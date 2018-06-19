@@ -164,15 +164,7 @@ object OptionsParser {
             continue
           }
 
-          val tokens = line.split(":").map { it.trim() }
-          val parseRegexp = { s: String -> Regex(s, RegexOption.IGNORE_CASE) }
-
-          ignoreConditions.add(when {
-            tokens.size == 1 -> IgnoreCondition(null, null, parseRegexp(tokens[0]))
-            tokens.size == 2 -> IgnoreCondition(tokens[0], null, parseRegexp(tokens[1]))
-            tokens.size == 3 -> IgnoreCondition(tokens[0].takeIf { it.isNotEmpty() }, tokens[1].takeIf { it.isNotEmpty() }, parseRegexp(tokens[2]))
-            else -> throw incorrectIgnoredProblemLineException(line)
-          })
+          ignoreConditions.add(IgnoreCondition.parseCondition(line))
         }
       }
     } catch (e: Exception) {
@@ -181,16 +173,6 @@ object OptionsParser {
 
     return IgnoredProblemsFilter(ignoreConditions)
   }
-
-  private fun incorrectIgnoredProblemLineException(line: String) = IllegalArgumentException(
-      """Incorrect problem ignoring line
-$line
-the line must be in the form: [<plugin_xml_id>[:<plugin_version>]:]<problem_description_regexp_pattern>
-Examples:
-org.some.plugin:3.4.0:access to unresolved class org.foo.Foo.*                    --- ignore for plugin 'org.some.plugin' of version 3.4.0
-org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*  --- ignore for all versions of Kotlin plugin
-access to unresolved class org.jetbrains.kotlin.compiler.*                        --- ignore for all plugins
-""")
 
   /**
    * Parses set of excluded plugins from [CmdOpts.excludedPluginsFile] file,

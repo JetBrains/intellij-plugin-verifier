@@ -17,6 +17,8 @@ enum class Settings(val key: String,
 
   PLUGINS_REPOSITORY_URL("verifier.service.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
 
+  CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" }),
+
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   ENABLE_AVAILABLE_IDE_SERVICE("verifier.service.enable.available.ide.service", { "false" }),
@@ -33,6 +35,13 @@ enum class Settings(val key: String,
       return property
     }
     return default?.invoke() ?: throw IllegalStateException("The property $key should be set")
+  }
+
+  fun getUnsecured(): String {
+    if (encrypted) {
+      return "*****"
+    }
+    return get()
   }
 
   fun getAsURL(): URL = URL(get().trimEnd('/'))

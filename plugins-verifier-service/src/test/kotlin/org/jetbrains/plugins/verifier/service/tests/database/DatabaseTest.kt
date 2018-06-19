@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.tests.database
 
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.database.ValueType
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -18,15 +19,19 @@ class DatabaseTest {
     tempFolder.newFolder().toPath()
   }
 
+  private val databasePath by lazy {
+    temp.resolve("database")
+  }
+
   @Test
   fun `database open-write-close-reopen-read test`() {
-    MapDbServerDatabase(temp).use { db ->
+    MapDbServerDatabase(databasePath).use { db ->
       val serviceDAO = ServiceDAO(db)
       serviceDAO.setProperty("one", "1")
       serviceDAO.setProperty("two", "2")
     }
 
-    MapDbServerDatabase(temp).use { db ->
+    MapDbServerDatabase(databasePath).use { db ->
       val serviceDAO = ServiceDAO(db)
       assertEquals("1", serviceDAO.getProperty("one"))
       assertEquals("2", serviceDAO.getProperty("two"))
@@ -34,7 +39,8 @@ class DatabaseTest {
   }
 
   private fun <T, R> openSetAndRun(valueType: ValueType<T>, f: MutableSet<T>.() -> R) =
-      MapDbServerDatabase(temp).use {
+      MapDbServerDatabase(temp
+          .resolve("database")).use {
         val set = it.openOrCreateSet("set", valueType)
         f(set)
       }
@@ -53,12 +59,12 @@ class DatabaseTest {
   @Test
   fun `serialization of the java-io-Serializable objects`() {
     val list = listOf(1, 2, 3)
-    MapDbServerDatabase(temp).use { db ->
+    MapDbServerDatabase(databasePath).use { db ->
       val set = db.openOrCreateSet("lists", ValueType.SERIALIZABLE)
       set.add(list)
     }
 
-    MapDbServerDatabase(temp).use { db ->
+    MapDbServerDatabase(databasePath).use { db ->
       val set = db.openOrCreateSet("lists", ValueType.SERIALIZABLE)
       assertEquals(1, set.size)
       assertEquals(list, set.first())
@@ -81,6 +87,41 @@ class DatabaseTest {
 
     openSetAndRun(valueType) {
       assertEquals(setOf(2), this)
+    }
+  }
+
+  @Test
+  fun `test list`() {
+    MapDbServerDatabase(databasePath).use { db ->
+      val list = db.openOrCreateList("list", ValueType.STRING)
+      list.add("c")
+      list.add("a")
+      list.add("b")
+    }
+
+    MapDbServerDatabase(databasePath).use { db ->
+      val list = db.openOrCreateList("list", ValueType.STRING)
+      assertEquals(listOf("c", "a", "b"), list)
+    }
+  }
+
+  @Test
+  fun `serialize and deserialize problems ignoring conditions`() {
+    val one = IgnoreCondition(null, null, Regex("xxx"))
+    val two = IgnoreCondition("pluginId", null, Regex("xxx"))
+    val three = IgnoreCondition("pluginId", "version", Regex("xxx"))
+
+    MapDbServerDatabase(databasePath).use { db ->
+      val serviceDAO = ServiceDAO(db)
+      serviceDAO.addIgnoreCondition(one)
+      serviceDAO.addIgnoreCondition(two)
+      serviceDAO.addIgnoreCondition(three)
+    }
+
+    MapDbServerDatabase(databasePath).use { db ->
+      val serviceDAO = ServiceDAO(db)
+      val ignoreConditions = serviceDAO.ignoreConditions
+      assertEquals(listOf(one, two, three), ignoreConditions)
     }
   }
 }

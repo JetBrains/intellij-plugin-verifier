@@ -1,6 +1,8 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import org.jetbrains.plugins.verifier.service.server.servlets.info.IgnoredProblemsPage
 import org.jetbrains.plugins.verifier.service.server.servlets.info.StatusPage
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.ScheduledVerification
@@ -15,34 +17,65 @@ class InfoServlet : BaseServlet() {
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     when {
-      path.endsWith("control-service") -> processServiceControl(req, resp)
-      path.endsWith("unignore-verification") -> processUnignoreVerification(req, resp)
+      path.endsWith("control-service") -> controlService(req, resp)
+      path.endsWith("unignore-verification") -> unignoreVerification(req, resp)
+      path.endsWith("modify-ignored-problems") -> modifyIgnoredProblems(req, resp)
+      path.endsWith("ignored-problems") -> ignoredProblems(resp)
       else -> processStatus(resp)
     }
   }
 
-  private fun processUnignoreVerification(req: HttpServletRequest, resp: HttpServletResponse) {
+  private fun sendBadRequest(resp: HttpServletResponse, message: String) {
+    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, message)
+  }
+
+  private fun modifyIgnoredProblems(req: HttpServletRequest, resp: HttpServletResponse) {
+    val ignoredProblems = req.getParameter("ignored.problems")
+    val adminPassword = req.getParameter("admin.password")
+    if (ignoredProblems == null || adminPassword == null) {
+      return sendBadRequest(resp, "Invalid request")
+    }
+    if (adminPassword != serverContext.authorizationData.serviceAdminPassword) {
+      resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect admin password")
+      return
+    }
+    val ignoreConditions = try {
+      parseIgnoreConditions(ignoredProblems)
+    } catch (e: Exception) {
+      val msg = "Unable to parse ignored problems: ${e.message}"
+      logger.warn(msg, e)
+      return sendBadRequest(resp, msg)
+    }
+    serverContext.serviceDAO.replaceIgnoreConditions(ignoreConditions)
+    resp.sendRedirect("/info/ignored-problems")
+  }
+
+  private fun parseIgnoreConditions(ignoredProblems: String) =
+      ignoredProblems.lines()
+          .map { it.trim() }
+          .filterNot { it.isEmpty() }
+          .map { IgnoreCondition.parseCondition(it) }
+
+  private fun ignoredProblems(resp: HttpServletResponse) {
+    sendHtml(resp, IgnoredProblemsPage(serverContext.serviceDAO.ignoreConditions).generate())
+  }
+
+  private fun unignoreVerification(req: HttpServletRequest, resp: HttpServletResponse) {
     val updateId = req.getParameter("updateId")?.toIntOrNull()
-    if (updateId == null) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'updateId' must be specified")
-      return
-    }
+        ?: return sendBadRequest(resp, "Parameter 'updateId' must be specified")
+
     val ideVersion = req.getParameter("ideVersion")?.let { IdeVersion.createIdeVersionIfValid(it) }
-    if (ideVersion == null) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter 'ideVersion' must be specified")
-      return
-    }
+        ?: return sendBadRequest(resp, "Parameter 'ideVersion' must be specified")
+
     val updateInfo = serverContext.pluginRepository.getPluginInfoById(updateId)
-    if (updateInfo == null) {
-      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Update #$updateId is not found in ${serverContext.pluginRepository}")
-      return
-    }
+        ?: return sendBadRequest(resp, "Update #$updateId is not found in ${serverContext.pluginRepository}")
+
     val scheduledVerification = ScheduledVerification(updateInfo, ideVersion)
     serverContext.verificationResultsFilter.forceVerificationResult(scheduledVerification)
     sendOk(resp, "Verification $scheduledVerification has been unignored")
   }
 
-  private fun processServiceControl(req: HttpServletRequest, resp: HttpServletResponse) {
+  private fun controlService(req: HttpServletRequest, resp: HttpServletResponse) {
     val adminPassword = req.getParameter("admin-password")
     if (adminPassword == null || adminPassword != serverContext.authorizationData.serviceAdminPassword) {
       resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Incorrect password")
@@ -68,7 +101,7 @@ class InfoServlet : BaseServlet() {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service $serviceName is not found")
     } else {
       if (action(service)) {
-        sendOk(resp, "Service's $serviceName state is changed to ${service.getState()}")
+        resp.sendRedirect("/info/status")
       } else {
         resp.sendError(HttpServletResponse.SC_CONFLICT, "Service $serviceName can't be paused")
       }
@@ -76,7 +109,7 @@ class InfoServlet : BaseServlet() {
   }
 
   private fun processStatus(resp: HttpServletResponse) {
-    sendContent(resp, StatusPage(serverContext).generateStatusPage(), "text/html")
+    sendHtml(resp, StatusPage(serverContext).generate())
   }
 
 }

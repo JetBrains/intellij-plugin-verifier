@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
@@ -32,7 +31,6 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val jdkDescriptorsCache: JdkDescriptorsCache,
                     val startupSettings: List<Settings>,
                     val serviceDAO: ServiceDAO,
-                    val serverDatabase: ServerDatabase,
                     val ideDescriptorsCache: IdeDescriptorsCache,
                     val pluginDetailsCache: PluginDetailsCache,
                     val verificationResultsFilter: VerificationResultFilter) : Closeable {
@@ -49,7 +47,7 @@ class ServerContext(val applicationHomeDirectory: Path,
   override fun close() {
     allServices.forEach { it.stop() }
     taskManager.closeLogged()
-    serverDatabase.closeLogged()
+    serviceDAO.closeLogged()
     ideDescriptorsCache.closeLogged()
     pluginDetailsCache.closeLogged()
     jdkDescriptorsCache.closeLogged()

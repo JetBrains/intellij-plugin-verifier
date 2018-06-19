@@ -5,7 +5,6 @@ import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.startup.ServerStartupListener
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -21,7 +20,6 @@ import javax.servlet.http.HttpServletResponse
 abstract class BaseServlet : HttpServlet() {
 
   companion object {
-    protected val LOG: Logger = LoggerFactory.getLogger(BaseServlet::class.java)
 
     val GSON: Gson = Gson()
 
@@ -32,7 +30,7 @@ abstract class BaseServlet : HttpServlet() {
         sendNotFound(resp)
         return null
       }
-      return path
+      return path.trimStart('/')
     }
 
     @JvmStatic
@@ -40,30 +38,30 @@ abstract class BaseServlet : HttpServlet() {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, message)
     }
 
-    inline fun <reified T : Any> fromJson(inputStream: InputStream): T = GSON.fromJson(InputStreamReader(inputStream, StandardCharsets.UTF_8), typeToken<T>())
+  }
 
-    @JvmStatic
-    protected inline fun <reified T : Any> parseJsonPart(req: HttpServletRequest, partName: String): T? {
-      val part = req.getPart(partName) ?: return null
-      return try {
-        fromJson(part.inputStream)
-      } catch (e: Exception) {
-        LOG.error("Unable to deserialize part $partName", e)
-        null
-      }
+  protected val logger = LoggerFactory.getLogger(BaseServlet::class.java)
+
+  inline fun <reified T : Any> fromJson(inputStream: InputStream): T = GSON.fromJson(InputStreamReader(inputStream, StandardCharsets.UTF_8), typeToken<T>())
+
+  protected inline fun <reified T : Any> parseJsonPart(req: HttpServletRequest, partName: String): T? {
+    val part = req.getPart(partName) ?: return null
+    return try {
+      fromJson(part.inputStream)
+    } catch (e: Exception) {
+      logger.error("Unable to deserialize part $partName", e)
+      null
     }
+  }
 
-    @JvmStatic
-    protected inline fun <reified T : Any> parseJsonParameter(req: HttpServletRequest, parameterName: String): T? {
-      val parameter = req.getParameter(parameterName) ?: return null
-      return try {
-        GSON.fromJson<T>(parameter)
-      } catch (e: Exception) {
-        LOG.error("Unable to deserialize parameter $parameterName: $parameter", e)
-        null
-      }
+  protected inline fun <reified T : Any> parseJsonParameter(req: HttpServletRequest, parameterName: String): T? {
+    val parameter = req.getParameter(parameterName) ?: return null
+    return try {
+      GSON.fromJson<T>(parameter)
+    } catch (e: Exception) {
+      logger.error("Unable to deserialize parameter $parameterName: $parameter", e)
+      null
     }
-
   }
 
   final override fun doGet(req: HttpServletRequest, resp: HttpServletResponse) = doPost(req, resp)
@@ -73,6 +71,10 @@ abstract class BaseServlet : HttpServlet() {
     resp.contentType = contentType
     resp.outputStream.write(bytes)
     resp.status = HttpServletResponse.SC_OK
+  }
+
+  protected fun sendHtml(resp: HttpServletResponse, html: String) {
+    sendContent(resp, html.toByteArray(), "text/html")
   }
 
   protected fun sendBytes(resp: HttpServletResponse, bytes: ByteArray) {

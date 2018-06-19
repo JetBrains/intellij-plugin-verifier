@@ -3,11 +3,13 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
+import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
@@ -33,7 +35,8 @@ class VerifierService(
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkPath: JdkPath,
     private val verificationResultsFilter: VerificationResultFilter,
-    private val pluginRepository: PluginRepository
+    private val pluginRepository: PluginRepository,
+    private val serviceDAO: ServiceDAO
 ) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
@@ -71,6 +74,11 @@ class VerifierService(
 
   private fun scheduleVerification(scheduledVerification: ScheduledVerification, now: Instant) {
     lastVerifiedDate[scheduledVerification] = now
+
+    val ignoreConditions = serviceDAO.ignoreConditions.toList()
+    val ignoredProblemsFilter = IgnoredProblemsFilter(ignoreConditions)
+    val ignoreProblemsFilters = listOf(ignoredProblemsFilter)
+
     val task = VerifyPluginTask(
         verifierExecutor,
         scheduledVerification.updateInfo,
@@ -79,7 +87,8 @@ class VerifierService(
         pluginDetailsCache,
         ideDescriptorsCache,
         jdkDescriptorsCache,
-        pluginRepository
+        pluginRepository,
+        ignoreProblemsFilters
     )
 
     val taskDescriptor = taskManager.enqueue(

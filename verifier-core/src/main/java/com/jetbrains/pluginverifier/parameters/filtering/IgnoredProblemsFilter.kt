@@ -3,8 +3,9 @@ package com.jetbrains.pluginverifier.parameters.filtering
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
-data class IgnoreCondition(val pluginId: String?, val version: String?, val pattern: Regex)
-
+/**
+ * [ProblemsFilter] that ignores problems specified in [ignoreConditions].
+ */
 class IgnoredProblemsFilter(val ignoreConditions: List<IgnoreCondition>) : ProblemsFilter {
 
   override fun shouldReportProblem(

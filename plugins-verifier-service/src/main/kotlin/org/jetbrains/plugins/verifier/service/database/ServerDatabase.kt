@@ -22,6 +22,12 @@ interface ServerDatabase : Closeable {
   fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V>
 
   /**
+   * Provides a list of objects with key types [keyType]
+   * that will be persisted on the database shutdown.
+   */
+  fun <K> openOrCreateList(listName: String, keyType: ValueType<K>): MutableList<K>
+
+  /**
    * Flush allocated database resources and save data.
    */
   override fun close() = Unit

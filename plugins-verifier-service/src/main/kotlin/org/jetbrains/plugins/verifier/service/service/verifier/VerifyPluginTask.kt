@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
@@ -38,7 +39,8 @@ class VerifyPluginTask(
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
-    private val pluginRepository: PluginRepository
+    private val pluginRepository: PluginRepository,
+    private val problemsFilters: List<ProblemsFilter>
 ) : Task<VerificationResult>("Check $updateInfo against $ideVersion"), Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
@@ -67,7 +69,7 @@ class VerifyPluginTask(
     val tasks = listOf(PluginVerifier(
         updateInfo,
         verificationReportage,
-        emptyList(),
+        problemsFilters,
         true,
         pluginDetailsCache,
         DefaultClsResolverProvider(

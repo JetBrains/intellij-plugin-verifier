@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetti
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
 import java.util.jar.Manifest
 import javax.servlet.ServletContext
 import javax.servlet.ServletContextEvent
@@ -76,8 +78,7 @@ class ServerStartupListener : ServletContextListener {
     val jdkDescriptorsCache = JdkDescriptorsCache()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
-    val serverDatabase = MapDbServerDatabase(applicationHomeDir)
-    val serviceDAO = ServiceDAO(serverDatabase)
+    val serviceDAO = openServiceDAO(applicationHomeDir)
 
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
@@ -95,11 +96,38 @@ class ServerStartupListener : ServletContextListener {
         jdkDescriptorsCache,
         Settings.values().toList(),
         serviceDAO,
-        serverDatabase,
         ideDescriptorsCache,
         pluginDetailsCache,
         verificationResultsFilter
     )
+  }
+
+  private fun openServiceDAO(applicationHomeDir: Path): ServiceDAO {
+    val databasePath = applicationHomeDir.resolve("database")
+    try {
+      return createServiceDAO(databasePath)
+    } catch (e: Exception) {
+      LOG.error("Unable to open/create database", e)
+      LOG.info("Flag to clear database on corruption is " + if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean() == true) "ON" else "OFF")
+      if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) {
+        LOG.info("Trying to recreate database")
+        databasePath.deleteLogged()
+        try {
+          val recreatedDAO = createServiceDAO(databasePath)
+          LOG.info("Successfully recreated database")
+          return recreatedDAO
+        } catch (e: Exception) {
+          LOG.error("Fatal error creating database: ${e.message}", e)
+          throw e
+        }
+      }
+      LOG.error("Do not clear database. Abort.")
+      throw e
+    }
+  }
+
+  private fun createServiceDAO(databasePath: Path): ServiceDAO {
+    return ServiceDAO(MapDbServerDatabase(databasePath))
   }
 
   private val maxDiskSpaceUsage = SpaceAmount.ofMegabytes(Settings.MAX_DISK_SPACE_MB.getAsLong().coerceAtLeast(10000))
@@ -139,7 +167,8 @@ class ServerStartupListener : ServletContextListener {
         ideDescriptorsCache,
         jdkPath,
         verificationResultsFilter,
-        pluginRepository
+        pluginRepository,
+        serviceDAO
     )
     if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
       verifierService.start()
@@ -187,7 +216,7 @@ class ServerStartupListener : ServletContextListener {
   private fun validateSystemProperties() {
     LOG.info("Validating system properties")
     Settings.values().toList().forEach { setting ->
-      LOG.info("Property '${setting.key}' = '${setting.get()}'")
+      LOG.info("Property '${setting.key}' = '${setting.getUnsecured()}'")
     }
   }
 }
