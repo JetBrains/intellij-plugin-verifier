@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.ClassNode
  * Implementations of this interface determine whether
  * a class file should be verified with bytecode analysis.
  */
-interface VerificationFilter {
+interface ClassFilter {
 
   /**
    * Determines whether [classNode] must be verified

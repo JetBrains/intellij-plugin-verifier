@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
@@ -15,11 +14,11 @@ import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
  * Aggregates the plugin verification results:
  * 1) Plugin structure [errors] [pluginStructureErrors]
  * 2) Plugin structure [warnings] [pluginStructureWarnings]
- * 3) Binary compatibility [problems] [compatibilityProblems]
+ * 3) Compatibility [problems] [compatibilityProblems]
  * 4) Deprecated API [usages] [deprecatedUsages]
  * 5) Dependencies [graph] [dependenciesGraph] used during the verification
  */
-class ResultHolder(private val pluginVerificationReportage: PluginVerificationReportage) {
+class ResultHolder {
 
   val compatibilityProblems: MutableSet<CompatibilityProblem> = hashSetOf()
 
@@ -27,7 +26,7 @@ class ResultHolder(private val pluginVerificationReportage: PluginVerificationRe
 
   var dependenciesGraph: DependenciesGraph? = null
 
-  val ignoredProblemsHolder = IgnoredProblemsHolder(pluginVerificationReportage)
+  val ignoredProblemsHolder = IgnoredProblemsHolder()
 
   val pluginStructureWarnings: MutableSet<PluginStructureWarning> = hashSetOf()
 
@@ -42,14 +41,12 @@ class ResultHolder(private val pluginVerificationReportage: PluginVerificationRe
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (deprecatedApiUsage !in deprecatedUsages) {
       deprecatedUsages.add(deprecatedApiUsage)
-      pluginVerificationReportage.logDeprecatedUsage(deprecatedApiUsage)
     }
   }
 
   fun registerProblem(problem: CompatibilityProblem) {
     if (problem !in compatibilityProblems && !ignoredProblemsHolder.isIgnored(problem)) {
       compatibilityProblems.add(problem)
-      pluginVerificationReportage.logNewProblemDetected(problem)
     }
   }
 
@@ -65,11 +62,9 @@ class ResultHolder(private val pluginVerificationReportage: PluginVerificationRe
       if (errorOrWarning.level == PluginProblem.Level.WARNING) {
         val pluginStructureWarning = PluginStructureWarning(errorOrWarning.message)
         pluginStructureWarnings.add(pluginStructureWarning)
-        pluginVerificationReportage.logNewPluginStructureWarning(pluginStructureWarning)
       } else {
         val pluginStructureError = PluginStructureError(errorOrWarning.message)
         pluginStructureErrors.add(pluginStructureError)
-        pluginVerificationReportage.logNewPluginStructureError(pluginStructureError)
       }
     }
   }

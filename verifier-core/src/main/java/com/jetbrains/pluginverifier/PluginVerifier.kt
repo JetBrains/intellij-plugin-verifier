@@ -29,7 +29,7 @@ class PluginVerifier(
 
   private val pluginReportage = verificationReportage.createPluginReportage(plugin, verificationTarget)
 
-  private val resultHolder = ResultHolder(pluginReportage)
+  private val resultHolder = ResultHolder()
 
   override fun call(): VerificationResult {
     try {
@@ -43,11 +43,26 @@ class PluginVerifier(
       pluginReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
     }
-
     val verificationResult = resultHolder.convertToVerificationResult()
+    resultHolder.logResults()
     pluginReportage.logVerificationResult(verificationResult)
     pluginReportage.logVerificationFinished(verificationResult.toString())
     return verificationResult
+  }
+
+  private fun ResultHolder.logResults() {
+    pluginStructureErrors.forEach { pluginReportage.logNewPluginStructureError(it) }
+    pluginStructureWarnings.forEach { pluginReportage.logNewPluginStructureWarning(it) }
+    compatibilityProblems.forEach { pluginReportage.logNewProblemDetected(it) }
+    deprecatedUsages.forEach { pluginReportage.logDeprecatedUsage(it) }
+    ignoredProblemsHolder.ignoredProblems.forEach { entry ->
+      entry.value.forEach {
+        pluginReportage.logProblemIgnored(entry.key, it.reason)
+      }
+    }
+    if (dependenciesGraph != null) {
+      pluginReportage.logDependencyGraph(dependenciesGraph!!)
+    }
   }
 
   private fun ResultHolder.convertToVerificationResult(): VerificationResult {
@@ -62,7 +77,7 @@ class PluginVerifier(
     }.apply {
       plugin = this@PluginVerifier.plugin
       verificationTarget = this@PluginVerifier.verificationTarget
-      ignoredProblems = resultHolder.ignoredProblemsHolder.ignoredProblems
+      ignoredProblems = resultHolder.ignoredProblemsHolder.ignoredProblems.keys.toSet()
       if (resultHolder.dependenciesGraph != null) {
         dependenciesGraph = resultHolder.dependenciesGraph!!
       }

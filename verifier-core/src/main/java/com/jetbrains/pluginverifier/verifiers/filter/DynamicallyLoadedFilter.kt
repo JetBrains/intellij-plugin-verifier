@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.ClassNode
  * This annotation indicates that the class is loaded by custom class loader, thus
  * it may be impossible to statically analyse its bytecode.
  */
-class DynamicallyLoadedFilter : VerificationFilter {
+class DynamicallyLoadedFilter : ClassFilter {
 
   companion object {
     private val DYNAMICALLY_LOADED = "com/intellij/ide/plugins/DynamicallyLoaded"

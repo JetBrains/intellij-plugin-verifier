@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilte
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
-import com.jetbrains.pluginverifier.reporting.verification.EmptyPluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -183,7 +182,7 @@ class DocumentedProblemsReportingTest {
       VerificationContext(
           PluginIdAndVersion("pluginId", "1.0"),
           VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
-          ResultHolder(EmptyPluginVerificationReportage),
+          ResultHolder(),
           false,
           emptyList(),
           EmptyClsResolver

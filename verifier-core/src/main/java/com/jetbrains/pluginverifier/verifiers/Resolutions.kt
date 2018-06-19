@@ -19,9 +19,11 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import java.util.*
 
-fun VerificationContext.resolveClassOrProblem(className: String,
-                                              lookup: ClassNode,
-                                              lookupLocation: () -> Location): ClassNode? {
+fun VerificationContext.resolveClassOrProblem(
+    className: String,
+    lookup: ClassNode,
+    lookupLocation: () -> Location
+): ClassNode? {
   val resolution = clsResolver.resolveClass(className)
   return with(resolution) {
     when (this) {
