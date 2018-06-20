@@ -10,13 +10,23 @@ ext.jpsVersion = '173.3531.6'
 ext.jpsPath = file("$buildDir/download/jps-standalone")
 
 FileTree jpsJarsTree = fileTree(dir: "$jpsPath")
-jpsJarsTree.include 'jps-model.jar', 'util.jar', 'log4j.jar', 'trove4j.jar', 'jdom.jar'
+jpsJarsTree.include 'jps-model.jar', 'util.jar', 'trove4j.jar', 'jdom.jar'
 
 dependencies {
   compile project(':structure-ide')
   compile project(':structure-classes')
   jpsDependency group: 'com.jetbrains.intellij.idea', name: 'jps-standalone', version: jpsVersion, ext: 'zip'
   compile jpsJarsTree
+
+  /**
+   * jps-model depends on log4j.
+   *
+   * Though `jps-standalone.zip` bundles `log4j` classes,
+   * we need to explicitly specify dependency on `log4j`
+   * to allow clients of `structure-ide-classes` module
+   * exclude it if necessary.
+   */
+  compile group: 'log4j', name: 'log4j', version: '1.2.17'
 }
 
 task extractJpsStandalone(type: Copy) {
@@ -29,13 +39,8 @@ task extractJpsStandalone(type: Copy) {
 compileJava.dependsOn extractJpsStandalone
 compileKotlin.dependsOn extractJpsStandalone
 
-//We have to include IDEA class files and dependencies (trove, jdom, log4j) into structure-ide jar because
-//it isn't possible to specify gradle-dependency on these modules: the jps-standalone.zip is published with
-//bundled libraries which might have been patched by IDEA team.
-
-//Note: we don't relocate the packages (for example, via shadow-jar plugin ) of these popular dependencies.
-//In case of any problems encountered by downstream clients we can bundle the classes into the jar with renaming pre-process.
-//The only client for now who uses structure-ide is plugin verifier.
+//We have to include dependencies of `jps-model` on `trove` and `jdom` into `structure-ide-classes`
+//because there jars might have been patched by IDEA team.
 jar {
   from {
     jpsJarsTree.collect { it.isDirectory() ? it : zipTree(it) }
