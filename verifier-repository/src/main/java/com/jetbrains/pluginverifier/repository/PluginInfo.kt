@@ -14,6 +14,8 @@ import java.util.*
 open class PluginInfo(
     val pluginId: String,
 
+    val pluginName: String,
+
     val version: String,
 
     val sinceBuild: IdeVersion?,
@@ -50,6 +52,7 @@ class LocalPluginInfo(
     val idePlugin: IdePlugin
 ) : PluginInfo(
     idePlugin.pluginId!!,
+    idePlugin.pluginName ?: idePlugin.pluginId!!,
     idePlugin.pluginVersion!!,
     idePlugin.sinceBuild,
     idePlugin.untilBuild,
@@ -63,7 +66,7 @@ class LocalPluginInfo(
     get() = idePlugin.toString()
 
   // writeReplace method for serialization
-  private fun writeReplace(): Any = PluginInfo(pluginId, version, sinceBuild, untilBuild, vendor)
+  private fun writeReplace(): Any = PluginInfo(pluginId, pluginName, version, sinceBuild, untilBuild, vendor)
 
   // readObject method for serialization
   @Suppress("UNUSED_PARAMETER")
@@ -87,6 +90,7 @@ class BundledPluginInfo(
     val idePlugin: IdePlugin
 ) : PluginInfo(
     idePlugin.pluginId!!,
+    idePlugin.pluginName ?: idePlugin.pluginId!!,
     idePlugin.pluginVersion ?: ideVersion.asString(),
     idePlugin.sinceBuild,
     idePlugin.untilBuild,
@@ -94,7 +98,7 @@ class BundledPluginInfo(
 ) {
 
   // writeReplace method for serialization
-  private fun writeReplace(): Any = PluginInfo(pluginId, version, sinceBuild, untilBuild, vendor)
+  private fun writeReplace(): Any = PluginInfo(pluginId, pluginName, version, sinceBuild, untilBuild, vendor)
 
   // readObject method for serialization
   @Suppress("UNUSED_PARAMETER")
@@ -117,6 +121,7 @@ class BundledPluginInfo(
  */
 class UpdateInfo(
     pluginId: String,
+    pluginName: String,
     version: String,
     sinceBuild: IdeVersion?,
     untilBuild: IdeVersion?,
@@ -127,6 +132,7 @@ class UpdateInfo(
     val tags: List<String>
 ) : PluginInfo(
     pluginId,
+    pluginName,
     version,
     sinceBuild,
     untilBuild,
@@ -144,7 +150,7 @@ class UpdateInfo(
 class PluginIdAndVersion(
     pluginId: String,
     version: String
-) : PluginInfo(pluginId, version, null, null, null) {
+) : PluginInfo(pluginId, pluginId, version, null, null, null) {
 
   override val presentableName
     get() = "$pluginId $version"

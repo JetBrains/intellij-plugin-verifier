@@ -81,7 +81,7 @@ class SerializationTest {
     val dependenciesGraph = DependenciesGraph(dependencyNode, listOf(dependencyNode), listOf(dependencyEdge))
 
     val ideVersion = IdeVersion.createIdeVersion("IU-181.1")
-    val pluginInfo = PluginInfo("id", "version", ideVersion, ideVersion, "vendor")
+    val pluginInfo = PluginInfo("id", "name", "version", ideVersion, ideVersion, "vendor")
     val target = VerificationTarget.Ide(ideVersion)
 
     val compatibilityProblems = setOf(methodNotFoundProblem)

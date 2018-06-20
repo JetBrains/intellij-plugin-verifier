@@ -198,6 +198,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
 
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
+        pluginName,
         version,
         sinceString.prepareIdeVersion(),
         untilString.prepareIdeVersion(),
