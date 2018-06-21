@@ -559,4 +559,11 @@ class VerificationCorrectnessTest {
         "This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a protected field access.AccessProblemBase.x : int")
   }
+
+  @Test
+  fun `kotlin default method without JvmDefault must be re-implemented in Java subclasses`() {
+    assertProblemFound("Concrete class mock.plugin.defaults.kotlin.JavaInheritor inherits from defaults.kotlin.I but " +
+        "doesn't implement the abstract method noDefault() : int. This can lead to **AbstractMethodError** exception at runtime.",
+        "Abstract method defaults.kotlin.I.noDefault() : int is not implemented")
+  }
 }

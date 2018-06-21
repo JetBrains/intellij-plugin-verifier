@@ -4,4 +4,11 @@
     <option name="sourceMapEmbedSources" />
     <option name="sourceMapPrefix" />
   </component>
+  <component name="KotlinCommonCompilerArguments">
+    <option name="errors">
+      <ArgumentParseErrors>
+        <option name="argumentWithoutValue" value="-Xjvm-default" />
+      </ArgumentParseErrors>
+    </option>
+  </component>
 </project>

@@ -12,7 +12,7 @@ project.ext.intellijStructureVersion = intellijStructureVersion
 
 buildscript {
 
-  ext.kotlin_version = '1.2.41'
+  ext.kotlin_version = '1.2.50'
 
   repositories {
     jcenter()
@@ -35,6 +35,16 @@ configure(allprojects) {
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
+
+  compileKotlin {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    kotlinOptions {
+      jvmTarget = "1.8"
+      freeCompilerArgs = ["-Xjvm-default=enable"]
+    }
+  }
 
   dependencies {
 
