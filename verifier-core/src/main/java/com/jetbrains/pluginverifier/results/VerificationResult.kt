@@ -181,7 +181,7 @@ sealed class VerificationResult : Serializable {
         append(" ")
         append("dependency".pluralize(modules.size + plugins.size))
         if (compatibilityProblems.isNotEmpty()) {
-          append(" and ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
+          append(" and found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
         }
       }
     }

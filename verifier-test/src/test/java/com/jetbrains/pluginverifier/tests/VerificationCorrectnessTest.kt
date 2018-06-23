@@ -446,47 +446,40 @@ class VerificationCorrectnessTest {
 
   @Test
   fun nonExistingClassOrInterface() {
-    val nonExistingClassLocations = listOf(
-        "Method mock.plugin.MethodProblems.brokenReturn() : NonExistingClass",
-        "Method mock.plugin.MethodProblems.brokenReturn() : NonExistingClass",
-        "Method mock.plugin.MethodProblems.brokenArg(NonExistingClass brokenArg) : void",
-        "Method mock.plugin.MethodProblems.brokenLocalVar() : void",
-        "Method mock.plugin.MethodProblems.brokenDotClass() : void",
-        "Method mock.plugin.MethodProblems.brokenMultiArray() : void",
-        "Method mock.plugin.MethodProblems.brokenInvocation() : void",
+    val expectedFullDesc = """Package 'non' is not found along with its class non.existing.NonExistingClass.
+Probably the package 'non' belongs to a library or dependency that is not resolved by the checker.
+It is also possible, however, that this package was actually removed from a dependency causing the detected problems. Access to unresolved classes at runtime may lead to **NoSuchClassError**.
+The following classes of 'non' are not resolved:
+  Class non.existing.NonExistingClass is referenced in
+    mock.plugin.FieldTypeNotFound.myNonExistingClass : NonExistingClass
+    mock.plugin.MethodProblems.brokenDotClass() : void
+    mock.plugin.ParentDoesntExist.<init>()
+    mock.plugin.arrays.ANewArrayInsn.foo(long l, double d, Object a) : void
+    mock.plugin.field.FieldProblemsContainer.accessUnknownClass() : void
+    ...and 7 other places...
+"""
 
-        "Constructor mock.plugin.ParentDoesntExist.<init>()",
-        "Method mock.plugin.arrays.ANewArrayInsn.foo(long l, double d, Object a) : void",
-        "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClassOfArray() : void",
-        "Method mock.plugin.field.FieldProblemsContainer.accessUnknownClass() : void",
-        "Field mock.plugin.FieldTypeNotFound.myNonExistingClass : NonExistingClass",
-        "Class mock.plugin.ParentDoesntExist"
-    )
+    assertProblemFound(expectedFullDesc, "Package 'non' is not found")
 
-    val nonExistingExceptionLocations = listOf(
+    val removedExceptionLocations = listOf(
         "Method mock.plugin.MethodProblems.brokenThrows() : void",
         "Method mock.plugin.MethodProblems.brokenCatch() : void"
     )
 
-    val nonExistingInterfaceLocations = listOf(
+    val removedInterfaceLocations = listOf(
         "Class mock.plugin.NotFoundInterface"
     )
 
-    fun rightMissingFullDescription(className: String, location: String) =
+    fun formatFull(className: String, location: String) =
         "$location references an unresolved class $className. This can lead to **NoSuchClassError** exception at runtime."
 
-    fun rightMissingShortDescription(className: String) = "Access to unresolved class $className"
 
-    nonExistingClassLocations.forEach {
-      assertProblemFound(rightMissingFullDescription("non.existing.NonExistingClass", it), rightMissingShortDescription("non.existing.NonExistingClass"))
+    removedExceptionLocations.forEach {
+      assertProblemFound(formatFull("removedClasses.RemovedException", it), "Access to unresolved class removedClasses.RemovedException")
     }
 
-    nonExistingExceptionLocations.forEach {
-      assertProblemFound(rightMissingFullDescription("non.existing.NonExistingException", it), rightMissingShortDescription("non.existing.NonExistingException"))
-    }
-
-    nonExistingInterfaceLocations.forEach {
-      assertProblemFound(rightMissingFullDescription("non.existing.NonExistingInterface", it), rightMissingShortDescription("non.existing.NonExistingInterface"))
+    removedInterfaceLocations.forEach {
+      assertProblemFound(formatFull("removedClasses.RemovedInterface", it), "Access to unresolved class removedClasses.RemovedInterface")
     }
   }
 
@@ -565,5 +558,51 @@ class VerificationCorrectnessTest {
     assertProblemFound("Concrete class mock.plugin.defaults.kotlin.JavaInheritor inherits from defaults.kotlin.I but " +
         "doesn't implement the abstract method noDefault() : int. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method defaults.kotlin.I.noDefault() : int is not implemented")
+  }
+
+  @Test
+  fun `package not resolved`() {
+    val expectedFullDescription = """Package 'removedClasses.removedWholePackage' is not found along with its 8 classes.
+Probably the package 'removedClasses.removedWholePackage' belongs to a library or dependency that is not resolved by the checker.
+It is also possible, however, that this package was actually removed from a dependency causing the detected problems. Access to unresolved classes at runtime may lead to **NoSuchClassError**.
+The following classes of 'removedClasses.removedWholePackage' are not resolved (only 5 most used classes are shown, 3 hidden):
+  Class removedClasses.removedWholePackage.Removed5 is referenced in
+    mock.plugin.removedClasses.User5.<init>()
+    mock.plugin.removedClasses.User5.usage1() : void
+    mock.plugin.removedClasses.User5.usage4() : void
+    mock.plugin.removedClasses.User5.usage5() : void
+    mock.plugin.removedClasses.User5.usage8() : void
+    ...and 5 other places...
+  Class removedClasses.removedWholePackage.Removed1 is referenced in
+    mock.plugin.removedClasses.User1.<init>()
+    mock.plugin.removedClasses.User1.usage1() : void
+    mock.plugin.removedClasses.User1.usage2() : void
+    mock.plugin.removedClasses.User1.usage3() : void
+    mock.plugin.removedClasses.User1
+  Class removedClasses.removedWholePackage.Removed2 is referenced in
+    mock.plugin.removedClasses.User2.<init>()
+    mock.plugin.removedClasses.User2
+  Class removedClasses.removedWholePackage.Removed3 is referenced in
+    mock.plugin.removedClasses.User3
+    mock.plugin.removedClasses.User3.<init>()
+  Class removedClasses.removedWholePackage.Removed4 is referenced in
+    mock.plugin.removedClasses.User4
+    mock.plugin.removedClasses.User4.<init>()
+"""
+
+    val expectedShortDescription = "Package 'removedClasses.removedWholePackage' is not found"
+    assertProblemFound(expectedFullDescription, expectedShortDescription)
+  }
+
+  @Test
+  fun `class removed`() {
+    assertProblemFound(
+        "Constructor mock.plugin.removedClasses.UsesRemoved.<init>() references an unresolved class removedClasses.RemovedClass. This can lead to **NoSuchClassError** exception at runtime.",
+        "Access to unresolved class removedClasses.RemovedClass"
+    )
+    assertProblemFound(
+        "Class mock.plugin.removedClasses.UsesRemoved references an unresolved class removedClasses.RemovedClass. This can lead to **NoSuchClassError** exception at runtime.",
+        "Access to unresolved class removedClasses.RemovedClass"
+    )
   }
 }

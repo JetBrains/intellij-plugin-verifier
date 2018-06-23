@@ -11,7 +11,7 @@ class AndroidProblemsFilter : ProblemsFilter {
 
   private companion object {
 
-    val androidPackages = listOf("com.android", "org/jetbrains.android").map { it.replace('.', '/') }
+    val androidPackages = listOf("com.android", "org.jetbrains.android").map { it.replace('.', '/') }
 
     fun String.belongsToAndroid() = androidPackages.any { startsWith("$it/") }
 

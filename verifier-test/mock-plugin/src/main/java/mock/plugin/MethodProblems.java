@@ -2,7 +2,7 @@ package mock.plugin;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import non.existing.NonExistingClass;
-import non.existing.NonExistingException;
+import removedClasses.RemovedException;
 
 public class MethodProblems {
   public NonExistingClass brokenReturn() {
@@ -17,14 +17,14 @@ public class MethodProblems {
     NonExistingClass brokenLocalVar = null;
   }
 
-  public void brokenThrows() throws NonExistingException {
+  public void brokenThrows() {
 
   }
 
   public void brokenCatch() {
     try {
-      throw new NonExistingException();
-    } catch (NonExistingException e) {
+      throw new RemovedException();
+    } catch (RemovedException e) {
       e.printStackTrace();
     }
   }

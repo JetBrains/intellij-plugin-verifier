@@ -1,6 +1,6 @@
 package mock.plugin;
 
-import non.existing.NonExistingInterface;
+import removedClasses.RemovedInterface;
 
-public interface NotFoundInterface extends NonExistingInterface {
+public interface NotFoundInterface extends RemovedInterface {
 }
