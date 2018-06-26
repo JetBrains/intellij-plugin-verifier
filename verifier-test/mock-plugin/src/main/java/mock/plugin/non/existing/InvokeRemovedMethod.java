@@ -1,6 +1,6 @@
 package mock.plugin.non.existing;
 
-import non.existing.Child;
+import invokevirtual.Child;
 
 public class InvokeRemovedMethod {
   public void foo() {

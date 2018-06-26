@@ -1,4 +1,4 @@
-package non.existing;
+package invokevirtual;
 
 public class Parent {
 
