@@ -18,11 +18,11 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -406,8 +406,9 @@ class VerificationCorrectnessTest {
 
   @Test
   fun missingVirtualMethod() {
-    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method non.existing.Child.removedMethod() : void. This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent)",
-        "Invocation of unresolved method non.existing.Child.removedMethod() : void"
+    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method invokevirtual.Child.removedMethod() : void. " +
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent)",
+        "Invocation of unresolved method invokevirtual.Child.removedMethod() : void"
     )
   }
 
@@ -445,7 +446,7 @@ class VerificationCorrectnessTest {
   }
 
   @Test
-  fun nonExistingClassOrInterface() {
+  fun `package removed along with its class`() {
     val expectedFullDesc = """Package 'non' is not found along with its class non.existing.NonExistingClass.
 Probably the package 'non' belongs to a library or dependency that is not resolved by the checker.
 It is also possible, however, that this package was actually removed from a dependency causing the detected problems. Access to unresolved classes at runtime may lead to **NoSuchClassError**.
@@ -505,7 +506,7 @@ The following classes of 'non' are not resolved:
   @Test
   fun `method of the IDE class was invoked virtually on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeVirtual() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent) " +
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
         "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
@@ -514,7 +515,7 @@ The following classes of 'non' are not resolved:
   @Test
   fun `static method of the IDE class was invoked on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeStatic() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (non.existing.Parent) " +
+        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
         "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
@@ -523,7 +524,7 @@ The following classes of 'non' are not resolved:
   @Test
   fun `instance field of the IDE class was accessed on plugin's subclass`() {
     assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (non.existing.Parent)",
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.removedField : int"
     )
   }
@@ -531,7 +532,7 @@ The following classes of 'non' are not resolved:
   @Test
   fun `final static field of the IDE interface was accessed in plugin`() {
     assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : java.lang.Object. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (non.existing.Parent) " +
+        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent) " +
         "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
     )
