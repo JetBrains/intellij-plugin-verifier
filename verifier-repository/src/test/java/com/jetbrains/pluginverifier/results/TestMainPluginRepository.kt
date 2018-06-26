@@ -23,6 +23,8 @@ class TestMainPluginRepository {
     @ClassRule
     @JvmField
     var hostReachableRule = HostReachableRule()
+
+    val repositoryURL = URL("https://plugins.jetbrains.com")
   }
 
   @Rule
@@ -33,7 +35,7 @@ class TestMainPluginRepository {
 
   @Before
   fun prepareRepository() {
-    repository = PublicPluginRepository(URL("https://plugins.jetbrains.com"))
+    repository = PublicPluginRepository(repositoryURL)
   }
 
   @Test
@@ -45,6 +47,14 @@ class TestMainPluginRepository {
   @Test
   fun updatesOfPlugin() {
     assertTrue(repository.getAllCompatibleVersionsOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
+  }
+
+  @Test
+  fun `browser url for plugin with id containing spaces must be encoded`() {
+    val versions = repository.getAllVersionsOfPlugin("Mongo Plugin")
+    assertTrue(versions.isNotEmpty())
+    val updateInfo = versions.first()
+    assertEquals(URL(repositoryURL, "/plugin/index?xmlId=Mongo+Plugin"), updateInfo.browserURL)
   }
 
   @Test

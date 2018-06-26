@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
+import java.net.URLEncoder
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -54,7 +55,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
 
   private val updateInfosRequester = UpdateInfosRequester()
 
-  private fun getBrowserUrl(pluginId: String) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/index?xmlId=$pluginId")
+  private fun getBrowserUrl(pluginId: String) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/index?xmlId=" + URLEncoder.encode(pluginId, "UTF-8"))
 
   private fun getDownloadUrl(updateId: Int) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
 

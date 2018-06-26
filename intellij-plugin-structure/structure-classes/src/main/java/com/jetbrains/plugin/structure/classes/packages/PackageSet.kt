@@ -13,7 +13,7 @@ class PackageSet {
   /**
    * Adds all packages and super-packages of the specified class.
    *
-   * If the class has default package, list `[""]` is returned.
+   * If the class has default package, list `[""]` is added.
    */
   fun addPackagesOfClass(className: String) {
     val superPackage = StringBuilder()
@@ -22,9 +22,8 @@ class PackageSet {
       if (c == '/') {
         defaultPackage = false
         packages.add(superPackage.toString())
-      } else {
-        superPackage.append(c)
       }
+      superPackage.append(c)
     }
     if (defaultPackage) {
       packages.add("")
