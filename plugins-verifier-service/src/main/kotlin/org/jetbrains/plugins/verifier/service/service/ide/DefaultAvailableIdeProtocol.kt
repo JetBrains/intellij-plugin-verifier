@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -46,7 +47,7 @@ private interface AvailableIdeConnector {
 
 class DefaultAvailableIdeProtocol(
     authorizationData: AuthorizationData,
-    pluginRepository: PluginRepository
+    pluginRepository: MarketplaceRepository
 ) : AvailableIdeProtocol {
 
   private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)

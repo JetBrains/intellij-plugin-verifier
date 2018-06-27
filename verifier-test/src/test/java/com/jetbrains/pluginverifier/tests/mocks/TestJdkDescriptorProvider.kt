@@ -4,9 +4,6 @@ import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import java.nio.file.Paths
 
-/**
- * Created by Sergey.Patrikeev
- */
 object TestJdkDescriptorProvider {
 
   fun getJdkPathForTests(): JdkPath {

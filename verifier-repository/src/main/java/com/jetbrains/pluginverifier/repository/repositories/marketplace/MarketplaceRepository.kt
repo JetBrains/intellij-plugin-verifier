@@ -32,7 +32,9 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
     private const val DEFAULT_BATCH_REQUEST_SIZE = 1000
 
     /**
-     * TODO: implement this mapping on the Plugins Repository.
+     * TODO: implement this mapping on the Plugins Repository: MP-1152.
+     * Currently, the Plugin Repository doesn't know about what modules are declared in what plugins.
+     *
      * The list of IntelliJ plugins which define some modules
      * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
      */

@@ -382,8 +382,6 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
       tcLog.testSuiteStarted("($prefix)").use {
         for (problem in problemsOfClass) {
           for (plugin in problem2Plugin.get(problem)) {
-            //todo: here and in other `testSuiteStarted` places
-            //it would be better to wrap the string with (parantheses)
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {

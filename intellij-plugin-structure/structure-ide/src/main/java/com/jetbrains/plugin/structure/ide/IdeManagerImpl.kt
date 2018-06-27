@@ -189,7 +189,6 @@ class IdeManagerImpl : IdeManager() {
         xmlDescriptors[xmlFilePath] = xmlFile
       }
     }
-    //todo: speedup the descriptors loading by caching all the /META-INF/* files.
     return PluginFromSourceXIncludePathResolver(xmlDescriptors)
   }
 
