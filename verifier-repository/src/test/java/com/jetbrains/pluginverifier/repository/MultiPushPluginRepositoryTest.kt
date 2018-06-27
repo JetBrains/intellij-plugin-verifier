@@ -30,7 +30,7 @@ class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginReposito
     assertEquals("JetBrains", pluginInfo.vendor)
     assertEquals(null, pluginInfo.sinceBuild)
     assertEquals(null, pluginInfo.untilBuild)
-    assertEquals(buildServerUrl, pluginInfo.browserUrl)
+    assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"), pluginInfo.browserUrl)
     assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-${pluginInfo.version}.zip"), pluginInfo.downloadUrl)
   }
 
