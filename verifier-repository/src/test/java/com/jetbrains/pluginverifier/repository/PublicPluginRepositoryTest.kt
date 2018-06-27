@@ -1,19 +1,21 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert.*
 import org.junit.Test
 import java.net.URL
 
 @HostReachableRule.HostReachable("https://plugins.jetbrains.com")
-class PublicPluginRepositoryTest : BaseRepositoryTest<PublicPluginRepository>() {
+class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
 
   companion object {
     val repositoryURL = URL("https://plugins.jetbrains.com")
   }
 
-  override fun createRepository() = PublicPluginRepository(repositoryURL)
+  override fun createRepository() = MarketplaceRepository(repositoryURL)
 
   @Test
   fun `last compatible plugins for IDE`() {

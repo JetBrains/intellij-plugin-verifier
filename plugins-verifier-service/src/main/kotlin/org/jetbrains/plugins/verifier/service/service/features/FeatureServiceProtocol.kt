@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
  * Protocol used to communicate with the Marketplace:

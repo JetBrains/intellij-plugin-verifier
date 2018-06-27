@@ -17,12 +17,12 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -56,7 +56,7 @@ class VerificationCorrectnessTest {
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
       val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
-      val pluginFilesBank = PluginFilesBank.create(PublicPluginRepository(URL("http://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
+      val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("http://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
       val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
       val pluginInfo = LocalPluginInfo(idePlugin)

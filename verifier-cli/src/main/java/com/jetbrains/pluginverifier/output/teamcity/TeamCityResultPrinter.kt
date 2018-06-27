@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependen
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
+import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem

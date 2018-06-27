@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.server.servlets.info
 
 import com.jetbrains.pluginverifier.misc.MemoryInfo
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor

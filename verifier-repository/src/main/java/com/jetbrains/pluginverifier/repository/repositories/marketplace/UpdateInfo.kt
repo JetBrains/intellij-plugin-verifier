@@ -1,11 +1,14 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.pluginverifier.repository.repositories.marketplace
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.Browseable
+import com.jetbrains.pluginverifier.repository.Downloadable
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.net.URL
 import java.util.*
 
 /**
- * Identifier of a plugin hosted on the public Plugin Repository [PublicPluginRepository].
+ * Identifier of a plugin hosted on the public Plugin Repository [MarketplaceRepository].
  */
 class UpdateInfo(
     pluginId: String,

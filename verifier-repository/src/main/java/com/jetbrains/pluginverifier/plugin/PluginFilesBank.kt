@@ -1,12 +1,17 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.pluginverifier.misc.nameWithoutExtension
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.repository.Downloadable
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.apache.commons.io.FileUtils
 import java.net.URL
 import java.nio.file.Path
@@ -51,7 +56,7 @@ class PluginFilesBank(
     private fun getPluginInfoByFile(repository: PluginRepository, file: Path): PluginInfo? {
       val name = file.nameWithoutExtension
       val updateId = name.toIntOrNull()
-      if (updateId != null && repository is PublicPluginRepository) {
+      if (updateId != null && repository is MarketplaceRepository) {
         return repository.getPluginInfoById(updateId)
       }
       val pluginId = name.substringBefore("-")

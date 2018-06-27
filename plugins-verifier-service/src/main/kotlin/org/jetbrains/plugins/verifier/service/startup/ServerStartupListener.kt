@@ -9,10 +9,10 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -61,7 +61,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
     val pluginRepositoryUrl = Settings.PLUGINS_REPOSITORY_URL.getAsURL()
-    val pluginRepository = PublicPluginRepository(pluginRepositoryUrl)
+    val pluginRepository = MarketplaceRepository(pluginRepositoryUrl)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)

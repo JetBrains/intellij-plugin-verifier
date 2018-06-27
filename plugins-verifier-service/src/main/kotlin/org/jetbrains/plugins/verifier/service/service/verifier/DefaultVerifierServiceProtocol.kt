@@ -7,8 +7,8 @@ import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
@@ -44,7 +44,7 @@ private data class ScheduledVerificationJson(
 
 class DefaultVerifierServiceProtocol(
     authorizationData: AuthorizationData,
-    private val pluginRepository: PublicPluginRepository
+    private val pluginRepository: MarketplaceRepository
 ) : VerifierServiceProtocol {
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {

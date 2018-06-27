@@ -107,10 +107,10 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     }
   }
 
-}
+  private interface DownloadConnector {
+    @Streaming
+    @GET
+    fun download(@Url url: String): Call<ResponseBody>
+  }
 
-private interface DownloadConnector {
-  @Streaming
-  @GET
-  fun download(@Url url: String): Call<ResponseBody>
 }

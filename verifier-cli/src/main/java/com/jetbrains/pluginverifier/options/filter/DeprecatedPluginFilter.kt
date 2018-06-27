@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.options.filter
 
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
  * [PluginFilter] that excludes from verification plugins

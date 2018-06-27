@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tests.mocks
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
  * Created by Sergey.Patrikeev

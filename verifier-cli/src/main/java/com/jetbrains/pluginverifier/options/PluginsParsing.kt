@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.File
 import java.io.IOException
@@ -34,7 +34,7 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
       pluginToTestArg.matches("#\\d+".toRegex()) -> {
         val updateId = Integer.parseInt(pluginToTestArg.drop(1))
         val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-          (this as? PublicPluginRepository)?.getPluginInfoById(updateId)
+          (this as? MarketplaceRepository)?.getPluginInfoById(updateId)
         } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
         pluginsSet.schedulePlugin(updateInfo)
       }
@@ -100,7 +100,7 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
 
   private fun getPluginInfoByUpdateId(updateId: Int): PluginInfo? =
       pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch plugin info for #$updateId") {
-        (pluginRepository as? PublicPluginRepository)?.getPluginInfoById(updateId)
+        (pluginRepository as? MarketplaceRepository)?.getPluginInfoById(updateId)
       }
 
   private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginInfo> {

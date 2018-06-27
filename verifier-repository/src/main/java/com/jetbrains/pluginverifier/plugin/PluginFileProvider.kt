@@ -1,5 +1,6 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.pluginverifier.plugin
 
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 
 /**

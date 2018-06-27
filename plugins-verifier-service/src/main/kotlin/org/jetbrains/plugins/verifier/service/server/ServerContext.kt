@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
@@ -25,7 +25,7 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val appVersion: String?,
                     val ideRepository: IdeRepository,
                     val ideFilesBank: IdeFilesBank,
-                    val pluginRepository: PublicPluginRepository,
+                    val pluginRepository: MarketplaceRepository,
                     val taskManager: TaskManager,
                     val authorizationData: AuthorizationData,
                     val jdkDescriptorsCache: JdkDescriptorsCache,

@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.repository.repositories.local
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
+import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 
 /**
  * [PluginRepository] consisting of [locally] [LocalPluginInfo] stored plugins.

@@ -20,7 +20,7 @@ import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterS
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator

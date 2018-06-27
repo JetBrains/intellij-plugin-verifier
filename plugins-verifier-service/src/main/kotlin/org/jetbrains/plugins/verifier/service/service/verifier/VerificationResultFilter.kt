@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.repository.UpdateInfo
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Ignore
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Send

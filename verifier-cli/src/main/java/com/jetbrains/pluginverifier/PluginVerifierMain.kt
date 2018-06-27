@@ -10,17 +10,17 @@ import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
 import com.jetbrains.pluginverifier.repository.cleanup.bytesToSpaceAmount
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
@@ -98,7 +98,7 @@ object PluginVerifierMain {
     freeArgs = freeArgs.drop(1)
 
     val pluginDownloadDirDiskSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
-    val pluginRepository = PublicPluginRepository(URL(pluginRepositoryUrl))
+    val pluginRepository = MarketplaceRepository(URL(pluginRepositoryUrl))
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
 
     val ideRepository = IdeRepository()

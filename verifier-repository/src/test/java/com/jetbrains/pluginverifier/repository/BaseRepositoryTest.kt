@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.pluginverifier.plugin.PluginFileProvider
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize

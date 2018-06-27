@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.repository.repositories.custom
 import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
+import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 import java.util.concurrent.TimeUnit
 
 /**

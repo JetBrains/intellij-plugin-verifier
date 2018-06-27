@@ -1,13 +1,9 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 
 /**
  * Represents API of the plugin repository.
- *
- * Its main implementation is [PublicPluginRepository]
- * that corresponds to the [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
 interface PluginRepository {
 
@@ -45,5 +41,3 @@ interface PluginRepository {
   fun getIdOfPluginDeclaringModule(moduleId: String): String?
 
 }
-
-val VERSION_COMPARATOR = compareBy<PluginInfo, String>(VersionComparatorUtil.COMPARATOR) { it.version }
