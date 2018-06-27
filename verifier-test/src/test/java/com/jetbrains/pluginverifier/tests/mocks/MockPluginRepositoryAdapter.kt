@@ -4,11 +4,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import java.net.URL
 
 open class MockPluginRepositoryAdapter : PluginRepository {
-
-  override val repositoryURL: URL = URL("http://example.com")
 
   override fun getAllPlugins(): List<PluginInfo> = defaultAction()
 

@@ -1,41 +1,52 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import java.io.InvalidObjectException
-import java.io.ObjectInputStream
 import java.io.Serializable
-import java.net.URL
-import java.util.*
 
 /**
- * Identifier of an IDE plugin.
+ * Identifier of a plugin.
  */
-open class PluginInfo(
+abstract class PluginInfo(
+    /**
+     * Unique plugin ID, which may be equal
+     * to name if ID is not specified.
+     */
     val pluginId: String,
 
+    /**
+     * Plugin name.
+     */
     val pluginName: String,
 
+    /**
+     * Plugin version.
+     */
     val version: String,
 
+    /**
+     * "since" compatibility range.
+     */
     val sinceBuild: IdeVersion?,
 
+    /**
+     * "until" compatibility range.
+     */
     val untilBuild: IdeVersion?,
 
+    /**
+     * Vendor of the plugin.
+     */
     val vendor: String?
 ) : Serializable {
 
+  /**
+   * Checks whether this plugin is compatible with [ideVersion].
+   */
   fun isCompatibleWith(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
 
   open val presentableName
     get() = "$pluginId $version"
-
-  override fun equals(other: Any?) = other is PluginInfo
-      && pluginId == other.pluginId
-      && version == other.version
-
-  override fun hashCode() = Objects.hash(pluginId, version)
 
   final override fun toString() = presentableName
 
@@ -43,115 +54,4 @@ open class PluginInfo(
     private const val serialVersionUID = 0L
   }
 
-}
-
-/**
- * Identifier of a local plugin.
- */
-class LocalPluginInfo(
-    val idePlugin: IdePlugin
-) : PluginInfo(
-    idePlugin.pluginId!!,
-    idePlugin.pluginName ?: idePlugin.pluginId!!,
-    idePlugin.pluginVersion!!,
-    idePlugin.sinceBuild,
-    idePlugin.untilBuild,
-    idePlugin.vendor
-) {
-
-  val definedModules: Set<String>
-    get() = idePlugin.definedModules
-
-  override val presentableName
-    get() = idePlugin.toString()
-
-  // writeReplace method for serialization
-  private fun writeReplace(): Any = PluginInfo(pluginId, pluginName, version, sinceBuild, untilBuild, vendor)
-
-  // readObject method for serialization
-  @Suppress("UNUSED_PARAMETER")
-  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
-
-  override fun equals(other: Any?) = other is LocalPluginInfo && idePlugin == other.idePlugin
-
-  override fun hashCode() = idePlugin.hashCode()
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
-
-}
-
-/**
- * Identifier of a plugin bundled to IDE.
- */
-class BundledPluginInfo(
-    val ideVersion: IdeVersion,
-    val idePlugin: IdePlugin
-) : PluginInfo(
-    idePlugin.pluginId!!,
-    idePlugin.pluginName ?: idePlugin.pluginId!!,
-    idePlugin.pluginVersion ?: ideVersion.asString(),
-    idePlugin.sinceBuild,
-    idePlugin.untilBuild,
-    idePlugin.vendor
-) {
-
-  // writeReplace method for serialization
-  private fun writeReplace(): Any = PluginInfo(pluginId, pluginName, version, sinceBuild, untilBuild, vendor)
-
-  // readObject method for serialization
-  @Suppress("UNUSED_PARAMETER")
-  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Must have been serialized to PluginInfo")
-
-  override fun equals(other: Any?) = other is BundledPluginInfo
-      && ideVersion == other.ideVersion
-      && idePlugin == other.idePlugin
-
-  override fun hashCode() = Objects.hash(ideVersion, idePlugin)
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
-
-}
-
-/**
- * Identifier of a plugin hosted in the Plugin Repository.
- */
-class UpdateInfo(
-    pluginId: String,
-    pluginName: String,
-    version: String,
-    sinceBuild: IdeVersion?,
-    untilBuild: IdeVersion?,
-    vendor: String,
-    val downloadUrl: URL,
-    val updateId: Int,
-    val browserURL: URL,
-    val tags: List<String>
-) : PluginInfo(
-    pluginId,
-    pluginName,
-    version,
-    sinceBuild,
-    untilBuild,
-    vendor
-) {
-
-  override val presentableName
-    get() = "$pluginId:$version (#$updateId)"
-
-}
-
-/**
- * Only plugin ID and version.
- */
-class PluginIdAndVersion(
-    pluginId: String,
-    version: String
-) : PluginInfo(pluginId, pluginId, version, null, null, null) {
-
-  override val presentableName
-    get() = "$pluginId $version"
 }

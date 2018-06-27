@@ -1,42 +1,19 @@
-package com.jetbrains.pluginverifier.results
+package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginFileProvider
-import com.jetbrains.pluginverifier.repository.PluginFilesBank
-import com.jetbrains.pluginverifier.repository.PublicPluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
-import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.repository.cleanup.fileSize
+import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert.*
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 import java.net.URL
 
 @HostReachableRule.HostReachable("https://plugins.jetbrains.com")
-class TestMainPluginRepository {
+class PublicPluginRepositoryTest : BaseRepositoryTest<PublicPluginRepository>() {
 
   companion object {
-    @ClassRule
-    @JvmField
-    var hostReachableRule = HostReachableRule()
-
     val repositoryURL = URL("https://plugins.jetbrains.com")
   }
 
-  @Rule
-  @JvmField
-  var temporaryFolder = TemporaryFolder()
-
-  private lateinit var repository: PublicPluginRepository
-
-  @Before
-  fun prepareRepository() {
-    repository = PublicPluginRepository(repositoryURL)
-  }
+  override fun createRepository() = PublicPluginRepository(repositoryURL)
 
   @Test
   fun `last compatible plugins for IDE`() {
@@ -54,7 +31,7 @@ class TestMainPluginRepository {
     val versions = repository.getAllVersionsOfPlugin("Mongo Plugin")
     assertTrue(versions.isNotEmpty())
     val updateInfo = versions.first()
-    assertEquals(URL(repositoryURL, "/plugin/index?xmlId=Mongo+Plugin"), updateInfo.browserURL)
+    assertEquals(URL(repositoryURL, "/plugin/index?xmlId=Mongo+Plugin"), updateInfo.browserUrl)
   }
 
   @Test
@@ -91,22 +68,15 @@ class TestMainPluginRepository {
     get() = IdeVersion.createIdeVersion("IU-162.1132.10")
 
   @Test
-  fun downloadNonExistentPlugin() {
+  fun `find non existent plugin by update id`() {
     val updateInfo = repository.getPluginInfoById(-1000)
     assertNull(updateInfo)
   }
 
   @Test
   fun downloadExistentPlugin() {
-    val updateInfo = repository.getPluginInfoById(40625) //.gitignore 2.3.2
-    assertNotNull(updateInfo)
-    val tempDownloadFolder = temporaryFolder.newFolder().toPath()
-    val pluginFilesBank = PluginFilesBank.create(repository, tempDownloadFolder, DiskSpaceSetting(SpaceAmount.ofMegabytes(100)))
-    val downloadPluginResult = pluginFilesBank.getPluginFile(updateInfo!!)
-    val fileLock = (downloadPluginResult as PluginFileProvider.Result.Found).pluginFileLock
-    assertNotNull(fileLock)
-    assertTrue(fileLock.file.fileSize > SpaceAmount.ZERO_SPACE)
-    fileLock.release()
+    val updateInfo = repository.getPluginInfoById(40625)!! //.gitignore 2.3.2
+    checkDownloadPlugin(updateInfo)
   }
 
 }

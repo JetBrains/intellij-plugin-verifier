@@ -32,7 +32,7 @@ class IdeDependencyFinder(private val ide: Ide,
       return repositoryPlugin
     }
     return DependencyFinder.Result.NotFound("Dependency $dependency is neither resolved among bundled plugins of ${ide.version}, " +
-        "nor is there compatible version available in the Plugin Repository ${pluginRepository.repositoryURL}")
+        "nor is there compatible version available in $pluginRepository")
   }
 
 }

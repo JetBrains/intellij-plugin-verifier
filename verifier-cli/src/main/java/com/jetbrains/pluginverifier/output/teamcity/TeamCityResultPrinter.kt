@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
+import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
@@ -251,7 +251,7 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
   private fun getPluginOverviewLink(plugin: PluginInfo): String {
-    val url = (plugin as? UpdateInfo)?.browserURL ?: return ""
+    val url = (plugin as? Browseable)?.browserUrl ?: return ""
     return "Plugin URL: $url"
   }
 

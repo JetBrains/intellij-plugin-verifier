@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.bundled.BundledPluginsRepository
+import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginsRepository
 
 /**
  * [DependencyFinder] that searches for the plugin
@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.bundled.BundledPluginsRepository
  */
 class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
-  private val bundledPluginsRepository = BundledPluginsRepository(ide, ide.idePath.toURI().toURL())
+  private val bundledPluginsRepository = BundledPluginsRepository(ide)
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     val dependencyId = dependency.id

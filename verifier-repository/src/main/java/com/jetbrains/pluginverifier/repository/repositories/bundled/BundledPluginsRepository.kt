@@ -1,20 +1,16 @@
-package com.jetbrains.pluginverifier.repository.bundled
+package com.jetbrains.pluginverifier.repository.repositories.bundled
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
-import java.net.URL
 
 /**
  * [PluginRepository] consisting of plugins bundled to the [IDE] [ide].
  */
 class BundledPluginsRepository(
-    val ide: Ide,
-    override val repositoryURL: URL
+    val ide: Ide
 ) : PluginRepository {
-
   override fun getAllPlugins() = ide.bundledPlugins.map {
     BundledPluginInfo(ide.version, it)
   }
@@ -41,4 +37,8 @@ class BundledPluginsRepository(
   fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
 
   fun findPluginByModule(moduleId: String) = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
+
+  override fun toString() = "Bundled plugins of ${ide.version}"
+
 }
+

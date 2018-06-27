@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.persistence.VerificationResultPersistence
-import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
@@ -25,6 +25,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.net.URL
 
 /**
  * Ensures that [VerificationResult] and relevant classes can be serialized and deserialized.
@@ -81,7 +82,7 @@ class SerializationTest {
     val dependenciesGraph = DependenciesGraph(dependencyNode, listOf(dependencyNode), listOf(dependencyEdge))
 
     val ideVersion = IdeVersion.createIdeVersion("IU-181.1")
-    val pluginInfo = PluginInfo("id", "name", "version", ideVersion, ideVersion, "vendor")
+    val pluginInfo = CustomPluginInfo("id", "name", "version", "vendor", URL("http://download-url.com"), URL("http://browser-url.com"))
     val target = VerificationTarget.Ide(ideVersion)
 
     val compatibilityProblems = setOf(methodNotFoundProblem)

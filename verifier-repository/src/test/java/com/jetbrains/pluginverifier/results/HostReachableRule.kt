@@ -20,7 +20,6 @@ class HostReachableRule : TestRule {
       AnnotationTarget.CLASS,
       AnnotationTarget.FILE
   )
-
   annotation class HostReachable(val value: String)
 
   override fun apply(statement: Statement, description: Description): Statement {
@@ -37,7 +36,7 @@ class HostReachableRule : TestRule {
 
     @Throws(Throwable::class)
     override fun evaluate() {
-      Assume.assumeTrue("Skipped, because the following host is not available at the moment: $host", false)
+      Assume.assumeTrue(messageHost(host), false)
     }
   }
 
@@ -47,8 +46,13 @@ class HostReachableRule : TestRule {
     connection.getInputStream().close()
     true
   } catch (e: Exception) {
+    System.err.println(messageHost(host))
     e.printStackTrace()
     false
+  }
+
+  companion object {
+    private fun messageHost(host: String) = "Skipped, because the following host is not available at the moment: $host"
   }
 
 }

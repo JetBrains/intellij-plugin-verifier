@@ -4,9 +4,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.options.filter.DeprecatedPluginFilter
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import java.net.URL
 
 /**
  * Set of plugins to be verified and to be ignored,
@@ -73,7 +72,7 @@ data class PluginsSet(
    */
   val invalidPluginFiles: MutableList<InvalidPluginFile> = arrayListOf()
 
-  val localRepository = LocalPluginRepository(URL("http://unused.com"))
+  val localRepository = LocalPluginRepository()
 
   fun addPluginFilter(pluginFilter: PluginFilter) {
     _pluginFilters.add(pluginFilter)

@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 
 /**
  * [DependencyFinder] that searches for the [dependency] [PluginDependency]

@@ -1,11 +1,11 @@
-package com.jetbrains.pluginverifier.repository.local
+package com.jetbrains.pluginverifier.repository.repositories.local
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.extension
 import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepositoryFactory.createLocalPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory.createLocalPluginRepository
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -23,7 +23,7 @@ object LocalPluginRepositoryFactory {
       it.isDirectory || it.extension == "zip" || it.extension == "jar"
     }
 
-    val localPluginRepository = LocalPluginRepository(repositoryRoot.toUri().toURL())
+    val localPluginRepository = LocalPluginRepository()
     for (pluginFile in pluginFiles) {
       with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
         when (this) {

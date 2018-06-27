@@ -1,17 +1,14 @@
-package com.jetbrains.pluginverifier.repository.local
+package com.jetbrains.pluginverifier.repository.repositories.local
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.VERSION_COMPARATOR
-import java.net.URL
 
 /**
  * [PluginRepository] consisting of [locally] [LocalPluginInfo] stored plugins.
  */
 class LocalPluginRepository(
-    override val repositoryURL: URL,
     private val plugins: MutableList<LocalPluginInfo> = arrayListOf()
 ) : PluginRepository {
 
@@ -44,4 +41,7 @@ class LocalPluginRepository(
   fun findPluginById(pluginId: String): LocalPluginInfo? = plugins.find { it.pluginId == pluginId }
 
   fun findPluginByModule(moduleId: String): LocalPluginInfo? = plugins.find { moduleId in it.definedModules }
+
+  override fun toString() = "Local Plugin Repository"
+
 }

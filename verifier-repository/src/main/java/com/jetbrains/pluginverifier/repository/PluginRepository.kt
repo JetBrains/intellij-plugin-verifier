@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
-import java.net.URL
 
 /**
  * Represents API of the plugin repository.
@@ -11,11 +10,6 @@ import java.net.URL
  * that corresponds to the [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
 interface PluginRepository {
-
-  /**
-   * URL of the repository that can be used to open it in a browser.
-   */
-  val repositoryURL: URL
 
   /**
    * Returns all plugins available in the repository.

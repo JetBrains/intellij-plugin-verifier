@@ -25,10 +25,12 @@ class PluginFilesBank(
 
   companion object {
     fun create(
-        repository: PublicPluginRepository,
+        repository: PluginRepository,
         pluginsDir: Path,
         diskSpaceSetting: DiskSpaceSetting,
-        urlProvider: ((PluginInfo) -> URL?) = { (it as? UpdateInfo)?.downloadUrl }
+        urlProvider: ((PluginInfo) -> URL?) = {
+          (it as? Downloadable)?.downloadUrl
+        }
     ): PluginFilesBank {
       val sweepPolicy = LruFileSizeSweepPolicy<PluginInfo>(diskSpaceSetting)
 
@@ -46,15 +48,16 @@ class PluginFilesBank(
       return PluginFilesBank(fileRepository, urlProvider)
     }
 
-    private fun getPluginInfoByFile(repository: PublicPluginRepository, file: Path): UpdateInfo? {
+    private fun getPluginInfoByFile(repository: PluginRepository, file: Path): PluginInfo? {
       val name = file.nameWithoutExtension
       val updateId = name.toIntOrNull()
-      if (updateId != null) {
+      if (updateId != null && repository is PublicPluginRepository) {
         return repository.getPluginInfoById(updateId)
       }
       val pluginId = name.substringBefore("-")
       val version = name.substringAfter("-")
-      return repository.getAllPlugins().find { it.pluginId == pluginId && it.version == version }
+      return repository.getAllPlugins()
+          .find { it.pluginId == pluginId && it.version == version }
     }
 
   }

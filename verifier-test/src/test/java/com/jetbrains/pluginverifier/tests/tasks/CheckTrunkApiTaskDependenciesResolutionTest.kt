@@ -20,7 +20,7 @@ import com.jetbrains.pluginverifier.repository.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
-import com.jetbrains.pluginverifier.repository.local.LocalPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
@@ -166,7 +166,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     val allPlugins = listOf(releaseSomeJetBrainsMockPlugin, trunkSomeJetBrainsMockPlugin, someJetBrainsMockPluginContainingModule, pluginToCheck)
     val infoToDetails = hashMapOf<PluginInfo, PluginDetails>()
     for (plugin in allPlugins) {
-      val pluginInfo = LocalPluginRepository(repositoryURL).addLocalPlugin(plugin)
+      val pluginInfo = LocalPluginRepository().addLocalPlugin(plugin)
       infoToDetails[pluginInfo] = PluginDetails(
           pluginInfo,
           plugin,
@@ -209,7 +209,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
 
   private fun createTrunkApiParamsForTest(releaseIde: MockIde, trunkIde: MockIde): CheckTrunkApiParams {
     val pluginsSet = PluginsSet()
-    pluginsSet.schedulePlugin(LocalPluginRepository(repositoryURL).addLocalPlugin(pluginToCheck))
+    pluginsSet.schedulePlugin(LocalPluginRepository().addLocalPlugin(pluginToCheck))
     return CheckTrunkApiParams(
         pluginsSet,
         TestJdkDescriptorProvider.getJdkPathForTests(),
@@ -226,7 +226,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   }
 
   private fun createLocalPluginRepository(idePlugin: IdePlugin, ideVersion: IdeVersion): LocalPluginRepository {
-    val localPluginRepository = LocalPluginRepository(repositoryURL)
+    val localPluginRepository = LocalPluginRepository()
     val plugins = listOf(
         idePlugin,
         someJetBrainsMockPluginContainingModule.copy(

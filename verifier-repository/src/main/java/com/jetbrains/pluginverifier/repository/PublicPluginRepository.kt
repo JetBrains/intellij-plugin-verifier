@@ -3,16 +3,19 @@ package com.jetbrains.pluginverifier.repository
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.retrofit.JsonUpdateInfo
-import com.jetbrains.pluginverifier.repository.retrofit.PublicPluginRepositoryConnector
 import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
 import java.net.URL
 import java.net.URLEncoder
 import java.time.Duration
@@ -25,7 +28,7 @@ import java.util.concurrent.TimeUnit
  * The plugin repository implementation that communicates with
  * [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
  */
-class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository {
+class PublicPluginRepository(val repositoryURL: URL) : PluginRepository {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(PublicPluginRepository::class.java)
@@ -95,7 +98,7 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
-  override fun toString(): String = repositoryURL.toExternalForm()
+  override fun toString() = "Plugin Repository " + repositoryURL.toExternalForm()
 
   /**
    * This class is responsible for requesting the [UpdateInfo]s.
@@ -272,3 +275,51 @@ class PublicPluginRepository(override val repositoryURL: URL) : PluginRepository
   }
 
 }
+
+/**
+ * The Retrofit connector used to communicate with https://plugins.jetbrains.com.
+ */
+private interface PublicPluginRepositoryConnector {
+
+  @GET("/manager/getUpdateInfoById")
+  fun getUpdateInfoById(@Query("updateId") updateId: Int): Call<JsonUpdateInfo>
+
+  @GET("/manager/allCompatibleUpdates")
+  fun getAllCompatibleUpdates(@Query("build") build: String): Call<List<JsonUpdateInfo>>
+
+  @GET("/plugin/updates")
+  fun getPluginUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesIdsHolder>
+
+  @POST("/manager/getUpdateInfosForIdsBetween")
+  fun getUpdateInfosForIdsBetween(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<JsonUpdateInfo>>
+
+  /**
+   * Returns all plugins with "until build" >= [build].
+   * The [startUpdateId] is used to limit the response size,
+   * and reduce the load on the Plugin Repository.
+   */
+  @GET("/manager/allUpdatesSince")
+  fun getAllUpdateSinceAndUntil(@Query("build") build: String, @Query("updateId") startUpdateId: Int): Call<List<JsonUpdateIdHolder>>
+}
+
+private data class JsonUpdateInfo(
+    @SerializedName("pluginId") val pluginId: String,
+    @SerializedName("pluginName") val pluginName: String,
+    @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
+    @SerializedName("updateId") val updateId: Int,
+    @SerializedName("vendor") val vendor: String,
+    @SerializedName("since") val sinceString: String,
+    @SerializedName("until") val untilString: String,
+    @SerializedName("tags") val tags: List<String>?
+)
+
+private data class JsonUpdatesIdsHolder(
+    @SerializedName("updates")
+    val updateIds: List<JsonUpdateIdHolder>
+)
+
+private data class JsonUpdateIdHolder(
+    @SerializedName("updateId", alternate = ["id"])
+    val updateId: Int
+)
+

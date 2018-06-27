@@ -11,9 +11,9 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
@@ -126,7 +126,7 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
                     appendIdeCompatibilityNote(plugin, baseTarget, newTarget)
                     appendMissingDependenciesNotes(newProblemsResult, plugin)
                   }
-                  val pluginUrl = (plugin as? UpdateInfo)?.browserURL
+                  val pluginUrl = (plugin as? Browseable)?.browserUrl
                   val pluginUrlPart = if (pluginUrl != null) "Plugin URL: $pluginUrl\n" else ""
                   val message = pluginUrlPart + "Plugin: ${plugin.pluginId}:${plugin.version}"
                   tcLog.testFailed(pluginName, message, problemDetails)

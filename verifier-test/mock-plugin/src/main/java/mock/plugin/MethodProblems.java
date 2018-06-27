@@ -17,8 +17,8 @@ public class MethodProblems {
     NonExistingClass brokenLocalVar = null;
   }
 
-  public void brokenThrows() {
-
+  public void brokenThrows() throws RemovedException {
+    throw new RemovedException();
   }
 
   public void brokenCatch() {
