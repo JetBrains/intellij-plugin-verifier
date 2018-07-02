@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
+import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Companion.TOO_MANY_PROBLEMS_THRESHOLD
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Ignore
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Send
 import org.slf4j.LoggerFactory
@@ -15,7 +16,7 @@ import java.time.temporal.ChronoUnit
  * should actually be sent to the Plugins Repository.
  *
  * Some verifications may be uncertain, such as those
- * that report too many problems (>100).
+ * that report too many problems ([TOO_MANY_PROBLEMS_THRESHOLD]).
  * For such verifications it is better to investigate the reasons
  * manually than simply send them to confused end users.
  *
@@ -26,7 +27,7 @@ import java.time.temporal.ChronoUnit
 class VerificationResultFilter {
 
   companion object {
-    private const val TOO_MANY_PROBLEMS_THRESHOLD = 100
+    private const val TOO_MANY_PROBLEMS_THRESHOLD = 300
 
     private const val RECHECK_ATTEMPTS = 3
 
