@@ -1,399 +1,572 @@
-{
-  "artifacts": [
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "BUILD",
-      "version": "2018.1",
-      "classifier": "",
-      "packaging": "txt",
-      "lastModified": "2018-04-06T00:22:38Z",
-      "lastModifiedUnixTimeMs": 1522974158000,
-      "eTag": "2bef3f317123985f80847c397d3abbe4",
-      "content": "181.1168"
-    },
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "mps",
-      "version": "2018.1",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "2018-04-06T00:22:24Z",
-      "lastModifiedUnixTimeMs": 1522974144000,
-      "eTag": "b1243d28c388ea556a3ba50640b853da"
-    },
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "mps",
-      "version": "2018.1",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "2018-04-06T00:22:17Z",
-      "lastModifiedUnixTimeMs": 1522974137000,
-      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
-    },
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "BUILD",
-      "version": "181.1168",
-      "classifier": "",
-      "packaging": "txt",
-      "lastModified": "2018-04-06T00:22:07Z",
-      "lastModifiedUnixTimeMs": 1522974127000,
-      "eTag": "2bef3f317123985f80847c397d3abbe4",
-      "content": "181.1168"
-    },
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "mps",
-      "version": "181.1168",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "2018-04-06T00:21:54Z",
-      "lastModifiedUnixTimeMs": 1522974114000,
-      "eTag": "78acf5c105a7f02672ae71b4ed5f40ba"
-    },
-    {
-      "groupId": "com.jetbrains.mps",
-      "artifactId": "mps",
-      "version": "181.1168",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "2018-04-06T00:21:49Z",
-      "lastModifiedUnixTimeMs": 1522974109000,
-      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "BUILD",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "txt",
-      "lastModified": "Tue Feb 20 19:37:26 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144646000,
-      "eTag": "0c564b9d9d064f53427fb8c51d7b3780",
-      "content": "181.3870.7"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ruby-test-framework",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:37:26 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144646000,
-      "eTag": "ef8ba72167b09c36d4a721f1b7c6c3f1"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-build-test",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:37:25 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144645000,
-      "eTag": "cd6f69848a8dbb628df603264984a207"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ruby-test-framework",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "jar",
-      "lastModified": "Tue Feb 20 19:37:25 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144645000,
-      "eTag": "b297fda147f4f36ff48fb85225baddea"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-build-test",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "jar",
-      "lastModified": "Tue Feb 20 19:37:24 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144644000,
-      "eTag": "b2b752a6940d7db4416433dfdf13aac1"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-standalone",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:37:23 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144643000,
-      "eTag": "2eb922219091e99b070cfe8c15799283"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-standalone",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 20 19:37:20 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144640000,
-      "eTag": "45137acb2332d1d6c2f5512a4e97e924-6"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU-teamcity",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:37:16 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144636000,
-      "eTag": "9b5c5bbbf27f94405b62678edad2dbde"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU-teamcity",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 20 19:37:05 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144625000,
-      "eTag": "db50ea7d3eeb3bd377d6fab2a6bbdb17-69"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:36:41 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144601000,
-      "eTag": "f360b73be2ca17585f6fb3c0df6b027a"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 20 19:36:26 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144586000,
-      "eTag": "00bd2d89f46b87f5cf34f52316198503-116"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "181.3870.7",
-      "classifier": "sources",
-      "packaging": "jar",
-      "lastModified": "Tue Feb 20 19:35:39 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144539000,
-      "eTag": "c2f37a09d5a98771aff3c1afdbe6bcce-20"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:35:34 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144534000,
-      "eTag": "0d2ef1e0be27f9787800db308aff11de"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 20 19:35:22 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144522000,
-      "eTag": "132cbf18c4e2923f7f9129d0734ba358-91"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "intellij-core",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 20 19:34:56 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144496000,
-      "eTag": "7b6c69050b8696ce4d17282bf57fb60c"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "intellij-core",
-      "version": "181.3870.7",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 20 19:34:53 MSK 2018",
-      "lastModifiedUnixTimeMs": 1519144493000,
-      "eTag": "6b3236c4d95dbdadb43829cce4eabe38-5"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "BUILD",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "txt",
-      "lastModified": "Tue Jan 30 13:08:34 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306914000,
-      "eTag": "86f2685dec9f794b80ec0c4130b90390",
-      "content": "173.4548.28"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-build-test",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "jar",
-      "lastModified": "Tue Jan 30 13:08:33 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306913000,
-      "eTag": "31cc31d6a91e926584f337d8e4cdb2db"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-build-test",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:08:33 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306913000,
-      "eTag": "20a656d1b5dc3d2b1df43cede4f12ce0"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-standalone",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:08:32 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306912000,
-      "eTag": "437020430baaf35095f648f0ab88bc6b"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "jps-standalone",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Jan 30 13:08:30 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306910000,
-      "eTag": "68bdeefa0b200c1da56d6029cbc9d39b-6"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU-teamcity",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:08:29 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306909000,
-      "eTag": "4487d9bbdff82bccdb7bf313631000cc"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU-teamcity",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Jan 30 13:08:18 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306898000,
-      "eTag": "28dfd89151a192ccdfe4f743f06aef0c-58"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:08:14 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306894000,
-      "eTag": "24bce46abc3ec11664d79578a8f5ba4b"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIU",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Jan 30 13:07:39 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306859000,
-      "eTag": "b336908c81ea715bdd4dd1fe181ff655-99"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "2017.3.4",
-      "classifier": "sources",
-      "packaging": "jar",
-      "lastModified": "Tue Jan 30 13:07:19 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306839000,
-      "eTag": "416cf31042e8d90442b923818199d8cd-16"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:07:17 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306837000,
-      "eTag": "3996e34ccb5ccacb9a7a16e71ab6748d"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "ideaIC",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Jan 30 13:06:54 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306814000,
-      "eTag": "8dbdf260d076ab74d4b986d5c5490f17-75"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "intellij-core",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Jan 30 13:06:49 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306809000,
-      "eTag": "8add5dbb4b1ef5af12aa5f148dd0f987"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.idea",
-      "artifactId": "intellij-core",
-      "version": "2017.3.4",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Jan 30 13:06:47 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517306807000,
-      "eTag": "4babdade0fd927d46ec6f9181983b7a8-5"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.rider",
-      "artifactId": "BUILD",
-      "version": "173.3994.2442",
-      "classifier": "",
-      "packaging": "txt",
-      "lastModified": "Tue Feb 06 19:13:33 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517933613000,
-      "eTag": "7fbc6a90eb26b859761dc76752ab3102",
-      "content": "173.3994.2442"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.rider",
-      "artifactId": "riderRD",
-      "version": "173.3994.2442",
-      "classifier": "",
-      "packaging": "pom",
-      "lastModified": "Tue Feb 06 19:13:32 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517933612000,
-      "eTag": "25c7cde13362c208dd7cd2625f088a12"
-    },
-    {
-      "groupId": "com.jetbrains.intellij.rider",
-      "artifactId": "riderRD",
-      "version": "173.3994.2442",
-      "classifier": "",
-      "packaging": "zip",
-      "lastModified": "Tue Feb 06 19:13:09 MSK 2018",
-      "lastModifiedUnixTimeMs": 1517933589000,
-      "eTag": "2af4cdfe992dd860ba4d50be9aadea12-71"
-    }
-  ]
-}
+[
+  {
+    "code": "CL",
+    "alternativeCodes": [],
+    "salesCode": "CL",
+    "name": "CLion",
+    "productFamilyName": "CLion",
+    "link": "https://www.jetbrains.com/clion",
+    "description": "A smart cross-platform IDE for C and C++",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-27",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/cpp/CLion-182.3458.13.tar.gz",
+            "size": 456278250,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-182.3458.13.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/cpp/CLion-182.3458.13.dmg",
+            "size": 435945199,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-182.3458.13.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/cpp/CLion-182.3458.13.exe",
+            "size": 305845392,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-182.3458.13.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/cpp/CLion-182.3458.13.zip",
+            "size": 414148116,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-182.3458.13.zip.sha256"
+          }
+        },
+        "licenseRequired": false,
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.13"
+      },
+      {
+        "date": "2018-06-15",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/cpp/CLion-2018.1.5.tar.gz",
+            "size": 346281801,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-2018.1.5.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/cpp/CLion-2018.1.5.dmg",
+            "size": 327799211,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-2018.1.5.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/cpp/CLion-2018.1.5.exe",
+            "size": 249333008,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-2018.1.5.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/cpp/CLion-2018.1.5.zip",
+            "size": 310298031,
+            "checksumLink": "https://download.jetbrains.com/cpp/CLion-2018.1.5.zip.sha256"
+          }
+        },
+        "notesLink": "https://blog.jetbrains.com/clion/2018/06/clion-2018-1-4-update/",
+        "version": "2018.1.5",
+        "majorVersion": "2018.1",
+        "build": "181.5281.33"
+      }
+    ]
+  },
+  {
+    "code": "IIC",
+    "alternativeCodes": [
+      "IC"
+    ],
+    "name": "IntelliJ IDEA Community",
+    "productFamilyName": "IntelliJ IDEA",
+    "link": "https://www.jetbrains.com/idea",
+    "description": "Capable and ergonomic Java IDE",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-26",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.tar.gz",
+            "size": 520290734,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.tar.gz.sha256"
+          },
+          "linuxWithoutJDK": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-182.3458.5-no-jdk.tar.gz",
+            "size": 446675884,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-182.3458.5-no-jdk.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.dmg",
+            "size": 510404626,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.dmg.sha256"
+          },
+          "sourcesArchive": {
+            "link": "https://github.com/JetBrains/intellij-community/archive/idea/182.3458.5.zip",
+            "size": 0,
+            "checksumLink": "https://github.com/JetBrains/intellij-community/archive/idea/182.3458.5.zip.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.exe",
+            "size": 441294352,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.win.zip",
+            "size": 581821010,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-182.3458.5.win.zip.sha256"
+          }
+        },
+        "notesLink": "https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+2018.2+182.3458.5+Release+Notes",
+        "printableReleaseType": "Beta",
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.5"
+      },
+      {
+        "date": "2018-06-13",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.tar.gz",
+            "size": 542876900,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.tar.gz.sha256"
+          },
+          "linuxWithoutJDK": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-2018.1.5-no-jdk.tar.gz",
+            "size": 469331936,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-2018.1.5-no-jdk.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.dmg",
+            "size": 533270293,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.exe",
+            "size": 458111224,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.win.zip",
+            "size": 604975485,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIC-2018.1.5.win.zip.sha256"
+          }
+        },
+        "notesLink": "https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+2018.1+181.5281.24+Release+Notes",
+        "version": "2018.1.5",
+        "majorVersion": "2018.1",
+        "build": "181.5281.24"
+      }
+    ]
+  },
+  {
+    "code": "IIU",
+    "alternativeCodes": [
+      "IU"
+    ],
+    "salesCode": "II",
+    "name": "IntelliJ IDEA Ultimate",
+    "productFamilyName": "IntelliJ IDEA",
+    "link": "https://www.jetbrains.com/idea",
+    "description": "Capable and ergonomic Java IDE",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-26",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.tar.gz",
+            "size": 645941882,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.tar.gz.sha256"
+          },
+          "linuxWithoutJDK": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-182.3458.5-no-jdk.tar.gz",
+            "size": 572338878,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-182.3458.5-no-jdk.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.dmg",
+            "size": 636808819,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.exe",
+            "size": 540433072,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.win.zip",
+            "size": 707656405,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-182.3458.5.win.zip.sha256"
+          }
+        },
+        "notesLink": "https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+2018.2+182.3458.5+Release+Notes",
+        "printableReleaseType": "Beta",
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.5"
+      },
+      {
+        "date": "2018-06-20",
+        "type": "eap",
+        "notesLink": "https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+2018.2+182.3341.11+Release+Notes",
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3341.11"
+      },
+      {
+        "date": "2018-06-13",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.tar.gz",
+            "size": 668830233,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.tar.gz.sha256"
+          },
+          "linuxWithoutJDK": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-2018.1.5-no-jdk.tar.gz",
+            "size": 595282180,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-2018.1.5-no-jdk.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.dmg",
+            "size": 659753157,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.exe",
+            "size": 557360280,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.win.zip",
+            "size": 730999498,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-2018.1.5.win.zip.sha256"
+          }
+        },
+        "notesLink": "https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+2018.1+181.5281.24+Release+Notes",
+        "version": "2018.1.5",
+        "majorVersion": "2018.1",
+        "build": "181.5281.24"
+      }
+    ]
+  },
+  {
+    "code": "MPS",
+    "alternativeCodes": [],
+    "name": "MPS",
+    "productFamilyName": "MPS",
+    "link": "https://www.jetbrains.com/mps",
+    "description": "Create your own domain-specific language",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-15",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.tar.gz",
+            "size": 316513673,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5-macos-jdk-bundled.dmg",
+            "size": 328679763,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5-macos-jdk-bundled.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.exe",
+            "size": 269513752,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.exe.sha256"
+          },
+          "zip": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.zip",
+            "size": 237488588,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.5.zip.sha256"
+          }
+        },
+        "notesLink": "https://youtrack.jetbrains.com/releaseNotes?q=%23MPS%20Fix%20versions:%20%7B2018.1.5%7D%20State:%20Fixed&&title=MPS+2018.1.5+release+notes",
+        "version": "2018.1.5",
+        "majorVersion": "2018.1",
+        "build": "181.1469"
+      },
+      {
+        "date": "2018-05-24",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.tar.gz",
+            "size": 316513562,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4-macos-jdk-bundled.dmg",
+            "size": 328680548,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4-macos-jdk-bundled.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.exe",
+            "size": 269511056,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.exe.sha256"
+          },
+          "zip": {
+            "link": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.zip",
+            "size": 237485755,
+            "checksumLink": "https://download.jetbrains.com/mps/2018.1/MPS-2018.1.4.zip.sha256"
+          }
+        },
+        "notesLink": "https://youtrack.jetbrains.com/releaseNotes?q=%23MPS%20Fix%20versions:%20%7B2018.1.4%7D%20State:%20Fixed&&title=MPS+2018.1.4+release+notes",
+        "version": "2018.1.4",
+        "majorVersion": "2018.1",
+        "build": "181.1404"
+      }
+    ]
+  },
+  {
+    "code": "PCC",
+    "alternativeCodes": [
+      "PC"
+    ],
+    "name": "PyCharm Community Edition",
+    "productFamilyName": "PyCharm",
+    "link": "https://www.jetbrains.com/pycharm",
+    "description": "Python IDE for professional developers",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-28",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.tar.gz",
+            "size": 252343427,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.dmg",
+            "size": 242557793,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.exe",
+            "size": 188787984,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3458.8.exe.sha256"
+          }
+        },
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.8"
+      },
+      {
+        "date": "2018-06-20",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.tar.gz",
+            "size": 252081823,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.dmg",
+            "size": 242320751,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.exe",
+            "size": 188549368,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-182.3341.8.exe.sha256"
+          }
+        },
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3341.8"
+      },
+      {
+        "date": "2018-05-31",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.tar.gz",
+            "size": 271284732,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.dmg",
+            "size": 261550086,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.exe",
+            "size": 195307208,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-community-2018.1.4.exe.sha256"
+          }
+        },
+        "version": "2018.1.4",
+        "majorVersion": "2018.1",
+        "build": "181.5087.37"
+      }
+    ]
+  },
+  {
+    "code": "PCP",
+    "alternativeCodes": [
+      "PY"
+    ],
+    "salesCode": "PC",
+    "name": "PyCharm Professional Edition",
+    "productFamilyName": "PyCharm",
+    "link": "https://www.jetbrains.com/pycharm",
+    "description": "Python IDE for professional developers",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-28",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.tar.gz",
+            "size": 331099455,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.dmg",
+            "size": 321138492,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.exe",
+            "size": 248735784,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-182.3458.8.exe.sha256"
+          }
+        },
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.8"
+      },
+      {
+        "date": "2018-05-31",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.tar.gz",
+            "size": 348483306,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.dmg",
+            "size": 338665813,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.exe",
+            "size": 254294088,
+            "checksumLink": "https://download.jetbrains.com/python/pycharm-professional-2018.1.4.exe.sha256"
+          }
+        },
+        "version": "2018.1.4",
+        "majorVersion": "2018.1",
+        "build": "181.5087.37"
+      }
+    ]
+  },
+  {
+    "code": "PS",
+    "alternativeCodes": [],
+    "salesCode": "PS",
+    "name": "PhpStorm",
+    "productFamilyName": "PhpStorm",
+    "link": "https://www.jetbrains.com/phpstorm",
+    "description": "Lightning-smart PHP IDE",
+    "categories": [
+      "IDE"
+    ],
+    "releases": [
+      {
+        "date": "2018-06-27",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.tar.gz",
+            "size": 296018583,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.dmg",
+            "size": 284410193,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.exe",
+            "size": 231071912,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3458.35.exe.sha256"
+          }
+        },
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3458.35"
+      },
+      {
+        "date": "2018-06-20",
+        "type": "eap",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.tar.gz",
+            "size": 295704328,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.dmg",
+            "size": 284042389,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.exe",
+            "size": 230807928,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-182.3341.34.exe.sha256"
+          }
+        },
+        "version": "2018.2",
+        "majorVersion": "2018.2",
+        "build": "182.3341.34"
+      },
+      {
+        "date": "2018-06-15",
+        "type": "release",
+        "downloads": {
+          "linux": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.tar.gz",
+            "size": 292469588,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.tar.gz.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.dmg",
+            "size": 280789476,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.dmg.sha256"
+          },
+          "windows": {
+            "link": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.exe",
+            "size": 229697216,
+            "checksumLink": "https://download.jetbrains.com/webide/PhpStorm-2018.1.6.exe.sha256"
+          }
+        },
+        "version": "2018.1.6",
+        "majorVersion": "2018.1",
+        "build": "181.5281.35"
+      }
+    ]
+  }
+]

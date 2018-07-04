@@ -26,7 +26,7 @@ class AvailableIdeService(
 ) {
 
   override fun doServe() {
-    val availableIdes = ideRepository.fetchIndex(false) + ideRepository.fetchIndex(true)
+    val availableIdes = ideRepository.fetchIndex()
     try {
       protocol.sendAvailableIdes(availableIdes)
     } catch (e: ServerUnavailable503Exception) {

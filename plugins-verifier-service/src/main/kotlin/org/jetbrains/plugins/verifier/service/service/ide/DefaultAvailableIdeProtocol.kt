@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.makeOkHttpClient
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
@@ -24,17 +23,17 @@ private data class AvailableIdeJson(
     @SerializedName("ideVersion")
     val ideVersion: String,
 
-    @SerializedName("isSnapshot")
-    val isSnapshot: Boolean,
-
     @SerializedName("releasedVersion")
-    val releasedVersion: String?
+    val releasedVersion: String?,
+
+    //todo: remove this when the Plugin Repository is ready. It will be no later than on July 13, 2018 :)
+    @SerializedName("isSnapshot")
+    val isSnapshot: Boolean = false
 )
 
 private fun AvailableIde.convertToJson() = AvailableIdeJson(
     version.asString(),
-    isSnapshot,
-    releasedVersion
+    releaseVersion
 )
 
 private interface AvailableIdeConnector {

@@ -15,47 +15,44 @@ import java.nio.file.Path
  */
 class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVersion> {
 
-  private val urlDownloader = UrlDownloader<IdeVersion> { getIdeDownloadUrl(it) }
-
-  private fun getIdeDownloadUrl(key: IdeVersion) =
-      try {
-        ideRepository.fetchAvailableIdeDescriptor(key, false)
-            ?: ideRepository.fetchAvailableIdeDescriptor(key, true)
-      } catch (e: Exception) {
-        null
-      }?.downloadUrl
+  private val urlDownloader = UrlDownloader<AvailableIde> { it.downloadUrl }
 
   override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
-    val downloadResult = downloadIdeToTempFile(key, tempDirectory)
-    if (downloadResult !is DownloadResult.Downloaded) {
-      return downloadResult
-    }
-    return try {
-      require(downloadResult.extension == "zip") { "IDE repository must provide .zip-ed IDE but provided: ${downloadResult.downloadedFileOrDirectory}" }
-      extractIde(downloadResult.downloadedFileOrDirectory, tempDirectory, key)
-    } finally {
-      downloadResult.downloadedFileOrDirectory.deleteLogged()
-    }
-  }
-
-  private fun downloadIdeToTempFile(ideVersion: IdeVersion, tempDirectory: Path): DownloadResult {
-    return try {
-      with(urlDownloader.download(ideVersion, tempDirectory)) {
-        when (this) {
-          is DownloadResult.Downloaded -> this
-          is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found in $ideRepository: $reason")
-          is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
-        }
-      }
+    val availableIde = try {
+      ideRepository.fetchAvailableIde(key)
     } catch (e: Exception) {
-      DownloadResult.FailedToDownload("Unable to download $ideVersion", e)
-    }
+      return DownloadResult.FailedToDownload("Failed to find IDE $key ", e)
+    } ?: return DownloadResult.NotFound("IDE $key is not available")
+
+    return downloadIde(availableIde, key, tempDirectory)
   }
 
-  private fun extractIde(zippedIde: Path, tempDirectory: Path, ideVersion: IdeVersion): DownloadResult {
+  private fun downloadIde(
+      availableIde: AvailableIde,
+      ideVersion: IdeVersion,
+      tempDirectory: Path
+  ) = try {
+    with(urlDownloader.download(availableIde, tempDirectory)) {
+      when (this) {
+        is DownloadResult.Downloaded -> {
+          try {
+            extractIdeToTempDir(downloadedFileOrDirectory, tempDirectory, ideVersion)
+          } finally {
+            downloadedFileOrDirectory.deleteLogged()
+          }
+        }
+        is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found in $ideRepository: $reason")
+        is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
+      }
+    }
+  } catch (e: Exception) {
+    DownloadResult.FailedToDownload("Unable to download $ideVersion", e)
+  }
+
+  private fun extractIdeToTempDir(archivedIde: Path, tempDirectory: Path, ideVersion: IdeVersion): DownloadResult {
     val destinationDir = Files.createTempDirectory(tempDirectory, "")
     return try {
-      zippedIde.toFile().extractTo(destinationDir.toFile())
+      archivedIde.toFile().extractTo(destinationDir.toFile())
       /**
        * Some IDE builds (like MPS) are distributed in form
        * of `<build>.zip/<single>/...`

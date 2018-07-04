@@ -11,40 +11,39 @@ import retrofit2.http.GET
 import java.util.concurrent.TimeUnit
 
 /**
- * Utility class that requests metadata from the [IDE repository](https://www.jetbrains.com/intellij-repository/releases)
- * on [available] [AvailableIde] IDEs.
+ * Provides index of IDE builds available for downloading.
+ * The index is fetched from the data service https://data.services.jetbrains.com/products.
  */
-class IdeRepository {
+class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_URL) {
 
   companion object {
-    const val IDE_REPOSITORY_URL = "https://www.jetbrains.com/intellij-repository/"
+    private const val DEFAULT_DATA_SERVICES_URL = "https://data.services.jetbrains.com"
   }
 
-  private val repositoryIndexConnector by lazy {
+  private val dataServiceConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(IDE_REPOSITORY_URL)
+        .baseUrl(dataServicesUrl)
         .addConverterFactory(GsonConverterFactory.create())
         .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
-        .create(RepositoryIndexConnector::class.java)
+        .create(ProductsConnector::class.java)
   }
 
-  fun fetchIndex(snapshots: Boolean = false): List<AvailableIde> {
-    val artifacts = if (snapshots) {
-      repositoryIndexConnector.getSnapshotsIndex()
-    } else {
-      repositoryIndexConnector.getReleaseIndex()
-    }.executeSuccessfully().body().artifacts
-    return IdeRepositoryIndexParser(IDE_REPOSITORY_URL)
-        .parseArtifacts(artifacts, snapshots)
+  /**
+   * Fetches available IDEs index from the data service.
+   */
+  fun fetchIndex(): List<AvailableIde> {
+    val products = dataServiceConnector.getProducts().executeSuccessfully().body()
+    return DataSourceIndexParser().parseAvailableIdes(products)
   }
 
-  fun fetchAvailableIdeDescriptor(ideVersion: IdeVersion, snapshots: Boolean): AvailableIde? {
+  /**
+   * Returns [AvailableIde] for this [ideVersion] if it is still available.
+   */
+  fun fetchAvailableIde(ideVersion: IdeVersion): AvailableIde? {
     val fullIdeVersion = ideVersion.setProductCodeIfAbsent("IU")
-    return fetchIndex(snapshots).find { it.version == fullIdeVersion }
+    return fetchIndex().find { it.version == fullIdeVersion }
   }
-
-  override fun toString() = "IDE Repository on $IDE_REPOSITORY_URL"
 
 }
 
@@ -55,32 +54,62 @@ fun IdeVersion.setProductCodeIfAbsent(productCode: String) =
       this
     }
 
-internal data class ArtifactsJson(
-    @SerializedName("artifacts")
-    val artifacts: List<ArtifactJson>
+
+internal interface ProductsConnector {
+  @GET("products")
+  fun getProducts(): Call<List<Product>>
+}
+
+internal data class Product(
+    @SerializedName("code")
+    val code: String,
+
+    @SerializedName("alternativeCodes")
+    val alternativeCodes: List<String>,
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("productFamilyName")
+    val productFamilyName: String,
+
+    @SerializedName("link")
+    val link: String,
+
+    @SerializedName("releases")
+    val releases: List<Release>
 )
 
-internal data class ArtifactJson(
-    @SerializedName("groupId")
-    val groupId: String,
-
-    @SerializedName("artifactId")
-    val artifactId: String,
+internal data class Release(
+    @SerializedName("date")
+    val date: String,
 
     @SerializedName("version")
-    val version: String,
+    val version: String?,
 
-    @SerializedName("packaging")
-    val packaging: String,
+    @SerializedName("majorVersion")
+    val majorVersion: String,
 
-    @SerializedName("content")
-    val content: String?
+    @SerializedName("build")
+    val build: String?,
+
+    @SerializedName("type")
+    val type: String,
+
+    @SerializedName("notesLink")
+    val notesLink: String,
+
+    @SerializedName("printableReleaseType")
+    val printableReleaseType: String?,
+
+    @SerializedName("downloads")
+    val downloads: Map<String, Download>?
 )
 
-private interface RepositoryIndexConnector {
-  @GET("releases/index.json")
-  fun getReleaseIndex(): Call<ArtifactsJson>
+internal data class Download(
+    @SerializedName("link")
+    val link: String,
 
-  @GET("snapshots/index.json")
-  fun getSnapshotsIndex(): Call<ArtifactsJson>
-}
+    @SerializedName("size")
+    val size: Long
+)

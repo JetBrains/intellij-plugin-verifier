@@ -17,7 +17,7 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
- * [Downloader] that can download files by URLs provided with [urlProvider].
+ * [Downloader] of files for URLs provided with [urlProvider].
  */
 class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> {
 
@@ -27,6 +27,8 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     private const val HTTPS_PROTOCOL = "https"
 
     private val LOG = LoggerFactory.getLogger(UrlDownloader::class.java)
+
+    private val urlPathExtensions = listOf("jar", "zip", "tar.gz", "tar.bz2", "txt", "html", "xml", "json")
   }
 
   private val downloadConnector: DownloadConnector = Retrofit.Builder()
@@ -36,16 +38,31 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       .build()
       .create(DownloadConnector::class.java)
 
-  private fun Response<ResponseBody>.guessExtension() =
-      when (body().contentType()) {
-        jarContentMediaType, xJarContentMediaType -> "jar"
-        jsonMediaType -> "json"
-        else -> if (raw().request().url().encodedPath().endsWith(".jar")) {
-          "jar"
-        } else {
-          "zip"
-        }
+  private fun Response<ResponseBody>.guessExtension(): String {
+    /**
+     * Guess by URL path extension.
+     */
+    val urlPath = raw().request().url().encodedPath()
+    for (pathExtension in urlPathExtensions) {
+      if (urlPath.endsWith(".$pathExtension")) {
+        return pathExtension
       }
+    }
+
+    /**
+     * Guess by content type
+     */
+    val contentType = body().contentType()
+    if (contentType == jarContentMediaType || contentType == xJarContentMediaType) {
+      return "jar"
+    }
+    if (contentType == jsonMediaType) {
+      return "json"
+    }
+
+    //Fallback to zip, since it's the most popular one.
+    return "zip"
+  }
 
   override fun download(key: K, tempDirectory: Path): DownloadResult {
     val downloadUrl = try {

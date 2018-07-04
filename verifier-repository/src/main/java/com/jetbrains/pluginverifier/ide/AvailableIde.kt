@@ -1,12 +1,14 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.safeEquals
+import com.jetbrains.pluginverifier.misc.safeHashCode
 import java.net.URL
+import java.util.*
 
 /**
- * Descriptor of IDE available in the IDE repository,
- * which resides in [https://www.jetbrains.com/intellij-repository/releases]
- * and [https://www.jetbrains.com/intellij-repository/snapshots].
+ * Descriptor of IDE build available for downloading
+ * from source repository, such as https://download.jetbrains.com
  */
 data class AvailableIde(
     /**
@@ -18,18 +20,22 @@ data class AvailableIde(
      * like `2017.3.4, 2017.3`, or `null`
      * if this IDE is not a release IDE.
      */
-    val releasedVersion: String?,
+    val releaseVersion: String?,
     /**
-     * Whether this IDE is from the /snapshots repository
-     */
-    val isSnapshot: Boolean,
-    /**
-     * Download URL pointing to the .zip archive of this IDE.
+     * URL to download this IDE build.
      */
     val downloadUrl: URL
 ) {
-  override fun toString() = version.toString() + if (isSnapshot) " (snapshot)" else ""
+
+  override fun toString() = version.toString() + if (isRelease) " ($releaseVersion)" else ""
 
   val isRelease: Boolean
-    get() = releasedVersion != null
+    get() = releaseVersion != null
+
+  override fun equals(other: Any?) = other is AvailableIde
+      && version == other.version
+      && releaseVersion == other.releaseVersion
+      && downloadUrl.safeEquals(other.downloadUrl)
+
+  override fun hashCode() = Objects.hash(version, releaseVersion, downloadUrl.safeHashCode())
 }
