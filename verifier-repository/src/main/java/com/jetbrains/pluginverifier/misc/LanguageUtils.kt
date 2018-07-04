@@ -27,8 +27,14 @@ fun checkIfInterrupted() {
 
 fun impossible(): Nothing = throw AssertionError("Impossible")
 
+/**
+ * `equals()` for URL that doesn't require internet connection in contrast to [URL.equals]
+ */
 fun URL.safeEquals(other: URL) = toExternalForm().trimEnd('/') == other.toExternalForm().trimEnd('/')
 
+/**
+ * `hashCode()` for URL that doesn't require internet connection in contrast to [URL.hashCode]
+ */
 fun URL.safeHashCode() = toExternalForm().trim('/').hashCode()
 
 fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,

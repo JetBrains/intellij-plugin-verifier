@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.EmptyDependencyFinder
-import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -65,7 +65,7 @@ class VerificationCorrectnessTest {
       try {
         val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
         val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-        return IdeDescriptorCreator.createByPath(ideaFile, IdeVersion.createIdeVersion("IU-145.500")).use { ideDescriptor ->
+        return IdeDescriptor.create(ideaFile, IdeVersion.createIdeVersion("IU-145.500"), null).use { ideDescriptor ->
           val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
           VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
             JdkDescriptorsCache().use { jdkDescriptorCache ->

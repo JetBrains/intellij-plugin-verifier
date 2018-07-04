@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.ide.IdeDescriptorCreator
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.OutputOptions
@@ -56,9 +55,9 @@ object OptionsParser {
     return SpecifiedMissingDependencyIgnoring(opts.ignoreMissingOptionalDeps.toSet())
   }
 
-  fun createIdeDescriptor(ideToCheckFile: Path, opts: CmdOpts): IdeDescriptor {
+  fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
-    return IdeDescriptorCreator.createByPath(ideToCheckFile, ideVersion)
+    return IdeDescriptor.create(idePath, ideVersion, null)
   }
 
   fun getJdkPath(opts: CmdOpts) = JdkPath(getJdkHomeDir(opts))

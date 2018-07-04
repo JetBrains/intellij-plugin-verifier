@@ -213,8 +213,8 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     return CheckTrunkApiParams(
         pluginsSet,
         TestJdkDescriptorProvider.getJdkPathForTests(),
-        IdeDescriptor(trunkIde, EmptyResolver),
-        IdeDescriptor(releaseIde, EmptyResolver),
+        IdeDescriptor(trunkIde, EmptyResolver, null),
+        IdeDescriptor(releaseIde, EmptyResolver, null),
         PackageFilter(emptyList()),
         emptyList(),
         listOf(someJetBrainsPluginId),

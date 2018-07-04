@@ -104,7 +104,7 @@ class IdeDescriptorsCache(cacheSize: Int,
       val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {
-        IdeDescriptorCreator.createByPath(ideLock.file, null)
+        IdeDescriptor.create(ideLock.file, null, ideLock)
       } catch (e: Exception) {
         return ProvideResult.Failed("Unable to open IDE $key", e)
       }
