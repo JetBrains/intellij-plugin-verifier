@@ -45,7 +45,7 @@ class PluginVerifier(
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      checkIfInterrupted()
+      //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
       pluginReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
     }
@@ -120,7 +120,6 @@ class PluginVerifier(
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      checkIfInterrupted()
       pluginReportage.logException("Failed to select classes for check for $plugin", e)
       resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return

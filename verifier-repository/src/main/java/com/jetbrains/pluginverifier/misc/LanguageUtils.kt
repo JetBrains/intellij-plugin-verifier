@@ -67,7 +67,6 @@ fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      checkIfInterrupted()
       val delayMillis = attemptsDelayTimeUnit.toMillis(attemptsDelay)
       LOG.error("Failed attempt #$attempt of $attempts to invoke '$presentableBlockName'. Wait for $delayMillis millis to reattempt", e)
       Thread.sleep(delayMillis)

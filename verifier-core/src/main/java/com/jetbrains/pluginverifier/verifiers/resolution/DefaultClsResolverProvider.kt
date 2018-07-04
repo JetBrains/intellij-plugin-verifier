@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
@@ -100,7 +99,6 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
             } catch (ie: InterruptedException) {
               throw ie
             } catch (e: Exception) {
-              checkIfInterrupted()
               reportage.logException("Unable to read classes of dependency ${depVertex.dependencyId}", e)
               continue
             }

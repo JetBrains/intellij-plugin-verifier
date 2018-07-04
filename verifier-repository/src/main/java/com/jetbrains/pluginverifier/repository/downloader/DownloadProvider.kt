@@ -55,7 +55,6 @@ class DownloadProvider<in K>(private val destinationDirectory: Path,
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      checkIfInterrupted()
       return ProvideResult.Failed("Unable to download $key", e)
     }
     return ProvideResult.Provided(destination)

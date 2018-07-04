@@ -1,10 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Settings
-import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -57,6 +54,7 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
     val locations = hashMapOf<LocationKey, Resolver>()
     try {
       for (locatorKey in locatorKeys) {
+        checkIfInterrupted()
         val resolver = locatorKey.locator.findClasses(idePlugin, pluginFile)
         if (resolver != null) {
           locations[locatorKey] = resolver
@@ -89,8 +87,11 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
         idePlugin: IdePlugin,
         extractDirectory: File,
         additionalKeys: List<LocationKey> = emptyList()
-    ) = IdePluginClassesFinder(idePlugin, extractDirectory, MAIN_CLASSES_KEYS + additionalKeys)
-        .findPluginClasses()
+    ) = IdePluginClassesFinder(
+        idePlugin,
+        extractDirectory,
+        MAIN_CLASSES_KEYS + additionalKeys
+    ).findPluginClasses()
   }
 
 }

@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -86,15 +85,15 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
   }
 
   private fun findVersionCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): PluginInfo? {
-    val ideVersion = version.asString()
-    if (ideVersion.startsWith("IU-")) {
-      val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
+    val asString = version.asString()
+    if (asString.startsWith("IU-")) {
+      val communityVersion = "IC-" + asString.substringAfter(asString, "IU-")
       return try {
-        pluginRepository.getLastCompatibleVersionOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+        val ideVersion = IdeVersion.createIdeVersion(communityVersion)
+        pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId)
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
-        checkIfInterrupted()
         null
       }
     }

@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
@@ -110,7 +109,6 @@ class IdeDescriptorsCache(cacheSize: Int,
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
-        checkIfInterrupted()
         return ProvideResult.Failed("Unable to open IDE $key", e)
       }
       return ProvideResult.Provided(ideDescriptor)

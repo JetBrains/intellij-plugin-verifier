@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
@@ -39,7 +38,6 @@ class JdkDescriptorsCache : Closeable {
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
-        checkIfInterrupted()
         return ProvideResult.Failed("Failed to read JDK classes $key: $jdkPath", e)
       }
       return ProvideResult.Provided(JdkDescriptor(resolver, jdkPath))

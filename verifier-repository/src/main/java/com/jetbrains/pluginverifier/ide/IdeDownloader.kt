@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
@@ -52,7 +51,6 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
   } catch (ie: InterruptedException) {
     throw ie
   } catch (e: Exception) {
-    checkIfInterrupted()
     DownloadResult.FailedToDownload("Unable to download $ideVersion", e)
   }
 
@@ -72,10 +70,8 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
       throw ie
     } catch (e: Exception) {
       destinationDir.deleteLogged()
-      checkIfInterrupted()
       DownloadResult.FailedToDownload("Unable to extract zip file of $ideVersion", e)
     } catch (e: Throwable) {
-      checkIfInterrupted()
       destinationDir.deleteLogged()
       throw e
     }

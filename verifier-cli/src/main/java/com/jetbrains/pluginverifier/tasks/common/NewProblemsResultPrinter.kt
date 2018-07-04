@@ -85,9 +85,10 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
-        checkIfInterrupted()
         null
       }
+      checkIfInterrupted()
+
       if (lastCompatibleVersion != null) {
         append("There is a newer version '${lastCompatibleVersion.version}' compatible with $newIdeVersion " +
             "in the Plugin Repository. Anyway the ${plugin.version} has been checked because this check configuration " +

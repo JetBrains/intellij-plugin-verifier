@@ -52,7 +52,18 @@ class BytecodeVerifier {
       FieldAccessInstructionVerifier()
   )
 
-  fun verify(classesToCheck: Set<String>, verificationContext: VerificationContext, progressIndicator: (Double) -> Unit) {
+  /**
+   * Runs bytecode verification for [classesToCheck]
+   * using the [verificationContext].
+   * Updates [progressIndicator] with percentage
+   * of processed classes.
+   */
+  @Throws(InterruptedException::class)
+  fun verify(
+      classesToCheck: Set<String>,
+      verificationContext: VerificationContext,
+      progressIndicator: (Double) -> Unit
+  ) {
     if (classesToCheck.isNotEmpty()) {
       for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
         checkIfInterrupted()

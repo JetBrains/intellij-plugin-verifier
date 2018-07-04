@@ -2,7 +2,6 @@ package com.jetbrains.intellij.feature.extractor
 
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.core.*
-import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
@@ -50,7 +49,6 @@ object FeaturesExtractor {
         } catch (ie: InterruptedException) {
           throw ie
         } catch (e: Exception) {
-          checkIfInterrupted()
           LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
           null
         }

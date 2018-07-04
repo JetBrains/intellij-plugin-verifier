@@ -106,7 +106,10 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
  * Copies [inputStream] to [destinationFile].
  * Updates the copying [progress].
  * Closes the [inputStream] on completion.
+ * Throws [InterruptedException] if the copying
+ * has been cancelled.
  */
+@Throws(InterruptedException::class)
 fun copyInputStreamToFileWithProgress(inputStream: InputStream,
                                       expectedSize: Long,
                                       destinationFile: File,
@@ -118,15 +121,15 @@ fun copyInputStreamToFileWithProgress(inputStream: InputStream,
   inputStream.use { input ->
     destinationFile.outputStream().buffered().use { output ->
       var count: Long = 0
-      var n: Int
       while (true) {
-        n = input.read(buffer)
+        val n = input.read(buffer)
         if (n == -1) break
         output.write(buffer, 0, n)
         count += n
         if (expectedSize > 0) {
           progress(count.toDouble() / expectedSize)
         }
+        checkIfInterrupted()
       }
     }
   }
