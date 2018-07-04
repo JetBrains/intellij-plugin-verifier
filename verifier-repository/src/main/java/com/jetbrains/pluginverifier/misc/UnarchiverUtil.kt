@@ -24,6 +24,9 @@ fun File.extractTo(destination: File): File {
     unArchiver.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, "Unarchive logger"))
     unArchiver.destDirectory = destination
     unArchiver.extract()
+  } catch (ie: InterruptedException) {
+    destination.deleteLogged()
+    throw ie
   } catch (e: Exception) {
     destination.deleteLogged()
     throw IOException("Unable to extract $this to $destination", e)

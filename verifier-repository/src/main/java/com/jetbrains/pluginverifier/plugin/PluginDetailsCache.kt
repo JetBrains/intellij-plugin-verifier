@@ -37,6 +37,7 @@ class PluginDetailsCache(
    * Provides the [PluginDetails] of the given [pluginInfo]
    * wrapped in a [Result].
    */
+  @Throws(InterruptedException::class)
   fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result {
     return with(resourceCache.getResourceCacheEntry(pluginInfo)) {
       when (this) {

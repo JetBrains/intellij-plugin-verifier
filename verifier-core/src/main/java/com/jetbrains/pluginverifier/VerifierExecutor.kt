@@ -41,6 +41,9 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
         val worker = try {
           completionService.submit(task)
         } catch (e: RejectedExecutionException) {
+          if (executor.isShutdown) {
+            throw InterruptedException()
+          }
           throw RuntimeException("Failed to schedule task", e)
         }
         workers.add(worker)

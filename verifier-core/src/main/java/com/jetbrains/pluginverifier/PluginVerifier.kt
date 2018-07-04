@@ -43,9 +43,9 @@ class PluginVerifier(
       pluginReportage.logVerificationStarted()
       verify()
     } catch (ie: InterruptedException) {
-      pluginReportage.logVerificationFinished("Cancelled")
       throw ie
-    } catch (e: Throwable) {
+    } catch (e: Exception) {
+      checkIfInterrupted()
       pluginReportage.logVerificationFinished("Failed with exception: ${e.message}")
       throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
     }
@@ -117,7 +117,10 @@ class PluginVerifier(
      */
     val checkClasses = try {
       pluginDetails.pluginClassesLocations.getClassesForCheck()
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: Exception) {
+      checkIfInterrupted()
       pluginReportage.logException("Failed to select classes for check for $plugin", e)
       resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return

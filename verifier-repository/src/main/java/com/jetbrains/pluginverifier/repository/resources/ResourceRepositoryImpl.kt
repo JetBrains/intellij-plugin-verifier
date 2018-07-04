@@ -122,7 +122,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     val lockId = nextLockId++
     val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
     logger.debug("get($key): lock is registered $lock ")
-    key2Locks.getOrPut(key, { hashSetOf() }).add(lock)
+    key2Locks.getOrPut(key) { hashSetOf() }.add(lock)
     return lock
   }
 
@@ -189,7 +189,8 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     }
 
     try {
-      return fetchTask.get().registerLockIfProvided(key)
+      val provideResult = fetchTask.get()
+      return provideResult.registerLockIfProvided(key)
     } finally {
       synchronized(this) {
         additionWaitingThreads.compute(key) { _, v -> if (v!! == 1) null else (v - 1) }
@@ -254,7 +255,10 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
    *
    * This method is thread safe. In case several threads attempt to get the same resource, only one
    * of them provides the resource while others wait for the first to complete and return the same resource.
+   *
+   * @throws InterruptedException if the current thread has been interrupted while waiting for the resource.
    */
+  @Throws(InterruptedException::class)
   override fun get(key: K): ResourceRepositoryResult<R> {
     val result = getOrWait(key)
     /**

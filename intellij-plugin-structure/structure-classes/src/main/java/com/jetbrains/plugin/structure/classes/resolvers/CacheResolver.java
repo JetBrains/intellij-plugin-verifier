@@ -33,7 +33,7 @@ public class CacheResolver extends Resolver {
         .maximumSize(cacheSize)
         .build(new CacheLoader<String, Optional<ClassNode>>() {
           @Override
-          public Optional<ClassNode> load(String key) throws Exception {
+          public Optional<ClassNode> load(@NotNull String key) throws Exception {
             ClassNode classNode = myDelegate.findClass(key);
             if (classNode == null) {
               return Optional.empty();
@@ -45,11 +45,14 @@ public class CacheResolver extends Resolver {
 
   @Override
   @Nullable
-  public ClassNode findClass(@NotNull String className) throws IOException {
+  public ClassNode findClass(@NotNull String className) throws IOException, InterruptedException {
     try {
       return myCache.get(className).orElse(null);
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
+      if (cause instanceof InterruptedException) {
+        throw (InterruptedException) cause;
+      }
       if (cause instanceof IOException) {
         throw (IOException) cause;
       }

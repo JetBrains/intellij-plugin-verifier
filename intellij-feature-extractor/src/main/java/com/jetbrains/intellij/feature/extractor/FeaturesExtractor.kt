@@ -2,6 +2,7 @@ package com.jetbrains.intellij.feature.extractor
 
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.core.*
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
@@ -42,14 +43,18 @@ object FeaturesExtractor {
     }
   }
 
-  private fun findBundledPluginClasses(ide: Ide): List<IdePluginClassesLocations> = ide.bundledPlugins.mapNotNull {
-    try {
-      IdePluginClassesFinder.findPluginClasses(it, additionalKeys = emptyList())
-    } catch (e: Throwable) {
-      LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
-      null
-    }
-  }
+  private fun findBundledPluginClasses(ide: Ide): List<IdePluginClassesLocations> =
+      ide.bundledPlugins.mapNotNull {
+        try {
+          IdePluginClassesFinder.findPluginClasses(it, additionalKeys = emptyList())
+        } catch (ie: InterruptedException) {
+          throw ie
+        } catch (e: Exception) {
+          checkIfInterrupted()
+          LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
+          null
+        }
+      }
 
   private fun implementations(plugin: IdePlugin, resolver: Resolver): ExtractorResult {
     val allEpFeatures = ExtensionPoint.values().map { epFeatures(plugin, it, resolver) }

@@ -148,7 +148,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
           progress.text = e.message
           LOG.info("Task ${task.presentableName} was cancelled: ${e.message}", e.cause)
         } catch (e: InterruptedException) {
-          state = TaskDescriptor.State.ERROR
+          state = TaskDescriptor.State.CANCELLED
           progress.text = "Interrupted"
           LOG.info("Task ${task.presentableName} was interrupted", e)
         } catch (e: Throwable) {
@@ -168,7 +168,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
   private fun <T> TaskDescriptor.successTask(result: T, callbacks: Callbacks<T>) {
     try {
       callbacks.onSuccess(result, this)
-    } catch (e: Throwable) {
+    } catch (e: Exception) {
       LOG.error("Failed 'onSuccess' callback for $this with result $result", e)
     }
   }
@@ -179,7 +179,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
   private fun TaskDescriptor.errorTask(error: Throwable, callbacks: Callbacks<*>) {
     try {
       callbacks.onError(error, this)
-    } catch (e: Throwable) {
+    } catch (e: Exception) {
       LOG.error("Failed 'onError' callback for $this with error ${error.message}", e)
     }
   }
@@ -202,7 +202,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
     }
     try {
       callbacks.onCompletion(this)
-    } catch (e: Throwable) {
+    } catch (e: Exception) {
       LOG.error("Failed 'onCompletion' callback for $this", e)
     }
   }

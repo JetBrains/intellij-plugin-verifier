@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
@@ -81,7 +82,10 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
 
       val lastCompatibleVersion = try {
         pluginRepository.getLastCompatibleVersionOfPlugin(newIdeVersion, plugin.pluginId)
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         null
       }
       if (lastCompatibleVersion != null) {

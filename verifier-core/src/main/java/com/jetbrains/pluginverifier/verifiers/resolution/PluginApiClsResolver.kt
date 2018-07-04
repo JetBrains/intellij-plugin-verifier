@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import java.io.Closeable
@@ -51,9 +52,12 @@ class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
       cachingResolver.findClass(className)
           ?.let { ClsResolution.Found(it) }
           ?: ClsResolution.NotFound
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: InvalidClassFileException) {
       ClsResolution.InvalidClassFile(e.asmError)
     } catch (e: Exception) {
+      checkIfInterrupted()
       ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
     }
   }

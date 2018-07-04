@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.apache.commons.io.FileUtils
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -27,6 +28,7 @@ class DownloadProvider<in K>(private val destinationDirectory: Path,
     downloadDirectory.forceDeleteIfExists()
   }
 
+  @Throws(InterruptedException::class)
   override fun provide(key: K): ProvideResult<Path> {
     val tempDirectory = createTempDirectoryForDownload(key)
     try {
@@ -50,16 +52,24 @@ class DownloadProvider<in K>(private val destinationDirectory: Path,
     val destination = createDestinationFileForKey(key, extension, isDirectory)
     try {
       moveFileOrDirectory(tempDownloadedFile, destination)
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: Exception) {
+      checkIfInterrupted()
       return ProvideResult.Failed("Unable to download $key", e)
     }
     return ProvideResult.Provided(destination)
   }
 
-  private fun createTempDirectoryForDownload(key: K) = Files.createTempDirectory(
-      downloadDirectory.createDir(),
-      "download-" + getFileNameForKey(key, "", true) + "-"
-  )
+  private fun createTempDirectoryForDownload(key: K) =
+      try {
+        Files.createTempDirectory(
+            downloadDirectory.createDir(),
+            "download-" + getFileNameForKey(key, "", true) + "-"
+        )
+      } catch (e: IOException) {
+        throw RuntimeException(e)
+      }
 
   private fun moveFileOrDirectory(fileOrDirectory: Path, destination: Path) {
     if (destination.exists()) {

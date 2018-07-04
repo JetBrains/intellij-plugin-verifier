@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -90,7 +91,10 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
       val communityVersion = "IC-" + ideVersion.substringAfter(ideVersion, "IU-")
       return try {
         pluginRepository.getLastCompatibleVersionOfPlugin(IdeVersion.createIdeVersion(communityVersion), pluginId)
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         null
       }
     }

@@ -40,7 +40,10 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
    *
    *  This method is thread safe. In case several threads attempt to get the same file, only one
    * of them will download it while others will wait for the first to complete.
+   *
+   * @throws InterruptedException if the current thread has been interrupted while getting the file.
    */
+  @Throws(InterruptedException::class)
   fun getFile(key: K): FileRepositoryResult = with(resourceRepository.get(key)) {
     when (this) {
       is ResourceRepositoryResult.Found -> FileRepositoryResult.Found(FileLockImpl(lockedResource))
@@ -49,13 +52,15 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
     }
   }
 
-  fun add(key: K, resource: Path) = resourceRepository.add(key, resource)
+  fun add(key: K, resource: Path): Boolean = resourceRepository.add(key, resource)
 
-  fun remove(key: K) = resourceRepository.remove(key)
+  fun remove(key: K): Boolean = resourceRepository.remove(key)
 
-  fun removeAll() = resourceRepository.removeAll()
+  fun removeAll() {
+    resourceRepository.removeAll()
+  }
 
-  fun has(key: K) = resourceRepository.has(key)
+  fun has(key: K): Boolean = resourceRepository.has(key)
 
   fun getAllExistingKeys(): Set<K> = resourceRepository.getAllExistingKeys()
 
@@ -68,6 +73,8 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
 
   fun <R> lockAndExecute(block: () -> R) = resourceRepository.lockAndExecute(block)
 
-  fun cleanup() = resourceRepository.cleanup()
+  fun cleanup() {
+    resourceRepository.cleanup()
+  }
 
 }

@@ -45,6 +45,7 @@ class IdeFilesBank(
   fun deleteIde(ideVersion: IdeVersion): Boolean =
       ideFilesRepository.remove(ideVersion)
 
+  @Throws(InterruptedException::class)
   fun getIdeFile(ideVersion: IdeVersion): Result =
       with(ideFilesRepository.getFile(ideVersion)) {
         when (this) {

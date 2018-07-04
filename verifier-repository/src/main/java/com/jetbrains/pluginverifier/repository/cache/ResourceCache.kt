@@ -130,6 +130,7 @@ class ResourceCache<R, in K>(
    * the corresponding [ResourceCacheEntry] must be
    * [closed] [ResourceCacheEntry.close] after being used.
    */
+  @Throws(InterruptedException::class)
   fun getResourceCacheEntry(key: K): ResourceCacheEntryResult<R> {
     /**
      * Cancel the fetching if _this_ resource cache is already closed.

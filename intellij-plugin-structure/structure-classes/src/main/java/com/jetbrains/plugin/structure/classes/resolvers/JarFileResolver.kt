@@ -99,7 +99,11 @@ class JarFileResolver(private val ioJarFile: File) : Resolver() {
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override fun findClass(className: String) =
-      if (className in classes) evaluateNode(className) else null
+      if (className in classes) {
+        evaluateNode(className)
+      } else {
+        null
+      }
 
   private fun evaluateNode(className: String): ClassNode? {
     val entry = jarFile.getEntry(className + CLASS_SUFFIX) ?: return null

@@ -32,6 +32,7 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
   /**
    * Fetches available IDEs index from the data service.
    */
+  @Throws(InterruptedException::class)
   fun fetchIndex(): List<AvailableIde> {
     val products = dataServiceConnector.getProducts().executeSuccessfully().body()
     return DataSourceIndexParser().parseAvailableIdes(products)
@@ -40,6 +41,7 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
   /**
    * Returns [AvailableIde] for this [ideVersion] if it is still available.
    */
+  @Throws(InterruptedException::class)
   fun fetchAvailableIde(ideVersion: IdeVersion): AvailableIde? {
     val fullIdeVersion = ideVersion.setProductCodeIfAbsent("IU")
     return fetchIndex().find { it.version == fullIdeVersion }

@@ -64,8 +64,9 @@ abstract class Resolver : Closeable {
    * @return a class-node for accessing the bytecode
    * @throws InvalidClassFileException if the class file is not valid from the point of view of the ASM bytecode engineering library
    * @throws IOException if IO error occurs, e.g. file .class-file was deleted
+   * @throws InterruptedException if the current thread has been interrupted while searching for the class.
    */
-  @Throws(InvalidClassFileException::class, IOException::class)
+  @Throws(InvalidClassFileException::class, IOException::class, InterruptedException::class)
   abstract fun findClass(className: String): ClassNode?
 
   /**

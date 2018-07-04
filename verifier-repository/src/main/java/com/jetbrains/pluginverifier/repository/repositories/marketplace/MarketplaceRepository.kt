@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -77,7 +78,10 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
             .getPluginUpdates(pluginId).executeSuccessfully().body()
             .updateIds
             .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         emptyList()
       }
 
@@ -174,7 +178,10 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
             .getUpdateInfosForIdsBetween(start, end)
             .executeSuccessfully().body()
             .map { it.toUpdateInfo() }
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         LOG.info("Unable to request [$start; $end] UpdateInfos", e)
         requestSingleUpdateInfo(updateId).singletonOrEmpty()
       }
@@ -186,7 +193,10 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
               .getUpdateInfoById(updateId)
               .executeSuccessfully().body()
               .toUpdateInfo()
+        } catch (ie: InterruptedException) {
+          throw ie
         } catch (e: Exception) {
+          checkIfInterrupted()
           LOG.error("Unable to request UpdateInfo #$updateId", e)
           null
         }

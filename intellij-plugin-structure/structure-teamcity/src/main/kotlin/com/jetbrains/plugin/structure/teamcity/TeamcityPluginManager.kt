@@ -76,7 +76,12 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
       val lineNumber = e.lineNumber
       val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: Exception) {
+      if (Thread.currentThread().isInterrupted) {
+        throw InterruptedException()
+      }
       LOG.info("Unable to read plugin descriptor from $streamName", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME))
     }

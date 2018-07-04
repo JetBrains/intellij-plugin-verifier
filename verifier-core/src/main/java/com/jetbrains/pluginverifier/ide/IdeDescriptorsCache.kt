@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
@@ -65,6 +66,7 @@ class IdeDescriptorsCache(cacheSize: Int,
    * and registers a [ResourceCacheEntry] for it.
    * The cache's state is not modified until this method returns.
    */
+  @Throws(InterruptedException::class)
   fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): Result {
     val resourceCacheEntryResult = resourceCache.getResourceCacheEntry(ideVersion)
     return with(resourceCacheEntryResult) {
@@ -105,7 +107,10 @@ class IdeDescriptorsCache(cacheSize: Int,
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {
         IdeDescriptor.create(ideLock.file, null, ideLock)
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         return ProvideResult.Failed("Unable to open IDE $key", e)
       }
       return ProvideResult.Provided(ideDescriptor)

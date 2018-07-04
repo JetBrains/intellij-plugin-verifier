@@ -6,6 +6,18 @@ import java.io.Closeable
 
 private val logger: Logger = LoggerFactory.getLogger("LanguageUtils")
 
+/**
+ * Checks whether the current thread has been interrupted.
+ * Clears the *interrupted status* and throws [InterruptedException]
+ * if it is the case.
+ */
+@Throws(InterruptedException::class)
+fun checkIfInterrupted() {
+  if (Thread.interrupted()) {
+    throw InterruptedException()
+  }
+}
+
 fun <T : Closeable?> T.closeLogged() {
   try {
     this?.close()

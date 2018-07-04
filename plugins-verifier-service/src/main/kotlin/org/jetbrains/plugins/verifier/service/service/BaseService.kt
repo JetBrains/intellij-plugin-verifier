@@ -97,7 +97,10 @@ abstract class BaseService(val serviceName: String,
       try {
         logger.info("$serviceName is going to start")
         doServe()
-      } catch (e: Throwable) {
+      } catch (ie: InterruptedException) {
+        logger.info("$serviceName has been interrupted")
+        Thread.currentThread().interrupt()
+      } catch (e: Exception) {
         logger.error("$serviceName failed to serve", e)
       } finally {
         val duration = System.currentTimeMillis() - start

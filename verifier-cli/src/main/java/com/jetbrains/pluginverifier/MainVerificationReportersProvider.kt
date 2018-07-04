@@ -2,10 +2,7 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.misc.buildList
-import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.misc.writeText
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
@@ -202,7 +199,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
             ignoredPlugins.joinToString(separator = "\n") { "${it.pluginInfo}: ${it.reason}" }
 
         ignoredPluginsFile.writeText(message)
+      } catch (ie: InterruptedException) {
+        throw ie
       } catch (e: Exception) {
+        checkIfInterrupted()
         LOG.error("Unable to save ignored plugins of $verificationTarget", e)
       }
     }
@@ -217,7 +217,10 @@ class MainVerificationReportersProvider(override val globalMessageReporters: Lis
         val ignoredProblemsFile = verificationTarget.getReportDirectory(verificationReportsDirectory).resolve("all-ignored-problems.txt")
         try {
           ignoredProblemsFile.writeText(ignoredProblemsText)
+        } catch (ie: InterruptedException) {
+          throw ie
         } catch (e: Exception) {
+          checkIfInterrupted()
           LOG.error("Unable to save ignored problems of $verificationTarget", e)
         }
       }

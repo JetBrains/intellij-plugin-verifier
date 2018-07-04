@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
@@ -17,9 +18,12 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
 
   private val urlDownloader = UrlDownloader<AvailableIde> { it.downloadUrl }
 
+  @Throws(InterruptedException::class)
   override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
     val availableIde = try {
       ideRepository.fetchAvailableIde(key)
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: Exception) {
       return DownloadResult.FailedToDownload("Failed to find IDE $key ", e)
     } ?: return DownloadResult.NotFound("IDE $key is not available")
@@ -45,7 +49,10 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
         is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
       }
     }
+  } catch (ie: InterruptedException) {
+    throw ie
   } catch (e: Exception) {
+    checkIfInterrupted()
     DownloadResult.FailedToDownload("Unable to download $ideVersion", e)
   }
 
@@ -60,10 +67,15 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
        */
       stripTopLevelDirectory(destinationDir)
       DownloadResult.Downloaded(destinationDir, "", true)
+    } catch (ie: InterruptedException) {
+      destinationDir.deleteLogged()
+      throw ie
     } catch (e: Exception) {
       destinationDir.deleteLogged()
+      checkIfInterrupted()
       DownloadResult.FailedToDownload("Unable to extract zip file of $ideVersion", e)
     } catch (e: Throwable) {
+      checkIfInterrupted()
       destinationDir.deleteLogged()
       throw e
     }

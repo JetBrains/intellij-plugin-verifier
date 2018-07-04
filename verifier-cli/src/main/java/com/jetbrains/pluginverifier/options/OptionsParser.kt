@@ -134,7 +134,10 @@ object OptionsParser {
 
   private fun safeCreateDocumentedProblemsFilter(opts: CmdOpts) = try {
     DocumentedProblemsFilter.createFilter(opts.documentedProblemsPageUrl)
+  } catch (ie: InterruptedException) {
+    throw ie
   } catch (e: Exception) {
+    checkIfInterrupted()
     LOG.error("Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
         "The problems described on the page will not be ignored.", e)
     null
@@ -153,7 +156,10 @@ object OptionsParser {
           ignoreConditions.add(IgnoreCondition.parseCondition(line))
         }
       }
+    } catch (ie: InterruptedException) {
+      throw ie
     } catch (e: Exception) {
+      checkIfInterrupted()
       throw IllegalArgumentException("Unable to parse ignored problems file $ignoreProblemsFile", e)
     }
 

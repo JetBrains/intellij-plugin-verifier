@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -24,7 +25,10 @@ object JarsUtils {
   private fun getResolversForJars(jars: Iterable<File>): List<Resolver> {
     val resolvers = arrayListOf<Resolver>()
     try {
-      jars.mapTo(resolvers) { JarFileResolver(it) }
+      jars.mapTo(resolvers) {
+        checkIfInterrupted()
+        JarFileResolver(it)
+      }
     } catch (e: Throwable) {
       resolvers.forEach { it.closeLogged() }
       throw e

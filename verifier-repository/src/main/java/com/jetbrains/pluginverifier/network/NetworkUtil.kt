@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
  * Throws an exception if the call has failed.
  */
 @Throws(
+    InterruptedException::class,
     NotFound404ResponseException::class,
     ServerInternalError500Exception::class,
     ServerUnavailable503Exception::class,
@@ -41,6 +42,7 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionChec
 private val <T> Call<T>.serverUrl: String
   get() = "${request().url().host()}:${request().url().port()}"
 
+@Throws(InterruptedException::class)
 private fun <T, R> Call<T>.executeWithInterruptionCheck(
     onSuccess: (Response<T>) -> R,
     onProblems: (Response<T>) -> R,
@@ -82,6 +84,10 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
   if (isCanceled) {
     throw InterruptedException()
   }
+
+  //The last check on whether the thread has been interrupted,
+  //after the Call has completed.
+  checkIfInterrupted()
 
   val response = responseRef.get()
   val error = errorRef.get()

@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.ResultPrinter
@@ -328,7 +329,10 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
                   .values.toList()
             }
           }
+        } catch (ie: InterruptedException) {
+          throw ie
         } catch (e: Exception) {
+          checkIfInterrupted()
           LOG.info("Unable to determine the last compatible updates of IDE $it", e)
           it to emptyList<PluginInfo>()
         }

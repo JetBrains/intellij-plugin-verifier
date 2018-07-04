@@ -63,8 +63,10 @@ class VerifyPluginTask(
     }
   }
 
-  private fun checkPluginWithIde(ideDescriptor: IdeDescriptor,
-                                 verificationReportage: VerificationReportage): VerificationResult {
+  private fun checkPluginWithIde(
+      ideDescriptor: IdeDescriptor,
+      verificationReportage: VerificationReportage
+  ): VerificationResult {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         pluginRepository,
