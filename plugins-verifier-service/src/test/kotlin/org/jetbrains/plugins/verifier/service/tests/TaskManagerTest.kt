@@ -117,10 +117,10 @@ class TaskManagerTest {
    * - 4 tasks are waiting for interruption
    * - 4 tasks will not be polled from the waiting queue
    *
-   * Check that for no task 'onCompletion' callback is called.
+   * Check that 'onCompletion' is not called for any cancelled task.
    */
   @Test
-  fun `cancel tasks`() {
+  fun `onCompletion callback must not be called for cancelled tasks`() {
     val runTasks = synchronizedList(arrayListOf<Int>())
     val completedTasks = synchronizedList(arrayListOf<Int>())
 

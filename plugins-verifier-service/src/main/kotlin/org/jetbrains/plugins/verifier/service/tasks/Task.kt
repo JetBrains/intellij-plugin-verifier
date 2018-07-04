@@ -1,16 +1,14 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
 /**
- * Service task is a piece of work to be [executed] [execute].
- *
- * The [presentableName] is used to display the task
- * and its [progress] [ProgressIndicator] on the
- * server [status] [org.jetbrains.plugins.verifier.service.server.servlets.InfoServlet] page .
+ * Service task to be [execute]d.
  */
 abstract class Task<out T>(val presentableName: String) {
 
   /**
    * Executes the task and returns the result.
+   *
+   * [progress] can be used to track execution progress and state.
    */
   abstract fun execute(progress: ProgressIndicator): T
 

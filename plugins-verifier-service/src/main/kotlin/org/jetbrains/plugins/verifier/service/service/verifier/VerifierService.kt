@@ -123,11 +123,7 @@ class VerifierService(
 
   @Synchronized
   private fun onError(scheduledVerification: ScheduledVerification, error: Throwable) {
-    if (error is InterruptedException) {
-      logger.info("Verification was interrupted $scheduledVerification")
-    } else {
-      logger.error("Verification failed $scheduledVerification", error)
-    }
+    logger.error("Verification failed $scheduledVerification", error)
   }
 
   /**

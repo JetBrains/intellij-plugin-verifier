@@ -69,11 +69,7 @@ class FeatureExtractorService(taskManager: TaskManager,
       taskDescriptor: TaskDescriptor,
       task: ExtractFeaturesTask
   ) {
-    if (error is InterruptedException) {
-      logger.info("Feature extraction of ${task.updateInfo} was interrupted")
-    } else {
-      logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
-    }
+    logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
   }
 
   @Synchronized

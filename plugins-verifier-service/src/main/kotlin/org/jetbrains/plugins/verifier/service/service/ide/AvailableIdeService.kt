@@ -7,11 +7,8 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit
 
 /**
- * Service responsible for providing set of IDE version
- * available in the IDE repository.
- *
- * Some IDEs may be selected by the Marketplace
- * to verify plugins.
+ * Service responsible for providing set of IDE versions
+ * available for verification to the Marketplace.
  */
 class AvailableIdeService(
     taskManager: TaskManager,

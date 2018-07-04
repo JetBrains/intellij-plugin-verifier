@@ -25,6 +25,7 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
+import org.jetbrains.plugins.verifier.service.tasks.TaskCancelledException
 
 /**
  * [Task] verifies the [plugin] [updateInfo]
@@ -52,8 +53,12 @@ class VerifyPluginTask(
           val verificationReportage = createVerificationReportage(progress)
           checkPluginWithIde(ideDescriptor, verificationReportage)
         }
-        is IdeDescriptorsCache.Result.NotFound -> throw InterruptedException("IDE $ideVersion is not found")
-        is IdeDescriptorsCache.Result.Failed -> throw InterruptedException("Failed to get $ideVersion: ${cacheEntry.message}: ${cacheEntry.error.message}")
+        is IdeDescriptorsCache.Result.NotFound -> {
+          throw TaskCancelledException("IDE $ideVersion is not found: " + cacheEntry.message)
+        }
+        is IdeDescriptorsCache.Result.Failed -> {
+          throw TaskCancelledException("Failed to get $ideVersion: ${cacheEntry.message}", cacheEntry.error)
+        }
       }
     }
   }

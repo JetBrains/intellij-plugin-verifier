@@ -141,15 +141,19 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
             progress.fraction = 1.0
           }
           state = TaskDescriptor.State.SUCCESS
-          progress.text = "Finished successfully: $result"
+          progress.text = "Success: $result"
           descriptor.successTask(result, callbacks)
+        } catch (e: TaskCancelledException) {
+          state = TaskDescriptor.State.CANCELLED
+          progress.text = e.message
+          LOG.info("Task ${task.presentableName} was cancelled: ${e.message}", e.cause)
+        } catch (e: InterruptedException) {
+          state = TaskDescriptor.State.ERROR
+          progress.text = "Interrupted"
+          LOG.info("Task ${task.presentableName} was interrupted", e)
         } catch (e: Throwable) {
           state = TaskDescriptor.State.ERROR
-          progress.text = if (e is InterruptedException) {
-            "Interrupted"
-          } else {
-            "Finished with error: ${e.message}"
-          }
+          progress.text = "Finished with error: ${e.message}"
           descriptor.errorTask(e, callbacks)
         }
       } finally {
@@ -187,7 +191,9 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
     synchronized(this@TaskManagerImpl) {
       if (this !in _activeTasks) {
         /**
-         * This task might have been cancelled in [cancel]
+         * This task might have been cancelled in [cancel].
+         *
+         * Do not execute 'onCompletion' callback for cancelled tasks.
          */
         return
       }

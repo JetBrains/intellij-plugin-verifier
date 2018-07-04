@@ -22,26 +22,6 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import java.util.concurrent.TimeUnit
 
-private interface VerifierRetrofitConnector {
-
-  @POST("/verification/getScheduledVerifications")
-  @Multipart
-  fun getScheduledVerifications(@Part("userName") userName: RequestBody,
-                                @Part("password") password: RequestBody): Call<List<ScheduledVerificationJson>>
-
-  @POST("/verification/receiveVerificationResult")
-  @Multipart
-  fun sendVerificationResult(@Part("verificationResult") verificationResult: RequestBody,
-                             @Part("userName") userName: RequestBody,
-                             @Part("password") password: RequestBody): Call<ResponseBody>
-
-}
-
-private data class ScheduledVerificationJson(
-    @SerializedName("updateId") val updateId: Int,
-    @SerializedName("ideVersion") val ideVersion: String
-)
-
 class DefaultVerifierServiceProtocol(
     authorizationData: AuthorizationData,
     private val pluginRepository: MarketplaceRepository
@@ -83,3 +63,23 @@ class DefaultVerifierServiceProtocol(
   }
 
 }
+
+private interface VerifierRetrofitConnector {
+
+  @POST("/verification/getScheduledVerifications")
+  @Multipart
+  fun getScheduledVerifications(@Part("userName") userName: RequestBody,
+                                @Part("password") password: RequestBody): Call<List<ScheduledVerificationJson>>
+
+  @POST("/verification/receiveVerificationResult")
+  @Multipart
+  fun sendVerificationResult(@Part("verificationResult") verificationResult: RequestBody,
+                             @Part("userName") userName: RequestBody,
+                             @Part("password") password: RequestBody): Call<ResponseBody>
+
+}
+
+private data class ScheduledVerificationJson(
+    @SerializedName("updateId") val updateId: Int,
+    @SerializedName("ideVersion") val ideVersion: String
+)
