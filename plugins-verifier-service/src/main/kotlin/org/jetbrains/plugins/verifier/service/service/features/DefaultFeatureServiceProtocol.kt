@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.google.gson.Gson
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.createJsonRequestBody
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -47,7 +47,7 @@ class DefaultFeatureServiceProtocol(
     Retrofit.Builder()
         .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
         .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
         .create(FeaturesRetrofitConnector::class.java)
   }

@@ -19,8 +19,27 @@ fun <T, R> T.doLogged(action: String, block: T.() -> R) {
   }
 }
 
+/**
+ * Checks whether the current thread has been interrupted.
+ * Clears the *interrupted status* and throws [InterruptedException]
+ * if it is the case.
+ */
+@Throws(InterruptedException::class)
 fun checkIfInterrupted() {
-  if (Thread.currentThread().isInterrupted) {
+  if (Thread.interrupted()) {
+    throw InterruptedException()
+  }
+}
+
+/**
+ * Checks whether the current thread has been interrupted.
+ * Clears the *interrupted status*, invokes the [action],
+ * and throws [InterruptedException] if it is the case.
+ */
+@Throws(InterruptedException::class)
+fun checkIfInterrupted(action: () -> Unit) {
+  if (Thread.interrupted()) {
+    action()
     throw InterruptedException()
   }
 }

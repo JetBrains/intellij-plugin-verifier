@@ -7,15 +7,35 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-fun makeOkHttpClient(needLog: Boolean, timeOut: Long, timeUnit: TimeUnit): OkHttpClient = OkHttpClient.Builder()
-    .dispatcher(Dispatcher(Executors.newCachedThreadPool(
-        ThreadFactoryBuilder()
-            .setNameFormat("Dispatcher")
-            .setDaemon(true)
-            .build())
+/**
+ * Creates [OkHttpClient] used to make network requests.
+ *
+ * @param needLog - whether to log HTTP requests and responses to console.
+ * May be useful for debugging.
+ * @param timeOut - timeout for requests and responses
+ * @param timeUnit - time unit of [timeOut]
+ */
+fun createOkHttpClient(
+    needLog: Boolean,
+    timeOut: Long,
+    timeUnit: TimeUnit
+) = OkHttpClient.Builder()
+    .dispatcher(Dispatcher(
+        Executors.newCachedThreadPool(
+            ThreadFactoryBuilder()
+                .setNameFormat("Dispatcher")
+                .setDaemon(true)
+                .build()
+        )
     ))
     .connectTimeout(timeOut, timeUnit)
     .readTimeout(timeOut, timeUnit)
     .writeTimeout(timeOut, timeUnit)
-    .addInterceptor(HttpLoggingInterceptor().setLevel(if (needLog) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE))
-    .build()
+    .addInterceptor(HttpLoggingInterceptor().setLevel(
+        if (needLog) {
+          HttpLoggingInterceptor.Level.BASIC
+        } else {
+          HttpLoggingInterceptor.Level.NONE
+        }
+    ))
+    .build()!!

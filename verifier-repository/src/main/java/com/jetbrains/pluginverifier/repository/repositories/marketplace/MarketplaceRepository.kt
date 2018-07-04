@@ -4,7 +4,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -48,7 +48,7 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
   private val repositoryConnector = Retrofit.Builder()
       .baseUrl(HttpUrl.get(repositoryURL))
       .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(MarketplaceConnector::class.java)
 

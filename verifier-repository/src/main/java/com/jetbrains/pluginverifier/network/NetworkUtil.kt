@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.network
 
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -62,10 +63,7 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
   })
 
   while (!finished.get()) {
-    if (Thread.interrupted()) {
-      cancel()
-      throw InterruptedException()
-    }
+    checkIfInterrupted { cancel() }
 
     //Wait a little bit for the request to complete.
     try {
@@ -98,6 +96,11 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
   }
 }
 
+/**
+ * Copies [inputStream] to [destinationFile].
+ * Updates the copying [progress].
+ * Closes the [inputStream] on completion.
+ */
 fun copyInputStreamToFileWithProgress(inputStream: InputStream,
                                       expectedSize: Long,
                                       destinationFile: File,

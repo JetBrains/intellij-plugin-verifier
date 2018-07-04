@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.ide
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.pluginverifier.ide.AvailableIde
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -57,7 +57,7 @@ class DefaultAvailableIdeProtocol(
     Retrofit.Builder()
         .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
         .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
         .create(AvailableIdeConnector::class.java)
   }

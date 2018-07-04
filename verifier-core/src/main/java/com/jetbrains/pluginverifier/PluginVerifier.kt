@@ -18,6 +18,11 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
 import java.util.concurrent.Callable
 
+/**
+ * Callable that performs verification
+ * of [plugin] against [verificationTarget]
+ * and returns [VerificationResult].
+ */
 class PluginVerifier(
     private val plugin: PluginInfo,
     verificationReportage: VerificationReportage,

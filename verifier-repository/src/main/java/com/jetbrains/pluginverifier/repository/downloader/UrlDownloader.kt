@@ -34,7 +34,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   private val downloadConnector: DownloadConnector = Retrofit.Builder()
       //the base repository is not used because all URLs provided by [urlProvider] are absolute
       .baseUrl("http://unnecessary.com")
-      .client(makeOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
+      .client(createOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
       .build()
       .create(DownloadConnector::class.java)
 

@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -24,7 +24,7 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
     Retrofit.Builder()
         .baseUrl(dataServicesUrl)
         .addConverterFactory(GsonConverterFactory.create())
-        .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
         .create(ProductsConnector::class.java)
   }

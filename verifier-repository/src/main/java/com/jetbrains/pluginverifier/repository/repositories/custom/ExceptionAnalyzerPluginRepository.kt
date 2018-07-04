@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
-import com.jetbrains.pluginverifier.misc.makeOkHttpClient
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import okhttp3.HttpUrl
@@ -27,7 +27,7 @@ class ExceptionAnalyzerPluginRepository : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
       .baseUrl(HttpUrl.get(EA_PLUGIN_WEB_URL))
-      .client(makeOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
       .create(ExceptionAnalyzerRepositoryConnector::class.java)
 
