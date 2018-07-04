@@ -18,4 +18,6 @@ interface Plugin {
   val vendorEmail: String?
 
   val vendorUrl: String?
+
+  val icons: List<PluginIcon>
 }

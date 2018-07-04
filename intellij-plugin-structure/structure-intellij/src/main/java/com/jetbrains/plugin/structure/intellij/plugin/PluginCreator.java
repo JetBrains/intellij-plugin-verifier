@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail;
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess;
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem;
+import com.jetbrains.plugin.structure.base.plugin.*;
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem;
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified;
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
@@ -46,11 +43,15 @@ final class PluginCreator {
                 @NotNull Document document,
                 @NotNull URL documentUrl,
                 @NotNull XIncludePathResolver pathResolver,
-                @NotNull File actualFile) {
+                @NotNull File actualFile,
+                @NotNull List<PluginIcon> icons) {
     myDescriptorPath = descriptorPath;
     myValidateDescriptor = validateDescriptor;
     myActualFile = actualFile;
     myPlugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver);
+    if (myPlugin != null) {
+      myPlugin.setIcons(icons);
+    }
   }
 
   PluginCreator(String descriptorPath, PluginProblem singleProblem, File actualFile) {
