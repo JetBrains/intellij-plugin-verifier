@@ -1,11 +1,9 @@
 package com.jetbrains.pluginverifier
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.causedBy
-import com.jetbrains.pluginverifier.misc.findCause
+import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.*
 
@@ -15,10 +13,6 @@ import java.util.concurrent.*
  * The [VerifierExecutor] can be reused for several verifications.
  */
 class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
-
-  companion object {
-    private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
-  }
 
   private val executor = Executors.newFixedThreadPool(concurrentWorkers,
       ThreadFactoryBuilder()
@@ -32,70 +26,69 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
   }
 
   /**
-   * Runs the [tasks] concurrently on the thread pool allocated for this [VerifierExecutor].
+   * Runs [tasks] concurrently on the thread pool allocated
+   * for this [VerifierExecutor] and returns their results.
+   *
+   * @throws InterruptedException if the current thread,
+   * or any executing worker has been interrupted while waiting.
    */
+  @Throws(InterruptedException::class)
   fun verify(tasks: List<PluginVerifier>): List<VerificationResult> {
     val completionService = ExecutorCompletionService<VerificationResult>(executor)
-    val workers = try {
-      tasks.map { completionService.submit(it) }
-    } catch (e: RejectedExecutionException) {
-      throw InterruptedException("The verifier executor rejected to execute the next task")
+    val workers = arrayListOf<Future<VerificationResult>>()
+    try {
+      for (task in tasks) {
+        val worker = try {
+          completionService.submit(task)
+        } catch (e: RejectedExecutionException) {
+          throw RuntimeException("Failed to schedule task", e)
+        }
+        workers.add(worker)
+      }
+      return waitAllWorkersInterruptibly(completionService, workers)
+    } catch (e: Throwable) {
+      for (worker in workers) {
+        worker.cancel(true)
+      }
+      throw e
     }
-    return waitForAllWorkers(completionService, workers)
   }
 
-  private fun waitForAllWorkers(completionService: ExecutorCompletionService<VerificationResult>,
-                                workers: List<Future<VerificationResult>>): List<VerificationResult> {
+  /**
+   * Waits for all [workers] to complete.
+   *
+   * No worker can throw [ExecutionException] with cause other
+   * than InterruptedException.
+   * It is a fatal error otherwise.
+   *
+   * Throws [InterruptedException] if:
+   * - The current thread has been interrupted while waiting.
+   * - Any worker has been cancelled or interrupted
+   */
+  @Throws(InterruptedException::class)
+  private fun waitAllWorkersInterruptibly(
+      completionService: ExecutorCompletionService<VerificationResult>,
+      workers: List<Future<VerificationResult>>
+  ): List<VerificationResult> {
     val results = arrayListOf<VerificationResult>()
-    try {
-      for (finished in 1..workers.size) {
-        while (true) {
-          if (Thread.currentThread().isInterrupted) {
-            workers.forEach {
-              it.cancel(true)
+    for (finished in 1..workers.size) {
+      while (true) {
+        checkIfInterrupted()
+        val future = completionService.poll(500, TimeUnit.MILLISECONDS) //throws InterruptedException
+        if (future != null) {
+          val result = try {
+            future.get() //propagate InterruptedException
+          } catch (e: CancellationException) {
+            throw InterruptedException("Worker has been cancelled")
+          } catch (e: ExecutionException) {
+            if (e.cause is InterruptedException) {
+              throw InterruptedException("Worker has been interrupted")
             }
-            throw InterruptedException()
+            //Fatal error because no worker can throw exceptions other than InterruptedException
+            throw RuntimeException("Fatal: worker finished abruptly", e.cause)
           }
-          val future = completionService.poll(500, TimeUnit.MILLISECONDS)
-          if (future != null) {
-            val result = try {
-              future.get()
-            } catch (e: Throwable) {
-              workers.forEach {
-                it.cancel(true)
-              }
-              val interruptedException = e.findCause(InterruptedException::class.java)
-              if (interruptedException != null) {
-                throw interruptedException
-              }
-              throw e
-            }
-            results.add(result)
-            break
-          }
-        }
-      }
-    } finally {
-      /**
-       * Force wait for the workers to finish, which is necessary in cases:
-       * 1) An exception has been thrown by any worker in `.get()`.
-       * It means that the program is corrupted.
-       *
-       * 2) The current thread has been interrupted.
-       * It means that the process has been cancelled.
-       *
-       * In both cases the thrown exception will be propagated after
-       * this finally block finishes.
-       */
-      for (worker in workers) {
-        try {
-          if (!worker.isCancelled) {
-            worker.get()
-          }
-        } catch (e: Throwable) {
-          if (!e.causedBy(InterruptedException::class.java)) {
-            LOG.error("Worker $worker finished abruptly", e)
-          }
+          results.add(result)
+          break
         }
       }
     }
