@@ -47,6 +47,8 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
     return fetchIndex().find { it.version == fullIdeVersion }
   }
 
+  override fun toString() = "IDE repository based on $dataServicesUrl/products"
+
 }
 
 fun IdeVersion.setProductCodeIfAbsent(productCode: String) =

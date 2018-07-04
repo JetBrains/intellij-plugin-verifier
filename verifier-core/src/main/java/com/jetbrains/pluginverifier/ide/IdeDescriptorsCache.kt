@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
 
 /**
- * Caches the [IdeDescriptor]s by [IdeVersion]s.
+ * Cache of [IdeDescriptor] associated by [IdeVersion]s.
  *
- * The cache must be [closed] [close] on the application shutdown
+ * This must be [closed] [close] on the application shutdown
  * to deallocate all the [IdeDescriptor]s.
  */
 class IdeDescriptorsCache(cacheSize: Int,
@@ -36,11 +36,11 @@ class IdeDescriptorsCache(cacheSize: Int,
       }.single()
 
   /**
-   * Atomically [selects] [selector] several IDEs from a set of all [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
+   * Atomically [selects] [versionsSelector] several IDEs from a set of all [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
    * and registers the [ResourceCacheEntry]s for the corresponding [IdeDescriptor]s.
    * The cache's state is not modified until this method returns.
    */
-  private fun getIdeDescriptors(selector: (Set<IdeVersion>) -> List<IdeVersion>): List<Result.Found> {
+  private fun getIdeDescriptors(versionsSelector: (Set<IdeVersion>) -> List<IdeVersion>): List<Result.Found> {
     val result = arrayListOf<Result.Found>()
     try {
       /**
@@ -48,7 +48,7 @@ class IdeDescriptorsCache(cacheSize: Int,
        * until the corresponding [ResourceCacheEntry]s are registered for them.
        */
       ideFilesBank.lockAndAccess {
-        val selectedVersions = selector(ideFilesBank.getAvailableIdeVersions())
+        val selectedVersions = versionsSelector(ideFilesBank.getAvailableIdeVersions())
         selectedVersions.mapNotNullTo(result) {
           getIdeDescriptorCacheEntry(it) as? Result.Found
         }
@@ -77,7 +77,13 @@ class IdeDescriptorsCache(cacheSize: Int,
     }
   }
 
+  /**
+   * Result of [fetching] [getIdeDescriptorCacheEntry] an entry from this cache.
+   */
   sealed class Result : Closeable {
+    /**
+     * Resource [entry] [resourceCacheEntry] has been fetched.
+     */
     data class Found(private val resourceCacheEntry: ResourceCacheEntry<IdeDescriptor>) : Result() {
 
       val ideDescriptor: IdeDescriptor
@@ -86,11 +92,18 @@ class IdeDescriptorsCache(cacheSize: Int,
       override fun close() = resourceCacheEntry.close()
     }
 
-    data class Failed(val message: String, val error: Throwable) : Result() {
+    /**
+     * Resource is not fetched because [error] was thrown.
+     * Investigate [reason] for a human-readable message.
+     */
+    data class Failed(val reason: String, val error: Throwable) : Result() {
       override fun close() = Unit
     }
 
-    data class NotFound(val message: String) : Result() {
+    /**
+     * Resource is not found because of [reason].
+     */
+    data class NotFound(val reason: String) : Result() {
       override fun close() = Unit
     }
   }
@@ -98,7 +111,8 @@ class IdeDescriptorsCache(cacheSize: Int,
   /**
    * Implementation of the [ResourceProvider] that provides the IDE files from the [ideFilesBank].
    */
-  private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
+  private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank)
+    : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
       val result = ideFilesBank.getIdeFile(key)

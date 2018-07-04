@@ -7,7 +7,7 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Descriptor of the [task] [Task] being executed.
+ * Descriptor of a [task] [Task] being executed.
  */
 data class TaskDescriptor(
     /**

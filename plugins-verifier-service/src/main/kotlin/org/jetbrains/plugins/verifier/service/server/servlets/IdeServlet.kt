@@ -14,7 +14,7 @@ class IdeServlet : BaseServlet() {
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {
     val path = getPath(req, resp) ?: return
     when {
-      path.endsWith("download") -> processDownloadIde(req, resp)
+      path.endsWith("upload") -> processUploadIde(req, resp)
       path.endsWith("deleteIde") -> processDeleteIde(req, resp)
       else -> sendJson(resp, serverContext.ideFilesBank.getAvailableIdeVersions())
     }
@@ -29,11 +29,13 @@ class IdeServlet : BaseServlet() {
     return ideVersion
   }
 
-  private fun processDownloadIde(req: HttpServletRequest, resp: HttpServletResponse) {
-    val parameterIdeVersion = parseIdeVersionParameter(req, resp) ?: return
-    val availableIde = serverContext.ideRepository.fetchIndex().find { it.version.asStringWithoutProductCode() == parameterIdeVersion.asStringWithoutProductCode() }
+  private fun processUploadIde(req: HttpServletRequest, resp: HttpServletResponse) {
+    val ideVersionParam = parseIdeVersionParameter(req, resp) ?: return
+    val availableIde = serverContext.ideRepository.fetchIndex().find {
+      it.version.asStringWithoutProductCode() == ideVersionParam.asStringWithoutProductCode()
+    }
     if (availableIde == null) {
-      sendNotFound(resp, "IDE with version $parameterIdeVersion is not found in the ${serverContext.ideRepository}")
+      sendNotFound(resp, "IDE with version $ideVersionParam is not found in the ${serverContext.ideRepository}")
       return
     }
     val ideVersion = availableIde.version

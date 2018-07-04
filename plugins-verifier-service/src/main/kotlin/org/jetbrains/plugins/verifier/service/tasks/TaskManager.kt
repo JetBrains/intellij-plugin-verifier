@@ -32,8 +32,8 @@ interface TaskManager : Closeable {
    * descriptor will be called on a background thread
    * if the task is finished abnormally.
    *
-   * The [onCompletion] callback will be invoked when then task
-   * completes, either successfully or abnormally.
+   * The [onCompletion] callback will be called on a background thread
+   * when then task completes, either successfully or abnormally.
    */
   fun <T> enqueue(
       task: Task<T>,

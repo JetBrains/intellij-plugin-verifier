@@ -54,10 +54,10 @@ class VerifyPluginTask(
           checkPluginWithIde(ideDescriptor, verificationReportage)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
-          throw TaskCancelledException("IDE $ideVersion is not found: " + cacheEntry.message)
+          throw TaskCancelledException("IDE $ideVersion is not found: " + cacheEntry.reason)
         }
         is IdeDescriptorsCache.Result.Failed -> {
-          throw TaskCancelledException("Failed to get $ideVersion: ${cacheEntry.message}", cacheEntry.error)
+          throw TaskCancelledException("Failed to get $ideVersion: ${cacheEntry.reason}", cacheEntry.error)
         }
       }
     }

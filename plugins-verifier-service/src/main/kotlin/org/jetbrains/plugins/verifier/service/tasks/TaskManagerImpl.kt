@@ -100,7 +100,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
 
     val taskId = ++nextTaskId
 
-    val taskProgress = DefaultProgressIndicator()
+    val taskProgress = ProgressIndicator()
     taskProgress.fraction = 0.0
     taskProgress.text = "Waiting to start..."
 
