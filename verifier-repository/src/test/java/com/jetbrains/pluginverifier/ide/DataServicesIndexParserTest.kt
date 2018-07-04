@@ -11,15 +11,15 @@ import java.net.URL
  * Ensures that the data service's index is parsed properly:
  * `https://data.services.jetbrains.com/products`
  */
-class DataSourceIndexParserTest {
+class DataServicesIndexParserTest {
 
   @Test
   fun `simple index parsing test`() {
     val products = Gson().fromJson<List<Product>>(
-        DataSourceIndexParserTest::class.java.getResourceAsStream("/ideRepositoryIndex.json").bufferedReader()
+        DataServicesIndexParserTest::class.java.getResourceAsStream("/ideRepositoryIndex.json").bufferedReader()
     )
 
-    val actualIdes = DataSourceIndexParser().parseAvailableIdes(products)
+    val actualIdes = DataServicesIndexParser().parseAvailableIdes(products)
     val expectedIdes = listOf(
         availableIde("CL-182.3458.13", null, "/cpp/CLion-182.3458.13.tar.gz"),
         availableIde("CL-181.5281.33", "2018.1.5", "/cpp/CLion-2018.1.5.tar.gz"),

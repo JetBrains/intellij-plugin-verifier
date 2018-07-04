@@ -35,7 +35,7 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
   @Throws(InterruptedException::class)
   fun fetchIndex(): List<AvailableIde> {
     val products = dataServiceConnector.getProducts().executeSuccessfully().body()
-    return DataSourceIndexParser().parseAvailableIdes(products)
+    return DataServicesIndexParser().parseAvailableIdes(products)
   }
 
   /**

@@ -10,7 +10,7 @@ import java.net.URL
  *
  * It recognises only products listed in [productCodeMapping] and ignores the rest.
  */
-class DataSourceIndexParser {
+class DataServicesIndexParser {
   /**
    * Maps data-service's product codes to common product codes.
    * For some products they are the same.
