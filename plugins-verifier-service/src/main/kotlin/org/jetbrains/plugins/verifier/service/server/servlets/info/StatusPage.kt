@@ -129,8 +129,8 @@ class StatusPage(private val serverContext: ServerContext) {
         val lastFinishedTasks = serverContext.taskManager.lastFinishedTasks
 
         mapOf(
-            "Running tasks" to runningTasks.sortedByDescending { it.startTime },
-            "Pending tasks (20 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(20),
+            "Running tasks (${runningTasks.size} total)" to runningTasks.sortedByDescending { it.startTime },
+            "Pending tasks (${waitingTasks.size} total) (20 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(20),
             "Finished tasks (20 latest)" to lastFinishedTasks.sortedByDescending { it.startTime }.take(20)
         ).forEach { title, tasks ->
           h2 {
