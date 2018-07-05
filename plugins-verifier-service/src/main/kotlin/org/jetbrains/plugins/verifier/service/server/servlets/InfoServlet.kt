@@ -86,25 +86,34 @@ class InfoServlet : BaseServlet() {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service name is not specified")
       return
     }
-    val command = req.getParameter("command")
-    when (command) {
-      "start" -> changeServiceState(serviceName, resp) { it.start() }
-      "resume" -> changeServiceState(serviceName, resp) { it.resume() }
-      "pause" -> changeServiceState(serviceName, resp) { it.pause() }
-      else -> resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command: $command")
-    }
-  }
-
-  private fun changeServiceState(serviceName: String, resp: HttpServletResponse, action: (BaseService) -> Boolean) {
     val service = serverContext.allServices.find { it.serviceName == serviceName }
     if (service == null) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service $serviceName is not found")
-    } else {
-      if (action(service)) {
-        resp.sendRedirect("/info/status")
-      } else {
-        resp.sendError(HttpServletResponse.SC_CONFLICT, "Service $serviceName can't be paused")
+      return
+    }
+    val command = req.getParameter("command")
+    changeServiceState(service, resp, command)
+  }
+
+  private fun changeServiceState(
+      service: BaseService,
+      resp: HttpServletResponse,
+      command: String
+  ) {
+    val success = when (command) {
+      "start" -> service.start()
+      "resume" -> service.resume()
+      "pause" -> service.pause()
+      else -> {
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown command: $command")
+        return
       }
+    }
+
+    if (success) {
+      resp.sendRedirect("/info/status")
+    } else {
+      resp.sendError(HttpServletResponse.SC_CONFLICT, "Service's ${service.serviceName} state cannot be changed from ${service.getState()} by command '$command'")
     }
   }
 
