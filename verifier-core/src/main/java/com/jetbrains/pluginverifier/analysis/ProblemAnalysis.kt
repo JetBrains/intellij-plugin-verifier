@@ -114,6 +114,10 @@ fun VerificationContext.analyzeMissingClasses(resultHolder: ResultHolder) {
     it !is ClassNotFoundProblem || it in noClassProblems
   }
 
-  //Add grouped [PackageNotFoundProblem]s.
-  resultHolder.compatibilityProblems.addAll(packageNotFoundProblems)
+  //Add grouped [PackageNotFoundProblem]s via [registerProblem]
+  //to ignore the problems if needed.
+  for (packageNotFoundProblem in packageNotFoundProblems) {
+    resultHolder.registerProblem(packageNotFoundProblem)
+  }
+
 }
