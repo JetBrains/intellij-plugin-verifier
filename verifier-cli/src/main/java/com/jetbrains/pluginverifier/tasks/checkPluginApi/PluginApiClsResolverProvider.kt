@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
-import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
@@ -19,9 +18,7 @@ class PluginApiClsResolverProvider(private val jdkDescriptorCache: JdkDescriptor
                                    private val basePluginResolver: Resolver,
                                    private val basePluginPackageFilter: PackageFilter) : ClsResolverProvider {
 
-  override fun provide(checkedPluginDetails: PluginDetails,
-                       resultHolder: ResultHolder,
-                       reportage: PluginVerificationReportage): ClsResolver {
+  override fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder): ClsResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     return with(jdkDescriptorCache.getJdkResolver(jdkPath)) {
       when (this) {

@@ -13,11 +13,8 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
-import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReporterSet
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -103,31 +100,19 @@ class VerifyPluginTask(
     }
   }
 
-  private fun createVerificationReportage(progress: ProgressIndicator) = VerificationReportageImpl(
-      reporterSetProvider = object : VerificationReportersProvider {
-        override val ignoredPluginsReporters: List<Reporter<PluginIgnoredEvent>> = emptyList()
+  private fun createVerificationReportage(progress: ProgressIndicator) =
+      object : VerificationReportage {
+        override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
+            Reporters(
+                progressReporters = listOf(createDelegatingReporter(progress))
+            )
 
-        override val globalMessageReporters = listOf<Reporter<String>>()
+        override fun logVerificationStage(stageMessage: String) = Unit
 
-        override val globalProgressReporters = listOf(createDelegatingReporter(progress))
+        override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
 
         override fun close() = Unit
-
-        override fun getReporterSetForPluginVerification(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
-            VerificationReporterSet(
-                verificationResultReporters = listOf(),
-                messageReporters = listOf(),
-                progressReporters = listOf(),
-                pluginStructureWarningsReporters = emptyList(),
-                pluginStructureErrorsReporters = emptyList(),
-                problemsReporters = emptyList(),
-                dependenciesGraphReporters = listOf(),
-                ignoredProblemReporters = emptyList(),
-                deprecatedReporters = emptyList(),
-                exceptionReporters = listOf()
-            )
       }
-  )
 
   /**
    * Verify newer plugins first.

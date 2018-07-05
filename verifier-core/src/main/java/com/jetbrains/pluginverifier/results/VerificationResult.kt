@@ -100,6 +100,13 @@ sealed class VerificationResult : Serializable {
   var deprecatedUsages: Set<DeprecatedApiUsage> = emptySet()
 
   /**
+   * Presentable verification verdict
+   */
+  abstract val verificationVerdict: String
+
+  final override fun toString() = verificationVerdict
+
+  /**
    * The [plugin] neither has the structure [errors] [PluginStructureError]
    * nor the structure [warnings] [PluginStructureWarning] nor
    * the [compatibility problems] [CompatibilityProblem] against the [verificationTarget].
@@ -107,7 +114,8 @@ sealed class VerificationResult : Serializable {
    * _The available fields are  [dependenciesGraph] and [deprecatedUsages]._
    */
   class OK : VerificationResult() {
-    override fun toString() = "OK"
+    override val verificationVerdict
+      get() = "OK"
 
     companion object {
       private const val serialVersionUID = 0L
@@ -120,7 +128,8 @@ sealed class VerificationResult : Serializable {
    * _The available fields are  [pluginStructureWarnings], [dependenciesGraph] and [deprecatedUsages]._
    */
   class StructureWarnings : VerificationResult() {
-    override fun toString() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
+    override val verificationVerdict
+      get() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
 
     companion object {
       private const val serialVersionUID = 0L
@@ -143,48 +152,49 @@ sealed class VerificationResult : Serializable {
    * and [deprecatedUsages].
    */
   class MissingDependencies : VerificationResult() {
-    override fun toString(): String {
-      val (modules, plugins) = directMissingDependencies.partition { it.dependency.isModule }
-      return buildString {
-        append("Missing ")
-        if (modules.isNotEmpty()) {
-          val (optional, nonOptional) = modules.partition { it.dependency.isOptional }
-          if (nonOptional.isNotEmpty()) {
-            append(nonOptional.size)
-            append(" mandatory " + "module".pluralize(nonOptional.size))
-          }
-          if (optional.isNotEmpty()) {
-            if (nonOptional.isNotEmpty()) {
-              append(" and ")
-            }
-            append(optional.size)
-            append(" optional " + "module".pluralize(optional.size))
-          }
-        }
-        if (plugins.isNotEmpty()) {
+    override val verificationVerdict
+      get() = {
+        val (modules, plugins) = directMissingDependencies.partition { it.dependency.isModule }
+        buildString {
+          append("Missing ")
           if (modules.isNotEmpty()) {
-            append(" and ")
-          }
-          val (optional, nonOptional) = plugins.partition { it.dependency.isOptional }
-          if (nonOptional.isNotEmpty()) {
-            append(nonOptional.size)
-            append(" mandatory " + "plugin".pluralize(nonOptional.size))
-          }
-          if (optional.isNotEmpty()) {
+            val (optional, nonOptional) = modules.partition { it.dependency.isOptional }
             if (nonOptional.isNotEmpty()) {
+              append(nonOptional.size)
+              append(" mandatory " + "module".pluralize(nonOptional.size))
+            }
+            if (optional.isNotEmpty()) {
+              if (nonOptional.isNotEmpty()) {
+                append(" and ")
+              }
+              append(optional.size)
+              append(" optional " + "module".pluralize(optional.size))
+            }
+          }
+          if (plugins.isNotEmpty()) {
+            if (modules.isNotEmpty()) {
               append(" and ")
             }
-            append(optional.size)
-            append(" optional " + "plugin".pluralize(optional.size))
+            val (optional, nonOptional) = plugins.partition { it.dependency.isOptional }
+            if (nonOptional.isNotEmpty()) {
+              append(nonOptional.size)
+              append(" mandatory " + "plugin".pluralize(nonOptional.size))
+            }
+            if (optional.isNotEmpty()) {
+              if (nonOptional.isNotEmpty()) {
+                append(" and ")
+              }
+              append(optional.size)
+              append(" optional " + "plugin".pluralize(optional.size))
+            }
+          }
+          append(" ")
+          append("dependency".pluralize(modules.size + plugins.size))
+          if (compatibilityProblems.isNotEmpty()) {
+            append(" and found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
           }
         }
-        append(" ")
-        append("dependency".pluralize(modules.size + plugins.size))
-        if (compatibilityProblems.isNotEmpty()) {
-          append(" and found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
-        }
-      }
-    }
+      }()
 
     val directMissingDependencies: List<MissingDependency>
       get() = dependenciesGraph.verifiedPlugin.missingDependencies
@@ -201,8 +211,9 @@ sealed class VerificationResult : Serializable {
    * and [deprecatedUsages]._
    */
   class CompatibilityProblems : VerificationResult() {
-    override fun toString() = "Found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size) +
-        " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
+    override val verificationVerdict
+      get() = "Found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size) +
+          " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
 
     companion object {
       private const val serialVersionUID = 0L
@@ -215,7 +226,8 @@ sealed class VerificationResult : Serializable {
    * _The available field is only the [pluginStructureErrors]._
    */
   class InvalidPlugin : VerificationResult() {
-    override fun toString() = "Plugin is invalid"
+    override val verificationVerdict
+      get() = "Plugin is invalid"
 
     companion object {
       private const val serialVersionUID = 0L
@@ -228,7 +240,8 @@ sealed class VerificationResult : Serializable {
    * _The available field is only the [failedToDownloadReason]._
    */
   class NotFound : VerificationResult() {
-    override fun toString() = "Plugin is not found"
+    override val verificationVerdict
+      get() = "Plugin is not found"
 
     companion object {
       private const val serialVersionUID = 0L
@@ -242,7 +255,8 @@ sealed class VerificationResult : Serializable {
    * _The available field is only the [failedToDownloadReason]._
    */
   class FailedToDownload : VerificationResult() {
-    override fun toString() = "Failed to download plugin"
+    override val verificationVerdict
+      get() = "Failed to download plugin"
 
     companion object {
       private const val serialVersionUID = 0L

@@ -11,10 +11,10 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
-import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredPluginsReporter
+import com.jetbrains.pluginverifier.reporting.verification.ReportageImpl
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -123,8 +123,7 @@ object PluginVerifierMain {
     println("Verification reports directory: $verificationReportsDirectory")
 
     createVerificationReportage(
-        verificationReportsDirectory,
-        opts.printPluginVerificationProgress
+        verificationReportsDirectory
     ).use { verificationReportage ->
 
       val runner = findTaskRunner(command)
@@ -182,20 +181,12 @@ object PluginVerifierMain {
     return DiskSpaceSetting(megabytes)
   }
 
-  private fun createVerificationReportage(verificationReportsDirectory: Path,
-                                          printPluginVerificationProgress: Boolean): VerificationReportage {
+  private fun createVerificationReportage(verificationReportsDirectory: Path): VerificationReportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogReporter<String>(logger))
-    val progressReporters = emptyList<Reporter<Double>>()
-
-    val reporterSetProvider = MainVerificationReportersProvider(
-        messageReporters,
-        progressReporters,
-        verificationReportsDirectory,
-        printPluginVerificationProgress,
-        logger
-    )
-    return VerificationReportageImpl(reporterSetProvider)
+    val reportersProvider = DirectoryLayoutReportersProvider(verificationReportsDirectory)
+    val ignoredPluginsReporter = IgnoredPluginsReporter(verificationReportsDirectory)
+    return ReportageImpl(reportersProvider, messageReporters, ignoredPluginsReporter)
   }
 
   private fun findTaskRunner(command: String?) = commandRunners.find { command == it.commandName }

@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -16,7 +17,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFileProvider
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -24,7 +26,10 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRep
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
-import com.jetbrains.pluginverifier.tests.mocks.*
+import com.jetbrains.pluginverifier.tests.mocks.EmptyPublicPluginRepository
+import com.jetbrains.pluginverifier.tests.mocks.MockIde
+import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
+import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
@@ -134,7 +139,19 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
           pluginDetailsCache
       )
       val verifierExecutor = VerifierExecutor(4)
-      val checkTrunkApiResult = checkTrunkApiTask.execute(VerificationReportageImpl(EmptyReporterSetProvider), verifierExecutor, JdkDescriptorsCache(), pluginDetailsCache)
+      val reportage = object : VerificationReportage {
+        override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
+            Reporters()
+
+        override fun logVerificationStage(stageMessage: String) = Unit
+
+        override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
+
+        override fun close() = Unit
+      }
+
+      val checkTrunkApiResult = checkTrunkApiTask.execute(reportage, verifierExecutor, JdkDescriptorsCache(), pluginDetailsCache)
+
       val releaseResults = checkTrunkApiResult.baseResults
       val trunkResults = checkTrunkApiResult.newResults
       val releaseResult = releaseResults.single()

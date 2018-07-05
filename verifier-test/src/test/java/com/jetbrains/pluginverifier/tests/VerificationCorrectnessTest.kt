@@ -18,7 +18,9 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportageImpl
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
+import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
@@ -26,7 +28,6 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.tests.mocks.EmptyReporterSetProvider
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.hamcrest.core.Is.`is`
@@ -67,27 +68,37 @@ class VerificationCorrectnessTest {
         val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
         return IdeDescriptor.create(ideaFile, IdeVersion.createIdeVersion("IU-145.500"), null).use { ideDescriptor ->
           val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
-          VerificationReportageImpl(EmptyReporterSetProvider).use { verificationReportage ->
-            JdkDescriptorsCache().use { jdkDescriptorCache ->
-              val tasks = listOf(PluginVerifier(
-                  pluginInfo,
-                  verificationReportage,
-                  emptyList(),
-                  true,
-                  pluginDetailsCache,
-                  DefaultClsResolverProvider(
-                      EmptyDependencyFinder,
-                      jdkDescriptorCache,
-                      jdkPath,
-                      ideDescriptor,
-                      externalClassesPackageFilter
-                  ),
-                  VerificationTarget.Ide(ideDescriptor.ideVersion)
-              ))
+          val reportage = object : VerificationReportage {
+            override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
+                Reporters()
 
-              VerifierExecutor(4).use { verifierExecutor ->
-                verifierExecutor.verify(tasks).single()
-              }
+            override fun logVerificationStage(stageMessage: String) = Unit
+
+            override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
+
+            override fun close() = Unit
+          }
+
+          JdkDescriptorsCache().use { jdkDescriptorCache ->
+            val tasks = listOf(
+                PluginVerifier(
+                    pluginInfo,
+                    reportage,
+                    emptyList(),
+                    true,
+                    pluginDetailsCache,
+                    DefaultClsResolverProvider(
+                        EmptyDependencyFinder,
+                        jdkDescriptorCache,
+                        jdkPath,
+                        ideDescriptor,
+                        externalClassesPackageFilter
+                    ),
+                    VerificationTarget.Ide(ideDescriptor.ideVersion)
+                ))
+
+            VerifierExecutor(4).use { verifierExecutor ->
+              verifierExecutor.verify(tasks).single()
             }
           }
         }

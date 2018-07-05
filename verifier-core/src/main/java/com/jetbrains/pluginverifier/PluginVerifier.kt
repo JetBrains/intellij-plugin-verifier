@@ -4,12 +4,15 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.analysis.analyzeMissingClasses
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
@@ -25,7 +28,7 @@ import java.util.concurrent.Callable
  */
 class PluginVerifier(
     private val plugin: PluginInfo,
-    verificationReportage: VerificationReportage,
+    private val verificationReportage: VerificationReportage,
     private val problemFilters: List<ProblemsFilter>,
     private val findDeprecatedApiUsages: Boolean,
     private val pluginDetailsCache: PluginDetailsCache,
@@ -33,41 +36,51 @@ class PluginVerifier(
     private val verificationTarget: VerificationTarget
 ) : Callable<VerificationResult> {
 
-  private val pluginReportage = verificationReportage.createPluginReportage(plugin, verificationTarget)
-
   private val resultHolder = ResultHolder()
 
   override fun call(): VerificationResult {
+    checkIfInterrupted()
+    val pluginReporters = verificationReportage.createPluginReporters(plugin, verificationTarget)
+    val startTime = System.currentTimeMillis()
     try {
-      checkIfInterrupted()
-      pluginReportage.logVerificationStarted()
-      verify()
-    } catch (ie: InterruptedException) {
-      throw ie
-    } catch (e: Exception) {
-      //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
-      pluginReportage.logVerificationFinished("Failed with exception: ${e.message}")
-      throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
+      pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")
+      try {
+        verify(pluginReporters)
+      } catch (ie: InterruptedException) {
+        throw ie
+      } catch (e: Exception) {
+        //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
+        pluginReporters.reportMessage("Failed with exception: ${e.message}")
+        throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
+      }
+
+      resultHolder.reportResults(pluginReporters)
+
+      val verificationResult = resultHolder.convertToVerificationResult()
+      pluginReporters.reportVerificationResult(verificationResult)
+
+      val elapsedTime = System.currentTimeMillis() - startTime
+      pluginReporters.reportMessage("Finished verification of $verificationTarget against $plugin " +
+          "in ${"%.2f".format(elapsedTime / 1000.0)} seconds: " + verificationResult.toString())
+      return verificationResult
+    } finally {
+      pluginReporters.closeLogged()
     }
-    val verificationResult = resultHolder.convertToVerificationResult()
-    resultHolder.logResults()
-    pluginReportage.logVerificationResult(verificationResult)
-    pluginReportage.logVerificationFinished(verificationResult.toString())
-    return verificationResult
   }
 
-  private fun ResultHolder.logResults() {
-    pluginStructureErrors.forEach { pluginReportage.logNewPluginStructureError(it) }
-    pluginStructureWarnings.forEach { pluginReportage.logNewPluginStructureWarning(it) }
-    compatibilityProblems.forEach { pluginReportage.logNewProblemDetected(it) }
-    deprecatedUsages.forEach { pluginReportage.logDeprecatedUsage(it) }
-    ignoredProblemsHolder.ignoredProblems.forEach { entry ->
-      entry.value.forEach {
-        pluginReportage.logProblemIgnored(entry.key, it.reason)
+  private fun ResultHolder.reportResults(pluginReportage: Reporters) {
+    pluginStructureErrors.forEach { pluginReportage.reportNewPluginStructureError(it) }
+    pluginStructureWarnings.forEach { pluginReportage.reportNewPluginStructureWarning(it) }
+    compatibilityProblems.forEach { pluginReportage.reportNewProblemDetected(it) }
+    deprecatedUsages.forEach { pluginReportage.reportDeprecatedUsage(it) }
+    ignoredProblemsHolder.ignoredProblems.forEach { (problem, ignoredEvents) ->
+      ignoredEvents.forEach {
+        val problemIgnoredEvent = ProblemIgnoredEvent(plugin, verificationTarget, problem, it.reason)
+        pluginReportage.reportProblemIgnored(problemIgnoredEvent)
       }
     }
     if (dependenciesGraph != null) {
-      pluginReportage.logDependencyGraph(dependenciesGraph!!)
+      pluginReportage.reportDependencyGraph(dependenciesGraph!!)
     }
   }
 
@@ -96,13 +109,13 @@ class PluginVerifier(
     }
   }
 
-  private fun verify() {
+  private fun verify(pluginReporters: Reporters) {
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use {
       when (it) {
         is PluginDetailsCache.Result.Provided -> {
           val pluginDetails = it.pluginDetails
           pluginDetails.pluginWarnings.forEach { resultHolder.registerPluginErrorOrWarning(it) }
-          verify(pluginDetails)
+          verify(pluginDetails, pluginReporters)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> it.pluginErrors.forEach { resultHolder.registerPluginErrorOrWarning(it) }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = it.reason
@@ -111,7 +124,7 @@ class PluginVerifier(
     }
   }
 
-  private fun verify(pluginDetails: PluginDetails) {
+  private fun verify(pluginDetails: PluginDetails, reporters: Reporters) {
     /**
      * Select classes for verification
      */
@@ -120,12 +133,12 @@ class PluginVerifier(
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      pluginReportage.logException("Failed to select classes for check for $plugin", e)
+      reporters.reportException("Failed to select classes for check for $plugin", e)
       resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return
     }
 
-    clsResolverProvider.provide(pluginDetails, resultHolder, pluginReportage).use { clsResolver ->
+    clsResolverProvider.provide(pluginDetails, resultHolder).use { clsResolver ->
       val verificationContext = VerificationContext(
           plugin,
           verificationTarget,
@@ -134,7 +147,9 @@ class PluginVerifier(
           problemFilters,
           clsResolver
       )
-      BytecodeVerifier().verify(checkClasses, verificationContext) { pluginReportage.logProgress(it) }
+      BytecodeVerifier().verify(checkClasses, verificationContext) {
+        reporters.reportProgress(it)
+      }
       verificationContext.analyzeMissingClasses(resultHolder)
     }
   }

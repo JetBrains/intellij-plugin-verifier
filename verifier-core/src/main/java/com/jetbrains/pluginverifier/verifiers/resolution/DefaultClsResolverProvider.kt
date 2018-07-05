@@ -18,7 +18,6 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
@@ -33,26 +32,28 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
                                  private val ideDescriptor: IdeDescriptor,
                                  private val externalClassesPackageFilter: PackageFilter) : ClsResolverProvider {
 
-  override fun provide(checkedPluginDetails: PluginDetails,
-                       resultHolder: ResultHolder,
-                       reportage: PluginVerificationReportage): ClsResolver {
+  override fun provide(
+      checkedPluginDetails: PluginDetails,
+      resultHolder: ResultHolder
+  ): ClsResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     return try {
-      buildDependenciesGraph(checkedPluginDetails.idePlugin, resultHolder, depGraph, reportage)
-      provide(pluginResolver, reportage, depGraph)
+      buildDependenciesGraph(checkedPluginDetails.idePlugin, resultHolder, depGraph)
+      provide(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
       throw e
     }
   }
 
-  private fun provide(pluginResolver: Resolver,
-                      reportage: PluginVerificationReportage,
-                      depGraph: DirectedGraph<DepVertex, DepEdge>): ClsResolver {
+  private fun provide(
+      pluginResolver: Resolver,
+      depGraph: DirectedGraph<DepVertex, DepEdge>
+  ): ClsResolver {
     val dependenciesResults = depGraph.vertexSet().map { it.dependencyResult }
-    val dependenciesResolver = createDependenciesResolver(depGraph, reportage)
+    val dependenciesResolver = createDependenciesResolver(depGraph)
 
     val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)
     return when (jdkCacheEntry) {
@@ -73,20 +74,20 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
     }
   }
 
-  private fun buildDependenciesGraph(plugin: IdePlugin,
-                                     resultHolder: ResultHolder,
-                                     depGraph: DirectedGraph<DepVertex, DepEdge>,
-                                     reportage: PluginVerificationReportage) {
+  private fun buildDependenciesGraph(
+      plugin: IdePlugin,
+      resultHolder: ResultHolder,
+      depGraph: DirectedGraph<DepVertex, DepEdge>
+  ) {
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     DepGraphBuilder(dependencyFinder).buildDependenciesGraph(depGraph, start)
 
     val apiGraph = DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(depGraph, start)
     resultHolder.dependenciesGraph = apiGraph
-    reportage.logDependencyGraph(apiGraph)
     resultHolder.addCycleWarningIfExists(apiGraph)
   }
 
-  private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>, reportage: PluginVerificationReportage): Resolver {
+  private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
     val dependenciesResolvers = arrayListOf<Resolver>()
     dependenciesResolvers.closeOnException {
       for (depVertex in graph.vertexSet()) {
@@ -99,7 +100,6 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
             } catch (ie: InterruptedException) {
               throw ie
             } catch (e: Exception) {
-              reportage.logException("Unable to read classes of dependency ${depVertex.dependencyId}", e)
               continue
             }
             dependenciesResolvers.add(pluginResolver)

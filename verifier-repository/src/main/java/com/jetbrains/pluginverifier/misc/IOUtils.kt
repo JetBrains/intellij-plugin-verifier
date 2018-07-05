@@ -8,6 +8,9 @@ private val LOG = LoggerFactory.getLogger("IOUtils")
 fun <T : Closeable?> T.closeLogged() {
   try {
     this?.close()
+  } catch (ie: InterruptedException) {
+    Thread.currentThread().interrupt()
+    LOG.error("Interrupted exception on closing $this", ie)
   } catch (e: Exception) {
     LOG.error("Unable to close $this", e)
   }

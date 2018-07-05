@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.reporting.common
 
 import com.jetbrains.pluginverifier.reporting.Reporter
 
-open class CollectingReporter<T> : Reporter<T> {
+class CollectingReporter<T> : Reporter<T> {
 
   private val reported = arrayListOf<T>()
 

@@ -10,15 +10,10 @@ import java.io.Closeable
 interface VerificationReportage : Closeable {
 
   /**
-   * Creates a [PluginVerificationReportage] for saving the reports
+   * Creates a [Reporters] for saving the reports
    * of the verification of the [pluginInfo] against [verificationTarget].
    */
-  fun createPluginReportage(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): PluginVerificationReportage
-
-  /**
-   * Invoked when the verification finishes.
-   */
-  fun logPluginVerificationFinished(pluginVerificationReportage: PluginVerificationReportage)
+  fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): Reporters
 
   /**
    * Logs the verification stage.
