@@ -5,14 +5,14 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
 class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
 
   override fun execute(
-      verificationReportage: VerificationReportage,
+      reportage: Reportage,
       verifierExecutor: VerifierExecutor,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
@@ -22,7 +22,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
           .map {
             PluginVerifier(
                 it,
-                verificationReportage,
+                reportage,
                 problemsFilters,
                 false,
                 pluginDetailsCache,

@@ -4,13 +4,15 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 
-class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
-                               val verificationReportage: VerificationReportage) : TaskParametersBuilder {
+class CheckPluginParamsBuilder(
+    val pluginRepository: PluginRepository,
+    val reportage: Reportage
+) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
     if (freeArgs.size <= 1) {
@@ -19,17 +21,17 @@ class CheckPluginParamsBuilder(val pluginRepository: PluginRepository,
           "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963")
     }
     val ideDescriptors = freeArgs.drop(1).map { Paths.get(it) }.map {
-      verificationReportage.logVerificationStage("Reading IDE $it")
+      reportage.logVerificationStage("Reading IDE $it")
       OptionsParser.createIdeDescriptor(it, opts)
     }
 
     val pluginToTestArg = freeArgs[0]
     val ideVersions = ideDescriptors.map { it.ideVersion }
-    val pluginsSet = PluginsParsing(pluginRepository, verificationReportage).parsePluginsToCheck(pluginToTestArg, ideVersions)
+    val pluginsSet = PluginsParsing(pluginRepository, reportage).parsePluginsToCheck(pluginToTestArg, ideVersions)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       ideVersions.forEach { ideVersion ->
-        verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
+        reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
       }
     }
 

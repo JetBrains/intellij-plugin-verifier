@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -26,9 +26,11 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
-                                 private val ideFilesBank: IdeFilesBank,
-                                 private val verificationReportage: VerificationReportage) : TaskParametersBuilder {
+class CheckTrunkApiParamsBuilder(
+    private val pluginRepository: PluginRepository,
+    private val ideFilesBank: IdeFilesBank,
+    private val reportage: Reportage
+) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
@@ -37,7 +39,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
       throw IllegalArgumentException("The IDE to be checked is not specified")
     }
 
-    verificationReportage.logVerificationStage("Reading classes of the trunk IDE ${args[0]}")
+    reportage.logVerificationStage("Reading classes of the trunk IDE ${args[0]}")
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
     return trunkIdeDescriptor.closeOnException {
       buildParameters(opts, apiOpts, trunkIdeDescriptor)
@@ -72,7 +74,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
       else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are specified")
     }
 
-    verificationReportage.logVerificationStage("Reading classes of the release IDE ${releaseIdeFileLock.file}")
+    reportage.logVerificationStage("Reading classes of the release IDE ${releaseIdeFileLock.file}")
     val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFileLock.file, opts)
     return releaseIdeDescriptor.closeOnException {
       releaseIdeFileLock.closeOnException {
@@ -103,7 +105,7 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
 
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 
-    verificationReportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
+    reportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
     val releaseCompatibleVersions = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
       getLastCompatiblePlugins(releaseVersion)
     }
@@ -127,8 +129,8 @@ class CheckTrunkApiParamsBuilder(private val pluginRepository: PluginRepository,
     )
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(releaseVersion), reason)
-      verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(trunkVersion), reason)
+      reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(releaseVersion), reason)
+      reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(trunkVersion), reason)
     }
 
     return CheckTrunkApiParams(

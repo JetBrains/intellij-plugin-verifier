@@ -13,8 +13,8 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -47,8 +47,8 @@ class VerifyPluginTask(
       when (cacheEntry) {
         is IdeDescriptorsCache.Result.Found -> {
           val ideDescriptor = cacheEntry.ideDescriptor
-          val verificationReportage = createVerificationReportage(progress)
-          checkPluginWithIde(ideDescriptor, verificationReportage)
+          val reportage = createReportage(progress)
+          checkPluginWithIde(ideDescriptor, reportage)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
           throw TaskCancelledException("IDE $ideVersion is not found: " + cacheEntry.reason)
@@ -62,7 +62,7 @@ class VerifyPluginTask(
 
   private fun checkPluginWithIde(
       ideDescriptor: IdeDescriptor,
-      verificationReportage: VerificationReportage
+      reportage: Reportage
   ): VerificationResult {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
@@ -72,7 +72,7 @@ class VerifyPluginTask(
 
     val tasks = listOf(PluginVerifier(
         updateInfo,
-        verificationReportage,
+        reportage,
         problemsFilters,
         true,
         pluginDetailsCache,
@@ -100,8 +100,8 @@ class VerifyPluginTask(
     }
   }
 
-  private fun createVerificationReportage(progress: ProgressIndicator) =
-      object : VerificationReportage {
+  private fun createReportage(progress: ProgressIndicator) =
+      object : Reportage {
         override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             Reporters(
                 progressReporters = listOf(createDelegatingReporter(progress))

@@ -8,13 +8,13 @@ import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.repository.PluginInfo
 
 /**
- * Main implementation of [VerificationReportage].
+ * Main implementation of [Reportage].
  */
 class ReportageImpl(
     val reportersProvider: ReportersProvider,
     val messageReporters: List<LogReporter<String>>,
     val ignoredPluginsReporter: IgnoredPluginsReporter
-) : VerificationReportage {
+) : Reportage {
 
   override fun logVerificationStage(stageMessage: String) {
     messageReporters.forEach { it.report(stageMessage) }

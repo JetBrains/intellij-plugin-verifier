@@ -13,8 +13,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredPluginsReporter
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.ReportageImpl
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -122,12 +122,12 @@ object PluginVerifierMain {
     val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
 
-    createVerificationReportage(
+    createReportage(
         verificationReportsDirectory
-    ).use { verificationReportage ->
+    ).use { reportage ->
 
       val runner = findTaskRunner(command)
-      val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache, verificationReportage)
+      val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache, reportage)
 
       val parameters = try {
         parametersBuilder.build(opts, freeArgs)
@@ -145,7 +145,7 @@ object PluginVerifierMain {
           VerifierExecutor(concurrentWorkers).use { verifierExecutor ->
             runner
                 .createTask(parameters, pluginRepository, pluginDetailsCache)
-                .execute(verificationReportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
+                .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
           }
         }
       }
@@ -181,7 +181,7 @@ object PluginVerifierMain {
     return DiskSpaceSetting(megabytes)
   }
 
-  private fun createVerificationReportage(verificationReportsDirectory: Path): VerificationReportage {
+  private fun createReportage(verificationReportsDirectory: Path): Reportage {
     val logger = LoggerFactory.getLogger("verification")
     val messageReporters = listOf(LogReporter<String>(logger))
     val reportersProvider = DirectoryLayoutReportersProvider(verificationReportsDirectory)

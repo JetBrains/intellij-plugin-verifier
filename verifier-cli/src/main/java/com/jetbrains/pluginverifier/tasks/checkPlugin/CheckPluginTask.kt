@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDepen
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
@@ -45,7 +45,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
   }
 
   override fun execute(
-      verificationReportage: VerificationReportage,
+      reportage: Reportage,
       verifierExecutor: VerifierExecutor,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
@@ -56,7 +56,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
         pluginsSet.pluginsToCheck.map {
           PluginVerifier(
               it,
-              verificationReportage,
+              reportage,
               problemsFilters,
               true,
               pluginDetailsCache,

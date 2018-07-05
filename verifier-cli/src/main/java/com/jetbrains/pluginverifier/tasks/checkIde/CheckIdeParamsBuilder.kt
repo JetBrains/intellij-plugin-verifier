@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -20,7 +20,7 @@ import java.nio.file.Paths
 
 class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
                             val pluginDetailsCache: PluginDetailsCache,
-                            val verificationReportage: VerificationReportage) : TaskParametersBuilder {
+                            val reportage: Reportage) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       throw IllegalArgumentException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")
@@ -29,19 +29,19 @@ class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
     if (!ideFile.isDirectory) {
       throw IllegalArgumentException("IDE path must be a directory: $ideFile")
     }
-    verificationReportage.logVerificationStage("Reading classes of IDE $ideFile")
+    reportage.logVerificationStage("Reading classes of IDE $ideFile")
     OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-      val pluginsSet = PluginsParsing(pluginRepository, verificationReportage).parsePluginsToCheck(opts, ideDescriptor.ideVersion)
+      val pluginsSet = PluginsParsing(pluginRepository, reportage).parsePluginsToCheck(opts, ideDescriptor.ideVersion)
 
       val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
       val excludedFilter = ExcludedPluginFilter(excludedPlugins)
       pluginsSet.addPluginFilter(excludedFilter)
 
       pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-        verificationReportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideDescriptor.ideVersion), reason)
+        reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideDescriptor.ideVersion), reason)
       }
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)

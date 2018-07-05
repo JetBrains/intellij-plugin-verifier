@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
@@ -23,7 +23,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
                         private val pluginDetailsCache: PluginDetailsCache) : Task {
 
   override fun execute(
-      verificationReportage: VerificationReportage,
+      reportage: Reportage,
       verifierExecutor: VerifierExecutor,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
@@ -55,7 +55,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
       for (pluginInfo in pluginsSet.pluginsToCheck) {
         tasks.add(PluginVerifier(
             pluginInfo,
-            verificationReportage,
+            reportage,
             parameters.problemsFilters,
             false,
             pluginDetailsCache,
@@ -65,7 +65,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
 
         tasks.add(PluginVerifier(
             pluginInfo,
-            verificationReportage,
+            reportage,
             parameters.problemsFilters,
             false,
             pluginDetailsCache,

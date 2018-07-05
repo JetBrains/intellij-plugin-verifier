@@ -17,8 +17,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFileProvider
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -139,7 +139,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
           pluginDetailsCache
       )
       val verifierExecutor = VerifierExecutor(4)
-      val reportage = object : VerificationReportage {
+      val reportage = object : Reportage {
         override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             Reporters()
 

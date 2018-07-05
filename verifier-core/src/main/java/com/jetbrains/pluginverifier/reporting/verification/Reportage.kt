@@ -7,7 +7,7 @@ import java.io.Closeable
 /**
  * Allows to report, log and save the verification stages and results in a configurable way.
  */
-interface VerificationReportage : Closeable {
+interface Reportage : Closeable {
 
   /**
    * Creates a [Reporters] for saving the reports

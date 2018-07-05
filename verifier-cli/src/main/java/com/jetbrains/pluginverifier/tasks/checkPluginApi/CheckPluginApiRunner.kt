@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkPluginApi
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.TaskParameters
@@ -19,7 +19,7 @@ class CheckPluginApiRunner : CommandRunner() {
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache,
-      verificationReportage: VerificationReportage
+      reportage: Reportage
   ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider)
 
   override fun createTask(

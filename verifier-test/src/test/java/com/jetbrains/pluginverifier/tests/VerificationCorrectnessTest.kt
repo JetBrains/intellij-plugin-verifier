@@ -18,8 +18,8 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -68,7 +68,7 @@ class VerificationCorrectnessTest {
         val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
         return IdeDescriptor.create(ideaFile, IdeVersion.createIdeVersion("IU-145.500"), null).use { ideDescriptor ->
           val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
-          val reportage = object : VerificationReportage {
+          val reportage = object : Reportage {
             override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
                 Reporters()
 

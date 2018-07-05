@@ -7,7 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.readLines
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -20,10 +20,10 @@ import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 class PluginsParsing(private val pluginRepository: PluginRepository,
-                     private val verificationReportage: VerificationReportage) {
+                     private val reportage: Reportage) {
 
   fun parsePluginsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>): PluginsSet {
-    verificationReportage.logVerificationStage("Parse a list of plugins to check")
+    reportage.logVerificationStage("Parse a list of plugins to check")
     val pluginsSet = PluginsSet()
     when {
       pluginToTestArg.startsWith("@") -> schedulePluginsFromFile(
@@ -79,7 +79,7 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
           if (!pluginFile.exists()) {
             throw RuntimeException("Plugin file '$path' with absolute '${pluginFile.toAbsolutePath()}' specified in '${pluginsListFile.toAbsolutePath()}' doesn't exist")
           }
-          verificationReportage.logVerificationStage("Reading descriptor of a plugin to check from $pluginFile")
+          reportage.logVerificationStage("Reading descriptor of a plugin to check from $pluginFile")
           addPluginToCheckFromFile(pluginFile, pluginsSet)
         }
       }
@@ -91,7 +91,7 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
       when (this) {
         is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
         is PluginCreationFail -> {
-          verificationReportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
+          reportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
           pluginsSet.invalidPluginFiles.add(InvalidPluginFile(pluginFile, errorsAndWarnings))
         }
       }

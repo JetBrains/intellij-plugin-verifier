@@ -12,8 +12,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
@@ -28,7 +28,7 @@ import java.util.concurrent.Callable
  */
 class PluginVerifier(
     private val plugin: PluginInfo,
-    private val verificationReportage: VerificationReportage,
+    private val reportage: Reportage,
     private val problemFilters: List<ProblemsFilter>,
     private val findDeprecatedApiUsages: Boolean,
     private val pluginDetailsCache: PluginDetailsCache,
@@ -40,7 +40,7 @@ class PluginVerifier(
 
   override fun call(): VerificationResult {
     checkIfInterrupted()
-    val pluginReporters = verificationReportage.createPluginReporters(plugin, verificationTarget)
+    val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
     val startTime = System.currentTimeMillis()
     try {
       pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")

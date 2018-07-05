@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tasks
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.VerificationReportage
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 /**
@@ -22,7 +22,7 @@ abstract class CommandRunner {
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache,
-      verificationReportage: VerificationReportage
+      reportage: Reportage
   ): TaskParametersBuilder
 
   abstract fun createTask(
