@@ -39,7 +39,7 @@ class VerifyPluginTask(
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val pluginRepository: PluginRepository,
     private val problemsFilters: List<ProblemsFilter>
-) : Task<VerificationResult>("Check $updateInfo against $ideVersion"), Comparable<VerifyPluginTask> {
+) : Task<VerificationResult>("Check $ideVersion against $updateInfo"), Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
     val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion)
