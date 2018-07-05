@@ -129,7 +129,6 @@ fun copyInputStreamToFileWithProgress(inputStream: InputStream,
         if (expectedSize > 0) {
           progress(count.toDouble() / expectedSize)
         }
-        checkIfInterrupted()
       }
     }
   }
