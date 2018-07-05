@@ -13,13 +13,13 @@ class PriorityTask<V>(
     val taskId: Long,
     val task: Task<V>,
     val runnableFuture: FutureTask<V>
-) : RunnableFuture<V> by runnableFuture, Comparable<PriorityTask<V>> {
+) : RunnableFuture<V> by runnableFuture, Comparable<PriorityTask<*>> {
 
-  override fun compareTo(other: PriorityTask<V>): Int {
+  override fun compareTo(other: PriorityTask<*>): Int {
     val otherTask = other.task
     if (task.javaClass == otherTask.javaClass && task is Comparable<*>) {
       @Suppress("UNCHECKED_CAST")
-      return (task as Comparable<Task<V>>).compareTo(otherTask)
+      return (task as Comparable<Task<*>>).compareTo(otherTask)
     }
     return other.taskId.compareTo(taskId)
   }

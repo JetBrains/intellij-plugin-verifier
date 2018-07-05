@@ -8,8 +8,9 @@ import java.io.Closeable
 interface TaskManager : Closeable {
   /**
    * Tasks with state either [TaskDescriptor.State.WAITING] or [TaskDescriptor.State.RUNNING]
+   * sorted by execution priority.
    */
-  val activeTasks: Set<TaskDescriptor>
+  val activeTasks: List<TaskDescriptor>
 
   /**
    * Tasks with state either [TaskDescriptor.State.SUCCESS] or [TaskDescriptor.State.ERROR]

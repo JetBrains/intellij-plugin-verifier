@@ -26,9 +26,9 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
   private var nextTaskId = 0L
 
   /**
-   * Currently scheduled tasks.
+   * Currently running and scheduled tasks.
    */
-  private val _activeTasks = linkedMapOf<TaskDescriptor, Future<*>>()
+  private val _activeTasks = linkedMapOf<TaskDescriptor, PriorityTask<*>>()
 
   /**
    * Last 128 finished tasks.
@@ -71,9 +71,11 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
       val onCompletion: (TaskDescriptor) -> Unit
   )
 
-  override val activeTasks: Set<TaskDescriptor>
+  override val activeTasks: List<TaskDescriptor>
     @Synchronized
-    get() = _activeTasks.keys.toSet()
+    get() = _activeTasks.entries
+        .sortedBy { it.value }
+        .map { it.key }
 
   override val lastFinishedTasks: Set<TaskDescriptor>
     @Synchronized
@@ -118,8 +120,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
     val futureTask = FutureTask<T>(runnable, null)
     val priorityTask = PriorityTask(taskId, task, futureTask)
 
-    val future = executorService.submit(priorityTask)
-    _activeTasks[descriptor] = future
+    _activeTasks[descriptor] = executorService.submit(priorityTask) as PriorityTask<*>
 
     return descriptor
   }
@@ -209,8 +210,8 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
 
   @Synchronized
   override fun cancel(taskDescriptor: TaskDescriptor) {
-    val future = _activeTasks[taskDescriptor] ?: return
-    future.cancel(true)
+    val priorityTask = _activeTasks[taskDescriptor] ?: return
+    priorityTask.cancel(true)
     _activeTasks.remove(taskDescriptor)
   }
 
