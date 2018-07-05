@@ -16,7 +16,8 @@ class AvailableIdeService(
 ) : BaseService("AvailableIdeService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
   override fun doServe() {
-    SendAvailableIdesTask(ideRepository, protocol)
+    val availableIdesTask = SendAvailableIdesTask(ideRepository, protocol)
+    taskManager.enqueue(availableIdesTask)
   }
 
 }
