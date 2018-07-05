@@ -3,8 +3,9 @@ package org.jetbrains.plugins.verifier.service.service.ide
 import com.jetbrains.pluginverifier.ide.AvailableIde
 
 /**
- * High-level protocol of communication between
- * the verifier service and the Marketplace.
+ * Protocol of communication with Marketplace
+ * that allows to send available IDE builds
+ * to schedule verifications.
  */
 interface AvailableIdeProtocol {
 
