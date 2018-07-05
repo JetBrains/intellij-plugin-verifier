@@ -199,7 +199,8 @@ class IdeManagerImpl : IdeManager() {
 
     val pathResolver = PluginXmlXIncludePathResolver(libFiles)
 
-    val platformDescriptorPath = IntelliJPlatformProduct.fromIdeVersion(ideVersion).platformPrefix + "Plugin.xml"
+    val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
+    val platformDescriptorPath = product.platformPrefix + "Plugin.xml"
     val descriptorPaths = listOf(PLUGIN_XML, platformDescriptorPath)
 
     for (libFile in libFiles) {
