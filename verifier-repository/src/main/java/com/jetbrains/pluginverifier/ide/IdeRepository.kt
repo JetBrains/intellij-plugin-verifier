@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.google.common.base.Suppliers
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
@@ -29,14 +30,17 @@ class IdeRepository(private val dataServicesUrl: String = DEFAULT_DATA_SERVICES_
         .create(ProductsConnector::class.java)
   }
 
+  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>({
+    val products = dataServiceConnector.getProducts().executeSuccessfully().body()
+    DataServicesIndexParser().parseAvailableIdes(products)
+  }, 1, TimeUnit.MINUTES)
+
+
   /**
    * Fetches available IDEs index from the data service.
    */
   @Throws(InterruptedException::class)
-  fun fetchIndex(): List<AvailableIde> {
-    val products = dataServiceConnector.getProducts().executeSuccessfully().body()
-    return DataServicesIndexParser().parseAvailableIdes(products)
-  }
+  fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
   /**
    * Returns [AvailableIde] for this [ideVersion] if it is still available.
