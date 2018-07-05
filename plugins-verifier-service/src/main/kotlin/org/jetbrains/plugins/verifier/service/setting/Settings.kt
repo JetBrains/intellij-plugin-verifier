@@ -13,7 +13,6 @@ enum class Settings(val key: String,
   APP_HOME_DIRECTORY("verifier.service.home.directory"),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
-  IDE_REPOSITORY_URL("verifier.service.ide.repository.url", { "https://www.jetbrains.com" }),
 
   PLUGINS_REPOSITORY_URL("verifier.service.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
 
