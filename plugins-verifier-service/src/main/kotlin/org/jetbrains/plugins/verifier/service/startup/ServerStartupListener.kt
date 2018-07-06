@@ -70,9 +70,8 @@ class ServerStartupListener : ServletContextListener {
     val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val authorizationData = AuthorizationData(
-        Settings.PLUGIN_REPOSITORY_VERIFIER_USERNAME.get(),
-        Settings.PLUGIN_REPOSITORY_VERIFIER_PASSWORD.get(),
-        Settings.SERVICE_ADMIN_PASSWORD.get()
+        Settings.SERVICE_ADMIN_PASSWORD.get(),
+        Settings.PLUGIN_REPOSITORY_AUTHORIZATION_TOKEN.get()
     )
 
     val jdkDescriptorsCache = JdkDescriptorsCache()

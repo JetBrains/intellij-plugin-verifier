@@ -5,7 +5,6 @@ import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.createByteArrayRequestBody
-import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -17,9 +16,7 @@ import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
+import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
 class DefaultVerifierServiceProtocol(
@@ -36,13 +33,11 @@ class DefaultVerifierServiceProtocol(
         .create(VerifierRetrofitConnector::class.java)
   }
 
-  private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)
-
-  private val passwordRequestBody = createStringRequestBody(authorizationData.pluginRepositoryPassword)
+  private val authorizationToken = "Bearer ${authorizationData.pluginRepositoryAuthorizationToken}"
 
   override fun requestScheduledVerifications(): List<ScheduledVerification> =
       retrofitConnector
-          .getScheduledVerifications(userNameRequestBody, passwordRequestBody)
+          .getScheduledVerifications(authorizationToken)
           .executeSuccessfully().body()
           .mapNotNull {
             val updateInfo = pluginRepository.getPluginInfoById(it.updateId)
@@ -58,8 +53,7 @@ class DefaultVerifierServiceProtocol(
   override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
     retrofitConnector.sendVerificationResult(
         createByteArrayRequestBody(verificationResult.prepareVerificationResponse(updateInfo).toByteArray()),
-        userNameRequestBody,
-        passwordRequestBody
+        authorizationToken
     ).executeSuccessfully()
   }
 
@@ -67,16 +61,15 @@ class DefaultVerifierServiceProtocol(
 
 private interface VerifierRetrofitConnector {
 
-  @POST("/verification/getScheduledVerifications")
-  @Multipart
-  fun getScheduledVerifications(@Part("userName") userName: RequestBody,
-                                @Part("password") password: RequestBody): Call<List<ScheduledVerificationJson>>
+  @GET("/verification/getScheduledVerifications")
+  fun getScheduledVerifications(@Header("Authorization") authorization: String): Call<List<ScheduledVerificationJson>>
 
   @POST("/verification/receiveVerificationResult")
   @Multipart
-  fun sendVerificationResult(@Part("verificationResult") verificationResult: RequestBody,
-                             @Part("userName") userName: RequestBody,
-                             @Part("password") password: RequestBody): Call<ResponseBody>
+  fun sendVerificationResult(
+      @Part("verificationResult") verificationResult: RequestBody,
+      @Header("Authorization") authorization: String
+  ): Call<ResponseBody>
 
 }
 

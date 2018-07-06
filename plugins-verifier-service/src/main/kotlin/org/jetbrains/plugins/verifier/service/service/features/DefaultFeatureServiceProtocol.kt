@@ -3,7 +3,6 @@ package org.jetbrains.plugins.verifier.service.service.features
 import com.google.gson.Gson
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.createJsonRequestBody
-import com.jetbrains.pluginverifier.network.createStringRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -14,23 +13,20 @@ import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
+import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
 private interface FeaturesRetrofitConnector {
 
-  @Multipart
-  @POST("/feature/getUpdatesToExtractFeatures")
-  fun getUpdatesToExtractFeatures(@Part("userName") userName: RequestBody,
-                                  @Part("password") password: RequestBody): Call<List<Int>>
+  @GET("/feature/getUpdatesToExtractFeatures")
+  fun getUpdatesToExtractFeatures(@Header("Authorization") authorization: String): Call<List<Int>>
 
   @Multipart
   @POST("/feature/receiveExtractedFeatures")
-  fun sendExtractedFeatures(@Part("extractedFeatures") extractedFeatures: RequestBody,
-                            @Part("userName") userName: RequestBody,
-                            @Part("password") password: RequestBody): Call<ResponseBody>
+  fun sendExtractedFeatures(
+      @Header("Authorization") authorization: String,
+      @Part("extractedFeatures") extractedFeatures: RequestBody
+  ): Call<ResponseBody>
 
 }
 
@@ -39,9 +35,7 @@ class DefaultFeatureServiceProtocol(
     private val pluginRepository: MarketplaceRepository
 ) : FeatureServiceProtocol {
 
-  private val userNameRequestBody = createStringRequestBody(authorizationData.pluginRepositoryUserName)
-
-  private val passwordRequestBody = createStringRequestBody(authorizationData.pluginRepositoryPassword)
+  private val authorizationToken = "Bearer ${authorizationData.pluginRepositoryAuthorizationToken}"
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
@@ -54,7 +48,7 @@ class DefaultFeatureServiceProtocol(
 
   override fun getUpdatesToExtract(): List<UpdateInfo> =
       retrofitConnector
-          .getUpdatesToExtractFeatures(userNameRequestBody, passwordRequestBody)
+          .getUpdatesToExtractFeatures(authorizationToken)
           .executeSuccessfully().body()
           .sortedDescending()
           .mapNotNull { pluginRepository.getPluginInfoById(it) }
@@ -63,9 +57,8 @@ class DefaultFeatureServiceProtocol(
   override fun sendExtractedFeatures(extractFeaturesResult: ExtractFeaturesTask.Result) {
     retrofitConnector
         .sendExtractedFeatures(
-            createJsonRequestBody(extractFeaturesResult.prepareFeaturesResponse()),
-            userNameRequestBody,
-            passwordRequestBody
+            authorizationToken,
+            createJsonRequestBody(extractFeaturesResult.prepareFeaturesResponse())
         ).executeSuccessfully()
   }
 }
