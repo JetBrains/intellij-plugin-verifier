@@ -18,7 +18,7 @@ class TaskManagerTest {
     TaskManagerImpl(4).use { tm ->
       val finish = AtomicBoolean()
 
-      val serviceTask: Task<Int> = object : Task<Int>("testTask") {
+      val serviceTask: Task<Int> = object : Task<Int>("testTask", "testTask") {
         override fun execute(progress: ProgressIndicator): Int {
           while (!finish.get()) {
           }
@@ -44,7 +44,7 @@ class TaskManagerTest {
       )
 
       assertEquals(1, tm.activeTasks.size)
-      val taskInfo = tm.activeTasks.first()
+      val taskInfo = tm.activeTasks.values.first().first()
 
       assertEquals(0.0, taskInfo.progress.fraction, 1e-5)
       finish.set(true)
@@ -81,7 +81,7 @@ class TaskManagerTest {
 
     val error = AtomicReference<String>()
 
-    class TestTask(val priority: Int) : Task<Int>("test"), Comparable<TestTask> {
+    class TestTask(val priority: Int) : Task<Int>("test", "test"), Comparable<TestTask> {
       override fun execute(progress: ProgressIndicator): Int {
         //Wait for the test to start.
         start.await()
@@ -124,7 +124,7 @@ class TaskManagerTest {
     val runTasks = synchronizedList(arrayListOf<Int>())
     val completedTasks = synchronizedList(arrayListOf<Int>())
 
-    class TestTask(val index: Int) : Task<Int>("test"), Comparable<TestTask> {
+    class TestTask(val index: Int) : Task<Int>("test", "test"), Comparable<TestTask> {
       override fun execute(progress: ProgressIndicator): Int {
         runTasks.add(index)
         while (!Thread.currentThread().isInterrupted) {
@@ -169,4 +169,59 @@ class TaskManagerTest {
     }
   }
 
+  /**
+   * Tests that the [TaskManager] executes tasks of different types
+   * in separate executors. It guarantees that no task will starve
+   * because some different tasks have greater priority.
+   */
+  @Test
+  fun `tasks of different types are executed in parallel`() {
+    class TaskFast : Task<Int>("task1", "task1") {
+      override fun execute(progress: ProgressIndicator) = 42
+    }
+
+    val start = AtomicBoolean()
+
+    class TaskLong : Task<Int>("task2", "task2") {
+      override fun execute(progress: ProgressIndicator): Int {
+        while (!start.get()) {
+        }
+        return 42
+      }
+    }
+
+    TaskManagerImpl(4).use { taskManager ->
+      /**
+       * Submit 16 tasks waiting for start.
+       */
+      for (i in 0 until 16) {
+        taskManager.enqueue(TaskLong())
+      }
+
+      val finishedTasks = synchronizedList(arrayListOf<Long>())
+      val taskIds = (0 until 4)
+          .map {
+            taskManager.enqueue(
+                TaskFast(),
+                onCompletion = { td -> finishedTasks.add(td.taskId) }
+            )
+          }.map { it.taskId }
+
+      val startTime = System.currentTimeMillis()
+      while (finishedTasks.size != 4 && System.currentTimeMillis() - startTime < 5000) {
+      }
+
+      try {
+        assertEquals(taskIds, finishedTasks)
+      } finally {
+        /**
+         * Start all long tasks and allow the task manager to exit.
+         */
+
+        //finally block is necessary here to guarantee that this
+        // line is executed in case the above assertion throws an exception.
+        start.set(true)
+      }
+    }
+  }
 }

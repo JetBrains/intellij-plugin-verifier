@@ -8,8 +8,10 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
 /**
  * [Task] responsible for deleting IDE build having the specified [IDE version] [ideVersion].
  */
-class DeleteIdeTask(private val ideFilesBank: IdeFilesBank,
-                    private val ideVersion: IdeVersion) : Task<Boolean>("DeleteIde #$ideVersion") {
+class DeleteIdeTask(
+    private val ideFilesBank: IdeFilesBank,
+    private val ideVersion: IdeVersion
+) : Task<Boolean>("DeleteIde #$ideVersion", "DeleteIde") {
 
   override fun execute(progress: ProgressIndicator) = ideFilesBank.deleteIde(ideVersion)
 

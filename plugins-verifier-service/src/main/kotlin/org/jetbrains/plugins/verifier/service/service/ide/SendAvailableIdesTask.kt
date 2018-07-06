@@ -11,7 +11,7 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
 class SendAvailableIdesTask(
     private val ideRepository: IdeRepository,
     private val protocol: AvailableIdeProtocol
-) : Task<Unit>("Send available IDEs to Marketplace") {
+) : Task<Unit>("Send available IDEs to Marketplace", "SendIdes") {
 
   override fun execute(progress: ProgressIndicator) {
     val availableIdes = ideRepository.fetchIndex()

@@ -9,8 +9,10 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
  * [Task] responsible for downloading IDE build having the specified [IDE version] [ideVersion]
  * from the [IDE Repository] [com.jetbrains.pluginverifier.ide.IdeRepository].
  */
-class DownloadIdeTask(private val ideFilesBank: IdeFilesBank,
-                      private val ideVersion: IdeVersion) : Task<Boolean>("Downloading IDE $ideVersion") {
+class DownloadIdeTask(
+    private val ideFilesBank: IdeFilesBank,
+    private val ideVersion: IdeVersion
+) : Task<Boolean>("Downloading IDE $ideVersion", "Download IDE") {
 
   override fun execute(progress: ProgressIndicator): Boolean {
     //initiates downloading of the IDE.

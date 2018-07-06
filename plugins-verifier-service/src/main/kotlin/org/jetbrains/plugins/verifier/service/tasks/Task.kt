@@ -1,9 +1,23 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
+typealias TaskType = String
+
 /**
  * Service task to be [execute]d.
  */
-abstract class Task<out T>(val presentableName: String) {
+abstract class Task<out T>(
+    /**
+     * Presentable name of the to be displayed
+     * to users.
+     */
+    val presentableName: String,
+
+    /**
+     * Type used to distinguish tasks
+     * and run independent tasks in parallel.
+     */
+    val taskType: TaskType
+) {
 
   /**
    * Executes the task and returns the result.

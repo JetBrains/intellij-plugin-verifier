@@ -4,24 +4,32 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.RunnableFuture
 
 /**
- * Wrapper over [FutureTask], which was enqueued for execution in an `ExecutorService`.
- * [PriorityTask] allows to change execution order based on the task's priority:
- * 1) Tasks of the same type can be compared via implementing [Comparable] interface.
- * 2) Tasks of different types will be compared based on [taskId]
+ * Wrapper over task enqueued for execution in `ExecutorService`
+ * that allows to change execution order based on the task's priority.
+ *
+ * [Task]s that implement [Comparable] will be executed in order of comparison.
+ * Other tasks will be executed in order of [TaskDescriptor.taskId].
+ *
+ * Withing one `ExecutorService` all [task]s must be of the same class.
  */
-class PriorityTask<V>(
-    val taskId: Long,
+internal class PriorityTask<V>(
+    val taskDescriptor: TaskDescriptor,
     val task: Task<V>,
     val runnableFuture: FutureTask<V>
 ) : RunnableFuture<V> by runnableFuture, Comparable<PriorityTask<*>> {
 
+  //Used by `PriorityBlockingQueue` supplied to `ExecutorService`.
   override fun compareTo(other: PriorityTask<*>): Int {
     val otherTask = other.task
-    if (task.javaClass == otherTask.javaClass && task is Comparable<*>) {
+    /**
+     * Assert that we don't try to compare tasks of different types.
+     */
+    require(task.javaClass == other.task.javaClass)
+    if (task is Comparable<*>) {
       @Suppress("UNCHECKED_CAST")
       return (task as Comparable<Task<*>>).compareTo(otherTask)
     }
-    return other.taskId.compareTo(taskId)
+    return taskDescriptor.taskId.compareTo(other.taskDescriptor.taskId)
   }
 
 }

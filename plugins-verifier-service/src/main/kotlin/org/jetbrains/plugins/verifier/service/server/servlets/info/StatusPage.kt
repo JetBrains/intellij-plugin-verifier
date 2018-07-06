@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server.servlets.info
 
+import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -123,43 +124,43 @@ class StatusPage(private val serverContext: ServerContext) {
         }
 
         val activeTasks = serverContext.taskManager.activeTasks
-        val runningTasks = activeTasks.filter { it.state == TaskDescriptor.State.RUNNING }
-        val waitingTasks = activeTasks.filter { it.state == TaskDescriptor.State.WAITING }
-
         val lastFinishedTasks = serverContext.taskManager.lastFinishedTasks
 
-        mapOf(
-            "Running tasks (${runningTasks.size} total)" to runningTasks.sortedByDescending { it.startTime },
-            "Pending tasks (${waitingTasks.size} total) (20 latest)" to waitingTasks.sortedByDescending { it.startTime }.take(20),
-            "Finished tasks (20 latest)" to lastFinishedTasks.sortedByDescending { it.startTime }.take(20)
-        ).forEach { title, tasks ->
-          h2 {
-            +title
-          }
-          table("width: 100%") {
-            tr {
-              th(style = "width: 5%") { +"ID" }
-              th(style = "width: 30%") { +"Task name" }
-              th(style = "width: 10%") { +"Start time" }
-              th(style = "width: 5%") { +"State" }
-              th(style = "width: 40%") { +"Message" }
-              th(style = "width: 5%") { +"Completion %" }
-              th(style = "width: 5%") { +"Total time (ms)" }
-            }
+        buildTaskTable("Finished tasks (20 latest)", lastFinishedTasks.sortedByDescending { it.endTime }.take(20))
 
-            tasks.forEach {
-              with(it) {
-                tr {
-                  td { +taskId.toString() }
-                  td { +presentableName }
-                  td { +DATE_FORMAT.format(startTime) }
-                  td { +state.toString() }
-                  td { +progress.text }
-                  td { +kotlin.String.format("%.2f", progress.fraction) }
-                  td { +elapsedTime.toMillis().toString() }
-                }
-              }
-            }
+        for ((taskType, tasks) in activeTasks) {
+          buildTaskTable("Running $taskType tasks", tasks.filter { it.state == TaskDescriptor.State.RUNNING })
+          buildTaskTable("Waiting $taskType tasks (20 latest)", tasks.filter { it.state == TaskDescriptor.State.WAITING }.take(20))
+        }
+      }
+    }
+  }
+
+  private fun HtmlBuilder.buildTaskTable(title: String, tasks: List<TaskDescriptor>) {
+    h2 {
+      +title
+    }
+    table("width: 100%") {
+      tr {
+        th(style = "width: 5%") { +"ID" }
+        th(style = "width: 30%") { +"Task name" }
+        th(style = "width: 10%") { +"Start time" }
+        th(style = "width: 5%") { +"State" }
+        th(style = "width: 40%") { +"Message" }
+        th(style = "width: 5%") { +"Completion %" }
+        th(style = "width: 5%") { +"Total time (ms)" }
+      }
+
+      tasks.forEach {
+        with(it) {
+          tr {
+            td { +taskId.toString() }
+            td { +presentableName }
+            td { +DATE_FORMAT.format(startTime) }
+            td { +state.toString() }
+            td { +progress.text }
+            td { +kotlin.String.format("%.2f", progress.fraction) }
+            td { +elapsedTime.toMillis().toString() }
           }
         }
       }

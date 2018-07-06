@@ -7,10 +7,12 @@ import java.io.Closeable
  */
 interface TaskManager : Closeable {
   /**
-   * Tasks with state either [TaskDescriptor.State.WAITING] or [TaskDescriptor.State.RUNNING]
-   * sorted by execution priority.
+   * Tasks that are currently waiting or running.
+   * They are grouped by [Task.taskType].
+   * Withing each type the tasks are sorted by execution priority:
+   * tasks with higher priority go first.
    */
-  val activeTasks: List<TaskDescriptor>
+  val activeTasks: Map<TaskType, List<TaskDescriptor>>
 
   /**
    * Tasks with state either [TaskDescriptor.State.SUCCESS] or [TaskDescriptor.State.ERROR]
@@ -38,17 +40,10 @@ interface TaskManager : Closeable {
    */
   fun <T> enqueue(
       task: Task<T>,
-      onSuccess: (T, TaskDescriptor) -> Unit,
-      onError: (Throwable, TaskDescriptor) -> Unit,
-      onCompletion: (TaskDescriptor) -> Unit
+      onSuccess: (T, TaskDescriptor) -> Unit = { _, _ -> },
+      onError: (Throwable, TaskDescriptor) -> Unit = { _, _ -> },
+      onCompletion: (TaskDescriptor) -> Unit = { }
   ): TaskDescriptor
-
-  /**
-   * Enqueues the task without registering the
-   * completion callbacks.
-   * To specify the callbacks use [enqueue] method instead.
-   */
-  fun <T> enqueue(task: Task<T>): TaskDescriptor
 
   /**
    * Cancels execution of the task with specified descriptor.

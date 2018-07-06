@@ -21,7 +21,7 @@ class ExtractFeaturesTask(
     val updateInfo: UpdateInfo,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val pluginDetailsCache: PluginDetailsCache
-) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo") {
+) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo", "ExtractFeatures") {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
