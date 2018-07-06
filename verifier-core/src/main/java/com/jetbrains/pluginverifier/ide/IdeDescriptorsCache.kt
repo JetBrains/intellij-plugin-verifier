@@ -15,8 +15,10 @@ import java.io.Closeable
  * This must be [closed] [close] on the application shutdown
  * to deallocate all the [IdeDescriptor]s.
  */
-class IdeDescriptorsCache(cacheSize: Int,
-                          private val ideFilesBank: IdeFilesBank) : Closeable {
+class IdeDescriptorsCache(
+    cacheSize: Int,
+    private val ideFilesBank: IdeFilesBank
+) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(
       cacheSize,
@@ -119,7 +121,7 @@ class IdeDescriptorsCache(cacheSize: Int,
       val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {
-        IdeDescriptor.create(ideLock.file, null, ideLock)
+        IdeDescriptor.create(ideLock.file, key, ideLock)
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
