@@ -73,9 +73,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
 
   override val activeTasks: List<TaskDescriptor>
     @Synchronized
-    get() = _activeTasks.entries
-        .sortedBy { it.value }
-        .map { it.key }
+    get() = _activeTasks.keys.sortedByDescending { it.taskId }
 
   override val lastFinishedTasks: Set<TaskDescriptor>
     @Synchronized
