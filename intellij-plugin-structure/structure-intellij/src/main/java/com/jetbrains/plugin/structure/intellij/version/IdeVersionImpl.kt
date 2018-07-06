@@ -12,34 +12,6 @@ class IdeVersionImpl(
     private val isSnapshot: Boolean = false
 ) : IdeVersion() {
 
-  override fun compareTo(other: IdeVersion): Int {
-    if (other !is IdeVersionImpl) {
-      if (baselineVersion != other.baselineVersion) {
-        return baselineVersion - other.baselineVersion
-      }
-      if (build != other.build) {
-        return build - other.build
-      }
-      if (isSnapshot != other.isSnapshot) {
-        return if (isSnapshot) 1 else -1
-      }
-      return 0
-    }
-
-    val c1 = components
-    val c2 = other.components
-
-    for (i in 0 until Math.min(c1.size, c2.size)) {
-      if (c1[i] == c2[i] && c1[i] == SNAPSHOT_VALUE) return 0
-      if (c1[i] == SNAPSHOT_VALUE) return 1
-      if (c2[i] == SNAPSHOT_VALUE) return -1
-
-      val result = c1[i] - c2[i]
-      if (result != 0) return result
-    }
-    return c1.size - c2.size
-  }
-
   override fun asString(includeProductCode: Boolean, includeSnapshotMarker: Boolean): String {
     val builder = StringBuilder()
 

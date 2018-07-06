@@ -118,4 +118,28 @@ public abstract class IdeVersion implements Comparable<IdeVersion>, Serializable
     }
     return false;
   }
+
+  @Override
+  final public int compareTo(@NotNull IdeVersion other) {
+    int[] c1 = getComponents();
+    int[] c2 = other.getComponents();
+
+    for (int i = 0; i < Math.min(c1.length, c2.length); i++) {
+      if (c1[i] == c2[i] && c1[i] == Integer.MAX_VALUE) {
+        return 0;
+      }
+      if (c1[i] == Integer.MAX_VALUE) {
+        return 1;
+      }
+      if (c2[i] == Integer.MAX_VALUE) {
+        return -1;
+      }
+      int result = Integer.compare(c1[i], c2[i]);
+      if (result != 0) {
+        return result;
+      }
+    }
+    return Integer.compare(c1.length, c2.length);
+  }
+
 }
