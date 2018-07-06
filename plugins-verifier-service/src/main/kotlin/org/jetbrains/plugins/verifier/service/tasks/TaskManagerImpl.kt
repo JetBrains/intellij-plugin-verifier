@@ -163,7 +163,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
         } catch (e: InterruptedException) {
           state = TaskDescriptor.State.CANCELLED
           progress.text = "Interrupted"
-          LOG.info("Task ${task.presentableName} was interrupted", e)
+          LOG.info("Task was interrupted: ${task.presentableName} ", e)
         } catch (e: Throwable) {
           state = TaskDescriptor.State.ERROR
           progress.text = "Finished with error: ${e.message}"

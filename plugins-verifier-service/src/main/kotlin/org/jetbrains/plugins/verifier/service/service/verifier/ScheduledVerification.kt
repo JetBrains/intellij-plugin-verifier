@@ -14,7 +14,7 @@ data class ScheduledVerification(
     val ideVersion: IdeVersion,
     val manually: Boolean = false
 ) {
-  override fun toString() = "$updateInfo against $ideVersion"
+  override fun toString() = "$ideVersion against $updateInfo"
 
   override fun equals(other: Any?) = other is ScheduledVerification &&
       updateInfo == other.updateInfo &&

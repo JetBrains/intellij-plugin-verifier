@@ -114,12 +114,12 @@ fun copyInputStreamToFileWithProgress(inputStream: InputStream,
                                       expectedSize: Long,
                                       destinationFile: File,
                                       progress: (Double) -> Unit) {
-  val bufferSize = 4 * 1024
-  val buffer = ByteArray(bufferSize)
+  val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
   progress(0.0)
   inputStream.use { input ->
     destinationFile.outputStream().buffered().use { output ->
+      checkIfInterrupted()
       var count: Long = 0
       while (true) {
         val n = input.read(buffer)

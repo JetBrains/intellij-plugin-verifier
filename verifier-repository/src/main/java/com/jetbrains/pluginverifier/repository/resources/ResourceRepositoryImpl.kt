@@ -10,6 +10,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.Instant
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.FutureTask
 
 /**
@@ -158,6 +160,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     statistics.remove(key)
   }
 
+  @Throws(InterruptedException::class)
   private fun getOrWait(key: K): ResourceRepositoryResult<R> {
     checkIfInterrupted()
     val (fetchTask, runInCurrentThread) = synchronized(this) {
@@ -189,7 +192,18 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     }
 
     try {
-      val provideResult = fetchTask.get()
+      val provideResult = try {
+        fetchTask.get() //propagate InterruptedException
+      } catch (ce: CancellationException) {
+        throw InterruptedException("Fetch task for $key has been cancelled")
+      } catch (e: ExecutionException) {
+        val cause = e.cause
+        if (cause != null) {
+          throw cause
+        } else {
+          throw RuntimeException("Failed to fetch result", e)
+        }
+      }
       return provideResult.registerLockIfProvided(key)
     } finally {
       synchronized(this) {

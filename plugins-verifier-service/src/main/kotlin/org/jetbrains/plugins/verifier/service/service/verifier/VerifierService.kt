@@ -145,7 +145,7 @@ class VerifierService(
       taskDescriptor: TaskDescriptor,
       scheduledVerification: ScheduledVerification
   ) {
-    logger.info("Verified $plugin against $verificationTarget: ${this}")
+    logger.info("Verified $scheduledVerification: $verificationVerdict")
     val decision = verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)
     if (decision == VerificationResultFilter.Result.Send) {
       try {
