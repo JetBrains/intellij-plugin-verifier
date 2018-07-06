@@ -140,7 +140,7 @@ class TaskManagerImpl(concurrency: Int) : TaskManager {
             progress.fraction = 1.0
           }
           state = TaskDescriptor.State.SUCCESS
-          progress.text = "Success: $result"
+          progress.text = "Success" + if (result != Unit) ": $result" else ""
           descriptor.successTask(result, callbacks)
         } catch (e: TaskCancelledException) {
           state = TaskDescriptor.State.CANCELLED
