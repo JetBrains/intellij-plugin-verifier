@@ -47,8 +47,9 @@ class DefaultVerifierServiceProtocol(
           .mapNotNull {
             val updateInfo = pluginRepository.getPluginInfoById(it.updateId)
             val ideVersion = IdeVersion.createIdeVersionIfValid(it.ideVersion)
+            val manually = it.manually
             if (updateInfo != null && ideVersion != null) {
-              ScheduledVerification(updateInfo, ideVersion)
+              ScheduledVerification(updateInfo, ideVersion, manually)
             } else {
               null
             }
@@ -81,5 +82,6 @@ private interface VerifierRetrofitConnector {
 
 private data class ScheduledVerificationJson(
     @SerializedName("updateId") val updateId: Int,
-    @SerializedName("ideVersion") val ideVersion: String
+    @SerializedName("ideVersion") val ideVersion: String,
+    @SerializedName("manually") val manually: Boolean
 )

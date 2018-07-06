@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
@@ -17,7 +16,6 @@ import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
@@ -30,19 +28,18 @@ import org.jetbrains.plugins.verifier.service.tasks.TaskCancelledException
  * using the [JDK] [jdkPath].
  */
 class VerifyPluginTask(
+    private val scheduledVerification: ScheduledVerification,
     private val verifierExecutor: VerifierExecutor,
-    private val updateInfo: UpdateInfo,
-    private val ideVersion: IdeVersion,
     private val jdkPath: JdkPath,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val pluginRepository: PluginRepository,
     private val problemsFilters: List<ProblemsFilter>
-) : Task<VerificationResult>("Check $ideVersion against $updateInfo"), Comparable<VerifyPluginTask> {
+) : Task<VerificationResult>("Check ${scheduledVerification.ideVersion} against ${scheduledVerification.updateInfo}"), Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): VerificationResult {
-    val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(ideVersion)
+    val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(scheduledVerification.ideVersion)
     return cacheEntry.use {
       when (cacheEntry) {
         is IdeDescriptorsCache.Result.Found -> {
@@ -51,10 +48,10 @@ class VerifyPluginTask(
           checkPluginWithIde(ideDescriptor, reportage)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
-          throw TaskCancelledException("IDE $ideVersion is not found: " + cacheEntry.reason)
+          throw TaskCancelledException("IDE ${scheduledVerification.ideVersion} is not found: " + cacheEntry.reason)
         }
         is IdeDescriptorsCache.Result.Failed -> {
-          throw TaskCancelledException("Failed to get $ideVersion: ${cacheEntry.reason}", cacheEntry.error)
+          throw TaskCancelledException("Failed to get ${scheduledVerification.ideVersion}: ${cacheEntry.reason}", cacheEntry.error)
         }
       }
     }
@@ -71,7 +68,7 @@ class VerifyPluginTask(
     )
 
     val tasks = listOf(PluginVerifier(
-        updateInfo,
+        scheduledVerification.updateInfo,
         reportage,
         problemsFilters,
         true,
@@ -115,11 +112,30 @@ class VerifyPluginTask(
       }
 
   /**
-   * Verify newer plugins first.
-   * This comparison result is used by [org.jetbrains.plugins.verifier.service.tasks.TaskManager]
+   * Comparison result is used by the task manager
    * to order tasks execution.
+   *
+   * 1) Newer plugins first.
+   * 2) Manually scheduled verifications first.
    */
-  override fun compareTo(other: VerifyPluginTask) =
-      Integer.compare(other.updateInfo.updateId, updateInfo.updateId)
+  override fun compareTo(other: VerifyPluginTask): Int {
+    val updateIdCmp = Integer.compare(
+        other.scheduledVerification.updateInfo.updateId,
+        scheduledVerification.updateInfo.updateId
+    )
+    if (scheduledVerification.manually && other.scheduledVerification.manually) {
+      return updateIdCmp
+    }
+    /**
+     * Manually scheduled verification has priority.
+     */
+    if (scheduledVerification.manually) {
+      return -1
+    }
+    if (other.scheduledVerification.manually) {
+      return 1
+    }
+    return updateIdCmp
+  }
 
 }

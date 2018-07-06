@@ -95,9 +95,8 @@ class VerifierService(
     val ignoreProblemsFilters = listOf(ignoredProblemsFilter, documentedProblemsFilterSupplier.get())
 
     val task = VerifyPluginTask(
+        scheduledVerification,
         verifierExecutor,
-        scheduledVerification.updateInfo,
-        scheduledVerification.ideVersion,
         jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
