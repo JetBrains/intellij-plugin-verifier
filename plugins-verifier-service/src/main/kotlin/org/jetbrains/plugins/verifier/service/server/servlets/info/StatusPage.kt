@@ -130,7 +130,7 @@ class StatusPage(private val serverContext: ServerContext) {
 
         for ((taskType, tasks) in activeTasks) {
           buildTaskTable("Running $taskType tasks", tasks.filter { it.state == TaskDescriptor.State.RUNNING })
-          buildTaskTable("Waiting $taskType tasks (20 latest)", tasks.filter { it.state == TaskDescriptor.State.WAITING }.take(20))
+          buildTaskTable("Waiting $taskType tasks (${tasks.size} total) (20 latest shown)", tasks.filter { it.state == TaskDescriptor.State.WAITING }.take(20))
         }
       }
     }
