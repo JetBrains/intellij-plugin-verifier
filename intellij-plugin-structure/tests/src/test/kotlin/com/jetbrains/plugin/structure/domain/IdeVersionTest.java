@@ -208,12 +208,19 @@ public class IdeVersionTest {
   }
 
   @Test
+  public void compareIdeVersionsWithDifferentProductCodes() {
+    assertTrue(version("IU-1.1").compareTo(version("IC-181.1")) > 0);
+    assertTrue(version("IU-181.1").compareTo(version("IC-181.1")) > 0);
+    assertTrue(version("IU-183.1").compareTo(version("IC-181.1")) > 0);
+  }
+
+  @Test
   public void snapshotDomination() {
     assertTrue(version("90.SNAPSHOT").compareTo(version("90.12345")) > 0);
-    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("RM-90.12345")) > 0);
-    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("RM-100.12345")) < 0);
-    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("RM-100.SNAPSHOT")) < 0);
-    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("RM-90.SNAPSHOT")) == 0);
+    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("IU-90.12345")) > 0);
+    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("IU-100.12345")) < 0);
+    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("IU-100.SNAPSHOT")) < 0);
+    assertTrue(version("IU-90.SNAPSHOT").compareTo(version("IU-90.SNAPSHOT")) == 0);
 
     assertTrue(version("145.SNAPSHOT").compareTo(version("145.1")) > 0);
     assertTrue(version("145.1").compareTo(version("145.SNAPSHOT")) < 0);
