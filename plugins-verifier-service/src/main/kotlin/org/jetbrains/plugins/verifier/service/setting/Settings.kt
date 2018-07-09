@@ -22,6 +22,11 @@ enum class Settings(val key: String,
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
   ENABLE_AVAILABLE_IDE_SERVICE("verifier.service.enable.available.ide.service", { "false" }),
 
+  /**
+   * IDE build which classes are used to extract plugins' features.
+   */
+  FEATURE_EXTRACTOR_IDE_BUILD("verifier.service.feature.extractor.ide.build", { "IU-181.5281.24" }),
+
   PLUGIN_REPOSITORY_AUTHORIZATION_TOKEN("verifier.service.authorization.token", encrypted = true),
 
   TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "8" }),

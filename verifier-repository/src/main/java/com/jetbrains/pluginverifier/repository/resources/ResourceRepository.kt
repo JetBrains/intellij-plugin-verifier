@@ -110,17 +110,6 @@ interface ResourceRepository<R, K> {
   fun getAvailableResources(): List<AvailableResource<R, K>>
 
   /**
-   * Locks the repository for the time of [block] invocation
-   * so that the repository's state cannot be changed by other threads.
-   *
-   * This may be useful in a concurrent environment when
-   * it is necessary to perform the operations atomically:
-   * for example, a thread could invoke [getAllExistingKeys]
-   * and then [get] several resources.
-   */
-  fun <R> lockAndExecute(block: () -> R): R
-
-  /**
    * Perform the cleanup procedure that frees the resources
    * selected by the implementation of this interface.
    */

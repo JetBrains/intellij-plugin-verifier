@@ -71,8 +71,6 @@ class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
         }
       }
 
-  fun <R> lockAndExecute(block: () -> R) = resourceRepository.lockAndExecute(block)
-
   fun cleanup() {
     resourceRepository.cleanup()
   }

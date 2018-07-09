@@ -31,8 +31,6 @@ class IdeFilesBank(
       .addInitialFilesFrom(bankDirectory) { IdeFileNameMapper.getIdeVersionByFile(it) }
       .build()
 
-  fun <R> lockAndAccess(block: () -> R) = ideFilesRepository.lockAndExecute(block)
-
   fun getAvailableIdeVersions(): Set<IdeVersion> =
       ideFilesRepository.getAllExistingKeys()
 

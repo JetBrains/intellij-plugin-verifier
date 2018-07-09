@@ -4,15 +4,18 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
+import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.slf4j.LoggerFactory
+import sun.plugin.dom.exception.InvalidStateException
 
 /**
  * [Task] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
@@ -26,6 +29,8 @@ class ExtractFeaturesTask(
   companion object {
     private val LOG = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
   }
+
+  private val featureExtractorIdeVersion = IdeVersion.createIdeVersion(Settings.FEATURE_EXTRACTOR_IDE_BUILD.get())
 
   /**
    * Result of the [feature extractor service] [FeatureExtractorService] task.
@@ -46,18 +51,19 @@ class ExtractFeaturesTask(
       EXTRACTED_PARTIALLY
     }
 
-    fun presentableText() = when {
+    override fun toString() = when {
       failedToDownloadReason != null -> "Plugin $updateInfo couldn't be downloaded: $failedToDownloadReason"
       notFoundReason != null -> "Plugin $updateInfo is not found: $notFoundReason"
       invalidPluginReason != null -> "Plugin $updateInfo is invalid: $invalidPluginReason"
       else -> "For plugin $updateInfo there " + "is".pluralize(features.size) + " " + "feature".pluralizeWithNumber(features.size) + " extracted: $resultType"
     }
-
-    override fun toString() = presentableText()
   }
 
   override fun execute(progress: ProgressIndicator): Result {
-    return getIde().use {
+    return ideDescriptorsCache.getIdeDescriptorCacheEntry(featureExtractorIdeVersion).use {
+      if (it !is IdeDescriptorsCache.Result.Found) {
+        throw InvalidStateException("IDE $featureExtractorIdeVersion cannot be found")
+      }
       val ideDescriptor = it.ideDescriptor
       pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
         with(it) {
@@ -99,15 +105,5 @@ class ExtractFeaturesTask(
     }
     return Result(updateInfo, resultType, features = extractorResult.features)
   }
-
-  /**
-   * Selects an IDE used to extract features of the [updateInfo].
-   */
-  private fun getIde() =
-      ideDescriptorsCache.getIdeDescriptor { availableIdes ->
-        availableIdes.find { updateInfo.isCompatibleWith(it) }
-            ?: availableIdes.firstOrNull()
-            ?: throw IllegalStateException("There are no IDEs on the server available")
-      }
 
 }

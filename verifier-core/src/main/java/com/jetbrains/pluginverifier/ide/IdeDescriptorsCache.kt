@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -17,7 +16,7 @@ import java.io.Closeable
  */
 class IdeDescriptorsCache(
     cacheSize: Int,
-    private val ideFilesBank: IdeFilesBank
+    ideFilesBank: IdeFilesBank
 ) : Closeable {
 
   private val resourceCache = createSizeLimitedResourceCache(
@@ -26,41 +25,6 @@ class IdeDescriptorsCache(
       { it.close() },
       "IdeDescriptorsCache"
   )
-
-  /**
-   * Atomically [selects] [selector] an IDE from a set of [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
-   * and registers an entry for the [IdeDescriptor].
-   * The cache's state is not modified until this method returns.
-   */
-  fun getIdeDescriptor(selector: (Set<IdeVersion>) -> IdeVersion): Result.Found =
-      getIdeDescriptors {
-        listOf(selector(it))
-      }.single()
-
-  /**
-   * Atomically [selects] [versionsSelector] several IDEs from a set of all [available] [IdeFilesBank.getAvailableIdeVersions] IDEs
-   * and registers the [ResourceCacheEntry]s for the corresponding [IdeDescriptor]s.
-   * The cache's state is not modified until this method returns.
-   */
-  private fun getIdeDescriptors(versionsSelector: (Set<IdeVersion>) -> List<IdeVersion>): List<Result.Found> {
-    val result = arrayListOf<Result.Found>()
-    try {
-      /**
-       * Lock the [ideFilesBank] to guarantee that the available IDEs will not be removed
-       * until the corresponding [ResourceCacheEntry]s are registered for them.
-       */
-      ideFilesBank.lockAndAccess {
-        val selectedVersions = versionsSelector(ideFilesBank.getAvailableIdeVersions())
-        selectedVersions.mapNotNullTo(result) {
-          getIdeDescriptorCacheEntry(it) as? Result.Found
-        }
-      }
-    } catch (e: Throwable) {
-      result.forEach { it.closeLogged() }
-      throw e
-    }
-    return result
-  }
 
   /**
    * Atomically creates an [IdeDescriptor] for IDE [ideVersion]

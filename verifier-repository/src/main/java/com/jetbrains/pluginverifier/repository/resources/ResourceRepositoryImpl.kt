@@ -68,9 +68,6 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
   }
 
   @Synchronized
-  override fun <R> lockAndExecute(block: () -> R): R = block()
-
-  @Synchronized
   override fun getAllExistingKeys() = resourcesRegistrar.getAllKeys().toSet()
 
   @Synchronized
@@ -229,6 +226,7 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }
 
+  @Synchronized
   override fun getAvailableResources() =
       resourcesRegistrar.resources.map { (key, resourceInfo) ->
         AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
