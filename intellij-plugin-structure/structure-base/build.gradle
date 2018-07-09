@@ -7,6 +7,8 @@ dependencies {
   compile("org.codehaus.plexus:plexus-archiver:3.6.0") {
     exclude group: "junit"
   }
-  compile 'org.codehaus.plexus:plexus-container-default:1.7.1'
+  compile("org.codehaus.plexus:plexus-container-default:1.7.1") {
+    exclude group: "com.google.collections"
+  }
 
 }
