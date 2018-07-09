@@ -1,11 +1,8 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.google.common.base.Suppliers
-import com.jetbrains.intellij.feature.extractor.core.LOG
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
-import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
@@ -48,18 +45,6 @@ class VerifierService(
 
   private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
-  /**
-   * Supplies and caches for 10 minutes [DocumentedProblemsFilter].
-   */
-  private val documentedProblemsFilterSupplier = Suppliers.memoizeWithExpiration({
-    try {
-      DocumentedProblemsFilter.createFilter()
-    } catch (e: Exception) {
-      LOG.info("Failed to parse documented problems. Consider there are no documented problems.", e)
-      DocumentedProblemsFilter(emptyList())
-    }
-  }, 10, TimeUnit.MINUTES)
-
   override fun doServe() {
     val allScheduledVerifications = try {
       verifierServiceProtocol.requestScheduledVerifications()
@@ -92,7 +77,7 @@ class VerifierService(
 
     val ignoreConditions = serviceDAO.ignoreConditions.toList()
     val ignoredProblemsFilter = IgnoredProblemsFilter(ignoreConditions)
-    val ignoreProblemsFilters = listOf(ignoredProblemsFilter, documentedProblemsFilterSupplier.get())
+    val ignoreProblemsFilters = listOf(ignoredProblemsFilter)
 
     val task = VerifyPluginTask(
         scheduledVerification,

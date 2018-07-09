@@ -33,7 +33,7 @@ class AllIgnoredProblemsReporter(private val verificationReportsDirectory: Path)
     for ((verificationTarget, collectingReporter) in targetToProblemsCollector) {
       val allIgnoredProblems = collectingReporter.getReported()
       if (allIgnoredProblems.isNotEmpty()) {
-        val ignoredProblemsText = formatIgnoredProblems(verificationTarget, allIgnoredProblems)
+        val ignoredProblemsText = formatManyIgnoredProblems(verificationTarget, allIgnoredProblems)
         val ignoredProblemsFile = verificationTarget
             .getReportDirectory(verificationReportsDirectory)
             .resolve("all-ignored-problems.txt")
@@ -43,22 +43,27 @@ class AllIgnoredProblemsReporter(private val verificationReportsDirectory: Path)
     }
   }
 
-  private fun formatIgnoredProblems(verificationTarget: VerificationTarget, allIdeIgnoredProblems: List<ProblemIgnoredEvent>): String =
-      buildString {
-        appendln("The following problems against $verificationTarget were ignored:")
-        for ((reason, allWithReason) in allIdeIgnoredProblems.groupBy { it.reason }) {
-          appendln("because $reason:")
-          for ((shortDescription, allWithShortDescription) in allWithReason.groupBy { it.problem.shortDescription }) {
-            appendln("    $shortDescription:")
-            for ((plugin, allWithPlugin) in allWithShortDescription.groupBy { it.plugin }) {
-              appendln("      $plugin:")
-              for (ignoredEvent in allWithPlugin) {
-                appendln("        ${ignoredEvent.problem.fullDescription}")
-              }
+  companion object {
+    fun formatManyIgnoredProblems(
+        verificationTarget: VerificationTarget,
+        allIgnoredProblems: List<ProblemIgnoredEvent>
+    ) = buildString {
+      appendln("The following problems against $verificationTarget were ignored:")
+      for ((reason, allWithReason) in allIgnoredProblems.groupBy { it.reason }) {
+        appendln("because $reason:")
+        for ((shortDescription, allWithShortDescription) in allWithReason.groupBy { it.problem.shortDescription }) {
+          appendln("    $shortDescription:")
+          for ((plugin, allWithPlugin) in allWithShortDescription.groupBy { it.plugin }) {
+            appendln("      $plugin:")
+            for (ignoredEvent in allWithPlugin) {
+              appendln("        ${ignoredEvent.problem.fullDescription}")
             }
-            appendln()
           }
+          appendln()
         }
       }
+    }
+  }
+
 
 }

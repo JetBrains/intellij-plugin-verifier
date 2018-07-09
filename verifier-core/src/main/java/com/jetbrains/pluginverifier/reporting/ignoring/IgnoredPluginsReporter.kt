@@ -8,7 +8,7 @@ import java.nio.file.Path
 
 /**
  * Collects all [ProblemIgnoredEvent] and saves them
- * to `<verification-home>/all-ignored-plugins.txt` file.
+ * to `<verification-home>/<verification-target>/all-ignored-plugins.txt` file.
  */
 class IgnoredPluginsReporter(private val verificationReportsDirectory: Path) : Reporter<PluginIgnoredEvent> {
 

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.AllIgnoredProblemsReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredProblemsReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.reporting.verification.ReportersProvider
@@ -65,7 +66,7 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
         createPluginStructureErrorsReporters(pluginVerificationDirectory),
         createProblemReporters(pluginVerificationDirectory),
         createDependencyGraphReporters(pluginVerificationDirectory),
-        createIgnoredProblemReporters(pluginVerificationDirectory),
+        createIgnoredProblemReporters(pluginVerificationDirectory, verificationTarget),
         createDeprecatedReporters(pluginVerificationDirectory),
         createExceptionReporters(pluginVerificationDirectory)
     )
@@ -134,11 +135,13 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
         add(FileReporter(pluginVerificationDirectory.resolve("verification-verdict.txt")) { it.toString() })
       }
 
-  private fun createIgnoredProblemReporters(pluginVerificationDirectory: Path) =
-      buildList<Reporter<ProblemIgnoredEvent>> {
-        add(AllIgnoredProblemsReporter(verificationReportsDirectory))
-        add(FileReporter(pluginVerificationDirectory.resolve("ignored-problems.txt")))
-      }
+  private fun createIgnoredProblemReporters(
+      pluginVerificationDirectory: Path,
+      verificationTarget: VerificationTarget
+  ) = buildList<Reporter<ProblemIgnoredEvent>> {
+    add(AllIgnoredProblemsReporter(verificationReportsDirectory))
+    add(IgnoredProblemsReporter(pluginVerificationDirectory, verificationTarget))
+  }
 
   private fun createMessageReporters(pluginVerificationDirectory: Path) =
       buildList<Reporter<String>> {
