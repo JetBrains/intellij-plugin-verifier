@@ -4,7 +4,9 @@ dependencies {
   compile group: 'commons-io', name: 'commons-io', version: '2.5'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
 
-  compile("org.codehaus.plexus:plexus-archiver:2.3") {
+  compile("org.codehaus.plexus:plexus-archiver:3.6.0") {
     exclude group: "junit"
   }
+  compile 'org.codehaus.plexus:plexus-container-default:1.7.1'
+
 }

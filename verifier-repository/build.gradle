@@ -6,6 +6,7 @@ dependencies {
   compile 'com.google.code.gson:gson:2.7'
 
   compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+  compile group: 'org.apache.commons', name: 'commons-compress', version: '1.17'
 
   compile group: 'org.jetbrains.intellij.plugins', name: 'structure-intellij-classes', version: intellijStructureVersion
   compile group: 'org.jetbrains.intellij.plugins', name: 'structure-ide', version: intellijStructureVersion

@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.base.utils.extractTo
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.extractTo
 import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -27,34 +27,34 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
       return DownloadResult.FailedToDownload("Failed to find IDE $key ", e)
     } ?: return DownloadResult.NotFound("IDE $key is not available")
 
-    return downloadIde(availableIde, key, tempDirectory)
+    return try {
+      downloadIde(availableIde, key, tempDirectory)
+    } catch (ie: InterruptedException) {
+      throw ie
+    } catch (e: Exception) {
+      DownloadResult.FailedToDownload("Unable to download $key", e)
+    }
   }
 
   private fun downloadIde(
       availableIde: AvailableIde,
       ideVersion: IdeVersion,
       tempDirectory: Path
-  ) = try {
-    with(urlDownloader.download(availableIde, tempDirectory)) {
-      when (this) {
-        is DownloadResult.Downloaded -> {
-          try {
-            extractIdeToTempDir(downloadedFileOrDirectory, tempDirectory, ideVersion)
-          } finally {
-            downloadedFileOrDirectory.deleteLogged()
-          }
+  ) = with(urlDownloader.download(availableIde, tempDirectory)) {
+    when (this) {
+      is DownloadResult.Downloaded -> {
+        try {
+          extractIdeToTempDir(downloadedFileOrDirectory, tempDirectory)
+        } finally {
+          downloadedFileOrDirectory.deleteLogged()
         }
-        is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found in $ideRepository: $reason")
-        is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
       }
+      is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found in $ideRepository: $reason")
+      is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
     }
-  } catch (ie: InterruptedException) {
-    throw ie
-  } catch (e: Exception) {
-    DownloadResult.FailedToDownload("Unable to download $ideVersion", e)
   }
 
-  private fun extractIdeToTempDir(archivedIde: Path, tempDirectory: Path, ideVersion: IdeVersion): DownloadResult {
+  private fun extractIdeToTempDir(archivedIde: Path, tempDirectory: Path): DownloadResult {
     val destinationDir = Files.createTempDirectory(tempDirectory, "")
     return try {
       archivedIde.toFile().extractTo(destinationDir.toFile())
@@ -65,12 +65,6 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
        */
       stripTopLevelDirectory(destinationDir)
       DownloadResult.Downloaded(destinationDir, "", true)
-    } catch (ie: InterruptedException) {
-      destinationDir.deleteLogged()
-      throw ie
-    } catch (e: Exception) {
-      destinationDir.deleteLogged()
-      DownloadResult.FailedToDownload("Unable to extract zip file of $ideVersion", e)
     } catch (e: Throwable) {
       destinationDir.deleteLogged()
       throw e

@@ -7,7 +7,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
-import com.jetbrains.plugin.structure.base.utils.ZipUtil
+import com.jetbrains.plugin.structure.base.utils.archiveDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -343,11 +343,11 @@ class InvalidPluginsTest {
 
         val oneMetaInf = temporaryFolder.newFolder("one$testNumber", "META-INF")
         File(oneMetaInf, "plugin.xml").writeText(firstDescriptor)
-        ZipUtil.archiveDirectory(oneMetaInf, File(lib, "one.jar"))
+        archiveDirectory(oneMetaInf, File(lib, "one.jar"))
 
         val twoMetaInf = temporaryFolder.newFolder("two$testNumber", "META-INF")
         File(twoMetaInf, "plugin.xml").writeText(secondDescriptor)
-        ZipUtil.archiveDirectory(twoMetaInf, File(lib, "two.jar"))
+        archiveDirectory(twoMetaInf, File(lib, "two.jar"))
 
         assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInLibDirectory("one.jar", "two.jar")))
       }

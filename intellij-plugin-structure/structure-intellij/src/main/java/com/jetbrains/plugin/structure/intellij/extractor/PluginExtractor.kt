@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.ZipUtil
+import com.jetbrains.plugin.structure.base.utils.extractTo
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
@@ -21,7 +21,7 @@ object PluginExtractor {
     val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_${pluginZip.nameWithoutExtension}_").toFile()
 
     try {
-      ZipUtil.extractZip(pluginZip, extractedPlugin)
+      pluginZip.extractTo(extractedPlugin)
     } catch (e: Throwable) {
       FileUtils.deleteQuietly(extractedPlugin)
       throw e
