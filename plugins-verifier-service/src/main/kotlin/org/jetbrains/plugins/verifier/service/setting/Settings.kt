@@ -20,6 +20,12 @@ enum class Settings(val key: String,
 
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
+
+  /**
+   * Specifies how often should the verifier service poll the verification queue from the Plugin Repository.
+   */
+  VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS("verifier.service.scheduler.period.seconds", { "10" }),
+
   ENABLE_AVAILABLE_IDE_SERVICE("verifier.service.enable.available.ide.service", { "false" }),
 
   /**

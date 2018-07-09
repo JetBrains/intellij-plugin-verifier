@@ -37,7 +37,7 @@ class VerifierService(
     private val verificationResultsFilter: VerificationResultFilter,
     private val pluginRepository: PluginRepository,
     private val serviceDAO: ServiceDAO
-) : BaseService("VerifierService", 0, 1, TimeUnit.MINUTES, taskManager) {
+) : BaseService("VerifierService", 0, Settings.VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS.getAsLong(), TimeUnit.SECONDS, taskManager) {
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
 
