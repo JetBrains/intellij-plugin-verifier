@@ -39,10 +39,8 @@ class ClassFilesResolver(private val root: File) : Resolver() {
   @Throws(IOException::class)
   override fun findClass(className: String): ClassNode? {
     val file = nameToClassFile[className] ?: return null
-    return readClassNode(file)
+    return AsmUtil.readClassFromFile(className, file)
   }
-
-  private fun readClassNode(classFile: File) = AsmUtil.readClassFromFile(classFile)
 
   override fun getClassLocation(className: String): Resolver? = if (containsClass(className)) {
     this
@@ -71,11 +69,15 @@ class ClassFilesResolver(private val root: File) : Resolver() {
 
   override fun close() = Unit
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
-      nameToClassFile.values
-          .asSequence()
-          .map { readClassNode(it) }
-          .all { processor(it) }
+  override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
+    for ((className, classFile) in nameToClassFile) {
+      val classNode = AsmUtil.readClassFromFile(className, classFile)
+      if (!processor(classNode)) {
+        return false
+      }
+    }
+    return true
+  }
 
   override fun toString() = root.canonicalPath!!
 }

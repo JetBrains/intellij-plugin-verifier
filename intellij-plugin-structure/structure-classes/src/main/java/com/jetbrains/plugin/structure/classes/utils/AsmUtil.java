@@ -1,9 +1,7 @@
 package com.jetbrains.plugin.structure.classes.utils;
 
-import com.google.common.io.Files;
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
@@ -32,9 +30,7 @@ public class AsmUtil {
 
   @NotNull
   public static String readClassName(@NotNull File classFile) throws IOException {
-    InputStream is = null;
-    try {
-      is = FileUtils.openInputStream(classFile);
+    try (InputStream is = FileUtils.openInputStream(classFile)) {
       ClassReader classReader = new ClassReader(is);
       String className = classReader.getClassName();
       if (className == null) {
@@ -43,21 +39,13 @@ public class AsmUtil {
       return className;
     } catch (RuntimeException e) {
       throw new InvalidClassFileException(classFile.getName(), getAsmErrorMessage(e));
-    } finally {
-      IOUtils.closeQuietly(is);
     }
-
   }
 
   @NotNull
-  public static ClassNode readClassFromFile(@NotNull File classFile) throws IOException {
-    InputStream is = null;
-    try {
-      is = FileUtils.openInputStream(classFile);
-      String className = Files.getNameWithoutExtension(classFile.getName());
+  public static ClassNode readClassFromFile(@NotNull String className, @NotNull File classFile) throws IOException {
+    try (InputStream is = FileUtils.openInputStream(classFile)) {
       return readClassNode(className, is);
-    } finally {
-      IOUtils.closeQuietly(is);
     }
   }
 }
