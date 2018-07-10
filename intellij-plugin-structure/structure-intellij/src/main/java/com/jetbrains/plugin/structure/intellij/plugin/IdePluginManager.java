@@ -272,7 +272,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
-      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(zipPlugin.getName()), zipPlugin);
+      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(), zipPlugin);
     }
     if (extractorResult instanceof ExtractorResult.Success) {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {

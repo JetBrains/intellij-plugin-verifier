@@ -13,11 +13,11 @@ open class IncorrectPluginFile(
     get() = "Incorrect plugin file $fileName. Must be a $expectedFileType"
 }
 
-class UnableToExtractZip(private val fileName: String) : PluginProblem() {
+class UnableToExtractZip : PluginProblem() {
 
   override val level
     get() = Level.ERROR
 
   override val message
-    get() = "Unable to extract plugin zip file $fileName"
+    get() = "Unable to extract plugin zip file"
 }

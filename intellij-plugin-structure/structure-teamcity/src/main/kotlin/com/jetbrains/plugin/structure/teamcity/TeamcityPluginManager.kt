@@ -42,7 +42,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     loadDescriptorFromZip(ZipFile(pluginFile))
   } catch (e: IOException) {
     LOG.info("Unable to extract plugin zip: $pluginFile", e)
-    PluginCreationFail(UnableToExtractZip(pluginFile.name))
+    PluginCreationFail(UnableToExtractZip())
   }
 
   private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
