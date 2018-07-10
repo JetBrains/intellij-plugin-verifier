@@ -128,7 +128,14 @@ class StatusPage(private val serverContext: ServerContext) {
 
         buildTaskTable("Finished tasks (20 latest)", lastFinishedTasks.sortedByDescending { it.endTime }.take(20))
 
-        for ((taskType, tasks) in activeTasks) {
+        /**
+         * Task types that must have even empty tables displayed.
+         */
+        val nonEmptyTablesTaskTypes = listOf("VerifyPlugin", "ExtractFeatures", "SendIdes")
+        val allTaskTypes = activeTasks.keys + nonEmptyTablesTaskTypes
+
+        for (taskType in allTaskTypes) {
+          val tasks = activeTasks[taskType].orEmpty()
           buildTaskTable("Running $taskType tasks", tasks.filter { it.state == TaskDescriptor.State.RUNNING })
           buildTaskTable("Waiting $taskType tasks (${tasks.size} total) (20 latest shown)", tasks.filter { it.state == TaskDescriptor.State.WAITING }.take(20))
         }
