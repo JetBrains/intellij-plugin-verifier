@@ -59,7 +59,7 @@ public class CacheResolver extends Resolver {
       if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
       }
-      throw new IOException(e);
+      throw new IOException(cause != null ? cause : e);
     }
   }
 
