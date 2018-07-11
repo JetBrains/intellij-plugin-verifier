@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.createPluginResolver
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
 import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
@@ -26,11 +27,13 @@ import java.io.Closeable
 /**
  * [ClsResolverProvider] that provides the [DefaultClsResolver].
  */
-class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
-                                 private val jdkDescriptorsCache: JdkDescriptorsCache,
-                                 private val jdkPath: JdkPath,
-                                 private val ideDescriptor: IdeDescriptor,
-                                 private val externalClassesPackageFilter: PackageFilter) : ClsResolverProvider {
+class DefaultClsResolverProvider(
+    private val dependencyFinder: DependencyFinder,
+    private val jdkDescriptorsCache: JdkDescriptorsCache,
+    private val jdkPath: JdkPath,
+    private val ideDescriptor: IdeDescriptor,
+    private val externalClassesPackageFilter: PackageFilter
+) : ClsResolverProvider {
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
@@ -40,7 +43,9 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     return try {
-      buildDependenciesGraph(checkedPluginDetails.idePlugin, resultHolder, depGraph)
+      val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
+      resultHolder.dependenciesGraph = apiGraph
+      resultHolder.addCycleWarningIfExists(apiGraph)
       provide(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
@@ -76,15 +81,11 @@ class DefaultClsResolverProvider(private val dependencyFinder: DependencyFinder,
 
   private fun buildDependenciesGraph(
       plugin: IdePlugin,
-      resultHolder: ResultHolder,
       depGraph: DirectedGraph<DepVertex, DepEdge>
-  ) {
+  ): DependenciesGraph {
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     DepGraphBuilder(dependencyFinder).buildDependenciesGraph(depGraph, start)
-
-    val apiGraph = DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(depGraph, start)
-    resultHolder.dependenciesGraph = apiGraph
-    resultHolder.addCycleWarningIfExists(apiGraph)
+    return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(depGraph, start)
   }
 
   private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {

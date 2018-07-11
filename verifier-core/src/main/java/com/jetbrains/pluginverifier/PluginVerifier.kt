@@ -144,7 +144,7 @@ class PluginVerifier(
      * Select classes for verification
      */
     val checkClasses = try {
-      pluginDetails.pluginClassesLocations.getClassesForCheck()
+      selectClassForCheck(pluginDetails)
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
@@ -169,6 +169,11 @@ class PluginVerifier(
     }
   }
 
+  private fun selectClassForCheck(pluginDetails: PluginDetails) =
+      classesSelectors.flatMapTo(hashSetOf()) {
+        it.getClassesForCheck(pluginDetails.pluginClassesLocations)
+      }
+
 }
 
 /**
@@ -176,9 +181,6 @@ class PluginVerifier(
  * class loader and of classes that should be verified.
  */
 private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
-
-fun IdePluginClassesLocations.getClassesForCheck() =
-    classesSelectors.flatMapTo(hashSetOf()) { it.getClassesForCheck(this) }
 
 fun IdePluginClassesLocations.createPluginResolver() =
     UnionResolver.create(classesSelectors.map { it.getClassLoader(this) })

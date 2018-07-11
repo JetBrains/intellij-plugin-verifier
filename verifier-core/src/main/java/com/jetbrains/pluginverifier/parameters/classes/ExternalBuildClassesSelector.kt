@@ -17,9 +17,8 @@ class ExternalBuildClassesSelector : ClassesSelector {
 
   override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
     val compileServerResolver = classesLocations.getResolver(CompileServerExtensionKey) ?: return emptySet()
-    val finalResolvers = compileServerResolver.finalResolvers
 
-    val jarFileResolvers = finalResolvers.filterIsInstance<JarFileResolver>()
+    val jarFileResolvers = compileServerResolver.finalResolvers.filterIsInstance<JarFileResolver>()
     val allServiceImplementations = hashSetOf<String>()
     for (jarFileResolver in jarFileResolvers) {
       jarFileResolver.implementedServiceProviders

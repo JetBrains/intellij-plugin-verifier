@@ -14,7 +14,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
  * bundled libraries' classes.
  *
  * Specifically, those classes are
- * 1) all classes referenced in the `plugin.xml` and all adjucent ones;
+ * 1) all classes referenced in the `plugin.xml` and all adjacent ones;
  * 1) for .jar-red plugins, all the classes contained in `.jar`;
  * 2) for .zip-ped plugins, all the classes from the `/lib` directory
  * and from the `/classes` directory.
@@ -22,7 +22,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
  * Note that this [selector] [MainClassesSelector] tries
  * to ignore third-party classes from libraries bundled into the plugin distribution
  * because a) they typically don't contain IntelliJ API usages, and b)
- * the verification may produce false warnings as some libraries
+ * the verification may produce false warnings since some libraries
  * optionally depend on another libraries, which may not be resolved.
  */
 class MainClassesSelector : ClassesSelector {
@@ -30,14 +30,16 @@ class MainClassesSelector : ClassesSelector {
   /**
    * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
    */
-  override fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver = UnionResolver.create(
-      IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { classesLocations.getResolver(it) }
-  )
+  override fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver =
+      UnionResolver.create(
+          IdePluginClassesFinder.MAIN_CLASSES_KEYS
+              .mapNotNull { classesLocations.getResolver(it) }
+      )
 
   /**
    * Determines plugin's classes that must be verified.
    *
-   * The purpose of this method is to filter out the unrelated classes which
+   * The purpose of this method is to filter out unrelated classes which
    * don't use the IntelliJ API: many plugins pack the libraries without all transitive dependencies.
    * We don't want to check such classes because it leads to false warnings.
    *
@@ -51,16 +53,16 @@ class MainClassesSelector : ClassesSelector {
 
     val mainUnitedResolver = UnionResolver.create(mainResolvers)
     val referencedResolvers = getAllClassesReferencedFromXml(classesLocations.idePlugin)
-        .mapNotNull { mainUnitedResolver.getClassLocation(it) }
-        .distinct()
+        .mapNotNullTo(hashSetOf()) { mainUnitedResolver.getClassLocation(it) }
         .let { if (it.isEmpty()) mainResolvers else it }
 
     return UnionResolver.create(referencedResolvers).allClasses
   }
 
-  private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> =
-      PluginXmlUtil.getAllClassesReferencedFromXml(plugin) +
-          plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.value) }
+  private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> {
+    return PluginXmlUtil.getAllClassesReferencedFromXml(plugin) +
+        plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.value) }
+  }
 
 
 }
