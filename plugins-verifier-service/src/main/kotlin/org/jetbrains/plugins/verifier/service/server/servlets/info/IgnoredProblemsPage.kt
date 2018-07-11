@@ -58,6 +58,13 @@ class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) {
 
       body {
         h2 { +"Modify ignored problems here" }
+        div {
+          +"Ignoring lines must be in the form: <plugin_xml_id>:[<plugin_version>:]<problem_description_regexp_pattern>, for example:"
+          br()
+          +"    org.some.plugin:3.4.0:access to unresolved class org.foo.Foo.*                    --- ignore for plugin 'org.some.plugin' of version 3.4.0\""
+          br()
+          +"    org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*  --- ignore for all versions of Kotlin plugin"
+        }
         form("ignoredProblemsForm", "", "/info/modify-ignored-problems", method = "post") {
           textarea("ignored_problems_form", "ignoredProblemsForm", "ignored.problems", "Enter ignored problems here") {
             getIgnoredProblemsLines().forEach {
