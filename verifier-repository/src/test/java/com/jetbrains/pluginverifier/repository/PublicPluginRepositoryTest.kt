@@ -67,7 +67,7 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
   }
 
   private val ideVersion: IdeVersion
-    get() = IdeVersion.createIdeVersion("IU-162.1132.10")
+    get() = IdeVersion.createIdeVersion("182.3040")
 
   @Test
   fun `find non existent plugin by update id`() {
