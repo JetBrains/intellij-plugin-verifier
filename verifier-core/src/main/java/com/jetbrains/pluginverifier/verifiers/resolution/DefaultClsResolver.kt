@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
-import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.pluginverifier.misc.closeLogged
@@ -43,16 +42,7 @@ class DefaultClsResolver(private val pluginResolver: Resolver,
     if (isExternalClass(className)) {
       return ClsResolution.ExternalClass
     }
-
-    return try {
-      cachingResolver.findClass(className)?.let { ClsResolution.Found(it) } ?: ClsResolution.NotFound
-    } catch (e: InvalidClassFileException) {
-      ClsResolution.InvalidClassFile(e.asmError)
-    } catch (ie: InterruptedException) {
-      throw ie
-    } catch (e: Exception) {
-      ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
-    }
+    return cachingResolver.resolveClassSafely(className)
   }
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {

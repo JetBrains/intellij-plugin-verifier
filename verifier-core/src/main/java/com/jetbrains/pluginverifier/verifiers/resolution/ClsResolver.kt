@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
+import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import java.io.Closeable
 
 /**
@@ -38,3 +40,19 @@ interface ClsResolver : Closeable {
    */
   fun packageExists(packageName: String): Boolean
 }
+
+/**
+ * Resolves class [className] in [this] resolver and returns corresponding [ClsResolution].
+ */
+fun Resolver.resolveClassSafely(className: String): ClsResolution =
+    try {
+      findClass(className)
+          ?.let { ClsResolution.Found(it) }
+          ?: ClsResolution.NotFound
+    } catch (e: InvalidClassFileException) {
+      ClsResolution.InvalidClassFile(e.asmError)
+    } catch (ie: InterruptedException) {
+      throw ie
+    } catch (e: Exception) {
+      ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
+    }

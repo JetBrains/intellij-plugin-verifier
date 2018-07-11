@@ -12,14 +12,14 @@ class FailedToReadClassFileProblem(
 ) : CompatibilityProblem() {
 
   override val problemType
-    get() = "Corrupted class file"
+    get() = "Failed to read class"
 
   override val shortDescription
     get() = "Failed to read class {0}".formatMessage(failedClass)
 
   override val fullDescription
-    get() = ("Class {0} referenced in {1} cannot be read: {2}. Unavailable classes can lead to " +
-        "**NoSuchClassError** or **ClassFormatError** exceptions at runtime.").formatMessage(failedClass, usage, reason)
+    get() = ("Class {0} referenced in {1} cannot be read. " +
+        "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(failedClass, usage, reason)
 
   override fun equals(other: Any?) = other is FailedToReadClassFileProblem
       && failedClass == other.failedClass
