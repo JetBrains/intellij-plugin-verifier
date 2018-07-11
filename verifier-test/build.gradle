@@ -15,21 +15,50 @@ task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build'
   from new File(mockPluginBuildDir, "libs/mock-plugin-1.0.jar")
 }
 
-task prepareAfterIdea(type: Copy, dependsOn: ':verifier-test:after-idea:build') {
+def afterIdeaBuildDir = project('after-idea').buildDir
+
+/**
+ * Creates resources.jar file with brokenPlugins.txt file inside.
+ */
+task prepareResourcesJar(type: Jar, dependsOn: [project('after-idea').processResources]) {
+  from "$afterIdeaBuildDir/resources/main/brokenPlugins.txt"
+  destinationDir = buildDir
+  archiveName = "resources.jar"
+}
+
+/**
+ * Creates 'after-idea' directory which content is similar to any IDE distribution:
+ * `/`
+ * `/build.txt`
+ * `lib/resources.jar`
+ * `lib/after-idea-1.0.jar`
+ * `plugins/devkit/`
+ * `plugins/devkit/META-INF/plugin.xml`
+ */
+task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build', prepareResourcesJar]) {
   into "$buildDir/mocks/after-idea"
 
-  def libDir = copySpec {
-    def afterIdeaBuildDir = project('after-idea').buildDir
-    from new File(afterIdeaBuildDir, "libs/after-idea-1.0.jar")
+  def ideaJar = copySpec {
+    from "$afterIdeaBuildDir/libs/after-idea-1.0.jar"
     into "lib"
   }
 
-  def pluginDir = copySpec {
-    from project('after-idea').file("src/main/resources/META-INF")
+  def resourcesJar = copySpec {
+    from prepareResourcesJar
+    into "lib"
+  }
+
+  def buildTxt = copySpec {
+    from "$afterIdeaBuildDir/resources/main/build.txt"
+    into "."
+  }
+
+  def devKitMetaInf = copySpec {
+    from "$afterIdeaBuildDir/resources/main/META-INF"
     into "plugins/devkit/META-INF"
   }
 
-  with libDir, pluginDir
+  with ideaJar, resourcesJar, buildTxt, devKitMetaInf
 }
 
 test.dependsOn prepareMockPlugin, prepareAfterIdea

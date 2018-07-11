@@ -38,7 +38,8 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
               ideDescriptor,
               PackageFilter(emptyList())
           ),
-          VerificationTarget.Ide(ideDescriptor.ideVersion)
+          VerificationTarget.Ide(ideDescriptor.ideVersion),
+          ideDescriptor.brokenPlugins
       )
     }
     reportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsSet.pluginsToCheck.size) + " is about to start")

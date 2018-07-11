@@ -117,10 +117,8 @@ class CheckTrunkApiParamsBuilder(
             .sortedByDescending { (it as UpdateInfo).updateId }
     )
 
-    val allBrokenPlugins = (IdeResourceUtil.getBrokenPluginsListedInIde(releaseIdeDescriptor.ide) +
-        IdeResourceUtil.getBrokenPluginsListedInIde(trunkIdeDescriptor.ide))
-
-    pluginsSet.addPluginFilter(ExcludedPluginFilter(allBrokenPlugins))
+    pluginsSet.addPluginFilter(ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(releaseIdeDescriptor.ide)))
+    pluginsSet.addPluginFilter(ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(trunkIdeDescriptor.ide)))
 
     println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" +
         pluginsSet.pluginsToCheck

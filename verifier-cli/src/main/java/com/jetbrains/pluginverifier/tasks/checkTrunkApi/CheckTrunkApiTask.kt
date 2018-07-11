@@ -60,7 +60,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
             false,
             pluginDetailsCache,
             releaseResolverProvider,
-            releaseTarget
+            releaseTarget,
+            releaseIde.brokenPlugins
         ))
 
         tasks.add(PluginVerifier(
@@ -70,7 +71,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams,
             false,
             pluginDetailsCache,
             trunkResolverProvider,
-            trunkTarget
+            trunkTarget,
+            trunkIde.brokenPlugins
         ))
       }
 

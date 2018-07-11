@@ -94,8 +94,10 @@ class VerificationCorrectnessTest {
                         ideDescriptor,
                         externalClassesPackageFilter
                     ),
-                    VerificationTarget.Ide(ideDescriptor.ideVersion)
-                ))
+                    VerificationTarget.Ide(ideDescriptor.ideVersion),
+                    ideDescriptor.brokenPlugins
+                )
+            )
 
             VerifierExecutor(4).use { verifierExecutor ->
               verifierExecutor.verify(tasks).single()
@@ -615,6 +617,21 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
     assertProblemFound(
         "Class mock.plugin.removedClasses.UsesRemoved references an unresolved class removedClasses.RemovedClass. This can lead to **NoSuchClassError** exception at runtime.",
         "Access to unresolved class removedClasses.RemovedClass"
+    )
+  }
+
+  /**
+   * Tests that the checked plugin 'org.some.company.plugin:1.0' is marked as incompatible with checked IU-145.500.
+   * See brokenPlugins.txt from 'after-idea'.
+   */
+  @Test
+  fun `checked plugin is marked as incompatible with this IDE`() {
+    assertProblemFound(
+        "Plugin org.some.company.plugin:1.0 is marked as incompatible with IU-145.500 in the special file 'brokenPlugins.txt' bundled to the IDE distribution. " +
+            "This option is used to prevent loading of broken plugins, which may lead to IDE startup errors, if the plugins remain locally installed (in config>/plugins directory) " +
+            "and the IDE is updated to newer version where this plugin is no more compatible. The new IDE will refuse to load this plugin with a message " +
+            "'The following plugins are incompatible with the current IDE build: org.some.company.plugin' or similar.",
+        "Plugin is marked as incompatible with IU-145.500"
     )
   }
 }

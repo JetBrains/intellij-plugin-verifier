@@ -14,8 +14,10 @@ import com.jetbrains.pluginverifier.plugin.UnableToReadPluginClassFilesProblem
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
+import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.results.problems.PluginIsMarkedIncompatibleProblem
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
@@ -28,24 +30,37 @@ import java.util.concurrent.Callable
  */
 class PluginVerifier(
     private val plugin: PluginInfo,
-    private val reportage: Reportage,
+    reportage: Reportage,
     private val problemFilters: List<ProblemsFilter>,
     private val findDeprecatedApiUsages: Boolean,
     private val pluginDetailsCache: PluginDetailsCache,
     private val clsResolverProvider: ClsResolverProvider,
-    private val verificationTarget: VerificationTarget
+    private val verificationTarget: VerificationTarget,
+    private val incompatiblePlugins: Set<PluginIdAndVersion>
 ) : Callable<VerificationResult> {
 
   private val resultHolder = ResultHolder()
 
+  private val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
+
   override fun call(): VerificationResult {
     checkIfInterrupted()
-    val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
     val startTime = System.currentTimeMillis()
     try {
       pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")
+
+      /**
+       * Register a special "marked incompatible" problem, if necessary.
+       */
+      if (verificationTarget is VerificationTarget.Ide && PluginIdAndVersion(plugin.pluginId, plugin.version) in incompatiblePlugins) {
+        resultHolder.registerProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
+      }
+
+      /**
+       * Run bytecode verification.
+       */
       try {
-        verify(pluginReporters)
+        loadPluginAndVerify()
       } catch (ie: InterruptedException) {
         throw ie
       } catch (e: Exception) {
@@ -109,13 +124,13 @@ class PluginVerifier(
     }
   }
 
-  private fun verify(pluginReporters: Reporters) {
+  private fun loadPluginAndVerify() {
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use {
       when (it) {
         is PluginDetailsCache.Result.Provided -> {
           val pluginDetails = it.pluginDetails
           pluginDetails.pluginWarnings.forEach { resultHolder.registerPluginErrorOrWarning(it) }
-          verify(pluginDetails, pluginReporters)
+          verifyClasses(pluginDetails)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> it.pluginErrors.forEach { resultHolder.registerPluginErrorOrWarning(it) }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = it.reason
@@ -124,7 +139,7 @@ class PluginVerifier(
     }
   }
 
-  private fun verify(pluginDetails: PluginDetails, reporters: Reporters) {
+  private fun verifyClasses(pluginDetails: PluginDetails) {
     /**
      * Select classes for verification
      */
@@ -133,7 +148,7 @@ class PluginVerifier(
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      reporters.reportException("Failed to select classes for check for $plugin", e)
+      pluginReporters.reportException("Failed to select classes for check for $plugin", e)
       resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return
     }
@@ -148,7 +163,7 @@ class PluginVerifier(
           clsResolver
       )
       BytecodeVerifier().verify(checkClasses, verificationContext) {
-        reporters.reportProgress(it)
+        pluginReporters.reportProgress(it)
       }
       verificationContext.analyzeMissingClasses(resultHolder)
     }

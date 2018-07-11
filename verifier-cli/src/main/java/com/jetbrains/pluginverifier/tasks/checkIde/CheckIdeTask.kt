@@ -33,7 +33,8 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
                     ideDescriptor,
                     externalClassesPackageFilter
                 ),
-                VerificationTarget.Ide(ideDescriptor.ideVersion)
+                VerificationTarget.Ide(ideDescriptor.ideVersion),
+                ideDescriptor.brokenPlugins
             )
           }
 

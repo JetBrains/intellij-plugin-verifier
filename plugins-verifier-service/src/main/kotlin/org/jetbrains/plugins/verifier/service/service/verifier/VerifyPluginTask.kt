@@ -81,7 +81,8 @@ class VerifyPluginTask(
             ideDescriptor,
             PackageFilter(emptyList())
         ),
-        VerificationTarget.Ide(ideDescriptor.ideVersion)
+        VerificationTarget.Ide(ideDescriptor.ideVersion),
+        ideDescriptor.brokenPlugins
     ))
     return verifierExecutor
         .verify(tasks)

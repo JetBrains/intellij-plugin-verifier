@@ -67,7 +67,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
                   ideDescriptor,
                   externalClassesPackageFilter
               ),
-              VerificationTarget.Ide(ideDescriptor.ideVersion)
+              VerificationTarget.Ide(ideDescriptor.ideVersion),
+              ideDescriptor.brokenPlugins
           )
         }
       }

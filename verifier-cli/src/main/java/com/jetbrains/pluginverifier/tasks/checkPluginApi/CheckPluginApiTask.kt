@@ -40,7 +40,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 false,
                 pluginDetailsCache,
                 baseClsResolverProvider,
-                baseTarget
+                baseTarget,
+                emptySet()
             )
         )
 
@@ -52,7 +53,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 false,
                 pluginDetailsCache,
                 newClsResolverProvider,
-                newTarget
+                newTarget,
+                emptySet()
             )
         )
       }
