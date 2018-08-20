@@ -27,8 +27,9 @@ class DeprecatedMethodUsage(
       append("Deprecated " + deprecatedElement.methodOrConstructorWord + " ")
       append(deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
       append(" is invoked in " + usageLocation.formatDeprecatedUsageLocation())
-      if (deprecationInfo.untilVersion != null) {
-        append(". This " + deprecatedElement.methodOrConstructorWord + " will be removed in " + deprecationInfo.untilVersion)
+      if (deprecationInfo.forRemoval) {
+        append(". This " + deprecatedElement.methodOrConstructorWord + " will be removed in ")
+        append(deprecationInfo.untilVersion ?: " a future release")
       }
     }
 

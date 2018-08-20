@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.access.AccessType
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedFieldUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
@@ -214,11 +213,6 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       val fieldDeprecated = fieldNode.getDeprecationInfo()
       if (fieldDeprecated != null) {
         ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod(), fieldDeprecated))
-      } else {
-        val classDeprecated = definingClass.getDeprecationInfo()
-        if (classDeprecated != null) {
-          ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod(), classDeprecated))
-        }
       }
     }
   }

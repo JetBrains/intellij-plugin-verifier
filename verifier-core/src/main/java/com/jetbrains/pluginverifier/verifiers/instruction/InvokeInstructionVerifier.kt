@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.access.AccessType
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
@@ -427,11 +426,6 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val methodDeprecated = methodNode.getDeprecationInfo()
       if (methodDeprecated != null) {
         ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod(), methodDeprecated))
-      } else {
-        val classDeprecated = definingClass.getDeprecationInfo()
-        if (classDeprecated != null) {
-          ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod(), classDeprecated))
-        }
       }
     }
   }

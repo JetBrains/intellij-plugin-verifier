@@ -652,5 +652,11 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
 
     assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalMethod.foo(int x) : void is overridden in class mock.plugin.deprecated.OverrideScheduledForRemovalMethod. This method will be removed in 2018.1")
     assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalInterface.bar() : void is overridden in class mock.plugin.deprecated.OverrideScheduledForRemovalMethod. This method will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalClassInheritor. This class will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalClassInheritor.<init>(). This class will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.staticFunOfDeprecatedClass() : void. This class will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.staticFieldOfDeprecatedClass() : void. This class will be removed in 2018.1")
   }
 }

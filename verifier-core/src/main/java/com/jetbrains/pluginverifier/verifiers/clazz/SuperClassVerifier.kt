@@ -16,7 +16,7 @@ import org.objectweb.asm.tree.ClassNode
 class SuperClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     val superClassName = clazz.superName ?: CommonClassNames.JAVA_LANG_OBJECT
-    val superNode = ctx.resolveClassOrProblem(superClassName, clazz, { clazz.createClassLocation() }) ?: return
+    val superNode = ctx.resolveClassOrProblem(superClassName, clazz) { clazz.createClassLocation() } ?: return
     //If the class or interface named as the direct superclass of C is in fact an interface, loading throws an IncompatibleClassChangeError.
     if (superNode.isInterface()) {
       ctx.registerProblem(SuperClassBecameInterfaceProblem(clazz.createClassLocation(), superNode.createClassLocation()))

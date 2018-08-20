@@ -26,8 +26,9 @@ class DeprecatedMethodOverridden(
     get() = buildString {
       append("Deprecated method ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}")
       append(" is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}")
-      if (deprecationInfo.untilVersion != null) {
-        append(". This method will be removed in " + deprecationInfo.untilVersion)
+      if (deprecationInfo.forRemoval) {
+        append(". This method will be removed in ")
+        append(deprecationInfo.untilVersion ?: " a future release")
       }
     }
 

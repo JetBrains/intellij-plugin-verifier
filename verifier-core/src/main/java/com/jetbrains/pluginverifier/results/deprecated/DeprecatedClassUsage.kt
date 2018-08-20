@@ -21,8 +21,9 @@ class DeprecatedClassUsage(
     get() = buildString {
       append("Deprecated " + deprecatedElement.classType + " ${deprecatedElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}")
       append(" is referenced in " + usageLocation.formatDeprecatedUsageLocation())
-      if (deprecationInfo.untilVersion != null) {
-        append(". This " + deprecatedElement.classType + " will be removed in " + deprecationInfo.untilVersion)
+      if (deprecationInfo.forRemoval) {
+        append(". This " + deprecatedElement.classType + " will be removed in ")
+        append(deprecationInfo.untilVersion ?: " a future release")
       }
     }
 

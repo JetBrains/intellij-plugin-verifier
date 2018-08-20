@@ -19,8 +19,9 @@ class DeprecatedFieldUsage(
     get() = buildString {
       append("Deprecated field ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
       append(" accessed in ${usageLocation.formatDeprecatedUsageLocation()}")
-      if (deprecationInfo.untilVersion != null) {
-        append(". This field will will be removed in " + deprecationInfo.untilVersion)
+      if (deprecationInfo.forRemoval) {
+        append(". This field will will be removed in ")
+        append(deprecationInfo.untilVersion ?: " a future release")
       }
     }
 
