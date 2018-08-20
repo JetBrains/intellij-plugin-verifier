@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedFieldUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalFieldUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
@@ -175,12 +176,12 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       //check that the array type exists
       val arrayType = fieldOwner.extractClassNameFromDescr()
       if (arrayType != null) {
-        ctx.resolveClassOrProblem(arrayType, verifiableClass, { getFromMethod() })
+        ctx.resolveClassOrProblem(arrayType, verifiableClass) { getFromMethod() }
       }
       return null
     }
 
-    val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass, { getFromMethod() }) ?: return null
+    val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass) { getFromMethod() } ?: return null
 
     val lookupResult = resolveFieldSteps(ownerNode)
     return when (lookupResult) {
@@ -191,7 +192,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
       }
       is FieldsImplementation.LookupResult.Found -> {
         checkFieldIsAccessible(lookupResult)
-        checkFieldIsDeprecated(lookupResult)
+        checkFieldIsUnstable(lookupResult)
         lookupResult
       }
     }
@@ -208,11 +209,14 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     ))
   }
 
-  private fun checkFieldIsDeprecated(resolvedField: LookupResult.Found) {
+  private fun checkFieldIsUnstable(resolvedField: LookupResult.Found) {
     with(resolvedField) {
       val fieldDeprecated = fieldNode.getDeprecationInfo()
       if (fieldDeprecated != null) {
         ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod(), fieldDeprecated))
+      }
+      if (fieldNode.isExperimentalApi()) {
+        ctx.registerExperimentalApiUsage(ExperimentalFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod()))
       }
     }
   }
@@ -245,7 +249,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass, { currentClass.createClassLocation() })
+      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass) { currentClass.createClassLocation() }
           ?: return LookupResult.Abort
 
       val lookupResult = resolveFieldSteps(resolvedIntf)
@@ -261,7 +265,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { currentClass.createClassLocation() })
+      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass) { currentClass.createClassLocation() }
           ?: return LookupResult.Abort
       val lookupResult = resolveFieldSteps(resolvedSuper)
       when (lookupResult) {

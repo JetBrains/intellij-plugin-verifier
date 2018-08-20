@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -24,6 +25,8 @@ class ResultHolder {
 
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
+  val experimentalApiUsages: MutableSet<ExperimentalApiUsage> = hashSetOf()
+
   var dependenciesGraph: DependenciesGraph? = null
 
   val ignoredProblemsHolder = IgnoredProblemsHolder()
@@ -39,9 +42,11 @@ class ResultHolder {
   private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    if (deprecatedApiUsage !in deprecatedUsages) {
-      deprecatedUsages.add(deprecatedApiUsage)
-    }
+    deprecatedUsages.add(deprecatedApiUsage)
+  }
+
+  fun registerExperimentalUsage(experimentalApiUsage: ExperimentalApiUsage) {
+    experimentalApiUsages.add(experimentalApiUsage)
   }
 
   fun registerProblem(problem: CompatibilityProblem) {

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
@@ -44,11 +45,11 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     if (methodOwner.startsWith("[")) {
       val arrayType = methodOwner.extractClassNameFromDescr()
       if (arrayType != null) {
-        ctx.checkClassExistsOrExternal(arrayType, { getFromMethod() })
+        ctx.checkClassExistsOrExternal(arrayType) { getFromMethod() }
       }
       return
     }
-    val ownerNode = ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
+    val ownerNode = ctx.resolveClassOrProblem(methodOwner, verifiableClass) { getFromMethod() } ?: return
 
     when (instruction) {
       Instruction.INVOKE_VIRTUAL -> processInvokeVirtual(ownerNode)
@@ -124,9 +125,9 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassNode = if (resolved.methodNode.name != "<init>" && (!ownerNode.isInterface() && methodOwner == verifiableClass.superName) && verifiableClass.isSuperFlag()) {
-      ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass, { getFromMethod() }) ?: return
+      ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass) { getFromMethod() } ?: return
     } else {
-      ctx.resolveClassOrProblem(methodOwner, verifiableClass, { getFromMethod() }) ?: return
+      ctx.resolveClassOrProblem(methodOwner, verifiableClass) { getFromMethod() } ?: return
     }
 
     /*
@@ -168,7 +169,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
         If a match is found, then it is the method to be invoked.
     */
     if (!classRef.isInterface() && classRef.superName != null) {
-      var current: ClassNode = ctx.resolveClassOrProblem(classRef.superName, classRef, { classRef.createClassLocation() })
+      var current: ClassNode = ctx.resolveClassOrProblem(classRef.superName, classRef) { classRef.createClassLocation() }
           ?: return null
       while (true) {
         val match = (current.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
@@ -178,7 +179,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
         val superName = current.superName
         superName ?: break
-        current = ctx.resolveClassOrProblem(superName, current, { current.createClassLocation() }) ?: return null
+        current = ctx.resolveClassOrProblem(superName, current) { current.createClassLocation() } ?: return null
       }
     }
 
@@ -187,7 +188,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (classRef.isInterface()) {
-      val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, classRef, { classRef.createClassLocation() })
+      val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, classRef) { classRef.createClassLocation() }
           ?: return null
       val match = (objectClass.methods as List<MethodNode>).find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && it.isPublic() }
       if (match != null) {
@@ -417,15 +418,18 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       ctx.registerProblem(problem)
       return null
     }
-    checkMethodIsDeprecated(resolvedMethod)
+    checkMethodIsUnstable(resolvedMethod)
     return resolvedMethod
   }
 
-  private fun checkMethodIsDeprecated(resolvedMethod: LookupResult.Found) {
+  private fun checkMethodIsUnstable(resolvedMethod: LookupResult.Found) {
     with(resolvedMethod) {
       val methodDeprecated = methodNode.getDeprecationInfo()
       if (methodDeprecated != null) {
         ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod(), methodDeprecated))
+      }
+      if (methodNode.isExperimentalApi()) {
+        ctx.registerExperimentalApiUsage(ExperimentalMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod()))
       }
     }
   }
@@ -465,7 +469,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
     method lookup succeeds.
     */
-    val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode, { interfaceNode.createClassLocation() })
+    val objectClass = ctx.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode) { interfaceNode.createClassLocation() }
         ?: return LookupResult.Abort
     val objectMethod = (objectClass.methods as List<MethodNode>).firstOrNull { it.name == methodName && it.desc == methodDescriptor && it.isPublic() && !it.isStatic() }
     if (objectMethod != null) {
@@ -488,7 +492,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
     5) Otherwise, if any superinterface of C declares a method with the name and descriptor specified by the method
     reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
-    val matchings = getSuperInterfaceMethods(interfaceNode, { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() })
+    val matchings = getSuperInterfaceMethods(interfaceNode) { it.name == methodName && it.desc == methodDescriptor && !it.isPrivate() && !it.isStatic() }
         ?: return LookupResult.Abort
     if (matchings.isNotEmpty()) {
       return matchings.first()
@@ -540,7 +544,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
       (cur.interfaces as List<String>).forEach {
         if (it !in visited) {
-          val resolveClass = ctx.resolveClassOrProblem(it, cur, { cur.createClassLocation() }) ?: return null
+          val resolveClass = ctx.resolveClassOrProblem(it, cur) { cur.createClassLocation() } ?: return null
           visited.add(it)
           queue.add(resolveClass)
         }
@@ -549,7 +553,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
       val superName = cur.superName
       if (superName != null) {
         if (superName !in visited) {
-          val resolvedSuper = ctx.resolveClassOrProblem(superName, cur, { cur.createClassLocation() }) ?: return null
+          val resolvedSuper = ctx.resolveClassOrProblem(superName, cur) { cur.createClassLocation() } ?: return null
           visited.add(superName)
           queue.add(resolvedSuper)
         }
@@ -648,7 +652,7 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass, { currentClass.createClassLocation() })
+      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass) { currentClass.createClassLocation() }
           ?: return LookupResult.Abort
       val lookupResult = resolveClassMethodStep2(resolvedSuper)
       when (lookupResult) {

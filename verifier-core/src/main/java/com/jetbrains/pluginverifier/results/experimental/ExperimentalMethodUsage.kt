@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.results.experimental
 
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -13,26 +13,23 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
 import java.util.*
 
-class DeprecatedMethodUsage(
+class ExperimentalMethodUsage(
     override val apiElement: MethodLocation,
-    override val usageLocation: Location,
-    deprecationInfo: DeprecationInfo
-) : DeprecatedApiUsage(deprecationInfo) {
+    override val usageLocation: Location
+) : ExperimentalApiUsage() {
+
   override val shortDescription
-    get() = "Deprecated " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
+    get() = "Experimental API " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
   override val fullDescription
     get() = buildString {
-      append("Deprecated " + apiElement.elementType.presentableName + " ")
+      append("Experimental API " + apiElement.elementType.presentableName + " ")
       append(apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
       append(" is invoked in " + usageLocation.formatUsageLocation())
-      if (deprecationInfo.forRemoval) {
-        append(". This " + apiElement.elementType.presentableName + " will be removed in ")
-        append(deprecationInfo.untilVersion ?: " a future release")
-      }
+      append(". This " + apiElement.elementType.presentableName + " can be changed in a future release leading to incompatibilities")
     }
 
-  override fun equals(other: Any?) = other is DeprecatedMethodUsage
+  override fun equals(other: Any?) = other is ExperimentalMethodUsage
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
 

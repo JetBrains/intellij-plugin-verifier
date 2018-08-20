@@ -82,16 +82,6 @@ private fun ClassLocation.formatHostClass(hostClassOption: HostClassOption): Str
   HostClassOption.FULL_HOST_WITH_SIGNATURE -> formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
 }
 
-val MethodLocation.isConstructor: Boolean
-  get() = methodName == "<init>"
-
-val MethodLocation.methodOrConstructorWord: String
-  get() = if (isConstructor) {
-    "constructor"
-  } else {
-    "method"
-  }
-
 fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
                                         methodParameterTypeOption: MethodParameterTypeOption,
                                         methodReturnTypeOption: MethodReturnTypeOption,

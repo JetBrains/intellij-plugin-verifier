@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -17,7 +18,7 @@ data class VerificationContext(
     val plugin: PluginInfo,
     val verificationTarget: VerificationTarget,
     val resultHolder: ResultHolder,
-    val findDeprecatedApiUsages: Boolean,
+    val findAbnormalApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     val clsResolver: ClsResolver
 ) {
@@ -33,29 +34,41 @@ data class VerificationContext(
   }
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    if (findDeprecatedApiUsages) {
+    if (findAbnormalApiUsages) {
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
-      if (shouldIndexDeprecatedClass(deprecatedElementHost, usageHostClass)) {
+      if (shouldIndexClass(deprecatedElementHost, usageHostClass)) {
         resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
       }
     }
   }
 
+  fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
+    if (findAbnormalApiUsages) {
+      val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
+      val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
+      if (shouldIndexClass(elementHostClass, usageHostClass)) {
+        resultHolder.registerExperimentalUsage(experimentalApiUsage)
+      }
+    }
+  }
+
   /**
-   * Determines whether we should index usage of deprecated API:
-   * 1) Usage resides in plugin
+   * Determines whether we should index usage of API.
+   *
+   * The following two conditions must be met:
+   * 1) The usage resides in plugin
    * 2) API is either IDE API or plugin's dependency API,
    * and it is not deprecated JDK API nor plugin's internal
    * deprecated API.
    */
-  private fun shouldIndexDeprecatedClass(
-      deprecatedElementHost: ClassLocation,
+  private fun shouldIndexClass(
+      elementHost: ClassLocation,
       usageHostClass: ClassLocation
   ): Boolean {
     val usageHostOrigin = clsResolver.getOriginOfClass(usageHostClass.className)
     if (usageHostOrigin == ClassFileOrigin.PLUGIN_INTERNAL_CLASS) {
-      val deprecatedHostOrigin = clsResolver.getOriginOfClass(deprecatedElementHost.className)
+      val deprecatedHostOrigin = clsResolver.getOriginOfClass(elementHost.className)
       return deprecatedHostOrigin == ClassFileOrigin.IDE_CLASS || deprecatedHostOrigin == ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
     }
     return false

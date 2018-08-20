@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -68,7 +69,8 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
         createDependencyGraphReporters(pluginVerificationDirectory),
         createIgnoredProblemReporters(pluginVerificationDirectory, verificationTarget),
         createDeprecatedReporters(pluginVerificationDirectory),
-        createExceptionReporters(pluginVerificationDirectory)
+        createExceptionReporters(pluginVerificationDirectory),
+        createExperimentalApiReporters(pluginVerificationDirectory)
     )
   }
 
@@ -107,6 +109,11 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
   private fun createDeprecatedReporters(pluginVerificationDirectory: Path) =
       buildList<Reporter<DeprecatedApiUsage>> {
         add(FileReporter(pluginVerificationDirectory.resolve("deprecated-usages.txt")))
+      }
+
+  private fun createExperimentalApiReporters(pluginVerificationDirectory: Path) =
+      buildList<Reporter<ExperimentalApiUsage>> {
+        add(FileReporter(pluginVerificationDirectory.resolve("experimental-api-usages.txt")))
       }
 
   private fun createExceptionReporters(pluginVerificationDirectory: Path) =

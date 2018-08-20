@@ -15,7 +15,6 @@ import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import com.jetbrains.pluginverifier.results.presentation.formatMethodReference
-import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
@@ -31,12 +30,12 @@ class IllegalMethodAccessProblem(
     get() = "Illegal method invocation"
 
   override val shortDescription
-    get() = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.methodOrConstructorWord, inaccessibleMethod)
+    get() = "Illegal invocation of {0} {1} {2}".formatMessage(methodAccessModifier, inaccessibleMethod.elementType.presentableName, inaccessibleMethod)
 
   override val fullDescription
     get() = buildString {
       append("{0} {1} contains an *{2}* instruction referencing ".formatMessage(
-          caller.methodOrConstructorWord.capitalize(),
+          caller.elementType.presentableName.capitalize(),
           caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
           instruction
       ))
@@ -45,14 +44,14 @@ class IllegalMethodAccessProblem(
       if (bytecodeMethodReference.hostClass.className == inaccessibleMethod.hostClass.className) {
         append("a {0} {1} {2} ".formatMessage(
             methodAccessModifier,
-            inaccessibleMethod.methodOrConstructorWord,
+            inaccessibleMethod.elementType.presentableName,
             actualMethodPresentation
         ))
       } else {
         append("{0} which is resolved to a {1} {2} {3} ".formatMessage(
             bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
             methodAccessModifier,
-            inaccessibleMethod.methodOrConstructorWord,
+            inaccessibleMethod.elementType.presentableName,
             actualMethodPresentation
         ))
       }

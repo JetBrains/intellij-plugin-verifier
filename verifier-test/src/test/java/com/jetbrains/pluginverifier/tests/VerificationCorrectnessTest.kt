@@ -27,6 +27,7 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInf
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
@@ -51,9 +52,13 @@ class VerificationCorrectnessTest {
 
     lateinit var actualDeprecatedUsages: Set<DeprecatedApiUsage>
 
+    lateinit var actualExperimentalApiUsages: Set<ExperimentalApiUsage>
+
     lateinit var redundantProblems: MutableSet<CompatibilityProblem>
 
     lateinit var redundantDeprecated: MutableSet<DeprecatedApiUsage>
+
+    lateinit var redundantExperimentalApiUsages: MutableSet<ExperimentalApiUsage>
 
     private fun doIdeaAndPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
       val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
@@ -127,8 +132,10 @@ class VerificationCorrectnessTest {
       result = verificationResult as VerificationResult.MissingDependencies
       actualProblems = result.compatibilityProblems
       actualDeprecatedUsages = result.deprecatedUsages
+      actualExperimentalApiUsages = result.experimentalApiUsages
       redundantProblems = actualProblems.toMutableSet()
       redundantDeprecated = actualDeprecatedUsages.toMutableSet()
+      redundantExperimentalApiUsages = actualExperimentalApiUsages.toMutableSet()
     }
 
     private fun prepareTestEnvironment() {
@@ -145,6 +152,9 @@ class VerificationCorrectnessTest {
 
         val deprecatedMessage = redundantDeprecated.joinToString(separator = "\n") { "${it.fullDescription}\n" }
         assertTrue("Redundant deprecated usages found: \n$deprecatedMessage", redundantDeprecated.isEmpty())
+
+        val experimentalMessage = redundantExperimentalApiUsages.joinToString(separator = "\n") { "${it.fullDescription}\n" }
+        assertTrue("Redundant experimental API found: \n$experimentalMessage", redundantExperimentalApiUsages.isEmpty())
       }
     }
   }
@@ -173,6 +183,12 @@ class VerificationCorrectnessTest {
     val foundDeprecatedUsage = actualDeprecatedUsages.find { description == it.fullDescription }
     assertTrue("Deprecated is not found:\n$description\nall deprecated:\n" + actualDeprecatedUsages.joinToString("\n"), foundDeprecatedUsage != null)
     redundantDeprecated.remove(foundDeprecatedUsage)
+  }
+
+  private fun assertExperimentalApiFound(description: String) {
+    val foundExperimentalApiUsage = actualExperimentalApiUsages.find { description == it.fullDescription }
+    assertTrue("Experimental API usage is not found:\n$description\nall experimental API:\n" + actualExperimentalApiUsages.joinToString("\n"), foundExperimentalApiUsage != null)
+    redundantExperimentalApiUsages.remove(foundExperimentalApiUsage)
   }
 
   @Test
@@ -642,7 +658,7 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
     assertDeprecatedUsageFound("Deprecated constructor deprecated.ScheduledForRemovalMethod.<init>() is invoked in mock.plugin.deprecated.ScheduledForRemovalUser.method() : void. This constructor will be removed in 2018.1")
     assertDeprecatedUsageFound("Deprecated constructor deprecated.ScheduledForRemovalMethod.<init>() is invoked in mock.plugin.deprecated.OverrideScheduledForRemovalMethod.<init>(). This constructor will be removed in 2018.1")
 
-    assertDeprecatedUsageFound("Deprecated field deprecated.ScheduledForRemovalField.x : int is accessed in mock.plugin.deprecated.ScheduledForRemovalUser.field() : void. This field will will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated field deprecated.ScheduledForRemovalField.x : int is accessed in mock.plugin.deprecated.ScheduledForRemovalUser.field() : void. This field will be removed in 2018.1")
     assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.field() : void. This class will be removed in 2018.1")
 
     assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalMethod.foo(int x) : void is invoked in mock.plugin.deprecated.ScheduledForRemovalUser.method() : void. This method will be removed in 2018.1")
@@ -658,5 +674,14 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
 
     assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.staticFunOfDeprecatedClass() : void. This class will be removed in 2018.1")
     assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.staticFieldOfDeprecatedClass() : void. This class will be removed in 2018.1")
+  }
+
+  @Test
+  fun `experimental APIs`() {
+    assertExperimentalApiFound("Experimental API method experimental.ExperimentalApiMethod.foo(int x) : void is invoked in mock.plugin.experimental.ExperimentalApiUser.method(ExperimentalApiMethod) : void. This method can be changed in a future release leading to incompatibilities")
+    assertExperimentalApiFound("Experimental API field experimental.ExperimentalApiField.x : int is accessed in mock.plugin.experimental.ExperimentalApiUser.field(ExperimentalApiField) : void. This field can be changed in a future release leading to incompatibilities")
+    assertExperimentalApiFound("Experimental API class experimental.ExperimentalApiClass is referenced in mock.plugin.experimental.ExperimentalApiUser.staticFieldOfDeprecatedClass() : void. This class can be changed in a future release leading to incompatibilities")
+    assertExperimentalApiFound("Experimental API class experimental.ExperimentalApiClass is referenced in mock.plugin.experimental.ExperimentalApiUser.staticFunOfDeprecatedClass() : void. This class can be changed in a future release leading to incompatibilities")
+    assertExperimentalApiFound("Experimental API class experimental.ExperimentalApiClass is referenced in mock.plugin.experimental.ExperimentalApiUser.clazz() : void. This class can be changed in a future release leading to incompatibilities")
   }
 }

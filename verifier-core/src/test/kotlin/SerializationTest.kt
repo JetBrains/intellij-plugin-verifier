@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginI
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
 import com.jetbrains.pluginverifier.results.deprecated.DeprecationInfo
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodUsage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -92,6 +93,9 @@ class SerializationTest {
 
     val deprecatedMethodUsage = DeprecatedMethodUsage(methodLocation, methodLocation, DeprecationInfo(true, "2018.1"))
     val deprecatedMethodUsages = setOf(deprecatedMethodUsage)
+
+    val experimentalApiUsage = ExperimentalMethodUsage(methodLocation, methodLocation)
+    val experimentalApiUsages = setOf(experimentalApiUsage)
   }
 
   @Test
@@ -105,6 +109,7 @@ class SerializationTest {
       it.pluginStructureWarnings = structureWarnings
       it.dependenciesGraph = dependenciesGraph
       it.deprecatedUsages = deprecatedMethodUsages
+      it.experimentalApiUsages = experimentalApiUsages
     }
     val file = tempFolder.newFile().toPath()
     VerificationResultPersistence.saveVerificationResult(result, file)
@@ -117,6 +122,7 @@ class SerializationTest {
     assertEquals(structureWarnings, deserialized.pluginStructureWarnings)
     assertEquals(dependenciesGraph, deserialized.dependenciesGraph)
     assertEquals(deprecatedMethodUsages, deserialized.deprecatedUsages)
+    assertEquals(experimentalApiUsages, deserialized.experimentalApiUsages)
   }
 
 }

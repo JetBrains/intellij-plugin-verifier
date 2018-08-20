@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult.*
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -98,6 +99,13 @@ sealed class VerificationResult : Serializable {
    * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
    */
   var deprecatedUsages: Set<DeprecatedApiUsage> = emptySet()
+
+  /**
+   * Contains [experimental] [ExperimentalApiUsage] API usages in the plugin.
+   *
+   * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
+   */
+  var experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet()
 
   /**
    * Presentable verification verdict

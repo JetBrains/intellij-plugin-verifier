@@ -88,6 +88,7 @@ class PluginVerifier(
     pluginStructureWarnings.forEach { pluginReportage.reportNewPluginStructureWarning(it) }
     compatibilityProblems.forEach { pluginReportage.reportNewProblemDetected(it) }
     deprecatedUsages.forEach { pluginReportage.reportDeprecatedUsage(it) }
+    experimentalApiUsages.forEach { pluginReportage.reportExperimentalApi(it) }
     ignoredProblemsHolder.ignoredProblems.forEach { (problem, ignoredEvents) ->
       ignoredEvents.forEach {
         val problemIgnoredEvent = ProblemIgnoredEvent(plugin, verificationTarget, problem, it.reason)
@@ -121,6 +122,7 @@ class PluginVerifier(
       failedToDownloadReason = resultHolder.failedToDownloadReason.orEmpty()
       notFoundReason = resultHolder.notFoundReason.orEmpty()
       deprecatedUsages = resultHolder.deprecatedUsages
+      experimentalApiUsages = resultHolder.experimentalApiUsages
     }
   }
 

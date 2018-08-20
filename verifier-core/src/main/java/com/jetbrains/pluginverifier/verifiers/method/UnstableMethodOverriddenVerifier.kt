@@ -1,12 +1,13 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodOverridden
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodOverridden
 import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-class DeprecatedMethodOverriddenVerifier : MethodVerifier {
+class UnstableMethodOverriddenVerifier : MethodVerifier {
 
   @Suppress("UNCHECKED_CAST")
   override fun verify(clazz: ClassNode, method: MethodNode, ctx: VerificationContext) {
@@ -48,6 +49,20 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
                 methodDeprecated
             )
         )
+      }
+
+      val experimentalApi = sameMethod.isExperimentalApi()
+      if (experimentalApi) {
+        val methodLocation = createMethodLocation(parent, sameMethod)
+        ctx.registerExperimentalApiUsage(
+            ExperimentalMethodOverridden(
+                methodLocation,
+                createMethodLocation(clazz, method)
+            )
+        )
+      }
+
+      if (experimentalApi || methodDeprecated != null) {
         return false
       }
     }

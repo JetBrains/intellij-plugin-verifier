@@ -76,5 +76,9 @@ data class MethodLocation(
   override fun toString() = formatMethodLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE)
 
   override val elementType: ElementType
-    get() = ElementType.METHOD
+    get() = if (methodName == "<init>") {
+      ElementType.CONSTRUCTOR
+    } else {
+      ElementType.METHOD
+    }
 }

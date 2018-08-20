@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalClassUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -35,6 +36,10 @@ fun VerificationContext.resolveClassOrProblem(
         val classDeprecated = node.getDeprecationInfo()
         if (classDeprecated != null) {
           registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation(), classDeprecated))
+        }
+        val experimentalApi = node.isExperimentalApi()
+        if (experimentalApi) {
+          registerExperimentalApiUsage(ExperimentalClassUsage(node.createClassLocation(), lookupLocation()))
         }
         node
       }

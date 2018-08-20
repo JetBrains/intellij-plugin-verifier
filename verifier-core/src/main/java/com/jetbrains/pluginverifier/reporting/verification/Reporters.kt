@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -55,9 +56,13 @@ data class Reporters(
      */
     val deprecatedReporters: List<Reporter<DeprecatedApiUsage>> = emptyList(),
     /**
-     * Reporters of exceptions occured.
+     * Reporters of exceptions occurred.
      */
-    val exceptionReporters: List<Reporter<MessageAndException>> = emptyList()
+    val exceptionReporters: List<Reporter<MessageAndException>> = emptyList(),
+    /**
+     * Reporters of experimental API usages..
+     */
+    val experimentalApiUsageReporters: List<Reporter<ExperimentalApiUsage>> = emptyList()
 ) : Closeable {
 
   fun reportException(message: String, exception: Throwable) {
@@ -98,6 +103,10 @@ data class Reporters(
 
   fun reportDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     deprecatedReporters.forEach { it.report(deprecatedApiUsage) }
+  }
+
+  fun reportExperimentalApi(experimentalApiUsage: ExperimentalApiUsage) {
+    experimentalApiUsageReporters.forEach { it.report(experimentalApiUsage) }
   }
 
   /**
