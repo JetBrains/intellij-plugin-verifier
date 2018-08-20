@@ -6,11 +6,11 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.deprecated.formatDeprecatedUsageLocation
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
@@ -36,10 +36,10 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
         for ((plugin, pluginUsages) in pluginDeprecatedUsages) {
           pluginUsages
               .asSequence()
-              .filter { it.deprecatedElement in deprecatedIdeApiElements }
+              .filter { it.apiElement in deprecatedIdeApiElements }
               .forEach {
                 deprecatedIdeApiToPluginUsages
-                    .getOrPut(it.deprecatedElement) { hashMapOf() }
+                    .getOrPut(it.apiElement) { hashMapOf() }
                     .compute(plugin) { _, c -> (c ?: 0) + 1 }
               }
         }
@@ -64,7 +64,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
             val fullTestMessage = buildString {
               for ((deprecatedApiElement, pluginToUsagesNumber) in sortedByNumberOfPlugins) {
                 append(deprecatedApiElement.locationType.capitalize())
-                append(" " + deprecatedApiElement.formatDeprecatedUsageLocation())
+                append(" " + deprecatedApiElement.formatUsageLocation())
                 append(" is used in ${pluginToUsagesNumber.size} " + "plugin".pluralize(pluginToUsagesNumber.size))
                 val sortedByNumberOfUsages = pluginToUsagesNumber.toList()
                     .sortedWith(compareByDescending<Pair<PluginInfo, Int>> { it.second }.thenBy { it.first.pluginId })
@@ -105,7 +105,7 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
             val fullTestMessage = buildString {
               for ((locationType, unusedApiElementsWithType) in unusedIdeDeprecatedElements.groupBy { it.locationType }) {
                 appendln("There " + "is".pluralize(unusedApiElementsWithType.size) + " ${unusedApiElementsWithType.size} " + "deprecated API " + locationType.pluralize(unusedApiElementsWithType.size) + " in $verifiedIdeVersion unused in checked plugins:")
-                val formattedUnusedUsages = unusedApiElementsWithType.map { it.formatDeprecatedUsageLocation() }.sorted()
+                val formattedUnusedUsages = unusedApiElementsWithType.map { it.formatUsageLocation() }.sorted()
                 for (unusedElement in formattedUnusedUsages) {
                   append("  ")
                   appendln(unusedElement)

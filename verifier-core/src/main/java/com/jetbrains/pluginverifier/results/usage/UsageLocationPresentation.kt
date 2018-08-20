@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.results.usage
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.presentation.*
 
-fun Location.formatDeprecatedUsageLocation() = when (this) {
+fun Location.formatUsageLocation() = when (this) {
   is ClassLocation -> formatClassLocation(
       ClassOption.FULL_NAME,
       ClassGenericsSignatureOption.NO_GENERICS

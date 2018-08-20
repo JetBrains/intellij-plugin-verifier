@@ -34,7 +34,7 @@ data class VerificationContext(
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (findDeprecatedApiUsages) {
-      val deprecatedElementHost = deprecatedApiUsage.deprecatedElement.getHostClass()
+      val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
       if (shouldIndexDeprecatedClass(deprecatedElementHost, usageHostClass)) {
         resultHolder.registerDeprecatedUsage(deprecatedApiUsage)

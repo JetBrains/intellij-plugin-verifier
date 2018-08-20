@@ -11,11 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedElementType
-import com.jetbrains.pluginverifier.results.location.ClassLocation
-import com.jetbrains.pluginverifier.results.location.FieldLocation
-import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.*
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
@@ -138,16 +134,20 @@ private fun DeprecatedApiUsage.convertDeprecatedApiUsage() =
     VerificationResults.DeprecatedApiUsage.newBuilder()
         .setShortDescription(shortDescription)
         .setFullDescription(fullDescription)
-        .setDeprecatedElement(deprecatedElement.presentableDeprecatedElement())
+        .setDeprecatedElement(apiElement.presentableDeprecatedElement())
         .setUsageLocation(usageLocation.presentableUsageLocation())
-        .setDeprecatedElementType(deprecatedElementType.convertDeprecatedElementType())
+        .setDeprecatedElementType(apiElement.elementType.convertDeprecatedElementType())
         .build()
 
-private fun DeprecatedElementType.convertDeprecatedElementType() = when (this) {
-  DeprecatedElementType.CLASS -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
-  DeprecatedElementType.METHOD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.METHOD
-  DeprecatedElementType.FIELD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.FIELD
-  DeprecatedElementType.CONSTRUCTOR -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CONSTRUCTOR
+//Map 'interface', 'enum', 'annotation' to 'class' for simplicity of protocol compatibility.
+private fun ElementType.convertDeprecatedElementType() = when (this) {
+  ElementType.CLASS -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
+  ElementType.INTERFACE -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
+  ElementType.ENUM -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
+  ElementType.ANNOTATION -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CLASS
+  ElementType.METHOD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.METHOD
+  ElementType.FIELD -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.FIELD
+  ElementType.CONSTRUCTOR -> VerificationResults.DeprecatedApiUsage.DeprecatedElementType.CONSTRUCTOR
 }
 
 private fun Location.presentableDeprecatedElement(): String = when (this) {
