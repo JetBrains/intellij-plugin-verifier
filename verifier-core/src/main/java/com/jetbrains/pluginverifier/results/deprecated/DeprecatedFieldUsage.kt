@@ -7,15 +7,22 @@ import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HO
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
 import java.util.*
 
-data class DeprecatedFieldUsage(
+class DeprecatedFieldUsage(
     override val deprecatedElement: FieldLocation,
-    override val usageLocation: Location
+    override val usageLocation: Location,
+    override val deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage() {
   override val shortDescription
     get() = "Deprecated field ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
 
   override val fullDescription
-    get() = "Deprecated field ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is accessed in ${usageLocation.formatDeprecatedUsageLocation()}"
+    get() = buildString {
+      append("Deprecated field ${deprecatedElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
+      append(" accessed in ${usageLocation.formatDeprecatedUsageLocation()}")
+      if (deprecationInfo.untilVersion != null) {
+        append(". This field will will be removed in " + deprecationInfo.untilVersion)
+      }
+    }
 
   override val deprecatedElementType
     get() = DeprecatedElementType.FIELD

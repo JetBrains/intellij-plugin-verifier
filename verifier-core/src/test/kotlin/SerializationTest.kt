@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.persistence.VerificationResultPersistence
 import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
+import com.jetbrains.pluginverifier.results.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -89,7 +90,7 @@ class SerializationTest {
     val structureErrors = setOf(pluginStructureError)
     val structureWarnings = setOf(pluginStructureWarning)
 
-    val deprecatedMethodUsage = DeprecatedMethodUsage(methodLocation, methodLocation)
+    val deprecatedMethodUsage = DeprecatedMethodUsage(methodLocation, methodLocation, DeprecationInfo(true, "2018.1"))
     val deprecatedMethodUsages = setOf(deprecatedMethodUsage)
   }
 

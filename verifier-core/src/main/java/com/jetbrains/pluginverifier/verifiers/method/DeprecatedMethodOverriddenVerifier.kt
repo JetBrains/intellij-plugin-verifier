@@ -18,16 +18,40 @@ class DeprecatedMethodOverriddenVerifier : MethodVerifier {
       return
     }
 
-    ClassParentsVisitor(ctx, true).visitClass(clazz, false, onEnter = { parent ->
-      val sameMethod = (parent.methods as List<MethodNode>).firstOrNull { it.name == method.name && it.desc == method.desc }
-      if (sameMethod != null && sameMethod.isDeprecated()) {
+    ClassParentsVisitor(ctx, true).visitClass(
+        clazz,
+        false,
+        onEnter = { parent ->
+          checkSuperMethod(ctx, clazz, method, parent)
+        }
+    )
+  }
+
+  private fun checkSuperMethod(
+      ctx: VerificationContext,
+      clazz: ClassNode,
+      method: MethodNode,
+      parent: ClassNode
+  ): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    val sameMethod = (parent.methods as List<MethodNode>)
+        .firstOrNull { it.name == method.name && it.desc == method.desc }
+
+    if (sameMethod != null) {
+      val methodDeprecated = sameMethod.getDeprecationInfo()
+      if (methodDeprecated != null) {
         val methodLocation = createMethodLocation(parent, sameMethod)
-        ctx.registerDeprecatedUsage(DeprecatedMethodOverridden(methodLocation, createMethodLocation(clazz, method)))
-        false
-      } else {
-        true
+        ctx.registerDeprecatedUsage(
+            DeprecatedMethodOverridden(
+                methodLocation,
+                createMethodLocation(clazz, method),
+                methodDeprecated
+            )
+        )
+        return false
       }
-    })
+    }
+    return true
   }
 
 }

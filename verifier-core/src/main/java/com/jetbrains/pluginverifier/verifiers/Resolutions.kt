@@ -32,8 +32,9 @@ fun VerificationContext.resolveClassOrProblem(
           registerProblem(IllegalClassAccessProblem(node.createClassLocation(), node.access.getAccessType(), lookupLocation()))
           return null
         }
-        if (node.isDeprecated()) {
-          registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation()))
+        val classDeprecated = node.getDeprecationInfo()
+        if (classDeprecated != null) {
+          registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation(), classDeprecated))
         }
         node
       }
@@ -63,7 +64,7 @@ fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLoca
 @Suppress("UNCHECKED_CAST")
 private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): List<ClassNode> {
   val parents = classNode.superName.singletonOrEmpty() + (classNode.interfaces as? List<String>).orEmpty()
-  return parents.mapNotNull { resolveClassOrProblem(it, classNode, { classNode.createClassLocation() }) }
+  return parents.mapNotNull { resolveClassOrProblem(it, classNode) { classNode.createClassLocation() } }
 }
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean =

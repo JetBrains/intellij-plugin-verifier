@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.results.presentation
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.convertFieldSignature
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.convertJvmDescriptorToNormalPresentation
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes
@@ -90,6 +91,23 @@ val MethodLocation.methodOrConstructorWord: String
     "constructor"
   } else {
     "method"
+  }
+
+val ClassLocation.isInterface: Boolean
+  get() = modifiers.contains(Modifiers.Modifier.INTERFACE)
+
+val ClassLocation.isEnum: Boolean
+  get() = modifiers.contains(Modifiers.Modifier.ENUM)
+
+val ClassLocation.isAnnotation: Boolean
+  get() = modifiers.contains(Modifiers.Modifier.ANNOTATION)
+
+val ClassLocation.classType: String
+  get() = when {
+    isInterface -> "interface"
+    isEnum -> "enum"
+    isAnnotation -> "annotation"
+    else -> "class"
   }
 
 fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,

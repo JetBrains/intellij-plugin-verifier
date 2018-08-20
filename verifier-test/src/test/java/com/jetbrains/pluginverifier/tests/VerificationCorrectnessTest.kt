@@ -204,7 +204,7 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `overriding deprecated interface method`() {
-    assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedInterface is referenced in mock.plugin.deprecated.OverrideDeprecatedMethod")
+    assertDeprecatedUsageFound("Deprecated interface deprecated.DeprecatedInterface is referenced in mock.plugin.deprecated.OverrideDeprecatedMethod")
     assertDeprecatedUsageFound("Deprecated method deprecated.DeprecatedInterface.bar() : void is overridden in class mock.plugin.deprecated.OverrideDeprecatedMethod")
   }
 
@@ -633,5 +633,24 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
             "'The following plugins are incompatible with the current IDE build: org.some.company.plugin' or similar.",
         "Plugin is marked as incompatible with IU-145.500"
     )
+  }
+
+  @Test
+  fun `scheduled for removal APIs`() {
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.clazz() : void. This class will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.ScheduledForRemovalMethod.<init>() is invoked in mock.plugin.deprecated.ScheduledForRemovalUser.method() : void. This constructor will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated constructor deprecated.ScheduledForRemovalMethod.<init>() is invoked in mock.plugin.deprecated.OverrideScheduledForRemovalMethod.<init>(). This constructor will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated field deprecated.ScheduledForRemovalField.x : int is accessed in mock.plugin.deprecated.ScheduledForRemovalUser.field() : void. This field will will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.field() : void. This class will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalMethod.foo(int x) : void is invoked in mock.plugin.deprecated.ScheduledForRemovalUser.method() : void. This method will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated class deprecated.ScheduledForRemovalClass is referenced in mock.plugin.deprecated.ScheduledForRemovalUser.method() : void. This class will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated interface deprecated.ScheduledForRemovalInterface is referenced in mock.plugin.deprecated.OverrideScheduledForRemovalMethod. This interface will be removed in 2018.1")
+
+    assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalMethod.foo(int x) : void is overridden in class mock.plugin.deprecated.OverrideScheduledForRemovalMethod. This method will be removed in 2018.1")
+    assertDeprecatedUsageFound("Deprecated method deprecated.ScheduledForRemovalInterface.bar() : void is overridden in class mock.plugin.deprecated.OverrideScheduledForRemovalMethod. This method will be removed in 2018.1")
   }
 }

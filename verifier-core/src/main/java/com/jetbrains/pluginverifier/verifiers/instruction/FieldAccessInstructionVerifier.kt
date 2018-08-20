@@ -211,10 +211,14 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
   private fun checkFieldIsDeprecated(resolvedField: LookupResult.Found) {
     with(resolvedField) {
-      if (fieldNode.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod()))
-      } else if (definingClass.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod()))
+      val fieldDeprecated = fieldNode.getDeprecationInfo()
+      if (fieldDeprecated != null) {
+        ctx.registerDeprecatedUsage(DeprecatedFieldUsage(createFieldLocation(definingClass, fieldNode), getFromMethod(), fieldDeprecated))
+      } else {
+        val classDeprecated = definingClass.getDeprecationInfo()
+        if (classDeprecated != null) {
+          ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod(), classDeprecated))
+        }
       }
     }
   }

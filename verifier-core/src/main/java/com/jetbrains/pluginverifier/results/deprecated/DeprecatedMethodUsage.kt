@@ -14,15 +14,23 @@ import com.jetbrains.pluginverifier.results.presentation.isConstructor
 import com.jetbrains.pluginverifier.results.presentation.methodOrConstructorWord
 import java.util.*
 
-data class DeprecatedMethodUsage(
+class DeprecatedMethodUsage(
     override val deprecatedElement: MethodLocation,
-    override val usageLocation: Location
+    override val usageLocation: Location,
+    override val deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage() {
   override val shortDescription
     get() = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
   override val fullDescription
-    get() = "Deprecated " + deprecatedElement.methodOrConstructorWord + " ${deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)} is invoked in " + usageLocation.formatDeprecatedUsageLocation()
+    get() = buildString {
+      append("Deprecated " + deprecatedElement.methodOrConstructorWord + " ")
+      append(deprecatedElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
+      append(" is invoked in " + usageLocation.formatDeprecatedUsageLocation())
+      if (deprecationInfo.untilVersion != null) {
+        append(". This " + deprecatedElement.methodOrConstructorWord + " will be removed in " + deprecationInfo.untilVersion)
+      }
+    }
 
   override val deprecatedElementType: DeprecatedElementType
     get() = if (deprecatedElement.isConstructor) {

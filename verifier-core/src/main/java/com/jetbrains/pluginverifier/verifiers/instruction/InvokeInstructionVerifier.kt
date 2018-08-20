@@ -424,10 +424,14 @@ private class InvokeImplementation(val verifiableClass: ClassNode,
 
   private fun checkMethodIsDeprecated(resolvedMethod: LookupResult.Found) {
     with(resolvedMethod) {
-      if (methodNode.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod()))
-      } else if (definingClass.isDeprecated()) {
-        ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod()))
+      val methodDeprecated = methodNode.getDeprecationInfo()
+      if (methodDeprecated != null) {
+        ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), getFromMethod(), methodDeprecated))
+      } else {
+        val classDeprecated = definingClass.getDeprecationInfo()
+        if (classDeprecated != null) {
+          ctx.registerDeprecatedUsage(DeprecatedClassUsage(definingClass.createClassLocation(), getFromMethod(), classDeprecated))
+        }
       }
     }
   }

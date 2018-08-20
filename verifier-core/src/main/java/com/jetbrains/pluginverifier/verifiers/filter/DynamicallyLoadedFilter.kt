@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.filter
 
-import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
+import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getInvisibleAnnotations
 import org.objectweb.asm.tree.ClassNode
 
@@ -12,10 +12,10 @@ import org.objectweb.asm.tree.ClassNode
 class DynamicallyLoadedFilter : ClassFilter {
 
   companion object {
-    private val DYNAMICALLY_LOADED = "com/intellij/ide/plugins/DynamicallyLoaded"
+    private const val DYNAMICALLY_LOADED = "com/intellij/ide/plugins/DynamicallyLoaded"
   }
 
   override fun shouldVerify(classNode: ClassNode) =
-      classNode.getInvisibleAnnotations().none { it.desc.extractClassNameFromDescr() == DYNAMICALLY_LOADED }
+      classNode.getInvisibleAnnotations()?.findAnnotation(DYNAMICALLY_LOADED) == null
 
 }
