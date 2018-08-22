@@ -497,7 +497,7 @@ The following classes of 'non' are not resolved:
     )
 
     val removedInterfaceLocations = listOf(
-        "Class mock.plugin.NotFoundInterface"
+        "Interface mock.plugin.NotFoundInterface"
     )
 
     fun formatFull(className: String, location: String) =
