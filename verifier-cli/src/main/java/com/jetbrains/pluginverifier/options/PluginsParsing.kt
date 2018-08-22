@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.readLines
 import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
@@ -19,75 +21,96 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-class PluginsParsing(private val pluginRepository: PluginRepository,
-                     private val reportage: Reportage) {
+/**
+ * Utility class used to fill [pluginsSet] with a list of plugins to check.
+ */
+class PluginsParsing(
+    private val pluginRepository: PluginRepository,
+    private val reportage: Reportage,
+    private val pluginsSet: PluginsSet
+) {
 
-  fun parsePluginsToCheck(pluginToTestArg: String, ideVersions: List<IdeVersion>): PluginsSet {
-    reportage.logVerificationStage("Parse a list of plugins to check")
-    val pluginsSet = PluginsSet()
-    when {
-      pluginToTestArg.startsWith("@") -> schedulePluginsFromFile(
-          pluginsSet,
-          Paths.get(pluginToTestArg.substringAfter("@")),
-          ideVersions
-      )
-      pluginToTestArg.matches("#\\d+".toRegex()) -> {
-        val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-        val updateInfo = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "get update information for update #$updateId") {
-          (this as? MarketplaceRepository)?.getPluginInfoById(updateId)
-        } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
-        pluginsSet.schedulePlugin(updateInfo)
-      }
-      else -> addPluginToCheckFromFile(Paths.get(pluginToTestArg), pluginsSet)
+  /**
+   * Adds update #[updateId] to [pluginsSet].
+   */
+  fun addUpdate(updateId: Int) {
+    val updateInfo = getPluginInfoByUpdateId(updateId)
+        ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
+    pluginsSet.schedulePlugin(updateInfo)
+  }
+
+  /**
+   * Adds last version of [pluginId] to [pluginsSet].
+   */
+  fun addLastPluginVersion(pluginId: String) {
+    val selector = LastVersionSelector()
+    val selectResult = selector.selectPluginVersion(pluginId, pluginRepository)
+    if (selectResult is PluginVersionSelector.Result.Selected) {
+      pluginsSet.schedulePlugin(selectResult.pluginInfo)
     }
+  }
+
+  /**
+   * Parses the command line options [opts] for a set of plugin IDs of
+   * to be checked against [ideVersion]
+   * and requests corresponding [UpdateInfo]s.
+   */
+  fun addByPluginIds(opts: CmdOpts, ideVersion: IdeVersion): PluginsSet {
+    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
+
+    val pluginInfos = tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check against $ideVersion") {
+      requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion)
+    }
+    pluginsSet.schedulePlugins(pluginInfos)
     return pluginsSet
   }
 
   /**
-   * Parses the command line for a set of plugins to be checked
-   * and requests [UpdateInfo]s compatible with [ideVersion].
+   * Parses lines of [pluginsListFile] and adds
+   * specified plugins to the [pluginsSet].
+   *
+   * - `id:<plugin-id>` - all version of <plugin-id> compatible with all [ideVersions] are added
+   * - `#<update-id>` - update #<update-id> is added
+   * - <plugin-path> - plugin from local <plugin-path> is added
    */
-  fun parsePluginsToCheck(opts: CmdOpts, ideVersion: IdeVersion): PluginsSet {
-    val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
-
-    val pluginsSet = PluginsSet()
-    tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check against $ideVersion") {
-      val pluginInfos = requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion)
-      pluginsSet.schedulePlugins(pluginInfos)
-    }
-    return pluginsSet
-  }
-
-  private fun schedulePluginsFromFile(pluginsSet: PluginsSet,
-                                      pluginsListFile: Path,
-                                      ideVersions: List<IdeVersion>) {
-    val pluginPaths = pluginsListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
+  fun addPluginsFromFile(
+      pluginsListFile: Path,
+      ideVersions: List<IdeVersion>
+  ) {
+    val lines = pluginsListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
     for (ideVersion in ideVersions) {
-      for (path in pluginPaths) {
-        if (path.startsWith("id:")) {
-          val compatiblePluginVersions = getCompatiblePluginVersions(path.substringAfter("id:"), ideVersion)
+      for (line in lines) {
+        if (line.startsWith("id:")) {
+          val compatiblePluginVersions = getCompatiblePluginVersions(line.substringAfter("id:"), ideVersion)
           pluginsSet.schedulePlugins(compatiblePluginVersions)
-        } else if (path.startsWith("#")) {
-          val updateId = path.substringAfter("#").toIntOrNull() ?: continue
-          val pluginInfo = getPluginInfoByUpdateId(updateId) ?: continue
-          pluginsSet.schedulePlugin(pluginInfo)
-        } else {
-          var pluginFile = Paths.get(path)
-          if (!pluginFile.isAbsolute) {
-            pluginFile = pluginsListFile.resolveSibling(path)
-          }
-          if (!pluginFile.exists()) {
-            throw RuntimeException("Plugin file '$path' with absolute '${pluginFile.toAbsolutePath()}' specified in '${pluginsListFile.toAbsolutePath()}' doesn't exist")
-          }
-          reportage.logVerificationStage("Reading descriptor of a plugin to check from $pluginFile")
-          addPluginToCheckFromFile(pluginFile, pluginsSet)
+          continue
         }
+
+        if (line.startsWith("#")) {
+          val updateId = line.substringAfter("#").toIntOrNull() ?: continue
+          addUpdate(updateId)
+          continue
+        }
+
+        var pluginFile = Paths.get(line)
+        if (!pluginFile.isAbsolute) {
+          pluginFile = pluginsListFile.resolveSibling(line)
+        }
+        addPluginFile(pluginFile, true)
       }
     }
   }
 
-  private fun addPluginToCheckFromFile(pluginFile: Path, pluginsSet: PluginsSet) {
-    with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
+  /**
+   * Adds plugin from local path [pluginFile] to [pluginsSet].
+   */
+  fun addPluginFile(pluginFile: Path, validateDescriptor: Boolean) {
+    if (!pluginFile.exists()) {
+      throw RuntimeException("Plugin file '$pluginFile' with absolute path '${pluginFile.toAbsolutePath()}' doesn't exist")
+    }
+
+    reportage.logVerificationStage("Reading plugin to check from $pluginFile")
+    with(IdePluginManager.createManager().createPlugin(pluginFile.toFile(), validateDescriptor)) {
       when (this) {
         is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
         is PluginCreationFail -> {
@@ -110,18 +133,8 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
     return allCompatibleUpdatesOfPlugin.map { it as UpdateInfo }
   }
 
+
   /**
-   * Parses a file containing a list of plugin IDs to check.
-   * ```
-   * plugin.one
-   * $plugin.two
-   * //comment
-   * plugin.three$
-   * ```
-   *
-   * If '$' is specified as a prefix or a suffix, only the last version
-   * of the plugin will be checked. Otherwise, all versions of the plugin will be checked.
-   *
    * Returns (ID-s of plugins to check all builds, ID-s of plugins to check last builds)
    */
   private fun parseAllAndLastPluginIdsToCheck(opts: CmdOpts): Pair<List<String>, List<String>> {
@@ -131,28 +144,48 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
     pluginsCheckAllBuilds.addAll(opts.pluginToCheckAllBuilds)
     pluginsCheckLastBuilds.addAll(opts.pluginToCheckLastBuild)
 
-    val pluginsFile = opts.pluginsToCheckFile
+    val pluginsFile = opts.pluginsToCheckFile?.let { File(it) }
     if (pluginsFile != null) {
-      try {
-        File(pluginsFile).readLines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("//") }
-            .forEach { fullLine ->
-              val trimmed = fullLine.trim('$').trim()
-              if (trimmed.isNotEmpty()) {
-                if (fullLine.startsWith("$") || fullLine.endsWith("$")) {
-                  pluginsCheckLastBuilds.add(trimmed)
-                } else {
-                  pluginsCheckAllBuilds.add(trimmed)
-                }
-              }
-            }
-      } catch (e: IOException) {
-        throw RuntimeException("Failed to read plugins to check file " + pluginsFile + ": " + e.message, e)
-      }
+      parseAllAndLastBuildsFile(pluginsFile, pluginsCheckAllBuilds, pluginsCheckLastBuilds)
     }
 
     return pluginsCheckAllBuilds to pluginsCheckLastBuilds
+  }
+
+  /**
+   * Parses [pluginsListFile] containing a list of plugin IDs to check.
+   * ```
+   * plugin.one
+   * $plugin.two
+   * //comment
+   * plugin.three$
+   * ```
+   *
+   * If '$' is specified as a prefix or a suffix, only the last version
+   * of the plugin will be checked. Otherwise, all versions of the plugin will be checked.
+   */
+  private fun parseAllAndLastBuildsFile(
+      pluginsListFile: File,
+      allBuilds: MutableList<String>,
+      lastBuilds: MutableList<String>
+  ) {
+    try {
+      pluginsListFile.readLines()
+          .map { it.trim() }
+          .filter { it.isNotEmpty() && !it.startsWith("//") }
+          .forEach { fullLine ->
+            val trimmed = fullLine.trim('$').trim()
+            if (trimmed.isNotEmpty()) {
+              if (fullLine.startsWith("$") || fullLine.endsWith("$")) {
+                lastBuilds.add(trimmed)
+              } else {
+                allBuilds.add(trimmed)
+              }
+            }
+          }
+    } catch (e: IOException) {
+      throw RuntimeException("Failed to read plugins to check file " + pluginsListFile + ": " + e.message, e)
+    }
   }
 
   /**
@@ -163,9 +196,11 @@ class PluginsParsing(private val pluginRepository: PluginRepository,
    * [checkAllBuildsPluginIds] is a list of plugin id-s of plugins for which every build (aka plugin version) will be selected.
    * [checkLastBuildsPluginIds] is a list of plugin id-s of plugins for which only the newest build (version) will be selected.
    */
-  private fun requestUpdatesToCheckByIds(checkAllBuildsPluginIds: List<String>,
-                                         checkLastBuildsPluginIds: List<String>,
-                                         ideVersion: IdeVersion): List<PluginInfo> {
+  private fun requestUpdatesToCheckByIds(
+      checkAllBuildsPluginIds: List<String>,
+      checkLastBuildsPluginIds: List<String>,
+      ideVersion: IdeVersion
+  ): List<PluginInfo> {
     if (checkAllBuildsPluginIds.isEmpty() && checkLastBuildsPluginIds.isEmpty()) {
       return pluginRepository.getLastCompatiblePlugins(ideVersion)
     } else {

@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
+import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -38,7 +39,8 @@ class DeprecatedUsagesParamsBuilder(
     val ideVersion = deprecatedOpts.releaseIdeVersion?.let { IdeVersion.createIdeVersionIfValid(it) }
         ?: ideDescriptor.ideVersion
 
-    val pluginsSet = PluginsParsing(pluginRepository, reportage).parsePluginsToCheck(opts, ideVersion)
+    val pluginsSet = PluginsSet()
+    PluginsParsing(pluginRepository, reportage, pluginsSet).addByPluginIds(opts, ideVersion)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)

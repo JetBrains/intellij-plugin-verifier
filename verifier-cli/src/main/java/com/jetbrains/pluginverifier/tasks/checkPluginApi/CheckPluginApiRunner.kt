@@ -20,7 +20,7 @@ class CheckPluginApiRunner : CommandRunner() {
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache,
       reportage: Reportage
-  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider)
+  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider, reportage)
 
   override fun createTask(
       parameters: TaskParameters,

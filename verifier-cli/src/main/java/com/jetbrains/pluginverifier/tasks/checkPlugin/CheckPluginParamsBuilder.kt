@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
+import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
@@ -25,9 +26,26 @@ class CheckPluginParamsBuilder(
       OptionsParser.createIdeDescriptor(it, opts)
     }
 
-    val pluginToTestArg = freeArgs[0]
     val ideVersions = ideDescriptors.map { it.ideVersion }
-    val pluginsSet = PluginsParsing(pluginRepository, reportage).parsePluginsToCheck(pluginToTestArg, ideVersions)
+    val pluginsSet = PluginsSet()
+    val pluginsParsing = PluginsParsing(pluginRepository, reportage, pluginsSet)
+
+    val pluginToTestArg = freeArgs[0]
+    when {
+      pluginToTestArg.startsWith("@") -> {
+        pluginsParsing.addPluginsFromFile(
+            Paths.get(pluginToTestArg.substringAfter("@")),
+            ideVersions
+        )
+      }
+      pluginToTestArg.matches("#\\d+".toRegex()) -> {
+        val updateId = Integer.parseInt(pluginToTestArg.drop(1))
+        pluginsParsing.addUpdate(updateId)
+      }
+      else -> {
+        pluginsParsing.addPluginFile(Paths.get(pluginToTestArg), true)
+      }
+    }
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       ideVersions.forEach { ideVersion ->

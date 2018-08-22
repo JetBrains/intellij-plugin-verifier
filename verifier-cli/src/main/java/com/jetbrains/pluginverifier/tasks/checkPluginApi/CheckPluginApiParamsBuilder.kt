@@ -1,24 +1,28 @@
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
-import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
-import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.exists
+import com.jetbrains.pluginverifier.misc.readLines
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import java.io.File
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class CheckPluginApiParamsBuilder(private val pluginRepository: PluginRepository,
-                                  private val pluginDetailsProvider: PluginDetailsProvider) : TaskParametersBuilder {
+class CheckPluginApiParamsBuilder(
+    private val pluginRepository: PluginRepository,
+    private val pluginDetailsProvider: PluginDetailsProvider,
+    private val reportage: Reportage
+) : TaskParametersBuilder {
   companion object {
     private const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
 Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip kotlin-depends.txt"""
@@ -43,7 +47,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
       throw IllegalArgumentException("New plugin file $newPluginFile doesn't exist")
     }
 
-    val pluginsToCheckFile = File(args[2])
+    val pluginsToCheckFile = Paths.get(args[2])
     if (!pluginsToCheckFile.exists()) {
       throw IllegalArgumentException("File with list of plugins' IDs to check doesn't exist: $pluginsToCheckFile")
     }
@@ -72,18 +76,19 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
   }
 
   private fun parsePackageFilter(packages: Array<String>): PackageFilter =
-      packages
-          .map { it.trim() }
-          .mapNotNull {
-            val exclude = it.startsWith("-")
-            val binaryPackageName = it.trim('+', '-').replace('.', '/')
-            if (binaryPackageName.isEmpty()) {
-              null
-            } else {
-              PackageFilter.Descriptor(!exclude, binaryPackageName)
-            }
-          }
-          .let { PackageFilter(it) }
+      PackageFilter(
+          packages
+              .map { it.trim() }
+              .mapNotNull {
+                val exclude = it.startsWith("-")
+                val binaryPackageName = it.trim('+', '-').replace('.', '/')
+                if (binaryPackageName.isEmpty()) {
+                  null
+                } else {
+                  PackageFilter.Descriptor(!exclude, binaryPackageName)
+                }
+              }
+      )
 
 
   private fun providePluginDetails(pluginFile: Path) =
@@ -97,17 +102,38 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
         }
       }
 
-  private fun parsePluginsToCheck(pluginsToCheckFile: File): PluginsSet {
+  /**
+   * Parses [pluginsToCheckFile] for a [PluginsSet].
+   *
+   * Lines can be:
+   * - `<plugin-id>` - adds the last version of <plugin-id>
+   * - `<plugin-path>` - adds plugin from local path <plugin-path>.
+   * If the <plugin-path> is followed by "!!", this plugin's descriptor
+   * will not be verified. It can be used to specify a bundled plugin,
+   * which has some mandatory elements missing (like <idea-version>).
+   */
+  private fun parsePluginsToCheck(pluginsToCheckFile: Path): PluginsSet {
     val pluginsSet = PluginsSet()
-    val lastVersionSelector = LastVersionSelector()
-    pluginsToCheckFile.readLines().mapNotNull { pluginId ->
-      with(lastVersionSelector.selectPluginVersion(pluginId, pluginRepository)) {
-        when (this) {
-          is PluginVersionSelector.Result.Selected -> pluginInfo
-          else -> null
-        }
+    val pluginsParsing = PluginsParsing(pluginRepository, reportage, pluginsSet)
+
+    for (line in pluginsToCheckFile.readLines()) {
+      val validateDescriptor = !line.endsWith("!!")
+      val path = line.substringBeforeLast("!!")
+
+      val pluginPath = try {
+        Paths.get(path).takeIf { it.exists() }
+            ?: pluginsToCheckFile.resolveSibling(path).takeIf { it.exists() }
+      } catch (e: InvalidPathException) {
+        null
       }
-    }.forEach { pluginsSet.schedulePlugin(it) }
+
+      if (pluginPath != null) {
+        pluginsParsing.addPluginFile(pluginPath, validateDescriptor)
+      } else {
+        pluginsParsing.addLastPluginVersion(line)
+      }
+    }
+
     return pluginsSet
   }
 
