@@ -22,6 +22,9 @@ message CompatibilityProblem {
   string problemType = 3;
 }
 
+/*
+ Usages of deprecated API in bytecode.
+*/
 message DeprecatedApiUsage {
   string shortDescription = 1;
 
@@ -31,17 +34,66 @@ message DeprecatedApiUsage {
 
   string usageLocation = 4;
 
-  DeprecatedElementType deprecatedElementType = 5;
+  /*
+   This field replaces the old `deprecatedElementType = 5`.
+  */
+  ElementType elementType = 6;
 
-  enum DeprecatedElementType {
-    CLASS = 0;
+  /*
+   Additional info on the deprecated API.
+  */
+  DeprecationInfo deprecationInfo = 7;
 
-    METHOD = 1;
+  /*
+    Contains additional info on deprecated API
 
-    FIELD = 2;
+    [forRemoval] - whether the deprecated API is scheduled for removal
+    [untilVersion] - version of the product where API is to be removed
+  */
+  message DeprecationInfo {
+      bool forRemoval = 1;
 
-    CONSTRUCTOR = 4;
+      string untilVersion = 2;
   }
+}
+
+/*
+ Usages of experimental API in bytecode.
+*/
+message ExperimentalApiUsage {
+    string shortDescription = 1;
+
+    string fullDescription = 2;
+
+    string apiElement = 3;
+
+    string usageLocation = 4;
+
+    ElementType apiElementType = 5;
+}
+
+/*
+ Type of API element.
+
+ Presence of that field in a message may be
+ checked by comparison with the default [UNSPECIFIED] value.
+*/
+enum ElementType {
+    UNSPECIFIED = 0;
+
+    CLASS = 1;
+
+    INTERFACE = 2;
+
+    ANNOTATION = 3;
+
+    ENUM = 4;
+
+    METHOD = 5;
+
+    CONSTRUCTOR = 6;
+
+    FIELD = 7;
 }
 
 message VerificationResult {
@@ -63,6 +115,8 @@ message VerificationResult {
   repeated CompatibilityProblem compatibility_problems = 8;
 
   repeated DeprecatedApiUsage deprecated_usages = 9;
+
+  repeated ExperimentalApiUsage experimental_api_usages = 10;
 
   enum ResultType {
     OK = 0;
