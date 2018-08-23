@@ -18,7 +18,7 @@ data class VerificationContext(
     val plugin: PluginInfo,
     val verificationTarget: VerificationTarget,
     val resultHolder: ResultHolder,
-    val findAbnormalApiUsages: Boolean,
+    val findUnstableApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     val clsResolver: ClsResolver
 ) {
@@ -34,7 +34,7 @@ data class VerificationContext(
   }
 
   fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    if (findAbnormalApiUsages) {
+    if (findUnstableApiUsages) {
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
       if (shouldIndexClass(deprecatedElementHost, usageHostClass)) {
@@ -44,7 +44,7 @@ data class VerificationContext(
   }
 
   fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
-    if (findAbnormalApiUsages) {
+    if (findUnstableApiUsages) {
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
       if (shouldIndexClass(elementHostClass, usageHostClass)) {

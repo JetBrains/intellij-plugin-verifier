@@ -15,8 +15,8 @@
  */
 package com.jetbrains.plugin.structure.intellij.utils;
 
-import com.google.common.io.ByteStreams;
-import org.apache.commons.io.IOUtils;
+import kotlin.io.ByteStreamsKt;
+import kotlin.io.ConstantsKt;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
 import org.jdom2.input.SAXBuilder;
@@ -88,35 +88,26 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(URL url) throws JDOMException, IOException {
-    InputStream stream = URLUtil.openStream(url);
-    try {
+    try (InputStream stream = URLUtil.openStream(url)) {
       return loadDocument(stream);
-    } finally {
-      IOUtils.closeQuietly(stream);
     }
   }
 
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    //to prevent closing the supplied stream from finally-block
+    //to prevent closing the supplied stream from InputStreamReader.close()
     InputStream copied = copyInputStream(stream);
-    InputStreamReader reader = new InputStreamReader(copied, Charset.forName("UTF-8"));
-    try {
+    try (InputStreamReader reader = new InputStreamReader(copied, Charset.forName("UTF-8"))) {
       SAXBuilder saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
       return saxBuilder.build(reader);
-    } finally {
-      IOUtils.closeQuietly(reader);
     }
   }
 
   @NotNull
   public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
-    InputStream stream = URLUtil.openResourceStream(url);
-    try {
+    try (InputStream stream = URLUtil.openResourceStream(url)) {
       return loadDocument(stream);
-    } finally {
-      IOUtils.closeQuietly(stream);
     }
   }
 
@@ -126,7 +117,7 @@ public class JDOMUtil {
 
   @NotNull
   private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
-    return new ByteArrayInputStream(ByteStreams.toByteArray(is));
+    return new ByteArrayInputStream(ByteStreamsKt.readBytes(is, ConstantsKt.DEFAULT_BUFFER_SIZE));
   }
 
   private static class EmptyTextFilter extends AbstractFilter {

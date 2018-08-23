@@ -92,17 +92,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     try {
       ZipEntry entry = getEntry(zipFile, descriptorPath);
       if (entry != null) {
-        InputStream documentStream = null;
-        try {
-          URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
-          documentStream = zipFile.getInputStream(entry);
+        try (InputStream documentStream = zipFile.getInputStream(entry)) {
           Document document = JDOMUtil.loadDocument(documentStream);
+          URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
           return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
         } catch (Exception e) {
           LOG.info("Unable to read file " + descriptorPath);
           return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
-        } finally {
-          IOUtils.closeQuietly(documentStream);
         }
       } else {
         return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), jarFile);
