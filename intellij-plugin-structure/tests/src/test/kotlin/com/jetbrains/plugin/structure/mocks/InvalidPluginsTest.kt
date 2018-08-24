@@ -373,6 +373,21 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `since or until build with year instead of branch number`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="2018.1"/>"""
+        }, listOf(ErroneousSinceBuild("plugin.xml", IdeVersion.createIdeVersion("2018.1")))
+    )
+
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
+        }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
+    )
+  }
+
+  @Test
   fun `too long properties specified`() {
 
     val string_65 = "a".repeat(65)

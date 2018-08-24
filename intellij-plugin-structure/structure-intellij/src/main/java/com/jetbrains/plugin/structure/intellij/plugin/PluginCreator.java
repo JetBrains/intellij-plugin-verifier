@@ -335,6 +335,35 @@ final class PluginCreator {
     validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH);
   }
 
+  private void validateSinceBuild(@Nullable String sinceBuild) {
+    if (sinceBuild == null) {
+      registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
+    } else {
+      IdeVersion sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild);
+      if (sinceBuildParsed == null) {
+        registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
+      } else {
+        if (sinceBuildParsed.getBaselineVersion() < 130 && sinceBuild.endsWith(".*")) {
+          registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
+        }
+        if (sinceBuildParsed.getBaselineVersion() > 2000) {
+          registerProblem(new ErroneousSinceBuild(myDescriptorPath, sinceBuildParsed));
+        }
+      }
+    }
+  }
+
+  private void validateUntilBuild(@NotNull String untilBuild) {
+    IdeVersion untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild);
+    if (untilBuildParsed == null) {
+      registerProblem(new InvalidUntilBuild(myDescriptorPath, untilBuild));
+    } else {
+      if (untilBuildParsed.getBaselineVersion() > 2000) {
+        registerProblem(new ErroneousUntilBuild(myDescriptorPath, untilBuildParsed));
+      }
+    }
+  }
+
   private void validateIdeaVersion(IdeaVersionBean versionBean) {
     if (versionBean == null) {
       registerProblem(new PropertyNotSpecified("idea-version", myDescriptorPath));
@@ -342,22 +371,11 @@ final class PluginCreator {
     }
 
     String sinceBuild = versionBean.sinceBuild;
-    if (sinceBuild == null) {
-      registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
-    } else {
-      try {
-        IdeVersion sinceBuildParsed = IdeVersion.createIdeVersion(sinceBuild);
-        if (sinceBuildParsed.getBaselineVersion() < 130 && sinceBuild.endsWith(".*")) {
-          registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
-        }
-      } catch (Exception e) {
-        registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
-      }
-    }
+    validateSinceBuild(sinceBuild);
 
     String untilBuild = versionBean.untilBuild;
-    if (untilBuild != null && !IdeVersion.isValidIdeVersion(untilBuild)) {
-      registerProblem(new InvalidUntilBuild(myDescriptorPath, untilBuild));
+    if (untilBuild != null) {
+      validateUntilBuild(untilBuild);
     }
   }
 
