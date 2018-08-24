@@ -34,7 +34,7 @@ object IdeResolverCreator {
       throw IOException("Directory \"lib\" is not found (should be found at $lib)")
     }
 
-    val jars = JarsUtils.collectJars(lib, { file -> !file.name.endsWith("javac2.jar") }, false)
+    val jars = JarsUtils.collectJars(lib, { true }, false)
 
     return JarsUtils.makeResolver(jars)
   }
