@@ -8,6 +8,7 @@ import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
 import java.util.Collections.synchronizedList
+import java.util.Collections.synchronizedSet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -198,21 +199,21 @@ class TaskManagerTest {
         taskManager.enqueue(TaskLong())
       }
 
-      val finishedTasks = synchronizedList(arrayListOf<Long>())
-      val taskIds = (0 until 4)
+      val finishedTasks = synchronizedSet(hashSetOf<Long>())
+      val finishedTaskIds = (0 until 4)
           .map {
             taskManager.enqueue(
                 TaskFast(),
                 onCompletion = { td -> finishedTasks.add(td.taskId) }
             )
-          }.map { it.taskId }
+          }.mapTo(hashSetOf()) { it.taskId }
 
       val startTime = System.currentTimeMillis()
       while (finishedTasks.size != 4 && System.currentTimeMillis() - startTime < 5000) {
       }
 
       try {
-        assertEquals(taskIds, finishedTasks)
+        assertEquals(finishedTaskIds, finishedTasks)
       } finally {
         /**
          * Start all long tasks and allow the task manager to exit.
