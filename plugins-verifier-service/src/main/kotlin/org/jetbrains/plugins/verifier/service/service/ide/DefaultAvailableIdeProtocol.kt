@@ -23,11 +23,7 @@ private data class AvailableIdeJson(
     val ideVersion: String,
 
     @SerializedName("releasedVersion")
-    val releasedVersion: String?,
-
-    //todo: remove this when the Plugin Repository is ready. It will be no later than on July 13, 2018 :)
-    @SerializedName("isSnapshot")
-    val isSnapshot: Boolean = false
+    val releasedVersion: String?
 )
 
 private fun AvailableIde.convertToJson() = AvailableIdeJson(
