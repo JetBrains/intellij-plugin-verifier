@@ -41,27 +41,27 @@ class ResultHolder {
 
   private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()
 
-  fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
+  fun addDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     deprecatedUsages.add(deprecatedApiUsage)
   }
 
-  fun registerExperimentalUsage(experimentalApiUsage: ExperimentalApiUsage) {
+  fun addExperimentalUsage(experimentalApiUsage: ExperimentalApiUsage) {
     experimentalApiUsages.add(experimentalApiUsage)
   }
 
-  fun registerProblem(problem: CompatibilityProblem) {
+  fun addProblem(problem: CompatibilityProblem) {
     if (problem !in compatibilityProblems && !ignoredProblemsHolder.isIgnored(problem)) {
       compatibilityProblems.add(problem)
     }
   }
 
-  fun registerIgnoredProblem(problem: CompatibilityProblem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
+  fun addIgnoredProblem(problem: CompatibilityProblem, ignoreDecisions: List<ProblemsFilter.Result.Ignore>) {
     if (problem !in compatibilityProblems && !ignoredProblemsHolder.isIgnored(problem)) {
       ignoredProblemsHolder.registerIgnoredProblem(problem, ignoreDecisions)
     }
   }
 
-  fun registerPluginErrorOrWarning(errorOrWarning: PluginProblem) {
+  fun addPluginErrorOrWarning(errorOrWarning: PluginProblem) {
     if (errorOrWarning !in pluginErrorsAndWarnings) {
       pluginErrorsAndWarnings.add(errorOrWarning)
       if (errorOrWarning.level == PluginProblem.Level.WARNING) {
@@ -79,7 +79,7 @@ class ResultHolder {
     if (cycles.isNotEmpty()) {
       val nodes = cycles[0]
       val cyclePresentation = nodes.joinToString(separator = " -> ") + " -> " + nodes[0]
-      registerPluginErrorOrWarning(DependenciesCycleWarning(cyclePresentation))
+      addPluginErrorOrWarning(DependenciesCycleWarning(cyclePresentation))
     }
   }
 

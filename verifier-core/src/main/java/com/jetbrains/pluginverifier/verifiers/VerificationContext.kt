@@ -27,9 +27,9 @@ data class VerificationContext(
     val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(problem, this) }
     val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
     if (ignoreDecisions.isNotEmpty()) {
-      resultHolder.registerIgnoredProblem(problem, ignoreDecisions)
+      resultHolder.addIgnoredProblem(problem, ignoreDecisions)
     } else {
-      resultHolder.registerProblem(problem)
+      resultHolder.addProblem(problem)
     }
   }
 
@@ -38,7 +38,7 @@ data class VerificationContext(
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
       if (shouldIndexClass(deprecatedElementHost, usageHostClass)) {
-        resultHolder.registerDeprecatedUsage(deprecatedApiUsage)
+        resultHolder.addDeprecatedUsage(deprecatedApiUsage)
       }
     }
   }
@@ -48,7 +48,7 @@ data class VerificationContext(
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
       if (shouldIndexClass(elementHostClass, usageHostClass)) {
-        resultHolder.registerExperimentalUsage(experimentalApiUsage)
+        resultHolder.addExperimentalUsage(experimentalApiUsage)
       }
     }
   }

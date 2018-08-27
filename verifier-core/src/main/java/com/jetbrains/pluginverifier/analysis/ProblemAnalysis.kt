@@ -117,7 +117,7 @@ fun VerificationContext.analyzeMissingClasses(resultHolder: ResultHolder) {
   //Add grouped [PackageNotFoundProblem]s via [registerProblem]
   //to ignore the problems if needed.
   for (packageNotFoundProblem in packageNotFoundProblems) {
-    resultHolder.registerProblem(packageNotFoundProblem)
+    registerProblem(packageNotFoundProblem)
   }
 
 }

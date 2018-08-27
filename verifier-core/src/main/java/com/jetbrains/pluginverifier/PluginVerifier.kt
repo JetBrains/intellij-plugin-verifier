@@ -53,7 +53,7 @@ class PluginVerifier(
        * Register a special "marked incompatible" problem, if necessary.
        */
       if (verificationTarget is VerificationTarget.Ide && PluginIdAndVersion(plugin.pluginId, plugin.version) in incompatiblePlugins) {
-        resultHolder.registerProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
+        resultHolder.addProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
       }
 
       /**
@@ -131,10 +131,10 @@ class PluginVerifier(
       when (it) {
         is PluginDetailsCache.Result.Provided -> {
           val pluginDetails = it.pluginDetails
-          pluginDetails.pluginWarnings.forEach { resultHolder.registerPluginErrorOrWarning(it) }
+          pluginDetails.pluginWarnings.forEach { resultHolder.addPluginErrorOrWarning(it) }
           verifyClasses(pluginDetails)
         }
-        is PluginDetailsCache.Result.InvalidPlugin -> it.pluginErrors.forEach { resultHolder.registerPluginErrorOrWarning(it) }
+        is PluginDetailsCache.Result.InvalidPlugin -> it.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = it.reason
         is PluginDetailsCache.Result.Failed -> resultHolder.failedToDownloadReason = "Plugin $plugin was not downloaded due to ${it.error.message}"
       }
@@ -151,7 +151,7 @@ class PluginVerifier(
       throw ie
     } catch (e: Exception) {
       pluginReporters.reportException("Failed to select classes for check for $plugin", e)
-      resultHolder.registerPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
+      resultHolder.addPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return
     }
 
