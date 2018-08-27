@@ -75,7 +75,7 @@ class ErroneousSinceBuild(
     val sinceBuild: IdeVersion
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
-    get() = "since build '$sinceBuild' must match the multi-part build number format '<branch>.<build_number>.<version>', for example \"182.4132.789\" or \"182.*\"" +
+    get() = "since build '$sinceBuild' must match the multi-part build number format '<branch>.<build_number>.<version>', for example '182.4132.789'. " +
         "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
 
   override val level: Level
@@ -87,7 +87,7 @@ class ErroneousUntilBuild(
     val untilBuild: IdeVersion
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
-    get() = "until build '$untilBuild' must match the multi-part build number format, for example \"182.4132.789\" or \"182.*\". " +
+    get() = "until build '$untilBuild' must match the multi-part build number format, for example '182.4132.789' or '182.*'. " +
         "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
 
   override val level: Level
