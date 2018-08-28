@@ -276,6 +276,11 @@ public class IdeVersionTest {
 
     assertFalse(IdeVersion.isValidIdeVersion("IU-163."));
     assertFalse(IdeVersion.isValidIdeVersion("SNAPSHOT.163"));
+    assertFalse(IdeVersion.isValidIdeVersion("172-4144.1"));
+    assertFalse(IdeVersion.isValidIdeVersion("-AB-4144.1"));
+    assertFalse(IdeVersion.isValidIdeVersion("-AB--4144.1"));
+    assertFalse(IdeVersion.isValidIdeVersion("A--B-4144.1"));
+    assertFalse(IdeVersion.isValidIdeVersion("A1-4144.1"));
 
     assertNotNull(IdeVersion.createIdeVersionIfValid("IU-163.1"));
     assertNotNull(IdeVersion.createIdeVersionIfValid("IU-163.SNAPSHOT"));

@@ -86,6 +86,8 @@ class IdeVersionImpl(
         productCode = ""
       }
 
+      validateProductCode(version, productCode)
+
       val baselineVersionSeparator = code.indexOf('.')
       val baselineVersion: Int
       val buildNumber: Int
@@ -132,6 +134,25 @@ class IdeVersionImpl(
         return IdeVersionImpl(productCode, intArrayOf(baselineVersion, buildNumber))
       }
 
+    }
+
+    /**
+     * Valid product codes:
+     * - IU
+     * - FB-IC
+     * - A-B-C
+     */
+    private fun validateProductCode(version: String, productCode: String) {
+      if (productCode.isNotEmpty()) {
+        for (c in productCode) {
+          if (c != '-' && !c.isLetter()) {
+            throw IllegalArgumentException("Invalid character '$c' in product code: $version")
+          }
+        }
+      }
+      if (version.startsWith("-") || version.endsWith("-") || version.contains("--")) {
+        throw IllegalArgumentException("Invalid product code: $version")
+      }
     }
 
     private fun parseBuildNumber(version: String, code: String): Int {
