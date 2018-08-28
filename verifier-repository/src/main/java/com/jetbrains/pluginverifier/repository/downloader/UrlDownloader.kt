@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> {
 
   private companion object {
+    private const val FILENAME = "filename="
     private const val FILE_PROTOCOL = "file"
     private const val HTTP_PROTOCOL = "http"
     private const val HTTPS_PROTOCOL = "https"
@@ -40,17 +41,24 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
 
   private fun Response<ResponseBody>.guessExtension(): String {
     /**
-     * Guess by URL path extension.
+     * Guess by Content-Disposition header.
      */
-    val urlPath = raw().request().url().encodedPath()
-    for (pathExtension in urlPathExtensions) {
-      if (urlPath.endsWith(".$pathExtension")) {
-        return pathExtension
+    val contentDisposition = headers().get("Content-Disposition")
+    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+      val fileName = contentDisposition.substringAfter(FILENAME).substringBefore(";")
+      val path = if (fileName.startsWith('\"') && fileName.endsWith('\"')) {
+        fileName.drop(1).dropLast(1)
+      } else {
+        fileName
+      }
+      val extension = guessExtensionByPath(path)
+      if (extension != null) {
+        return extension
       }
     }
 
     /**
-     * Guess by content type
+     * Guess by content type.
      */
     val contentType = body().contentType()
     if (contentType == jarContentMediaType || contentType == xJarContentMediaType) {
@@ -60,8 +68,26 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
       return "json"
     }
 
+    /**
+     * Guess by URL path extension.
+     */
+    val path = raw().request().url().encodedPath()
+    val extension = guessExtensionByPath(path)
+    if (extension != null) {
+      return extension
+    }
+
     //Fallback to zip, since it's the most popular one.
     return "zip"
+  }
+
+  private fun guessExtensionByPath(path: String): String? {
+    for (extension in urlPathExtensions) {
+      if (path.endsWith(".$extension")) {
+        return extension
+      }
+    }
+    return null
   }
 
   @Throws(InterruptedException::class)
