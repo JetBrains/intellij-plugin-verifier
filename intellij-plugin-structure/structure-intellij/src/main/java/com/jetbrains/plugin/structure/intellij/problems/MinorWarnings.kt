@@ -39,15 +39,6 @@ class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
     get() = "Default value in plugin descriptor $descriptorPath: <change-notes> shouldn't have 'Add change notes here' or 'most HTML tags may be used'"
 }
 
-class DefaultDescription(private val descriptorPath: String) : PluginProblem() {
-
-  override val level
-    get() = PluginProblem.Level.WARNING
-
-  override val message
-    get() = "Default value in plugin descriptor $descriptorPath: <description> shouldn't have 'Enter short description for your plugin here.' or 'most HTML tags may be used'"
-}
-
 class ShortChangeNotes(private val descriptorPath: String) : PluginProblem() {
 
   override val level

@@ -115,3 +115,12 @@ class TooLongPropertyValue(
   override val level
     get() = PluginProblem.Level.ERROR
 }
+
+class DefaultDescription(private val descriptorPath: String) : PluginProblem() {
+
+  override val level
+    get() = PluginProblem.Level.ERROR
+
+  override val message
+    get() = "Default value in plugin descriptor $descriptorPath: <description> shouldn't have 'Enter short description for your plugin here.' or 'most HTML tags may be used'"
+}
