@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.repositories.custom.MultiPushPluginRepository
 import com.jetbrains.pluginverifier.results.HostReachableRule
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.*
 import org.junit.Test
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
@@ -28,8 +28,8 @@ class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginReposito
     assertEquals("vcs-hosting-multipush", pluginInfo.pluginId)
     assertEquals("Vcs Hosting Multi-Push", pluginInfo.pluginName)
     assertEquals("JetBrains", pluginInfo.vendor)
-    assertEquals(null, pluginInfo.sinceBuild)
-    assertEquals(null, pluginInfo.untilBuild)
+    assertNotNull(pluginInfo.sinceBuild)
+    assertNotNull(pluginInfo.untilBuild)
     assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"), pluginInfo.browserUrl)
     assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-${pluginInfo.version}.zip"), pluginInfo.downloadUrl)
   }
@@ -56,7 +56,7 @@ class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginReposito
 <name>Vcs Hosting Multi-Push</name>
 <id>vcs-hosting-multipush</id>
 <version>1.0.7</version>
-<idea-version since-build="182.671"/>
+<idea-version since-build="182.671" until-build="183.1234"/>
 <vendor>JetBrains</vendor>
 <download-url>vcs-hosting-idea-multipush-1.0.7.zip</download-url>
 <description>
@@ -72,6 +72,8 @@ Supports the multipush feature of the git-hosting, which allows to push commits 
     val list = MultiPushPluginRepository.parsePluginsList(document, buildServerUrl)
     assertEquals(1, list.size)
     val pluginInfo = list[0]
+    assertEquals(IdeVersion.createIdeVersion("182.671"), pluginInfo.sinceBuild)
+    assertEquals(IdeVersion.createIdeVersion("183.1234"), pluginInfo.untilBuild)
     assertEquals("vcs-hosting-multipush", pluginInfo.pluginId)
     assertEquals("1.0.7", pluginInfo.version)
     assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-1.0.7.zip"), pluginInfo.downloadUrl)

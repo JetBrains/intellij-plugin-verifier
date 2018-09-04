@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.safeEquals
 import com.jetbrains.pluginverifier.misc.safeHashCode
 import com.jetbrains.pluginverifier.repository.Browseable
@@ -17,13 +18,15 @@ class CustomPluginInfo(
     version: String,
     vendor: String,
     override val downloadUrl: URL,
-    override val browserUrl: URL
+    override val browserUrl: URL,
+    sinceBuild: IdeVersion? = null,
+    untilBuild: IdeVersion? = null
 ) : Downloadable, Browseable, PluginInfo(
     pluginId,
     pluginName,
     version,
-    null,
-    null,
+    sinceBuild,
+    untilBuild,
     vendor
 ) {
 

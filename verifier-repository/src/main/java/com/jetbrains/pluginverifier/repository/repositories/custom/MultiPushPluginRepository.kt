@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -73,6 +74,13 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
           val id = children.find { it.nodeName == "id" }?.textContent?.trim() ?: continue
           val version = children.find { it.nodeName == "version" }?.textContent?.trim() ?: continue
           val downloadStr = children.find { it.nodeName == "download-url" }?.textContent?.trim() ?: continue
+
+          val ideaVersion = children.find { it.nodeName == "idea-version" }
+          val attributes = ideaVersion?.attributes
+
+          val sinceBuild = attributes?.getNamedItem("since-build")?.textContent?.let { IdeVersion.createIdeVersionIfValid(it) }
+          val untilBuild = attributes?.getNamedItem("until-build")?.textContent?.let { IdeVersion.createIdeVersionIfValid(it) }
+
           if (id.isNotEmpty() && version.isNotEmpty() && downloadStr.isNotEmpty()) {
             result.add(CustomPluginInfo(
                 id,
@@ -80,7 +88,9 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
                 version,
                 "JetBrains",
                 URL(buildServerUrl, "$CONFIGURATION_PATH/.lastSuccessful/$downloadStr"),
-                URL(buildServerUrl, CONFIGURATION_PATH)
+                URL(buildServerUrl, CONFIGURATION_PATH),
+                sinceBuild,
+                untilBuild
             ))
           }
         }
