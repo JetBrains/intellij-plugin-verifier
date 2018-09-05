@@ -13,22 +13,14 @@ import java.nio.file.Path
 /**
  * [Downloader] of the IDEs from the [IdeRepository].
  */
-class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVersion> {
+class IdeDownloader : Downloader<AvailableIde> {
 
   private val urlDownloader = UrlDownloader<AvailableIde> { it.downloadUrl }
 
   @Throws(InterruptedException::class)
-  override fun download(key: IdeVersion, tempDirectory: Path): DownloadResult {
-    val availableIde = try {
-      ideRepository.fetchAvailableIde(key)
-    } catch (ie: InterruptedException) {
-      throw ie
-    } catch (e: Exception) {
-      return DownloadResult.FailedToDownload("Failed to find IDE $key ", e)
-    } ?: return DownloadResult.NotFound("IDE $key is not available")
-
+  override fun download(key: AvailableIde, tempDirectory: Path): DownloadResult {
     return try {
-      downloadIde(availableIde, key, tempDirectory)
+      downloadIde(key, key.version, tempDirectory)
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
@@ -49,7 +41,7 @@ class IdeDownloader(private val ideRepository: IdeRepository) : Downloader<IdeVe
           downloadedFileOrDirectory.deleteLogged()
         }
       }
-      is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found in $ideRepository: $reason")
+      is DownloadResult.NotFound -> DownloadResult.NotFound("IDE $ideVersion is not found: $reason")
       is DownloadResult.FailedToDownload -> DownloadResult.FailedToDownload("Failed to download IDE $ideVersion: $reason", error)
     }
   }

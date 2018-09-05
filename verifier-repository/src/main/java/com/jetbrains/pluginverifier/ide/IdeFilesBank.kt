@@ -2,13 +2,14 @@ package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank.Result.Found
+import com.jetbrains.pluginverifier.misc.isDirectory
+import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
-import com.jetbrains.pluginverifier.repository.files.AvailableFile
-import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryBuilder
-import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.*
+import com.jetbrains.pluginverifier.repository.provider.ProvideResult
+import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.nio.file.Path
 
 /**
@@ -26,10 +27,18 @@ class IdeFilesBank(
 
   private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
       .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
-      .resourceProvider(DownloadProvider(bankDirectory, IdeDownloader(ideRepository), IdeFileNameMapper()))
+      .resourceProvider(IdeDownloadProvider(bankDirectory, ideRepository))
       .presentableName("IDEs bank at $bankDirectory")
-      .addInitialFilesFrom(bankDirectory) { IdeFileNameMapper.getIdeVersionByFile(it) }
+      .addInitialFilesFrom(bankDirectory) { getIdeVersionByPath(it) }
       .build()
+
+  private fun getIdeVersionByPath(file: Path) =
+      if (file.isDirectory) {
+        IdeVersion.createIdeVersionIfValid(file.simpleName)
+            ?.setProductCodeIfAbsent("IU")
+      } else {
+        null
+      }
 
   fun getAvailableIdeVersions(): Set<IdeVersion> =
       ideFilesRepository.getAllExistingKeys()
@@ -83,4 +92,29 @@ class IdeFilesBank(
 
   override fun toString() = "IDEs at $bankDirectory"
 
+}
+
+private class IdeDownloadProvider(
+    bankDirectory: Path,
+    val ideRepository: IdeRepository
+) : ResourceProvider<IdeVersion, Path> {
+
+  private val ideFileNameMapper = object : FileNameMapper<AvailableIde> {
+    override fun getFileNameWithoutExtension(key: AvailableIde) =
+        key.version.asString()
+  }
+
+  private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader(), ideFileNameMapper)
+
+  override fun provide(key: IdeVersion): ProvideResult<Path> {
+    val availableIde = try {
+      ideRepository.fetchAvailableIde(key)
+    } catch (ie: InterruptedException) {
+      throw ie
+    } catch (e: Exception) {
+      return ProvideResult.Failed("Failed to find IDE $key ", e)
+    } ?: return ProvideResult.NotFound("IDE $key is not available")
+
+    return downloadProvider.provide(availableIde)
+  }
 }
