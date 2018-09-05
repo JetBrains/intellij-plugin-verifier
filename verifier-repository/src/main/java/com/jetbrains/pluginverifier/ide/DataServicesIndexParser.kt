@@ -11,7 +11,7 @@ import java.net.URL
  *
  * It recognises only products listed in [productCodeMapping] and ignores the rest.
  */
-class DataServicesIndexParser {
+internal class DataServicesIndexParser {
   internal fun parseAvailableIdes(products: List<Product>): List<AvailableIde> {
     val availableIdes = arrayListOf<AvailableIde>()
     for (product in products) {
