@@ -86,6 +86,8 @@ configure(allprojects) {
     mavenLocal()
     mavenCentral()
     maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
+    maven { url "https://www.jetbrains.com/intellij-repository/releases" }
+    maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   }
 
   dependencies {

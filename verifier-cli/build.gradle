@@ -9,6 +9,19 @@ shadowJar {
   manifest {
     attributes 'Main-Class': 'com.jetbrains.pluginverifier.PluginVerifierMain'
   }
+  
+  //Exclude resources/dlls and other stuff coming from the dependencies.
+  exclude([
+      '/win32/**',
+      '/tips/**',
+      '/search/**',
+      '/linux/**',
+      '/intentionDescriptions/**',
+      '/inspectionDescriptions/**',
+      '/fileTemplates/**',
+      '/darwin/**',
+      '**.dll'
+  ])
 }
 
 jar.finalizedBy(shadowJar)

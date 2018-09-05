@@ -29,6 +29,8 @@ configure(allprojects) {
   repositories {
     maven { url "http://repo.maven.apache.org/maven2" }
     maven { url "http://dl.bintray.com/jonnyzzz/maven" }
+    maven { url "https://www.jetbrains.com/intellij-repository/releases" }
+    maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   }
 
   dependencies {

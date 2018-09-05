@@ -1,48 +1,9 @@
-repositories {
-  maven { url "http://www.jetbrains.com/intellij-repository/releases" }
-}
-
-configurations {
-  jpsDependency
-}
-
-ext.jpsVersion = '173.3531.6'
-ext.jpsPath = file("$buildDir/download/jps-standalone")
-
-FileTree jpsJarsTree = fileTree(dir: "$jpsPath")
-jpsJarsTree.include 'jps-model.jar', 'util.jar', 'trove4j.jar', 'jdom.jar'
+def jpsVersion = "182.4323.46"
 
 dependencies {
   compile project(':structure-ide')
   compile project(':structure-classes')
-  jpsDependency group: 'com.jetbrains.intellij.idea', name: 'jps-standalone', version: jpsVersion, ext: 'zip'
-  compile jpsJarsTree
 
-  /**
-   * jps-model depends on log4j.
-   *
-   * Though `jps-standalone.zip` bundles `log4j` classes,
-   * we need to explicitly specify dependency on `log4j`
-   * to allow clients of `structure-ide-classes` module
-   * exclude it if necessary.
-   */
-  compile group: 'log4j', name: 'log4j', version: '1.2.17'
-}
-
-task extractJpsStandalone(type: Copy) {
-  def jpsZip = { configurations.jpsDependency.files.first() }
-  def outputDir = jpsPath
-  from zipTree(jpsZip)
-  into outputDir
-}
-
-compileJava.dependsOn extractJpsStandalone
-compileKotlin.dependsOn extractJpsStandalone
-
-//We have to include dependencies of `jps-model` on `trove` and `jdom` into `structure-ide-classes`
-//because there jars might have been patched by IDEA team.
-jar {
-  from {
-    jpsJarsTree.collect { it.isDirectory() ? it : zipTree(it) }
-  }
+  compile "com.jetbrains.intellij.platform:jps-model-serialization:$jpsVersion"
+  compile "com.jetbrains.intellij.platform:jps-model-impl:$jpsVersion"
 }
