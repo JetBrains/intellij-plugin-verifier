@@ -1,0 +1,399 @@
+{
+  "artifacts": [
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "BUILD",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "2018-04-06T00:22:38Z",
+      "lastModifiedUnixTimeMs": 1522974158000,
+      "eTag": "2bef3f317123985f80847c397d3abbe4",
+      "content": "181.1168"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "2018-04-06T00:22:24Z",
+      "lastModifiedUnixTimeMs": 1522974144000,
+      "eTag": "b1243d28c388ea556a3ba50640b853da"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "2018.1",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "2018-04-06T00:22:17Z",
+      "lastModifiedUnixTimeMs": 1522974137000,
+      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "BUILD",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "2018-04-06T00:22:07Z",
+      "lastModifiedUnixTimeMs": 1522974127000,
+      "eTag": "2bef3f317123985f80847c397d3abbe4",
+      "content": "181.1168"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "2018-04-06T00:21:54Z",
+      "lastModifiedUnixTimeMs": 1522974114000,
+      "eTag": "78acf5c105a7f02672ae71b4ed5f40ba"
+    },
+    {
+      "groupId": "com.jetbrains.mps",
+      "artifactId": "mps",
+      "version": "181.1168",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "2018-04-06T00:21:49Z",
+      "lastModifiedUnixTimeMs": 1522974109000,
+      "eTag": "b4f2d73b5c4bf72c072f14cd83bf674c-45"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "BUILD",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "Tue Feb 20 19:37:26 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144646000,
+      "eTag": "0c564b9d9d064f53427fb8c51d7b3780",
+      "content": "181.3870.7"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ruby-test-framework",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:37:26 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144646000,
+      "eTag": "ef8ba72167b09c36d4a721f1b7c6c3f1"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-build-test",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:37:25 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144645000,
+      "eTag": "cd6f69848a8dbb628df603264984a207"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ruby-test-framework",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "jar",
+      "lastModified": "Tue Feb 20 19:37:25 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144645000,
+      "eTag": "b297fda147f4f36ff48fb85225baddea"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-build-test",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "jar",
+      "lastModified": "Tue Feb 20 19:37:24 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144644000,
+      "eTag": "b2b752a6940d7db4416433dfdf13aac1"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-standalone",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:37:23 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144643000,
+      "eTag": "2eb922219091e99b070cfe8c15799283"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-standalone",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 20 19:37:20 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144640000,
+      "eTag": "45137acb2332d1d6c2f5512a4e97e924-6"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU-teamcity",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:37:16 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144636000,
+      "eTag": "9b5c5bbbf27f94405b62678edad2dbde"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU-teamcity",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 20 19:37:05 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144625000,
+      "eTag": "db50ea7d3eeb3bd377d6fab2a6bbdb17-69"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:36:41 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144601000,
+      "eTag": "f360b73be2ca17585f6fb3c0df6b027a"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 20 19:36:26 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144586000,
+      "eTag": "00bd2d89f46b87f5cf34f52316198503-116"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "181.3870.7",
+      "classifier": "sources",
+      "packaging": "jar",
+      "lastModified": "Tue Feb 20 19:35:39 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144539000,
+      "eTag": "c2f37a09d5a98771aff3c1afdbe6bcce-20"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:35:34 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144534000,
+      "eTag": "0d2ef1e0be27f9787800db308aff11de"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 20 19:35:22 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144522000,
+      "eTag": "132cbf18c4e2923f7f9129d0734ba358-91"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "intellij-core",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 20 19:34:56 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144496000,
+      "eTag": "7b6c69050b8696ce4d17282bf57fb60c"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "intellij-core",
+      "version": "181.3870.7",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 20 19:34:53 MSK 2018",
+      "lastModifiedUnixTimeMs": 1519144493000,
+      "eTag": "6b3236c4d95dbdadb43829cce4eabe38-5"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "BUILD",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "Tue Jan 30 13:08:34 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306914000,
+      "eTag": "86f2685dec9f794b80ec0c4130b90390",
+      "content": "173.4548.28"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-build-test",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "jar",
+      "lastModified": "Tue Jan 30 13:08:33 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306913000,
+      "eTag": "31cc31d6a91e926584f337d8e4cdb2db"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-build-test",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:08:33 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306913000,
+      "eTag": "20a656d1b5dc3d2b1df43cede4f12ce0"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-standalone",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:08:32 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306912000,
+      "eTag": "437020430baaf35095f648f0ab88bc6b"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "jps-standalone",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Jan 30 13:08:30 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306910000,
+      "eTag": "68bdeefa0b200c1da56d6029cbc9d39b-6"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU-teamcity",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:08:29 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306909000,
+      "eTag": "4487d9bbdff82bccdb7bf313631000cc"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU-teamcity",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Jan 30 13:08:18 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306898000,
+      "eTag": "28dfd89151a192ccdfe4f743f06aef0c-58"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:08:14 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306894000,
+      "eTag": "24bce46abc3ec11664d79578a8f5ba4b"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIU",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Jan 30 13:07:39 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306859000,
+      "eTag": "b336908c81ea715bdd4dd1fe181ff655-99"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "2017.3.4",
+      "classifier": "sources",
+      "packaging": "jar",
+      "lastModified": "Tue Jan 30 13:07:19 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306839000,
+      "eTag": "416cf31042e8d90442b923818199d8cd-16"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:07:17 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306837000,
+      "eTag": "3996e34ccb5ccacb9a7a16e71ab6748d"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "ideaIC",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Jan 30 13:06:54 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306814000,
+      "eTag": "8dbdf260d076ab74d4b986d5c5490f17-75"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "intellij-core",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Jan 30 13:06:49 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306809000,
+      "eTag": "8add5dbb4b1ef5af12aa5f148dd0f987"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.idea",
+      "artifactId": "intellij-core",
+      "version": "2017.3.4",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Jan 30 13:06:47 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517306807000,
+      "eTag": "4babdade0fd927d46ec6f9181983b7a8-5"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.rider",
+      "artifactId": "BUILD",
+      "version": "173.3994.2442",
+      "classifier": "",
+      "packaging": "txt",
+      "lastModified": "Tue Feb 06 19:13:33 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517933613000,
+      "eTag": "7fbc6a90eb26b859761dc76752ab3102",
+      "content": "173.3994.2442"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.rider",
+      "artifactId": "riderRD",
+      "version": "173.3994.2442",
+      "classifier": "",
+      "packaging": "pom",
+      "lastModified": "Tue Feb 06 19:13:32 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517933612000,
+      "eTag": "25c7cde13362c208dd7cd2625f088a12"
+    },
+    {
+      "groupId": "com.jetbrains.intellij.rider",
+      "artifactId": "riderRD",
+      "version": "173.3994.2442",
+      "classifier": "",
+      "packaging": "zip",
+      "lastModified": "Tue Feb 06 19:13:09 MSK 2018",
+      "lastModifiedUnixTimeMs": 1517933589000,
+      "eTag": "2af4cdfe992dd860ba4d50be9aadea12-71"
+    }
+  ]
+}

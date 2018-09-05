@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.startup
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
@@ -66,7 +66,7 @@ class ServerStartupListener : ServletContextListener {
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
-    val ideRepository = IdeRepository()
+    val ideRepository = ReleaseIdeRepository()
     val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val authorizationData = AuthorizationData(

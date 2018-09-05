@@ -16,7 +16,7 @@ class DataServicesIndexParserTest {
   @Test
   fun `simple index parsing test`() {
     val products = Gson().fromJson<List<Product>>(
-        DataServicesIndexParserTest::class.java.getResourceAsStream("/ideRepositoryIndex.json").bufferedReader()
+        DataServicesIndexParserTest::class.java.getResourceAsStream("/releaseIdeRepositoryIndex.json").bufferedReader()
     )
 
     val actualIdes = DataServicesIndexParser().parseAvailableIdes(products)

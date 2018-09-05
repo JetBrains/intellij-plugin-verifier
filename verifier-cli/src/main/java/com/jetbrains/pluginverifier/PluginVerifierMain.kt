@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -101,7 +101,7 @@ object PluginVerifierMain {
     val pluginRepository = MarketplaceRepository(URL(pluginRepositoryUrl))
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
 
-    val ideRepository = IdeRepository()
+    val ideRepository = ReleaseIdeRepository()
 
     val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
