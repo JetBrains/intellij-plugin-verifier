@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.google.common.base.Suppliers
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
@@ -29,13 +30,17 @@ class SnapshotsIdeRepository : IdeRepository {
         .create(RepositoryIndexConnector::class.java)
   }
 
-  override fun fetchIndex(): List<AvailableIde> {
+  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
+
+  private fun updateIndex(): List<AvailableIde> {
     val artifacts = repositoryIndexConnector
         .getSnapshotsIndex()
         .executeSuccessfully().body()
         .artifacts
     return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, true)
   }
+
+  override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
   override fun fetchAvailableIde(ideVersion: IdeVersion): AvailableIde? {
     val fullIdeVersion = ideVersion.setProductCodeIfAbsent("IU")

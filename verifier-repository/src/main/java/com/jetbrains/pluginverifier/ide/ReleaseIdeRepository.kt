@@ -30,10 +30,12 @@ class ReleaseIdeRepository : IdeRepository {
         .create(ProductsConnector::class.java)
   }
 
-  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>({
+  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
+
+  private fun updateIndex(): List<AvailableIde> {
     val products = dataServiceConnector.getProducts().executeSuccessfully().body()
-    DataServicesIndexParser().parseAvailableIdes(products)
-  }, 1, TimeUnit.MINUTES)
+    return DataServicesIndexParser().parseAvailableIdes(products)
+  }
 
 
   @Throws(InterruptedException::class)
