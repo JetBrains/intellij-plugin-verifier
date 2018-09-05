@@ -71,6 +71,7 @@ object IdeResolverCreator {
         .runtimeOnly()
         .libraries
         .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
+        .distinctBy { it.path }
         .filter { it.isFile && it.name.endsWith(".jar") }
   }
 
