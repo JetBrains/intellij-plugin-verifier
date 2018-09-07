@@ -121,8 +121,11 @@ public abstract class IdeVersion implements Comparable<IdeVersion>, Serializable
 
   @Override
   final public int compareTo(@NotNull IdeVersion other) {
-    int compareProductCodes = getProductCode().compareTo(other.getProductCode());
-    if (compareProductCodes != 0) {
+    String thisCode = getProductCode();
+    String otherCode = other.getProductCode();
+
+    int compareProductCodes = thisCode.compareTo(otherCode);
+    if (!thisCode.isEmpty() && !otherCode.isEmpty() && compareProductCodes != 0) {
       return compareProductCodes;
     }
 
