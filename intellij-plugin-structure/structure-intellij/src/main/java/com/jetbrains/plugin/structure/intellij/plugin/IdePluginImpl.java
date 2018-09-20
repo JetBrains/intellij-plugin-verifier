@@ -192,7 +192,7 @@ public class IdePluginImpl implements IdePlugin {
   @NotNull
   @Override
   public List<PluginIcon> getIcons() {
-    return icons;
+    return Collections.unmodifiableList(icons);
   }
 
   public void setIcons(List<PluginIcon> icons) {

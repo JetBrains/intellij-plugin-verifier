@@ -346,7 +346,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   }
 
   @NotNull
-  private String getIconFileName(IconTheme iconTheme) {
+  private String getIconFileName(@NotNull IconTheme iconTheme) {
     return "pluginIcon" + iconTheme.getSuffix() + ".svg";
   }
 
