@@ -57,6 +57,10 @@ data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: Str
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+          ||
+          problem is MethodNotImplementedProblem
+          && problem.abstractMethod.methodName == methodName
+          && problem.abstractMethod.hostClass.className == hostClass
 }
 
 /**
@@ -78,6 +82,10 @@ data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: 
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
           && verificationContext.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+          ||
+          problem is MethodNotImplementedProblem
+          && problem.abstractMethod.methodName == methodName
+          && problem.abstractMethod.hostClass.className == hostClass
 }
 
 /**

@@ -29,4 +29,8 @@ data class Modifiers(private val flags: Int) : Serializable {
 
   fun contains(flag: Modifier): Boolean = flags.and(flag.flag) != 0
 
+  companion object {
+    fun of(vararg modifiers: Modifier) = Modifiers(modifiers.map { it.flag }.fold(0) { acc, m -> acc.or(m) })
+  }
+
 }
