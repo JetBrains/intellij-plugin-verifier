@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 
 data class TeamcityPlugin(
@@ -18,7 +19,9 @@ data class TeamcityPlugin(
     val downloadUrl: String?,
     val useSeparateClassLoader: Boolean,
     val parameters: Map<String, String>?
-) : Plugin
+) : Plugin {
+  override val icons: List<PluginIcon> = emptyList()
+}
 
 
 fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(

@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon;
 import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean;
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean;
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean;
@@ -25,6 +26,7 @@ public class IdePluginImpl implements IdePlugin {
   private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
   private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<String, IdePlugin>();
+  private final List<PluginIcon> icons = new ArrayList<PluginIcon>();
   private Multimap<String, Element> myExtensions;
   private File myOriginalFile;
   private File myExtractDirectory;
@@ -185,6 +187,17 @@ public class IdePluginImpl implements IdePlugin {
   @Override
   public Map<String, IdePlugin> getOptionalDescriptors() {
     return Collections.unmodifiableMap(myOptionalDescriptors);
+  }
+
+  @NotNull
+  @Override
+  public List<PluginIcon> getIcons() {
+    return Collections.unmodifiableList(icons);
+  }
+
+  public void setIcons(List<PluginIcon> icons) {
+    this.icons.clear();
+    this.icons.addAll(icons);
   }
 
   void addOptionalDescriptor(@NotNull String configurationFile, @NotNull IdePlugin optionalPlugin) {

@@ -1,8 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult;
-import com.jetbrains.plugin.structure.base.plugin.PluginManager;
-import com.jetbrains.plugin.structure.base.plugin.Settings;
+import com.jetbrains.plugin.structure.base.plugin.*;
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound;
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip;
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
@@ -29,10 +27,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -77,7 +78,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     return new IdePluginManager(pathResolver, extractDirectory);
   }
 
-  private PluginCreator loadDescriptorFromJarFile(@NotNull File jarFile,
+  private PluginCreator loadPluginInfoFromJarFile(@NotNull File jarFile,
                                                   @NotNull final String descriptorPath,
                                                   @NotNull final XIncludePathResolver pathResolver,
                                                   boolean validateDescriptor) {
@@ -94,8 +95,9 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       if (entry != null) {
         try (InputStream documentStream = zipFile.getInputStream(entry)) {
           Document document = JDOMUtil.loadDocument(documentStream);
+          List<PluginIcon> icons = getIconsFromJarFile(zipFile);
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
-          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile);
+          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, pathResolver, jarFile, icons);
         } catch (Exception e) {
           LOG.info("Unable to read file " + descriptorPath);
           return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), jarFile);
@@ -110,6 +112,22 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
         LOG.error("Unable to close jar file " + jarFile, e);
       }
     }
+  }
+
+  @NotNull
+  private List<PluginIcon> getIconsFromJarFile(ZipFile jarFile) throws IOException {
+    List<PluginIcon> icons = new ArrayList<>();
+    for (IconTheme theme : IconTheme.values()) {
+      String zipEntryName = getIconFileName(theme);
+      ZipEntry entry = getEntry(jarFile, zipEntryName);
+      if (entry == null) {
+        continue;
+      }
+      byte[] iconContent = new byte[(int) entry.getSize()];
+      IOUtils.readFully(jarFile.getInputStream(entry), iconContent);
+      icons.add(new PluginIcon(theme, iconContent, zipEntryName));
+    }
+    return icons;
   }
 
   @Nullable
@@ -127,34 +145,42 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     return META_INF + File.separator + descriptorPath;
   }
 
-  private PluginCreator loadDescriptorFromDir(@NotNull File pluginDirectory, @NotNull String filePath, boolean validateDescriptor) {
+  private PluginCreator loadPluginInfoFromDir(@NotNull File pluginDirectory, @NotNull String filePath, boolean validateDescriptor) {
     File descriptorFile = new File(pluginDirectory, META_INF + File.separator + filePath);
-    if (descriptorFile.exists()) {
-      return loadDescriptorFromDescriptorFile(filePath, pluginDirectory, descriptorFile, validateDescriptor);
-    } else {
-      return loadDescriptorFromLibDirectory(pluginDirectory, filePath, validateDescriptor);
+    if (!descriptorFile.exists()) {
+      return loadPluginInfoFromLibDirectory(pluginDirectory, filePath, validateDescriptor);
     }
-  }
 
-  private PluginCreator loadDescriptorFromDescriptorFile(@NotNull String descriptorPath,
-                                                         @NotNull File pluginDirectory,
-                                                         @NotNull File descriptorFile,
-                                                         boolean validateDescriptor) {
     try {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
-      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory);
+      List<PluginIcon> icons = loadIconsFromDir(new File(pluginDirectory, META_INF));
+      return new PluginCreator(filePath, validateDescriptor, document, documentUrl, myPathResolver, pluginDirectory, icons);
     } catch (JDOMParseException e) {
       int lineNumber = e.getLineNumber();
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
-      return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath), pluginDirectory);
+      return new PluginCreator(filePath, new UnexpectedDescriptorElements(message, filePath), pluginDirectory);
     } catch (Exception e) {
-      LOG.info("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath), pluginDirectory);
+      LOG.info("Unable to read plugin descriptor " + filePath + " of plugin " + descriptorFile, e);
+      return new PluginCreator(filePath, new UnableToReadDescriptor(filePath), pluginDirectory);
     }
   }
 
-  private PluginCreator loadDescriptorFromLibDirectory(@NotNull final File root, @NotNull String descriptorPath, boolean validateDescriptor) {
+  private List<PluginIcon> loadIconsFromDir(File metaInfDir) throws IOException {
+    List<PluginIcon> icons = new ArrayList<>();
+    for (IconTheme theme : IconTheme.values()) {
+      File iconFile = new File(metaInfDir, getIconFileName(theme));
+      if (!iconFile.exists()) {
+        continue;
+      }
+      byte[] iconContent = new byte[(int) iconFile.length()];
+      IOUtils.readFully(new FileInputStream(iconFile), iconContent);
+      icons.add(new PluginIcon(theme, iconContent, iconFile.getName()));
+    }
+    return icons;
+  }
+
+  private PluginCreator loadPluginInfoFromLibDirectory(@NotNull final File root, @NotNull String descriptorPath, boolean validateDescriptor) {
     File libDir = new File(root, "lib");
     if (!libDir.isDirectory()) {
       return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
@@ -173,9 +199,9 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     for (final File file : files) {
       PluginCreator innerCreator;
       if (FileUtilKt.isJar(file) || FileUtilKt.isZip(file)) {
-        innerCreator = loadDescriptorFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
+        innerCreator = loadPluginInfoFromJarFile(file, descriptorPath, pathResolver, validateDescriptor);
       } else if (file.isDirectory()) {
-        innerCreator = loadDescriptorFromDir(file, descriptorPath, validateDescriptor);
+        innerCreator = loadPluginInfoFromDir(file, descriptorPath, validateDescriptor);
       } else {
         continue;
       }
@@ -216,15 +242,15 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   }
 
   @NotNull
-  private PluginCreator loadDescriptorFromJarOrDirectory(@NotNull File jarOrDirectory,
+  private PluginCreator loadPluginInfoFromJarOrDirectory(@NotNull File jarOrDirectory,
                                                          @NotNull String descriptorPath,
                                                          boolean validateDescriptor) {
     descriptorPath = toSystemIndependentName(descriptorPath);
     PluginCreator pluginCreator;
     if (jarOrDirectory.isDirectory()) {
-      pluginCreator = loadDescriptorFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
+      pluginCreator = loadPluginInfoFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
     } else if (FileUtilKt.isJar(jarOrDirectory)) {
-      pluginCreator = loadDescriptorFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
+      pluginCreator = loadPluginInfoFromJarFile(jarOrDirectory, descriptorPath, myPathResolver, validateDescriptor);
     } else {
       return new PluginCreator(descriptorPath, new IncorrectIntellijFile(jarOrDirectory.getName()), jarOrDirectory);
     }
@@ -257,7 +283,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (configurationFile.startsWith("/" + META_INF + "/")) {
       configurationFile = StringUtil.trimStart(configurationFile, "/" + META_INF + "/");
     }
-    return loadDescriptorFromJarOrDirectory(jarOrDirectory, configurationFile, false);
+    return loadPluginInfoFromJarOrDirectory(jarOrDirectory, configurationFile, false);
   }
 
   @NotNull
@@ -272,7 +298,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     }
     if (extractorResult instanceof ExtractorResult.Success) {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {
-        return loadDescriptorFromJarOrDirectory(extractedPlugin.getPluginFile(), PLUGIN_XML, validateDescriptor);
+        return loadPluginInfoFromJarOrDirectory(extractedPlugin.getPluginFile(), PLUGIN_XML, validateDescriptor);
       }
     } else {
       return new PluginCreator(PLUGIN_XML, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
@@ -310,9 +336,14 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (FileUtilKt.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor);
     } else {
-      pluginCreator = loadDescriptorFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor);
+      pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor);
     }
     return pluginCreator;
+  }
+
+  @NotNull
+  private String getIconFileName(@NotNull IconTheme iconTheme) {
+    return "pluginIcon" + iconTheme.getSuffix() + ".svg";
   }
 
 }
