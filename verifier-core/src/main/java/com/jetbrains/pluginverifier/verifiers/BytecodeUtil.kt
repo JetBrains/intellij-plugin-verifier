@@ -137,6 +137,15 @@ fun MethodNode.getInvisibleAnnotations() = invisibleAnnotations as? List<Annotat
 @Suppress("UNCHECKED_CAST")
 fun FieldNode.getInvisibleAnnotations() = invisibleAnnotations as? List<AnnotationNode>
 
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.getFields() = fields as? List<FieldNode>
+
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.getMethods() = methods as? List<MethodNode>
+
+@Suppress("UNCHECKED_CAST")
+fun ClassNode.getInterfaces() = interfaces as? List<String>
+
 fun List<AnnotationNode>.findAnnotation(className: String): AnnotationNode? =
     find { it.desc?.extractClassNameFromDescr() == className }
 

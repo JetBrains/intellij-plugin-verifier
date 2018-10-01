@@ -8,8 +8,12 @@ import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import com.jetbrains.pluginverifier.verifiers.resolution.FieldResolution
+import com.jetbrains.pluginverifier.verifiers.resolution.FieldResolutionResult
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.MethodNode
 
 /**
  * Verifies GETSTATIC, PUTSTATIC, GETFIELD and PUTFIELD instructions
@@ -34,13 +38,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
                                    val fieldName: String = instr.name,
                                    val fieldDescriptor: String = instr.desc) {
 
-  val instruction: Instruction = when (instr.opcode) {
-    Opcodes.PUTFIELD -> Instruction.PUT_FIELD
-    Opcodes.GETFIELD -> Instruction.GET_FIELD
-    Opcodes.PUTSTATIC -> Instruction.PUT_STATIC
-    Opcodes.GETSTATIC -> Instruction.GET_STATIC
-    else -> throw IllegalArgumentException()
-  }
+  private val instruction = Instruction.fromOpcode(instr.opcode) ?: throw IllegalArgumentException()
 
   fun verify() {
     when (instruction) {
@@ -129,7 +127,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   }
 
 
-  private fun checkFieldIsAccessible(location: LookupResult.Found) {
+  private fun checkFieldIsAccessible(location: FieldResolutionResult.Found) {
     val definingClass = location.definingClass
     val fieldNode = location.fieldNode
 
@@ -171,7 +169,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
    *  If the reference to C can be successfully resolved, an exception relating
    *  to the failure of resolution of the field reference itself can be thrown.
    */
-  private fun resolveField(): LookupResult.Found? {
+  private fun resolveField(): FieldResolutionResult.Found? {
     if (fieldOwner.startsWith("[")) {
       //check that the array type exists
       val arrayType = fieldOwner.extractClassNameFromDescr()
@@ -183,14 +181,14 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
     val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass) { getFromMethod() } ?: return null
 
-    val lookupResult = resolveFieldSteps(ownerNode)
+    val lookupResult = FieldResolution(fieldName, fieldDescriptor, ctx.clsResolver, ctx).resolveField(ownerNode)
     return when (lookupResult) {
-      FieldsImplementation.LookupResult.Abort -> null
-      FieldsImplementation.LookupResult.NotFound -> {
+      FieldResolutionResult.Abort -> null
+      FieldResolutionResult.NotFound -> {
         registerFieldNotFoundProblem(ownerNode)
         null
       }
-      is FieldsImplementation.LookupResult.Found -> {
+      is FieldResolutionResult.Found -> {
         checkFieldIsAccessible(lookupResult)
         checkFieldIsUnstable(lookupResult)
         lookupResult
@@ -209,7 +207,7 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
     ))
   }
 
-  private fun checkFieldIsUnstable(resolvedField: LookupResult.Found) {
+  private fun checkFieldIsUnstable(resolvedField: FieldResolutionResult.Found) {
     with(resolvedField) {
       val fieldDeprecated = fieldNode.getDeprecationInfo()
       if (fieldDeprecated != null) {
@@ -223,63 +221,6 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
 
 
   fun getFromMethod() = createMethodLocation(verifiableClass, verifiableMethod)
-
-  sealed class LookupResult {
-    object Abort : LookupResult()
-
-    object NotFound : LookupResult()
-
-    data class Found(val definingClass: ClassNode, val fieldNode: FieldNode) : LookupResult()
-  }
-
-  @Suppress("UNCHECKED_CAST")
-  fun resolveFieldSteps(currentClass: ClassNode): LookupResult {
-    /**
-     * 1) If C declares a field with the name and descriptor specified by the field reference,
-     * field lookup succeeds. The declared field is the result of the field lookup.
-     */
-    val fields = currentClass.fields as List<FieldNode>
-    val matching = fields.firstOrNull { it.name == fieldName && it.desc == fieldDescriptor }
-    if (matching != null) {
-      return LookupResult.Found(currentClass, matching)
-    }
-
-    /**
-     * 2) Otherwise, field lookup is applied recursively to the direct superinterfaces
-     * of the specified class or interface C.
-     */
-    for (anInterface in currentClass.interfaces as List<String>) {
-      val resolvedIntf = ctx.resolveClassOrProblem(anInterface, currentClass) { currentClass.createClassLocation() }
-          ?: return LookupResult.Abort
-
-      val lookupResult = resolveFieldSteps(resolvedIntf)
-      when (lookupResult) {
-        LookupResult.NotFound -> Unit
-        LookupResult.Abort -> return lookupResult
-        is LookupResult.Found -> return lookupResult
-      }
-    }
-
-    /**
-     * 3) Otherwise, if C has a superclass S, field lookup is applied recursively to S.
-     */
-    val superName = currentClass.superName
-    if (superName != null) {
-      val resolvedSuper = ctx.resolveClassOrProblem(superName, currentClass) { currentClass.createClassLocation() }
-          ?: return LookupResult.Abort
-      val lookupResult = resolveFieldSteps(resolvedSuper)
-      when (lookupResult) {
-        LookupResult.NotFound -> Unit
-        LookupResult.Abort -> return lookupResult
-        is LookupResult.Found -> return lookupResult
-      }
-    }
-
-    /**
-     * 4) Otherwise, field lookup fails.
-     */
-    return LookupResult.NotFound
-  }
 
 }
 

@@ -21,9 +21,9 @@ data class VerificationContext(
     val findUnstableApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     val clsResolver: ClsResolver
-) {
+) : ProblemRegistrar {
 
-  fun registerProblem(problem: CompatibilityProblem) {
+  override fun registerProblem(problem: CompatibilityProblem) {
     val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(problem, this) }
     val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
     if (ignoreDecisions.isNotEmpty()) {
@@ -33,7 +33,7 @@ data class VerificationContext(
     }
   }
 
-  fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
+  override fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
     if (findUnstableApiUsages) {
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
@@ -43,7 +43,7 @@ data class VerificationContext(
     }
   }
 
-  fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
+  override fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
     if (findUnstableApiUsages) {
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
