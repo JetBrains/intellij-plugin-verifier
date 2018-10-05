@@ -1,5 +1,11 @@
 package org.jetbrains.plugins.verifier.service.startup
 
+import com.amazonaws.ClientConfiguration
+import com.amazonaws.auth.AWSStaticCredentialsProvider
+import com.amazonaws.auth.BasicAWSCredentials
+import com.amazonaws.client.builder.AwsClientBuilder
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
@@ -62,6 +68,7 @@ class ServerStartupListener : ServletContextListener {
 
     val pluginRepositoryUrl = Settings.PLUGINS_REPOSITORY_URL.getAsURL()
     val pluginRepository = MarketplaceRepository(pluginRepositoryUrl)
+    val amazonS3 = initializeS3Client()
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
@@ -90,6 +97,7 @@ class ServerStartupListener : ServletContextListener {
         ideRepository,
         ideFilesBank,
         pluginRepository,
+        amazonS3,
         taskManager,
         authorizationData,
         jdkDescriptorsCache,
@@ -156,7 +164,7 @@ class ServerStartupListener : ServletContextListener {
   }
 
   private fun ServerContext.addVerifierService() {
-    val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
+    val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, amazonS3, pluginRepository)
     val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
     val verifierService = VerifierService(
         taskManager,
@@ -173,6 +181,34 @@ class ServerStartupListener : ServletContextListener {
       verifierService.start()
     }
     addService(verifierService)
+  }
+
+  private fun initializeS3Client(): AmazonS3 {
+    val awsCredentialsProvider = AWSStaticCredentialsProvider(
+        BasicAWSCredentials(Settings.AWS_ACCESS_KEY.get(), Settings.AWS_SECRET_KEY.get())
+    )
+    val amazonClientBuilder = AmazonS3ClientBuilder.standard()
+    amazonClientBuilder.credentials = awsCredentialsProvider
+
+    val signatureVersion = Settings.AWS_SIGNATURE_VERSION.get()
+    if (signatureVersion.isNotEmpty()) {
+      val clientConfiguration = ClientConfiguration()
+      clientConfiguration.signerOverride = signatureVersion
+    }
+
+    val endpoint = Settings.AWS_S3_ENDPOINT.get()
+    if (endpoint.isNotEmpty()) {
+      val endpointConfiguration = AwsClientBuilder.EndpointConfiguration(
+          endpoint,
+          Settings.AWS_REGION.get()
+      )
+      amazonClientBuilder.setEndpointConfiguration(endpointConfiguration)
+      amazonClientBuilder.enablePathStyleAccess()
+    } else {
+      amazonClientBuilder.region = Settings.AWS_REGION.get()
+    }
+
+    return amazonClientBuilder.build()
   }
 
   private fun ServerContext.addFeatureService() {

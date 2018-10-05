@@ -115,6 +115,7 @@ configure(allprojects) {
     compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: 'dev'
 
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
+    compile "com.amazonaws:aws-java-sdk-s3:1.11.420"
   }
 
 }

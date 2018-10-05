@@ -12,6 +12,7 @@ import java.util.*
  */
 class UpdateInfo(
     pluginId: String,
+    val pluginIntId: Int,
     pluginName: String,
     version: String,
     sinceBuild: IdeVersion?,
