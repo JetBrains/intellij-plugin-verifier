@@ -21,14 +21,6 @@ enum class Settings(val key: String,
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
   ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
 
-  AWS_SECRET_KEY("verifier.service.aws.secret"),
-  AWS_ACCESS_KEY("verifier.service.aws.access.key"),
-  AWS_REGION("verifier.service.aws.region"),
-  AWS_BUCKET_NAME("verifier.service.aws.bucket.name"),
-  AWS_BUCKET_PREFIX("verifier.service.aws.bucket.prefix", { "" }),
-  AWS_SIGNATURE_VERSION("verifier.service.aws.signature.version", { "" }),
-  AWS_S3_ENDPOINT("verifier.service.aws.s3.endpoint", { "" }),
-
   /**
    * Specifies how often should the verifier service poll the verification queue from the Plugin Repository.
    */

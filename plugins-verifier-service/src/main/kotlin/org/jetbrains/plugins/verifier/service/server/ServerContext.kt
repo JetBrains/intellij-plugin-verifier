@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.server
 
-import com.amazonaws.services.s3.AmazonS3
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeRepository
@@ -27,7 +26,6 @@ class ServerContext(val applicationHomeDirectory: Path,
                     val ideRepository: IdeRepository,
                     val ideFilesBank: IdeFilesBank,
                     val pluginRepository: MarketplaceRepository,
-                    val amazonS3: AmazonS3,
                     val taskManager: TaskManager,
                     val authorizationData: AuthorizationData,
                     val jdkDescriptorsCache: JdkDescriptorsCache,

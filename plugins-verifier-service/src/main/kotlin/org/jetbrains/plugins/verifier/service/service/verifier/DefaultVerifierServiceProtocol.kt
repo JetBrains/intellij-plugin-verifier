@@ -1,31 +1,30 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.amazonaws.services.s3.AmazonS3
-import com.amazonaws.services.s3.model.ObjectMetadata
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
-import okhttp3.MediaType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import org.apache.http.HttpStatus
+import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
-import java.io.ByteArrayInputStream
+import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
+
 
 class DefaultVerifierServiceProtocol(
     authorizationData: AuthorizationData,
-    private val s3Client: AmazonS3,
     private val pluginRepository: MarketplaceRepository
 ) : VerifierServiceProtocol {
 
@@ -39,8 +38,6 @@ class DefaultVerifierServiceProtocol(
   }
 
   private val authorizationToken = "Bearer ${authorizationData.pluginRepositoryAuthorizationToken}"
-  private val s3BucketName = Settings.AWS_BUCKET_NAME.get()
-  private val s3BucketPrefix = Settings.AWS_BUCKET_PREFIX.get()
 
   override fun requestScheduledVerifications(): List<ScheduledVerification> =
       retrofitConnector
@@ -59,19 +56,28 @@ class DefaultVerifierServiceProtocol(
 
   override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
     val verificationResponse = verificationResult.prepareVerificationResponse(updateInfo)
-    val key = "${updateInfo.pluginIntId}/${updateInfo.updateId}/verification/${verificationResponse.ideVersion}.bin"
-    val verificationResponseContent = verificationResponse.toByteArray()
-    val metadata = ObjectMetadata()
-    metadata.contentLength = verificationResponseContent.size.toLong()
-    s3Client.putObject(
-        s3BucketName, "$s3BucketPrefix$key", ByteArrayInputStream(verificationResponseContent), metadata
-    )
+    val uploadUrl = URIBuilder(pluginRepository.repositoryURL.toString())
+        .setPath("/verification/uploadVerificationResultContent")
+        .addParameter("updateId", updateInfo.updateId.toString())
+        .addParameter("ideVersion", verificationResponse.ideVersion)
+        .build()
+        .toURL()
+    (uploadUrl.openConnection() as HttpURLConnection).apply {
+      doOutput = true
+      requestMethod = "PUT"
+      setRequestProperty("Authorization", authorizationToken)
+      outputStream.write(verificationResponse.toByteArray())
+      if (responseCode != HttpStatus.SC_OK) {
+        throw  Exception("Failed to save verification result")
+      }
+    }
+
     retrofitConnector.sendVerificationResult(
         authorizationToken,
         updateInfo.updateId,
-        RequestBody.create(MediaType.parse("text/plain"), verificationResponse.ideVersion),
-        RequestBody.create(MediaType.parse("text/plain"), verificationResult.verificationVerdict),
-        RequestBody.create(MediaType.parse("text/plain"), verificationResponse.resultType.name)
+        RequestBody.create(stringMediaType, verificationResponse.ideVersion),
+        RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
+        RequestBody.create(stringMediaType, verificationResponse.resultType.name)
     ).executeSuccessfully()
   }
 
