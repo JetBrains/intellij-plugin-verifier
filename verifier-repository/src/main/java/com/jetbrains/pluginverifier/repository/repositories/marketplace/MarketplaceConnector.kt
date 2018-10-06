@@ -34,7 +34,6 @@ internal interface MarketplaceConnector {
 
 internal data class JsonUpdateInfo(
     @SerializedName("pluginId") val pluginId: String,
-    @SerializedName("pluginIntId") val pluginIntId: Int,
     @SerializedName("pluginName") val pluginName: String,
     @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
     @SerializedName("updateId") val updateId: Int,

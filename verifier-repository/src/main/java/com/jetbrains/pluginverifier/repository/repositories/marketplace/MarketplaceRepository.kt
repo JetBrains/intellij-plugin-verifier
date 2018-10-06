@@ -206,7 +206,6 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
 
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
-        pluginIntId,
         pluginName,
         version,
         sinceString.prepareIdeVersion(),
