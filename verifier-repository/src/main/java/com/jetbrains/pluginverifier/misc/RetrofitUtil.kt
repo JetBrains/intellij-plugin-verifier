@@ -31,7 +31,8 @@ fun createOkHttpClient(
         )
     ))
     .addInterceptor { chain: Interceptor.Chain ->
-      //Manually handle PUT redirect
+      // Manually handle PUT redirect,
+      // can be removed when this issue will be fixed https://github.com/square/okhttp/issues/3111
       val request = chain.request()
       val response = chain.proceed(request)
       if (response.code() != 307 && response.code() != 308) {
