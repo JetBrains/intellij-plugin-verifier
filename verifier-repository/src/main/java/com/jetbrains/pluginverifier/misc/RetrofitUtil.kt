@@ -1,7 +1,9 @@
 package com.jetbrains.pluginverifier.misc
 
+import com.google.common.net.HttpHeaders.LOCATION
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import okhttp3.Dispatcher
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.util.concurrent.Executors
@@ -28,6 +30,17 @@ fun createOkHttpClient(
                 .build()
         )
     ))
+    .addInterceptor { chain: Interceptor.Chain ->
+      //Manually handle PUT redirect
+      val request = chain.request()
+      val response = chain.proceed(request)
+      if (response.code() != 307 && response.code() != 308) {
+        return@addInterceptor response
+      }
+      val location = response.header(LOCATION) ?: return@addInterceptor response
+      val redirectedRequest = request.newBuilder().url(location).build()
+      chain.proceed(redirectedRequest)
+    }
     .connectTimeout(timeOut, timeUnit)
     .readTimeout(timeOut, timeUnit)
     .writeTimeout(timeOut, timeUnit)

@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
+import com.jetbrains.pluginverifier.network.byteArrayMediaType
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -12,14 +13,11 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import org.apache.http.HttpStatus
-import org.apache.http.client.utils.URIBuilder
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
-import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
 
@@ -56,21 +54,12 @@ class DefaultVerifierServiceProtocol(
 
   override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
     val verificationResponse = verificationResult.prepareVerificationResponse(updateInfo)
-    val uploadUrl = URIBuilder(pluginRepository.repositoryURL.toString())
-        .setPath("/verification/uploadVerificationResultContent")
-        .addParameter("updateId", updateInfo.updateId.toString())
-        .addParameter("ideVersion", verificationResponse.ideVersion)
-        .build()
-        .toURL()
-    (uploadUrl.openConnection() as HttpURLConnection).apply {
-      doOutput = true
-      requestMethod = "PUT"
-      setRequestProperty("Authorization", authorizationToken)
-      outputStream.write(verificationResponse.toByteArray())
-      if (responseCode != HttpStatus.SC_OK) {
-        throw  Exception("Failed to save verification result")
-      }
-    }
+    retrofitConnector.uploadVerificationResultContent(
+        authorizationToken,
+        updateInfo.updateId,
+        verificationResponse.ideVersion,
+        RequestBody.create(byteArrayMediaType, verificationResponse.toByteArray())
+    ).executeSuccessfully()
 
     retrofitConnector.sendVerificationResult(
         authorizationToken,
@@ -87,6 +76,14 @@ private interface VerifierRetrofitConnector {
 
   @GET("/verification/getScheduledVerifications")
   fun getScheduledVerifications(@Header("Authorization") authorization: String): Call<List<ScheduledVerificationJson>>
+
+  @PUT("/verification/uploadVerificationResultContent")
+  fun uploadVerificationResultContent(
+      @Header("Authorization") authorization: String,
+      @Query("updateId") updateId: Int,
+      @Query("ideVersion") ideVersion: String,
+      @Body content: RequestBody
+  ): Call<ResponseBody>
 
   @POST("/verification/receiveVerificationResult")
   @Multipart
