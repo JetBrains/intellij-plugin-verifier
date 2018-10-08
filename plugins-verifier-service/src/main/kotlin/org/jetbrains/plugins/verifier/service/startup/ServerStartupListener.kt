@@ -181,7 +181,8 @@ class ServerStartupListener : ServletContextListener {
         taskManager,
         featureServiceProtocol,
         ideDescriptorsCache,
-        pluginDetailsCache
+        pluginDetailsCache,
+        ideRepository
     )
     addService(featureService)
     if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {

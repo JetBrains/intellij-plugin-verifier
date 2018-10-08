@@ -31,7 +31,7 @@ enum class Settings(val key: String,
   /**
    * IDE build which classes are used to extract plugins' features.
    */
-  FEATURE_EXTRACTOR_IDE_BUILD("verifier.service.feature.extractor.ide.build", { "IU-181.5281.24" }),
+  FEATURE_EXTRACTOR_IDE_BUILD("verifier.service.feature.extractor.ide.build", { "IU-182.4505.22" }),
 
   PLUGIN_REPOSITORY_AUTHORIZATION_TOKEN("verifier.service.authorization.token", encrypted = true),
 

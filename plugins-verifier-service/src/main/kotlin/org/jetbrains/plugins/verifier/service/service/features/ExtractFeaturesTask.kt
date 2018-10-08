@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -15,7 +16,6 @@ import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.slf4j.LoggerFactory
-import sun.plugin.dom.exception.InvalidStateException
 
 /**
  * [Task] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
@@ -23,7 +23,8 @@ import sun.plugin.dom.exception.InvalidStateException
 class ExtractFeaturesTask(
     val updateInfo: UpdateInfo,
     private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val pluginDetailsCache: PluginDetailsCache
+    private val pluginDetailsCache: PluginDetailsCache,
+    private val ideRepository: IdeRepository
 ) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo", "ExtractFeatures") {
 
   companion object {
@@ -60,11 +61,28 @@ class ExtractFeaturesTask(
   }
 
   override fun execute(progress: ProgressIndicator): Result {
-    return ideDescriptorsCache.getIdeDescriptorCacheEntry(featureExtractorIdeVersion).use {
-      if (it !is IdeDescriptorsCache.Result.Found) {
-        throw InvalidStateException("IDE $featureExtractorIdeVersion cannot be found")
+    return getIdeDescriptorForRun().use {
+      execute(it.ideDescriptor)
+    }
+  }
+
+  private fun getIdeDescriptorForRun(): IdeDescriptorsCache.Result.Found {
+    val specifiedVersion = ideDescriptorsCache.getIdeDescriptorCacheEntry(featureExtractorIdeVersion)
+    if (specifiedVersion is IdeDescriptorsCache.Result.Found) {
+      return specifiedVersion
+    }
+    val maxUltimateVersion = ideRepository.fetchIndex().map { it.version }.filter { it.productCode == "IU" }.max()
+    if (maxUltimateVersion != null) {
+      LOG.warn("IDE $featureExtractorIdeVersion is not available, defaulting to $maxUltimateVersion")
+      val maxUltimateIdeEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(maxUltimateVersion)
+      if (maxUltimateIdeEntry is IdeDescriptorsCache.Result.Found) {
+        return maxUltimateIdeEntry
       }
-      val ideDescriptor = it.ideDescriptor
+    }
+    throw IllegalStateException("IDE $featureExtractorIdeVersion for feature extraction is not available")
+  }
+
+  private fun execute(ideDescriptor: IdeDescriptor): Result =
       pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
         with(it) {
           when (this) {
@@ -94,8 +112,6 @@ class ExtractFeaturesTask(
           }
         }
       }
-    }
-  }
 
   private fun runFeatureExtractor(ideDescriptor: IdeDescriptor, plugin: IdePlugin): Result {
     val extractorResult = FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, plugin)

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -21,7 +22,8 @@ import java.util.concurrent.TimeUnit
 class FeatureExtractorService(taskManager: TaskManager,
                               private val featureServiceProtocol: FeatureServiceProtocol,
                               private val ideDescriptorsCache: IdeDescriptorsCache,
-                              private val pluginDetailsCache: PluginDetailsCache)
+                              private val pluginDetailsCache: PluginDetailsCache,
+                              private val ideRepository: IdeRepository)
   : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val scheduledUpdates = linkedMapOf<UpdateInfo, TaskDescriptor>()
@@ -46,7 +48,8 @@ class FeatureExtractorService(taskManager: TaskManager,
     val extractTask = ExtractFeaturesTask(
         updateInfo,
         ideDescriptorsCache,
-        pluginDetailsCache
+        pluginDetailsCache,
+        ideRepository
     )
     val taskDescriptor = taskManager.enqueue(
         extractTask,
