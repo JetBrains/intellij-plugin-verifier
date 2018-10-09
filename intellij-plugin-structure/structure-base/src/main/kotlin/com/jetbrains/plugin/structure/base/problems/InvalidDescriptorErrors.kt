@@ -30,3 +30,26 @@ class PropertyNotSpecified(
   override val level
     get() = Level.ERROR
 }
+
+class NotNumber(
+    private val propertyName: String,
+    descriptorPath: String? = null
+) : InvalidDescriptorProblem(descriptorPath) {
+
+  override val detailedMessage: String
+    get() = "<$propertyName> must be integer"
+
+  override val level
+    get() = Level.ERROR
+}
+
+class InvalidProductCode(
+    descriptorPath: String? = null
+) : InvalidDescriptorProblem(descriptorPath) {
+
+  override val detailedMessage: String
+    get() = "Product code must start with 'P' and be at least 4 characters length"
+
+  override val level
+    get() = Level.ERROR
+}

@@ -24,6 +24,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.time.LocalDate
 
 /**
  * Created by Sergey Patrikeev
@@ -56,6 +57,10 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.untilBuild)
 
     assertEquals("change_notes", plugin.changeNotes)
+
+    assertEquals("PABC", plugin.productDescriptor?.code)
+    assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)
+    assertEquals(20181, plugin.productDescriptor?.releaseVersion)
 
   }
 

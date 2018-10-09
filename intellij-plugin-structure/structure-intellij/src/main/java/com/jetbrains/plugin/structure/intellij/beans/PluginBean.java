@@ -20,6 +20,7 @@ public class PluginBean {
   @XmlElement(name = "version") public String pluginVersion;
   @XmlElement(name = "vendor") public PluginVendorBean vendor;
   @XmlElement(name = "idea-version") public IdeaVersionBean ideaVersion;
+  @XmlElement(name = "product-descriptor") public ProductDescriptorBean productDescriptor;
   @XmlElement(name = "is-internal") public boolean isInternal = true;
   @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<PluginDependencyBean>();
   @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<PluginHelpSetBean>();

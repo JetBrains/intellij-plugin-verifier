@@ -411,6 +411,31 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `invalid product descriptor`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          productDescriptor = """<product-descriptor/>"""
+        },
+        listOf(
+            PropertyNotSpecified("code", "plugin.xml"),
+            PropertyNotSpecified("release-date", "plugin.xml"),
+            PropertyNotSpecified("release-version", "plugin.xml")
+        )
+    )
+
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          productDescriptor = """<product-descriptor code="ABC" release-date="not-date" release-version="not-int"/>"""
+        },
+        listOf(
+            ReleaseDateWrongFormat,
+            NotNumber("release-version", "plugin.xml"),
+            InvalidProductCode("plugin.xml")
+        )
+    )
+  }
+
+  @Test
   fun `too long properties specified`() {
 
     val string_65 = "a".repeat(65)

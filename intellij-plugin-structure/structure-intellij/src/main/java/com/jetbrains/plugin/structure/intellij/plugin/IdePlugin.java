@@ -39,4 +39,7 @@ public interface IdePlugin extends Plugin {
 
   @Nullable
   File getOriginalFile();
+
+  @Nullable
+  ProductDescriptor getProductDescriptor();
 }

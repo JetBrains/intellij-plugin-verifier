@@ -1,13 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
 import com.jetbrains.plugin.structure.base.plugin.*;
-import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem;
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified;
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
-import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean;
+import com.jetbrains.plugin.structure.base.problems.*;
+import com.jetbrains.plugin.structure.intellij.beans.*;
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor;
 import com.jetbrains.plugin.structure.intellij.problems.*;
 import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
@@ -23,6 +18,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +30,9 @@ final class PluginCreator {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
 
+  public static DateTimeFormatter releaseDateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+  private static final int MIN_PRODUCT_CODE_LENGTH = 4;
+  private static final int MAX_PRODUCT_CODE_LENGTH = 15;
   private static final int MAX_VERSION_LENGTH = 64;
   private static final int MAX_PROPERTY_LENGTH = 255;
   private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
@@ -79,6 +80,7 @@ final class PluginCreator {
       validateChangeNotes(bean.changeNotes);
       validateVendor(bean.vendor);
       validateIdeaVersion(bean.ideaVersion);
+      validateProductDescriptor(bean.productDescriptor);
 
       if (bean.dependencies != null) {
         for (PluginDependencyBean dependencyBean : bean.dependencies) {
@@ -97,6 +99,50 @@ final class PluginCreator {
       }
     }
   }
+
+  private void validateProductDescriptor(ProductDescriptorBean productDescriptor) {
+    if (productDescriptor != null) {
+      validateProductCode(productDescriptor.code);
+      validateReleaseDate(productDescriptor.releaseDate);
+      validateReleaseVersion(productDescriptor.releaseVersion);
+    }
+  }
+
+  private void validateProductCode(String productCode) {
+    if (StringUtil.isEmpty(productCode)) {
+      registerProblem(new PropertyNotSpecified("code", myDescriptorPath));
+    } else {
+      if (!productCode.startsWith("P") || productCode.length() < MIN_PRODUCT_CODE_LENGTH) {
+        registerProblem(new InvalidProductCode(myDescriptorPath));
+      }
+      validatePropertyLength("Product code", productCode, MAX_PRODUCT_CODE_LENGTH);
+    }
+  }
+
+  private void validateReleaseDate(String releaseDate) {
+    if (StringUtil.isEmpty(releaseDate)) {
+      registerProblem(new PropertyNotSpecified("release-date", myDescriptorPath));
+    } else {
+      try {
+        LocalDate.parse(releaseDate, releaseDateFormatter);
+      } catch (DateTimeParseException e) {
+        registerProblem(ReleaseDateWrongFormat.INSTANCE);
+      }
+    }
+  }
+
+  private void validateReleaseVersion(String releaseVersion) {
+    if (StringUtil.isEmpty(releaseVersion)) {
+      registerProblem(new PropertyNotSpecified("release-version", myDescriptorPath));
+    } else {
+      try {
+        Integer.valueOf(releaseVersion);
+      } catch (NumberFormatException e) {
+        registerProblem(new NotNumber("release-version", myDescriptorPath));
+      }
+    }
+  }
+
 
   private void validateAttributes(@NotNull PluginBean bean) {
     if (bean.url != null) {

@@ -3,10 +3,7 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon;
-import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean;
-import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean;
+import com.jetbrains.plugin.structure.intellij.beans.*;
 import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jdom2.Document;
@@ -15,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.*;
 
 import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.isEmpty;
@@ -42,6 +40,7 @@ public class IdePluginImpl implements IdePlugin {
   private String myNotes;
   private IdeVersion mySinceBuild;
   private IdeVersion myUntilBuild;
+  private ProductDescriptor myProductDescriptor;
 
   IdePluginImpl(@NotNull Document underlyingDocument, @NotNull PluginBean bean) {
     myUnderlyingDocument = underlyingDocument;
@@ -173,6 +172,15 @@ public class IdePluginImpl implements IdePlugin {
       myVendorUrl = vendorBean.url;
       myVendorEmail = vendorBean.email;
     }
+    ProductDescriptorBean productDescriptorBean = bean.productDescriptor;
+    if (productDescriptorBean != null) {
+
+      myProductDescriptor = new ProductDescriptor(
+          productDescriptorBean.code,
+          LocalDate.parse(productDescriptorBean.releaseDate, PluginCreator.releaseDateFormatter),
+          Integer.valueOf(productDescriptorBean.releaseVersion)
+      );
+    }
     myNotes = bean.changeNotes;
     myDescription = bean.description;
   }
@@ -215,6 +223,12 @@ public class IdePluginImpl implements IdePlugin {
   @Override
   public File getOriginalFile() {
     return myOriginalFile;
+  }
+
+  @Nullable
+  @Override
+  public ProductDescriptor getProductDescriptor() {
+    return myProductDescriptor;
   }
 
   void setOriginalPluginFile(@NotNull File originalFile) {

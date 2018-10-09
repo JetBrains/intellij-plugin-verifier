@@ -135,3 +135,12 @@ class DefaultDescription(descriptorPath: String) : InvalidDescriptorProblem(desc
   override val detailedMessage
     get() = "value of <description> must not have default 'Enter short description for your plugin here.' or 'most HTML tags may be used'"
 }
+
+object ReleaseDateWrongFormat : PluginProblem() {
+  override val level
+    get() = PluginProblem.Level.ERROR
+
+  override val message
+    get() = "Property <release-date> must be of YYYYMMDD format"
+}
+
