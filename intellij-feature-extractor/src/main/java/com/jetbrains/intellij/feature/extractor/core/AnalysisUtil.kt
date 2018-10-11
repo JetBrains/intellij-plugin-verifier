@@ -8,9 +8,9 @@ import org.objectweb.asm.tree.analysis.*
 
 object AnalysisUtil {
 
-  private val STRING_BUILDER = "java/lang/StringBuilder"
+  private const val STRING_BUILDER = "java/lang/StringBuilder"
 
-  fun analyzeMethodFrames(classNode: ClassNode, methodNode: MethodNode) =
+  fun analyzeMethodFrames(classNode: ClassNode, methodNode: MethodNode): List<Frame<SourceValue>> =
       Analyzer(SourceInterpreter()).analyze(classNode.name, methodNode).toList()
 
   fun getMethodParametersNumber(methodNode: MethodNode): Int = Type.getMethodType(methodNode.desc).argumentTypes.size
@@ -44,32 +44,11 @@ object AnalysisUtil {
 
     var producer: Value? = null
 
-    val interpreter = object : SourceInterpreter() {
-      override fun ternaryOperation(p0: AbstractInsnNode?, p1: Value?, p2: Value?, p3: Value?): Value {
-        return super.ternaryOperation(p0, p1 as SourceValue, p2 as SourceValue, p3 as SourceValue)
+    val interpreter = object : SourceInterpreter(Opcodes.ASM7) {
+      override fun returnOperation(insn: AbstractInsnNode?, value: SourceValue?, expected: SourceValue?) {
+        producer = value
+        super.returnOperation(insn, value, expected)
       }
-
-      override fun merge(p0: Value?, p1: Value?): Value {
-        return super.merge(p0 as SourceValue, p1 as SourceValue)
-      }
-
-      override fun returnOperation(p0: AbstractInsnNode?, p1: Value?, p2: Value?) {
-        producer = p1
-        return super.returnOperation(p0, p1 as SourceValue, p2 as SourceValue)
-      }
-
-      override fun unaryOperation(p0: AbstractInsnNode?, p1: Value?): Value {
-        return super.unaryOperation(p0, p1 as SourceValue)
-      }
-
-      override fun binaryOperation(p0: AbstractInsnNode?, p1: Value?, p2: Value?): Value {
-        return super.binaryOperation(p0, p1 as SourceValue, p2 as SourceValue)
-      }
-
-      override fun copyOperation(p0: AbstractInsnNode?, p1: Value?): Value {
-        return super.copyOperation(p0, p1 as SourceValue)
-      }
-
     }
 
     val frames = Analyzer(interpreter).analyze(classNode.name, methodNode).toList()
@@ -82,7 +61,7 @@ object AnalysisUtil {
   }
 
 
-  fun evaluateConstantString(value: Value?, resolver: Resolver, frames: List<Frame>, instructions: List<AbstractInsnNode>): String? {
+  fun evaluateConstantString(value: Value?, resolver: Resolver, frames: List<Frame<SourceValue>>, instructions: List<AbstractInsnNode>): String? {
     if (value !is SourceValue) {
       return null
     }
@@ -100,12 +79,12 @@ object AnalysisUtil {
           return evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
         } else {
           val classNode = resolver.findClass(producer.owner) ?: return null
-          val methodNode = classNode.findMethod({ it.name == producer.name && it.desc == producer.desc }) ?: return null
+          val methodNode = classNode.findMethod { it.name == producer.name && it.desc == producer.desc } ?: return null
           return extractConstantFunctionValue(classNode, methodNode, resolver)
         }
       } else if (producer is FieldInsnNode) {
         val classNode = resolver.findClass(producer.owner) ?: return null
-        val fieldNode = classNode.findField({ it.name == producer.name && it.desc == producer.desc }) ?: return null
+        val fieldNode = classNode.findField { it.name == producer.name && it.desc == producer.desc } ?: return null
         return evaluateConstantFieldValue(classNode, fieldNode, resolver)
       }
     }
@@ -120,7 +99,7 @@ object AnalysisUtil {
     if (fieldNode.value is String) {
       return fieldNode.value as String
     }
-    val clinit = classNode.findMethod({ it.name == "<clinit>" }) ?: return null
+    val clinit = classNode.findMethod { it.name == "<clinit>" } ?: return null
     val frames = AnalysisUtil.analyzeMethodFrames(classNode, clinit)
     val instructions = clinit.instructionsAsList()
     val putStaticInstructionIndex = instructions.indexOfLast {
@@ -134,10 +113,12 @@ object AnalysisUtil {
   }
 
 
-  fun evaluateConcatenatedStringValue(producer: MethodInsnNode,
-                                      frames: List<Frame>,
-                                      resolver: Resolver,
-                                      instructions: List<AbstractInsnNode>): String? {
+  private fun evaluateConcatenatedStringValue(
+      producer: MethodInsnNode,
+      frames: List<Frame<SourceValue>>,
+      resolver: Resolver,
+      instructions: List<AbstractInsnNode>
+  ): String? {
     val producerIndex = instructions.indexOf(producer)
     if (producerIndex == -1) {
       return null

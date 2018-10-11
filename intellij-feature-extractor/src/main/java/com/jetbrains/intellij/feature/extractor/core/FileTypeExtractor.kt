@@ -4,10 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.*
 import org.objectweb.asm.tree.analysis.Frame
 import org.objectweb.asm.tree.analysis.SourceValue
 import org.objectweb.asm.tree.analysis.Value
@@ -17,23 +14,26 @@ import org.objectweb.asm.tree.analysis.Value
  */
 class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
-  private val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
-  private val FILE_TYPE_CONSUMER = "com/intellij/openapi/fileTypes/FileTypeConsumer"
+  companion object {
+    private const val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
+    private const val FILE_TYPE_CONSUMER = "com/intellij/openapi/fileTypes/FileTypeConsumer"
 
-  private val EXPLICIT_EXTENSION = "(Lcom/intellij/openapi/fileTypes/FileType;Ljava/lang/String;)V"
-  private val FILE_TYPE_ONLY = "(Lcom/intellij/openapi/fileTypes/FileType;)V"
+    private const val EXPLICIT_EXTENSION = "(Lcom/intellij/openapi/fileTypes/FileType;Ljava/lang/String;)V"
+    private const val FILE_TYPE_ONLY = "(Lcom/intellij/openapi/fileTypes/FileType;)V"
 
-  private val FILENAME_MATCHERS = "(Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V"
+    private const val FILENAME_MATCHERS = "(Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V"
 
-  private val EXACT_NAME_MATCHER = "com/intellij/openapi/fileTypes/ExactFileNameMatcher"
+    private const val EXACT_NAME_MATCHER = "com/intellij/openapi/fileTypes/ExactFileNameMatcher"
 
-  private val EXTENSIONS_MATCHER = "com/intellij/openapi/fileTypes/ExtensionFileNameMatcher"
+    private const val EXTENSIONS_MATCHER = "com/intellij/openapi/fileTypes/ExtensionFileNameMatcher"
+  }
 
   override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName != FILE_TYPE_FACTORY) {
       return null
     }
-    val method = classNode.findMethod({ it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract() }) ?: return null
+    val method = classNode.findMethod { it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract() }
+        ?: return null
     val frames = AnalysisUtil.analyzeMethodFrames(classNode, method)
 
     val result = arrayListOf<String>()
@@ -83,9 +83,11 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     return result
   }
 
-  private fun computeExtensionsPassedToFileNameMatcherArray(methodInstructions: List<AbstractInsnNode>,
-                                                            arrayUserInstructionIndex: Int,
-                                                            frames: List<Frame>): List<String>? {
+  private fun computeExtensionsPassedToFileNameMatcherArray(
+      methodInstructions: List<AbstractInsnNode>,
+      arrayUserInstructionIndex: Int,
+      frames: List<Frame<SourceValue>>
+  ): List<String>? {
     val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
     if (arrayProducer !is SourceValue || arrayProducer.insns.size != 1) {
       return null
@@ -129,15 +131,17 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
    * in general case <block_i> is a set of instructions which constructs or obtains an instance
    * of the i-th element of the array.
    */
-  private fun aggregateFileNameMatcherAsArrayElements(newArrayInsnIndex: Int,
-                                                      arrayUserInstructionIndex: Int,
-                                                      methodInstructions: List<AbstractInsnNode>, frames: List<Frame>): List<String> {
+  private fun aggregateFileNameMatcherAsArrayElements(
+      newArrayInsnIndex: Int,
+      arrayUserInstructionIndex: Int,
+      methodInstructions: List<AbstractInsnNode>, frames: List<Frame<SourceValue>>
+  ): List<String> {
     val dummyValue: AbstractInsnNode = object : AbstractInsnNode(-1) {
       override fun getType(): Int = -1
 
       override fun accept(p0: MethodVisitor?) = Unit
 
-      override fun clone(p0: MutableMap<Any?, Any?>?): AbstractInsnNode = this
+      override fun clone(clonedLabels: MutableMap<LabelNode, LabelNode>?) = this
     }
 
     //insert dummy instructions to the end to prevent ArrayIndexOutOfBoundsException.
@@ -303,7 +307,8 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
     val clazz = resolver.findClass(first.desc) ?: return null
-    val method = clazz.findMethod({ it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty() }) ?: return null
+    val method = clazz.findMethod { it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty() }
+        ?: return null
     return AnalysisUtil.extractConstantFunctionValue(clazz, method, resolver)
   }
 

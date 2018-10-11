@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
-import org.objectweb.asm.tree.analysis.Frame
 import org.objectweb.asm.tree.analysis.Value
 
 /*
@@ -27,7 +26,7 @@ class FacetTypeExtractor(resolver: Resolver) : Extractor(resolver) {
         if (insn is MethodInsnNode) {
           if (insn.name == "<init>" && insn.owner == FACET_TYPE) {
 
-            val frame: Frame = frames[index]
+            val frame = frames[index]
 
             val value: Value?
             if (insn.desc == "(Lcom/intellij/facet/FacetTypeId;Ljava/lang/String;Ljava/lang/String;Lcom/intellij/facet/FacetTypeId;)V") {
