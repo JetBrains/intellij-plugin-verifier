@@ -39,7 +39,7 @@ fun createOkHttpClient(
         return@addInterceptor response
       }
       val location = response.header(LOCATION) ?: return@addInterceptor response
-      val redirectedRequest = request.newBuilder().url(location).build()
+      val redirectedRequest = request.newBuilder().url(location).removeHeader("Authorization").build()
       chain.proceed(redirectedRequest)
     }
     .connectTimeout(timeOut, timeUnit)
