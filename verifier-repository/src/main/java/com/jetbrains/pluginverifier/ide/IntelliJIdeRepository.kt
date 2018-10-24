@@ -12,10 +12,13 @@ import retrofit2.http.GET
 import java.util.concurrent.TimeUnit
 
 /**
- * Provides index of snapshot IDE builds available for downloading.
- * The index is fetched from https://www.jetbrains.com/intellij-repository/snapshots/.
+ * Provides index of IDE builds available for downloading,
+ * which is fetched from IntelliJ
+ * [release](https://www.jetbrains.com/intellij-repository/release/) or
+ * [snapshots](https://www.jetbrains.com/intellij-repository/snapshots)
+ * repository, depending on
  */
-class SnapshotsIdeRepository : IdeRepository {
+class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeRepository {
 
   companion object {
     const val INTELLIJ_REPOSITORY_URL = "https://www.jetbrains.com/intellij-repository/"
@@ -33,11 +36,15 @@ class SnapshotsIdeRepository : IdeRepository {
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
 
   private fun updateIndex(): List<AvailableIde> {
-    val artifacts = repositoryIndexConnector
-        .getSnapshotsIndex()
+    val index = if (snapshotsChannel) {
+      repositoryIndexConnector.getSnapshotsIndex()
+    } else {
+      repositoryIndexConnector.getReleasesIndex()
+    }
+    val artifacts = index
         .executeSuccessfully().body()
         .artifacts
-    return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, true)
+    return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, snapshotsChannel)
   }
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
@@ -74,6 +81,9 @@ internal data class ArtifactJson(
 )
 
 private interface RepositoryIndexConnector {
+
+  @GET("releases/index.json")
+  fun getReleasesIndex(): Call<ArtifactsJson>
 
   @GET("snapshots/index.json")
   fun getSnapshotsIndex(): Call<ArtifactsJson>

@@ -1,0 +1,80 @@
+buildscript {
+
+  ext.kotlin_version = '1.2.50'
+
+  repositories {
+    jcenter()
+  }
+
+  dependencies {
+    classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
+}
+
+allprojects {
+  apply plugin: 'java'
+  apply plugin: 'kotlin'
+}
+
+jar {
+  manifest {
+    attributes(
+        'Main-Class': 'org.jetbrains.ide.diff.builder.MainKt'
+    )
+  }
+
+  from {
+    (configurations.compile + configurations.runtime).collect { it.isDirectory() ? it : zipTree(it) }
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+repositories {
+  mavenLocal()
+  maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
+  maven { url "https://www.jetbrains.com/intellij-repository/releases" }
+  maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+compileKotlin {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+    freeCompilerArgs = ["-Xjvm-default=enable"]
+  }
+}
+
+dependencies {
+  runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+
+  testCompile 'junit:junit:4.12'
+  testCompile project(':')
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: 'dev'
+  compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
+  compile 'org.apache.commons:commons-text:1.6'
+}
+
+task copyMockIdes(type: Copy, dependsOn: [':mock-old-ide:prepareIde', ':mock-new-ide:prepareIde']) {
+  into "$buildDir/mock-ides"
+  def oldIde = copySpec {
+    from new File(project('mock-old-ide').buildDir, "mock-ide")
+    into "old-ide"
+  }
+  def newIde = copySpec {
+    from new File(project('mock-new-ide').buildDir, "mock-ide")
+    into "new-ide"
+  }
+  with oldIde, newIde
+}
+
+test.dependsOn(copyMockIdes)

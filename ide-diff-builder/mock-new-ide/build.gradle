@@ -1,0 +1,17 @@
+version = '1.0'
+
+task prepareIde(type: Copy, dependsOn: build) {
+  into "$buildDir/mock-ide"
+  
+  def ideaJar = copySpec {
+    from "$buildDir/libs/mock-new-ide-1.0.jar"
+    into "lib"
+  }
+  
+  def buildTxt = copySpec {
+    from "$buildDir/resources/main/build.txt"
+    into "."
+  }
+  
+  with ideaJar, buildTxt
+}

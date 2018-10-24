@@ -77,7 +77,24 @@ data class FormatOptions(
      * org/some/Anonymous$1 -> org.some.Anonymous$1
      * ```
      */
-    val internalNameConverter: (String) -> String = toFullJavaClassName
+    val internalNameConverter: (String) -> String = toFullJavaClassName,
+
+    /**
+     * Separator string used to separate several type
+     * arguments of a reference type signature from each other.
+     * ```
+     * <T, K> -> <T, K>
+     * ```
+     */
+    val typeArgumentsSeparator: String = ", ",
+    /**
+     * Separator string used to separate several type parameters
+     * of a class signature from each other.
+     * ```
+     * public class A<T, K> -> <T, K>
+     * ```
+     */
+    val typeParametersSeparator: String = ", "
 ) {
   /**
    * Converts internal class name to presentable name,
@@ -162,13 +179,13 @@ sealed class ReferenceTypeSignature : JavaTypeSignature()
  */
 data class ClassTypeSignature(
     val topClassTypeSignature: SimpleClassTypeSignature,
-    val innerClassTypeSingatures: List<SimpleClassTypeSignature>
+    val innerClassTypeSignatures: List<SimpleClassTypeSignature>
 ) : ReferenceTypeSignature() {
 
   override fun format(formatOptions: FormatOptions) =
       buildString {
         append(topClassTypeSignature.format(formatOptions))
-        for (innerClass in innerClassTypeSingatures) {
+        for (innerClass in innerClassTypeSignatures) {
           append(".").append(innerClass.format(formatOptions))
         }
       }
@@ -177,7 +194,7 @@ data class ClassTypeSignature(
       buildString {
         append("L")
         append(topClassTypeSignature)
-        for (suffix in innerClassTypeSingatures) {
+        for (suffix in innerClassTypeSignatures) {
           append(".").append(suffix)
         }
         append(";")
@@ -243,7 +260,7 @@ data class TypeArguments(val typeArguments: List<TypeArgument>) : FormattableSig
   override fun toString() = "<" + typeArguments.tightJoin() + ">"
 
   override fun format(formatOptions: FormatOptions) =
-      "<" + typeArguments.joinToString { it.format(formatOptions) } + ">"
+      "<" + typeArguments.joinToString(separator = formatOptions.typeArgumentsSeparator) { it.format(formatOptions) } + ">"
 }
 
 /**
@@ -339,7 +356,7 @@ data class TypeParameters(val typeParameters: List<TypeParameter>) : Formattable
   override fun toString() = "<" + typeParameters.tightJoin() + ">"
 
   override fun format(formatOptions: FormatOptions) =
-      "<" + typeParameters.joinToString { it.format(formatOptions) } + ">"
+      "<" + typeParameters.joinToString(separator = formatOptions.typeParametersSeparator) { it.format(formatOptions) } + ">"
 }
 
 /**

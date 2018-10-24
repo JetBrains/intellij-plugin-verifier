@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
 import java.io.IOException
@@ -60,19 +61,7 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
 
   @Throws(IOException::class)
   override fun close() {
-    val firstException = resolvers.asSequence()
-        .mapNotNull {
-          try {
-            it.close()
-            null
-          } catch (e: Exception) {
-            e
-          }
-        }.firstOrNull()
-
-    if (firstException != null) {
-      throw firstException
-    }
+    resolvers.closeAll()
   }
 
   override fun toString() = "Union of ${resolvers.size} resolver" + (if (resolvers.size != 1) "s" else "")

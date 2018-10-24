@@ -20,6 +20,15 @@ fun <T, R> T.doLogged(action: String, block: T.() -> R) {
 }
 
 /**
+ * Checks that two values are equal,
+ * or throws [IllegalStateException]
+ * with a message otherwise.
+ */
+fun <T> checkEquals(expected: T, actual: T) {
+  check(expected == actual) { "Values mismatch:\nExpected: $expected\nActual: $actual" }
+}
+
+/**
  * Checks whether the current thread has been interrupted.
  * Clears the *interrupted status* and throws [InterruptedException]
  * if it is the case.

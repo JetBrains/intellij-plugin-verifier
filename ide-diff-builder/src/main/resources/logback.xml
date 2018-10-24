@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <timestamp key="startTime" datePattern="yyyy-MM-dd_HH-mm-ss"/>
+
+    <property name="log.pattern"
+              value="%d{yyyy-MM-dd'T'HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <property name="log.pattern.alternative"
+              value="%20(%d{yyyy-MM-dd'T'HH:mm:ss}) %-22([%thread]) %-5level %-30.30(%logger{0}:%method) - %msg%n"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+
+    </appender>
+
+    <logger name="com.jetbrains.plugin.structure" level="WARN"/>
+
+    <root level="${ide.diff.builder.logger.root.level:-INFO}">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>

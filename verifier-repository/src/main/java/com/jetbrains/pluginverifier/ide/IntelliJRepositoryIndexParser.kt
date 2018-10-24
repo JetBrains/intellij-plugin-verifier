@@ -79,7 +79,7 @@ internal class IntelliJRepositoryIndexParser {
   private fun buildDownloadUrl(artifactInfo: ArtifactJson, snapshots: Boolean, groupId: String, version: String): URL {
     return URL(
         with(artifactInfo) {
-          SnapshotsIdeRepository.INTELLIJ_REPOSITORY_URL +
+          IntelliJIdeRepository.INTELLIJ_REPOSITORY_URL +
               (if (snapshots) "snapshots" else "releases") +
               "/${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging"
         }

@@ -25,6 +25,13 @@ inline fun <T : Closeable?, R> List<T>.closeOnException(block: (List<T>) -> R): 
   }
 }
 
+/**
+ * Executes the given [block] of code on `this` closeable instance
+ * and returns the execution result.
+ *
+ * If an exception is thrown, `this` will be closed with logging and
+ * the exception will be propagated.
+ */
 inline fun <T : Closeable?, R> T.closeOnException(block: (T) -> R): R {
   try {
     return block(this)

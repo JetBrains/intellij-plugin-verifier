@@ -1,0 +1,5 @@
+rootProject.name = 'ide-diff-builder'
+include 'mock-old-ide'
+include 'mock-new-ide'
+includeBuild '../.'
+includeBuild '../intellij-plugin-structure'
