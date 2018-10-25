@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.results.presentation
 
-import org.objectweb.asm.Opcodes
+import com.jetbrains.pluginverifier.verifiers.ASM_API_LEVEL
 import org.objectweb.asm.signature.SignatureVisitor
 
-class TypeSignatureVisitor(val binaryNameConverter: (String) -> String) : SignatureVisitor(Opcodes.ASM5) {
+class TypeSignatureVisitor(val binaryNameConverter: (String) -> String) : SignatureVisitor(ASM_API_LEVEL) {
 
   private var result: StringBuilder = StringBuilder()
 
@@ -12,8 +12,6 @@ class TypeSignatureVisitor(val binaryNameConverter: (String) -> String) : Signat
   private var seenTypeArgument: Boolean = false
 
   fun getResult(): String = result.toString() + "[]".repeat(dimensions)
-
-  private val IGNORING_VISITOR: SignatureVisitor = object : SignatureVisitor(api) {}
 
   private fun convertBaseType(descriptor: Char): String = when (descriptor) {
     'V' -> "void"
@@ -64,7 +62,7 @@ class TypeSignatureVisitor(val binaryNameConverter: (String) -> String) : Signat
       result.append(", ")
     }
     result.append("?")
-    return IGNORING_VISITOR
+    return PresentableSignatureVisitor.IGNORING_VISITOR
   }
 
   override fun visitInnerClassType(name: String) {

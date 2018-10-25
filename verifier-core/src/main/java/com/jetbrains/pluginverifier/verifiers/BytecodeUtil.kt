@@ -5,6 +5,8 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
+const val ASM_API_LEVEL = Opcodes.ASM7
+
 @Suppress("UNCHECKED_CAST")
 fun MethodNode.getParameterNames(): List<String> {
   val arguments = Type.getArgumentTypes(desc)
@@ -86,6 +88,8 @@ fun ClassNode.isInterface(): Boolean = access and Opcodes.ACC_INTERFACE != 0
 
 fun ClassNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
 
+fun ClassNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
+
 fun MethodNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
 
 fun FieldNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
@@ -122,7 +126,11 @@ fun FieldNode.isStatic(): Boolean = access and Opcodes.ACC_STATIC != 0
 
 fun ClassNode.isSuperFlag(): Boolean = access and Opcodes.ACC_SUPER != 0
 
+fun ClassNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
+
 fun MethodNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
+
+fun FieldNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
 
 fun MethodNode.isBridgeMethod(): Boolean = access and Opcodes.ACC_BRIDGE != 0
 

@@ -32,7 +32,7 @@ fun File.createDir(): File {
   if (!isDirectory) {
     FileUtils.forceMkdir(this)
     if (!isDirectory) {
-      throw IOException("Failed to create directory ${this}")
+      throw IOException("Failed to create directory $this")
     }
   }
   return this

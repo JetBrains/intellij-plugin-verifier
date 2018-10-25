@@ -1,10 +1,12 @@
 package com.jetbrains.pluginverifier.results.presentation
 
-import org.objectweb.asm.Opcodes
+import com.jetbrains.pluginverifier.verifiers.ASM_API_LEVEL
 import org.objectweb.asm.signature.SignatureVisitor
 
 /*
-These are the complete signature rules:
+These are the complete signature rules.
+
+See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.7.9.1
 
 JavaTypeSignature:
   ReferenceTypeSignature
@@ -88,9 +90,11 @@ VoidDescriptor:
 FieldSignature:
   ReferenceTypeSignature
 */
-class PresentableSignatureVisitor(val binaryNameConverter: String.() -> String) : SignatureVisitor(Opcodes.ASM5) {
+class PresentableSignatureVisitor(private val binaryNameConverter: String.() -> String) : SignatureVisitor(ASM_API_LEVEL) {
 
-  private val IGNORING_VISITOR = object : SignatureVisitor(api) {}
+  companion object {
+    val IGNORING_VISITOR = object : SignatureVisitor(ASM_API_LEVEL) {}
+  }
 
   private val formalTypeParameters: StringBuilder = StringBuilder()
 
@@ -156,7 +160,7 @@ class PresentableSignatureVisitor(val binaryNameConverter: String.() -> String) 
 
   fun getClassFormalTypeParameters(): String = formalTypeParameters.toString()
 
-  fun getReturnType(): String = returnType?.getResult() ?: throw IllegalArgumentException("Exptected method signature")
+  fun getReturnType(): String = returnType?.getResult() ?: throw IllegalArgumentException("Expected method signature")
 
   fun getMethodParameterTypes(): List<String> = methodParameters.map { it.getResult() }
 

@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.results.presentation
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.convertFieldSignature
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.convertJvmDescriptorToNormalPresentation
+import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.convertTypeSignature
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes
 
 /**
@@ -53,7 +53,7 @@ private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String 
     FieldTypeOption.FULL_TYPE -> toFullJavaClassName
   }
   return if (signature.isNotEmpty()) {
-    convertFieldSignature(signature, descriptorConverter)
+    convertTypeSignature(signature, descriptorConverter)
   } else {
     convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)
   }
@@ -68,7 +68,7 @@ fun ClassLocation.formatClassLocation(classLocationOption: ClassOption,
   return if (signature.isNotEmpty()) {
     when (classTypeSignatureOption) {
       ClassGenericsSignatureOption.NO_GENERICS -> converter(className)
-      ClassGenericsSignatureOption.WITH_GENERICS -> converter(className) + JvmDescriptorsPresentation.convertClassSignature(signature, toSimpleJavaClassName)
+      ClassGenericsSignatureOption.WITH_GENERICS -> converter(className) + JvmDescriptorsPresentation.parseClassSignature(signature, toSimpleJavaClassName)
     }
   } else {
     converter(className)

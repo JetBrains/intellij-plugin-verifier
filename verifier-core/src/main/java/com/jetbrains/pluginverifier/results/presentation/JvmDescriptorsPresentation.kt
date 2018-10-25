@@ -29,7 +29,7 @@ object JvmDescriptorsPresentation {
       "J" -> "long"
       "D" -> "double"
       else -> {
-        require(elemType.startsWith("L") && elemType.endsWith(";") && elemType.length > 2, { elemType })
+        require(elemType.startsWith("L") && elemType.endsWith(";") && elemType.length > 2) { elemType }
         elemType.substring(1, elemType.length - 1).binaryNameConverter()
       }
     }
@@ -37,6 +37,8 @@ object JvmDescriptorsPresentation {
   }
 
   /**
+   * Splits internal JVM descriptor on individual descriptors of the parameters and return type.
+   *
    * E.g. (IFLjava/lang/Object;)Ljava/lang/String; -> [I, F, Ljava/lang/Object;] and Ljava/lang/String;
    */
   fun splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor: String): Pair<List<String>, String> {
@@ -51,7 +53,7 @@ object JvmDescriptorsPresentation {
    * E.g. (I)TE; -> [ int ] and E
    */
   fun parseMethodSignature(methodSignature: String, binaryNameConverter: String.() -> String): Pair<List<String>, String> {
-    require(methodSignature.isNotEmpty(), { "Empty signature is not expected here" })
+    require(methodSignature.isNotEmpty()) { "Empty signature is not expected here" }
     val visitor = runSignatureVisitor(methodSignature, binaryNameConverter)
     val returnType = visitor.getReturnType()
     return visitor.getMethodParameterTypes() to returnType
@@ -64,43 +66,47 @@ object JvmDescriptorsPresentation {
     return visitor
   }
 
-  fun convertClassSignature(classSignature: String, binaryNameConverter: String.() -> String): String {
-    require(classSignature.isNotEmpty(), { "Empty signature is not expected here" })
+  fun parseClassSignature(classSignature: String, binaryNameConverter: String.() -> String): String {
+    require(classSignature.isNotEmpty()) { "Empty signature is not expected here" }
     val visitor = runSignatureVisitor(classSignature, binaryNameConverter)
     return visitor.getClassFormalTypeParameters()
   }
 
-  fun convertFieldSignature(fieldSignature: String, binaryNameConverter: String.() -> String): String {
-    require(fieldSignature.isNotEmpty(), { "Empty signature is not expected here" })
+  fun convertTypeSignature(typeSignature: String, binaryNameConverter: String.() -> String): String {
+    require(typeSignature.isNotEmpty()) { "Empty signature is not expected here" }
     val visitor = TypeSignatureVisitor(binaryNameConverter)
-    SignatureReader(fieldSignature).acceptType(visitor)
+    SignatureReader(typeSignature).acceptType(visitor)
     return visitor.getResult()
   }
 
   private fun parseMethodParametersTypesByDescriptor(methodDescriptor: String): List<String> {
-    require(methodDescriptor.startsWith("(") && methodDescriptor.contains(')'), { "Invalid method descriptor: $methodDescriptor" })
+    require(methodDescriptor.startsWith("(") && methodDescriptor.contains(')')) { "Invalid method descriptor: $methodDescriptor" }
     val rawParameterTypes = arrayListOf<String>()
     var pos = 1
     while (methodDescriptor[pos] != ')') {
       val char = methodDescriptor[pos]
-      if (char in "ZCBSIFJD") {
-        rawParameterTypes.add(char.toString())
-        pos++
-      } else if (char == '[') {
-        var end = pos
-        while (methodDescriptor[end] == '[') {
-          end++
+      when (char) {
+        in "ZCBSIFJD" -> {
+          rawParameterTypes.add(char.toString())
+          pos++
         }
-        if (methodDescriptor[end] == 'L') {
-          end = methodDescriptor.indexOf(';', end)
+        '[' -> {
+          var end = pos
+          while (methodDescriptor[end] == '[') {
+            end++
+          }
+          if (methodDescriptor[end] == 'L') {
+            end = methodDescriptor.indexOf(';', end)
+          }
+          rawParameterTypes.add(methodDescriptor.substring(pos, end + 1))
+          pos = end + 1
         }
-        rawParameterTypes.add(methodDescriptor.substring(pos, end + 1))
-        pos = end + 1
-      } else {
-        require(char == 'L')
-        val end = methodDescriptor.indexOf(';', pos)
-        rawParameterTypes.add(methodDescriptor.substring(pos, end + 1))
-        pos = end + 1
+        else -> {
+          require(char == 'L')
+          val end = methodDescriptor.indexOf(';', pos)
+          rawParameterTypes.add(methodDescriptor.substring(pos, end + 1))
+          pos = end + 1
+        }
       }
     }
     return rawParameterTypes
