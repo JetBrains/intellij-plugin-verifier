@@ -2,13 +2,10 @@ import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class TestLocationsPresentation {
+class TestPresentations {
 
   @Test
   fun `test class name conversion`() {
-    assertEquals("Class", toFullJavaClassName("Class"))
-    assertEquals("Class", toFullJavaClassName("Class"))
-
     assertEquals("SomeClass", toFullJavaClassName("SomeClass"))
     assertEquals("SomeClass.Nested", toFullJavaClassName("SomeClass\$Nested"))
     assertEquals("SomeClass.Static.Inner", toFullJavaClassName("SomeClass\$Static\$Inner"))
@@ -18,4 +15,5 @@ class TestLocationsPresentation {
     assertEquals("SomeClass$4$5$6", toFullJavaClassName("SomeClass$4$5$6"))
     assertEquals("SomeClass\$321.XXX\$555", toFullJavaClassName("SomeClass\$321\$XXX\$555"))
   }
+
 }

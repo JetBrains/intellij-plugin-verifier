@@ -253,19 +253,19 @@ class VerificationCorrectnessTest {
 
   @Test
   fun notImplementedAbstractMethodFromInterface() {
-    assertProblemFound("Concrete class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
-        "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented"
+    assertProblemFound("Concrete class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
+        "Abstract method com.intellij.openapi.components.PersistentStateComponent.getState() : T is not implemented"
     )
   }
 
   @Test
   fun notImplementedPrivateOverridingFromInterface() {
-    assertProblemFound("Concrete class mock.plugin.private_and_static.PrivateOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
+    assertProblemFound("Concrete class mock.plugin.private_and_static.PrivateOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent.getState() : T is not implemented")
   }
 
   @Test
   fun notImplementedStaticOverridingFromInterface() {
-    assertProblemFound("Concrete class mock.plugin.private_and_static.StaticOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent<T> but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent<T>.getState() : T is not implemented")
+    assertProblemFound("Concrete class mock.plugin.private_and_static.StaticOverridingNotImplemented inherits from com.intellij.openapi.components.PersistentStateComponent but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.", "Abstract method com.intellij.openapi.components.PersistentStateComponent.getState() : T is not implemented")
   }
 
 
@@ -443,12 +443,12 @@ class VerificationCorrectnessTest {
 
   @Test
   fun `method signature changed because the generic parameter type of the enclosing class deleted`() {
-    assertProblemFound("Method mock.plugin.generics.NoSuchMethodError.error(generics.Base<?> base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(java.lang.Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound("Method mock.plugin.generics.NoSuchMethodError.error(generics.Base base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(java.lang.Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method generics.Base.foo(Number) : void")
 
     assertProblemFound(
-        "Concrete class mock.plugin.generics.Subclass inherits from generics.Base<T> but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
-        "Abstract method generics.Base<T>.foo(T arg0) : void is not implemented"
+        "Concrete class mock.plugin.generics.Subclass inherits from generics.Base but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
+        "Abstract method generics.Base.foo(T arg0) : void is not implemented"
     )
   }
 

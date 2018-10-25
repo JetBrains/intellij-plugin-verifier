@@ -68,7 +68,7 @@ fun ClassLocation.formatClassLocation(classLocationOption: ClassOption,
   return if (signature.isNotEmpty()) {
     when (classTypeSignatureOption) {
       ClassGenericsSignatureOption.NO_GENERICS -> converter(className)
-      ClassGenericsSignatureOption.WITH_GENERICS -> converter(className) + JvmDescriptorsPresentation.parseClassSignature(signature, toSimpleJavaClassName)
+      ClassGenericsSignatureOption.WITH_GENERICS -> converter(className) + JvmDescriptorsPresentation.convertClassSignature(signature, toSimpleJavaClassName)
     }
   } else {
     converter(className)
@@ -131,7 +131,7 @@ private fun MethodLocation.methodParametersWithNamesAndReturnType(methodParamete
     MethodReturnTypeOption.NO_RETURN_TYPE -> toSimpleJavaClassName
   }
   val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
-    JvmDescriptorsPresentation.parseMethodSignature(signature, paramsConverter)
+    JvmDescriptorsPresentation.convertMethodSignature(signature, paramsConverter)
   } else {
     val (paramsTs, returnT) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
     (paramsTs.map { convertJvmDescriptorToNormalPresentation(it, paramsConverter) }) to (convertJvmDescriptorToNormalPresentation(returnT, returnConverter))

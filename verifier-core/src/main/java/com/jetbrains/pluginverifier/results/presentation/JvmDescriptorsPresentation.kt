@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.results.presentation
 
+import com.jetbrains.pluginverifier.results.signatures.FormatOptions
+import com.jetbrains.pluginverifier.results.signatures.SigVisitor
 import org.objectweb.asm.signature.SignatureReader
 
 object JvmDescriptorsPresentation {
@@ -52,31 +54,38 @@ object JvmDescriptorsPresentation {
    *
    * E.g. (I)TE; -> [ int ] and E
    */
-  fun parseMethodSignature(methodSignature: String, binaryNameConverter: String.() -> String): Pair<List<String>, String> {
-    require(methodSignature.isNotEmpty()) { "Empty signature is not expected here" }
-    val visitor = runSignatureVisitor(methodSignature, binaryNameConverter)
-    val returnType = visitor.getReturnType()
-    return visitor.getMethodParameterTypes() to returnType
+  fun convertMethodSignature(signature: String, binaryNameConverter: String.() -> String): Pair<List<String>, String> {
+    require(signature.isNotEmpty()) { "Empty signature is not expected here" }
+    val visitor = runSignatureVisitor(signature)
+    val methodSignature = visitor.getMethodSignature()
+    val formatOptions = FormatOptions(internalNameConverter = binaryNameConverter)
+    val returnType = methodSignature.result.format(formatOptions)
+    val parameters = methodSignature.parameterSignatures.map { it.format(formatOptions) }
+    return parameters to returnType
   }
 
-  private fun runSignatureVisitor(signature: String, binaryNameConverter: String.() -> String): PresentableSignatureVisitor {
+  private fun runSignatureVisitor(signature: String): SigVisitor {
     require(signature.isNotEmpty())
-    val visitor = PresentableSignatureVisitor(binaryNameConverter)
+    val visitor = SigVisitor()
     SignatureReader(signature).accept(visitor)
     return visitor
   }
 
-  fun parseClassSignature(classSignature: String, binaryNameConverter: String.() -> String): String {
-    require(classSignature.isNotEmpty()) { "Empty signature is not expected here" }
-    val visitor = runSignatureVisitor(classSignature, binaryNameConverter)
-    return visitor.getClassFormalTypeParameters()
+  fun convertClassSignature(signature: String, binaryNameConverter: String.() -> String): String {
+    require(signature.isNotEmpty()) { "Empty signature is not expected here" }
+    val visitor = runSignatureVisitor(signature)
+    val classSignature = visitor.getClassSignature()
+    val formatOptions = FormatOptions(internalNameConverter = binaryNameConverter)
+    return classSignature.format(formatOptions)
   }
 
   fun convertTypeSignature(typeSignature: String, binaryNameConverter: String.() -> String): String {
     require(typeSignature.isNotEmpty()) { "Empty signature is not expected here" }
-    val visitor = TypeSignatureVisitor(binaryNameConverter)
+    val visitor = SigVisitor()
     SignatureReader(typeSignature).acceptType(visitor)
-    return visitor.getResult()
+    val fieldSignature = visitor.getFieldSignature()
+    val formatOptions = FormatOptions(internalNameConverter = binaryNameConverter)
+    return fieldSignature.format(formatOptions)
   }
 
   private fun parseMethodParametersTypesByDescriptor(methodDescriptor: String): List<String> {
