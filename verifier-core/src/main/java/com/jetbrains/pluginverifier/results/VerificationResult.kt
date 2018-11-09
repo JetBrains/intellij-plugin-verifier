@@ -220,8 +220,12 @@ sealed class VerificationResult : Serializable {
    */
   class CompatibilityProblems : VerificationResult() {
     override val verificationVerdict
-      get() = "Found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size) +
-          " and ${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size)
+      get() = buildString {
+        append("Found ").append(compatibilityProblems.size).append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
+        if (pluginStructureWarnings.isNotEmpty()) {
+          append(" and ").append(pluginStructureWarnings.size).append(" ").append("warning".pluralize(pluginStructureWarnings.size))
+        }
+      }
 
     companion object {
       private const val serialVersionUID = 0L
