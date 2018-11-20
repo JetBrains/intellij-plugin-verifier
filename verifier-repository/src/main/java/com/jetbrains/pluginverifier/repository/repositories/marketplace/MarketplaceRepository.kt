@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.repository.repositories.marketplace
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.misc.singletonOrEmpty
@@ -21,10 +22,14 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
- * The plugin repository implementation that communicates with
- * [JetBrains Plugins Repository](https://plugins.jetbrains.com/)
+ * The [plugin repository] [PluginRepository] implementation that communicates with
+ * [JetBrains Plugins Repository](https://plugins.jetbrains.com/) and requests
+ * plugins compatible with [product].
  */
-class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
+class MarketplaceRepository(
+    val repositoryURL: URL,
+    val product: IntelliJPlatformProduct = IntelliJPlatformProduct.IDEA
+) : PluginRepository {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(MarketplaceRepository::class.java)
@@ -266,7 +271,7 @@ class MarketplaceRepository(val repositoryURL: URL) : PluginRepository {
 
     private fun requestUpdateIds(startUpdateId: Int) =
         repositoryConnector
-            .getAllUpdateSinceAndUntil("1.0", startUpdateId).executeSuccessfully()
+            .getAllUpdateSinceAndUntil("${product.productCode}-1.0", startUpdateId).executeSuccessfully()
             .body()
             .map { it.updateId }
 
