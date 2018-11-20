@@ -24,11 +24,11 @@ import java.util.concurrent.TimeUnit
 /**
  * The [plugin repository] [PluginRepository] implementation that communicates with
  * [JetBrains Plugins Repository](https://plugins.jetbrains.com/) and requests
- * plugins compatible with [product].
+ * plugins compatible with [products].
  */
 class MarketplaceRepository(
     val repositoryURL: URL,
-    val product: IntelliJPlatformProduct = IntelliJPlatformProduct.IDEA
+    val products: List<IntelliJPlatformProduct> = listOf(IntelliJPlatformProduct.IDEA)
 ) : PluginRepository {
 
   companion object {
@@ -252,11 +252,11 @@ class MarketplaceRepository(
     private fun updateState() {
       if (needFullUpdate()) {
         fullUpdateTime = Instant.now()
-        val fullUpdateIds = requestUpdateIds(1)
+        val fullUpdateIds = requestUpdateIdsForAllProducts(1)
         allUpdateIds.clear()
         allUpdateIds.addAll(fullUpdateIds)
       } else {
-        val newUpdateIds = requestUpdateIds(lastUpdateId + 1)
+        val newUpdateIds = requestUpdateIdsForAllProducts(lastUpdateId + 1)
         allUpdateIds.addAll(newUpdateIds)
       }
       updateLastId(allUpdateIds)
@@ -269,7 +269,10 @@ class MarketplaceRepository(
     private fun needFullUpdate() =
         fullUpdateTime == null || fullUpdateTime!! <= Instant.now().minus(duration)
 
-    private fun requestUpdateIds(startUpdateId: Int) =
+    private fun requestUpdateIdsForAllProducts(startUpdateId: Int): Set<Int> =
+        products.flatMapTo(hashSetOf()) { requestUpdateIds(startUpdateId, it) }
+
+    private fun requestUpdateIds(startUpdateId: Int, product: IntelliJPlatformProduct) =
         repositoryConnector
             .getAllUpdateSinceAndUntil("${product.productCode}-1.0", startUpdateId).executeSuccessfully()
             .body()
