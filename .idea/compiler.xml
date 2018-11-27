@@ -6,12 +6,18 @@
       <module name="after-idea_test" target="1.8" />
       <module name="before-idea_main" target="1.8" />
       <module name="before-idea_test" target="1.8" />
+      <module name="ide-diff-builder_main" target="1.8" />
+      <module name="ide-diff-builder_test" target="1.8" />
       <module name="intellij-feature-extractor_main" target="1.8" />
       <module name="intellij-feature-extractor_test" target="1.8" />
       <module name="intellij-plugin-structure_main" target="1.8" />
       <module name="intellij-plugin-structure_test" target="1.8" />
       <module name="mock-compile-library_main" target="1.8" />
       <module name="mock-compile-library_test" target="1.8" />
+      <module name="mock-new-ide_main" target="1.8" />
+      <module name="mock-new-ide_test" target="1.8" />
+      <module name="mock-old-ide_main" target="1.8" />
+      <module name="mock-old-ide_test" target="1.8" />
       <module name="mock-plugin_main" target="1.8" />
       <module name="mock-plugin_test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins-mock-plugin_main" target="1.8" />
