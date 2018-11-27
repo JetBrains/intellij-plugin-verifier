@@ -53,10 +53,10 @@ private data class ApiFeaturesResult(@SerializedName("updateId") val updateId: I
   }
 }
 
-private enum class ApiExtensionPoint(val extensionPointName: String) {
-  CONFIGURATION_TYPE("com.intellij.configurationType"),
-  FACET_TYPE("com.intellij.facetType"),
-  FILE_TYPE("com.intellij.fileTypeFactory"),
-  ARTIFACT_TYPE("com.intellij.packaging.artifactType"),
-  MODULE_TYPE("com.intellij.moduleType")
+private enum class ApiExtensionPoint {
+  CONFIGURATION_TYPE,
+  FACET_TYPE,
+  FILE_TYPE,
+  ARTIFACT_TYPE,
+  MODULE_TYPE
 }
