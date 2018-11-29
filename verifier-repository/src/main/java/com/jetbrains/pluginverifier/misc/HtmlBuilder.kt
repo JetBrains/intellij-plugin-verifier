@@ -5,11 +5,10 @@ import java.io.PrintWriter
 
 class HtmlBuilder(val output: PrintWriter) {
   fun tag(tagName: String, block: () -> Unit = {}, attr: Map<String, String> = emptyMap()) {
-    val renderedAttributes = renderAttributes(attr)
-    val open = if (renderedAttributes.isEmpty()) {
+    val open = if (attr.isEmpty()) {
       "<$tagName>"
     } else {
-      "<$tagName $renderedAttributes>"
+      "<$tagName ${renderAttributes(attr)}>"
     }
     output.println(open)
     block()
@@ -17,14 +16,15 @@ class HtmlBuilder(val output: PrintWriter) {
   }
 
   private fun renderAttributes(attr: Map<String, String>) =
-      attr.filterValues { it.isNotEmpty() }.entries.joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
+      attr.asSequence()
+          .filter { it.value.isNotEmpty() }
+          .joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
 
   fun closedTag(tagName: String, attr: Map<String, String> = emptyMap()) {
-    val renderedAttributes = renderAttributes(attr)
-    output.println(if (renderedAttributes.isEmpty()) {
+    output.println(if (attr.isEmpty()) {
       "<$tagName/>"
     } else {
-      "<$tagName $renderedAttributes/>"
+      "<$tagName ${renderAttributes(attr)}/>"
     })
   }
 
