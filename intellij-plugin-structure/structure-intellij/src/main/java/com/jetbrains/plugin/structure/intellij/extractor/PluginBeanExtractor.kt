@@ -46,20 +46,17 @@ object PluginBeanExtractor {
   }
 
   private fun extractEPName(extensionElement: Element): String {
-    var epName: String? = extensionElement.getAttributeValue("point")
-
-    if (epName == null) {
-      val parentElement = extensionElement.parentElement
-      val ns = parentElement?.getAttributeValue("defaultExtensionNs")
-
-      if (ns != null) {
-        epName = ns + '.'.toString() + extensionElement.name
-      } else {
-        val namespace = extensionElement.namespace
-        epName = namespace.uri + '.'.toString() + extensionElement.name
-      }
+    val point = extensionElement.getAttributeValue("point")
+    if (point != null) {
+      return point
     }
-    return epName
+
+    val parentNs = extensionElement.parentElement?.getAttributeValue("defaultExtensionNs")
+    return if (parentNs != null) {
+      parentNs + '.' + extensionElement.name
+    } else {
+      extensionElement.namespace.uri + '.' + extensionElement.name
+    }
   }
 
 }
