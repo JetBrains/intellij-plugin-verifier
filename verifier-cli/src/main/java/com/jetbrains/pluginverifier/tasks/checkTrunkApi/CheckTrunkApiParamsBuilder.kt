@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.listPresentationInColumns
-import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
+import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
@@ -24,7 +24,6 @@ import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 class CheckTrunkApiParamsBuilder(
     private val pluginRepository: PluginRepository,
@@ -61,7 +60,7 @@ class CheckTrunkApiParamsBuilder(
       }
       apiOpts.majorIdeVersion != null -> {
         val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        releaseIdeFileLock = tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "download ide $ideVersion") {
+        releaseIdeFileLock = retry("download ide $ideVersion") {
           val result = ideFilesBank.getIdeFile(ideVersion)
           if (result is IdeFilesBank.Result.Found) {
             result.ideFileLock
@@ -106,7 +105,7 @@ class CheckTrunkApiParamsBuilder(
     val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
 
     reportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
-    val releaseCompatibleVersions = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch last compatible updates with $releaseVersion") {
+    val releaseCompatibleVersions = pluginRepository.retry("fetch last compatible updates with $releaseVersion") {
       getLastCompatiblePlugins(releaseVersion)
     }
 

@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.readLines
-import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
+import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -19,7 +19,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 /**
  * Utility class used to fill [pluginsSet] with a list of plugins to check.
@@ -58,7 +57,7 @@ class PluginsParsing(
   fun addByPluginIds(opts: CmdOpts, ideVersion: IdeVersion): PluginsSet {
     val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
 
-    val pluginInfos = tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch updates to check against $ideVersion") {
+    val pluginInfos = retry("fetch updates to check against $ideVersion") {
       requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion)
     }
     pluginsSet.schedulePlugins(pluginInfos)
@@ -122,12 +121,12 @@ class PluginsParsing(
   }
 
   private fun getPluginInfoByUpdateId(updateId: Int): PluginInfo? =
-      pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch plugin info for #$updateId") {
+      pluginRepository.retry("fetch plugin info for #$updateId") {
         (pluginRepository as? MarketplaceRepository)?.getPluginInfoById(updateId)
       }
 
   private fun getCompatiblePluginVersions(pluginId: String, ideVersion: IdeVersion): List<PluginInfo> {
-    val allCompatibleUpdatesOfPlugin = pluginRepository.tryInvokeSeveralTimes(3, 5, TimeUnit.SECONDS, "fetch all compatible updates of plugin $pluginId with $ideVersion") {
+    val allCompatibleUpdatesOfPlugin = pluginRepository.retry("fetch all compatible updates of plugin $pluginId with $ideVersion") {
       getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
     }
     return allCompatibleUpdatesOfPlugin.map { it as UpdateInfo }

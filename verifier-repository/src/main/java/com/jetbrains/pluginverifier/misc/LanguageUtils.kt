@@ -65,11 +65,13 @@ fun URL.safeEquals(other: URL) = toExternalForm().trimEnd('/') == other.toExtern
  */
 fun URL.safeHashCode() = toExternalForm().trim('/').hashCode()
 
-fun <T, R> T.tryInvokeSeveralTimes(attempts: Int,
-                                   attemptsDelay: Long,
-                                   attemptsDelayTimeUnit: TimeUnit,
-                                   presentableBlockName: String,
-                                   block: T.() -> R): R {
+fun <T, R> T.retry(
+    presentableBlockName: String,
+    attempts: Int = 5,
+    attemptsDelay: Long = 30,
+    attemptsDelayTimeUnit: TimeUnit = TimeUnit.SECONDS,
+    block: T.() -> R
+): R {
   for (attempt in 1..attempts) {
     try {
       return block()
