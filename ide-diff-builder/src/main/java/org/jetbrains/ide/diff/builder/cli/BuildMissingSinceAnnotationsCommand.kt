@@ -31,7 +31,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
     private val URL_TIMEOUT = TimeUnit.MINUTES.toMillis(1).toInt()
 
     const val INTELLIJ_ARTIFACTS_REPOSITORY_NAME = "IntelliJ Artifact Repository"
-    const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository/"
+    const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository"
     const val INTELLIJ_ARTIFACTS_REPOSITORY_RELEASES_URL = "$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/releases"
     const val INTELLIJ_ARTIFACTS_REPOSITORY_SNAPSHOTS_URL = "$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/snapshots"
 
@@ -70,6 +70,12 @@ class BuildMissingSinceAnnotationsCommand : Command {
     } else {
       "The following packages will be processed: " + packages.joinToString()
     })
+
+    //build-missing-since-annotations -ides-dir
+    //for_tests/diff/ides-dir
+    //-packages
+    //"com.intellij;com.jetbrains;org.jetbrains;org.intellij;ini4idea;git4idea;icons;com.theoryinpractice.testng;com.maddyhome;com.chronon;com.github;org.angular2;org.angularjs;org.fest;com.heroku;jetbrains;com.dmarcotte;org.editorconfig;com.sixrr;org.gga;com.siyeh;ie.wombat;org.osmorc;org.osgi;org.rubyforge;org.zmlx"
+    //for_tests/diff/result-new-new
 
     val idePath = cliOptions.getIdePath()
     LOG.info("IDE cache directory to use: $idePath")
