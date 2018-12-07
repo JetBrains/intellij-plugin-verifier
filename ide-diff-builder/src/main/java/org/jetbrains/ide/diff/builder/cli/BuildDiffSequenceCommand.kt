@@ -3,8 +3,6 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.simpleName
-import com.jetbrains.pluginverifier.misc.tryInvokeSeveralTimes
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.sampullara.cli.Args
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 /**
  * Builds a cumulative sequence of API diffs of multiple IDE builds.
@@ -22,7 +19,7 @@ import java.util.concurrent.TimeUnit
  */
 class BuildDiffSequenceCommand : Command {
 
-  companion object {
+  private companion object {
     private val LOG = LoggerFactory.getLogger("build-diff-sequence")
   }
 
@@ -43,9 +40,9 @@ class BuildDiffSequenceCommand : Command {
       java -jar diff-builder.jar build-diff-sequence -ides-dir ./ides-cache result/ IU-181.1 IU-181.9 IU-182.1 IU-183.1
 
       will build API diffs between
-       IU-181.1 <-> IU-181.9  ---> result/since-IU-181.9.zip
-       IU-181.9 <-> IU-182.1  ---> result/since-IU-182.1.zip (contains since IU-181.9)
-       IU-182.1 <-> IU-183.1  ---> result/since-IU-183.1.zip (contains since IU-182.1)
+       IU-181.1 <-> IU-181.9  ---> result/IU-api-since-IU-181.9-annotations.zip
+       IU-181.9 <-> IU-182.1  ---> result/IU-api-since-IU-182.1-annotations.zip (contains since IU-181.9)
+       IU-182.1 <-> IU-183.1  ---> result/IU-api-since-IU-183.1-annotations.zip (contains since IU-182.1)
 
       Downloaded IDE builds will be cached in ./ides-cache, which is limited in size to 10 GB.
 
@@ -60,6 +57,15 @@ class BuildDiffSequenceCommand : Command {
   open class CliOptions : IdeDiffCommand.CliOptions() {
     @set:Argument("ides-dir", description = "Path where downloaded IDE builds are cached")
     var idesDirPath: String? = null
+
+    fun getIdePath(): Path =
+        if (idesDirPath != null) {
+          Paths.get(idesDirPath)
+        } else {
+          Files.createTempDirectory("ides-dir").also {
+            it.toFile().deleteOnExit()
+          }
+        }
   }
 
   private data class Options(
@@ -76,13 +82,7 @@ class BuildDiffSequenceCommand : Command {
     val cliOptions = CliOptions()
     var args = Args.parse(cliOptions, freeArgs.toTypedArray(), true)
 
-    val idesDir = if (cliOptions.idesDirPath != null) {
-      Paths.get(cliOptions.idesDirPath)
-    } else {
-      Files.createTempDirectory("ides-dir").also {
-        it.toFile().deleteOnExit()
-      }
-    }
+    val idesDir = cliOptions.getIdePath()
 
     val resultPath = Paths.get(args.first())
     resultPath.deleteLogged()
@@ -108,9 +108,6 @@ class BuildDiffSequenceCommand : Command {
     }
   }
 
-  private fun IdeVersion.getSinceFileName() =
-      "since-" + asString() + ".zip"
-
   override fun execute(freeArgs: List<String>) {
     val (idesDir, resultPath, ideVersions, packages) = parseOptions(freeArgs)
     val ideFilesBank = IdeFilesBank(
@@ -125,12 +122,12 @@ class BuildDiffSequenceCommand : Command {
 
   /**
    * Builds diffs between adjacent IDE builds listed in [ideVersions]
-   * and saves cumulative "available since" external annotations under [resultPath].
+   * and saves cumulative "available since" external annotations roots under [resultsDirectory].
    */
   private fun buildDiffs(
       ideVersions: List<IdeVersion>,
       ideFilesBank: IdeFilesBank,
-      resultPath: Path,
+      resultsDirectory: Path,
       packages: List<String>
   ) {
     var previousResult: Path? = null
@@ -138,59 +135,16 @@ class BuildDiffSequenceCommand : Command {
       val oldIdeVersion = ideVersions[i]
       val newIdeVersion = ideVersions[i + 1]
 
-      val newResultPath = resultPath.resolve(newIdeVersion.getSinceFileName())
-      newResultPath.deleteLogged()
+      val resultPath = BuildMissingSinceAnnotationsCommand.getIdeAnnotationsResultPath(resultsDirectory, newIdeVersion)
+      resultPath.deleteLogged()
 
-      val tempResultPath = newResultPath.resolveSibling("temp-" + newResultPath.simpleName)
-      try {
-        buildDiffBetweenIdes(oldIdeVersion, newIdeVersion, ideFilesBank, tempResultPath, packages)
-        if (previousResult == null) {
-          Files.move(tempResultPath, newResultPath)
-        } else {
-          MergeSinceDataCommand().mergeSinceData(previousResult, tempResultPath, newResultPath)
-        }
-        previousResult = newResultPath
-      } finally {
-        tempResultPath.deleteLogged()
+      IdeDiffCommand().buildIdeDiff(oldIdeVersion, newIdeVersion, ideFilesBank, packages, resultPath)
+      if (previousResult != null) {
+        MergeSinceDataCommand().mergeSinceData(previousResult, resultPath, resultPath)
       }
-      LOG.info("Cumulative API diff between $newIdeVersion and previous IDE builds has been saved to $newResultPath")
-    }
-  }
 
-  /**
-   * Downloads IDEs [oldIdeVersion] and [newIdeVersion] from [ideFilesBank],
-   * builds API diff between them and saves it to [resultPath].
-   */
-  private fun buildDiffBetweenIdes(
-      oldIdeVersion: IdeVersion,
-      newIdeVersion: IdeVersion,
-      ideFilesBank: IdeFilesBank,
-      resultPath: Path,
-      packages: List<String>
-  ) {
-    val oldIdeResult = ideFilesBank.downloadIde(oldIdeVersion)
-    return oldIdeResult.ideFileLock.use { oldIdeFileLock ->
-      val newIdeResult = ideFilesBank.downloadIde(newIdeVersion)
-      newIdeResult.ideFileLock.use { newIdeFileLock ->
-        IdeDiffCommand().buildIdeDiff(
-            oldIdeFileLock.file,
-            newIdeFileLock.file,
-            resultPath,
-            packages
-        )
-      }
-    }
-  }
-
-  private fun IdeFilesBank.downloadIde(ideVersion: IdeVersion): IdeFilesBank.Result.Found {
-    return tryInvokeSeveralTimes(3, 3, TimeUnit.SECONDS, "Download $ideVersion") {
-      LOG.info("Downloading $ideVersion")
-      val ideFile = getIdeFile(ideVersion)
-      when (ideFile) {
-        is IdeFilesBank.Result.Found -> ideFile
-        is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ideVersion is not found: ${ideFile.reason}")
-        is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ideVersion couldn't be downloaded: ${ideFile.reason}", ideFile.exception)
-      }
+      previousResult = resultPath
+      LOG.info("Cumulative API diff between $newIdeVersion and previous IDE builds has been saved to $resultPath")
     }
   }
 

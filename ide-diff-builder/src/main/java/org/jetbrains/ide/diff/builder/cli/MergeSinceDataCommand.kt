@@ -1,9 +1,13 @@
 package org.jetbrains.ide.diff.builder.cli
 
+import com.jetbrains.pluginverifier.misc.simpleName
 import org.jetbrains.ide.diff.builder.persistence.SinceApiReader
 import org.jetbrains.ide.diff.builder.persistence.SinceApiWriter
+import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 /**
  * Merges two "available since" external annotations roots.
@@ -14,6 +18,11 @@ import java.nio.file.Paths
  * @see [help]
  */
 class MergeSinceDataCommand : Command {
+
+  private companion object {
+    private val LOG = LoggerFactory.getLogger("merge-since-data")
+  }
+
   override val commandName
     get() = "merge-since-data"
 
@@ -37,24 +46,38 @@ class MergeSinceDataCommand : Command {
     val rootTwo = Paths.get(freeArgs[1])
     val resultRoot = Paths.get(freeArgs[2])
     mergeSinceData(rootOne, rootTwo, resultRoot)
-    println("Since API data from $rootOne and $rootTwo have been merged to ${resultRoot.toAbsolutePath()}")
   }
 
   fun mergeSinceData(rootOne: Path, rootTwo: Path, resultRoot: Path) {
+    LOG.info("Merging 'API is available since' data from ${rootOne.simpleName} and ${rootTwo.simpleName} and saving result to ${resultRoot.simpleName}")
+
     //Read the first signatures entirely, to check duplications.
     val firstSinceData = SinceApiReader(rootOne).use {
       it.readSinceApiData()
     }
 
-    SinceApiWriter(resultRoot).use { mergeWriter ->
-      mergeWriter.appendSinceApiData(firstSinceData)
+    val tempRoot = if (resultRoot == rootOne || resultRoot == rootTwo) {
+      resultRoot.resolveSibling("temp-" + resultRoot.simpleName)
+    } else {
+      resultRoot
+    }
 
-      SinceApiReader(rootTwo).use { readerTwo ->
-        readerTwo.readAllSignatures()
-            .filterNot { (apiSignature, _) -> apiSignature in firstSinceData }
-            .forEach { mergeWriter.appendSignature(it.first, it.second) }
+    try {
+      SinceApiWriter(tempRoot).use { mergeWriter ->
+        mergeWriter.appendSinceApiData(firstSinceData)
+
+        SinceApiReader(rootTwo).use { readerTwo ->
+          readerTwo.readAllSignatures()
+              .filterNot { (apiSignature, _) -> apiSignature in firstSinceData }
+              .forEach { mergeWriter.appendSignature(it.first, it.second) }
+        }
+      }
+    } finally {
+      if (resultRoot != tempRoot) {
+        Files.move(tempRoot, resultRoot, StandardCopyOption.REPLACE_EXISTING)
       }
     }
+    LOG.info("Since API data from ${rootOne.simpleName} and ${rootTwo.simpleName} have been merged to ${resultRoot.simpleName}")
   }
 }
 

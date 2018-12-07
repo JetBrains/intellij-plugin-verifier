@@ -2,10 +2,7 @@ package org.jetbrains.ide.diff.builder
 
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.cli.BuildDiffSequenceCommand
-import org.jetbrains.ide.diff.builder.cli.IdeDiffCommand
-import org.jetbrains.ide.diff.builder.cli.IdeRepositoryIndexCommand
-import org.jetbrains.ide.diff.builder.cli.MergeSinceDataCommand
+import org.jetbrains.ide.diff.builder.cli.*
 
 private fun usage(): Nothing {
   System.err.println("""
@@ -22,9 +19,9 @@ private val AVAILABLE_COMMANDS = listOf(
     BuildDiffSequenceCommand(),
     IdeDiffCommand(),
     MergeSinceDataCommand(),
-    IdeRepositoryIndexCommand()
+    IdeRepositoryIndexCommand(),
+    BuildMissingSinceAnnotationsCommand()
 )
-
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) {

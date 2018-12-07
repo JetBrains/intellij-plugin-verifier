@@ -2,6 +2,9 @@ package org.jetbrains.ide.diff.builder.cli
 
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeFilesBank
+import com.jetbrains.pluginverifier.misc.retry
+import com.jetbrains.pluginverifier.misc.simpleName
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.SinceApiBuilder
@@ -52,32 +55,65 @@ class IdeDiffCommand : Command {
     val oldIdePath = Paths.get(args[0])
     val newIdePath = Paths.get(args[1])
     val resultRoot = Paths.get(args[2])
-    val (newVersion, oldVersion) = buildIdeDiff(oldIdePath, newIdePath, resultRoot, cliOptions.packages.toList())
-    println("New API in $newVersion compared to $oldVersion is saved to external annotations root ${resultRoot.toAbsolutePath()}")
+    val packages = cliOptions.getPackages()
+    LOG.info(if (packages.any { it.isEmpty() }) {
+      "All packages will be processed"
+    } else {
+      "The following packages will be processed: " + packages.joinToString()
+    })
+
+    buildIdeDiff(oldIdePath, newIdePath, resultRoot, packages)
   }
 
-  fun buildIdeDiff(
+  private fun buildIdeDiff(
       oldIdePath: Path,
       newIdePath: Path,
       resultRoot: Path,
       packages: List<String>
-  ): Pair<IdeVersion, IdeVersion> {
+  ) {
     val oldIde = IdeManager.createManager().createIde(oldIdePath.toFile())
     val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
-    LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}\n" +
-        "The following packages will be processed: " +
-        if (packages.any { it.isEmpty() }) {
-          "all packages"
-        } else {
-          packages.joinToString()
-        }
-    )
+    LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
 
     val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde)
     SinceApiWriter(resultRoot).use {
       it.appendSinceApiData(sinceApiData)
     }
-    return newIde.version to oldIde.version
+    LOG.info("New API in ${newIde.version} compared to ${oldIde.version} is saved to external annotations root ${resultRoot.simpleName}")
+  }
+
+  fun buildIdeDiff(
+      oldIdeVersion: IdeVersion,
+      newIdeVersion: IdeVersion,
+      ideFilesBank: IdeFilesBank,
+      packages: List<String>,
+      resultPath: Path
+  ) {
+    val oldIdeResult = ideFilesBank.downloadIde(oldIdeVersion)
+    return oldIdeResult.ideFileLock.use { oldIdeFileLock ->
+      val newIdeResult = ideFilesBank.downloadIde(newIdeVersion)
+      newIdeResult.ideFileLock.use { newIdeFileLock ->
+        buildIdeDiff(
+            oldIdeFileLock.file,
+            newIdeFileLock.file,
+            resultPath,
+            packages
+        )
+      }
+    }
+  }
+
+  private fun IdeFilesBank.downloadIde(ideVersion: IdeVersion): IdeFilesBank.Result.Found {
+    val message = "Downloading $ideVersion"
+    return retry(message) {
+      LOG.info(message)
+      val ideFile = getIdeFile(ideVersion)
+      when (ideFile) {
+        is IdeFilesBank.Result.Found -> ideFile
+        is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ideVersion is not found: ${ideFile.reason}")
+        is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ideVersion couldn't be downloaded: ${ideFile.reason}", ideFile.exception)
+      }
+    }
   }
 
   open class CliOptions {
@@ -85,6 +121,8 @@ class IdeDiffCommand : Command {
         "By default it is equal to \"org.jetbrains;com.jetbrains;org.intellij;com.intellij\". " +
         "If an empty package is specified using \"\", all packages will be processed.")
     var packages: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
+
+    fun getPackages(): List<String> = packages.toList()
   }
 
 }
