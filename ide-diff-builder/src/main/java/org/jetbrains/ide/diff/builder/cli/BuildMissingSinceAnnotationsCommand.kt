@@ -71,12 +71,6 @@ class BuildMissingSinceAnnotationsCommand : Command {
       "The following packages will be processed: " + packages.joinToString()
     })
 
-    //build-missing-since-annotations -ides-dir
-    //for_tests/diff/ides-dir
-    //-packages
-    //"com.intellij;com.jetbrains;org.jetbrains;org.intellij;ini4idea;git4idea;icons;com.theoryinpractice.testng;com.maddyhome;com.chronon;com.github;org.angular2;org.angularjs;org.fest;com.heroku;jetbrains;com.dmarcotte;org.editorconfig;com.sixrr;org.gga;com.siyeh;ie.wombat;org.osmorc;org.osgi;org.rubyforge;org.zmlx"
-    //for_tests/diff/result-new-new
-
     val idePath = cliOptions.getIdePath()
     LOG.info("IDE cache directory to use: $idePath")
 
@@ -91,11 +85,19 @@ class BuildMissingSinceAnnotationsCommand : Command {
         .toList().sorted()
     LOG.info("The following ${availableIdes.size} IDEs are available in $INTELLIJ_ARTIFACTS_REPOSITORY_NAME: " + availableIdes.joinToString())
 
+    //todo: remove this check when annotations are uploaded
+    val locallyProcessedIdes = if (System.getProperty("before.annotations.uploaded") != null) {
+      availableIdes.filter { getIdeAnnotationsResultPath(resultsDirectory, it).exists() }
+    } else {
+      emptyList()
+    }
+
     val idesWithoutAnnotations = availableIdes
         .filter { version ->
           version >= MIN_BUILD_NUMBER
               && version.asStringWithoutProductCode() !in releasesAnnotations
               && version.asStringWithoutProductCode() !in snapshotsAnnotations
+              && version !in locallyProcessedIdes
         }
 
     LOG.info("The following ${idesWithoutAnnotations.size} IDEs lack 'API available since' annotations: " + idesWithoutAnnotations.joinToString())
