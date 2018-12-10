@@ -12,22 +12,6 @@ import java.net.URL
  */
 internal class IntelliJRepositoryIndexParser {
 
-  companion object {
-
-    /**
-     * Maps known artifact IDs to IDE product codes.
-     *
-     * If a new IDE is published to the /snapshots repository,
-     * it should be registered here.
-     */
-    private val artifactIdToIdeProductCode = mapOf(
-        "ideaIC" to "IC",
-        "ideaIU" to "IU",
-        "riderRD" to "RD",
-        "mps" to "MPS"
-    )
-  }
-
   fun parseArtifacts(artifacts: List<ArtifactJson>, snapshots: Boolean): List<AvailableIde> {
     val allAvailableIdes = arrayListOf<AvailableIde>()
 
@@ -43,15 +27,13 @@ internal class IntelliJRepositoryIndexParser {
        */
       val buildNumber = artifactsOfVersion.find { it.artifactId == "BUILD" }?.content ?: continue
 
-      /**
-       * Find IDE builds artifacts.
-       * They have "zip" packaging and "artifactId" one of [artifactIdToIdeProductCode].
-       */
-      val ideArtifacts = artifactsOfVersion.filter { it.packaging == "zip" && it.artifactId in artifactIdToIdeProductCode }
+      val ideArtifacts = artifactsOfVersion.filter {
+        it.packaging == "zip" && IntelliJIdeRepository.getProductCodeByArtifactId(it.artifactId) != null
+      }
 
       for (artifactInfo in ideArtifacts) {
         val ideVersion = IdeVersion.createIdeVersionIfValid(buildNumber)
-            ?.setProductCodeIfAbsent(artifactIdToIdeProductCode.getValue(artifactInfo.artifactId))
+            ?.setProductCodeIfAbsent(IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId)!!)
             ?: continue
 
         val downloadUrl = buildDownloadUrl(artifactInfo, snapshots, groupId, version)

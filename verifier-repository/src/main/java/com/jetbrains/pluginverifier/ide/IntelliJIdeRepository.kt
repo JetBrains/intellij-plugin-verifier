@@ -22,6 +22,28 @@ class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeReposito
 
   companion object {
     const val INTELLIJ_REPOSITORY_URL = "https://www.jetbrains.com/intellij-repository/"
+
+    /**
+     * Maps artifact IDs, group IDs and corresponding product codes.
+     *
+     * If a new IDE is published to the repository, it should be registered here.
+     */
+    private val artifactIdGroupIdAndProductCode = listOf(
+        Triple("ideaIC", "com.jetbrains.intellij.idea", "IC"),
+        Triple("ideaIU", "com.jetbrains.intellij.idea", "IU"),
+        Triple("riderRD", "com.jetbrains.intellij.rider", "RD"),
+        Triple("mps", "com.jetbrains.mps", "MPS"),
+        Triple("clion", "com.jetbrains.intellij.clion", "CL")
+    )
+
+    fun getArtifactIdByProductCode(productCode: String): String? =
+        artifactIdGroupIdAndProductCode.find { it.third == productCode }?.first
+
+    fun getGroupIdByProductCode(productCode: String): String? =
+        artifactIdGroupIdAndProductCode.find { it.third == productCode }?.second
+
+    fun getProductCodeByArtifactId(artifactId: String): String? =
+        artifactIdGroupIdAndProductCode.find { it.first == artifactId }?.third
   }
 
   private val repositoryIndexConnector by lazy {

@@ -2,6 +2,7 @@ package org.jetbrains.ide.diff.builder.cli
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
+import com.jetbrains.pluginverifier.ide.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.misc.exists
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.misc.simpleName
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import org.jetbrains.ide.diff.builder.maven.buildMavenDownloadUrl
-import org.jetbrains.ide.diff.builder.maven.requestMavenAvailableVersions
 import org.slf4j.LoggerFactory
 import java.net.URL
 import java.nio.file.Path
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Builds "API is available since" artifacts for IDEs that lack such annotations in the IntelliJ Artifacts Repositories.
- * It saves them under results directory with names like `IU-api-since-191.1234-annotations.zip`.
+ * It saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
  */
 class BuildMissingSinceAnnotationsCommand : Command {
 
@@ -32,19 +32,18 @@ class BuildMissingSinceAnnotationsCommand : Command {
 
     const val INTELLIJ_ARTIFACTS_REPOSITORY_NAME = "IntelliJ Artifact Repository"
     const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository"
-    const val INTELLIJ_ARTIFACTS_REPOSITORY_RELEASES_URL = "$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/releases"
-    const val INTELLIJ_ARTIFACTS_REPOSITORY_SNAPSHOTS_URL = "$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/snapshots"
 
-    const val ANNOTATIONS_GROUP_ID = "com.jetbrains.intellij.idea"
-    const val ANNOTATIONS_ARTIFACT_ID = "IU-api-since"
     const val ANNOTATIONS_CLASSIFIER = "annotations"
     const val ANNOTATIONS_PACKAGING = "zip"
 
-    private fun getAnnotationsFileName(ideVersion: IdeVersion) =
-        ANNOTATIONS_ARTIFACT_ID + '-' + ideVersion.asStringWithoutProductCode() + '-' + ANNOTATIONS_CLASSIFIER + '.' + ANNOTATIONS_PACKAGING
-
     fun getIdeAnnotationsResultPath(resultsDirectory: Path, ideVersion: IdeVersion): Path =
         resultsDirectory.resolve(getAnnotationsFileName(ideVersion))
+
+    private fun getAnnotationsFileName(ideVersion: IdeVersion): String {
+      val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)
+      checkNotNull(artifactId) { ideVersion.asString() }
+      return artifactId + '-' + ideVersion.asStringWithoutProductCode() + '-' + ANNOTATIONS_CLASSIFIER + '.' + ANNOTATIONS_PACKAGING
+    }
   }
 
   override val commandName: String
@@ -54,7 +53,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
     get() = """
       Builds "API available since" artifacts for IDEs that lack such annotations in the IntelliJ Artifacts Repositories:
       https://www.jetbrains.com/intellij-repository/releases/ and https://www.jetbrains.com/intellij-repository/snapshots
-      It saves them under results directory with names like `IU-api-since-191.1234-annotations.zip`.
+      It saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
 
       build-missing-since-annotations [-ides-dir <IDE cache dir] [-packages "org.some;com.another"] <results directory>
     """.trimIndent()
@@ -76,33 +75,19 @@ class BuildMissingSinceAnnotationsCommand : Command {
 
     val ideFilesBank = IdeFilesBank(idePath, allIdeRepository, DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE * 10))
 
-    val releasesAnnotations = requestAvailableAnnotationsVersions(INTELLIJ_ARTIFACTS_REPOSITORY_RELEASES_URL)
-    val snapshotsAnnotations = requestAvailableAnnotationsVersions(INTELLIJ_ARTIFACTS_REPOSITORY_SNAPSHOTS_URL)
-
     val availableIdes = allIdeRepository.fetchIndex().asSequence()
         .map { it.version }
         .filter { it.productCode == "IU" }
         .toList().sorted()
     LOG.info("The following ${availableIdes.size} IDEs are available in $INTELLIJ_ARTIFACTS_REPOSITORY_NAME: " + availableIdes.joinToString())
 
-    //todo: remove this check when annotations are uploaded
-    val locallyProcessedIdes = if (System.getProperty("before.annotations.uploaded") != null) {
-      availableIdes.filter { getIdeAnnotationsResultPath(resultsDirectory, it).exists() }
-    } else {
-      emptyList()
-    }
+    val alreadyBuiltAnnotations = availableIdes.filter { getIdeAnnotationsResultPath(resultsDirectory, it).exists() }
 
-    val idesWithoutAnnotations = availableIdes
-        .filter { version ->
-          version >= MIN_BUILD_NUMBER
-              && version.asStringWithoutProductCode() !in releasesAnnotations
-              && version.asStringWithoutProductCode() !in snapshotsAnnotations
-              && version !in locallyProcessedIdes
-        }
+    val idesToProcess = availableIdes.filter { it >= MIN_BUILD_NUMBER && it !in alreadyBuiltAnnotations }
 
-    LOG.info("The following ${idesWithoutAnnotations.size} IDEs lack 'API available since' annotations: " + idesWithoutAnnotations.joinToString())
+    LOG.info("Building annotations for the following ${idesToProcess.size} IDEs: " + idesToProcess.joinToString())
 
-    for (ideVersion in idesWithoutAnnotations) {
+    for (ideVersion in idesToProcess) {
       val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
 
       val baseIdeVersion = selectBaseIdeVersion(ideVersion, availableIdes) ?: return
@@ -110,7 +95,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
 
       val previousIdeVersion = availableIdes.filter { it < ideVersion }.max()
           ?: throw RuntimeException("For $ideVersion there is no previous IDE")
-      val previousAnnotations = getOrDownloadSinceAnnotations(previousIdeVersion, resultsDirectory)
+      val previousAnnotations = getOrDownloadAnnotations(previousIdeVersion, resultsDirectory)
 
       if (previousAnnotations != null) {
         MergeSinceDataCommand().mergeSinceData(previousAnnotations, resultPath, resultPath)
@@ -118,17 +103,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
     }
   }
 
-  private fun requestAvailableAnnotationsVersions(repoUrl: String): List<String> {
-    //Todo: remove this option when the annotations are uploaded to the repository.
-    if (System.getProperty("before.annotations.uploaded") != null) {
-      return emptyList()
-    }
-    return retry("Request available annotations versions from $repoUrl") {
-      requestMavenAvailableVersions(repoUrl, ANNOTATIONS_GROUP_ID, ANNOTATIONS_ARTIFACT_ID)
-    }
-  }
-
-  private fun getOrDownloadSinceAnnotations(ideVersion: IdeVersion, resultsDirectory: Path): Path? {
+  private fun getOrDownloadAnnotations(ideVersion: IdeVersion, resultsDirectory: Path): Path? {
     val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
     if (resultPath.exists()) {
       return resultPath
@@ -149,10 +124,14 @@ class BuildMissingSinceAnnotationsCommand : Command {
   }
 
   private fun downloadAnnotations(ideVersion: IdeVersion, resultPath: Path) {
+    val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)
+    val groupId = IntelliJIdeRepository.getGroupIdByProductCode(ideVersion.productCode)
+    check(artifactId != null && groupId != null) { ideVersion.asString() }
+
     val downloadUrl = URL(buildMavenDownloadUrl(
         INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL,
-        ANNOTATIONS_GROUP_ID,
-        ANNOTATIONS_ARTIFACT_ID,
+        groupId!!,
+        artifactId!!,
         ideVersion.asStringWithoutProductCode(),
         ANNOTATIONS_CLASSIFIER,
         ANNOTATIONS_PACKAGING

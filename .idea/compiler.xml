@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="1.6">
@@ -6,6 +7,12 @@
       <module name="after-idea_test" target="1.8" />
       <module name="before-idea_main" target="1.8" />
       <module name="before-idea_test" target="1.8" />
+      <module name="ide-diff-builder.main" target="1.8" />
+      <module name="ide-diff-builder.mock-new-ide.main" target="1.8" />
+      <module name="ide-diff-builder.mock-new-ide.test" target="1.8" />
+      <module name="ide-diff-builder.mock-old-ide.main" target="1.8" />
+      <module name="ide-diff-builder.mock-old-ide.test" target="1.8" />
+      <module name="ide-diff-builder.test" target="1.8" />
       <module name="ide-diff-builder_main" target="1.8" />
       <module name="ide-diff-builder_test" target="1.8" />
       <module name="intellij-feature-extractor_main" target="1.8" />
@@ -18,10 +25,50 @@
       <module name="mock-new-ide_test" target="1.8" />
       <module name="mock-old-ide_main" target="1.8" />
       <module name="mock-old-ide_test" target="1.8" />
+      <module name="mock-plugin-org.jetbrains.intellij.plugins.mock-plugin.main" target="1.8" />
+      <module name="mock-plugin-org.jetbrains.intellij.plugins.mock-plugin.test" target="1.8" />
       <module name="mock-plugin_main" target="1.8" />
       <module name="mock-plugin_test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins-mock-plugin_main" target="1.8" />
       <module name="org.jetbrains.intellij.plugins-mock-plugin_test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.after-idea.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.after-idea.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.before-idea.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.before-idea.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.intellij-plugin-structure.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.intellij-plugin-structure.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.mock-compile-library.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.mock-compile-library.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.mock-plugin.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.mock-plugin.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-base.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-base.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-classes.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-classes.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-ide-classes.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-ide-classes.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-ide.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-ide.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-intellij-classes.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-intellij-classes.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-intellij.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-intellij.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-teamcity.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.structure-teamcity.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.teamcity-mock-plugin.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.teamcity-mock-plugin.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.tests.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.tests.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-cli.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-cli.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-core.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-core.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-parent.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-parent.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-repository.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-repository.test" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-test.main" target="1.8" />
+      <module name="org.jetbrains.intellij.plugins.verifier-test.test" target="1.8" />
       <module name="plugins-verifier-service_main" target="1.8" />
       <module name="plugins-verifier-service_test" target="1.8" />
       <module name="structure-base_main" target="1.8" />

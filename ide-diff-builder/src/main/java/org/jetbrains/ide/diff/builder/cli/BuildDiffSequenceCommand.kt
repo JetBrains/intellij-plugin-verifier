@@ -40,9 +40,9 @@ class BuildDiffSequenceCommand : Command {
       java -jar diff-builder.jar build-diff-sequence -ides-dir ./ides-cache result/ IU-181.1 IU-181.9 IU-182.1 IU-183.1
 
       will build API diffs between
-       IU-181.1 <-> IU-181.9  ---> result/IU-api-since-IU-181.9-annotations.zip
-       IU-181.9 <-> IU-182.1  ---> result/IU-api-since-IU-182.1-annotations.zip (contains since IU-181.9)
-       IU-182.1 <-> IU-183.1  ---> result/IU-api-since-IU-183.1-annotations.zip (contains since IU-182.1)
+       IU-181.1 <-> IU-181.9  ---> result/ideaIU-181.9-annotations.zip
+       IU-181.9 <-> IU-182.1  ---> result/ideaIU-182.1-annotations.zip (contains since IU-181.9)
+       IU-182.1 <-> IU-183.1  ---> result/ideaIU-183.1-annotations.zip (contains since IU-182.1)
 
       Downloaded IDE builds will be cached in ./ides-cache, which is limited in size to 10 GB.
 
