@@ -82,18 +82,20 @@ class BuildMissingSinceAnnotationsCommand : Command {
 
     LOG.info("Building annotations for the following ${idesToProcess.size} IDEs: " + idesToProcess.joinToString())
 
-    for (ideVersion in idesToProcess) {
-      val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
+    for (currentVersion in idesToProcess) {
+      val resultPath = getIdeAnnotationsResultPath(resultsDirectory, currentVersion)
 
-      val baseIdeVersion = selectBaseIdeVersion(ideVersion, availableIdes) ?: return
-      IdeDiffCommand().buildIdeDiff(baseIdeVersion, ideVersion, ideFilesBank, packages, resultPath)
+      val previousVersion = availableIdes.filter { it < currentVersion }.max()
+          ?: throw RuntimeException("For $currentVersion there is no previous IDE")
 
-      val previousIdeVersion = availableIdes.filter { it < ideVersion }.max()
-          ?: throw RuntimeException("For $ideVersion there is no previous IDE")
-      val previousAnnotations = getOrDownloadAnnotations(previousIdeVersion, resultsDirectory)
+      IdeDiffCommand().buildIdeDiff(previousVersion, currentVersion, ideFilesBank, packages, resultPath)
 
-      if (previousAnnotations != null) {
-        MergeSinceDataCommand().mergeSinceData(previousAnnotations, resultPath, resultPath)
+      val previousBranchLastVersion = availableIdes.filter { it.baselineVersion == getPreviousBranch(currentVersion.baselineVersion) }.max()
+          ?: throw RuntimeException("For $currentVersion there is no IDE in the previous branch")
+
+      val previousBranchAnnotations = getOrDownloadAnnotations(previousBranchLastVersion, resultsDirectory)
+      if (previousBranchAnnotations != null) {
+        MergeSinceDataCommand().mergeSinceData(previousBranchAnnotations, resultPath, resultPath)
       }
     }
   }
@@ -130,12 +132,6 @@ class BuildMissingSinceAnnotationsCommand : Command {
     }
   }
 
-  /**
-   * Among all available IDE versions selects the latest from the previous branch.
-   */
-  private fun selectBaseIdeVersion(ideVersion: IdeVersion, ideIndex: List<IdeVersion>): IdeVersion? =
-      ideIndex.filter { it.baselineVersion == getPreviousBranch(ideVersion.baselineVersion) }.max()
-          ?: throw RuntimeException("For $ideVersion there is no IDE in the previous branch")
 }
 
 /**
