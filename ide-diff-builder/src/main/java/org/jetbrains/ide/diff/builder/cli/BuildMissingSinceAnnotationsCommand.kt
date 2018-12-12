@@ -9,13 +9,10 @@ import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.sampullara.cli.Args
-import org.apache.commons.io.FileUtils
-import org.jetbrains.ide.diff.builder.maven.buildMavenDownloadUrl
+import org.jetbrains.ide.diff.builder.maven.downloadArtifactTo
 import org.slf4j.LoggerFactory
-import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 
 /**
  * Builds "API is available since" artifacts for IDEs that lack such annotations in the IntelliJ Artifacts Repositories.
@@ -27,8 +24,6 @@ class BuildMissingSinceAnnotationsCommand : Command {
     private val LOG = LoggerFactory.getLogger("build-missing-since-annotations")
 
     private val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("181.1")
-
-    private val URL_TIMEOUT = TimeUnit.MINUTES.toMillis(1).toInt()
 
     const val INTELLIJ_ARTIFACTS_REPOSITORY_NAME = "IntelliJ Artifact Repository"
     const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository"
@@ -124,19 +119,15 @@ class BuildMissingSinceAnnotationsCommand : Command {
   }
 
   private fun downloadAnnotations(ideVersion: IdeVersion, resultPath: Path) {
-    val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)
-    val groupId = IntelliJIdeRepository.getGroupIdByProductCode(ideVersion.productCode)
-    check(artifactId != null && groupId != null) { ideVersion.asString() }
-
-    val downloadUrl = URL(buildMavenDownloadUrl(
-        INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL,
-        groupId!!,
-        artifactId!!,
-        ideVersion.asStringWithoutProductCode(),
-        ANNOTATIONS_CLASSIFIER,
-        ANNOTATIONS_PACKAGING
-    ))
-    FileUtils.copyURLToFile(downloadUrl, resultPath.toFile(), URL_TIMEOUT, URL_TIMEOUT)
+    val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)!!
+    val groupId = IntelliJIdeRepository.getGroupIdByProductCode(ideVersion.productCode)!!
+    val version = ideVersion.asStringWithoutProductCode()
+    try {
+      downloadArtifactTo("$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/releases", groupId, artifactId, version, resultPath, ANNOTATIONS_CLASSIFIER, ANNOTATIONS_PACKAGING)
+    } catch (e: Exception) {
+      LOG.info("Couldn't download annotations from /releases: ${e.message}. Searching in /snapshots")
+      downloadArtifactTo("$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/snapshots", groupId, artifactId, version, resultPath, ANNOTATIONS_CLASSIFIER, ANNOTATIONS_PACKAGING)
+    }
   }
 
   /**

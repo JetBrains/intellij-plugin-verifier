@@ -1,9 +1,13 @@
 package org.jetbrains.ide.diff.builder.maven
 
+import org.apache.commons.io.FileUtils
 import java.net.URL
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 val METADATA_VERSIONS_REGEX = Regex("<version>(.*)</version>")
+
+private val DOWNLOAD_TIMEOUT = TimeUnit.MINUTES.toMillis(3).toInt()
 
 private fun buildMavenMetadataUrl(
     repoUrl: String,
@@ -24,6 +28,27 @@ fun requestMavenAvailableVersions(repoUrl: String, groupId: String, artifactId: 
       .map { it.groups[1]!!.value }
       .toList()
 }
+
+fun downloadArtifactTo(
+    repositoryUrl: String,
+    groupId: String,
+    artifactId: String,
+    version: String,
+    result: Path,
+    classifier: String = "",
+    packaging: String = "jar"
+) {
+  val downloadUrl = URL(buildMavenDownloadUrl(
+      repositoryUrl,
+      groupId,
+      artifactId,
+      version,
+      classifier,
+      packaging
+  ))
+  FileUtils.copyURLToFile(downloadUrl, result.toFile(), DOWNLOAD_TIMEOUT, DOWNLOAD_TIMEOUT)
+}
+
 
 fun buildMavenDownloadUrl(
     repoUrl: String,
