@@ -84,7 +84,10 @@ bintray {
 
 
   publish = true
-  publications = ['BasePublication', 'ClassesPublication', 'IntellijPublication', 'IntellijClassesPublication', 'IdePublication', 'IdeClassesPublication', 'TeamCityPublication']
+  publications = [
+          'BasePublication', 'ClassesPublication', 'IntellijPublication', 'IntellijClassesPublication', 
+          'IdePublication', 'IdeClassesPublication', 'TeamCityPublication', 'DotNetPublication'
+  ]
 
   pkg {
     repo = 'intellij-plugin-service'
