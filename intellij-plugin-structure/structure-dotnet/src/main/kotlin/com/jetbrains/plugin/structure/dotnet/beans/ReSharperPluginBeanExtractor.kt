@@ -12,11 +12,11 @@ private val EMPTY_CHAR_ARRAY = CharArray(0)
 
 fun extractPluginBean(inputStream: InputStream): ReSharperPluginBean {
   val builder = SAXBuilder()
-  builder.setEntityResolver({ _, _ -> InputSource(CharArrayReader(EMPTY_CHAR_ARRAY)) })
+  builder.setEntityResolver { _, _ -> InputSource(CharArrayReader(EMPTY_CHAR_ARRAY)) }
   val rootElement = builder.build(inputStream).rootElement
   rootElement.namespace = Namespace.NO_NAMESPACE
   rootElement.descendants.forEach {
-    if(it is Element) {
+    if (it is Element) {
       it.namespace = Namespace.NO_NAMESPACE
     }
   }
