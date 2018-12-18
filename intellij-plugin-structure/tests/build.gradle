@@ -5,6 +5,7 @@ dependencies {
   testCompile project(":structure-intellij")
   testCompile project(":structure-intellij-classes")
   testCompile project(":structure-teamcity")
+  testCompile project(":structure-dotnet")
   testRuntime project("mock-plugin")
   testCompile 'junit:junit:4.11'
   testCompile 'org.hamcrest:hamcrest-library:1.3'
