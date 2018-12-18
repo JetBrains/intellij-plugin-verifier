@@ -1,16 +1,12 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
 import com.jetbrains.plugin.structure.base.plugin.*;
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound;
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip;
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor;
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements;
+import com.jetbrains.plugin.structure.base.problems.*;
 import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractedPlugin;
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult;
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor;
 import com.jetbrains.plugin.structure.intellij.problems.IncorrectIntellijFile;
-import com.jetbrains.plugin.structure.intellij.problems.MultiplePluginDescriptorsInLibDirectory;
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty;
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
@@ -226,7 +222,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       firstDescriptor = secondDescriptor;
       secondDescriptor = temp;
     }
-    return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInLibDirectory(firstDescriptor, secondDescriptor), root);
+    return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInDistribution(firstDescriptor, secondDescriptor), root);
   }
 
   private void sortFilesWithRespectToRootDirectoryName(@NotNull final File root, File[] files) {

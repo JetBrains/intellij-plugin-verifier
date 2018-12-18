@@ -1,10 +1,7 @@
 package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.dotnet.beans.extractPluginBean
 import com.jetbrains.plugin.structure.dotnet.beans.toPlugin
 import com.jetbrains.plugin.structure.dotnet.problems.IncorrectDotNetPluginFile
@@ -45,7 +42,10 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
           continue
         }
         if (nugetDescriptor != null) {
-          return PluginCreationFail(PluginDescriptorIsNotFound(""))
+          //Ensure deterministic errors description.
+          val firstName = minOf(nugetDescriptor.name, entry.name)
+          val secondName = maxOf(nugetDescriptor.name, entry.name)
+          return PluginCreationFail(MultiplePluginDescriptorsInDistribution(firstName, secondName))
         }
         nugetDescriptor = entry
       }

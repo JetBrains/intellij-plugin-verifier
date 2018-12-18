@@ -3,10 +3,7 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.archiveDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
@@ -348,7 +345,7 @@ class InvalidPluginsTest {
         File(twoMetaInf, "plugin.xml").writeText(secondDescriptor)
         archiveDirectory(twoMetaInf, File(lib, "two.jar"))
 
-        assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInLibDirectory("one.jar", "two.jar")))
+        assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInDistribution("one.jar", "two.jar")))
       }
     }
   }
