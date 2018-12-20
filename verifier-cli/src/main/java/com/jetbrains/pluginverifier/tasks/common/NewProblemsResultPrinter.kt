@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.common
 
+import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.google.common.collect.Multimaps
@@ -19,10 +20,11 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
-import java.lang.StringBuilder
 
-class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
-                               private val pluginRepository: PluginRepository) : TaskResultPrinter {
+class NewProblemsResultPrinter(
+    private val outputOptions: OutputOptions,
+    private val pluginRepository: PluginRepository
+) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as NewProblemsResult) {
@@ -74,7 +76,7 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
       val newIdeVersion = newTarget.ideVersion
 
       val sinceUntil = plugin.presentableSinceUntilRange()
-      append("\nNote that the compatibility range ")
+      append("Note that the compatibility range ")
       if (sinceUntil != null) {
         append("$sinceUntil ")
       }
@@ -101,16 +103,16 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
             "the API compatibility policy: https://confluence.jetbrains.com/display/IDEA/IntelliJ+Platform+API+compatibility+policy"
         )
       }
+      appendln()
     }
   }
 
   private fun printResults(newProblemsResult: NewProblemsResult) {
     val tcLog = TeamCityLog(System.out)
 
-    val plugin2NewProblems = newProblemsResult.getNewPluginProblems()
-    val problem2Plugins = Multimaps.invertFrom(plugin2NewProblems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
-
-    val allProblems = problem2Plugins.keySet()
+    val allPlugin2Problems = newProblemsResult.getNewPluginProblems()
+    val allProblem2Plugins = Multimaps.invertFrom(allPlugin2Problems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
+    val allProblems = allProblem2Plugins.keySet()
 
     val baseTarget = newProblemsResult.baseTarget
     val newTarget = newProblemsResult.newTarget
@@ -118,26 +120,39 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
       tcLog.testSuiteStarted("($problemTypeSuite)").use {
-        val shortDescription2Problems = allProblemsOfClass.groupBy { it.shortDescription }
-        for ((shortDescription, problemsWithShortDescription) in shortDescription2Problems) {
-          for (problem in problemsWithShortDescription) {
-            tcLog.testSuiteStarted(shortDescription).use {
-              for (plugin in problem2Plugins.get(problem)) {
-                val pluginName = "($plugin)"
-                tcLog.testStarted(pluginName).use {
-                  val problemDetails = buildString {
-                    append(problem.fullDescription)
-                    append("\nThis problem takes place against $newTarget but not against $baseTarget")
-                    appendIdeCompatibilityNote(plugin, baseTarget, newTarget)
-                    appendMissingDependenciesNotes(newProblemsResult, plugin)
+        for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.shortDescription }) {
+          val testName = "($shortDescription)"
+          tcLog.testStarted(testName).use {
+            val testMessage = buildString {
+              appendln(shortDescription)
+              appendln("This problem is detected for $newTarget but not for $baseTarget.")
+            }
+
+            val plugin2Problems = ArrayListMultimap.create<PluginInfo, CompatibilityProblem>()
+            for (problem in problemsWithShortDescription) {
+              for (plugin in allProblem2Plugins.get(problem)) {
+                plugin2Problems.put(plugin, problem)
+              }
+            }
+
+            val testDetails = buildString {
+              for ((plugin, problems) in plugin2Problems.asMap()) {
+                val urlSuffix = (plugin as? Browseable)?.browserUrl?.let { " $it" }.orEmpty()
+                appendln()
+                appendln(plugin.pluginId + ":" + plugin.version + urlSuffix)
+                appendIdeCompatibilityNote(plugin, baseTarget, newTarget)
+                appendMissingDependenciesNotes(newProblemsResult, plugin)
+                appendln()
+
+                for ((index, problem) in problems.withIndex()) {
+                  if (problems.size > 1) {
+                    append("${index + 1}) ")
                   }
-                  val pluginUrl = (plugin as? Browseable)?.browserUrl
-                  val pluginUrlPart = if (pluginUrl != null) "Plugin URL: $pluginUrl\n" else ""
-                  val message = pluginUrlPart + "Plugin: ${plugin.pluginId}:${plugin.version}"
-                  tcLog.testFailed(pluginName, message, problemDetails)
+                  appendln(problem.fullDescription)
                 }
               }
             }
+            tcLog.testFailed(testName, testMessage, testDetails)
           }
         }
       }
@@ -165,7 +180,7 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
     val newMissingDependencies = comparison.newDirectMissingDependencies
 
     if (newMissingDependencies.isNotEmpty()) {
-      append("\nNote: some problems might have been caused by missing dependencies: [\n")
+      appendln("Note: some problems might have been caused by missing dependencies: [")
       for ((dependency, missingReason) in newMissingDependencies) {
         append("$dependency: $missingReason")
 
@@ -183,9 +198,9 @@ class NewProblemsResultPrinter(private val outputOptions: OutputOptions,
             }
           }
         }
-        append("\n")
+        appendln()
       }
-      append("]")
+      appendln("]")
     }
   }
 
