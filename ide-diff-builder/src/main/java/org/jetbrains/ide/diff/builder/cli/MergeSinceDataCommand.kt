@@ -63,10 +63,12 @@ class MergeSinceDataCommand : Command {
     }
 
     try {
-      SinceApiWriter(tempRoot).use { mergeWriter ->
-        mergeWriter.appendSinceApiData(firstSinceData)
+      SinceApiReader(rootTwo).use { readerTwo ->
+        val resultIdeBuild = maxOf(firstSinceData.ideBuildNumber, readerTwo.readIdeBuildNumber())
 
-        SinceApiReader(rootTwo).use { readerTwo ->
+        SinceApiWriter(tempRoot, resultIdeBuild).use { mergeWriter ->
+          mergeWriter.appendSinceApiData(firstSinceData)
+
           readerTwo.readAllSignatures()
               .filterNot { (apiSignature, _) -> apiSignature in firstSinceData }
               .forEach { mergeWriter.appendSignature(it.first, it.second) }

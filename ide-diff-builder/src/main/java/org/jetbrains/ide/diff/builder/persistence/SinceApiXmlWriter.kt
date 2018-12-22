@@ -10,6 +10,8 @@ const val AVAILABLE_SINCE_ANNOTATION_NAME = "org.jetbrains.annotations.ApiStatus
 
 const val ANNOTATIONS_XML_FILE_NAME = "annotations.xml"
 
+const val BUILD_TXT_FILE_NAME = "build.txt"
+
 /**
  * Utility class used to save "available since" information
  * as external annotations for a set of [ApiSignature]s

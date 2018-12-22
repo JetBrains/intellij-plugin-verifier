@@ -16,7 +16,7 @@ class SinceApiBuilderTest : BaseOldNewIdesTest() {
       val oldIde = IdeManager.createManager().createIde(oldIdeFile)
       val newIde = IdeManager.createManager().createIde(newIdeFile)
 
-      return SinceApiBuilder(interestingPackages = listOf("added")).build(oldIde, newIde)
+      return SinceApiBuilder(interestingPackages = listOf("added")).build(oldIde, newIde, newIde.version)
     }
   }
 

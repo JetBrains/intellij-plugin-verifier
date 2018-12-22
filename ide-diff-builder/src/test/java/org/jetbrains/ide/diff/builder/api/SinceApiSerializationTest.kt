@@ -54,7 +54,7 @@ class SinceApiSerializationTest : BaseOldNewIdesTest() {
   }
 
   private fun saveAndRead(sinceApiData: SinceApiData, root: Path) {
-    SinceApiWriter(root).use {
+    SinceApiWriter(root, sinceApiData.ideBuildNumber).use {
       it.appendSinceApiData(sinceApiData)
     }
 

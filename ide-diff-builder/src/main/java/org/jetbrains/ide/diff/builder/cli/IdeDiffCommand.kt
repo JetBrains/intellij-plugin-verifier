@@ -75,8 +75,8 @@ class IdeDiffCommand : Command {
     val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
     LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
 
-    val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde)
-    SinceApiWriter(resultRoot).use {
+    val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde, newIde.version)
+    SinceApiWriter(resultRoot, sinceApiData.ideBuildNumber).use {
       it.appendSinceApiData(sinceApiData)
     }
     LOG.info("New API in ${newIde.version} compared to ${oldIde.version} is saved to external annotations root ${resultRoot.simpleName}")

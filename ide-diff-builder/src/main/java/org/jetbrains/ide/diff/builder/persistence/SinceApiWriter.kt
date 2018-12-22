@@ -14,9 +14,11 @@ import java.util.*
 
 /**
  * Utility class used to save [SinceApiData] to external annotations roots.
+ * [ideBuildNumber] is the IDE build number this root has been built for.
  *
  * Creates necessary package-like directory structure, for example
  * ```
+ * build.txt
  * org/
  * org/some/
  * org/some/annotations.xml
@@ -26,7 +28,7 @@ import java.util.*
  *
  * This class is not thread safe.
  */
-class SinceApiWriter(private val annotationsRoot: Path) : Closeable {
+class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumber: IdeVersion) : Closeable {
 
   private companion object {
     /**
@@ -82,6 +84,8 @@ class SinceApiWriter(private val annotationsRoot: Path) : Closeable {
     //Delete previous root, if exists.
     rootDirectory.deleteLogged()
     rootDirectory.createDir()
+
+    rootDirectory.resolve(BUILD_TXT_FILE_NAME).writeText(ideBuildNumber.asStringWithoutProductCode())
   }
 
   /**

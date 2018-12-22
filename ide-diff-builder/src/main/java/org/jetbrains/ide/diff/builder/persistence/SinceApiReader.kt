@@ -40,6 +40,23 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
     xmlReaderSequence = buildXmlReaderSequence()
   }
 
+  /**
+   * IDE build number this root was built for.
+   */
+  fun readIdeBuildNumber(): IdeVersion {
+    val buildNumberStr = if (annotationsRoot.extension == "zip") {
+      ZipFile(annotationsRoot.toFile()).use {
+        val entry = it.getEntry(BUILD_TXT_FILE_NAME)
+            ?: throw IllegalArgumentException("$annotationsRoot must contain $BUILD_TXT_FILE_NAME")
+        it.getInputStream(entry).bufferedReader().readLine()
+      }
+    } else {
+      annotationsRoot.resolve(BUILD_TXT_FILE_NAME).readText()
+    }
+    return IdeVersion.createIdeVersionIfValid(buildNumberStr)
+        ?: throw IllegalArgumentException("Invalid IDE build number $buildNumberStr written in $BUILD_TXT_FILE_NAME of $annotationsRoot")
+  }
+
   private fun buildXmlReaderSequence(): XmlReaderSequence =
       if (annotationsRoot.extension == "zip") {
         ZipXmlReaderSequence(ZipFile(annotationsRoot.toFile()))
@@ -57,12 +74,13 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
    * and returns corresponding [SinceApiData].
    */
   fun readSinceApiData(): SinceApiData {
+    val ideBuildNumber = readIdeBuildNumber()
     val versionToApiData = mutableMapOf<IdeVersion, ApiData>()
     for ((apiSignature, sinceVersion) in readAllSignatures()) {
       versionToApiData.getOrPut(sinceVersion) { ApiData() }
           .addSignature(apiSignature)
     }
-    return SinceApiData(versionToApiData)
+    return SinceApiData(ideBuildNumber, versionToApiData)
   }
 
   /**

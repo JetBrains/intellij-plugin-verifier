@@ -5,8 +5,9 @@ import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 
 /**
  * Container of APIs and versions when those APIs were first introduced.
+ * [ideBuildNumber] is the latest IDE build number this data contains info about.
  */
-data class SinceApiData(val versionToApiData: Map<IdeVersion, ApiData>) {
+data class SinceApiData(val ideBuildNumber: IdeVersion, val versionToApiData: Map<IdeVersion, ApiData>) {
   /**
    * Returns this data object as a sequence of signatures
    * and "available since" versions.

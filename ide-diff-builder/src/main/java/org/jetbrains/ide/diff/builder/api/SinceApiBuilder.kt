@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.verifiers.*
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
@@ -32,11 +33,11 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
     private val IGNORED_PLUGIN_IDS = setOf("org.jetbrains.kotlin", "org.jetbrains.android")
   }
 
-  fun build(oldIde: Ide, newIde: Ide): SinceApiData {
+  fun build(oldIde: Ide, newIde: Ide, ideBuildNumber: IdeVersion): SinceApiData {
     val apiData = ApiData()
     appendIdeCoreData(oldIde, newIde, apiData)
     appendBundledPluginsData(oldIde, newIde, apiData)
-    return SinceApiData(mapOf(newIde.version to apiData))
+    return SinceApiData(ideBuildNumber, mapOf(newIde.version to apiData))
   }
 
   private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, apiData: ApiData) {
