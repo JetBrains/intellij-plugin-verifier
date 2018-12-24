@@ -21,11 +21,10 @@ private interface FeaturesRetrofitConnector {
   @GET("/feature/getUpdatesToExtractFeatures")
   fun getUpdatesToExtractFeatures(@Header("Authorization") authorization: String): Call<List<Int>>
 
-  @Multipart
   @POST("/feature/receiveExtractedFeatures")
   fun sendExtractedFeatures(
       @Header("Authorization") authorization: String,
-      @Part("extractedFeatures") extractedFeatures: RequestBody
+      @Body extractedFeatures: RequestBody
   ): Call<ResponseBody>
 
 }
