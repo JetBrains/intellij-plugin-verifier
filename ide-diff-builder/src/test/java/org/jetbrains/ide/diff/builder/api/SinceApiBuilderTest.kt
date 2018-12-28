@@ -1,7 +1,5 @@
 package org.jetbrains.ide.diff.builder.api
 
-import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,7 +14,7 @@ class SinceApiBuilderTest : BaseOldNewIdesTest() {
       val oldIde = IdeManager.createManager().createIde(oldIdeFile)
       val newIde = IdeManager.createManager().createIde(newIdeFile)
 
-      return SinceApiBuilder(interestingPackages = listOf("added")).build(oldIde, newIde, newIde.version)
+      return SinceApiBuilder(interestingPackages = listOf("added")).build(oldIde, newIde)
     }
   }
 

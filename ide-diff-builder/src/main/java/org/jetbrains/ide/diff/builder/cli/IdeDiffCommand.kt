@@ -1,7 +1,5 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.misc.simpleName
@@ -75,7 +73,7 @@ class IdeDiffCommand : Command {
     val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
     LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
 
-    val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde, newIde.version)
+    val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde)
     SinceApiWriter(resultRoot, sinceApiData.ideBuildNumber).use {
       it.appendSinceApiData(sinceApiData)
     }
