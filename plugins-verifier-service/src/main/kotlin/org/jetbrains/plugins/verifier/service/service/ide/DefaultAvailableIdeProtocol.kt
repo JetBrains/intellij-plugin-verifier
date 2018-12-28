@@ -12,10 +12,9 @@ import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.Header
-import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Part
 import java.util.concurrent.TimeUnit
 
 private data class AvailableIdeJson(
@@ -32,11 +31,10 @@ private fun AvailableIde.convertToJson() = AvailableIdeJson(
 )
 
 private interface AvailableIdeConnector {
-  @Multipart
   @POST("/verification/receiveAvailableIdes")
   fun sendAvailableIdes(
       @Header("Authorization") authorization: String,
-      @Part("availableIdes") availableIdes: List<AvailableIdeJson>
+      @Body availableIdes: List<AvailableIdeJson>
   ): Call<ResponseBody>
 }
 
