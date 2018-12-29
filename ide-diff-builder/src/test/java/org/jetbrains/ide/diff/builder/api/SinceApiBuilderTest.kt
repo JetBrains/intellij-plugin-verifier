@@ -1,5 +1,7 @@
 package org.jetbrains.ide.diff.builder.api
 
+import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
 import org.junit.Assert.assertEquals
 import org.junit.Test

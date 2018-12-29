@@ -1,5 +1,14 @@
 package org.jetbrains.ide.diff.builder.api
 
+import com.jetbrains.plugin.structure.base.utils.closeAll
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.verifiers.*
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature

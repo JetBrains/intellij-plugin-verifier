@@ -1,5 +1,7 @@
 package org.jetbrains.ide.diff.builder.cli
 
+import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.misc.simpleName
