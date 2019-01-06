@@ -11,7 +11,11 @@ import java.util.*
  * or [field][FieldLocation].
  */
 sealed class Location : Serializable {
+  abstract val presentableLocation: String
+
   abstract val elementType: ElementType
+
+  final override fun toString() = presentableLocation
 }
 
 data class ClassLocation(
@@ -23,7 +27,8 @@ data class ClassLocation(
 
   override fun hashCode() = className.hashCode()
 
-  override fun toString() = formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
+  override val presentableLocation
+    get() = formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
 
   override val elementType: ElementType
     get() = with(modifiers) {
@@ -51,7 +56,8 @@ data class FieldLocation(
 
   override fun hashCode() = Objects.hash(hostClass, fieldName, fieldDescriptor)
 
-  override fun toString() = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_TYPE)
+  override val presentableLocation
+    get() = formatFieldLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, FieldTypeOption.SIMPLE_TYPE)
 
   override val elementType: ElementType
     get() = ElementType.FIELD
@@ -73,7 +79,8 @@ data class MethodLocation(
 
   override fun hashCode() = Objects.hash(hostClass, methodName, methodDescriptor)
 
-  override fun toString() = formatMethodLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE)
+  override val presentableLocation
+    get() = formatMethodLocation(HostClassOption.FULL_HOST_WITH_SIGNATURE, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME, MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE)
 
   override val elementType: ElementType
     get() = if (methodName == "<init>") {

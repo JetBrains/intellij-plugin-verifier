@@ -10,7 +10,7 @@ import java.util.*
  */
 class PackageNotFoundProblem(
     val packageName: String,
-    val classNotFoundProblems: List<ClassNotFoundProblem>
+    val classNotFoundProblems: Set<ClassNotFoundProblem>
 ) : CompatibilityProblem() {
 
   override val problemType

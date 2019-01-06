@@ -91,14 +91,14 @@ fun VerificationContext.analyzeMissingClasses(resultHolder: ResultHolder) {
    * or the Verifier is not properly configured to find them.
    */
   val noClassProblems = hashSetOf<ClassNotFoundProblem>()
-  val packageToMissingProblems = hashMapOf<String, MutableList<ClassNotFoundProblem>>()
+  val packageToMissingProblems = hashMapOf<String, MutableSet<ClassNotFoundProblem>>()
 
   for (classNotFoundProblem in classNotFoundProblems) {
     val className = classNotFoundProblem.unresolved.className
     val missingPackage = clsResolver.getTopMostMissingPackage(className)
     if (missingPackage != null) {
       packageToMissingProblems
-          .getOrPut(missingPackage) { arrayListOf() }
+          .getOrPut(missingPackage) { hashSetOf() }
           .add(classNotFoundProblem)
     } else {
       noClassProblems.add(classNotFoundProblem)

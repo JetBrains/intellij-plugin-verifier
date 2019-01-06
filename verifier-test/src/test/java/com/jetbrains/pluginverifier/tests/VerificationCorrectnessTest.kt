@@ -482,8 +482,8 @@ It is also possible, however, that this package was actually removed from a depe
 The following classes of 'non' are not resolved:
   Class non.existing.NonExistingClass is referenced in
     mock.plugin.FieldTypeNotFound.myNonExistingClass : NonExistingClass
-    mock.plugin.MethodProblems.brokenDotClass() : void
-    mock.plugin.ParentDoesntExist.<init>()
+    mock.plugin.MethodProblems.brokenArg(NonExistingClass brokenArg) : void
+    mock.plugin.ParentDoesntExist
     mock.plugin.arrays.ANewArrayInsn.foo(long l, double d, Object a) : void
     mock.plugin.field.FieldProblemsContainer.accessUnknownClass() : void
     ...and 7 other places...
@@ -597,21 +597,21 @@ Probably the package 'removedClasses.removedWholePackage' belongs to a library o
 It is also possible, however, that this package was actually removed from a dependency causing the detected problems. Access to unresolved classes at runtime may lead to **NoSuchClassError**.
 The following classes of 'removedClasses.removedWholePackage' are not resolved (only 5 most used classes are shown, 3 hidden):
   Class removedClasses.removedWholePackage.Removed5 is referenced in
+    mock.plugin.removedClasses.User5
     mock.plugin.removedClasses.User5.<init>()
     mock.plugin.removedClasses.User5.usage1() : void
-    mock.plugin.removedClasses.User5.usage4() : void
-    mock.plugin.removedClasses.User5.usage5() : void
-    mock.plugin.removedClasses.User5.usage8() : void
+    mock.plugin.removedClasses.User5.usage2() : void
+    mock.plugin.removedClasses.User5.usage3() : void
     ...and 5 other places...
   Class removedClasses.removedWholePackage.Removed1 is referenced in
+    mock.plugin.removedClasses.User1
     mock.plugin.removedClasses.User1.<init>()
     mock.plugin.removedClasses.User1.usage1() : void
     mock.plugin.removedClasses.User1.usage2() : void
     mock.plugin.removedClasses.User1.usage3() : void
-    mock.plugin.removedClasses.User1
   Class removedClasses.removedWholePackage.Removed2 is referenced in
-    mock.plugin.removedClasses.User2.<init>()
     mock.plugin.removedClasses.User2
+    mock.plugin.removedClasses.User2.<init>()
   Class removedClasses.removedWholePackage.Removed3 is referenced in
     mock.plugin.removedClasses.User3
     mock.plugin.removedClasses.User3.<init>()

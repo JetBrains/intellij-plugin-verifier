@@ -24,7 +24,8 @@ object PackageNotFoundDescriptionBuilder {
    * Build full description of [PackageNotFoundProblem].
    */
   fun buildDescription(packageNotFoundProblem: PackageNotFoundProblem) = buildString {
-    val missingClasses = packageNotFoundProblem.classNotFoundProblems.map { it.unresolved.className }.toSet()
+    val classNotFoundProblems = packageNotFoundProblem.classNotFoundProblems
+    val missingClasses = classNotFoundProblems.mapTo(hashSetOf()) { it.unresolved.className }
     val missingClassesNumber = missingClasses.size
     val normalPackageName = packageNotFoundProblem.packageName.replace('/', '.')
 
@@ -58,7 +59,7 @@ object PackageNotFoundDescriptionBuilder {
     /**
      * Group unresolved classes and sort by number of occurrences.
      */
-    val classRefToProblems = packageNotFoundProblem.classNotFoundProblems
+    val classRefToProblems = classNotFoundProblems
         .groupBy { it.unresolved }
         .toList()
         .sortedWith(Comparator { one, two ->
@@ -96,18 +97,18 @@ object PackageNotFoundDescriptionBuilder {
       problems: List<ClassNotFoundProblem>
   ): List<ClassNotFoundProblem> {
     if (problems.size <= number) {
-      return problems.sortedBy { it.usage.hostClass().className }
+      return problems
     }
 
-    val grouped = problems
-        .sortedBy { it.usage.hostClass().className }
+    val hostClassToProblems = problems
         .groupBy { it.usage.hostClass() }
+        .mapValues { it.value.sortedBy { it.usage.presentableLocation } }
 
     val result = arrayListOf<ClassNotFoundProblem>()
     var index = 0
     while (result.size < number) {
-      //Problems from different locations on that index.
-      val slice = grouped.mapNotNull { it.value.elementAtOrNull(index) }
+      //Problems from different locations at this index.
+      val slice = hostClassToProblems.mapNotNull { it.value.elementAtOrNull(index) }
       result.addAll(slice)
       index++
     }
@@ -131,7 +132,7 @@ object PackageNotFoundDescriptionBuilder {
           .thenBy { it.fieldName }
           .compare(one, two)
     }
-    return@r one.hostClass().className.compareTo(two.hostClass().className)
+    return@r one.presentableLocation.compareTo(two.presentableLocation)
   }
 
   private fun Location.hostClass() = when (this) {
