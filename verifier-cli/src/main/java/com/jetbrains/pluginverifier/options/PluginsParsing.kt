@@ -54,14 +54,13 @@ class PluginsParsing(
    * to be checked against [ideVersion]
    * and requests corresponding [UpdateInfo]s.
    */
-  fun addByPluginIds(opts: CmdOpts, ideVersion: IdeVersion): PluginsSet {
+  fun addByPluginIds(opts: CmdOpts, ideVersion: IdeVersion) {
     val (allVersions, lastVersions) = parseAllAndLastPluginIdsToCheck(opts)
 
     val pluginInfos = retry("fetch updates to check against $ideVersion") {
       requestUpdatesToCheckByIds(allVersions, lastVersions, ideVersion)
     }
     pluginsSet.schedulePlugins(pluginInfos)
-    return pluginsSet
   }
 
   /**
