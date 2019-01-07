@@ -139,12 +139,14 @@ class IdeManagerImpl : IdeManager() {
 
   private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver) =
       xmlFiles
+          .asSequence()
           .filter { "plugin.xml" == it.name }
           .map { it.absoluteFile.parentFile }
           .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
           .map { it.parentFile }
           .filter { it.isDirectory }
           .mapNotNull { safeCreatePlugin(it, pathResolver, PLUGIN_XML) }
+          .toList()
 
   private fun safeCreatePlugin(
       pluginFile: File,
