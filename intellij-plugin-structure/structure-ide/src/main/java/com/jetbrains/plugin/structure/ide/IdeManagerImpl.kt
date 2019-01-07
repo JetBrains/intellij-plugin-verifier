@@ -126,8 +126,8 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun getDummyPluginsFromSources(ideaDir: File): List<IdePlugin> = when {
-    isUltimate(ideaDir) -> getDummyPlugins(getUltimateClassesRoot(ideaDir))
-    isCommunity(ideaDir) -> getDummyPlugins(getCommunityClassesRoot(ideaDir))
+    isUltimate(ideaDir) -> getDummyPlugins(getUltimateClassesRoot(ideaDir)!!)
+    isCommunity(ideaDir) -> getDummyPlugins(getCommunityClassesRoot(ideaDir)!!)
     else -> throw IllegalArgumentException("Incorrect IDEA structure: $ideaDir. It must be Community or Ultimate sources root with compiled class files.")
   }
 
@@ -266,13 +266,21 @@ class IdeManagerImpl : IdeManager() {
 
     fun isSourceDir(dir: File) = File(dir, ".idea").isDirectory
 
-    fun isUltimate(ideaDir: File) = File(ideaDir, "community/.idea").isDirectory && getUltimateClassesRoot(ideaDir).isDirectory
+    fun isUltimate(ideaDir: File): Boolean = File(ideaDir, "community/.idea").isDirectory && getUltimateClassesRoot(ideaDir) != null
 
-    fun isCommunity(ideaDir: File) = File(ideaDir, ".idea").isDirectory && getCommunityClassesRoot(ideaDir).isDirectory
+    fun isCommunity(ideaDir: File): Boolean = File(ideaDir, ".idea").isDirectory && getCommunityClassesRoot(ideaDir) != null
 
-    fun getUltimateClassesRoot(ideaDir: File) = File(ideaDir, "out/classes/production")
+    fun getUltimateClassesRoot(ideaDir: File): File? {
+      return listOf(
+          ideaDir.resolve("out/classes/production"),
+          ideaDir.resolve("out/compilation/classes/production")
+      ).first { it.isDirectory }
+    }
 
-    fun getCommunityClassesRoot(ideaDir: File) = File(ideaDir, "out/production")
+    fun getCommunityClassesRoot(ideaDir: File): File? {
+      return ideaDir.resolve("out/production").takeIf { it.isDirectory }
+    }
+
   }
 
 }

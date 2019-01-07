@@ -45,14 +45,14 @@ object IdeResolverCreator {
 
     pools.add(getIdeResolverFromLibraries(ideaDir))
 
-    if (IdeManagerImpl.isUltimate(ideaDir)) {
-      pools.add(ClassFilesResolver(IdeManagerImpl.getUltimateClassesRoot(ideaDir)))
-      pools.add(getIdeResolverFromLibraries(File(ideaDir, "community")))
-      pools.add(getLibrariesResolver(ideaDir))
-    } else if (IdeManagerImpl.isCommunity(ideaDir)) {
-      pools.add(ClassFilesResolver(IdeManagerImpl.getCommunityClassesRoot(ideaDir)))
-    } else {
-      throw IllegalArgumentException("Incorrect IDEA sources: $ideaDir. It must be Community or Ultimate sources root with compiled class files")
+    when {
+      IdeManagerImpl.isUltimate(ideaDir) -> {
+        pools += ClassFilesResolver(IdeManagerImpl.getUltimateClassesRoot(ideaDir)!!)
+        pools += getIdeResolverFromLibraries(File(ideaDir, "community"))
+        pools += getLibrariesResolver(ideaDir)
+      }
+      IdeManagerImpl.isCommunity(ideaDir) -> pools += ClassFilesResolver(IdeManagerImpl.getCommunityClassesRoot(ideaDir)!!)
+      else -> throw IllegalArgumentException("Incorrect IDEA sources: $ideaDir. It must be Community or Ultimate sources root with compiled class files")
     }
 
     return UnionResolver.create(pools)
