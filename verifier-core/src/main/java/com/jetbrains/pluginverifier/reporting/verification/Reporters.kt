@@ -14,9 +14,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import java.io.Closeable
 
 /**
- * Set of configured [reporters] [Reporter] used
- * by the [Reporters] to report and save the
- * verification stages and results.
+ * Set of configured [reporters] [Reporter] used to report and save the verification stages and results.
  */
 data class Reporters(
     /**

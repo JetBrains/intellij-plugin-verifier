@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
 import java.nio.file.Path
 
 /**
- * Collects all [ProblemIgnoredEvent] and saves them
+ * Collects all [PluginIgnoredEvent]s and saves them
  * to `<verification-home>/<verification-target>/all-ignored-plugins.txt` file.
  */
 class IgnoredPluginsReporter(private val verificationReportsDirectory: Path) : Reporter<PluginIgnoredEvent> {
