@@ -69,6 +69,11 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
   companion object {
 
     @JvmStatic
+    fun create(vararg resolvers: Resolver): Resolver {
+      return create(resolvers.asIterable())
+    }
+
+    @JvmStatic
     fun create(resolvers: Iterable<Resolver>): Resolver {
       val nonEmpty = resolvers.filterNot { it.isEmpty }
       return when {
