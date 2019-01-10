@@ -74,8 +74,12 @@ class BuildMissingSinceAnnotationsCommand : Command {
     val args = Args.parse(cliOptions, freeArgs.toTypedArray(), false)
 
     val resultsDirectory = Paths.get(args[0])
-    val packages = cliOptions.getPackages()
+    LOG.info("Results will be saved to $resultsDirectory")
+
     val jdkPath = cliOptions.getJdkPath()
+    LOG.info("JDK will be used to resolve java classes: $jdkPath")
+
+    val packages = cliOptions.getPackages()
     LOG.info(if (packages.any { it.isEmpty() }) {
       "All packages will be processed"
     } else {
