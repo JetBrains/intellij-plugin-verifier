@@ -106,15 +106,19 @@ fun MethodNode.isDeprecated(): Boolean = access and Opcodes.ACC_DEPRECATED != 0
 
 fun FieldNode.isDeprecated(): Boolean = access and Opcodes.ACC_DEPRECATED != 0
 
-fun FieldNode.isDefaultAccess(): Boolean = !isPublic() && !this.isProtected() && !isPrivate()
+fun ClassNode.isDefaultAccess(): Boolean = !isPublic() && !isPrivate() && !isProtected()
 
-fun MethodNode.isDefaultAccess(): Boolean = !isPublic() && !this.isProtected() && !isPrivate()
+fun FieldNode.isDefaultAccess(): Boolean = !isPublic() && !isProtected() && !isPrivate()
+
+fun MethodNode.isDefaultAccess(): Boolean = !isPublic() && !isProtected() && !isPrivate()
 
 fun MethodNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
 
 fun MethodNode.isConstructor(): Boolean = name == "<init>"
 
 fun MethodNode.isClassInitializer(): Boolean = name == "<clinit>"
+
+fun ClassNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
 
 fun FieldNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
 
