@@ -110,6 +110,9 @@ class BuildMissingSinceAnnotationsCommand : Command {
        */
       return null
     }
+    if (System.getProperty("ide.diff.builder.no.download.annotations").orEmpty().equals("true", true)) {
+      return null
+    }
     val message = "Downloading annotations for $ideVersion to ${resultPath.simpleName}"
     LOG.info(message)
     retry(message) {
