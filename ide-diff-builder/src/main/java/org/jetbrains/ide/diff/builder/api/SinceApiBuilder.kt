@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.verifiers.*
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -182,15 +183,19 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
     return ".impl." in packageName
   }
 
-  private fun ClassNode.isIgnored() = isPrivate()
+  private fun ClassNode.isProtected() = access and Opcodes.ACC_PROTECTED != 0
+
+  private fun ClassNode.isDefaultAccess() = !isPublic() && !isPrivate() && !isProtected()
+
+  private fun ClassNode.isIgnored() = isPrivate() || isDefaultAccess()
       || isSynthetic()
       || name.isSyntheticLikeName()
       || !name.hasInterestingPackage()
       || name.hasImplementationLikeName()
       || name.hasImplementationLikePackage()
 
-  private fun MethodNode.isIgnored() = isPrivate() || isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
+  private fun MethodNode.isIgnored() = isPrivate() || isDefaultAccess() || isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
 
-  private fun FieldNode.isIgnored() = isPrivate() || isSynthetic() || name.isSyntheticLikeName()
+  private fun FieldNode.isIgnored() = isPrivate() || isDefaultAccess() || isSynthetic() || name.isSyntheticLikeName()
 
 }
