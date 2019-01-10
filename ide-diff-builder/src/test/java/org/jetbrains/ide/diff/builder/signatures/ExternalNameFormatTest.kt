@@ -51,7 +51,9 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
       "pkg/E" to "pkg.E",
       "pkg/E\$F" to "pkg.E.F",
       "unchanged/A" to "unchanged.A",
-      "removed/A" to "removed.A"
+      "removed/A" to "removed.A",
+      "ignored/A" to "ignored.A",
+      "ignored/B" to "ignored.B"
   )
 
   private val methodName2externalName = mapOf(

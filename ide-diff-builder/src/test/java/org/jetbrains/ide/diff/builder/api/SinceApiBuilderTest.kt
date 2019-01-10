@@ -16,7 +16,7 @@ class SinceApiBuilderTest : BaseOldNewIdesTest() {
       val oldIde = IdeManager.createManager().createIde(oldIdeFile)
       val newIde = IdeManager.createManager().createIde(newIdeFile)
 
-      return SinceApiBuilder(interestingPackages = listOf("added")).build(oldIde, newIde)
+      return SinceApiBuilder(interestingPackages = listOf("added", "ignored")).build(oldIde, newIde)
     }
   }
 
@@ -40,7 +40,9 @@ class SinceApiBuilderTest : BaseOldNewIdesTest() {
       "added.A void m3(java.util.Map<java.lang.Integer,java.lang.Integer>)",
 
       "added.A.B B()",
-      "added.A.C C()"
+      "added.A.C C()",
+
+      "ignored.B void foo(java.lang.Number)"
   )
 
   private val expectedNewFields = listOf(

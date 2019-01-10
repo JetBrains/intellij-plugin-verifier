@@ -5,6 +5,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.*
 import org.jetbrains.ide.diff.builder.api.SinceApiData
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
+import org.jetbrains.ide.diff.builder.signatures.ClassSignature
+import org.jetbrains.ide.diff.builder.signatures.FieldSignature
+import org.jetbrains.ide.diff.builder.signatures.MethodSignature
 import java.io.Closeable
 import java.io.Writer
 import java.nio.file.Files
@@ -112,8 +115,24 @@ class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumb
    * since [sinceVersion] to the output.
    */
   fun appendSignature(apiSignature: ApiSignature, sinceVersion: IdeVersion) {
+    if (apiSignature.isBuggySignature()) {
+      return
+    }
     getPackageXmlWriter(apiSignature.packageName)
         .appendSignatureSince(apiSignature, sinceVersion)
+  }
+
+  //Workaround for IJI-100: Annotations artifacts include @AvailableSince annotations for methods which cannot be called from sources.
+  private fun ApiSignature.isBuggySignature(): Boolean {
+    fun String.isSyntheticLikeName(): Boolean {
+      return contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
+    }
+
+    return when (this) {
+      is ClassSignature -> className.isSyntheticLikeName()
+      is MethodSignature -> methodName == "<clinit>" || methodName.isSyntheticLikeName()
+      is FieldSignature -> fieldName.isSyntheticLikeName()
+    }
   }
 
   private fun getPackageXmlWriter(packageName: String): SinceApiXmlWriter {

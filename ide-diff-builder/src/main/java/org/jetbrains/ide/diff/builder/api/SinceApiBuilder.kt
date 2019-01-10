@@ -158,7 +158,7 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
     }
   }
 
-  private fun String.isSyntheticLikeName() = contains('$') && substringAfterLast('$', "").toIntOrNull() != null
+  private fun String.isSyntheticLikeName() = contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
 
   private fun String.hasInterestingPackage(): Boolean {
     val packageName = getJavaPackageName(this)
@@ -189,7 +189,7 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
       || name.hasImplementationLikeName()
       || name.hasImplementationLikePackage()
 
-  private fun MethodNode.isIgnored() = isPrivate() || isSynthetic() || name.isSyntheticLikeName()
+  private fun MethodNode.isIgnored() = isPrivate() || isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
 
   private fun FieldNode.isIgnored() = isPrivate() || isSynthetic() || name.isSyntheticLikeName()
 
