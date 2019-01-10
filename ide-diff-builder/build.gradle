@@ -59,7 +59,7 @@ dependencies {
 
   testCompile 'junit:junit:4.12'
   testCompile project(':')
-  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: '1.193'
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: '1.196'
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile 'org.apache.commons:commons-text:1.6'
 }
@@ -77,4 +77,4 @@ task copyMockIdes(type: Copy, dependsOn: [':mock-old-ide:prepareIde', ':mock-new
   with oldIde, newIde
 }
 
-test.dependsOn(copyMockIdes)
+test.dependsOn(copyMockIdes, copyMockIdes.outputs.files)

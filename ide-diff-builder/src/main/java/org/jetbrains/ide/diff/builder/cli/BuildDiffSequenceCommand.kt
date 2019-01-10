@@ -3,6 +3,7 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.sampullara.cli.Args
@@ -72,7 +73,8 @@ class BuildDiffSequenceCommand : Command {
       val idesDir: Path,
       val resultPath: Path,
       val ideVersions: List<IdeVersion>,
-      val packages: List<String>
+      val packages: List<String>,
+      val jdkPath: JdkPath
   )
 
   /**
@@ -83,6 +85,7 @@ class BuildDiffSequenceCommand : Command {
     var args = Args.parse(cliOptions, freeArgs.toTypedArray(), true)
 
     val idesDir = cliOptions.getIdePath()
+    val jdkPath = cliOptions.getJdkPath()
 
     val resultPath = Paths.get(args.first())
     resultPath.deleteLogged()
@@ -96,7 +99,7 @@ class BuildDiffSequenceCommand : Command {
 
     val ideVersions = args.map { IdeVersion.createIdeVersion(it) }
     checkIdeVersionsAvailable(ideVersions)
-    return Options(idesDir, resultPath, ideVersions, cliOptions.packages.toList())
+    return Options(idesDir, resultPath, ideVersions, cliOptions.packages.toList(), jdkPath)
   }
 
   private fun checkIdeVersionsAvailable(ideVersions: List<IdeVersion>) {
@@ -109,7 +112,7 @@ class BuildDiffSequenceCommand : Command {
   }
 
   override fun execute(freeArgs: List<String>) {
-    val (idesDir, resultPath, ideVersions, packages) = parseOptions(freeArgs)
+    val (idesDir, resultPath, ideVersions, packages, jdkPath) = parseOptions(freeArgs)
     val ideFilesBank = IdeFilesBank(
         idesDir,
         allIdeRepository,
@@ -117,7 +120,7 @@ class BuildDiffSequenceCommand : Command {
     )
 
     LOG.info("Building API diffs for a list of IDE builds: " + ideVersions.joinToString())
-    buildDiffs(ideVersions, ideFilesBank, resultPath, packages)
+    buildDiffs(ideVersions, ideFilesBank, resultPath, packages, jdkPath)
   }
 
   /**
@@ -128,7 +131,8 @@ class BuildDiffSequenceCommand : Command {
       ideVersions: List<IdeVersion>,
       ideFilesBank: IdeFilesBank,
       resultsDirectory: Path,
-      packages: List<String>
+      packages: List<String>,
+      jdkPath: JdkPath
   ) {
     var previousResult: Path? = null
     for (i in 0 until ideVersions.size - 1) {
@@ -138,7 +142,7 @@ class BuildDiffSequenceCommand : Command {
       val resultPath = BuildMissingSinceAnnotationsCommand.getIdeAnnotationsResultPath(resultsDirectory, newIdeVersion)
       resultPath.deleteLogged()
 
-      IdeDiffCommand().buildIdeDiff(oldIdeVersion, newIdeVersion, ideFilesBank, packages, resultPath)
+      IdeDiffCommand().buildIdeDiff(oldIdeVersion, newIdeVersion, ideFilesBank, packages, resultPath, jdkPath)
       if (previousResult != null) {
         MergeSinceDataCommand().mergeSinceData(previousResult, resultPath, resultPath)
       }

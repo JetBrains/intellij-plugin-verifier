@@ -1,6 +1,8 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
+import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
+import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.Ide
@@ -9,20 +11,22 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 import java.io.Closeable
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Builder of [SinceApiData] by APIs difference of two IDEs.
  */
-class SinceApiBuilder(private val interestingPackages: List<String>) {
+class SinceApiBuilder(private val interestingPackages: List<String>, private val jdkPath: JdkPath) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(SinceApiBuilder::class.java)
@@ -35,43 +39,41 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
 
   fun build(oldIde: Ide, newIde: Ide): SinceApiData {
     val apiData = ApiData()
-    appendIdeCoreData(oldIde, newIde, apiData)
-    appendBundledPluginsData(oldIde, newIde, apiData)
-    return SinceApiData(newIde.version, mapOf(newIde.version to apiData))
+    return JdkResolverCreator.createJdkResolver(jdkPath.jdkPath.toFile()).use { jdkResolver ->
+      appendIdeCoreData(oldIde, newIde, apiData, jdkResolver)
+      appendBundledPluginsData(oldIde, newIde, apiData, jdkResolver)
+      SinceApiData(newIde.version, mapOf(newIde.version to apiData))
+    }
   }
 
-  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, apiData: ApiData) {
-    IdeResolverCreator.createIdeResolver(oldIde).use { oldResolver ->
-      IdeResolverCreator.createIdeResolver(newIde).use { newResolver ->
-        appendData(oldResolver, newResolver, apiData)
+  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, apiData: ApiData, jdkResolver: Resolver) {
+    IdeResolverCreator.createIdeResolver(oldIde).use { oldIdeResolver ->
+      IdeResolverCreator.createIdeResolver(newIde).use { newIdeResolver ->
+        appendData(oldIdeResolver, newIdeResolver, apiData, jdkResolver)
       }
     }
   }
 
-  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, apiData: ApiData) {
+  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, apiData: ApiData, jdkResolver: Resolver) {
     val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
     Closeable { oldPluginClassLocations.closeAll() }.use {
       val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
       Closeable { newPluginClassLocations.closeAll() }.use {
         val oldAllPluginsResolver = oldPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
         val newAllPluginsResolver = newPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
-        appendData(oldAllPluginsResolver, newAllPluginsResolver, apiData)
+        appendData(oldAllPluginsResolver, newAllPluginsResolver, apiData, jdkResolver)
       }
     }
   }
 
-  private fun appendData(oldResolver: Resolver, newResolver: Resolver, apiData: ApiData) {
+  private fun appendData(oldResolver: Resolver, newResolver: Resolver, apiData: ApiData, jdkResolver: Resolver) {
+    val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
     newResolver.processAllClasses { newClass ->
       if (newClass.isIgnored()) {
         return@processAllClasses true
       }
 
-      val oldClass = try {
-        oldResolver.findClass(newClass.name)
-      } catch (e: Exception) {
-        LOG.warn("Class file ${newClass.name} couldn't be read from $oldResolver distribution", e)
-        return@processAllClasses true
-      }
+      val oldClass = oldResolver.safeFindClass(newClass.name)
 
       if (oldClass == null) {
         /**
@@ -82,7 +84,7 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
          * to handle them.
          */
         apiData.addSignature(newClass.createClassLocation().toSignature())
-        for (methodNode in newClass.getMethods().orEmpty().filterNot { it.isIgnored() }) {
+        for (methodNode in newClass.getMethods().orEmpty().filterNot { it.isIgnored() || isMethodOverriding(it, newClass, completeNewResolver) }) {
           apiData.addSignature(createMethodLocation(newClass, methodNode).toSignature())
         }
         for (fieldNode in newClass.getFields().orEmpty().filterNot { it.isIgnored() }) {
@@ -91,9 +93,50 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
         return@processAllClasses true
       }
 
-      compareClasses(oldClass, newClass, apiData)
+      compareClasses(oldClass, newClass, apiData, completeNewResolver)
       true
     }
+  }
+
+  private fun Resolver.safeFindClass(className: String): ClassNode? {
+    return try {
+      findClass(className)
+    } catch (e: Exception) {
+      LOG.warn("Class file $className couldn't be read from $this", e)
+      return null
+    }
+  }
+
+  private fun isMethodOverriding(methodNode: MethodNode, classNode: ClassNode, resolver: Resolver): Boolean {
+    if (methodNode.isConstructor()
+        || methodNode.isClassInitializer()
+        || methodNode.isStatic()
+        || methodNode.isPrivate()
+        || methodNode.isDefaultAccess()
+    ) {
+      return false
+    }
+
+    val parentsVisitor = ClassParentsVisitor(true) { _, parentClassName ->
+      resolver.safeFindClass(parentClassName)
+    }
+
+    val isOverriding = AtomicBoolean()
+    parentsVisitor.visitClass(classNode, false, onEnter = { parentClass ->
+      val hasSameMethod = parentClass.getMethods().orEmpty().any {
+        it.name == methodNode.name
+            && it.desc == methodNode.desc
+            && !it.isStatic()
+            && !it.isPrivate()
+            && !it.isDefaultAccess()
+      }
+      if (hasSameMethod) {
+        isOverriding.set(true)
+      }
+      !isOverriding.get()
+    }, onExit = {})
+
+    return isOverriding.get()
   }
 
   /**
@@ -135,9 +178,14 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
     null
   }
 
-  private fun compareClasses(oldClass: ClassNode, newClass: ClassNode, apiDiff: ApiData) {
+  private fun compareClasses(
+      oldClass: ClassNode,
+      newClass: ClassNode,
+      apiDiff: ApiData,
+      completeNewResolver: Resolver
+  ) {
     for (newMethod in newClass.getMethods().orEmpty()) {
-      if (newMethod.isIgnored()) {
+      if (newMethod.isIgnored() || isMethodOverriding(newMethod, newClass, completeNewResolver)) {
         continue
       }
 
@@ -182,10 +230,6 @@ class SinceApiBuilder(private val interestingPackages: List<String>) {
     val packageName = getJavaPackageName(this)
     return ".impl." in packageName
   }
-
-  private fun ClassNode.isProtected() = access and Opcodes.ACC_PROTECTED != 0
-
-  private fun ClassNode.isDefaultAccess() = !isPublic() && !isPrivate() && !isProtected()
 
   private fun ClassNode.isIgnored() = isPrivate() || isDefaultAccess()
       || isSynthetic()

@@ -1,6 +1,9 @@
 package ignored;
 
 public class A<T> {
-  void foo(T t) {
+  public void bar() {
+  }
+
+  public void foo(T t) {
   }
 }

@@ -50,7 +50,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
       https://www.jetbrains.com/intellij-repository/releases/ and https://www.jetbrains.com/intellij-repository/snapshots
       It saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
 
-      build-missing-since-annotations [-ides-dir <IDE cache dir] [-packages "org.some;com.another"] <results directory>
+      build-missing-since-annotations [-ides-dir <IDE cache dir] [-jdk-path <path to JDK home>] [-packages "org.some;com.another"] <results directory>
     """.trimIndent()
 
   override fun execute(freeArgs: List<String>) {
@@ -59,6 +59,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
 
     val resultsDirectory = Paths.get(args[0])
     val packages = cliOptions.getPackages()
+    val jdkPath = cliOptions.getJdkPath()
     LOG.info(if (packages.any { it.isEmpty() }) {
       "All packages will be processed"
     } else {
@@ -86,7 +87,7 @@ class BuildMissingSinceAnnotationsCommand : Command {
       val resultPath = getIdeAnnotationsResultPath(resultsDirectory, currentIdeVersion)
 
       val baseIdeVersion = selectBaseIdeVersion(currentIdeVersion, availableIdes) ?: return
-      IdeDiffCommand().buildIdeDiff(baseIdeVersion, currentIdeVersion, ideFilesBank, packages, resultPath)
+      IdeDiffCommand().buildIdeDiff(baseIdeVersion, currentIdeVersion, ideFilesBank, packages, resultPath, jdkPath)
 
       val previousIdeVersion = availableIdes.filter { it < currentIdeVersion }.max()
           ?: throw RuntimeException("For $currentIdeVersion there is no previous IDE")

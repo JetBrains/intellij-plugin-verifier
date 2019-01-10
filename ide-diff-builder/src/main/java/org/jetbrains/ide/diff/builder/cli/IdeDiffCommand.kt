@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.misc.simpleName
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.SinceApiBuilder
@@ -56,26 +57,29 @@ class IdeDiffCommand : Command {
     val newIdePath = Paths.get(args[1])
     val resultRoot = Paths.get(args[2])
     val packages = cliOptions.getPackages()
+    val jdkPath = cliOptions.getJdkPath()
+    LOG.info("JDK path will be used: $jdkPath")
     LOG.info(if (packages.any { it.isEmpty() }) {
       "All packages will be processed"
     } else {
       "The following packages will be processed: " + packages.joinToString()
     })
 
-    buildIdeDiff(oldIdePath, newIdePath, resultRoot, packages)
+    buildIdeDiff(oldIdePath, newIdePath, resultRoot, packages, jdkPath)
   }
 
   private fun buildIdeDiff(
       oldIdePath: Path,
       newIdePath: Path,
       resultRoot: Path,
-      packages: List<String>
+      packages: List<String>,
+      jdkPath: JdkPath
   ) {
     val oldIde = IdeManager.createManager().createIde(oldIdePath.toFile())
     val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
     LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
 
-    val sinceApiData = SinceApiBuilder(packages).build(oldIde, newIde)
+    val sinceApiData = SinceApiBuilder(packages, jdkPath).build(oldIde, newIde)
     SinceApiWriter(resultRoot, sinceApiData.ideBuildNumber).use {
       it.appendSinceApiData(sinceApiData)
     }
@@ -87,7 +91,8 @@ class IdeDiffCommand : Command {
       newIdeVersion: IdeVersion,
       ideFilesBank: IdeFilesBank,
       packages: List<String>,
-      resultPath: Path
+      resultPath: Path,
+      jdkPath: JdkPath
   ) {
     val oldIdeResult = ideFilesBank.downloadIde(oldIdeVersion)
     return oldIdeResult.ideFileLock.use { oldIdeFileLock ->
@@ -97,7 +102,8 @@ class IdeDiffCommand : Command {
             oldIdeFileLock.file,
             newIdeFileLock.file,
             resultPath,
-            packages
+            packages,
+            jdkPath
         )
       }
     }
@@ -122,7 +128,12 @@ class IdeDiffCommand : Command {
         "If an empty package is specified using \"\", all packages will be processed.")
     var packages: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
 
+    @set:Argument("jdk-path", alias = "jp", description = "Path to JDK home directory (e.g. /usr/lib/jvm/java-8-oracle). If not specified, JAVA_HOME will be used.")
+    var jdkPath: String? = null
+
     fun getPackages(): List<String> = packages.toList()
+
+    fun getJdkPath(): JdkPath = if (jdkPath == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(jdkPath!!)
   }
 
 }
