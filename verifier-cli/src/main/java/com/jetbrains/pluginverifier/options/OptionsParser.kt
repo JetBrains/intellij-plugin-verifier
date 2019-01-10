@@ -3,7 +3,10 @@ package com.jetbrains.pluginverifier.options
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.deleteLogged
+import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
@@ -60,7 +63,10 @@ object OptionsParser {
     return IdeDescriptor.create(idePath, ideVersion, null)
   }
 
-  fun getJdkPath(opts: CmdOpts) = JdkPath(getJdkHomeDir(opts))
+  fun getJdkPath(opts: CmdOpts): JdkPath {
+    val path = opts.runtimeDir
+    return if (path == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(path)
+  }
 
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
@@ -69,26 +75,6 @@ object OptionsParser {
           ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
     }
     return null
-  }
-
-  private fun getJdkHomeDir(opts: CmdOpts): Path {
-    val runtimeDirectory: Path
-
-    if (opts.runtimeDir != null) {
-      runtimeDirectory = Paths.get(opts.runtimeDir)
-      if (!runtimeDirectory.isDirectory) {
-        throw RuntimeException("Specified runtime directory is not a directory: " + opts.runtimeDir)
-      }
-    } else {
-      val javaHome = System.getenv("JAVA_HOME") ?: throw RuntimeException("JAVA_HOME is not specified")
-
-      runtimeDirectory = Paths.get(javaHome)
-      if (!runtimeDirectory.isDirectory) {
-        throw RuntimeException("Invalid JAVA_HOME: $javaHome")
-      }
-    }
-
-    return runtimeDirectory
   }
 
   fun getExternalClassesPackageFilter(opts: CmdOpts): PackageFilter =
