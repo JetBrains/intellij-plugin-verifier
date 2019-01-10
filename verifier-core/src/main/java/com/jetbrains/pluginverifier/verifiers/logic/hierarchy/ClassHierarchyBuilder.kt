@@ -26,7 +26,7 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
 
     val className2Hierarchy = hashMapOf<String, ClassHierarchy>()
 
-    ClassParentsVisitor(context, true).visitClass(classNode, true,
+    createVerificationParentsVisitor(context, true).visitClass(classNode, true,
         onEnter = { parent ->
           val parentOrigin = context.clsResolver.getOriginOfClass(parent.name)
           if (parentOrigin != null) {

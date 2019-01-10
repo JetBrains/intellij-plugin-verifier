@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodOverridden
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodOverridden
 import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.createVerificationParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -19,7 +19,7 @@ class UnstableMethodOverriddenVerifier : MethodVerifier {
       return
     }
 
-    ClassParentsVisitor(ctx, true).visitClass(
+    createVerificationParentsVisitor(ctx, true).visitClass(
         clazz,
         false,
         onEnter = { parent ->
@@ -34,9 +34,7 @@ class UnstableMethodOverriddenVerifier : MethodVerifier {
       method: MethodNode,
       parent: ClassNode
   ): Boolean {
-    @Suppress("UNCHECKED_CAST")
-    val sameMethod = (parent.methods as List<MethodNode>)
-        .firstOrNull { it.name == method.name && it.desc == method.desc }
+    val sameMethod = parent.getMethods().orEmpty().find { it.name == method.name && it.desc == method.desc }
 
     if (sameMethod != null) {
       val methodDeprecated = sameMethod.getDeprecationInfo()
