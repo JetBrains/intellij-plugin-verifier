@@ -123,17 +123,17 @@ class IdeDiffCommand : Command {
   }
 
   open class CliOptions {
+    @set:Argument("jdk-path", alias = "jp", description = "Path to JDK home directory (e.g. /usr/lib/jvm/java-8-oracle). If not specified, JAVA_HOME will be used.")
+    var jdkPathStr: String? = null
+
     @set:Argument("packages", delimiter = ";", description = "Semicolon (';') separated list of packages to be processed. " +
         "By default it is equal to \"org.jetbrains;com.jetbrains;org.intellij;com.intellij\". " +
         "If an empty package is specified using \"\", all packages will be processed.")
-    var packages: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
+    var packagesArray: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
 
-    @set:Argument("jdk-path", alias = "jp", description = "Path to JDK home directory (e.g. /usr/lib/jvm/java-8-oracle). If not specified, JAVA_HOME will be used.")
-    var jdkPath: String? = null
+    fun getPackages(): List<String> = packagesArray.toList()
 
-    fun getPackages(): List<String> = packages.toList()
-
-    fun getJdkPath(): JdkPath = if (jdkPath == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(jdkPath!!)
+    fun getJdkPath(): JdkPath = if (jdkPathStr == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(jdkPathStr!!)
   }
 
 }

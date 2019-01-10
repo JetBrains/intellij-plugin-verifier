@@ -99,7 +99,7 @@ class BuildDiffSequenceCommand : Command {
 
     val ideVersions = args.map { IdeVersion.createIdeVersion(it) }
     checkIdeVersionsAvailable(ideVersions)
-    return Options(idesDir, resultPath, ideVersions, cliOptions.packages.toList(), jdkPath)
+    return Options(idesDir, resultPath, ideVersions, cliOptions.getPackages(), jdkPath)
   }
 
   private fun checkIdeVersionsAvailable(ideVersions: List<IdeVersion>) {
