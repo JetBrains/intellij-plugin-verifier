@@ -66,10 +66,10 @@ class BuildMissingSinceAnnotationsCommand : Command {
       "The following packages will be processed: " + packages.joinToString()
     })
 
-    val idePath = cliOptions.getIdePath()
-    LOG.info("IDE cache directory to use: $idePath")
+    val idesDir = cliOptions.getIdesDirectory()
+    LOG.info("IDE cache directory to use: $idesDir")
 
-    val ideFilesBank = IdeFilesBank(idePath, allIdeRepository, DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE * 10))
+    val ideFilesBank = IdeFilesBank(idesDir, allIdeRepository, DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE * 10))
 
     val availableIdes = allIdeRepository.fetchIndex().asSequence()
         .map { it.version }

@@ -59,7 +59,7 @@ class BuildDiffSequenceCommand : Command {
     @set:Argument("ides-dir", description = "Path where downloaded IDE builds are cached")
     var idesDirPath: String? = null
 
-    fun getIdePath(): Path =
+    fun getIdesDirectory(): Path =
         if (idesDirPath != null) {
           Paths.get(idesDirPath)
         } else {
@@ -84,7 +84,7 @@ class BuildDiffSequenceCommand : Command {
     val cliOptions = CliOptions()
     var args = Args.parse(cliOptions, freeArgs.toTypedArray(), true)
 
-    val idesDir = cliOptions.getIdePath()
+    val idesDir = cliOptions.getIdesDirectory()
     val jdkPath = cliOptions.getJdkPath()
 
     val resultPath = Paths.get(args.first())
