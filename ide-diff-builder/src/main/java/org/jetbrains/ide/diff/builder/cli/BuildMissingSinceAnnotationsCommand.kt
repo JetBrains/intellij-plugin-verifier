@@ -9,8 +9,10 @@ import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.sampullara.cli.Args
+import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.maven.downloadArtifactTo
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -53,8 +55,22 @@ class BuildMissingSinceAnnotationsCommand : Command {
       build-missing-since-annotations [-ides-dir <IDE cache dir] [-jdk-path <path to JDK home>] [-packages "org.some;com.another"] <results directory>
     """.trimIndent()
 
+  open class CliOptions : IdeDiffCommand.CliOptions() {
+    @set:Argument("ides-dir", description = "Path where downloaded IDE builds are cached")
+    var idesDirPath: String? = null
+
+    fun getIdesDirectory(): Path =
+        if (idesDirPath != null) {
+          Paths.get(idesDirPath)
+        } else {
+          Files.createTempDirectory("ides-dir").also {
+            it.toFile().deleteOnExit()
+          }
+        }
+  }
+
   override fun execute(freeArgs: List<String>) {
-    val cliOptions = BuildDiffSequenceCommand.CliOptions()
+    val cliOptions = CliOptions()
     val args = Args.parse(cliOptions, freeArgs.toTypedArray(), false)
 
     val resultsDirectory = Paths.get(args[0])
