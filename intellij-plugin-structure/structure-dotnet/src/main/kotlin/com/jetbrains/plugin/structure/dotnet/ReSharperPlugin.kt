@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 data class ReSharperPlugin(
     override val pluginId: String,
     override val pluginName: String,
-    override val pluginVersion: String,
     override val url: String?,
     override val changeNotes: String?,
     override val description: String?,
@@ -14,6 +13,7 @@ data class ReSharperPlugin(
     override val vendorEmail: String?,
     override val vendorUrl: String?,
 
+    val nonNormalizedVersion: String,
     val summary: String?,
     val authors: List<String>,
     val licenseUrl: String?,
@@ -21,7 +21,8 @@ data class ReSharperPlugin(
     val dependencies: List<DotNetDependency>
 ) : Plugin {
   override val icons: List<PluginIcon> = emptyList()
-  val parsedVersion = NugetSemanticVerison.parse(pluginVersion)
+  val parsedVersion = NugetSemanticVerison.parse(nonNormalizedVersion)
+  override val pluginVersion = parsedVersion.normalizedVersionString
 }
 
 data class DotNetDependency(val id: String, val versionRange: String)

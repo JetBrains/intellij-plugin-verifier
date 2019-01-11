@@ -38,7 +38,7 @@ fun ReSharperPluginBean.toPlugin(): ReSharperPlugin {
     else -> id
   }
   return ReSharperPlugin(
-      pluginId = id, pluginName = pluginName, vendor = vendor, pluginVersion = this.version!!, url = this.url,
+      pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
       changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
       authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
       dependencies = dependencies?.map { DotNetDependency(it.id!!, it.version!!) } ?: emptyList()
