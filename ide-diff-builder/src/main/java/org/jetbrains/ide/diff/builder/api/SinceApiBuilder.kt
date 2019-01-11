@@ -219,8 +219,9 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
   /**
    * Returns `true` if this class is likely an implementation of something.
    * `org.some.ServiceImpl` -> true
+   * `org.some.InterfaceImpl.InnerClass` -> true
    */
-  private fun String.hasImplementationLikeName() = endsWith("Impl")
+  private fun String.hasImplementationLikeName() = endsWith("Impl") || contains("Impl.")
 
   /**
    * Returns `true` if this package is likely a package containing implementation of some APIs.
