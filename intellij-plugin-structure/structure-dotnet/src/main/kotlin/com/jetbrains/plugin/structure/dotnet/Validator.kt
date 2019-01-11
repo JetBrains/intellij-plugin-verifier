@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidIdError
+import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
 
 internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -22,8 +23,15 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
     }
   }
 
-  if (bean.version.isNullOrBlank()) {
+  val version = bean.version
+  if (version == null || version.isBlank()) {
     problems.add(PropertyNotSpecified("version"))
+  } else {
+    try {
+      NugetSemanticVerison.parse(version)
+    } catch (e: IllegalArgumentException) {
+      problems.add(InvalidVersionError(version))
+    }
   }
 
   if (bean.authors.isNullOrBlank()) {

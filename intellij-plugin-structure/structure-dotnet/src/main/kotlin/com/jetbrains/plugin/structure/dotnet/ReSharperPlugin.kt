@@ -21,6 +21,7 @@ data class ReSharperPlugin(
     val dependencies: List<DotNetDependency>
 ) : Plugin {
   override val icons: List<PluginIcon> = emptyList()
+  val parsedVersion = NugetSemanticVerison.parse(pluginVersion)
 }
 
 data class DotNetDependency(val id: String, val versionRange: String)

@@ -6,3 +6,8 @@ object InvalidIdError : PluginProblem() {
   override val level = Level.ERROR
   override val message = "The id parameter in metadata must consist of two parts (company and a plugin name) separated by dot"
 }
+
+class InvalidVersionError(version: String) : PluginProblem() {
+  override val level = Level.ERROR
+  override val message = "Package version $version doesn't represent valid NuGet version"
+}
