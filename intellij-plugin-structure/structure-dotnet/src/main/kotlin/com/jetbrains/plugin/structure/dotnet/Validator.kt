@@ -28,7 +28,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
     problems.add(PropertyNotSpecified("version"))
   } else {
     try {
-      NugetSemanticVerison.parse(version)
+      NugetSemanticVersion.parse(version)
     } catch (e: IllegalArgumentException) {
       problems.add(InvalidVersionError(version))
     }
