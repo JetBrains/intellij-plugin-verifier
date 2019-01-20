@@ -1,30 +1,22 @@
 package added;
 
-import java.util.Map;
-
 public class A {
-  public int f1;
+  //Added with A. No need to register.
+  public int f;
 
-  public String f2;
-  //Private stuff should not be reported as added
-  private int f3;
-
-  public static void m2() {
+  //Added with A. No need to register.
+  public void m() {
   }
 
-  public void m3(Map<Integer, Integer> m) {
-  }
-
-  public void m1() {
-  }
-
-  private void m3() {
-  }
-
+  //Added with A. No need to register.
   public static class C {
   }
 
+  //Added with A. No need to register.
   public class B {
+    //Added with A. No need to register.
+    public class D {
+    }
   }
 
 }

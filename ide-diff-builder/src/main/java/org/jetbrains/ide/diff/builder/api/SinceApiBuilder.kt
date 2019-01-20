@@ -73,29 +73,40 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
         return@processAllClasses true
       }
 
-      val oldClass = oldResolver.safeFindClass(newClass.name)
+      val className = newClass.name
+      val oldClass = oldResolver.safeFindClass(className)
 
       if (oldClass == null) {
         /**
-         * Register the new class and all its stuff.
+         * Register new class/interface signature.
          *
-         * Inner and nested classes will be processed separately
-         * in this `processAllClasses`, so here is no need
-         * to handle them.
+         * Don't register its methods, fields and inner classes because it is unnecessary and clutters UI.
+         * See for discussion: https://youtrack.jetbrains.com/issue/IJI-102.
          */
+        val outerClassName = getOuterClassName(className)
+        if (outerClassName != null && !oldResolver.containsClass(outerClassName)) {
+          //Outer class is already registered
+          return@processAllClasses true
+        }
+
+
         apiData.addSignature(newClass.createClassLocation().toSignature())
-        for (methodNode in newClass.getMethods().orEmpty().filterNot { it.isIgnored() || isMethodOverriding(it, newClass, completeNewResolver) }) {
-          apiData.addSignature(createMethodLocation(newClass, methodNode).toSignature())
-        }
-        for (fieldNode in newClass.getFields().orEmpty().filterNot { it.isIgnored() }) {
-          apiData.addSignature(createFieldLocation(newClass, fieldNode).toSignature())
-        }
         return@processAllClasses true
       }
 
       compareClasses(oldClass, newClass, apiData, completeNewResolver)
       true
     }
+  }
+
+  private fun getOuterClassName(className: String): String? {
+    val packageName = className.substringBeforeLast("/")
+    val simpleName = className.substringAfterLast("/")
+    if ('$' in simpleName) {
+      val outerSimpleName = simpleName.substringBeforeLast('$')
+      return if (packageName.isEmpty()) outerSimpleName else "$packageName/$outerSimpleName"
+    }
+    return null
   }
 
   private fun Resolver.safeFindClass(className: String): ClassNode? {

@@ -31,25 +31,22 @@ class SinceApiBuilderTest : BaseOldNewIdesTest() {
 
   private val expectedNewClasses = listOf(
       "added.A",
-      "added.A.B",
-      "added.A.C"
+      "added.M.B",
+      "added.M.C"
   )
 
   private val expectedNewMethods = listOf(
-      "added.A A()",
-      "added.A void m1()",
-      "added.A void m2()",
-      "added.A void m3(java.util.Map<java.lang.Integer,java.lang.Integer>)",
-
-      "added.A.B B()",
-      "added.A.C C()",
+      "added.M M(int)",
+      "added.M void m1()",
+      "added.M void m2()",
+      "added.M void m3(java.util.Map<java.lang.Integer,java.lang.Integer>)",
 
       "ignored.B void foo(java.lang.Number)"
   )
 
   private val expectedNewFields = listOf(
-      "added.A f1",
-      "added.A f2"
+      "added.M f1",
+      "added.M f2"
   )
 
   private fun checkSinceApi(sinceApiData: SinceApiData) {

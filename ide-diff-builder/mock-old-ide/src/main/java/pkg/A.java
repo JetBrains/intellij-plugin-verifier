@@ -10,7 +10,7 @@ class A<F> {
   public List<String> f3;
   public F f4;
 
-  public A() {
+  public A(int x) {
   }
 
   public void m1() {

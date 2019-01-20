@@ -47,7 +47,9 @@ fun MethodLocation.toSignature(): MethodSignature {
     /**
      * Constructor name is equal to simple class name.
      */
-    methodName = hostClass.className.substringAfterLast('/').substringAfterLast('$')
+    val simpleClassName = hostClass.className.substringAfterLast('/')
+    val isInnerClass = '$' in simpleClassName
+    methodName = if (isInnerClass) simpleClassName.substringAfterLast('$') else simpleClassName
     /**
      * Constructors of static inner classes (aka nested classes)
      * don't contain the enclosing class in the signature,
@@ -57,7 +59,7 @@ fun MethodLocation.toSignature(): MethodSignature {
      * first parameter of enclosing class,
      * but in the external name it must be ignored.
      */
-    if (!modifiers.contains(Modifiers.Modifier.STATIC)) {
+    if (isInnerClass && !modifiers.contains(Modifiers.Modifier.STATIC)) {
       dropFirstParameter = true
     }
   } else {

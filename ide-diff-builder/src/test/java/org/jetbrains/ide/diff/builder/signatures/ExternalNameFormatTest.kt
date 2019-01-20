@@ -53,11 +53,12 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
       "unchanged/A" to "unchanged.A",
       "removed/A" to "removed.A",
       "ignored/A" to "ignored.A",
-      "ignored/B" to "ignored.B"
+      "ignored/B" to "ignored.B",
+      "added/M" to "added.M"
   )
 
   private val methodName2externalName = mapOf(
-      "<init>" to "pkg.A A()",
+      "<init>" to "pkg.A A(int)",
       "m1" to "pkg.A void m1()",
       "m2" to "pkg.A int m2()",
       "m3" to "pkg.A java.lang.String m3()",
