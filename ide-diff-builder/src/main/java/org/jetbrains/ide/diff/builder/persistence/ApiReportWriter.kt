@@ -3,11 +3,9 @@ package org.jetbrains.ide.diff.builder.persistence
 import com.jetbrains.plugin.structure.base.utils.archiveDirectory
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.*
-import org.jetbrains.ide.diff.builder.api.SinceApiData
+import org.jetbrains.ide.diff.builder.api.ApiEvent
+import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
-import org.jetbrains.ide.diff.builder.signatures.ClassSignature
-import org.jetbrains.ide.diff.builder.signatures.FieldSignature
-import org.jetbrains.ide.diff.builder.signatures.MethodSignature
 import java.io.Closeable
 import java.io.Writer
 import java.nio.file.Files
@@ -16,7 +14,7 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 
 /**
- * Utility class used to save [SinceApiData] to external annotations roots.
+ * Utility class used to save [ApiReport] to external annotations roots.
  * [ideBuildNumber] is the IDE build number this root has been built for.
  *
  * Creates necessary package-like directory structure, for example
@@ -31,7 +29,7 @@ import java.util.*
  *
  * This class is not thread safe.
  */
-class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumber: IdeVersion) : Closeable {
+class ApiReportWriter(private val annotationsRoot: Path, private val ideBuildNumber: IdeVersion) : Closeable {
 
   private companion object {
     /**
@@ -57,8 +55,8 @@ class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumb
    * This map is limited in size with [MAX_OPEN_FILES].
    * When more writers get open, the eldest one is closed.
    */
-  private val packageWriters = object : LinkedHashMap<String, SinceApiXmlWriter>() {
-    override fun removeEldestEntry(eldest: Map.Entry<String, SinceApiXmlWriter>): Boolean {
+  private val packageWriters = object : LinkedHashMap<String, ApiXmlWriter>() {
+    override fun removeEldestEntry(eldest: Map.Entry<String, ApiXmlWriter>): Boolean {
       if (size > MAX_OPEN_FILES) {
         val xmlWriter = eldest.value
         xmlWriter.closeLogged()
@@ -92,50 +90,30 @@ class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumb
   }
 
   /**
-   * Appends the specified [sinceApiData] to the output.
+   * Appends the specified [apiReport] to the output.
    */
-  fun appendSinceApiData(sinceApiData: SinceApiData) {
-    val signaturesSequence = sinceApiData.asSequence()
-    appendSignatures(signaturesSequence)
+  fun appendApiReport(apiReport: ApiReport) {
+    appendSignatures(apiReport.asSequence())
   }
 
 
   /**
-   * Appends the specified sequence of [ApiSignature]s
-   * and "available since" versions to the output.
+   * Appends the specified sequence of signatures and corresponding events to the output.
    */
-  fun appendSignatures(sequence: Sequence<Pair<ApiSignature, IdeVersion>>) {
-    for ((apiSignature, sinceVersion) in sequence) {
-      appendSignature(apiSignature, sinceVersion)
+  private fun appendSignatures(sequence: Sequence<Pair<ApiSignature, ApiEvent>>) {
+    for ((apiSignature, apiEvent) in sequence) {
+      appendSignature(apiSignature, apiEvent)
     }
   }
 
   /**
-   * Appends the specified signature [apiSignature] available
-   * since [sinceVersion] to the output.
+   * Appends the specified signature's event to the output.
    */
-  fun appendSignature(apiSignature: ApiSignature, sinceVersion: IdeVersion) {
-    if (apiSignature.isBuggySignature()) {
-      return
-    }
-    getPackageXmlWriter(apiSignature.packageName)
-        .appendSignatureSince(apiSignature, sinceVersion)
+  fun appendSignature(apiSignature: ApiSignature, apiEvent: ApiEvent) {
+    getPackageXmlWriter(apiSignature.packageName).appendSignature(apiSignature, apiEvent)
   }
 
-  //Workaround for IJI-100: Annotations artifacts include @AvailableSince annotations for methods which cannot be called from sources.
-  private fun ApiSignature.isBuggySignature(): Boolean {
-    fun String.isSyntheticLikeName(): Boolean {
-      return contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
-    }
-
-    return when (this) {
-      is ClassSignature -> className.isSyntheticLikeName()
-      is MethodSignature -> methodName == "<clinit>" || methodName.isSyntheticLikeName()
-      is FieldSignature -> fieldName.isSyntheticLikeName()
-    }
-  }
-
-  private fun getPackageXmlWriter(packageName: String): SinceApiXmlWriter {
+  private fun getPackageXmlWriter(packageName: String): ApiXmlWriter {
     allPackages += packageName
     val existing = packageWriters[packageName]
     if (existing != null) {
@@ -143,7 +121,7 @@ class SinceApiWriter(private val annotationsRoot: Path, private val ideBuildNumb
     }
     val xmlFile = resolveAnnotationsXmlFile(packageName)
     val needStart = !xmlFile.exists() || Files.size(xmlFile) == 0L
-    val xmlWriter = SinceApiXmlWriter(xmlFile.createWriter())
+    val xmlWriter = ApiXmlWriter(xmlFile.createWriter())
     if (needStart) {
       xmlWriter.appendXmlStart()
     }

@@ -6,7 +6,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.jetbrains.ide.diff.builder.api.ApiData
-import org.jetbrains.ide.diff.builder.api.SinceApiData
+import org.jetbrains.ide.diff.builder.api.ApiEvent
+import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import java.io.Closeable
 import java.nio.file.Files
@@ -15,15 +16,14 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 /**
- * Utility class used to read [SinceApiData] from [annotationsRoot],
- * which may be a .zip or directory.
+ * Utility class used to read [ApiReport] from [annotationsRoot], which may be a .zip or directory.
  *
  * This class is not thread-safe.
  */
-class SinceApiReader(private val annotationsRoot: Path) : Closeable {
+class ApiReportReader(private val annotationsRoot: Path) : Closeable {
 
   /**
-   * Sequence of [SinceApiXmlReader] for the given [annotationsRoot].
+   * Sequence of [ApiXmlReader] for the given [annotationsRoot].
    * XML readers of this sequence get closed after fully processed.
    */
   private val xmlReaderSequence: XmlReaderSequence
@@ -31,7 +31,7 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
   /**
    * XML reader used to read signature of the current "annotations.xml".
    */
-  private var currentXmlReader: SinceApiXmlReader? = null
+  private var currentXmlReader: ApiXmlReader? = null
 
   init {
     require(annotationsRoot.isDirectory || annotationsRoot.extension == "zip") {
@@ -70,32 +70,25 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
       }
 
   /**
-   * Reads external annotations from [annotationsRoot]
-   * and returns corresponding [SinceApiData].
+   * Reads external annotations from [annotationsRoot] and returns corresponding [ApiReport].
    */
-  fun readSinceApiData(): SinceApiData {
+  fun readApiReport(): ApiReport {
     val ideBuildNumber = readIdeBuildNumber()
-    val versionToApiData = mutableMapOf<IdeVersion, ApiData>()
-    for ((apiSignature, sinceVersion) in readAllSignatures()) {
-      versionToApiData.getOrPut(sinceVersion) { ApiData() }
+    val apiEventToData = mutableMapOf<ApiEvent, ApiData>()
+    for ((apiSignature, apiEvent) in readAllSignatures()) {
+      apiEventToData.getOrPut(apiEvent) { ApiData() }
           .addSignature(apiSignature)
     }
-    return SinceApiData(ideBuildNumber, versionToApiData)
+    return ApiReport(ideBuildNumber, apiEventToData)
   }
 
   /**
-   * Reads all [ApiSignature]s and "available since" versions
-   * recorder in the specified [annotationsRoot].
+   * Sequence of all signatures and corresponding API events recorded in the configured annotations root.
    */
-  fun readAllSignatures(): Sequence<Pair<ApiSignature, IdeVersion>> =
+  fun readAllSignatures(): Sequence<Pair<ApiSignature, ApiEvent>> =
       generateSequence { readNextSignature() }
 
-  /**
-   * Reads next [ApiSignature] and "available since" version
-   * specified in the [annotationsRoot].
-   * Returns `null` if no more unread signatures left in `this` reader.
-   */
-  private fun readNextSignature(): Pair<ApiSignature, IdeVersion>? {
+  private fun readNextSignature(): Pair<ApiSignature, ApiEvent>? {
     while (true) {
       if (currentXmlReader == null) {
         currentXmlReader = xmlReaderSequence.getNextReader()
@@ -122,7 +115,7 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
 }
 
 /**
- * Iterable sequence of [SinceApiXmlReader]s from a specific root.
+ * Iterable sequence of [ApiXmlReader]s from a specific root.
  * - from a zip file - [ZipXmlReaderSequence]
  * - from multiple files - [FilesXmlReaderSequence]
  *
@@ -130,7 +123,7 @@ class SinceApiReader(private val annotationsRoot: Path) : Closeable {
  * the ZipFile will be closed.
  */
 private interface XmlReaderSequence : Closeable {
-  fun getNextReader(): SinceApiXmlReader?
+  fun getNextReader(): ApiXmlReader?
 }
 
 private class FilesXmlReaderSequence(
@@ -140,7 +133,7 @@ private class FilesXmlReaderSequence(
 
   private val filesIterator = xmlFiles.iterator()
 
-  override fun getNextReader(): SinceApiXmlReader? {
+  override fun getNextReader(): ApiXmlReader? {
     if (filesIterator.hasNext()) {
       val nextFile = filesIterator.next()
       val packageName = annotationsRoot
@@ -152,7 +145,7 @@ private class FilesXmlReaderSequence(
           .replace('/', '.')
 
       return Files.newBufferedReader(nextFile).closeOnException {
-        SinceApiXmlReader(packageName, it)
+        ApiXmlReader(packageName, it)
       }
     }
     return null
@@ -175,7 +168,7 @@ private class ZipXmlReaderSequence(val zipFile: ZipFile) : XmlReaderSequence {
     return null
   }
 
-  override fun getNextReader(): SinceApiXmlReader? {
+  override fun getNextReader(): ApiXmlReader? {
     val xmlEntry = getNextXmlEntry() ?: return null
     val packageName = xmlEntry.name
         .toSystemIndependentName()
@@ -183,7 +176,7 @@ private class ZipXmlReaderSequence(val zipFile: ZipFile) : XmlReaderSequence {
         .substringBeforeLast("/")
         .replace('/', '.')
     return zipFile.getInputStream(xmlEntry).bufferedReader().closeOnException {
-      SinceApiXmlReader(packageName, it)
+      ApiXmlReader(packageName, it)
     }
   }
 

@@ -24,12 +24,12 @@ import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Builder of [SinceApiData] by APIs difference of two IDEs.
+ * Builder of [ApiReport] by APIs difference of two IDEs.
  */
-class SinceApiBuilder(private val interestingPackages: List<String>, private val jdkPath: JdkPath) {
+class IdeDiffBuilder(private val interestingPackages: List<String>, private val jdkPath: JdkPath) {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(SinceApiBuilder::class.java)
+    private val LOG = LoggerFactory.getLogger(IdeDiffBuilder::class.java)
 
     /**
      * IDs of plugins to be ignored from processing. Their APIs are not relevant to IDE.
@@ -37,66 +37,79 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
     private val IGNORED_PLUGIN_IDS = setOf("org.jetbrains.kotlin", "org.jetbrains.android")
   }
 
-  fun build(oldIde: Ide, newIde: Ide): SinceApiData {
-    val apiData = ApiData()
+  fun build(oldIde: Ide, newIde: Ide): ApiReport {
+    val introducedData = ApiData()
+    val removedData = ApiData()
     return JdkResolverCreator.createJdkResolver(jdkPath.jdkPath.toFile()).use { jdkResolver ->
-      appendIdeCoreData(oldIde, newIde, apiData, jdkResolver)
-      appendBundledPluginsData(oldIde, newIde, apiData, jdkResolver)
-      SinceApiData(newIde.version, mapOf(newIde.version to apiData))
+      appendIdeCoreData(oldIde, newIde, jdkResolver, introducedData, removedData)
+      appendBundledPluginsData(oldIde, newIde, jdkResolver, introducedData, removedData)
+      val apiEventToData = mapOf(
+          IntroducedIn(newIde.version) to introducedData,
+          RemovedIn(newIde.version) to removedData
+      )
+      ApiReport(newIde.version, apiEventToData)
     }
   }
 
-  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, apiData: ApiData, jdkResolver: Resolver) {
+  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
     IdeResolverCreator.createIdeResolver(oldIde).use { oldIdeResolver ->
       IdeResolverCreator.createIdeResolver(newIde).use { newIdeResolver ->
-        appendData(oldIdeResolver, newIdeResolver, apiData, jdkResolver)
+        appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
       }
     }
   }
 
-  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, apiData: ApiData, jdkResolver: Resolver) {
+  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
     val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
     Closeable { oldPluginClassLocations.closeAll() }.use {
       val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
       Closeable { newPluginClassLocations.closeAll() }.use {
         val oldAllPluginsResolver = oldPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
         val newAllPluginsResolver = newPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
-        appendData(oldAllPluginsResolver, newAllPluginsResolver, apiData, jdkResolver)
+        appendData(oldAllPluginsResolver, newAllPluginsResolver, jdkResolver, introducedData, removedData)
       }
     }
   }
 
-  private fun appendData(oldResolver: Resolver, newResolver: Resolver, apiData: ApiData, jdkResolver: Resolver) {
+  private fun appendData(oldResolver: Resolver, newResolver: Resolver, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
+    val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkResolver)))
     val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
     newResolver.processAllClasses { newClass ->
-      if (newClass.isIgnored()) {
-        return@processAllClasses true
-      }
-
-      val className = newClass.name
-      val oldClass = oldResolver.safeFindClass(className)
-
-      if (oldClass == null) {
-        /**
-         * Register new class/interface signature.
-         *
-         * Don't register its methods, fields and inner classes because it is unnecessary and clutters UI.
-         * See for discussion: https://youtrack.jetbrains.com/issue/IJI-102.
-         */
-        val outerClassName = getOuterClassName(className)
-        if (outerClassName != null && !oldResolver.containsClass(outerClassName)) {
-          //Outer class is already registered
-          return@processAllClasses true
-        }
-
-
-        apiData.addSignature(newClass.createClassLocation().toSignature())
-        return@processAllClasses true
-      }
-
-      compareClasses(oldClass, newClass, apiData, completeNewResolver)
+      appendApiDifference(newClass, completeOldResolver, completeNewResolver, introducedData)
       true
     }
+    oldResolver.processAllClasses { oldClass ->
+      appendApiDifference(oldClass, completeNewResolver, completeOldResolver, removedData)
+      true
+    }
+  }
+
+  private fun appendApiDifference(twoClass: ClassNode, oneResolver: Resolver, twoResolver: Resolver, apiData: ApiData) {
+    if (twoClass.isIgnored()) {
+      return
+    }
+
+    val className = twoClass.name
+    val oneClass = oneResolver.safeFindClass(className)
+
+    if (oneClass == null) {
+      /**
+       * Register class/interface signature.
+       *
+       * Don't register its methods, fields and inner classes because it is unnecessary and clutters UI.
+       * See for discussion: https://youtrack.jetbrains.com/issue/IJI-102.
+       */
+      val outerClassName = getOuterClassName(className)
+      if (outerClassName != null && !oneResolver.containsClass(outerClassName)) {
+        //Outer class is already registered
+        return
+      }
+
+      apiData.addSignature(twoClass.createClassLocation().toSignature())
+      return
+    }
+
+    apiData.appendApiDifference(oneClass, twoClass, twoResolver)
   }
 
   private fun getOuterClassName(className: String): String? {
@@ -170,8 +183,7 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
   /**
    * Finds class files of all plugins bundled into the [ide].
    *
-   * The results must be [closed] [IdePluginClassesLocations.close]
-   * when no more required to free up possibly occupied disk space:
+   * The results must be closed when no more required to free up possibly occupied disk space:
    * plugins might have been extracted to a temporary directory.
    */
   private fun readBundledPluginsClassesLocations(ide: Ide): List<IdePluginClassesLocations> =
@@ -189,31 +201,33 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
     null
   }
 
-  private fun compareClasses(
-      oldClass: ClassNode,
-      newClass: ClassNode,
-      apiDiff: ApiData,
-      completeNewResolver: Resolver
+  /**
+   * Appends all signatures present in [twoClass] that are not present in [oneClass].
+   */
+  private fun ApiData.appendApiDifference(
+      oneClass: ClassNode,
+      twoClass: ClassNode,
+      twoResolver: Resolver
   ) {
-    for (newMethod in newClass.getMethods().orEmpty()) {
-      if (newMethod.isIgnored() || isMethodOverriding(newMethod, newClass, completeNewResolver)) {
+    for (twoMethod in twoClass.getMethods().orEmpty()) {
+      if (twoMethod.isIgnored() || isMethodOverriding(twoMethod, twoClass, twoResolver)) {
         continue
       }
 
-      val oldMethod = oldClass.getMethods()?.find { it.name == newMethod.name && it.desc == newMethod.desc }
-      if (oldMethod == null) {
-        apiDiff.addSignature(createMethodLocation(newClass, newMethod).toSignature())
+      val oneMethod = oneClass.getMethods()?.find { it.name == twoMethod.name && it.desc == twoMethod.desc }
+      if (oneMethod == null) {
+        addSignature(createMethodLocation(twoClass, twoMethod).toSignature())
       }
     }
 
-    for (newField in newClass.getFields().orEmpty()) {
-      if (newField.isIgnored()) {
+    for (twoField in twoClass.getFields().orEmpty()) {
+      if (twoField.isIgnored()) {
         continue
       }
 
-      val oldField = oldClass.getFields()?.find { it.name == newField.name && it.desc == newField.desc }
-      if (oldField == null) {
-        apiDiff.addSignature(createFieldLocation(newClass, newField).toSignature())
+      val oneField = oneClass.getFields()?.find { it.name == twoField.name && it.desc == twoField.desc }
+      if (oneField == null) {
+        addSignature(createFieldLocation(twoClass, twoField).toSignature())
       }
     }
   }
@@ -221,6 +235,9 @@ class SinceApiBuilder(private val interestingPackages: List<String>, private val
   private fun String.isSyntheticLikeName() = contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
 
   private fun String.hasInterestingPackage(): Boolean {
+    if (interestingPackages.isEmpty()) {
+      return true
+    }
     val packageName = getJavaPackageName(this)
     return interestingPackages.any { p ->
       p.isEmpty() || p == packageName || packageName.startsWith("$p.")

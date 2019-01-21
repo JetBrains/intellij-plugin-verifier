@@ -2,6 +2,9 @@ package org.jetbrains.ide.diff.builder.persistence
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.checkEquals
+import org.jetbrains.ide.diff.builder.api.ApiEvent
+import org.jetbrains.ide.diff.builder.api.IntroducedIn
+import org.jetbrains.ide.diff.builder.api.RemovedIn
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.jetbrains.ide.diff.builder.signatures.parseApiSignature
 import org.jetbrains.ide.diff.builder.signatures.unescapeHtml
@@ -11,12 +14,9 @@ import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamReader
 
 /**
- * Utility class used to read `annotations.xml` files corresponding to package [packageName].
+ * Utility class used to read `annotations.xml` corresponding to package [packageName].
  */
-class SinceApiXmlReader(
-    private val packageName: String,
-    private val reader: Reader
-) : Closeable {
+class ApiXmlReader(private val packageName: String, private val reader: Reader) : Closeable {
 
   private companion object {
     val xmlInputFactory: XMLInputFactory by lazy {
@@ -27,19 +27,18 @@ class SinceApiXmlReader(
   private val xmlInput = xmlInputFactory.createXMLStreamReader(reader)
 
   /**
-   * Reads next [ApiSignature] and [IdeVersion] where this signature
-   * was first introduced, from the configured stream.
+   * Reads next [ApiSignature] and corresponding [ApiEvent].
    * Returns `null` if no more signatures left unread.
    */
-  fun readNextSignature(): Pair<ApiSignature, IdeVersion>? {
+  fun readNextSignature(): Pair<ApiSignature, ApiEvent>? {
     if (!xmlInput.hasNext()) {
       return null
     }
 
     var apiSignature: ApiSignature? = null
-    var insideAnnotation = false
+    var annotationName: String? = null
 
-    while (xmlInput.hasNext()) {
+    whileLoop@ while (xmlInput.hasNext()) {
       xmlInput.next()
       if (xmlInput.eventType == XMLStreamReader.START_ELEMENT) {
         when (xmlInput.localName) {
@@ -50,12 +49,11 @@ class SinceApiXmlReader(
           }
           "annotation" -> {
             checkEquals("name", xmlInput.getAttributeLocalName(0))
-            checkEquals(AVAILABLE_SINCE_ANNOTATION_NAME, xmlInput.getAttributeValue(0))
-            insideAnnotation = true
+            annotationName = xmlInput.getAttributeValue(0)
           }
           "val" -> {
             checkNotNull(apiSignature) { "<val> before <item>" }
-            check(insideAnnotation) { "<val> before <annotation>" }
+            checkNotNull(annotationName) { "<val> before <annotation>" }
             checkEquals("name", xmlInput.getAttributeLocalName(0))
             checkEquals("value", xmlInput.getAttributeValue(0))
 
@@ -63,15 +61,20 @@ class SinceApiXmlReader(
             val value = xmlInput.getAttributeValue(1).unescapeHtml()
 
             check(value.startsWith('\"') && value.endsWith('\"')) { value }
-            val sinceVersion = IdeVersion.createIdeVersion(value.trim('\"'))
-            return apiSignature!! to sinceVersion
+            val clearValue = value.trim('\"')
+            val apiEvent = when (annotationName) {
+              AVAILABLE_SINCE_ANNOTATION_NAME -> IntroducedIn(IdeVersion.createIdeVersion(clearValue))
+              AVAILABLE_UNTIL_ANNOTATION_NAME -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
+              else -> continue@whileLoop
+            }
+            return apiSignature!! to apiEvent
           }
         }
       }
       if (xmlInput.eventType == XMLStreamReader.END_ELEMENT) {
         when (xmlInput.localName) {
           "item" -> apiSignature = null
-          "annotation" -> insideAnnotation = false
+          "annotation" -> annotationName = null
         }
       }
     }

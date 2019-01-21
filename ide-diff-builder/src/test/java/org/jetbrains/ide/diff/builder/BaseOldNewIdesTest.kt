@@ -1,5 +1,9 @@
 package org.jetbrains.ide.diff.builder
 
+import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import org.jetbrains.ide.diff.builder.api.ApiReport
+import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
 import java.io.File
 
 abstract class BaseOldNewIdesTest {
@@ -18,6 +22,17 @@ abstract class BaseOldNewIdesTest {
         check(it.isDirectory)
       }
     }
+  }
+
+  fun buildApiReport(): ApiReport {
+    val oldIdeFile = getOldIdeFile()
+    val newIdeFile = getNewIdeFile()
+
+    val oldIde = IdeManager.createManager().createIde(oldIdeFile)
+    val newIde = IdeManager.createManager().createIde(newIdeFile)
+
+    val jdkPath = JdkPath.createJavaHomeJdkPath()
+    return IdeDiffBuilder(emptyList(), jdkPath).build(oldIde, newIde)
   }
 
 }

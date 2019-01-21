@@ -8,17 +8,14 @@ import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.api.SinceApiBuilder
-import org.jetbrains.ide.diff.builder.persistence.SinceApiWriter
+import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
+import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * Builds API diff between two IDE versions,
- * and saves the result as external "available since"
- * annotations root with since-build equal to the second IDE.
- * @see [help]
+ * Builds API diff between two IDE builds and saves the result as external annotations root.
  */
 class IdeDiffCommand : Command {
   companion object {
@@ -30,8 +27,7 @@ class IdeDiffCommand : Command {
 
   override val help
     get() = """
-      Builds API diff between two IDE versions, and saves the result as
-      external "available since <second IDE version>" annotations root.
+      Builds API diff between two IDE versions, and saves the result as external annotations root.
 
       ide-diff [-packages <packages>] <old IDE path> <new IDE path> <result path>
 
@@ -42,8 +38,7 @@ class IdeDiffCommand : Command {
       For example:
       java -jar diff-builder.jar ide-diff path/to/IU-183.1 path/to/IU-183.567 path/to/result
 
-      will build and save "available since" IU-183.567 external annotations
-      to path/to/result, which can be a directory or a zip file.
+      will build and save external annotations to path/to/result, which can be a directory or a zip file.
     """.trimIndent()
 
   override fun execute(freeArgs: List<String>) {
@@ -79,9 +74,9 @@ class IdeDiffCommand : Command {
     val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
     LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
 
-    val sinceApiData = SinceApiBuilder(packages, jdkPath).build(oldIde, newIde)
-    SinceApiWriter(resultRoot, sinceApiData.ideBuildNumber).use {
-      it.appendSinceApiData(sinceApiData)
+    val apiReport = IdeDiffBuilder(packages, jdkPath).build(oldIde, newIde)
+    ApiReportWriter(resultRoot, apiReport.ideBuildNumber).use {
+      it.appendApiReport(apiReport)
     }
     LOG.info("New API in ${newIde.version} compared to ${oldIde.version} is saved to external annotations root ${resultRoot.simpleName}")
   }

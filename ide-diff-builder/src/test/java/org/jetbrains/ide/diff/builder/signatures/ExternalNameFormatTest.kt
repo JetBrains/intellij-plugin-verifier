@@ -12,15 +12,12 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
 
 /**
  * Asserts that string presentations for API elements found
- * in bytecode are evaluated according to format expected
+ * in byte-code are evaluated according to format expected
  * by the external annotations system,
- * which is [com.intellij.psi.util.PsiFormatUtil.getExternalName].
- *
- * @see [formatAsExternalName]
+ * which is `com.intellij.psi.util.PsiFormatUtil.getExternalName`.
  */
 class ExternalNameFormatTest : BaseOldNewIdesTest() {
 
@@ -44,45 +41,16 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
   }
 
   private val className2externalName = mapOf(
-      "pkg/A" to "pkg.A",
-      "pkg/B" to "pkg.B",
-      "pkg/C" to "pkg.C",
-      "pkg/C\$D" to "pkg.C.D",
-      "pkg/E" to "pkg.E",
-      "pkg/E\$F" to "pkg.E.F",
-      "unchanged/A" to "unchanged.A",
-      "removed/A" to "removed.A",
-      "ignored/A" to "ignored.A",
-      "ignored/B" to "ignored.B",
-      "added/M" to "added.M"
-  )
-
-  private val methodName2externalName = mapOf(
-      "<init>" to "pkg.A A(int)",
-      "m1" to "pkg.A void m1()",
-      "m2" to "pkg.A int m2()",
-      "m3" to "pkg.A java.lang.String m3()",
-      "m4" to "pkg.A void m4(java.lang.String)",
-      "m5" to "pkg.A void m5(java.util.List<java.lang.String>)",
-      "m6" to "pkg.A T m6()",
-      "m7" to "pkg.A void m7(T)",
-      "m8" to "pkg.A T m8(S)",
-      "m9" to "pkg.A void m9(java.util.Map<java.lang.String,java.lang.Integer>)",
-      "m10" to "pkg.A void m10(java.util.Map<K,V>)",
-      "m11" to "pkg.A int[] m11()",
-      "m12" to "pkg.A java.lang.String[][] m12()",
-      "m13" to "pkg.A java.util.List<java.lang.Comparable<? extends java.lang.Number>> m13()",
-      "m14" to "pkg.A java.lang.Class<? extends E> m14()",
-      "m15" to "pkg.A java.lang.Class<? super E> m15()",
-      "m16" to "pkg.A java.util.Map<java.lang.Object,java.lang.String> m16(java.lang.Object, java.util.Map<java.lang.Object,java.lang.String>, T)",
-      "m17" to "pkg.A void m17(java.lang.Class<?>, java.lang.Class<?>[][])"
+      "same/Same" to "same.Same",
+      "same/Same\$Inner" to "same.Same.Inner",
+      "same/Same\$Nested" to "same.Same.Nested"
   )
 
   private val fieldName2externalName = mapOf(
-      "f1" to "pkg.A f1",
-      "f2" to "pkg.A f2",
-      "f3" to "pkg.A f3",
-      "f4" to "pkg.A f4"
+      "f1" to "same.Same f1",
+      "f2" to "same.Same f2",
+      "f3" to "same.Same f3",
+      "f4" to "same.Same f4"
   )
 
   @Test
@@ -92,23 +60,36 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
   }
 
   @Test
-  fun `check method names`() {
-    val aClass = ideResolver.findClass("pkg/A")!!
-    val methodNodes = aClass.getMethods().orEmpty()
-    checkMethods(methodNodes, aClass)
+  fun `check many signatures from A`() {
+    val aClass = ideResolver.findClass("same/Same")!!
+    val methodName2externalName = mapOf(
+        "<init>" to "same.Same Same(int)",
+        "m1" to "same.Same void m1()",
+        "m2" to "same.Same int m2()",
+        "m3" to "same.Same java.lang.String m3()",
+        "m4" to "same.Same void m4(java.lang.String)",
+        "m5" to "same.Same void m5(java.util.List<java.lang.String>)",
+        "m6" to "same.Same T m6()",
+        "m7" to "same.Same void m7(T)",
+        "m8" to "same.Same T m8(S)",
+        "m9" to "same.Same void m9(java.util.Map<java.lang.String,java.lang.Integer>)",
+        "m10" to "same.Same void m10(java.util.Map<K,V>)",
+        "m11" to "same.Same int[] m11()",
+        "m12" to "same.Same java.lang.String[][] m12()",
+        "m13" to "same.Same java.util.List<java.lang.Comparable<? extends java.lang.Number>> m13()",
+        "m14" to "same.Same java.lang.Class<? extends E> m14()",
+        "m15" to "same.Same java.lang.Class<? super E> m15()",
+        "m16" to "same.Same java.util.Map<java.lang.Object,java.lang.String> m16(java.lang.Object, java.util.Map<java.lang.Object,java.lang.String>, T)",
+        "m17" to "same.Same void m17(java.lang.Class<?>, java.lang.Class<?>[][])"
+    )
+    checkMethods(aClass, methodName2externalName)
   }
 
   @Test
   fun `check field names`() {
-    val aClass = ideResolver.findClass("pkg/A")!!
+    val aClass = ideResolver.findClass("same/Same")!!
     val fieldNodes = aClass.getFields().orEmpty()
     checkFields(fieldNodes, aClass)
-  }
-
-  @Test
-  fun `check default constructor of an inner class name`() {
-    val innerClass = ideResolver.findClass("pkg/E\$F")!!
-    checkEmptyConstructorOfInnerClass(innerClass)
   }
 
   /**
@@ -125,26 +106,27 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
    * descriptor = (LA;)V
    * but external name must be A.B B()
    */
-  private fun checkEmptyConstructorOfInnerClass(innerClass: ClassNode) {
-    val emptyInnerCtr = innerClass.getMethods()!!.find { it.name == "<init>" }!!
-    assertEquals("(Lpkg/E;)V", emptyInnerCtr.desc)
-
-    val externalName = createMethodLocation(innerClass, emptyInnerCtr).toSignature().externalPresentation
-    assertEquals("pkg.E.F F()", externalName)
+  @Test
+  fun `check default constructor of an inner class name`() {
+    val innerClass = ideResolver.findClass("same/Same\$Inner")!!
+    val nestedClass = ideResolver.findClass("same/Same\$Nested")!!
+    checkMethods(innerClass, mapOf("<init>" to "same.Same.Inner Inner()"))
+    checkMethods(nestedClass, mapOf("<init>" to "same.Same.Nested Nested()"))
   }
 
   private fun checkClasses(classNodes: List<ClassNode>) {
-    for (classNode in classNodes) {
-      val expectedName = className2externalName[classNode.name]
-      assertNotNull(classNode.name, expectedName)
+    for ((className, expectedName) in className2externalName) {
+      val classNode = classNodes.find { it.name == className }
+      assertNotNull(className, classNode)
+      assertNotNull(classNode!!.name, expectedName)
 
       val actualName = classNode.createClassLocation().toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }
 
-  private fun checkMethods(methodNodes: List<MethodNode>, aClass: ClassNode) {
-    for (methodNode in methodNodes) {
+  private fun checkMethods(aClass: ClassNode, methodName2externalName: Map<String, String>) {
+    for (methodNode in aClass.getMethods().orEmpty()) {
       val expectedName = methodName2externalName[methodNode.name]
       assertNotNull(methodNode.name, expectedName)
 
