@@ -1,0 +1,4 @@
+package ignored;
+
+class IgnoredRemovedPackagePrivateClass {
+}

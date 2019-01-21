@@ -1,16 +1,16 @@
-package pkg;
+package same;
 
 import java.util.List;
 import java.util.Map;
 
-class A<F> {
+class Same<F> {
 
   public int f1;
   public String f2;
   public List<String> f3;
   public F f4;
 
-  public A(int x) {
+  public Same(int x) {
   }
 
   public void m1() {
@@ -74,5 +74,10 @@ class A<F> {
   public void m17(Class<?> c, Class<?>[][] cs) {
   }
 
+  public static class Nested {
+  }
+
+  public class Inner {
+  }
 
 }
