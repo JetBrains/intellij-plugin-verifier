@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.misc.readText
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
-import org.jetbrains.ide.diff.builder.persistence.SinceApiReader
-import org.jetbrains.ide.diff.builder.persistence.SinceApiWriter
+import org.jetbrains.ide.diff.builder.persistence.ApiReportReader
+import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -17,23 +17,23 @@ import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.util.zip.ZipFile
 
-class SinceApiSerializationTest : BaseOldNewIdesTest() {
+class ApiReportSerializationTest : BaseOldNewIdesTest() {
 
   @Rule
   @JvmField
   val tempFolder = TemporaryFolder()
 
-  private lateinit var sinceApiData: SinceApiData
+  private lateinit var apiReport: ApiReport
 
   @Before
   fun build() {
-    sinceApiData = SinceApiBuilderTest.buildSinceApi()
+    apiReport = IdeDiffBuilderTest().buildApiReport()
   }
 
   @Test
-  fun `build, save and read new API data as directory`() {
+  fun `build, save and read API report as directory`() {
     val root = tempFolder.newFolder().toPath()
-    saveAndRead(sinceApiData, root)
+    saveAndRead(apiReport, root)
     assertTrue(root.isDirectory)
     val annotationsXml = root.resolve("added/annotations.xml")
     assertTrue(annotationsXml.fileSize > SpaceAmount.ZERO_SPACE)
@@ -42,9 +42,9 @@ class SinceApiSerializationTest : BaseOldNewIdesTest() {
   }
 
   @Test
-  fun `build, save and read new API data as zip`() {
-    val root = tempFolder.newFile("since.zip").toPath()
-    saveAndRead(sinceApiData, root)
+  fun `build, save and read API report as zip`() {
+    val root = tempFolder.newFile("report.zip").toPath()
+    saveAndRead(apiReport, root)
     assertEquals("zip", root.extension)
     ZipFile(root.toFile()).use { zipFile ->
       assertTrue(zipFile.entries().asSequence().count() > 0)
@@ -53,19 +53,19 @@ class SinceApiSerializationTest : BaseOldNewIdesTest() {
     }
   }
 
-  private fun saveAndRead(sinceApiData: SinceApiData, root: Path) {
-    SinceApiWriter(root, sinceApiData.ideBuildNumber).use {
-      it.appendSinceApiData(sinceApiData)
+  private fun saveAndRead(apiReport: ApiReport, root: Path) {
+    ApiReportWriter(root, apiReport.ideBuildNumber).use {
+      it.appendApiReport(apiReport)
     }
 
-    val readSinceApiData = SinceApiReader(root).use {
-      it.readSinceApiData()
+    val readApiReport = ApiReportReader(root).use {
+      it.readApiReport()
     }
 
-    assertEquals(sinceApiData.versionToApiData.keys, readSinceApiData.versionToApiData.keys)
+    assertEquals(apiReport.apiEventToData.keys, readApiReport.apiEventToData.keys)
 
-    val apiData = sinceApiData.versionToApiData.values.first()
-    val readApiData = readSinceApiData.versionToApiData.values.first()
+    val apiData = apiReport.apiEventToData.values.first()
+    val readApiData = readApiReport.apiEventToData.values.first()
 
     assertEquals(apiData.apiSignatures, readApiData.apiSignatures)
   }
