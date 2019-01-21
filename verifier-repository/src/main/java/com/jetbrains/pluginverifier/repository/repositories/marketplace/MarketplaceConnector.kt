@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.repository.repositories.marketplace
 import com.google.gson.annotations.SerializedName
 import retrofit2.Call
 import retrofit2.http.GET
-import retrofit2.http.POST
 import retrofit2.http.Query
 
 /**
@@ -20,7 +19,7 @@ internal interface MarketplaceConnector {
   @GET("/plugin/updates")
   fun getPluginUpdates(@Query("xmlId") xmlId: String): Call<JsonUpdatesIdsHolder>
 
-  @POST("/manager/getUpdateInfosForIdsBetween")
+  @GET("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIdsBetween(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<JsonUpdateInfo>>
 
   /**
