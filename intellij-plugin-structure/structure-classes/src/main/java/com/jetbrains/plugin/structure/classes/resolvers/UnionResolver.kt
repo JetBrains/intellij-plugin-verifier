@@ -1,43 +1,33 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
-import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
-import java.io.IOException
 
 /**
- * [Resolver] that unites several [resolvers] with the class-path like order
- * of the classes [resolution] [findClass].
+ * [Resolver] that unites several [resolvers] with the Java classpath search strategy.
  */
 class UnionResolver private constructor(private val resolvers: List<Resolver>) : Resolver() {
 
-  private val classToResolver = hashMapOf<String, Resolver>()
+  private val packageToResolvers: Map<String, List<Resolver>> = buildPackageToResolvers()
 
-  private val packageSet = PackageSet()
-
-  init {
-    /**
-     * We want to support the class path search order,
-     * so the `class-name -> resolver` mapping should prefer
-     * the first resolver in the [resolvers] list in
-     * case several resolvers contain the same class.
-     */
-    for (resolver in resolvers.asReversed()) {
-      for (className in resolver.allClasses) {
-        classToResolver[className] = resolver
+  private fun buildPackageToResolvers(): Map<String, List<Resolver>> {
+    val result = hashMapOf<String, MutableList<Resolver>>()
+    for (resolver in resolvers) {
+      for (packageName in resolver.allPackages) {
+        result.getOrPut(packageName) { arrayListOf() } += resolver
       }
-      packageSet.addPackages(resolver.allPackages)
     }
+    return result
   }
 
   override val allClasses
-    get() = classToResolver.keys
+    get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
 
   override val allPackages
-    get() = packageSet.getAllPackages()
+    get() = packageToResolvers.keys
 
   override val isEmpty
-    get() = classToResolver.isEmpty()
+    get() = packageToResolvers.isEmpty()
 
   override val classPath
     get() = resolvers.flatMap { it.classPath }
@@ -46,20 +36,48 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
     get() = resolvers.flatMap { it.finalResolvers }
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
-      resolvers
-          .asSequence()
-          .all { it.processAllClasses(processor) }
+      resolvers.asSequence().all { it.processAllClasses(processor) }
 
-  override fun containsClass(className: String) = className in classToResolver
+  private fun getPackageName(className: String) = className.substringBeforeLast('/', "")
 
-  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  override fun containsClass(className: String): Boolean {
+    val packageName = getPackageName(className)
+    val resolvers = packageToResolvers[packageName]
+    return resolvers != null && resolvers.any { it.containsClass(className) }
+  }
 
-  @Throws(IOException::class)
-  override fun findClass(className: String) = classToResolver[className]?.findClass(className)
+  override fun containsPackage(packageName: String) = packageName in packageToResolvers
 
-  override fun getClassLocation(className: String) = classToResolver[className]?.getClassLocation(className)
+  override fun findClass(className: String): ClassNode? {
+    val packageName = getPackageName(className)
+    val resolvers = packageToResolvers[packageName]
+    if (resolvers == null || resolvers.isEmpty()) {
+      return null
+    }
+    for (resolver in resolvers) {
+      val classNode = resolver.findClass(className)
+      if (classNode != null) {
+        return classNode
+      }
+    }
+    return null
+  }
 
-  @Throws(IOException::class)
+  override fun getClassLocation(className: String): Resolver? {
+    val packageName = getPackageName(className)
+    val resolvers = packageToResolvers[packageName]
+    if (resolvers == null || resolvers.isEmpty()) {
+      return null
+    }
+    for (resolver in resolvers) {
+      val classLocation = resolver.getClassLocation(className)
+      if (classLocation != null) {
+        return classLocation
+      }
+    }
+    return null
+  }
+
   override fun close() {
     resolvers.closeAll()
   }
@@ -69,9 +87,7 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
   companion object {
 
     @JvmStatic
-    fun create(vararg resolvers: Resolver): Resolver {
-      return create(resolvers.asIterable())
-    }
+    fun create(vararg resolvers: Resolver): Resolver = create(resolvers.asIterable())
 
     @JvmStatic
     fun create(resolvers: Iterable<Resolver>): Resolver {
@@ -80,10 +96,6 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
         nonEmpty.isEmpty() -> EmptyResolver
         nonEmpty.size == 1 -> nonEmpty[0]
         else -> {
-          /**
-           * Remove duplicate Resolvers built
-           * from the same class paths.
-           */
           /**
            * Remove duplicate Resolvers built
            * from the same class paths.

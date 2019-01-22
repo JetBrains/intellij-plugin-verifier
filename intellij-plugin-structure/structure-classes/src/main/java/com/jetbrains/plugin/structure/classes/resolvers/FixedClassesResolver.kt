@@ -3,20 +3,28 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
+import java.util.concurrent.atomic.AtomicInteger
 
-class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolver() {
+class FixedClassesResolver private constructor(private val classes: Map<String, ClassNode>) : Resolver() {
+
   companion object {
-    fun create(classes: List<ClassNode>): Resolver {
-      return FixedClassesResolver(classes.asReversed().associateBy { it.name })
-    }
+    fun create(vararg classes: ClassNode): Resolver = create(classes.toList())
+
+    fun create(classes: Iterable<ClassNode>): Resolver =
+        FixedClassesResolver(classes.reversed().associateBy { it.name })
+
+    private val uniqueClassPathSequenceNumber = AtomicInteger()
   }
 
   private val packageSet = PackageSet()
+
+  private val uniqueClassPath: File
 
   init {
     for (className in classes.keys) {
       packageSet.addPackagesOfClass(className)
     }
+    uniqueClassPath = File("fixed-classes-resolver-${uniqueClassPathSequenceNumber.getAndIncrement()}")
   }
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
@@ -38,7 +46,7 @@ class FixedClassesResolver(private val classes: Map<String, ClassNode>) : Resolv
     get() = classes.isEmpty()
 
   override val classPath
-    get() = emptyList<File>()
+    get() = listOf(uniqueClassPath)
 
   override val finalResolvers
     get() = listOf(this)
