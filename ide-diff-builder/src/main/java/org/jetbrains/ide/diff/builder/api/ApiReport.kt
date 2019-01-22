@@ -18,10 +18,9 @@ data class ApiReport(val ideBuildNumber: IdeVersion, val apiEventToData: Map<Api
           }
 
   /**
-   * Returns `true` if `this` contains [apiSignature] associated
-   * with some [IdeVersion].
+   * Returns all API events associated with the signature in this report.
    */
-  operator fun contains(apiSignature: ApiSignature) =
-      apiEventToData.values.any { apiSignature in it }
+  operator fun get(apiSignature: ApiSignature): List<ApiEvent> =
+      apiEventToData.filter { it.value.contains(apiSignature) }.map { it.key }
 
 }
