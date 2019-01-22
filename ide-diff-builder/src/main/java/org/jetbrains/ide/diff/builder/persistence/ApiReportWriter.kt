@@ -29,7 +29,7 @@ import java.util.*
  *
  * This class is not thread safe.
  */
-class ApiReportWriter(private val annotationsRoot: Path, private val ideBuildNumber: IdeVersion) : Closeable {
+class ApiReportWriter(private val reportPath: Path, private val ideBuildNumber: IdeVersion) : Closeable {
 
   private companion object {
     /**
@@ -40,7 +40,7 @@ class ApiReportWriter(private val annotationsRoot: Path, private val ideBuildNum
   }
 
   init {
-    require(annotationsRoot.extension == "" || annotationsRoot.extension == "zip") {
+    require(reportPath.extension == "" || reportPath.extension == "zip") {
       "Only directory or .zip roots are supported"
     }
   }
@@ -69,16 +69,16 @@ class ApiReportWriter(private val annotationsRoot: Path, private val ideBuildNum
   /**
    * Whether it's necessary to save the result to zip.
    */
-  private val saveZip = annotationsRoot.extension == "zip"
+  private val saveZip = reportPath.extension == "zip"
 
   /**
-   * Original [annotationsRoot] if it is a directory,
+   * Original [reportPath] if it is a directory,
    * or a temporary directory.
    */
   private val rootDirectory = if (saveZip) {
-    annotationsRoot.resolveSibling(annotationsRoot.simpleName + ".dir")
+    reportPath.resolveSibling(reportPath.simpleName + ".dir")
   } else {
-    annotationsRoot
+    reportPath
   }
 
   init {
@@ -166,7 +166,7 @@ class ApiReportWriter(private val annotationsRoot: Path, private val ideBuildNum
 
     if (saveZip) {
       try {
-        archiveDirectory(rootDirectory.toFile(), annotationsRoot.toFile(), false)
+        archiveDirectory(rootDirectory.toFile(), reportPath.toFile(), false)
       } finally {
         rootDirectory.deleteLogged()
       }

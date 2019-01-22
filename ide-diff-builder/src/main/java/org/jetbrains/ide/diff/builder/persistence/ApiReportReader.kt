@@ -16,14 +16,14 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 /**
- * Utility class used to read [ApiReport] from [annotationsRoot], which may be a .zip or directory.
+ * Utility class used to read [ApiReport] from [reportPath], which may be a .zip or directory.
  *
  * This class is not thread-safe.
  */
-class ApiReportReader(private val annotationsRoot: Path) : Closeable {
+class ApiReportReader(private val reportPath: Path) : Closeable {
 
   /**
-   * Sequence of [ApiXmlReader] for the given [annotationsRoot].
+   * Sequence of [ApiXmlReader] for the given [reportPath].
    * XML readers of this sequence get closed after fully processed.
    */
   private val xmlReaderSequence: XmlReaderSequence
@@ -34,7 +34,7 @@ class ApiReportReader(private val annotationsRoot: Path) : Closeable {
   private var currentXmlReader: ApiXmlReader? = null
 
   init {
-    require(annotationsRoot.isDirectory || annotationsRoot.extension == "zip") {
+    require(reportPath.isDirectory || reportPath.extension == "zip") {
       "Only directory or .zip roots are supported"
     }
     xmlReaderSequence = buildXmlReaderSequence()
@@ -44,33 +44,33 @@ class ApiReportReader(private val annotationsRoot: Path) : Closeable {
    * IDE build number this root was built for.
    */
   fun readIdeBuildNumber(): IdeVersion {
-    val buildNumberStr = if (annotationsRoot.extension == "zip") {
-      ZipFile(annotationsRoot.toFile()).use {
+    val buildNumberStr = if (reportPath.extension == "zip") {
+      ZipFile(reportPath.toFile()).use {
         val entry = it.getEntry(BUILD_TXT_FILE_NAME)
-            ?: throw IllegalArgumentException("$annotationsRoot must contain $BUILD_TXT_FILE_NAME")
+            ?: throw IllegalArgumentException("$reportPath must contain $BUILD_TXT_FILE_NAME")
         it.getInputStream(entry).bufferedReader().readLine()
       }
     } else {
-      annotationsRoot.resolve(BUILD_TXT_FILE_NAME).readText()
+      reportPath.resolve(BUILD_TXT_FILE_NAME).readText()
     }
     return IdeVersion.createIdeVersionIfValid(buildNumberStr)
-        ?: throw IllegalArgumentException("Invalid IDE build number $buildNumberStr written in $BUILD_TXT_FILE_NAME of $annotationsRoot")
+        ?: throw IllegalArgumentException("Invalid IDE build number $buildNumberStr written in $BUILD_TXT_FILE_NAME of $reportPath")
   }
 
   private fun buildXmlReaderSequence(): XmlReaderSequence =
-      if (annotationsRoot.extension == "zip") {
-        ZipXmlReaderSequence(ZipFile(annotationsRoot.toFile()))
+      if (reportPath.extension == "zip") {
+        ZipXmlReaderSequence(ZipFile(reportPath.toFile()))
       } else {
         val xmlFiles = FileUtils.listFiles(
-            annotationsRoot.toFile(),
+            reportPath.toFile(),
             NameFileFilter(ANNOTATIONS_XML_FILE_NAME),
             TrueFileFilter.INSTANCE
         ).map { it.toPath().toAbsolutePath() }
-        FilesXmlReaderSequence(annotationsRoot.toAbsolutePath(), xmlFiles)
+        FilesXmlReaderSequence(reportPath.toAbsolutePath(), xmlFiles)
       }
 
   /**
-   * Reads external annotations from [annotationsRoot] and returns corresponding [ApiReport].
+   * Reads external annotations from [reportPath] and returns corresponding [ApiReport].
    */
   fun readApiReport(): ApiReport {
     val ideBuildNumber = readIdeBuildNumber()
