@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
@@ -21,6 +22,7 @@ import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 import java.io.Closeable
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -37,7 +39,13 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     private val IGNORED_PLUGIN_IDS = setOf("org.jetbrains.kotlin", "org.jetbrains.android")
   }
 
-  fun build(oldIde: Ide, newIde: Ide): ApiReport {
+  fun buildIdeDiff(oldIdePath: Path, newIdePath: Path): ApiReport {
+    val oldIde = IdeManager.createManager().createIde(oldIdePath.toFile())
+    val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
+    return buildIdeDiff(oldIde, newIde)
+  }
+
+  fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport {
     val introducedData = ApiData()
     val removedData = ApiData()
     return JdkResolverCreator.createJdkResolver(jdkPath.jdkPath.toFile()).use { jdkResolver ->

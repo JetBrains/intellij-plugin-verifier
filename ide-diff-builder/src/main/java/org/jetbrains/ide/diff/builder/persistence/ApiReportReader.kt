@@ -22,6 +22,10 @@ import java.util.zip.ZipFile
  */
 class ApiReportReader(private val reportPath: Path) : Closeable {
 
+  companion object {
+    fun readFrom(reportPath: Path) = ApiReportReader(reportPath).use { it.readApiReport() }
+  }
+
   /**
    * Sequence of [ApiXmlReader] for the given [reportPath].
    * XML readers of this sequence get closed after fully processed.

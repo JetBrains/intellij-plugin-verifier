@@ -174,3 +174,7 @@ class ApiReportWriter(private val reportPath: Path, private val ideBuildNumber: 
   }
 
 }
+
+fun ApiReport.saveTo(resultPath: Path) {
+  ApiReportWriter(resultPath, ideBuildNumber).use { it.appendApiReport(this) }
+}

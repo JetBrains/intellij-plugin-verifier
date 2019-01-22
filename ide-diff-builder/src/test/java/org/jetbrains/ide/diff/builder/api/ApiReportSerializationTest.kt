@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
 import org.jetbrains.ide.diff.builder.persistence.ApiReportReader
-import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
+import org.jetbrains.ide.diff.builder.persistence.saveTo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -54,9 +54,7 @@ class ApiReportSerializationTest : BaseOldNewIdesTest() {
   }
 
   private fun saveAndRead(apiReport: ApiReport, root: Path) {
-    ApiReportWriter(root, apiReport.ideBuildNumber).use {
-      it.appendApiReport(apiReport)
-    }
+    apiReport.saveTo(root)
 
     val readApiReport = ApiReportReader(root).use {
       it.readApiReport()

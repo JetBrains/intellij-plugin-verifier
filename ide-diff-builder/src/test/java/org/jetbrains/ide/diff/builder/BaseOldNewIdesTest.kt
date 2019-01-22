@@ -32,7 +32,7 @@ abstract class BaseOldNewIdesTest {
     val newIde = IdeManager.createManager().createIde(newIdeFile)
 
     val jdkPath = JdkPath.createJavaHomeJdkPath()
-    return IdeDiffBuilder(emptyList(), jdkPath).build(oldIde, newIde)
+    return IdeDiffBuilder(emptyList(), jdkPath).buildIdeDiff(oldIde, newIde)
   }
 
 }

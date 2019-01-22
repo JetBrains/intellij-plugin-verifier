@@ -1,17 +1,12 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
-import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
+import org.jetbrains.ide.diff.builder.persistence.saveTo
 import org.slf4j.LoggerFactory
-import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -60,61 +55,10 @@ class IdeDiffCommand : Command {
       "The following packages will be processed: " + packages.joinToString()
     })
 
-    buildIdeDiff(oldIdePath, newIdePath, resultRoot, packages, jdkPath)
-  }
+    val apiReport = IdeDiffBuilder(packages, jdkPath).buildIdeDiff(oldIdePath, newIdePath)
+    apiReport.saveTo(resultRoot)
 
-  private fun buildIdeDiff(
-      oldIdePath: Path,
-      newIdePath: Path,
-      resultRoot: Path,
-      packages: List<String>,
-      jdkPath: JdkPath
-  ) {
-    val oldIde = IdeManager.createManager().createIde(oldIdePath.toFile())
-    val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
-    LOG.info("Building API diff between ${oldIde.version} and ${newIde.version}")
-
-    val apiReport = IdeDiffBuilder(packages, jdkPath).build(oldIde, newIde)
-    ApiReportWriter(resultRoot, apiReport.ideBuildNumber).use {
-      it.appendApiReport(apiReport)
-    }
-    LOG.info("New API in ${newIde.version} compared to ${oldIde.version} is saved to external annotations root ${resultRoot.simpleName}")
-  }
-
-  fun buildIdeDiff(
-      oldIdeVersion: IdeVersion,
-      newIdeVersion: IdeVersion,
-      ideFilesBank: IdeFilesBank,
-      packages: List<String>,
-      resultPath: Path,
-      jdkPath: JdkPath
-  ) {
-    val oldIdeResult = ideFilesBank.downloadIde(oldIdeVersion)
-    return oldIdeResult.ideFileLock.use { oldIdeFileLock ->
-      val newIdeResult = ideFilesBank.downloadIde(newIdeVersion)
-      newIdeResult.ideFileLock.use { newIdeFileLock ->
-        buildIdeDiff(
-            oldIdeFileLock.file,
-            newIdeFileLock.file,
-            resultPath,
-            packages,
-            jdkPath
-        )
-      }
-    }
-  }
-
-  private fun IdeFilesBank.downloadIde(ideVersion: IdeVersion): IdeFilesBank.Result.Found {
-    val message = "Downloading $ideVersion"
-    return retry(message) {
-      LOG.info(message)
-      val ideFile = getIdeFile(ideVersion)
-      when (ideFile) {
-        is IdeFilesBank.Result.Found -> ideFile
-        is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ideVersion is not found: ${ideFile.reason}")
-        is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ideVersion couldn't be downloaded: ${ideFile.reason}", ideFile.exception)
-      }
-    }
+    LOG.info("API diff between ${newIdePath.simpleName} and ${oldIdePath.simpleName} is saved to ${resultRoot.simpleName}")
   }
 
   open class CliOptions {
