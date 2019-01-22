@@ -62,7 +62,7 @@ class ClassFilesResolver(private val root: File) : Resolver() {
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override val classPath
-    get() = classPaths.toList()
+    get() = listOf(root)
 
   override val finalResolvers
     get() = listOf(this)
