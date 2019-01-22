@@ -9,11 +9,11 @@ public class AddedClass {
   public void method() {
   }
 
-  public static class C {
+  public static class Nested {
   }
 
-  public class B {
-    public class D {
+  public class Inner {
+    public class InnerInner {
     }
   }
 

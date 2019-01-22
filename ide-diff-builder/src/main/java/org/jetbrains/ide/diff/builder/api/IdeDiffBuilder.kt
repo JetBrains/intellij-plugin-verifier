@@ -82,43 +82,126 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   private fun appendData(oldResolver: Resolver, newResolver: Resolver, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
     val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkResolver)))
     val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
-    newResolver.processAllClasses { newClass ->
-      appendApiDifference(newClass, completeOldResolver, completeNewResolver, introducedData)
-      true
-    }
-    oldResolver.processAllClasses { oldClass ->
-      appendApiDifference(oldClass, completeNewResolver, completeOldResolver, removedData)
-      true
-    }
-  }
 
-  private fun appendApiDifference(twoClass: ClassNode, oneResolver: Resolver, twoResolver: Resolver, apiData: ApiData) {
-    if (twoClass.isIgnored()) {
-      return
-    }
-
-    val className = twoClass.name
-    val oneClass = oneResolver.safeFindClass(className)
-
-    if (oneClass == null) {
-      /**
-       * Register class/interface signature.
-       *
-       * Don't register its methods, fields and inner classes because it is unnecessary and clutters UI.
-       * See for discussion: https://youtrack.jetbrains.com/issue/IJI-102.
-       */
-      val outerClassName = getOuterClassName(className)
-      if (outerClassName != null && !oneResolver.containsClass(outerClassName)) {
-        //Outer class is already registered
-        return
+    val allClasses: Set<String> = oldResolver.allClasses + newResolver.allClasses
+    for (className in allClasses) {
+      if (isIgnoredClassName(className)) {
+        continue
       }
 
-      apiData.addSignature(twoClass.createClassLocation().toSignature())
+      val oldClass = completeOldResolver.safeFindClass(className)
+      val newClass = completeNewResolver.safeFindClass(className)
+      if (oldClass == null && newClass == null) {
+        continue
+      }
+
+      if (newClass != null && newClass.isAccessible() && !newClass.isIgnored()) {
+        findAddedApi(oldClass, newClass, completeOldResolver, completeNewResolver, introducedData)
+      }
+      if (oldClass != null && oldClass.isAccessible() && !oldClass.isIgnored()) {
+        findRemovedApi(oldClass, newClass, completeOldResolver, completeNewResolver, removedData)
+      }
+    }
+  }
+
+  /**
+   * Appends all signatures available in [newClass] but not available in [oldClass].
+   */
+  private fun findAddedApi(
+      oldClass: ClassNode?,
+      newClass: ClassNode,
+      oldResolver: Resolver,
+      newResolver: Resolver,
+      introducedData: ApiData
+  ) {
+    if (oldClass == null || !oldClass.isAccessible()) {
+      //Don't register methods, fields and inner classes of newly added class, only its own signature.
+      val outerClassName = getOuterClassName(newClass.name)
+      if (outerClassName != null && !oldResolver.containsClass(outerClassName)) {
+        //Outer class is already added => no need to register this inner one.
+        return
+      }
+      introducedData.addSignature(newClass.createClassLocation().toSignature())
       return
     }
 
-    apiData.appendApiDifference(oneClass, twoClass, twoResolver)
+    for (newMethod in newClass.getMethods().orEmpty()) {
+      if (!newMethod.isAccessible() || newMethod.isIgnored() || isMethodOverriding(newMethod, newClass, newResolver)) {
+        continue
+      }
+
+      val oldMethod = oldClass.getMethods()?.find {
+        it.name == newMethod.name && it.desc == newMethod.desc && it.isAccessible() && !it.isIgnored()
+      }
+      if (oldMethod == null) {
+        introducedData.addSignature(createMethodLocation(newClass, newMethod).toSignature())
+      }
+    }
+
+    for (newField in newClass.getFields().orEmpty()) {
+      if (!newField.isAccessible() || newField.isIgnored()) {
+        continue
+      }
+
+      val oldField = oldClass.getFields()?.find {
+        it.name == newField.name && it.desc == newField.desc && it.isAccessible() && !it.isIgnored()
+      }
+      if (oldField == null) {
+        introducedData.addSignature(createFieldLocation(newClass, newField).toSignature())
+      }
+    }
   }
+
+  /**
+   * Appends all signatures available in [oldClass] but not available in [newClass].
+   */
+  private fun findRemovedApi(
+      oldClass: ClassNode,
+      newClass: ClassNode?,
+      oldResolver: Resolver,
+      newResolver: Resolver,
+      removedData: ApiData
+  ) {
+    if (newClass == null || !newClass.isAccessible()) {
+      /**
+       * Don't register methods, fields and inner classes of removed class, only its own signature.
+       */
+      val outerClassName = getOuterClassName(oldClass.name)
+      if (outerClassName != null && !newResolver.containsClass(outerClassName)) {
+        //Outer class is already registered => no need to register this inner one.
+        return
+      }
+      removedData.addSignature(oldClass.createClassLocation().toSignature())
+      return
+    }
+
+    for (oldMethod in oldClass.getMethods().orEmpty()) {
+      if (!oldMethod.isAccessible() || oldMethod.isIgnored() || isMethodOverriding(oldMethod, oldClass, oldResolver)) {
+        continue
+      }
+
+      val newMethod = newClass.getMethods()?.find {
+        it.name == oldMethod.name && it.desc == oldMethod.desc && it.isAccessible() && !it.isIgnored()
+      }
+      if (newMethod == null) {
+        removedData.addSignature(createMethodLocation(oldClass, oldMethod).toSignature())
+      }
+    }
+
+    for (oldField in oldClass.getFields().orEmpty()) {
+      if (!oldField.isAccessible() || oldField.isIgnored()) {
+        continue
+      }
+
+      val newField = newClass.getFields()?.find {
+        it.name == oldField.name && it.desc == oldField.desc && it.isAccessible() && !it.isIgnored()
+      }
+      if (newField == null) {
+        removedData.addSignature(createFieldLocation(oldClass, oldField).toSignature())
+      }
+    }
+  }
+
 
   private fun getOuterClassName(className: String): String? {
     val packageName = className.substringBeforeLast("/")
@@ -134,7 +217,6 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return try {
       findClass(className)
     } catch (e: Exception) {
-      LOG.warn("Class file $className couldn't be read from $this", e)
       return null
     }
   }
@@ -209,37 +291,6 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     null
   }
 
-  /**
-   * Appends all signatures present in [twoClass] that are not present in [oneClass].
-   */
-  private fun ApiData.appendApiDifference(
-      oneClass: ClassNode,
-      twoClass: ClassNode,
-      twoResolver: Resolver
-  ) {
-    for (twoMethod in twoClass.getMethods().orEmpty()) {
-      if (twoMethod.isIgnored() || isMethodOverriding(twoMethod, twoClass, twoResolver)) {
-        continue
-      }
-
-      val oneMethod = oneClass.getMethods()?.find { it.name == twoMethod.name && it.desc == twoMethod.desc }
-      if (oneMethod == null) {
-        addSignature(createMethodLocation(twoClass, twoMethod).toSignature())
-      }
-    }
-
-    for (twoField in twoClass.getFields().orEmpty()) {
-      if (twoField.isIgnored()) {
-        continue
-      }
-
-      val oneField = oneClass.getFields()?.find { it.name == twoField.name && it.desc == twoField.desc }
-      if (oneField == null) {
-        addSignature(createFieldLocation(twoClass, twoField).toSignature())
-      }
-    }
-  }
-
   private fun String.isSyntheticLikeName() = contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
 
   private fun String.hasInterestingPackage(): Boolean {
@@ -268,15 +319,22 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return ".impl." in packageName
   }
 
-  private fun ClassNode.isIgnored() = isPrivate() || isDefaultAccess()
-      || isSynthetic()
-      || name.isSyntheticLikeName()
-      || !name.hasInterestingPackage()
-      || name.hasImplementationLikeName()
-      || name.hasImplementationLikePackage()
+  private fun isIgnoredClassName(className: String): Boolean =
+      !className.hasInterestingPackage()
+          || className.hasImplementationLikeName()
+          || className.hasImplementationLikePackage()
+          || className.isSyntheticLikeName()
 
-  private fun MethodNode.isIgnored() = isPrivate() || isDefaultAccess() || isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
+  private fun ClassNode.isAccessible() = !isPrivate() && !isDefaultAccess()
 
-  private fun FieldNode.isIgnored() = isPrivate() || isDefaultAccess() || isSynthetic() || name.isSyntheticLikeName()
+  private fun ClassNode.isIgnored() = isIgnoredClassName(name) || isSynthetic()
+
+  private fun MethodNode.isAccessible() = !isPrivate() && !isDefaultAccess()
+
+  private fun MethodNode.isIgnored() = isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
+
+  private fun FieldNode.isAccessible() = !isPrivate() && !isDefaultAccess()
+
+  private fun FieldNode.isIgnored() = isSynthetic() || name.isSyntheticLikeName()
 
 }

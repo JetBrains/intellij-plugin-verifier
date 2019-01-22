@@ -2,10 +2,27 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class IdeDiffBuilderTest : BaseOldNewIdesTest() {
+
+  private val accessOpenedClasses = listOf(
+      "access.AccessOpenedClass",
+      "access.AccessOpenedContent.PrivateInnerBecameProtected",
+      "access.AccessOpenedContent.PrivateInnerBecamePublic",
+      "access.AccessOpenedContent.PrivateNestedBecameProtected",
+      "access.AccessOpenedContent.PrivateNestedBecamePublic"
+  )
+
+  private val accessClosedClasses = listOf(
+      "access.AccessClosedClass",
+      "access.AccessClosedContent.ProtectedInnerBecamePrivate",
+      "access.AccessClosedContent.ProtectedNestedBecamePrivate",
+      "access.AccessClosedContent.PublicInnerBecamePrivate",
+      "access.AccessClosedContent.PublicNestedBecamePrivate"
+  )
 
   private val newClasses = listOf(
       "added.AddedClass",
@@ -39,6 +56,16 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
       "removed.RemovedContent void publicStaticMethod()"
   )
 
+  private val accessOpenedMethods = listOf(
+      "access.AccessOpenedContent void privateMethodBecamePublic()",
+      "access.AccessOpenedContent void privateMethodBecameProtected()"
+  )
+
+  private val accessClosedMethods = listOf(
+      "access.AccessClosedContent void publicMethodBecamePrivate()",
+      "access.AccessClosedContent void protectedMethodBecamePrivate()"
+  )
+
   private val newFields = listOf(
       "added.AddedContent publicField",
       "added.AddedContent protectedField"
@@ -47,6 +74,16 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
   private val removedFields = listOf(
       "removed.RemovedContent publicField",
       "removed.RemovedContent protectedField"
+  )
+
+  private val accessOpenedFields = listOf(
+      "access.AccessOpenedContent privateFieldBecamePublic",
+      "access.AccessOpenedContent privateFieldBecameProtected"
+  )
+
+  private val accessClosedFields = listOf(
+      "access.AccessClosedContent publicFieldBecamePrivate",
+      "access.AccessClosedContent protectedFieldBecamePrivate"
   )
 
   @Test
@@ -58,16 +95,37 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
     assertEquals(setOf(introducedIn, removedIn), apiReport.apiEventToData.keys)
 
     val introducedApiData = apiReport.apiEventToData[introducedIn]!!
-    assertEquals(
-        (newClasses + newMethods + newFields).sorted(),
-        introducedApiData.apiSignatures.map { it.externalPresentation }.sorted()
+    assertSetsEqual(
+        (newClasses + newMethods + newFields + accessOpenedClasses + accessOpenedMethods + accessOpenedFields).toSet(),
+        introducedApiData.apiSignatures.map { it.externalPresentation }.toSet()
     )
 
     val removedInData = apiReport.apiEventToData[removedIn]!!
-    assertEquals(
-        (removedClasses + removedMethods + removedFields).sorted(),
-        removedInData.apiSignatures.map { it.externalPresentation }.sorted()
+    assertSetsEqual(
+        (removedClasses + removedMethods + removedFields + accessClosedClasses + accessClosedMethods + accessClosedFields).toSet(),
+        removedInData.apiSignatures.map { it.externalPresentation }.toSet()
     )
+  }
+
+  private fun assertSetsEqual(expected: Set<String>, actual: Set<String>) {
+    val redundant = (actual - expected).sorted()
+    val absent = (expected - actual).sorted()
+
+    if (redundant.isNotEmpty()) {
+      println("Redundant")
+      for (s in redundant) {
+        println("  $s")
+      }
+    }
+
+    if (absent.isNotEmpty()) {
+      println("Absent")
+      for (s in absent) {
+        println("  $s")
+      }
+    }
+
+    Assert.assertTrue(redundant.isEmpty() && absent.isEmpty())
   }
 
 }
