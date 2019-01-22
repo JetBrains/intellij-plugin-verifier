@@ -4,6 +4,9 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 object EmptyResolver : Resolver() {
+  override val readMode
+    get() = ReadMode.FULL
+
   override fun processAllClasses(processor: (ClassNode) -> Boolean) = true
 
   override fun findClass(className: String) = null

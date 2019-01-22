@@ -13,14 +13,22 @@ import java.io.InputStream;
 public class AsmUtil {
 
   @NotNull
-  public static ClassNode readClassNode(@NotNull String className, @NotNull InputStream inputStream) throws IOException {
+  public static ClassNode readClassNode(@NotNull String className,
+                                        @NotNull InputStream inputStream,
+                                        boolean fully) throws IOException {
     try {
       ClassNode node = new ClassNode();
-      new ClassReader(inputStream).accept(node, 0);
+      int parsingOptions = fully ? 0 : (ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+      new ClassReader(inputStream).accept(node, parsingOptions);
       return node;
     } catch (RuntimeException e) {
       throw new InvalidClassFileException(className, getAsmErrorMessage(e));
     }
+  }
+
+  @NotNull
+  public static ClassNode readClassNode(@NotNull String className, @NotNull InputStream inputStream) throws IOException {
+    return readClassNode(className, inputStream, true);
   }
 
   private static String getAsmErrorMessage(RuntimeException e) {
@@ -43,9 +51,16 @@ public class AsmUtil {
   }
 
   @NotNull
-  public static ClassNode readClassFromFile(@NotNull String className, @NotNull File classFile) throws IOException {
+  public static ClassNode readClassFromFile(@NotNull String className,
+                                            @NotNull File classFile,
+                                            boolean fully) throws IOException {
     try (InputStream is = FileUtils.openInputStream(classFile)) {
-      return readClassNode(className, is);
+      return readClassNode(className, is, fully);
     }
+  }
+
+  @NotNull
+  public static ClassNode readClassFromFile(@NotNull String className, @NotNull File classFile) throws IOException {
+    return readClassFromFile(className, classFile, true);
   }
 }

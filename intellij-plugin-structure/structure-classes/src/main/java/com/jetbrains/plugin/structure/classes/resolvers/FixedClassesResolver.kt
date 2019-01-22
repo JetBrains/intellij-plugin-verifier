@@ -5,13 +5,19 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
-class FixedClassesResolver private constructor(private val classes: Map<String, ClassNode>) : Resolver() {
+class FixedClassesResolver private constructor(
+    private val classes: Map<String, ClassNode>,
+    override val readMode: ReadMode
+) : Resolver() {
 
   companion object {
     fun create(vararg classes: ClassNode): Resolver = create(classes.toList())
 
     fun create(classes: Iterable<ClassNode>): Resolver =
-        FixedClassesResolver(classes.reversed().associateBy { it.name })
+        FixedClassesResolver(classes.reversed().associateBy { it.name }, ReadMode.FULL)
+
+    fun create(readMode: ReadMode, classes: Iterable<ClassNode>): Resolver =
+        FixedClassesResolver(classes.reversed().associateBy { it.name }, readMode)
 
     private val uniqueClassPathSequenceNumber = AtomicInteger()
   }

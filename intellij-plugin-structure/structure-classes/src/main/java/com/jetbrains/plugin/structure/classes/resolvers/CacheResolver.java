@@ -121,4 +121,10 @@ public class CacheResolver extends Resolver {
   public boolean processAllClasses(@NotNull Function1<? super ClassNode, Boolean> processor) throws IOException {
     return myDelegate.processAllClasses(processor);
   }
+
+  @NotNull
+  @Override
+  public ReadMode getReadMode() {
+    return myDelegate.getReadMode();
+  }
 }

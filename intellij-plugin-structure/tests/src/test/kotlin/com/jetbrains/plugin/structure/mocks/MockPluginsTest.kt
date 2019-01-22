@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -141,7 +142,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     val extractDirectory = tempFolder.newFolder()
     assertTrue(extractDirectory.listFiles().isEmpty())
 
-    IdePluginClassesFinder.findPluginClasses(plugin, extractDirectory, listOf(CompileServerExtensionKey)).use { locationsContainer ->
+    IdePluginClassesFinder.findPluginClasses(plugin, extractDirectory, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { locationsContainer ->
       testMockClasses(locationsContainer, hasLibDirectory, classPath)
     }
 

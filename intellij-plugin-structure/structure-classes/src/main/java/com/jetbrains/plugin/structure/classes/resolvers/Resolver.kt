@@ -19,6 +19,19 @@ import java.io.IOException
 abstract class Resolver : Closeable {
 
   /**
+   * Read mode used to specify whether this resolver reads [ClassNode]s fully,
+   * including methods' code, debug frames, or only classes' signatures.
+   */
+  enum class ReadMode {
+    FULL, SIGNATURES
+  }
+
+  /**
+   * Read mode this resolved is opened with.
+   */
+  abstract val readMode: ReadMode
+
+  /**
    * Returns the *binary* names of all the contained classes.
    *
    * @return all the classes names in the *binary* form.

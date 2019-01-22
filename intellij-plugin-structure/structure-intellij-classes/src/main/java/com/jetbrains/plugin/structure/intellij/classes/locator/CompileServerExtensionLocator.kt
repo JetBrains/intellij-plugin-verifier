@@ -9,12 +9,12 @@ import java.io.File
  * Classes that added to external build process' classpath.
  * See PR-1063 and com.intellij.compiler.server.CompileServerPlugin for details
  */
-class CompileServerExtensionLocator : ClassesLocator {
+class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   companion object {
-    private val EXTENSION_POINT_NAME = "com.intellij.compileServer.plugin"
+    private const val EXTENSION_POINT_NAME = "com.intellij.compileServer.plugin"
   }
 
-  override val locationKey: LocationKey = CompileServerExtensionKey
+  override val locationKey = CompileServerExtensionKey
 
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
     val pluginLib = File(pluginFile, "lib")
@@ -26,7 +26,7 @@ class CompileServerExtensionLocator : ClassesLocator {
           .filter { it.endsWith(".jar") }
           .map { File(pluginLib, it) }
           .filter { it.isFile }
-      return JarsUtils.makeResolver(allCompileJars)
+      return JarsUtils.makeResolver(readMode, allCompileJars)
     }
     return null
   }
@@ -35,5 +35,6 @@ class CompileServerExtensionLocator : ClassesLocator {
 object CompileServerExtensionKey : LocationKey {
   override val name: String = "compileServer.plugin extension point"
 
-  override val locator: ClassesLocator = CompileServerExtensionLocator()
+  override fun getLocator(readMode: Resolver.ReadMode) = CompileServerExtensionLocator(readMode)
+
 }

@@ -48,7 +48,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport {
     val introducedData = ApiData()
     val removedData = ApiData()
-    return JdkResolverCreator.createJdkResolver(jdkPath.jdkPath.toFile()).use { jdkResolver ->
+    return JdkResolverCreator.createJdkResolver(Resolver.ReadMode.SIGNATURES, jdkPath.jdkPath.toFile()).use { jdkResolver ->
       appendIdeCoreData(oldIde, newIde, jdkResolver, introducedData, removedData)
       appendBundledPluginsData(oldIde, newIde, jdkResolver, introducedData, removedData)
       val apiEventToData = mapOf(
@@ -60,8 +60,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   }
 
   private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
-    IdeResolverCreator.createIdeResolver(oldIde).use { oldIdeResolver ->
-      IdeResolverCreator.createIdeResolver(newIde).use { newIdeResolver ->
+    IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldIdeResolver ->
+      IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newIdeResolver ->
         appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
       }
     }
@@ -282,7 +282,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   private fun safeFindPluginClasses(ide: Ide, idePlugin: IdePlugin): IdePluginClassesLocations? = try {
     if (idePlugin.pluginId !in IGNORED_PLUGIN_IDS) {
       LOG.debug("Reading class files of a plugin $idePlugin bundled into $ide")
-      IdePluginClassesFinder.findPluginClasses(idePlugin, pluginClassesLocationsKeys)
+      IdePluginClassesFinder.findPluginClasses(idePlugin, Resolver.ReadMode.SIGNATURES, pluginClassesLocationsKeys)
     } else {
       null
     }

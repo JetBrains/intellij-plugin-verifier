@@ -8,7 +8,9 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.util.jar.JarFile
 
-class JarFileResolver(private val ioJarFile: File) : Resolver() {
+class JarFileResolver(private val ioJarFile: File, override val readMode: ReadMode) : Resolver() {
+
+  constructor(jarFile: File) : this(jarFile, ReadMode.FULL)
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
@@ -84,7 +86,7 @@ class JarFileResolver(private val ioJarFile: File) : Resolver() {
       if (entryName.endsWith(CLASS_SUFFIX)) {
         val className = entryName.substringBeforeLast(CLASS_SUFFIX)
         jarFile.getInputStream(jarEntry).use { entryInputStream ->
-          val classNode = AsmUtil.readClassNode(className, entryInputStream)
+          val classNode = AsmUtil.readClassNode(className, entryInputStream, readMode == ReadMode.FULL)
           if (!processor(classNode)) {
             return false
           }
@@ -108,7 +110,7 @@ class JarFileResolver(private val ioJarFile: File) : Resolver() {
   private fun evaluateNode(className: String): ClassNode? {
     val entry = jarFile.getEntry(className + CLASS_SUFFIX) ?: return null
     jarFile.getInputStream(entry).use { inputStream ->
-      return AsmUtil.readClassNode(className, inputStream)
+      return AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
     }
   }
 

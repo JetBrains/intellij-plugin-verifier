@@ -20,14 +20,17 @@ object JarsUtils {
         }
       }, if (recursively) TrueFileFilter.INSTANCE else FalseFileFilter.FALSE).toList()
 
-  fun makeResolver(jars: Iterable<File>): Resolver = UnionResolver.create(getResolversForJars(jars))
+  fun makeResolver(readMode: Resolver.ReadMode, jars: Iterable<File>): Resolver =
+      UnionResolver.create(getResolversForJars(readMode, jars))
 
-  private fun getResolversForJars(jars: Iterable<File>): List<Resolver> {
+  fun makeResolver(jars: Iterable<File>): Resolver = makeResolver(Resolver.ReadMode.FULL, jars)
+
+  private fun getResolversForJars(readMode: Resolver.ReadMode, jars: Iterable<File>): List<Resolver> {
     val resolvers = arrayListOf<Resolver>()
     try {
       jars.mapTo(resolvers) {
         checkIfInterrupted()
-        JarFileResolver(it)
+        JarFileResolver(it, readMode)
       }
     } catch (e: Throwable) {
       resolvers.forEach { it.closeLogged() }

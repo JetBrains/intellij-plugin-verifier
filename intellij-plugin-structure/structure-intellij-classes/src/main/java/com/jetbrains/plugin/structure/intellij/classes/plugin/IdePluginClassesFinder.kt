@@ -15,9 +15,12 @@ import java.io.Closeable
 import java.io.File
 import java.io.IOException
 
-class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugin,
-                                                 private val extractDirectory: File,
-                                                 private val locatorKeys: List<LocationKey>) {
+class IdePluginClassesFinder private constructor(
+    private val idePlugin: IdePlugin,
+    private val extractDirectory: File,
+    private val readMode: Resolver.ReadMode,
+    private val locatorKeys: List<LocationKey>
+) {
 
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
@@ -55,7 +58,7 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
     try {
       for (locatorKey in locatorKeys) {
         checkIfInterrupted()
-        val resolver = locatorKey.locator.findClasses(idePlugin, pluginFile)
+        val resolver = locatorKey.getLocator(readMode).findClasses(idePlugin, pluginFile)
         if (resolver != null) {
           locations[locatorKey] = resolver
         }
@@ -71,25 +74,27 @@ class IdePluginClassesFinder private constructor(private val idePlugin: IdePlugi
 
     val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
 
+    fun findPluginClasses(idePlugin: IdePlugin, additionalKeys: List<LocationKey> = emptyList()) =
+        findPluginClasses(idePlugin, Resolver.ReadMode.FULL, additionalKeys)
+
     fun findPluginClasses(
         idePlugin: IdePlugin,
+        readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
         additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
-      val extractDirectory = if (idePlugin is IdePluginImpl) {
-        idePlugin.extractDirectory
-      } else {
-        Settings.EXTRACT_DIRECTORY.getAsFile()
-      }
-      return findPluginClasses(idePlugin, extractDirectory, additionalKeys)
+      val extractDirectory = if (idePlugin is IdePluginImpl) idePlugin.extractDirectory else Settings.EXTRACT_DIRECTORY.getAsFile()
+      return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
     fun findPluginClasses(
         idePlugin: IdePlugin,
         extractDirectory: File,
+        readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
         additionalKeys: List<LocationKey> = emptyList()
     ) = IdePluginClassesFinder(
         idePlugin,
         extractDirectory,
+        readMode,
         MAIN_CLASSES_KEYS + additionalKeys
     ).findPluginClasses()
   }

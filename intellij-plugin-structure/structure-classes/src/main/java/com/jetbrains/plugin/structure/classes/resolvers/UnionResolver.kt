@@ -6,7 +6,10 @@ import org.objectweb.asm.tree.ClassNode
 /**
  * [Resolver] that unites several [resolvers] with the Java classpath search strategy.
  */
-class UnionResolver private constructor(private val resolvers: List<Resolver>) : Resolver() {
+class UnionResolver private constructor(
+    private val resolvers: List<Resolver>,
+    override val readMode: ReadMode
+) : Resolver() {
 
   private val packageToResolvers: Map<String, List<Resolver>> = buildPackageToResolvers()
 
@@ -103,7 +106,14 @@ class UnionResolver private constructor(private val resolvers: List<Resolver>) :
           val uniqueResolvers = nonEmpty
               .flatMap { it.finalResolvers }
               .distinctBy { it.classPath }
-          UnionResolver(uniqueResolvers)
+
+          val readMode = if (uniqueResolvers.all { it.readMode == ReadMode.FULL }) {
+            ReadMode.FULL
+          } else {
+            ReadMode.SIGNATURES
+          }
+
+          UnionResolver(uniqueResolvers, readMode)
         }
       }
     }

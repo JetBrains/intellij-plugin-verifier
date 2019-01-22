@@ -6,12 +6,12 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.File
 
-class JarPluginLocator : ClassesLocator {
+class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = JarPluginKey
 
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
     if (pluginFile.isJar()) {
-      return JarFileResolver(pluginFile)
+      return JarFileResolver(pluginFile, readMode)
     }
     return null
   }
@@ -20,5 +20,5 @@ class JarPluginLocator : ClassesLocator {
 object JarPluginKey : LocationKey {
   override val name: String = "jar"
 
-  override val locator: ClassesLocator = JarPluginLocator()
+  override fun getLocator(readMode: Resolver.ReadMode) = JarPluginLocator(readMode)
 }

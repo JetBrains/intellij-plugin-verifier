@@ -7,7 +7,10 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.io.IOException
 
-class ClassFilesResolver(private val root: File) : Resolver() {
+class ClassFilesResolver(private val root: File, override val readMode: ReadMode) : Resolver() {
+
+  constructor(root: File) : this(root, ReadMode.FULL)
+
   private val nameToClassFile = hashMapOf<String, File>()
 
   private val packageSet = PackageSet()
@@ -39,7 +42,7 @@ class ClassFilesResolver(private val root: File) : Resolver() {
   @Throws(IOException::class)
   override fun findClass(className: String): ClassNode? {
     val file = nameToClassFile[className] ?: return null
-    return AsmUtil.readClassFromFile(className, file)
+    return AsmUtil.readClassFromFile(className, file, readMode == ReadMode.FULL)
   }
 
   override fun getClassLocation(className: String): Resolver? = if (containsClass(className)) {
@@ -71,7 +74,7 @@ class ClassFilesResolver(private val root: File) : Resolver() {
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
     for ((className, classFile) in nameToClassFile) {
-      val classNode = AsmUtil.readClassFromFile(className, classFile)
+      val classNode = AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
       if (!processor(classNode)) {
         return false
       }
