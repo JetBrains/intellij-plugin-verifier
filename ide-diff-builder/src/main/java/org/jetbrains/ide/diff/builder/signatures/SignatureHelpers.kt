@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
+import com.jetbrains.pluginverifier.results.presentation.toSimpleJavaClassName
 import com.jetbrains.pluginverifier.results.signatures.FormatOptions
 import com.jetbrains.pluginverifier.results.signatures.SigVisitor
 import org.apache.commons.text.StringEscapeUtils
@@ -32,7 +33,7 @@ fun String.unescapeHtml(): String = StringEscapeUtils.unescapeHtml4(this)
 fun ClassLocation.toSignature(): ClassSignature =
     ClassSignature(
         getJavaPackageName(className),
-        toFullJavaClassName(className)
+        toSimpleJavaClassName(className)
     )
 
 fun MethodLocation.toSignature(): MethodSignature {
@@ -67,21 +68,10 @@ fun MethodLocation.toSignature(): MethodSignature {
   }
 
   val paramsSignatures = paramTypes.drop(if (dropFirstParameter) 1 else 0).joinToString()
-  return MethodSignature(
-      getJavaPackageName(hostClass.className),
-      toFullJavaClassName(hostClass.className),
-      methodName,
-      retType,
-      paramsSignatures
-  )
+  return MethodSignature(hostClass.toSignature(), methodName, retType, paramsSignatures)
 }
 
-fun FieldLocation.toSignature() =
-    FieldSignature(
-        getJavaPackageName(hostClass.className),
-        toFullJavaClassName(hostClass.className),
-        fieldName
-    )
+fun FieldLocation.toSignature() = FieldSignature(hostClass.toSignature(), fieldName)
 
 private fun MethodLocation.convertMethodSignature(): Pair<List<String>, String> {
   return if (signature.isNotEmpty()) {
@@ -133,7 +123,8 @@ fun parseApiSignature(packageName: String, externalName: String): ApiSignature {
     val methodName = externalName.substringBefore('(').substringAfterLast(' ')
     val returnType = externalName.substringAfter("$className ", "").substringBefore(" $methodName(", "").takeIf { it.isNotEmpty() }
     val paramSignatures = externalName.substringAfter('(').substringBefore(')')
-    return MethodSignature(packageName, className, methodName, returnType, paramSignatures)
+    val hostSignature = parseClassSignature(packageName, className)
+    return MethodSignature(hostSignature, methodName, returnType, paramSignatures)
   }
   if (' ' in externalName) {
     /**
@@ -142,8 +133,14 @@ fun parseApiSignature(packageName: String, externalName: String): ApiSignature {
      */
     val className = externalName.substringBefore(' ')
     val fieldName = externalName.substringAfter(' ')
-    return FieldSignature(packageName, className, fieldName)
+    val hostSignature = parseClassSignature(packageName, className)
+    return FieldSignature(hostSignature, fieldName)
   }
-  return ClassSignature(packageName, externalName)
+  return parseClassSignature(packageName, externalName)
+}
+
+private fun parseClassSignature(packageName: String, externalName: String): ClassSignature {
+  val simpleClassName = externalName.substringAfter("$packageName.")
+  return ClassSignature(packageName, simpleClassName)
 }
 

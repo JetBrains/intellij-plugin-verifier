@@ -16,7 +16,7 @@ sealed class ApiSignature {
    * Converts internal presentation of API to string presentation
    * expected by external annotations system.
    * In IDEA codebase the same conversion from PSI element to string is done
-   * in [com.intellij.psi.util.PsiFormatUtil.getExternalName].
+   * in `com.intellij.psi.util.PsiFormatUtil.getExternalName`.
    *
    * Examples of external names:
    * ```
@@ -39,10 +39,10 @@ sealed class ApiSignature {
 /**
  * Signature of an API class, consisting of its fully qualified name.
  */
-data class ClassSignature(
-    override val packageName: String,
-    val className: String
-) : ApiSignature() {
+data class ClassSignature(override val packageName: String, val simpleClassName: String) : ApiSignature() {
+
+  val className: String
+    get() = if (packageName.isNotEmpty()) "$packageName.$simpleClassName" else simpleClassName
 
   override val externalPresentation: String
     get() = className
@@ -53,32 +53,33 @@ data class ClassSignature(
  * method name, and generified signatures of the parameters and return type.
  */
 data class MethodSignature(
-    override val packageName: String,
-    val hostClass: String,
+    val hostSignature: ClassSignature,
     val methodName: String,
     val returnType: String?,
     val paramsSignature: String
 ) : ApiSignature() {
 
-  override val externalPresentation: String
-    get() = hostClass +
-        if (returnType != null) {
+  override val packageName
+    get() = hostSignature.packageName
+
+  override val externalPresentation
+    get() = hostSignature.className +
+        (if (returnType != null) {
           " $returnType"
         } else {
           ""
-        } + " $methodName($paramsSignature)"
+        }) + " $methodName($paramsSignature)"
 }
 
 /**
  * Signature of an API field, consisting of the host class' fully qualified name
  * and field name.
  */
-data class FieldSignature(
-    override val packageName: String,
-    val hostClass: String,
-    val fieldName: String
-) : ApiSignature() {
+data class FieldSignature(val hostSignature: ClassSignature, val fieldName: String) : ApiSignature() {
 
-  override val externalPresentation: String
-    get() = "$hostClass $fieldName"
+  override val packageName
+    get() = hostSignature.packageName
+
+  override val externalPresentation
+    get() = hostSignature.className + " $fieldName"
 }
