@@ -1,5 +1,6 @@
 package org.jetbrains.ide.diff.builder.cli
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IntelliJIdeRepository
@@ -20,6 +21,9 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 /**
  * Builds API annotations artifacts for IDEs that lack such annotations in the IntelliJ Artifacts Repositories.
@@ -74,6 +78,13 @@ class BuildMissingApiAnnotationsCommand : Command {
       }
       return branch - 1
     }
+
+    private val ioExecutor = Executors.newCachedThreadPool(
+        ThreadFactoryBuilder()
+            .setDaemon(true)
+            .setNameFormat("io-%d")
+            .build()
+    )
   }
 
   override val commandName: String
@@ -168,7 +179,7 @@ class BuildMissingApiAnnotationsCommand : Command {
       val resultPath = getIdeAnnotationsResultPath(resultsDirectory, currentIdeVersion)
       resultPath.deleteLogged()
 
-      LOG.info("Annotations for $currentIdeVersion have been saved to ${resultPath.simpleName}")
+      LOG.info("____Result for $currentIdeVersion has been saved to ${resultPath.simpleName}")
       mergedApiReport.saveTo(resultPath)
     }
   }
@@ -186,15 +197,35 @@ class BuildMissingApiAnnotationsCommand : Command {
       packages: List<String>,
       jdkPath: JdkPath
   ): ApiReport {
-    val oldIdeFile = ideFilesBank.downloadIde(oldIdeVersion)
-    return oldIdeFile.use {
-      val newIdeFile = ideFilesBank.downloadIde(newIdeVersion)
-      newIdeFile.use {
-        LOG.info("________Both IDEs have been downloaded, building their diff")
-        IdeDiffBuilder(packages, jdkPath).buildIdeDiff(oldIdeFile.file, newIdeFile.file)
-      }
+    val oldIdeTask = ideFilesBank.downloadIdeAsync(oldIdeVersion)
+    val newIdeTask = ideFilesBank.downloadIdeAsync(newIdeVersion)
+
+    val (oldIdeFile, oldException) = oldIdeTask.getOrException()
+    val (newIdeFile, newException) = newIdeTask.getOrException()
+
+    try {
+      if (oldException != null) throw oldException
+      if (newException != null) throw newException
+      LOG.info("________Both IDEs have been downloaded, building their diff")
+      return IdeDiffBuilder(packages, jdkPath).buildIdeDiff(oldIdeFile!!.file, newIdeFile!!.file)
+    } finally {
+      oldIdeFile.closeLogged()
+      newIdeFile.closeLogged()
     }
   }
+
+  private fun <T> Future<T>.getOrException(): Pair<T?, Throwable?> {
+    return try {
+      get() to null
+    } catch (e: ExecutionException) {
+      null to e.cause!!
+    } catch (e: Throwable) {
+      null to e
+    }
+  }
+
+  private fun IdeFilesBank.downloadIdeAsync(ideVersion: IdeVersion): Future<FileLock> =
+      ioExecutor.submit<FileLock> { downloadIde(ideVersion) }
 
   private fun IdeFilesBank.downloadIde(ideVersion: IdeVersion): FileLock {
     val message = "________Downloading $ideVersion"
