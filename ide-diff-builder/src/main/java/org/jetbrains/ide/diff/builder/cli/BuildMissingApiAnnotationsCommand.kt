@@ -34,7 +34,7 @@ class BuildMissingApiAnnotationsCommand : Command {
   companion object {
     private val LOG = LoggerFactory.getLogger("build-missing-api-annotations")
 
-    private val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("181.1")
+    private val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("171.1")
 
     const val INTELLIJ_ARTIFACTS_REPOSITORY_NAME = "IntelliJ Artifact Repository"
     const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository"
