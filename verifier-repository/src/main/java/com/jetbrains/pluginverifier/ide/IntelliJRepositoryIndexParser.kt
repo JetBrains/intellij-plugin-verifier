@@ -4,15 +4,11 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.net.URL
 
 /**
- * Utility class used to parse
- * [releases](https://www.jetbrains.com/intellij-repository/releases)
- * and
- * [snapshots](https://www.jetbrains.com/intellij-repository/snapshots/)
- * repositories to get lists of [AvailableIde]s.
+ * Utility class used to parse index of available IDEs from [IntelliJIdeRepository].
  */
 internal class IntelliJRepositoryIndexParser {
 
-  fun parseArtifacts(artifacts: List<ArtifactJson>, snapshots: Boolean): List<AvailableIde> {
+  fun parseArtifacts(artifacts: List<ArtifactJson>, channel: IntelliJIdeRepository.Channel): List<AvailableIde> {
     val allAvailableIdes = arrayListOf<AvailableIde>()
 
     /**
@@ -36,9 +32,9 @@ internal class IntelliJRepositoryIndexParser {
             ?.setProductCodeIfAbsent(IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId)!!)
             ?: continue
 
-        val downloadUrl = buildDownloadUrl(artifactInfo, snapshots, groupId, version)
+        val downloadUrl = buildDownloadUrl(artifactInfo, channel, groupId, version)
 
-        val isRelease = !snapshots && isReleaseLikeVersion(artifactInfo.version)
+        val isRelease = channel == IntelliJIdeRepository.Channel.RELEASE && isReleaseLikeVersion(artifactInfo.version)
         val releasedVersion = version.takeIf { isRelease }
         val availableIde = AvailableIde(ideVersion, releasedVersion, downloadUrl)
         allAvailableIdes.add(availableIde)
@@ -54,18 +50,13 @@ internal class IntelliJRepositoryIndexParser {
         .values.toList()
   }
 
-  /**
-   * An example of the download URL is
-   * https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/182-SNAPSHOT/ideaIU-182-SNAPSHOT.zip
-   */
-  private fun buildDownloadUrl(artifactInfo: ArtifactJson, snapshots: Boolean, groupId: String, version: String): URL {
-    return URL(
-        with(artifactInfo) {
-          IntelliJIdeRepository.INTELLIJ_REPOSITORY_URL +
-              (if (snapshots) "snapshots" else "releases") +
-              "/${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging"
-        }
-    )
+  private fun buildDownloadUrl(
+      artifactInfo: ArtifactJson,
+      channel: IntelliJIdeRepository.Channel,
+      groupId: String,
+      version: String
+  ) = with(artifactInfo) {
+    URL(channel.repositoryUrl + "/${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging")
   }
 
   /**
@@ -75,7 +66,6 @@ internal class IntelliJRepositoryIndexParser {
    * For one [AvailableIde.version] there might be two [AvailableIde]s:
    * one with `isRelease = true` and another with `isRelease = false`.
    * We'd like to keep only the release one.
-   * For snapshots channel we want to keep only one IDE.
    */
   private fun getUniqueIde(ides: List<AvailableIde>): AvailableIde =
       if (ides.size == 2) {

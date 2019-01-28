@@ -9,19 +9,26 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Url
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
  * Provides index of IDE builds available for downloading,
- * which is fetched from IntelliJ
- * [release](https://www.jetbrains.com/intellij-repository/release/) or
- * [snapshots](https://www.jetbrains.com/intellij-repository/snapshots)
- * repository, depending on
+ * which is fetched from IntelliJ Artifacts Repositories.
+ * - [release](https://www.jetbrains.com/intellij-repository/release)
+ * - [snapshots](https://www.jetbrains.com/intellij-repository/snapshots)
+ * - [nightly](https://www.jetbrains.com/intellij-repository/nightly) - available only with JetBrains VPN.
  */
-class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeRepository {
+class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
+
+  enum class Channel(val repositoryUrl: String) {
+    RELEASE("https://cache-redirector.jetbrains.com/intellij-repository/releases"),
+    SNAPSHOTS("https://cache-redirector.jetbrains.com/intellij-repository/snapshots"),
+    NIGHTLY("https://www.jetbrains.com/intellij-repository/nightly")
+  }
 
   companion object {
-    const val INTELLIJ_REPOSITORY_URL = "https://www.jetbrains.com/intellij-repository/"
 
     /**
      * Maps artifact IDs, group IDs and corresponding product codes.
@@ -48,7 +55,7 @@ class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeReposito
 
   private val repositoryIndexConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(INTELLIJ_REPOSITORY_URL)
+        .baseUrl("https://unused.com")
         .addConverterFactory(GsonConverterFactory.create())
         .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
@@ -58,16 +65,19 @@ class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeReposito
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
 
   private fun updateIndex(): List<AvailableIde> {
-    val index = if (snapshotsChannel) {
-      repositoryIndexConnector.getSnapshotsIndex()
-    } else {
-      repositoryIndexConnector.getReleasesIndex()
+    val index = repositoryIndexConnector.getIndex(channel.getIndexUrl())
+    val artifacts = try {
+      index.executeSuccessfully().body().artifacts
+    } catch (e: Exception) {
+      if (channel == Channel.NIGHTLY) {
+        throw IOException("Failed to fetch index from nightly channel. This channel is only accessible with JetBrains VPN connection", e)
+      }
+      throw e
     }
-    val artifacts = index
-        .executeSuccessfully().body()
-        .artifacts
-    return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, snapshotsChannel)
+    return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, channel)
   }
+
+  private fun Channel.getIndexUrl() = "$repositoryUrl/index.json"
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
@@ -76,7 +86,7 @@ class IntelliJIdeRepository(private val snapshotsChannel: Boolean) : IdeReposito
     return fetchIndex().find { it.version == fullIdeVersion }
   }
 
-  override fun toString() = "IDE Repository on $INTELLIJ_REPOSITORY_URL"
+  override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.toLowerCase()})"
 
 }
 
@@ -104,9 +114,7 @@ internal data class ArtifactJson(
 
 private interface RepositoryIndexConnector {
 
-  @GET("releases/index.json")
-  fun getReleasesIndex(): Call<ArtifactsJson>
+  @GET
+  fun getIndex(@Url url: String): Call<ArtifactsJson>
 
-  @GET("snapshots/index.json")
-  fun getSnapshotsIndex(): Call<ArtifactsJson>
 }
