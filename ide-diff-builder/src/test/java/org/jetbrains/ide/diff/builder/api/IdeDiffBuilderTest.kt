@@ -2,7 +2,6 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -105,27 +104,6 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
         (removedClasses + removedMethods + removedFields + accessClosedClasses + accessClosedMethods + accessClosedFields).toSet(),
         removedInData.apiSignatures.map { it.externalPresentation }.toSet()
     )
-  }
-
-  private fun assertSetsEqual(expected: Set<String>, actual: Set<String>) {
-    val redundant = (actual - expected).sorted()
-    val absent = (expected - actual).sorted()
-
-    if (redundant.isNotEmpty()) {
-      println("Redundant")
-      for (s in redundant) {
-        println("  $s")
-      }
-    }
-
-    if (absent.isNotEmpty()) {
-      println("Absent")
-      for (s in absent) {
-        println("  $s")
-      }
-    }
-
-    Assert.assertTrue(redundant.isEmpty() && absent.isEmpty())
   }
 
 }
