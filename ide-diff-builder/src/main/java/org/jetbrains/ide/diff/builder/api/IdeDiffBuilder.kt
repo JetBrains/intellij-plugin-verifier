@@ -115,7 +115,6 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       introducedData: ApiData
   ) {
     if (oldClass == null || !oldClass.isAccessible()) {
-      //Don't register methods, fields and inner classes of newly added class, only its own signature.
       val outerClassName = getOuterClassName(newClass.name)
       if (outerClassName != null && !oldResolver.containsClass(outerClassName)) {
         //Outer class is already added => no need to register this inner one.
@@ -163,9 +162,6 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       removedData: ApiData
   ) {
     if (newClass == null || !newClass.isAccessible()) {
-      /**
-       * Don't register methods, fields and inner classes of removed class, only its own signature.
-       */
       val outerClassName = getOuterClassName(oldClass.name)
       if (outerClassName != null && !newResolver.containsClass(outerClassName)) {
         //Outer class is already registered => no need to register this inner one.
