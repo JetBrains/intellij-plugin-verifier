@@ -89,12 +89,14 @@ class IdeRepositoryIndexCommand : Command {
 
 }
 
-val releasesIdeRepository = IntelliJIdeRepository(false)
-val snapshotsIdeRepository = IntelliJIdeRepository(true)
+val releasesIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.RELEASE)
+val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
+val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
 val allIdeRepository = MergingIdeRepository(listOf(
     releasesIdeRepository,
-    snapshotsIdeRepository
+    snapshotsIdeRepository,
+    nightlyIdeRepository
 ))
 
 class MergingIdeRepository(private val ideRepositories: List<IdeRepository>) : IdeRepository {
