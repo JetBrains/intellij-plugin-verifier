@@ -12,8 +12,11 @@ class ApiReportsMerger {
     if (reports.isEmpty()) {
       return ApiReport(resultIdeVersion, emptyMap())
     }
+    if (reports.size == 1) {
+      return reports.single().copy(ideBuildNumber = resultIdeVersion)
+    }
 
-    val apiEventToData = hashMapOf<ApiEvent, ApiData>()
+    val apiEventToData = hashMapOf<ApiEvent, MutableSet<ApiSignature>>()
     val processedSignatures = hashSetOf<ApiSignature>()
     for (report in reports) {
       for ((signature, _) in report.asSequence()) {
@@ -21,12 +24,12 @@ class ApiReportsMerger {
           val allEvents = reports.flatMap { it[signature] }
           val mergedEvents = ApiEventsMerger().mergeEvents(allEvents)
           for (event in mergedEvents) {
-            apiEventToData.getOrPut(event) { ApiData() }.addSignature(signature)
+            apiEventToData.getOrPut(event) { hashSetOf() } += signature
           }
         }
       }
     }
-    return ApiReport(resultIdeVersion, apiEventToData)
+    return ApiReport(resultIdeVersion, apiEventToData.mapValues { ApiData(it.value) })
   }
 
 }

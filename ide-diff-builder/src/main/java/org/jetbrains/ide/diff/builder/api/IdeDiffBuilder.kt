@@ -15,6 +15,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
+import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
 import org.objectweb.asm.tree.ClassNode
@@ -46,8 +47,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   }
 
   fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport {
-    val introducedData = ApiData()
-    val removedData = ApiData()
+    val introducedData = hashSetOf<ApiSignature>()
+    val removedData = hashSetOf<ApiSignature>()
     return JdkResolverCreator.createJdkResolver(Resolver.ReadMode.SIGNATURES, jdkPath.jdkPath.toFile()).use { jdkResolver ->
       appendIdeCoreData(oldIde, newIde, jdkResolver, introducedData, removedData)
       appendBundledPluginsData(oldIde, newIde, jdkResolver, introducedData, removedData)
@@ -55,11 +56,11 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
           IntroducedIn(newIde.version) to introducedData,
           RemovedIn(newIde.version) to removedData
       )
-      ApiReport(newIde.version, apiEventToData)
+      ApiReport(newIde.version, apiEventToData.mapValues { ApiData(it.value) })
     }
   }
 
-  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
+  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
     IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldIdeResolver ->
       IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newIdeResolver ->
         appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
@@ -67,7 +68,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
+  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
     val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
     Closeable { oldPluginClassLocations.closeAll() }.use {
       val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
@@ -79,7 +80,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendData(oldResolver: Resolver, newResolver: Resolver, jdkResolver: Resolver, introducedData: ApiData, removedData: ApiData) {
+  private fun appendData(oldResolver: Resolver, newResolver: Resolver, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
     val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkResolver)))
     val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
 
@@ -112,7 +113,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       newClass: ClassNode,
       oldResolver: Resolver,
       newResolver: Resolver,
-      introducedData: ApiData
+      introducedData: MutableSet<ApiSignature>
   ) {
     if (oldClass == null || !oldClass.isAccessible()) {
       val outerClassName = getOuterClassName(newClass.name)
@@ -120,7 +121,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         //Outer class is already added => no need to register this inner one.
         return
       }
-      introducedData.addSignature(newClass.createClassLocation().toSignature())
+      introducedData += newClass.createClassLocation().toSignature()
       return
     }
 
@@ -133,7 +134,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         it.name == newMethod.name && it.desc == newMethod.desc && it.isAccessible() && !it.isIgnored()
       }
       if (oldMethod == null) {
-        introducedData.addSignature(createMethodLocation(newClass, newMethod).toSignature())
+        introducedData += createMethodLocation(newClass, newMethod).toSignature()
       }
     }
 
@@ -146,7 +147,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         it.name == newField.name && it.desc == newField.desc && it.isAccessible() && !it.isIgnored()
       }
       if (oldField == null) {
-        introducedData.addSignature(createFieldLocation(newClass, newField).toSignature())
+        introducedData += createFieldLocation(newClass, newField).toSignature()
       }
     }
   }
@@ -159,7 +160,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       newClass: ClassNode?,
       oldResolver: Resolver,
       newResolver: Resolver,
-      removedData: ApiData
+      removedData: MutableSet<ApiSignature>
   ) {
     if (newClass == null || !newClass.isAccessible()) {
       val outerClassName = getOuterClassName(oldClass.name)
@@ -167,7 +168,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         //Outer class is already registered => no need to register this inner one.
         return
       }
-      removedData.addSignature(oldClass.createClassLocation().toSignature())
+      removedData += oldClass.createClassLocation().toSignature()
       return
     }
 
@@ -180,7 +181,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         it.name == oldMethod.name && it.desc == oldMethod.desc && it.isAccessible() && !it.isIgnored()
       }
       if (newMethod == null) {
-        removedData.addSignature(createMethodLocation(oldClass, oldMethod).toSignature())
+        removedData += createMethodLocation(oldClass, oldMethod).toSignature()
       }
     }
 
@@ -193,7 +194,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         it.name == oldField.name && it.desc == oldField.desc && it.isAccessible() && !it.isIgnored()
       }
       if (newField == null) {
-        removedData.addSignature(createFieldLocation(oldClass, oldField).toSignature())
+        removedData += createFieldLocation(oldClass, oldField).toSignature()
       }
     }
   }

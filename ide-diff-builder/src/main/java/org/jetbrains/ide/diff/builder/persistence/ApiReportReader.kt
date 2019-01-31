@@ -47,7 +47,7 @@ class ApiReportReader(private val reportPath: Path) : Closeable {
   /**
    * IDE build number this root was built for.
    */
-  fun readIdeBuildNumber(): IdeVersion {
+  private fun readIdeBuildNumber(): IdeVersion {
     val buildNumberStr = if (reportPath.extension == "zip") {
       ZipFile(reportPath.toFile()).use {
         val entry = it.getEntry(BUILD_TXT_FILE_NAME)
@@ -78,18 +78,17 @@ class ApiReportReader(private val reportPath: Path) : Closeable {
    */
   fun readApiReport(): ApiReport {
     val ideBuildNumber = readIdeBuildNumber()
-    val apiEventToData = mutableMapOf<ApiEvent, ApiData>()
+    val apiEventToData = hashMapOf<ApiEvent, MutableSet<ApiSignature>>()
     for ((apiSignature, apiEvent) in readAllSignatures()) {
-      apiEventToData.getOrPut(apiEvent) { ApiData() }
-          .addSignature(apiSignature)
+      apiEventToData.getOrPut(apiEvent) { hashSetOf() } += apiSignature
     }
-    return ApiReport(ideBuildNumber, apiEventToData)
+    return ApiReport(ideBuildNumber, apiEventToData.mapValues { ApiData(it.value) })
   }
 
   /**
    * Sequence of all signatures and corresponding API events recorded in the configured annotations root.
    */
-  fun readAllSignatures(): Sequence<Pair<ApiSignature, ApiEvent>> =
+  private fun readAllSignatures(): Sequence<Pair<ApiSignature, ApiEvent>> =
       generateSequence { readNextSignature() }
 
   private fun readNextSignature(): Pair<ApiSignature, ApiEvent>? {

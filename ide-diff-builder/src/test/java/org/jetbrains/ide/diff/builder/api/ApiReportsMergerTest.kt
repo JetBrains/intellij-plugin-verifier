@@ -157,11 +157,11 @@ private fun createApiReport(
   val events: MutableList<Pair<ApiEvent, ApiSignature>> = mutableListOf()
   events.eventsAppender()
 
-  val eventsToData = hashMapOf<ApiEvent, ApiData>()
+  val eventsToData = hashMapOf<ApiEvent, MutableSet<ApiSignature>>()
   for ((event, signature) in events) {
-    eventsToData.getOrPut(event) { ApiData() }.addSignature(signature)
+    eventsToData.getOrPut(event) { hashSetOf() } += signature
   }
 
-  return ApiReport(ideVersion, eventsToData)
+  return ApiReport(ideVersion, eventsToData.mapValues { ApiData(it.value) })
 }
 
