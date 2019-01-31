@@ -343,8 +343,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       "com.intellij.ide.b",
       "com.jetbrains.a",
       "com.jetbrains.b",
-      "com.jetbrains.ls.a",
-      "com.jetbrains.ls.b"
+      "com.jetbrains.ls"
   )
 
   private fun String.hasObfuscatedLikePackage(): Boolean {
