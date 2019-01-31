@@ -334,11 +334,30 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return ".impl." in packageName
   }
 
+  private val knownObfuscatedPackages = listOf(
+      "a",
+      "b",
+      "com.intellij.a",
+      "com.intellij.b",
+      "com.intellij.ide.a",
+      "com.intellij.ide.b",
+      "com.jetbrains.a",
+      "com.jetbrains.b",
+      "com.jetbrains.ls.a",
+      "com.jetbrains.ls.b"
+  )
+
+  private fun String.hasObfuscatedLikePackage(): Boolean {
+    val packageName = getJavaPackageName(this)
+    return knownObfuscatedPackages.any { packageName.startsWith("$it.") }
+  }
+
   private fun isIgnoredClassName(className: String): Boolean =
       !className.hasInterestingPackage()
           || className.hasImplementationLikeName()
           || className.hasImplementationLikePackage()
           || className.isSyntheticLikeName()
+          || className.hasObfuscatedLikePackage()
 
   private fun ClassNode.isAccessible() = !isPrivate() && !isDefaultAccess()
 
