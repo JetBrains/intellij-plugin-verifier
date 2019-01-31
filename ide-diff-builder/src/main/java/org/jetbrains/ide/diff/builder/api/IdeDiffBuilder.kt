@@ -60,7 +60,13 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendIdeCoreData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
+  private fun appendIdeCoreData(
+      oldIde: Ide,
+      newIde: Ide,
+      jdkResolver: Resolver,
+      introducedData: MutableSet<ApiSignature>,
+      removedData: MutableSet<ApiSignature>
+  ) {
     IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldIdeResolver ->
       IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newIdeResolver ->
         appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
@@ -68,7 +74,13 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendBundledPluginsData(oldIde: Ide, newIde: Ide, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
+  private fun appendBundledPluginsData(
+      oldIde: Ide,
+      newIde: Ide,
+      jdkResolver: Resolver,
+      introducedData: MutableSet<ApiSignature>,
+      removedData: MutableSet<ApiSignature>
+  ) {
     val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
     Closeable { oldPluginClassLocations.closeAll() }.use {
       val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
@@ -80,7 +92,13 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendData(oldResolver: Resolver, newResolver: Resolver, jdkResolver: Resolver, introducedData: MutableSet<ApiSignature>, removedData: MutableSet<ApiSignature>) {
+  private fun appendData(
+      oldResolver: Resolver,
+      newResolver: Resolver,
+      jdkResolver: Resolver,
+      introducedData: MutableSet<ApiSignature>,
+      removedData: MutableSet<ApiSignature>
+  ) {
     val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkResolver)))
     val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
 
