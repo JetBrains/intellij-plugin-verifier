@@ -6,21 +6,20 @@ import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 /**
  * Container of APIs and associated events built for IDE of version [ideBuildNumber].
  */
-data class ApiReport(val ideBuildNumber: IdeVersion, val apiEventToData: Map<ApiEvent, ApiData>) {
+data class ApiReport(val ideBuildNumber: IdeVersion, val apiSignatureToEvents: Map<ApiSignature, Set<ApiEvent>>) {
   /**
    * Returns this report as a sequence of signatures and corresponding events.
    */
   fun asSequence(): Sequence<Pair<ApiSignature, ApiEvent>> =
-      apiEventToData
+      apiSignatureToEvents
           .asSequence()
-          .flatMap { (apiEvent, signatures) ->
-            signatures.apiSignatures.asSequence().map { it to apiEvent }
-          }
+          .flatMap { (signature, events) -> events.asSequence().map { signature to it } }
+
 
   /**
-   * Returns all API events associated with the signature in this report.
+   * Returns all API events associated with the signature in this report sorted by IDE version.
    */
   operator fun get(apiSignature: ApiSignature): List<ApiEvent> =
-      apiEventToData.filter { it.value.contains(apiSignature) }.map { it.key }
+      apiSignatureToEvents.getOrDefault(apiSignature, emptySet()).sortedBy { it.ideVersion }
 
 }

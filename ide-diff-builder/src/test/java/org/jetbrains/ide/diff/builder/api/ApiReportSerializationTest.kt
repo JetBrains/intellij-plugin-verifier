@@ -8,7 +8,8 @@ import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
 import org.jetbrains.ide.diff.builder.persistence.ApiReportReader
 import org.jetbrains.ide.diff.builder.persistence.saveTo
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -57,10 +58,9 @@ class ApiReportSerializationTest : BaseOldNewIdesTest() {
 
     val restoredReport = ApiReportReader.readFrom(root)
 
-    for ((originalEvent, originalData) in originalReport.apiEventToData) {
-      val restoredData = restoredReport.apiEventToData[originalEvent]
-      assertNotNull("$originalEvent", restoredData)
-      assertSetsEqual(originalData.apiSignatures, restoredData!!.apiSignatures)
+    for ((originalSignature, events) in originalReport.apiSignatureToEvents) {
+      val restoredEvents = restoredReport[originalSignature]
+      assertSetsEqual(events, restoredEvents.toSet())
     }
   }
 

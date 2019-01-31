@@ -2,7 +2,6 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class IdeDiffBuilderTest : BaseOldNewIdesTest() {
@@ -95,9 +94,11 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
     val ideVersion = IdeVersion.createIdeVersion("2.0")
     val introducedIn = IntroducedIn(ideVersion)
     val removedIn = RemovedIn(ideVersion)
-    assertEquals(setOf(introducedIn, removedIn), apiReport.apiEventToData.keys)
 
-    val introducedApiData = apiReport.apiEventToData.getValue(introducedIn)
+    val introducedSignatures = apiReport.asSequence()
+        .filter { it.second == introducedIn }.map { it.first }
+        .map { it.externalPresentation }.toSet()
+
     assertSetsEqual(
         (newClasses
             + newMethods
@@ -106,10 +107,13 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
             + accessOpenedMethods
             + accessOpenedFields
             + modifiedFields).toSet(),
-        introducedApiData.apiSignatures.map { it.externalPresentation }.toSet()
+        introducedSignatures
     )
 
-    val removedInData = apiReport.apiEventToData.getValue(removedIn)
+    val removedSignatures = apiReport.asSequence()
+        .filter { it.second == removedIn }.map { it.first }
+        .map { it.externalPresentation }.toSet()
+
     assertSetsEqual(
         (removedClasses
             + removedMethods
@@ -118,7 +122,7 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
             + accessClosedMethods
             + accessClosedFields
             + modifiedFields).toSet(),
-        removedInData.apiSignatures.map { it.externalPresentation }.toSet()
+        removedSignatures
     )
   }
 

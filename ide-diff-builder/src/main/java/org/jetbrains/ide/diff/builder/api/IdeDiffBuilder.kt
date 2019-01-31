@@ -52,11 +52,18 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return JdkResolverCreator.createJdkResolver(Resolver.ReadMode.SIGNATURES, jdkPath.jdkPath.toFile()).use { jdkResolver ->
       appendIdeCoreData(oldIde, newIde, jdkResolver, introducedData, removedData)
       appendBundledPluginsData(oldIde, newIde, jdkResolver, introducedData, removedData)
-      val apiEventToData = mapOf(
-          IntroducedIn(newIde.version) to introducedData,
-          RemovedIn(newIde.version) to removedData
-      )
-      ApiReport(newIde.version, apiEventToData.mapValues { ApiData(it.value) })
+      val apiSignatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
+      val introducedIn = IntroducedIn(newIde.version)
+      val removedIn = RemovedIn(newIde.version)
+
+      for (signature in introducedData) {
+        apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += introducedIn
+      }
+      for (signature in removedData) {
+        apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += removedIn
+      }
+
+      ApiReport(newIde.version, apiSignatureToEvents)
     }
   }
 

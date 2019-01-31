@@ -11,12 +11,10 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.api.ApiReport
-import org.jetbrains.ide.diff.builder.api.ApiReportsMerger
-import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
-import org.jetbrains.ide.diff.builder.maven.downloadArtifactTo
+import org.jetbrains.ide.diff.builder.api.*
 import org.jetbrains.ide.diff.builder.persistence.ApiReportReader
 import org.jetbrains.ide.diff.builder.persistence.saveTo
+import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -36,47 +34,18 @@ class BuildApiAnnotationsCommand : Command {
 
     private val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("171.1")
 
-    const val INTELLIJ_ARTIFACTS_REPOSITORY_NAME = "IntelliJ Artifact Repository"
-    const val INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL = "https://cache-redirector.jetbrains.com/intellij-repository"
+    private fun getDiffsPath(resultsDirectory: Path) = resultsDirectory.resolve("diffs")
 
-    const val ANNOTATIONS_CLASSIFIER = "annotations"
-    const val ANNOTATIONS_PACKAGING = "zip"
+    private fun getIdeDiffPath(resultsDirectory: Path, oneIdeVersion: IdeVersion, twoIdeVersion: IdeVersion): Path =
+        getDiffsPath(resultsDirectory).resolve("$oneIdeVersion-vs-$twoIdeVersion.zip")
 
-    fun getIdeAnnotationsResultPath(resultsDirectory: Path, ideVersion: IdeVersion): Path =
+    private fun getIdeAnnotationsResultPath(resultsDirectory: Path, ideVersion: IdeVersion): Path =
         resultsDirectory.resolve(getAnnotationsFileName(ideVersion))
 
     private fun getAnnotationsFileName(ideVersion: IdeVersion): String {
       val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)
       checkNotNull(artifactId) { ideVersion.asString() }
-      return artifactId + '-' + ideVersion.asStringWithoutProductCode() + '-' + ANNOTATIONS_CLASSIFIER + '.' + ANNOTATIONS_PACKAGING
-    }
-
-    private fun mustRebuildAllAnnotations(): Boolean =
-        System.getProperty("ide.diff.builder.rebuild.all.annotations").orEmpty().equals("true", true)
-
-    /**
-     * Returns previous branch number for specified branch.
-     * ```
-     * 145 -> 144
-     * 162 -> 145
-     * 163 -> 162
-     * 171 -> 163
-     * ...
-     * 181 -> 173
-     * 182 -> 181
-     * 183 -> 182
-     * and so on ...
-     * ```
-     */
-    private fun getPreviousBranch(branch: Int): Int {
-      check(branch <= 162 || branch % 10 <= 3) { "$branch" }
-      if (branch == 162) {
-        return 145
-      }
-      if (branch >= 163 && branch % 10 == 1) {
-        return ((branch / 10) - 1) * 10 + 3
-      }
-      return branch - 1
+      return "$artifactId-${ideVersion.asStringWithoutProductCode()}-annotations.zip"
     }
 
     private val ioExecutor = Executors.newCachedThreadPool(
@@ -140,48 +109,121 @@ class BuildApiAnnotationsCommand : Command {
         .map { it.version }
         .filter { it.productCode == "IU" }
         .toList().sorted()
-    LOG.info("The following ${availableIdes.size} IDEs are available in $INTELLIJ_ARTIFACTS_REPOSITORY_NAME: " + availableIdes.joinToString())
 
-    val alreadyProcessedIdes = if (mustRebuildAllAnnotations()) {
-      emptyList()
-    } else {
-      availableIdes.filter { getIdeAnnotationsResultPath(resultsDirectory, it).exists() }
+    LOG.info("The following ${availableIdes.size} IDEs are available in the IDE repository: " + availableIdes.joinToString())
+
+    if (System.getProperty("ide.diff.builder.rebuild").orEmpty().equals("true", true)) {
+      val diffsPath = getDiffsPath(resultsDirectory)
+      LOG.info("Removing all existing IDE diffs from $diffsPath")
+      diffsPath.deleteLogged()
     }
 
-    LOG.info("The following ${alreadyProcessedIdes.size} IDEs are already processed locally: " + alreadyProcessedIdes.joinToString())
+    val idesToProcess = availableIdes.filter { it >= MIN_BUILD_NUMBER }
+    check(idesToProcess.size > 1) { "Too few IDE builds to process: ${idesToProcess.size}" }
 
-    val idesToProcess = availableIdes.filter { ideVersion ->
-      ideVersion >= MIN_BUILD_NUMBER && ideVersion !in alreadyProcessedIdes
+    LOG.info("Building IDE diffs for ${idesToProcess.size} adjacent IDEs: " + idesToProcess.joinToString())
+    val ideDiffs = buildAdjacentIdeDiffs(idesToProcess, resultsDirectory, ideFilesBank, packages, jdkPath)
+
+    LOG.info("Merging all IDE diffs into one accumulated report")
+    var accumulatedReport: ApiReport = ApiReportReader.readFrom(ideDiffs.first().reportPath)
+    for (ideDiff in ideDiffs.drop(1)) {
+      val apiReport = ApiReportReader.readFrom(ideDiff.reportPath)
+      accumulatedReport = ApiReportsMerger().mergeApiReports(ideDiff.newIdeVersion, listOf(accumulatedReport, apiReport))
     }
 
-    LOG.info("Building annotations for the following ${idesToProcess.size} IDEs: " + idesToProcess.joinToString())
+    val accumulatedPath = resultsDirectory.resolve("accumulated-up-to-${idesToProcess.last()}.zip")
+    accumulatedReport.saveTo(accumulatedPath)
+    LOG.info("The accumulated report has been built and saved to ${accumulatedPath.simpleName}.")
 
-    for ((index, currentIdeVersion) in idesToProcess.withIndex()) {
-      LOG.info("Building annotations for $currentIdeVersion (${index + 1} of ${idesToProcess.size})")
-
-      val baseIdeVersion = selectBaseIdeVersion(currentIdeVersion, availableIdes)
-      val lastIdeVersion = selectLastIdeVersion(currentIdeVersion, availableIdes)
-      LOG.info("____base IDE = $baseIdeVersion; last IDE = $lastIdeVersion")
-
-      LOG.info("____Building API diff between base=$baseIdeVersion and current=$currentIdeVersion")
-      val baseDiff = buildIdeDiffBetweenIdes(baseIdeVersion, currentIdeVersion, ideFilesBank, packages, jdkPath)
-
-      LOG.info("____Building API diff between last=$lastIdeVersion and current=$currentIdeVersion")
-      val lastDiff = buildIdeDiffBetweenIdes(lastIdeVersion, currentIdeVersion, ideFilesBank, packages, jdkPath)
-
-      LOG.info("____Searching for result for last=$lastIdeVersion")
-      val lastResult = getOrDownloadApiReport(lastIdeVersion, resultsDirectory)
-
-      val reports = listOfNotNull(baseDiff, lastDiff, lastResult)
-      LOG.info("____Merging results for " + reports.joinToString { it.ideBuildNumber.asString() })
-      val mergedApiReport = ApiReportsMerger().mergeApiReports(currentIdeVersion, reports)
-
-      val resultPath = getIdeAnnotationsResultPath(resultsDirectory, currentIdeVersion)
-      resultPath.deleteLogged()
-
-      LOG.info("____Result for $currentIdeVersion has been saved to ${resultPath.simpleName}")
-      mergedApiReport.saveTo(resultPath)
+    LOG.info("Building annotations for last IDEs of each branch.")
+    val branchToLastIdeVersion = idesToProcess.groupingBy { it.baselineVersion }.reduce { _, acc, ideVersion -> maxOf(acc, ideVersion) }
+    for ((branch, ideVersion) in branchToLastIdeVersion) {
+      LOG.info("Building annotations for last IDE of branch $branch: $ideVersion")
+      val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
+      val annotations = buildApiAnnotations(accumulatedReport, ideVersion)
+      annotations.saveTo(resultPath)
     }
+  }
+
+  private data class IdeDiff(val reportPath: Path, val oldIdeVersion: IdeVersion, val newIdeVersion: IdeVersion)
+
+  private fun buildAdjacentIdeDiffs(
+      idesToProcess: List<IdeVersion>,
+      resultsDirectory: Path,
+      ideFilesBank: IdeFilesBank,
+      packages: List<String>,
+      jdkPath: JdkPath
+  ): List<IdeDiff> {
+    val ideDiffs = arrayListOf<IdeDiff>()
+    for (index in 1 until idesToProcess.size) {
+      val previousIdeVersion = idesToProcess[index - 1]
+      val currentIdeVersion = idesToProcess[index]
+
+      LOG.info("____Building IDE diff ($index of ${idesToProcess.size - 1}) between $previousIdeVersion and $currentIdeVersion")
+
+      val ideDiffPath = getIdeDiffPath(resultsDirectory, previousIdeVersion, currentIdeVersion)
+      if (ideDiffPath.exists()) {
+        LOG.info("________IDE diff between $previousIdeVersion and $currentIdeVersion is already built")
+      } else {
+        val apiReport = buildIdeDiffBetweenIdes(previousIdeVersion, currentIdeVersion, ideFilesBank, packages, jdkPath)
+        LOG.info("________Saving IDE diff between $previousIdeVersion and $currentIdeVersion to $ideDiffPath")
+        apiReport.saveTo(ideDiffPath)
+      }
+      ideDiffs += IdeDiff(ideDiffPath, previousIdeVersion, currentIdeVersion)
+    }
+    return ideDiffs
+  }
+
+  private fun buildApiAnnotations(mergedReport: ApiReport, ideVersion: IdeVersion): ApiReport {
+    val apiSignatureToEvents = hashMapOf<ApiSignature, Set<ApiEvent>>()
+
+    val allSignatures = mergedReport.asSequence().map { it.first }.distinct()
+    for (signature in allSignatures) {
+      val events = mergedReport[signature]
+      if (events.isEmpty()) {
+        continue
+      }
+      val sanitizedEvents = arrayListOf<ApiEvent>()
+
+      val firstEvent = events.first()
+      if (firstEvent is IntroducedIn) {
+        /**
+         * IntroducedIn is the first event <=> this signature didn't exist ever before.
+         * Thus register its first introduction time.
+         */
+        sanitizedEvents += firstEvent
+      }
+
+      val lastRemoved = events.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
+      if (lastRemoved != null) {
+        /**
+         * Take the last RemovedIn event, even if the signature has been added and removed multiple times.
+         */
+        sanitizedEvents += lastRemoved
+
+        val lastEvent = events.last()
+        if (lastEvent is IntroducedIn) {
+          /**
+           * The last event is IntroducedIn => the signature has been finally re-added.
+           */
+          sanitizedEvents += lastEvent
+        }
+      }
+
+      if (sanitizedEvents.size == 1) {
+        val singleEvent = sanitizedEvents.single()
+        val isOldEvent = when (singleEvent) {
+          is IntroducedIn -> singleEvent.ideVersion.baselineVersion > ideVersion.baselineVersion
+          is RemovedIn -> singleEvent.ideVersion.baselineVersion < ideVersion.baselineVersion
+        }
+        if (isOldEvent) {
+          continue
+        }
+      }
+
+      apiSignatureToEvents[signature] = events.toSet()
+    }
+    return ApiReport(ideVersion, apiSignatureToEvents)
   }
 
   private fun createIdeFilesBank(idesDir: Path): IdeFilesBank {
@@ -239,54 +281,5 @@ class BuildApiAnnotationsCommand : Command {
       }
     }
   }
-
-  private fun getOrDownloadApiReport(ideVersion: IdeVersion, resultsDirectory: Path): ApiReport? {
-    val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
-    if (resultPath.exists()) {
-      LOG.info("________Result for $ideVersion is available at ${resultPath.simpleName}")
-      return ApiReportReader.readFrom(resultPath)
-    }
-    if (ideVersion < MIN_BUILD_NUMBER) {
-      //We don't build annotations for old IDEs.
-      return null
-    }
-    try {
-      val message = "________Downloading annotations for $ideVersion to ${resultPath.simpleName}"
-      retry(message) {
-        downloadAnnotations(ideVersion, resultPath)
-      }
-    } catch (e: Exception) {
-      throw IllegalStateException("Annotations for $ideVersion were not found locally, nor they could be downloaded from the repository.", e)
-    }
-    return ApiReportReader.readFrom(resultPath)
-  }
-
-  private fun downloadAnnotations(ideVersion: IdeVersion, resultPath: Path) {
-    val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)!!
-    val groupId = IntelliJIdeRepository.getGroupIdByProductCode(ideVersion.productCode)!!
-    val version = ideVersion.asStringWithoutProductCode()
-    try {
-      downloadArtifactTo("$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/releases", groupId, artifactId, version, resultPath, ANNOTATIONS_CLASSIFIER, ANNOTATIONS_PACKAGING)
-    } catch (e: Exception) {
-      LOG.info("Couldn't download annotations from /releases: ${e.message}. Searching in /snapshots")
-      downloadArtifactTo("$INTELLIJ_ARTIFACTS_REPOSITORY_BASE_URL/snapshots", groupId, artifactId, version, resultPath, ANNOTATIONS_CLASSIFIER, ANNOTATIONS_PACKAGING)
-    }
-  }
-
-  /**
-   * Selects latest IDE build from the previous branch.
-   */
-  private fun selectBaseIdeVersion(ideVersion: IdeVersion, ideIndex: List<IdeVersion>): IdeVersion {
-    val previousBranch = getPreviousBranch(ideVersion.baselineVersion)
-    return ideIndex.filter { it.baselineVersion == previousBranch }.max()
-        ?: throw RuntimeException("For $ideVersion there is no IDE in the previous branch")
-  }
-
-  /**
-   * Selects IDE build previous for the current one.
-   */
-  private fun selectLastIdeVersion(ideVersion: IdeVersion, ideIndex: List<IdeVersion>): IdeVersion =
-      ideIndex.filter { it < ideVersion }.max()
-          ?: throw RuntimeException("For $ideVersion there is no previous IDE")
 
 }

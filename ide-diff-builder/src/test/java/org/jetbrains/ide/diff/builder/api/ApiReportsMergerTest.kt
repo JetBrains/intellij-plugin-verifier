@@ -130,7 +130,7 @@ class ApiReportsMergerTest {
   }
 
   private fun assertReportsEqual(expectedReport: ApiReport, actualReport: ApiReport) {
-    assertEquals(expectedReport.apiEventToData, actualReport.apiEventToData)
+    assertEquals(expectedReport.apiSignatureToEvents, actualReport.apiSignatureToEvents)
   }
 
   private fun mergeReports(
@@ -157,11 +157,11 @@ private fun createApiReport(
   val events: MutableList<Pair<ApiEvent, ApiSignature>> = mutableListOf()
   events.eventsAppender()
 
-  val eventsToData = hashMapOf<ApiEvent, MutableSet<ApiSignature>>()
+  val signatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
   for ((event, signature) in events) {
-    eventsToData.getOrPut(event) { hashSetOf() } += signature
+    signatureToEvents.getOrPut(signature) { hashSetOf() } += event
   }
 
-  return ApiReport(ideVersion, eventsToData.mapValues { ApiData(it.value) })
+  return ApiReport(ideVersion, signatureToEvents)
 }
 

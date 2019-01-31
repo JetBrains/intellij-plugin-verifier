@@ -64,7 +64,7 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
             val clearValue = value.trim('\"')
             val apiEvent = when (annotationName) {
               AVAILABLE_SINCE_ANNOTATION_NAME -> IntroducedIn(IdeVersion.createIdeVersion(clearValue))
-              AVAILABLE_UNTIL_ANNOTATION_NAME -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
+              SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
               else -> continue@whileLoop
             }
             return apiSignature!! to apiEvent

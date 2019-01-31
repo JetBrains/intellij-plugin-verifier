@@ -12,9 +12,13 @@ sealed class ApiEvent {
 /**
  * API was introduced in [ideVersion].
  */
-data class IntroducedIn(override val ideVersion: IdeVersion) : ApiEvent()
+data class IntroducedIn(override val ideVersion: IdeVersion) : ApiEvent() {
+  override fun toString() = "+$ideVersion"
+}
 
 /**
  * API was removed in [ideVersion].
  */
-data class RemovedIn(override val ideVersion: IdeVersion) : ApiEvent()
+data class RemovedIn(override val ideVersion: IdeVersion) : ApiEvent() {
+  override fun toString() = "-$ideVersion"
+}

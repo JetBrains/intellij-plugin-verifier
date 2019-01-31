@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.misc.*
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
-import org.jetbrains.ide.diff.builder.api.ApiData
 import org.jetbrains.ide.diff.builder.api.ApiEvent
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
@@ -78,11 +77,11 @@ class ApiReportReader(private val reportPath: Path) : Closeable {
    */
   fun readApiReport(): ApiReport {
     val ideBuildNumber = readIdeBuildNumber()
-    val apiEventToData = hashMapOf<ApiEvent, MutableSet<ApiSignature>>()
+    val apiSignatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
     for ((apiSignature, apiEvent) in readAllSignatures()) {
-      apiEventToData.getOrPut(apiEvent) { hashSetOf() } += apiSignature
+      apiSignatureToEvents.getOrPut(apiSignature) { hashSetOf() } += apiEvent
     }
-    return ApiReport(ideBuildNumber, apiEventToData.mapValues { ApiData(it.value) })
+    return ApiReport(ideBuildNumber, apiSignatureToEvents)
   }
 
   /**
