@@ -85,6 +85,10 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
       "access.AccessClosedContent protectedFieldBecamePrivate"
   )
 
+  private val modifiedFields = listOf(
+      "modified.ModifiedContent x"
+  )
+
   @Test
   fun `run diff builder for old and new IDEs`() {
     val apiReport = buildApiReport()
@@ -93,15 +97,27 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
     val removedIn = RemovedIn(ideVersion)
     assertEquals(setOf(introducedIn, removedIn), apiReport.apiEventToData.keys)
 
-    val introducedApiData = apiReport.apiEventToData[introducedIn]!!
+    val introducedApiData = apiReport.apiEventToData.getValue(introducedIn)
     assertSetsEqual(
-        (newClasses + newMethods + newFields + accessOpenedClasses + accessOpenedMethods + accessOpenedFields).toSet(),
+        (newClasses
+            + newMethods
+            + newFields
+            + accessOpenedClasses
+            + accessOpenedMethods
+            + accessOpenedFields
+            + modifiedFields).toSet(),
         introducedApiData.apiSignatures.map { it.externalPresentation }.toSet()
     )
 
-    val removedInData = apiReport.apiEventToData[removedIn]!!
+    val removedInData = apiReport.apiEventToData.getValue(removedIn)
     assertSetsEqual(
-        (removedClasses + removedMethods + removedFields + accessClosedClasses + accessClosedMethods + accessClosedFields).toSet(),
+        (removedClasses
+            + removedMethods
+            + removedFields
+            + accessClosedClasses
+            + accessClosedMethods
+            + accessClosedFields
+            + modifiedFields).toSet(),
         removedInData.apiSignatures.map { it.externalPresentation }.toSet()
     )
   }
