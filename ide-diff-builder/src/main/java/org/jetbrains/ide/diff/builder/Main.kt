@@ -2,7 +2,7 @@ package org.jetbrains.ide.diff.builder
 
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.cli.BuildMissingApiAnnotationsCommand
+import org.jetbrains.ide.diff.builder.cli.BuildApiAnnotationsCommand
 import org.jetbrains.ide.diff.builder.cli.IdeDiffCommand
 import org.jetbrains.ide.diff.builder.cli.IdeRepositoryIndexCommand
 
@@ -20,7 +20,7 @@ private fun usage(): Nothing {
 private val AVAILABLE_COMMANDS = listOf(
     IdeDiffCommand(),
     IdeRepositoryIndexCommand(),
-    BuildMissingApiAnnotationsCommand()
+    BuildApiAnnotationsCommand()
 )
 
 fun main(args: Array<String>) {

@@ -26,13 +26,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 /**
- * Builds API annotations artifacts for IDEs that lack such annotations in the IntelliJ Artifacts Repositories.
- * It saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
+ * Builds API annotations artifacts for IDEs from the IntelliJ Artifacts Repositories
+ * and saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
  */
-class BuildMissingApiAnnotationsCommand : Command {
+class BuildApiAnnotationsCommand : Command {
 
   companion object {
-    private val LOG = LoggerFactory.getLogger("build-missing-api-annotations")
+    private val LOG = LoggerFactory.getLogger("build-api-annotations")
 
     private val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("171.1")
 
@@ -88,7 +88,7 @@ class BuildMissingApiAnnotationsCommand : Command {
   }
 
   override val commandName: String
-    get() = "build-missing-api-annotations"
+    get() = "build-api-annotations"
 
   override val help: String
     get() = """
@@ -96,7 +96,7 @@ class BuildMissingApiAnnotationsCommand : Command {
       https://www.jetbrains.com/intellij-repository/releases/ and https://www.jetbrains.com/intellij-repository/snapshots
       It saves them under results directory with names like `ideaIU-191.1234-annotations.zip`.
 
-      build-missing-api-annotations [-ides-dir <IDE cache dir] [-jdk-path <path to JDK home>] [-packages "org.some;com.another"] <results directory>
+      build-api-annotations [-ides-dir <IDE cache dir] [-jdk-path <path to JDK home>] [-packages "org.some;com.another"] <results directory>
     """.trimIndent()
 
   open class CliOptions : IdeDiffCommand.CliOptions() {
