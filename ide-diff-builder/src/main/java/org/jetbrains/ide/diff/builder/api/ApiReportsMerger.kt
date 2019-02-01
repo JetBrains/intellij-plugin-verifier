@@ -8,6 +8,11 @@ import org.jetbrains.ide.diff.builder.signatures.ApiSignature
  */
 class ApiReportsMerger {
 
+  private fun isBuggySignature(signature: ApiSignature): Boolean {
+    val className = signature.externalPresentation.substringBefore(" ")
+    return IdeDiffBuilder.hasObfuscatedLikePackage(className)
+  }
+
   fun mergeApiReports(resultIdeVersion: IdeVersion, reports: List<ApiReport>): ApiReport {
     if (reports.isEmpty()) {
       return ApiReport(resultIdeVersion, emptyMap())
@@ -20,7 +25,7 @@ class ApiReportsMerger {
     val processedSignatures = hashSetOf<ApiSignature>()
     for (report in reports) {
       for ((signature, _) in report.asSequence()) {
-        if (processedSignatures.add(signature)) {
+        if (!isBuggySignature(signature) && processedSignatures.add(signature)) {
           val allEvents = reports.flatMap { it[signature] }
           val mergedEvents = ApiEventsMerger().mergeEvents(allEvents)
           for (event in mergedEvents) {

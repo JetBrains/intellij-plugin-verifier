@@ -39,6 +39,23 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
      * IDs of plugins to be ignored from processing. Their APIs are not relevant to IDE.
      */
     private val IGNORED_PLUGIN_IDS = setOf("org.jetbrains.kotlin", "org.jetbrains.android")
+
+    private val knownObfuscatedPackages = listOf(
+        "a",
+        "b",
+        "com.intellij.a",
+        "com.intellij.b",
+        "com.intellij.ide.a",
+        "com.intellij.ide.b",
+        "com.jetbrains.a",
+        "com.jetbrains.b",
+        "com.jetbrains.ls"
+    )
+
+    fun hasObfuscatedLikePackage(className: String): Boolean {
+      val javaName = toFullJavaClassName(className)
+      return knownObfuscatedPackages.any { javaName.startsWith("$it.") }
+    }
   }
 
   fun buildIdeDiff(oldIdePath: Path, newIdePath: Path): ApiReport {
@@ -342,29 +359,12 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return ".impl." in packageName
   }
 
-  private val knownObfuscatedPackages = listOf(
-      "a",
-      "b",
-      "com.intellij.a",
-      "com.intellij.b",
-      "com.intellij.ide.a",
-      "com.intellij.ide.b",
-      "com.jetbrains.a",
-      "com.jetbrains.b",
-      "com.jetbrains.ls"
-  )
-
-  private fun String.hasObfuscatedLikePackage(): Boolean {
-    val javaName = toFullJavaClassName(this)
-    return knownObfuscatedPackages.any { javaName.startsWith("$it.") }
-  }
-
   private fun isIgnoredClassName(className: String): Boolean =
       !className.hasInterestingPackage()
           || className.hasImplementationLikeName()
           || className.hasImplementationLikePackage()
           || className.isSyntheticLikeName()
-          || className.hasObfuscatedLikePackage()
+          || hasObfuscatedLikePackage(className)
 
   private fun ClassNode.isAccessible() = !isPrivate() && !isDefaultAccess()
 
