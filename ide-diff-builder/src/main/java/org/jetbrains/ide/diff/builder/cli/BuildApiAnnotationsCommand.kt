@@ -105,12 +105,15 @@ class BuildApiAnnotationsCommand : Command {
 
     val ideFilesBank = createIdeFilesBank(idesDir)
 
-    val availableIdes = allIdeRepository.fetchIndex().asSequence()
-        .map { it.version }
-        .filter { it.productCode == "IU" }
-        .toList().sorted()
+    val repositoryToIdes = allIdeRepositories.associate { ideRepository ->
+      ideRepository to ideRepository.fetchIndex()
+          .map { it.version }
+          .filter { it.productCode == "IU" }
+          .sorted()
+    }
+    val availableIdes = repositoryToIdes.values.flatten().distinct().sorted()
 
-    LOG.info("The following ${availableIdes.size} IDEs are available in the IDE repository: " + availableIdes.joinToString())
+    LOG.info("The following ${availableIdes.size} IDEs are available in all IDE repositories: " + availableIdes.joinToString())
 
     if (System.getProperty("ide.diff.builder.rebuild").orEmpty().equals("true", true)) {
       val diffsPath = getDiffsPath(resultsDirectory)
@@ -135,13 +138,17 @@ class BuildApiAnnotationsCommand : Command {
     accumulatedReport.saveTo(accumulatedPath)
     LOG.info("The accumulated report has been built and saved to ${accumulatedPath.simpleName}.")
 
-    LOG.info("Building annotations for last IDEs of each branch.")
-    val branchToLastIdeVersion = idesToProcess.groupingBy { it.baselineVersion }.reduce { _, acc, ideVersion -> maxOf(acc, ideVersion) }
-    for ((branch, ideVersion) in branchToLastIdeVersion) {
-      LOG.info("Building annotations for last IDE of branch $branch: $ideVersion")
-      val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
-      val annotations = buildApiAnnotations(accumulatedReport, ideVersion)
-      annotations.saveTo(resultPath)
+    LOG.info("Building annotations for last IDEs of each branch for each repository.")
+    for (ideRepository in allIdeRepositories) {
+      val branchToLastIdeVersion = repositoryToIdes.getValue(ideRepository)
+          .groupingBy { it.baselineVersion }
+          .reduce { _, acc, ideVersion -> maxOf(acc, ideVersion) }
+      for ((branch, ideVersion) in branchToLastIdeVersion) {
+        LOG.info("Building annotations for last IDE of branch $branch: $ideVersion from $ideRepository")
+        val resultPath = getIdeAnnotationsResultPath(resultsDirectory, ideVersion)
+        val annotations = buildApiAnnotations(accumulatedReport, ideVersion)
+        annotations.saveTo(resultPath)
+      }
     }
   }
 
@@ -211,7 +218,7 @@ class BuildApiAnnotationsCommand : Command {
   private fun createIdeFilesBank(idesDir: Path): IdeFilesBank {
     val gigabytes = System.getProperty("ides.dir.max.size.gb", "10").toInt()
     val diskSpaceSetting = DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE * gigabytes)
-    return IdeFilesBank(idesDir, allIdeRepository, diskSpaceSetting)
+    return IdeFilesBank(idesDir, allIdeMergingRepository, diskSpaceSetting)
   }
 
   private fun buildIdeDiffBetweenIdes(

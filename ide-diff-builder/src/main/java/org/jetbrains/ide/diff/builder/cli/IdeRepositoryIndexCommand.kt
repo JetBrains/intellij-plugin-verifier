@@ -61,10 +61,10 @@ class IdeRepositoryIndexCommand : Command {
     val options = Options()
     Args.parse(options, freeArgs.toTypedArray(), false)
     val repository = when (options.channel) {
-      "all" -> allIdeRepository
+      "all" -> allIdeMergingRepository
       "releases-only" -> releasesIdeRepository
       "snapshots-only" -> snapshotsIdeRepository
-      else -> allIdeRepository
+      else -> allIdeMergingRepository
     }
 
     val index = repository
@@ -93,13 +93,15 @@ val releasesIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.
 val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
 val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
-val allIdeRepository = MergingIdeRepository(listOf(
+val allIdeRepositories: List<IdeRepository> = listOf(
     releasesIdeRepository,
     snapshotsIdeRepository,
     nightlyIdeRepository
-))
+)
 
-class MergingIdeRepository(private val ideRepositories: List<IdeRepository>) : IdeRepository {
+val allIdeMergingRepository = MergingIdeRepository(allIdeRepositories)
+
+class MergingIdeRepository(val ideRepositories: List<IdeRepository>) : IdeRepository {
 
   override fun fetchIndex() =
       ideRepositories.flatMap { it.fetchIndex() }.distinctBy { it.version }.sortedBy { it.version }
