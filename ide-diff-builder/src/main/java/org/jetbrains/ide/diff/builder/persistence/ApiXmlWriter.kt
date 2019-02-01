@@ -8,9 +8,9 @@ import org.jetbrains.ide.diff.builder.signatures.escapeHtml
 import java.io.Closeable
 import java.io.Writer
 
-const val AVAILABLE_SINCE_ANNOTATION_NAME = "org.jetbrains.annotations.ApiStatus.AvailableSince"
-
-const val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = "org.jetbrains.annotations.ApiStatus.ScheduledForRemoval"
+sealed class ApiEventAnnotation(val annotationName: String, val valueName: String)
+object AvailableSinceAnnotation : ApiEventAnnotation("org.jetbrains.annotations.ApiStatus.AvailableSince", "value")
+object ScheduledForRemovalAnnotation : ApiEventAnnotation("org.jetbrains.annotations.ApiStatus.ScheduledForRemoval", "inVersion")
 
 const val ANNOTATIONS_XML_FILE_NAME = "annotations.xml"
 
@@ -27,9 +27,9 @@ internal class ApiXmlWriter(private val writer: Writer) : Closeable {
   }
 
   fun appendSignature(apiSignature: ApiSignature, apiEvent: ApiEvent) {
-    val annotationName = when (apiEvent) {
-      is IntroducedIn -> AVAILABLE_SINCE_ANNOTATION_NAME
-      is RemovedIn -> SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME
+    val apiEventAnnotation = when (apiEvent) {
+      is IntroducedIn -> AvailableSinceAnnotation
+      is RemovedIn -> ScheduledForRemovalAnnotation
     }
 
     val ideVersion = when (apiEvent) {
@@ -39,8 +39,8 @@ internal class ApiXmlWriter(private val writer: Writer) : Closeable {
 
     with(writer) {
       appendln("""  <item name="${apiSignature.externalPresentation.escapeHtml()}">""")
-      appendln("""    <annotation name="$annotationName">""")
-      appendln("""      <val name="value" val="&quot;${ideVersion.asStringWithoutProductCode()}&quot;"/>""")
+      appendln("""    <annotation name="${apiEventAnnotation.annotationName}">""")
+      appendln("""      <val name="${apiEventAnnotation.valueName}" val="&quot;${ideVersion.asStringWithoutProductCode()}&quot;"/>""")
       appendln("""    </annotation>""")
       appendln("""  </item>""")
     }

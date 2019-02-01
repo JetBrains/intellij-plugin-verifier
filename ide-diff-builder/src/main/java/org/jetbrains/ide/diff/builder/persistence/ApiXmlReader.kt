@@ -36,7 +36,7 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
     }
 
     var apiSignature: ApiSignature? = null
-    var annotationName: String? = null
+    var apiEventAnnotation: ApiEventAnnotation? = null
 
     whileLoop@ while (xmlInput.hasNext()) {
       xmlInput.next()
@@ -49,23 +49,26 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
           }
           "annotation" -> {
             checkEquals("name", xmlInput.getAttributeLocalName(0))
-            annotationName = xmlInput.getAttributeValue(0)
+            apiEventAnnotation = when (xmlInput.getAttributeValue(0)) {
+              AvailableSinceAnnotation.annotationName -> AvailableSinceAnnotation
+              ScheduledForRemovalAnnotation.annotationName -> ScheduledForRemovalAnnotation
+              else -> continue@whileLoop
+            }
           }
           "val" -> {
             checkNotNull(apiSignature) { "<val> before <item>" }
-            checkNotNull(annotationName) { "<val> before <annotation>" }
+            checkNotNull(apiEventAnnotation) { "<val> before <annotation>" }
             checkEquals("name", xmlInput.getAttributeLocalName(0))
-            checkEquals("value", xmlInput.getAttributeValue(0))
+            checkEquals(apiEventAnnotation!!.valueName, xmlInput.getAttributeValue(0))
 
             checkEquals("val", xmlInput.getAttributeLocalName(1))
             val value = xmlInput.getAttributeValue(1).unescapeHtml()
 
             check(value.startsWith('\"') && value.endsWith('\"')) { value }
             val clearValue = value.trim('\"')
-            val apiEvent = when (annotationName) {
-              AVAILABLE_SINCE_ANNOTATION_NAME -> IntroducedIn(IdeVersion.createIdeVersion(clearValue))
-              SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
-              else -> continue@whileLoop
+            val apiEvent = when (apiEventAnnotation) {
+              AvailableSinceAnnotation -> IntroducedIn(IdeVersion.createIdeVersion(clearValue))
+              ScheduledForRemovalAnnotation -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
             }
             return apiSignature!! to apiEvent
           }
@@ -74,7 +77,7 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
       if (xmlInput.eventType == XMLStreamReader.END_ELEMENT) {
         when (xmlInput.localName) {
           "item" -> apiSignature = null
-          "annotation" -> annotationName = null
+          "annotation" -> apiEventAnnotation = null
         }
       }
     }
