@@ -187,41 +187,23 @@ class BuildApiAnnotationsCommand : Command {
 
       val firstEvent = events.first()
       if (firstEvent is IntroducedIn) {
-        /**
-         * IntroducedIn is the first event <=> this signature didn't exist ever before.
-         * Thus register its first introduction time.
-         */
+        if (firstEvent.ideVersion.baselineVersion > ideVersion.baselineVersion) {
+          //Too new signature for this IDE => skip
+          continue
+        }
         sanitizedEvents += firstEvent
       }
 
-      val lastRemoved = events.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
-      if (lastRemoved != null) {
-        /**
-         * Take the last RemovedIn event, even if the signature has been added and removed multiple times.
-         */
-        sanitizedEvents += lastRemoved
-
-        val lastEvent = events.last()
-        if (lastEvent is IntroducedIn) {
-          /**
-           * The last event is IntroducedIn => the signature has been finally re-added.
-           */
-          sanitizedEvents += lastEvent
-        }
-      }
-
-      if (sanitizedEvents.size == 1) {
-        val singleEvent = sanitizedEvents.single()
-        val isOldEvent = when (singleEvent) {
-          is IntroducedIn -> singleEvent.ideVersion.baselineVersion > ideVersion.baselineVersion
-          is RemovedIn -> singleEvent.ideVersion.baselineVersion < ideVersion.baselineVersion
-        }
-        if (isOldEvent) {
+      val lastEvent = events.last()
+      if (lastEvent is RemovedIn) {
+        if (lastEvent.ideVersion.baselineVersion < ideVersion.baselineVersion) {
+          //Too old signature for this IDE => skip
           continue
         }
+        sanitizedEvents += lastEvent
       }
 
-      apiSignatureToEvents[signature] = events.toSet()
+      apiSignatureToEvents[signature] = sanitizedEvents.toSet()
     }
     return ApiReport(ideVersion, apiSignatureToEvents)
   }
