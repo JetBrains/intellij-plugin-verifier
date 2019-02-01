@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFi
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
@@ -354,8 +355,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   )
 
   private fun String.hasObfuscatedLikePackage(): Boolean {
-    val packageName = getJavaPackageName(this)
-    return knownObfuscatedPackages.any { packageName.startsWith("$it.") }
+    val javaName = toFullJavaClassName(this)
+    return knownObfuscatedPackages.any { javaName.startsWith("$it.") }
   }
 
   private fun isIgnoredClassName(className: String): Boolean =
