@@ -18,7 +18,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
   }
 
   if (dependencies != null && dependencies.any { it.id == "Wave" }) {
-    if (id != null && id.count { it == '.' } != 1) {
+    if (id != null && !id.contains('.')) {
       problems.add(InvalidIdError)
     }
   }
