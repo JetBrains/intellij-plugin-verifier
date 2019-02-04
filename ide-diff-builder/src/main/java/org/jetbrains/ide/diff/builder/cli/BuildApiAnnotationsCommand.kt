@@ -108,12 +108,12 @@ class BuildApiAnnotationsCommand : Command {
     val repositoryToIdes = allIdeRepositories.associate { ideRepository ->
       ideRepository to ideRepository.fetchIndex()
           .map { it.version }
-          .filter { it.productCode == "IU" }
+          .filter { it.productCode == "IU" && it >= MIN_BUILD_NUMBER }
           .sorted()
     }
-    val availableIdes = repositoryToIdes.values.flatten().distinct().sorted()
+    val idesToProcess = repositoryToIdes.values.flatten().distinct().sorted()
 
-    LOG.info("The following ${availableIdes.size} IDEs are available in all IDE repositories: " + availableIdes.joinToString())
+    LOG.info("The following ${idesToProcess.size} IDEs (> $MIN_BUILD_NUMBER) are available in all IDE repositories: " + idesToProcess.joinToString())
 
     if (System.getProperty("ide.diff.builder.rebuild").orEmpty().equals("true", true)) {
       val diffsPath = getDiffsPath(resultsDirectory)
@@ -121,7 +121,6 @@ class BuildApiAnnotationsCommand : Command {
       diffsPath.deleteLogged()
     }
 
-    val idesToProcess = availableIdes.filter { it >= MIN_BUILD_NUMBER }
     check(idesToProcess.size > 1) { "Too few IDE builds to process: ${idesToProcess.size}" }
 
     LOG.info("Building IDE diffs for ${idesToProcess.size} adjacent IDEs: " + idesToProcess.joinToString())
