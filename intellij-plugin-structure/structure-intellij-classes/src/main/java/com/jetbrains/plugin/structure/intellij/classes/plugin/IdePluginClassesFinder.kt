@@ -74,7 +74,7 @@ class IdePluginClassesFinder private constructor(
 
     val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
 
-    fun findPluginClasses(idePlugin: IdePlugin, additionalKeys: List<LocationKey> = emptyList()) =
+    fun findPluginClasses(idePlugin: IdePlugin, additionalKeys: List<LocationKey> = emptyList()): IdePluginClassesLocations =
         findPluginClasses(idePlugin, Resolver.ReadMode.FULL, additionalKeys)
 
     fun findPluginClasses(
@@ -91,7 +91,7 @@ class IdePluginClassesFinder private constructor(
         extractDirectory: File,
         readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
         additionalKeys: List<LocationKey> = emptyList()
-    ) = IdePluginClassesFinder(
+    ): IdePluginClassesLocations = IdePluginClassesFinder(
         idePlugin,
         extractDirectory,
         readMode,
