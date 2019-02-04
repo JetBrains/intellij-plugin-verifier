@@ -111,7 +111,11 @@ class VerificationResultFilter {
       return Send
     }
 
-    var decision = verificationResult.checkTooManyProblems(verificationEndTime)
+    var decision = if (scheduledVerification.manually) {
+      Send
+    } else {
+      verificationResult.checkTooManyProblems(verificationEndTime)
+    }
     if (decision === Send) {
       decision = verificationResult.checkFailedToFetch(scheduledVerification.updateInfo, verificationEndTime)
     }
