@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.createPluginResolver
@@ -20,6 +21,7 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.results.warnings.IdePackagesBundledWarning
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.Closeable
@@ -40,6 +42,7 @@ class DefaultClsResolverProvider(
       resultHolder: ResultHolder
   ): ClsResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
+    findMistakenlyBundledIdeClasses(pluginResolver, resultHolder)
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
     return try {
@@ -50,6 +53,13 @@ class DefaultClsResolverProvider(
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
       throw e
+    }
+  }
+
+  private fun findMistakenlyBundledIdeClasses(pluginResolver: Resolver, resultHolder: ResultHolder) {
+    val idePackages = pluginResolver.allPackages.filter { KnownIdePackages.isKnownPackage(it) }
+    if (idePackages.isNotEmpty()) {
+      resultHolder.addPluginErrorOrWarning(IdePackagesBundledWarning(idePackages))
     }
   }
 
