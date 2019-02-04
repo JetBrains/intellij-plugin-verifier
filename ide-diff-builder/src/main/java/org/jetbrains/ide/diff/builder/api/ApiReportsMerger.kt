@@ -26,8 +26,7 @@ class ApiReportsMerger {
     for (report in reports) {
       for ((signature, _) in report.asSequence()) {
         if (!isBuggySignature(signature) && processedSignatures.add(signature)) {
-          val allEvents = reports.flatMap { it[signature] }
-          val mergedEvents = ApiEventsMerger().mergeEvents(allEvents)
+          val mergedEvents = reports.flatMap { it[signature] }.distinct().sortedBy { it.ideVersion }
           for (event in mergedEvents) {
             apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += event
           }
