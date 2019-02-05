@@ -28,7 +28,7 @@ class DocumentedProblemsParser {
         Regex("($IDENTIFIER)\\.($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)\\.($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(s[0].toInternalName()) },
-        Regex("($IDENTIFIER)\\.($IDENTIFIER) abstract method added") to { s -> DocAbstractMethodAdded(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)\\.($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(s[0].toInternalName(), s[1].toInternalName()) }
     )
 

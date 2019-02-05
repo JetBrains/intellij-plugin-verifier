@@ -26,9 +26,11 @@ class DocumentedProblemsParserTest {
     val expectedProblems = listOf(
         DocPackageRemoved("com/example/deletedPackage"),
         DocAbstractMethodAdded("com/example/Faz", "newAbstractMethod"),
+        DocAbstractMethodAdded("com/example/SomeClass", "abstractMethodWithParams"),
         DocFieldRemoved("com/example/Baz", "REMOVED_FIELD"),
         DocClassRemoved("com/example/Foo"),
         DocMethodRemoved("com/example/Bar", "removedMethod"),
+        DocMethodRemoved("com/example/RemovedConstructorWithParams", "<init>"),
         DocClassMovedToPackage("com/example/Baf", "com/another"),
         DocMethodReturnTypeChanged("com/example/Foo\$InnerClass", "changedReturnType"),
         DocMethodParameterTypeChanged("com/example/Bar", "changedParameterType"),
