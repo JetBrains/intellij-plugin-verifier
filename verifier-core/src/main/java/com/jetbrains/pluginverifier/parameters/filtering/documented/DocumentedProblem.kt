@@ -72,6 +72,14 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
 }
 
 /**
+ * <class name>.<method name> method became final
+ */
+data class DocMethodBecameFinal(val hostClass: String, val methodName: String) : DocumentedProblem {
+  override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
+      problem is OverridingFinalMethodProblem && problem.finalMethod.hostClass.className == hostClass && problem.finalMethod.methodName == methodName
+}
+
+/**
  * <class name>.<method name> method parameter type changed from <before> to <after>
  *
  * It supports the following case: given two types A and B such that B derives from A

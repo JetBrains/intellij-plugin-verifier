@@ -27,6 +27,7 @@ class DocumentedProblemsParserTest {
         DocPackageRemoved("com/example/deletedPackage"),
         DocAbstractMethodAdded("com/example/Faz", "newAbstractMethod"),
         DocAbstractMethodAdded("com/example/SomeClass", "abstractMethodWithParams"),
+        DocAbstractMethodAdded("com/example/MethodHolder", "abstractMethodSeparatedWithDash"),
         DocFieldRemoved("com/example/Baz", "REMOVED_FIELD"),
         DocClassRemoved("com/example/Foo"),
         DocMethodRemoved("com/example/Bar", "removedMethod"),
@@ -42,7 +43,8 @@ class DocumentedProblemsParserTest {
         DocMethodParameterTypeChanged("com/example/Foo", "foo"),
         DocMethodRemoved("com/example/Baz", "<init>"),
         DocMethodParameterTypeChanged("com/example/Baf", "<init>"),
-        DocMethodParameterTypeChanged("com/example/Bam", "<init>")
+        DocMethodParameterTypeChanged("com/example/Bam", "<init>"),
+        DocMethodBecameFinal("com/example/MethodHolder", "methodBecameFinal")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)
