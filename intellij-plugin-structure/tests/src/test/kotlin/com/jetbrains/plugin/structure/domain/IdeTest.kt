@@ -14,7 +14,6 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.lang.IllegalArgumentException
 
 class IdeTest {
 
@@ -27,8 +26,9 @@ class IdeTest {
   val expectedEx: ExpectedException = ExpectedException.none()
 
   @Test
-  fun `version is not specified`() {
-    val ideaFolder = temporaryFolder.newFolder()
+  fun `version is not specified in distributed IDE`() {
+    val ideaFolder = temporaryFolder.newFolder("idea")
+    ideaFolder.resolve("lib").mkdirs()
 
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage(
@@ -42,8 +42,6 @@ class IdeTest {
 
   @Test
   fun `create idea from binaries`() {
-    val bundledPluginXmlContent = perfectXmlBuilder.asString()
-
     val ideaFolder = temporaryFolder.newFolder("idea")
     File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
 
@@ -53,6 +51,8 @@ class IdeTest {
      */
     val pluginsFolder = File(ideaFolder, "plugins")
     val somePluginFolder = File(pluginsFolder, "somePlugin")
+
+    val bundledPluginXmlContent = perfectXmlBuilder.asString()
     val bundledXml = File(somePluginFolder, "META-INF/plugin.xml")
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(bundledPluginXmlContent)
@@ -93,16 +93,16 @@ class IdeTest {
     val bundledPluginXmlContent = perfectXmlBuilder.asString()
 
     val ideaFolder = temporaryFolder.newFolder("idea")
-    File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
+    ideaFolder.resolve("build.txt").writeText("IU-163.1.2.3")
 
-    File(ideaFolder, ".idea").mkdirs()
-    File(ideaFolder, "community/.idea").mkdirs()
+    ideaFolder.resolve(".idea").mkdirs()
+    ideaFolder.resolve("community/.idea").mkdirs()
 
-    val productionDir = File(ideaFolder, "out/classes/production")
+    val productionDir = ideaFolder.resolve("out/classes/production")
     productionDir.mkdirs()
 
-    val bundledFolder = File(productionDir, "somePlugin")
-    val bundledXml = File(bundledFolder, "/META-INF/plugin.xml")
+    val bundledFolder = productionDir.resolve("somePlugin")
+    val bundledXml = bundledFolder.resolve("META-INF").resolve("plugin.xml")
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(bundledPluginXmlContent)
 
@@ -116,7 +116,14 @@ class IdeTest {
   }
 
   @Test
-  fun `plugins bundled to idea might not have valid descriptors`() {
+  fun `plugins bundled to idea may not have versions in descriptors`() {
+    val ideaFolder = temporaryFolder.newFolder("idea")
+    ideaFolder.resolve(".idea").mkdirs()
+
+    val compilationRoot = ideaFolder.resolve("out").resolve("compilation").resolve("classes").resolve("production")
+    compilationRoot.mkdirs()
+    ideaFolder.resolve("build.txt").writeText("IU-163.1.2.3")
+
     val incompleteDescriptor = PluginXmlBuilder().modify {
       name = "<name>Bundled</name>"
       id = "<id>Bundled</id>"
@@ -124,19 +131,14 @@ class IdeTest {
       description = "<description>Short</description>"
       changeNotes = "<change-notes>Short</change-notes>"
     }
-
-    val ideaFolder = temporaryFolder.newFolder("idea")
-    File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
-
-    val pluginsFolder = File(ideaFolder, "plugins")
-    val bundledPluginFolder = File(pluginsFolder, "Bundled")
-    val bundledXml = File(bundledPluginFolder, "META-INF/plugin.xml")
+    val bundledPluginFolder = compilationRoot.resolve("Bundled")
+    val bundledXml = bundledPluginFolder.resolve("META-INF/plugin.xml")
     bundledXml.parentFile.mkdirs()
     bundledXml.writeText(incompleteDescriptor)
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
-    assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
-    assertThat(ide.bundledPlugins, hasSize(1))
+    assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)
+    assertEquals(1, ide.bundledPlugins.size)
     val plugin = ide.bundledPlugins[0]!!
     assertThat(plugin.pluginId, `is`("Bundled"))
   }

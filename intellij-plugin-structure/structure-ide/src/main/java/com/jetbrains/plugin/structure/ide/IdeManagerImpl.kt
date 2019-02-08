@@ -27,48 +27,45 @@ class IdeManagerImpl : IdeManager() {
   override fun createIde(ideDir: File): Ide = createIde(ideDir, null)
 
   override fun createIde(idePath: File, version: IdeVersion?): Ide {
-    if (!idePath.exists()) {
-      throw IllegalArgumentException("IDE file $idePath is not found")
+    check(idePath.exists()) { "IDE file doesn't exist: $idePath" }
+    val ideVersion = version ?: when {
+      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> readVersionFromIdeSources(idePath)
+      isDistributionIde(idePath) -> readVersionFromDistribution(idePath)
+      else -> throw IllegalArgumentException("Invalid IDE: $idePath")
     }
-    val ideVersion = version ?: if (isSourceDir(idePath)) {
-      readVersionFromSourcesDir(idePath)
-    } else {
-      readVersionFromBinaries(idePath)
+
+    val bundledPlugins = when {
+      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> readCompiledPlugins(getCompiledClassesRoot(idePath)!!)
+      isDistributionIde(idePath) -> readBundledPlugins(idePath) + readPlatformPlugins(idePath, ideVersion)
+      else -> throw IllegalArgumentException()
     }
-    val bundled = if (isSourceDir(idePath)) {
-      getDummyPluginsFromSources(idePath)
-    } else {
-      readBundledPlugins(idePath) + readPlatformPlugins(idePath, ideVersion)
-    }
-    return IdeImpl(idePath, ideVersion, bundled)
+
+    return IdeImpl(idePath, ideVersion, bundledPlugins)
   }
 
-  private fun readVersionFromBinaries(idePath: File): IdeVersion {
-    val suitableFiles = listOf(
+  private fun readVersionFromDistribution(idePath: File): IdeVersion {
+    val locations = listOf(
         idePath.resolve("build.txt"),
         idePath.resolve("Resources").resolve("build.txt"),
         idePath.resolve("community").resolve("build.txt"),
         idePath.resolve("ultimate").resolve("community").resolve("build.txt")
     )
-    val firstExists = suitableFiles.find { it.exists() }
-    if (firstExists != null) {
-      return readBuildNumber(firstExists)
-    }
-    throw IllegalArgumentException("Build number is not found in the following files relative to $idePath: " +
-        suitableFiles.map { it.relativeTo(idePath) }.joinToString()
-    )
+    val buildTxtFile = locations.find { it.exists() }
+        ?: throw IllegalArgumentException(
+            "Build number is not found in the following files relative to $idePath: " +
+                locations.map { it.relativeTo(idePath) }.joinToString()
+        )
+    return readBuildNumber(buildTxtFile)
   }
 
-  private fun readVersionFromSourcesDir(idePath: File): IdeVersion {
-    val buildFile = File(idePath, "build.txt")
-    if (buildFile.exists()) {
-      return readBuildNumber(buildFile)
-    }
-    val communityBuildFile = File(idePath, "community/build.txt")
-    if (communityBuildFile.exists()) {
-      return readBuildNumber(communityBuildFile)
-    }
-    throw IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)")
+  private fun readVersionFromIdeSources(idePath: File): IdeVersion {
+    val locations = listOf(
+        idePath.resolve("build.txt"),
+        idePath.resolve("community").resolve("build.txt")
+    )
+    val buildTxtFile = locations.find { it.exists() }
+        ?: throw IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)")
+    return readBuildNumber(buildTxtFile)
   }
 
   /**
@@ -125,19 +122,13 @@ class IdeManagerImpl : IdeManager() {
     return IdeVersion.createIdeVersion(buildNumberString)
   }
 
-  private fun getDummyPluginsFromSources(ideaDir: File): List<IdePlugin> = when {
-    isUltimate(ideaDir) -> getDummyPlugins(getUltimateClassesRoot(ideaDir)!!)
-    isCommunity(ideaDir) -> getDummyPlugins(getCommunityClassesRoot(ideaDir)!!)
-    else -> throw IllegalArgumentException("Incorrect IDEA structure: $ideaDir. It must be Community or Ultimate sources root with compiled class files.")
+  private fun readCompiledPlugins(compilationRoot: File): List<IdePlugin> {
+    val xmlFiles = FileUtils.listFiles(compilationRoot, WildcardFileFilter("*.xml"), TrueFileFilter.TRUE)
+    val pathResolver = getPathResolver(xmlFiles)
+    return readCompiledPlugins(xmlFiles, pathResolver)
   }
 
-  private fun getDummyPlugins(ideRoot: File): List<IdePlugin> {
-    val allXmlFiles = FileUtils.listFiles(ideRoot, WildcardFileFilter("*.xml"), TrueFileFilter.TRUE)
-    val pathResolver = getFromSourcesPathResolver(allXmlFiles)
-    return getDummyPlugins(allXmlFiles, pathResolver)
-  }
-
-  private fun getDummyPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver) =
+  private fun readCompiledPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver) =
       xmlFiles
           .asSequence()
           .filter { "plugin.xml" == it.name }
@@ -170,28 +161,24 @@ class IdeManagerImpl : IdeManager() {
     return null
   }
 
-  /**
-   * Returns a [XIncludePathResolver] that can resolve the plugin descriptors
-   * and auxiliary xml files in a locally built IDE.
-   */
-  private fun getFromSourcesPathResolver(xmlFiles: Iterable<File>): XIncludePathResolver {
+  private fun getPathResolver(xmlFiles: Iterable<File>): XIncludePathResolver {
     val xmlDescriptors = hashMapOf<String, File>()
     for (xmlFile in xmlFiles) {
-      val pathParts = xmlFile.absolutePath
-          .split("/")
-          .dropLastWhile { it.isEmpty() }
-
-      /**
-       * Take only the last two parts of the .xml file path. For example,
-       * `/home/used/Documents/ultimate/out/plugins/some/plugin/META-INF/someFile.xml`
-       * will be converted to `/META-INF/someFile.xml`
-       */
-      if (pathParts.size >= 2) {
-        val xmlFilePath = "/" + pathParts[pathParts.size - 2] + "/" + pathParts[pathParts.size - 1]
-        xmlDescriptors[xmlFilePath] = xmlFile
+      val xmlRoot = getXmlRoot(xmlFile)
+      if (xmlRoot != null) {
+        val relativePath = "/" + xmlFile.relativeTo(xmlRoot)
+        xmlDescriptors[relativePath] = xmlFile
       }
     }
     return PluginFromSourceXIncludePathResolver(xmlDescriptors)
+  }
+
+  private fun getXmlRoot(xmlFile: File): File? {
+    var root: File? = xmlFile
+    while (root != null && !root.resolve("META-INF").isDirectory) {
+      root = root.parentFile
+    }
+    return root
   }
 
   private fun readPlatformPlugins(ideaDir: File, ideVersion: IdeVersion): List<IdePlugin> {
@@ -264,23 +251,23 @@ class IdeManagerImpl : IdeManager() {
 
     private const val SPECIAL_PLUGIN_NAME = "IDEA CORE"
 
-    fun isSourceDir(dir: File) = File(dir, ".idea").isDirectory
+    fun isCompiledUltimate(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
+        ideaDir.resolve(".idea").isDirectory &&
+        ideaDir.resolve("community").resolve(".idea").isDirectory
 
-    fun isUltimate(ideaDir: File): Boolean = File(ideaDir, "community/.idea").isDirectory && getUltimateClassesRoot(ideaDir) != null
+    fun isCompiledCommunity(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
+        ideaDir.resolve(".idea").isDirectory &&
+        !ideaDir.resolve("community").resolve(".idea").isDirectory
 
-    fun isCommunity(ideaDir: File): Boolean = File(ideaDir, ".idea").isDirectory && getCommunityClassesRoot(ideaDir) != null
+    fun isDistributionIde(ideaDir: File) = ideaDir.resolve("lib").isDirectory &&
+        !ideaDir.resolve(".idea").isDirectory
 
-    fun getUltimateClassesRoot(ideaDir: File): File? {
-      return listOf(
-          ideaDir.resolve("out/classes/production"),
-          ideaDir.resolve("out/compilation/classes/production")
-      ).first { it.isDirectory }
-    }
-
-    fun getCommunityClassesRoot(ideaDir: File): File? {
-      return ideaDir.resolve("out/production").takeIf { it.isDirectory }
-    }
-
+    fun getCompiledClassesRoot(ideaDir: File): File? =
+        listOf(
+            ideaDir.resolve("out").resolve("production"),
+            ideaDir.resolve("out").resolve("classes").resolve("production"),
+            ideaDir.resolve("out").resolve("compilation").resolve("classes").resolve("production")
+        ).find { it.isDirectory }
   }
 
 }
