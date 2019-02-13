@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
@@ -23,7 +24,7 @@ import org.objectweb.asm.tree.MethodNode
  */
 class BytecodeVerifier {
 
-  private val verificationFilters = listOf(DynamicallyLoadedFilter())
+  private val verificationFilters = listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
 
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
