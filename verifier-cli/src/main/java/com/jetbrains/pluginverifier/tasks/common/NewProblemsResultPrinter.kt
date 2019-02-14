@@ -184,7 +184,7 @@ class NewProblemsResultPrinter(
     if (newMissingDependencies.isNotEmpty()) {
       appendln("Note: some problems might have been caused by missing dependencies: [")
       for ((dependency, missingReason) in newMissingDependencies) {
-        append("$dependency: $missingReason")
+        append("    $dependency: $missingReason")
 
         val baseResolvedDependency = baseResult.getResolvedDependency(dependency)
         if (baseResolvedDependency != null) {
