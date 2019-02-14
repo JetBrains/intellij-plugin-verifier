@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -161,8 +162,9 @@ class NewProblemsResultPrinter(
     }
 
     val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
+    val affectedPluginsCnt = allPlugin2Problems.keySet().size
     if (newProblemsCnt > 0) {
-      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $newTarget compared to $baseTarget")
+      tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $newTarget compared to $baseTarget (affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt) + ")")
     } else {
       tcLog.buildStatusSuccess("No new compatibility problems found in $newTarget compared to $baseTarget")
     }

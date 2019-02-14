@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -19,7 +20,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckIdeResult) {
       if (outputOptions.needTeamCityLog) {
-        printTcLog(outputOptions.teamCityGroupType, true, this)
+        printTcLog(outputOptions.teamCityGroupType, this)
       } else {
         printOnStdOut(this)
       }
@@ -42,32 +43,28 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
     }
   }
 
-  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy,
-                         setBuildStatus: Boolean,
-                         checkIdeResult: CheckIdeResult) {
+  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult) {
     with(checkIdeResult) {
       val tcLog = TeamCityLog(System.out)
       val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository, outputOptions.missingDependencyIgnoring)
       resultPrinter.printResults(results)
       resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
-      if (setBuildStatus) {
-        val totalProblemsNumber = results.flatMap {
-          when (it) {
-            is VerificationResult.CompatibilityProblems -> it.compatibilityProblems
-            is VerificationResult.MissingDependencies -> it.compatibilityProblems //some problems might have been caused by missing dependencies
-            is VerificationResult.InvalidPlugin -> setOf(Any())
-            is VerificationResult.OK,
-            is VerificationResult.StructureWarnings,
-            is VerificationResult.NotFound,
-            is VerificationResult.FailedToDownload -> emptySet()
-          }
-        }.distinct().size
-        if (totalProblemsNumber > 0) {
-          tcLog.buildStatusFailure("IDE $ideVersion has $totalProblemsNumber problem${if (totalProblemsNumber > 1) "s" else ""}")
-        } else {
-          tcLog.buildStatusSuccess("IDE $ideVersion doesn't have broken API problems")
+      val totalProblemsNumber = results.flatMap {
+        when (it) {
+          is VerificationResult.CompatibilityProblems -> it.compatibilityProblems
+          is VerificationResult.MissingDependencies -> it.compatibilityProblems
+          is VerificationResult.InvalidPlugin -> emptySet()
+          is VerificationResult.OK,
+          is VerificationResult.StructureWarnings,
+          is VerificationResult.NotFound,
+          is VerificationResult.FailedToDownload -> emptySet()
         }
-
+      }.distinctBy { it.shortDescription }.size
+      val affectedPluginsCnt = results.distinctBy { it.verificationTarget }.size
+      if (totalProblemsNumber > 0) {
+        tcLog.buildStatusFailure("IDE $ideVersion has " + "problem".pluralizeWithNumber(totalProblemsNumber) + " affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt))
+      } else {
+        tcLog.buildStatusSuccess("IDE $ideVersion doesn't have broken API problems")
       }
     }
   }
