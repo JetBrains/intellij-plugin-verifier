@@ -17,6 +17,6 @@ class LastCompatibleVersionSelector(val ideVersion: IdeVersion) : PluginVersionS
     if (allVersions.isEmpty()) {
       return PluginVersionSelector.Result.NotFound("Plugin $pluginId is not available in $pluginRepository")
     }
-    return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion")
+    return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion in $pluginRepository")
   }
 }

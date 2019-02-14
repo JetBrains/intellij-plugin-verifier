@@ -4,10 +4,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.resolution.ChainDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.LocalRepositoryDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -39,7 +36,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams,
    * 2) If not found, resolves the [dependency] [PluginDependency] using the [IdeDependencyFinder].
    */
   private fun createDependencyFinder(ideDescriptor: IdeDescriptor): DependencyFinder {
-    val localFinder = LocalRepositoryDependencyFinder(parameters.pluginsSet.localRepository, pluginDetailsCache)
+    val localFinder = RepositoryDependencyFinder(parameters.pluginsSet.localRepository, LastVersionSelector(), pluginDetailsCache)
     val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return ChainDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }

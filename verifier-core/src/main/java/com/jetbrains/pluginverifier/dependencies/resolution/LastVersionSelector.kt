@@ -14,7 +14,7 @@ class LastVersionSelector : PluginVersionSelector {
     val allVersionsOfPlugin = pluginRepository.getAllVersionsOfPlugin(pluginId)
     val lastVersion = allVersionsOfPlugin.maxWith(versionComparator)
     return if (lastVersion == null) {
-      PluginVersionSelector.Result.NotFound("Plugin $pluginId is not found in the Plugin Repository")
+      PluginVersionSelector.Result.NotFound("Plugin $pluginId is not found in $pluginRepository")
     } else {
       PluginVersionSelector.Result.Selected(lastVersion)
     }

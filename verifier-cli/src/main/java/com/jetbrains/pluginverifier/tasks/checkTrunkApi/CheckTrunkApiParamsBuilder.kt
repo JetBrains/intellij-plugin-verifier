@@ -17,12 +17,12 @@ import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
+import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import java.io.File
 import java.nio.file.Paths
 
 class CheckTrunkApiParamsBuilder(
@@ -98,11 +98,11 @@ class CheckTrunkApiParamsBuilder(
 
     val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
         ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+        ?: EmptyPluginRepository
 
     val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
         ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
-
-    val jetBrainsPluginIds = getJetBrainsPluginIds(apiOpts)
+        ?: EmptyPluginRepository
 
     reportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
     val releaseCompatibleVersions = pluginRepository.retry("fetch last compatible updates with $releaseVersion") {
@@ -112,7 +112,11 @@ class CheckTrunkApiParamsBuilder(
     val pluginsSet = PluginsSet()
     pluginsSet.schedulePlugins(
         releaseCompatibleVersions
-            .filterNot { it.pluginId in jetBrainsPluginIds }
+            .filterNot {
+              val pluginId = it.pluginId
+              releaseLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty() ||
+                  trunkLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty()
+            }
             .sortedByDescending { (it as UpdateInfo).updateId }
     )
 
@@ -137,21 +141,11 @@ class CheckTrunkApiParamsBuilder(
         releaseIdeDescriptor,
         externalClassesPackageFilter,
         problemsFilters,
-        jetBrainsPluginIds,
         deleteReleaseIdeOnExit,
         releaseIdeFileLock,
         releaseLocalRepository,
         trunkLocalRepository
     )
-  }
-
-  private fun getJetBrainsPluginIds(apiOpts: CheckTrunkApiOpts): List<String> {
-    if (apiOpts.jetBrainsPluginsFile != null) {
-      val file = File(apiOpts.jetBrainsPluginsFile)
-      require(file.exists()) { "JetBrains plugin IDS file doesn't exist: $file" }
-      return file.readLines()
-    }
-    return emptyList()
   }
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
@@ -169,12 +163,6 @@ class CheckTrunkApiOpts {
 
   @set:Argument("major-ide-path", alias = "mip", description = "The path to release (major) IDE build with which to compare API problems in trunk (master) IDE build.")
   var majorIdePath: String? = null
-
-  @set:Argument("jetbrains-plugins-file", alias = "jbpf", description = "The path to a file with plugin ids separated by newline. " +
-      "The provided plugin ids are JetBrains-developed plugins that in conjunction with IDE build constitute IntelliJ API used by third-party plugin developers. " +
-      "Compatible versions of these plugins will be downloaded and installed to the release and trunk IDE before verification. " +
-      "Found compatibility problems differences will be reported as if it were breakages of trunk API compared to release API.")
-  var jetBrainsPluginsFile: String? = null
 
   @set:Argument("release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
       "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +

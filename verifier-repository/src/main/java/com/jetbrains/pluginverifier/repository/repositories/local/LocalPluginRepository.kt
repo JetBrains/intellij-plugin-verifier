@@ -8,9 +8,7 @@ import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 /**
  * [PluginRepository] consisting of [locally] [LocalPluginInfo] stored plugins.
  */
-class LocalPluginRepository(
-    private val plugins: MutableList<LocalPluginInfo> = arrayListOf()
-) : PluginRepository {
+class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = arrayListOf()) : PluginRepository {
 
   fun addLocalPlugin(idePlugin: IdePlugin): LocalPluginInfo {
     val localPluginInfo = LocalPluginInfo(idePlugin)
@@ -37,10 +35,6 @@ class LocalPluginRepository(
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
       plugins.find { moduleId in it.definedModules }?.pluginId
-
-  fun findPluginById(pluginId: String): LocalPluginInfo? = plugins.find { it.pluginId == pluginId }
-
-  fun findPluginByModule(moduleId: String): LocalPluginInfo? = plugins.find { moduleId in it.definedModules }
 
   override fun toString() = "Local Plugin Repository"
 

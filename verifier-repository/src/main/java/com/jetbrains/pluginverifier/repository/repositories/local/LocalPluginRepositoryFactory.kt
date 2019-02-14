@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.extension
 import com.jetbrains.pluginverifier.misc.isDirectory
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory.createLocalPluginRepository
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,7 +19,7 @@ object LocalPluginRepositoryFactory {
    * Creates a [LocalPluginRepository] by parsing
    * all [plugin] [com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
    */
-  fun createLocalPluginRepository(repositoryRoot: Path): LocalPluginRepository {
+  fun createLocalPluginRepository(repositoryRoot: Path): PluginRepository {
     val pluginFiles = Files.list(repositoryRoot).filter {
       it.isDirectory || it.extension == "zip" || it.extension == "jar"
     }

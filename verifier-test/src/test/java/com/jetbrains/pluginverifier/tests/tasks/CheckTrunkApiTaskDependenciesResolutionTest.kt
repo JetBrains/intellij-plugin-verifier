@@ -22,11 +22,11 @@ import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
+import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
-import com.jetbrains.pluginverifier.tests.mocks.EmptyPublicPluginRepository
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
@@ -35,7 +35,6 @@ import org.hamcrest.Matchers.instanceOf
 import org.junit.Assert.assertThat
 import org.junit.Test
 import java.io.Closeable
-import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -61,8 +60,6 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   val someJetBrainsModule = "org.jetbrains.module"
 
   val someJetBrainsPluginContainingModuleId = "org.jetbrains.module.container"
-
-  val repositoryURL = URL("http://unnecessary.com")
 
   val releaseVersion = createIdeVersion("IU-173.1")
 
@@ -135,8 +132,8 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     PluginDetailsCache(10, pluginFileProvider, createPluginDetailsProviderForTest()).use { pluginDetailsCache ->
       val checkTrunkApiTask = CheckTrunkApiTask(
           checkTrunkApiParams,
-          EmptyPublicPluginRepository,
-          pluginDetailsCache
+          pluginDetailsCache,
+          EmptyPluginRepository
       )
       val verifierExecutor = VerifierExecutor(4)
       val reportage = object : Reportage {
@@ -234,7 +231,6 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         IdeDescriptor(releaseIde, EmptyResolver, null, emptySet()),
         PackageFilter(emptyList()),
         emptyList(),
-        listOf(someJetBrainsPluginId),
         false,
         IdleFileLock(Paths.get("unnecessary")),
         createLocalPluginRepository(releaseSomeJetBrainsMockPlugin, releaseVersion),

@@ -148,7 +148,6 @@ Here is the full syntax of the command:
         [-subsystems-to-check | -subsystems]
         [-release-jetbrains-plugins | -rjbp <path>]
         [-trunk-jetbrains-plugins | -tjbp <path>]
-        [-jetbrains-plugins-file | -jbpf <file>]
         [-team-city | -tc ]
     
 #### Specific options
@@ -158,12 +157,6 @@ Here is the full syntax of the command:
     -major-ide-version (-miv)
         The IDE version with which to compare API problems. 
         This IDE will be downloaded from the IDE Repository: https://www.jetbrains.com/intellij-repository/releases
-    
-    -jetbrains-plugins-file (jbpf)
-        The path to a file with plugin IDs separated by newline.
-        The provided plugin IDs are JetBrains-developed plugins that, along with IDE build, constitute IntelliJ API 
-        used by third-party plugin developers.
-        Compatible versions of these plugins will be available locally when verifying release and trunk IDEs.
     
     -release-jetbrains-plugins (-rjbp)
         The root of the local plugin repository containing JetBrains plugins compatible with the release IDE.
@@ -208,7 +201,7 @@ Here is the full syntax of the command:
         The broken plugins are those which contain at least one problem as a result of the verification.
     
     -plugins-to-check-file (-ptcf)
-        File that contains list of plugins to check (e.g. '<IDE-home>/lib/resources.jar/checkedPlugins.txt') 
+        File that contains list of plugins to check 
         Each line of the file is either:
             plugin_id (check ALL builds of the plugin) 
             $plugin_id' (check only LAST build of the plugin)
