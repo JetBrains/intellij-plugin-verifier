@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.ClassNode
 object BundledIdeClassesFilter : ClassFilter {
 
   override fun shouldVerify(classNode: ClassNode): Boolean {
-    val packageName = classNode.name.substringBeforeLast('/').replace('/', '.')
+    val packageName = classNode.name.substringBeforeLast('/', "").replace('/', '.')
     return !KnownIdePackages.isKnownPackage(packageName)
   }
 
