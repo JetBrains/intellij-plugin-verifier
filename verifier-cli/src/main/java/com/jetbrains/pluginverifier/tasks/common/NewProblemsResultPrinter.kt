@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
@@ -138,8 +139,9 @@ class NewProblemsResultPrinter(
             val testDetails = buildString {
               for ((plugin, problems) in plugin2Problems.asMap()) {
                 val urlSuffix = (plugin as? Browseable)?.browserUrl?.let { " $it" }.orEmpty()
+                val updateIdSuffix = (plugin as? UpdateInfo)?.updateId?.let { " ($it)" }.orEmpty()
                 appendln()
-                appendln(plugin.pluginId + ":" + plugin.version + urlSuffix)
+                appendln(plugin.pluginId + ":" + plugin.version + urlSuffix + updateIdSuffix)
                 appendIdeCompatibilityNote(plugin, baseTarget, newTarget)
                 appendMissingDependenciesNotes(newProblemsResult, plugin)
                 appendln()
