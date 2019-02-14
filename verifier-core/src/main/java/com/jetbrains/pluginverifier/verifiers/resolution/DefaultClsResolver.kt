@@ -14,12 +14,14 @@ import java.io.Closeable
  * 3) IDE classes
  * 4) Class of plugin's dependencies
  */
-class DefaultClsResolver(private val pluginResolver: Resolver,
-                         private val dependenciesResolver: Resolver,
-                         private val jdkClassesResolver: Resolver,
-                         private val ideResolver: Resolver,
-                         private val externalClassesPackageFilter: PackageFilter,
-                         private val closeableResources: List<Closeable>) : ClsResolver {
+class DefaultClsResolver(
+    private val pluginResolver: Resolver,
+    private val dependenciesResolver: Resolver,
+    private val jdkClassesResolver: Resolver,
+    private val ideResolver: Resolver,
+    private val externalClassesPackageFilter: PackageFilter,
+    private val closeableResources: List<Closeable>
+) : ClsResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(

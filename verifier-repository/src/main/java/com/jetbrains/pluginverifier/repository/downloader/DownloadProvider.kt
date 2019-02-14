@@ -14,9 +14,11 @@ import java.nio.file.Path
  * using provided [downloader] and saving them to the [destinationDirectory]
  * using the [fileNameMapper].
  */
-class DownloadProvider<in K>(private val destinationDirectory: Path,
-                             private val downloader: Downloader<K>,
-                             private val fileNameMapper: FileNameMapper<K>) : ResourceProvider<K, Path> {
+class DownloadProvider<in K>(
+    private val destinationDirectory: Path,
+    private val downloader: Downloader<K>,
+    private val fileNameMapper: FileNameMapper<K>
+) : ResourceProvider<K, Path> {
   private companion object {
     const val DOWNLOADS_DIRECTORY = "downloads"
   }
@@ -45,10 +47,12 @@ class DownloadProvider<in K>(private val destinationDirectory: Path,
   }
 
   @Synchronized
-  private fun saveDownloadedFileToFinalDestination(key: K,
-                                                   tempDownloadedFile: Path,
-                                                   extension: String,
-                                                   isDirectory: Boolean): ProvideResult<Path> {
+  private fun saveDownloadedFileToFinalDestination(
+      key: K,
+      tempDownloadedFile: Path,
+      extension: String,
+      isDirectory: Boolean
+  ): ProvideResult<Path> {
     val destination = createDestinationFileForKey(key, extension, isDirectory)
     try {
       moveFileOrDirectory(tempDownloadedFile, destination)

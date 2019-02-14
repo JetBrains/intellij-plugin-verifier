@@ -12,10 +12,12 @@ import java.nio.file.Path
  * This is used to select the files that should be removed on the
  * [cleanup procedure] [com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy].
  */
-class AvailableFile<out K>(key: K,
-                           resourceInfo: ResourceInfo<Path>,
-                           usageStatistic: UsageStatistic,
-                           isLocked: Boolean) : AvailableResource<Path, K>(key, resourceInfo, usageStatistic, isLocked) {
+class AvailableFile<out K>(
+    key: K,
+    resourceInfo: ResourceInfo<Path>,
+    usageStatistic: UsageStatistic,
+    isLocked: Boolean
+) : AvailableResource<Path, K>(key, resourceInfo, usageStatistic, isLocked) {
   /**
    * File descriptor
    */

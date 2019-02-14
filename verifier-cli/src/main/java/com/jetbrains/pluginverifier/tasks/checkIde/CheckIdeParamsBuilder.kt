@@ -18,9 +18,11 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 
-class CheckIdeParamsBuilder(val pluginRepository: PluginRepository,
-                            val pluginDetailsCache: PluginDetailsCache,
-                            val reportage: Reportage) : TaskParametersBuilder {
+class CheckIdeParamsBuilder(
+    val pluginRepository: PluginRepository,
+    val pluginDetailsCache: PluginDetailsCache,
+    val reportage: Reportage
+) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
       throw IllegalArgumentException("You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"")

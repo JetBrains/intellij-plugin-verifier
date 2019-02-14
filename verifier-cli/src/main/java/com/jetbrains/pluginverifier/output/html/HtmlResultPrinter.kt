@@ -15,9 +15,11 @@ import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
 
-class HtmlResultPrinter(private val verificationTarget: VerificationTarget,
-                        private val htmlFile: Path,
-                        private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
+class HtmlResultPrinter(
+    private val verificationTarget: VerificationTarget,
+    private val htmlFile: Path,
+    private val missingDependencyIgnoring: MissingDependencyIgnoring
+) : ResultPrinter {
 
   override fun printResults(results: List<VerificationResult>) {
     PrintWriter(Files.newBufferedWriter(htmlFile.create())).use {

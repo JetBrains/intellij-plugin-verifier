@@ -8,12 +8,14 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
-class CheckPluginApiParams(pluginsSet: PluginsSet,
-                           val basePluginDetails: PluginDetails,
-                           val newPluginDetails: PluginDetails,
-                           val jdkPath: JdkPath,
-                           val problemsFilters: List<ProblemsFilter>,
-                           val basePluginPackageFilter: PackageFilter) : TaskParameters(pluginsSet) {
+class CheckPluginApiParams(
+    pluginsSet: PluginsSet,
+    val basePluginDetails: PluginDetails,
+    val newPluginDetails: PluginDetails,
+    val jdkPath: JdkPath,
+    val problemsFilters: List<ProblemsFilter>,
+    val basePluginPackageFilter: PackageFilter
+) : TaskParameters(pluginsSet) {
 
   override val presentableText
     get() = """

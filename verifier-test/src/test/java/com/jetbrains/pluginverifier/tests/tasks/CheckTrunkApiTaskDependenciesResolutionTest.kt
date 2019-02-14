@@ -157,23 +157,29 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     }
   }
 
-  private fun assertPluginsAreProperlyResolved(releaseVerificationResult: VerificationResult,
-                                               trunkVerificationResult: VerificationResult) {
+  private fun assertPluginsAreProperlyResolved(
+      releaseVerificationResult: VerificationResult,
+      trunkVerificationResult: VerificationResult
+  ) {
     assertThat(trunkVerificationResult, instanceOf(VerificationResult.OK::class.java))
     assertThat(releaseVerificationResult, instanceOf(VerificationResult.OK::class.java))
 
     val trunkGraph = (trunkVerificationResult as VerificationResult.OK).dependenciesGraph
     val releaseGraph = (releaseVerificationResult as VerificationResult.OK).dependenciesGraph
 
-    assertThat(trunkGraph.vertices.drop(1), containsInAnyOrder(
+    assertThat(
+        trunkGraph.vertices.drop(1), containsInAnyOrder(
         DependencyNode(someJetBrainsPluginId, "2.0", emptyList()),
         DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
-    ))
+    )
+    )
 
-    assertThat(releaseGraph.vertices.drop(1), containsInAnyOrder(
+    assertThat(
+        releaseGraph.vertices.drop(1), containsInAnyOrder(
         DependencyNode(someJetBrainsPluginId, "1.0", emptyList()),
         DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
-    ))
+    )
+    )
   }
 
   private fun createPluginDetailsProviderForTest(): PluginDetailsProvider {

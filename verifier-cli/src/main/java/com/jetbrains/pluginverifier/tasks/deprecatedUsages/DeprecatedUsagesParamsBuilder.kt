@@ -57,9 +57,11 @@ class DeprecatedUsagesParamsBuilder(
   }
 
   class DeprecatedUsagesOpts {
-    @set:Argument("release-ide-version", alias = "riv", description = "The version of the release IDE for which compatible plugins must be " +
+    @set:Argument(
+        "release-ide-version", alias = "riv", description = "The version of the release IDE for which compatible plugins must be " +
         "downloaded and checked against the specified IDE. This is needed when the specified IDE is a trunk-built IDE for which " +
-        "there might not be compatible updates")
+        "there might not be compatible updates"
+    )
     var releaseIdeVersion: String? = null
   }
 

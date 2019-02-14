@@ -22,10 +22,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 
-class TeamCityResultPrinter(private val tcLog: TeamCityLog,
-                            private val groupBy: GroupBy,
-                            private val repository: PluginRepository,
-                            private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
+class TeamCityResultPrinter(
+    private val tcLog: TeamCityLog,
+    private val groupBy: GroupBy,
+    private val repository: PluginRepository,
+    private val missingDependencyIgnoring: MissingDependencyIgnoring
+) : ResultPrinter {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityResultPrinter::class.java)
@@ -193,9 +195,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * ....and so on...
    * ```
    */
-  private fun printResultsForSpecificPluginId(pluginId: String,
-                                              pluginResults: List<VerificationResult>,
-                                              targetToLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>) {
+  private fun printResultsForSpecificPluginId(
+      pluginId: String,
+      pluginResults: List<VerificationResult>,
+      targetToLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>
+  ) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
         versionToResults.value.forEach { result ->
@@ -206,9 +210,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun printResultOfSpecificVersion(plugin: PluginInfo,
-                                           verificationResult: VerificationResult,
-                                           testName: String) {
+  private fun printResultOfSpecificVersion(
+      plugin: PluginInfo,
+      verificationResult: VerificationResult,
+      testName: String
+  ) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
         is VerificationResult.CompatibilityProblems -> printProblems(plugin, testName, verificationResult.compatibilityProblems)
@@ -223,9 +229,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun printMissingDependencies(plugin: PluginInfo,
-                                       verificationResult: VerificationResult.MissingDependencies,
-                                       testName: String) {
+  private fun printMissingDependencies(
+      plugin: PluginInfo,
+      verificationResult: VerificationResult.MissingDependencies,
+      testName: String
+  ) {
     val problems = verificationResult.compatibilityProblems
     val missingDependencies = verificationResult.directMissingDependencies
     if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
@@ -261,9 +269,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     tcLog.testFailed(versionTestName, message, "")
   }
 
-  private fun printProblems(plugin: PluginInfo,
-                            testName: String,
-                            problems: Set<CompatibilityProblem>) {
+  private fun printProblems(
+      plugin: PluginInfo,
+      testName: String,
+      problems: Set<CompatibilityProblem>
+  ) {
     val overview = getPluginOverviewLink(plugin) + "\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
     val problemsContent = getProblemsContent(problems)
     tcLog.testStdErr(testName, problemsContent)
@@ -288,9 +298,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
     }
   }
 
-  private fun getTooManyUnknownClassesProblems(missingDependencies: List<MissingDependency>,
-                                               notFoundClassesProblems: List<ClassNotFoundProblem>,
-                                               problems: Set<CompatibilityProblem>): String {
+  private fun getTooManyUnknownClassesProblems(
+      missingDependencies: List<MissingDependency>,
+      notFoundClassesProblems: List<ClassNotFoundProblem>,
+      problems: Set<CompatibilityProblem>
+  ): String {
     val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
     return buildString {
       appendln("There are too many missing classes (${notFoundClassesProblems.size});")
@@ -310,9 +322,8 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
   }
 
   /**
-   * For each [IDE version] [IdeVersion] returns the last versions
-   * of the plugin available in the [repository] and compatible with
-   * this IDE version.
+   * For each IDE returns the last versions f the plugin available in the [repository]
+   * and compatible with this IDE.
    */
   private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<VerificationTarget>): Map<VerificationTarget, List<PluginInfo>> =
       verificationTargets.associate {
@@ -351,9 +362,11 @@ class TeamCityResultPrinter(private val tcLog: TeamCityLog,
    * 1) `(173.3727.144.8)`
    * 2) `(173.3727.244.997 - newest)`
    */
-  private fun getPluginVersionAsTestName(pluginInfo: PluginInfo,
-                                         verificationTarget: VerificationTarget,
-                                         ideLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>): String {
+  private fun getPluginVersionAsTestName(
+      pluginInfo: PluginInfo,
+      verificationTarget: VerificationTarget,
+      ideLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>
+  ): String {
     val lastVersions = ideLastPluginVersions.getOrDefault(verificationTarget, emptyList())
     return if (pluginInfo in lastVersions) {
       "(${pluginInfo.version} - newest)"

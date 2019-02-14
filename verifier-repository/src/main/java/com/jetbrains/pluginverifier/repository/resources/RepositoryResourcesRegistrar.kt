@@ -5,15 +5,17 @@ import org.slf4j.Logger
 /**
  * Data structure that maintains a set of registered resources and their total weights.
  *
- * It is initialized with [initial] [totalWeight] total weight of the resources, typically
- * equal zero in the units of chosen weights domain, the [weigher] used to assign
+ * It is initialized with initial weight of [totalWeight],
+ * typically equal zero in the units of chosen weights domain, the [weigher] used to assign
  * weights of the resources in a controlled way and the [disposer] used to deallocate
  * the resources being removed.
  */
-internal class RepositoryResourcesRegistrar<R, K>(initWeight: ResourceWeight,
-                                                  private val weigher: (R) -> ResourceWeight,
-                                                  private val disposer: (R) -> Unit,
-                                                  private val logger: Logger) {
+internal class RepositoryResourcesRegistrar<R, K>(
+    initWeight: ResourceWeight,
+    private val weigher: (R) -> ResourceWeight,
+    private val disposer: (R) -> Unit,
+    private val logger: Logger
+) {
 
   private var _totalWeight: ResourceWeight = initWeight
 

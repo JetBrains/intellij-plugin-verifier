@@ -8,7 +8,7 @@ class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
 
   override val message
     get() = "Plugin descriptor $descriptorPath does not include any module dependency tags. " +
-      "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA."
+        "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA."
 }
 
 class NonLatinDescription : PluginProblem() {

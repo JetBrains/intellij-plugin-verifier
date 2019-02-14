@@ -34,30 +34,38 @@ class IllegalMethodAccessProblem(
 
   override val fullDescription
     get() = buildString {
-      append("{0} {1} contains an *{2}* instruction referencing ".formatMessage(
-          caller.elementType.presentableName.capitalize(),
-          caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
-          instruction
-      ))
+      append(
+          "{0} {1} contains an *{2}* instruction referencing ".formatMessage(
+              caller.elementType.presentableName.capitalize(),
+              caller.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
+              instruction
+          )
+      )
 
       val actualMethodPresentation = inaccessibleMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES)
       if (bytecodeMethodReference.hostClass.className == inaccessibleMethod.hostClass.className) {
-        append("a {0} {1} {2} ".formatMessage(
-            methodAccessModifier,
-            inaccessibleMethod.elementType.presentableName,
-            actualMethodPresentation
-        ))
+        append(
+            "a {0} {1} {2} ".formatMessage(
+                methodAccessModifier,
+                inaccessibleMethod.elementType.presentableName,
+                actualMethodPresentation
+            )
+        )
       } else {
-        append("{0} which is resolved to a {1} {2} {3} ".formatMessage(
-            bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
-            methodAccessModifier,
-            inaccessibleMethod.elementType.presentableName,
-            actualMethodPresentation
-        ))
+        append(
+            "{0} which is resolved to a {1} {2} {3} ".formatMessage(
+                bytecodeMethodReference.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME),
+                methodAccessModifier,
+                inaccessibleMethod.elementType.presentableName,
+                actualMethodPresentation
+            )
+        )
       }
-      append("inaccessible to a class {0}. ".formatMessage(
-          caller.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
-      ))
+      append(
+          "inaccessible to a class {0}. ".formatMessage(
+              caller.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
+          )
+      )
       append("This can lead to **IllegalAccessError** exception at runtime.")
     }
 

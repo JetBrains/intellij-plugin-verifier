@@ -59,8 +59,10 @@ private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String 
   }
 }
 
-fun ClassLocation.formatClassLocation(classLocationOption: ClassOption,
-                                      classTypeSignatureOption: ClassGenericsSignatureOption): String {
+fun ClassLocation.formatClassLocation(
+    classLocationOption: ClassOption,
+    classTypeSignatureOption: ClassGenericsSignatureOption
+): String {
   val converter = when (classLocationOption) {
     ClassOption.SIMPLE_NAME -> toSimpleJavaClassName
     ClassOption.FULL_NAME -> toFullJavaClassName
@@ -82,10 +84,12 @@ private fun ClassLocation.formatHostClass(hostClassOption: HostClassOption): Str
   HostClassOption.FULL_HOST_WITH_SIGNATURE -> formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)
 }
 
-fun MethodLocation.formatMethodLocation(hostClassOption: HostClassOption,
-                                        methodParameterTypeOption: MethodParameterTypeOption,
-                                        methodReturnTypeOption: MethodReturnTypeOption,
-                                        methodParameterNameOption: MethodParameterNameOption): String = buildString {
+fun MethodLocation.formatMethodLocation(
+    hostClassOption: HostClassOption,
+    methodParameterTypeOption: MethodParameterTypeOption,
+    methodReturnTypeOption: MethodReturnTypeOption,
+    methodParameterNameOption: MethodParameterNameOption
+): String = buildString {
   val formattedHost = hostClass.formatHostClass(hostClassOption)
   if (formattedHost.isNotEmpty()) {
     append("$formattedHost.")
@@ -118,9 +122,11 @@ private fun MethodLocation.zipWithNamesIfPossible(parametersTypes: List<String>)
       parametersTypes
     }
 
-private fun MethodLocation.methodParametersWithNamesAndReturnType(methodParameterTypeOption: MethodParameterTypeOption,
-                                                                  methodReturnTypeOption: MethodReturnTypeOption,
-                                                                  methodParameterNameOption: MethodParameterNameOption): Pair<List<String>, String> {
+private fun MethodLocation.methodParametersWithNamesAndReturnType(
+    methodParameterTypeOption: MethodParameterTypeOption,
+    methodReturnTypeOption: MethodReturnTypeOption,
+    methodParameterNameOption: MethodParameterNameOption
+): Pair<List<String>, String> {
   val paramsConverter = when (methodParameterTypeOption) {
     MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME -> toSimpleJavaClassName
     MethodParameterTypeOption.FULL_PARAM_CLASS_NAME -> toFullJavaClassName

@@ -2,11 +2,13 @@ package com.jetbrains.pluginverifier.repository.resources
 
 import java.time.Instant
 
-internal class ResourceLockImpl<R, K>(lockTime: Instant,
-                                      resourceInfo: ResourceInfo<R>,
-                                      val key: K,
-                                      private val lockId: Long,
-                                      private val repository: ResourceRepositoryImpl<R, K>) : ResourceLock<R>(lockTime, resourceInfo) {
+internal class ResourceLockImpl<R, K>(
+    lockTime: Instant,
+    resourceInfo: ResourceInfo<R>,
+    val key: K,
+    private val lockId: Long,
+    private val repository: ResourceRepositoryImpl<R, K>
+) : ResourceLock<R>(lockTime, resourceInfo) {
 
   override fun release() = repository.releaseLock(this)
 

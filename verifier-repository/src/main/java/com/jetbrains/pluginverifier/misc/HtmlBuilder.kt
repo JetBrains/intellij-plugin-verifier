@@ -21,11 +21,13 @@ class HtmlBuilder(val output: PrintWriter) {
           .joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
 
   fun closedTag(tagName: String, attr: Map<String, String> = emptyMap()) {
-    output.println(if (attr.isEmpty()) {
-      "<$tagName/>"
-    } else {
-      "<$tagName ${renderAttributes(attr)}/>"
-    })
+    output.println(
+        if (attr.isEmpty()) {
+          "<$tagName/>"
+        } else {
+          "<$tagName ${renderAttributes(attr)}/>"
+        }
+    )
   }
 
   fun html(block: () -> Unit) = tag("html", block)

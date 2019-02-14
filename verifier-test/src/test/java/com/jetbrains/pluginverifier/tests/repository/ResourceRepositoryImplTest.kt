@@ -15,8 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ResourceRepositoryImplTest {
 
-  private fun createSizedResourceRepository(maximumSize: Int,
-                                            resourceProvider: (Int) -> Closeable) = ResourceRepositoryImpl(
+  private fun createSizedResourceRepository(
+      maximumSize: Int,
+      resourceProvider: (Int) -> Closeable
+  ) = ResourceRepositoryImpl(
       SizeEvictionPolicy(maximumSize),
       Clock.systemUTC(),
       object : ResourceProvider<Int, Closeable> {

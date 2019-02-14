@@ -253,7 +253,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun notImplementedAbstractMethodFromInterface() {
-    assertProblemFound("Concrete class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound(
+        "Concrete class mock.plugin.NotImplementedProblem inherits from com.intellij.openapi.components.PersistentStateComponent but doesn't implement the abstract method getState() : T. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method com.intellij.openapi.components.PersistentStateComponent.getState() : T is not implemented"
     )
   }
@@ -271,7 +272,8 @@ class VerificationCorrectnessTest {
 
   @Test
   fun notImplementedAbstractMethodFromAbstractClass() {
-    assertProblemFound("Concrete class mock.plugin.abstrackt.NotImplementedAbstractMethod inherits from com.intellij.psi.search.UseScopeEnlarger but doesn't implement the abstract method getAdditionalUseScope(PsiElement arg0) : SearchScope. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound(
+        "Concrete class mock.plugin.abstrackt.NotImplementedAbstractMethod inherits from com.intellij.psi.search.UseScopeEnlarger but doesn't implement the abstract method getAdditionalUseScope(PsiElement arg0) : SearchScope. This can lead to **AbstractMethodError** exception at runtime.",
         "Abstract method com.intellij.psi.search.UseScopeEnlarger.getAdditionalUseScope(PsiElement arg0) : SearchScope is not implemented"
     )
   }
@@ -279,85 +281,98 @@ class VerificationCorrectnessTest {
 
   @Test
   fun overridingFinalMethod() {
-    assertProblemFound("Class mock.plugin.OverrideFinalMethodProblem overrides the final method com.intellij.openapi.actionSystem.AnAction.isEnabledInModalContext() : boolean. This can lead to **VerifyError** exception at runtime.",
+    assertProblemFound(
+        "Class mock.plugin.OverrideFinalMethodProblem overrides the final method com.intellij.openapi.actionSystem.AnAction.isEnabledInModalContext() : boolean. This can lead to **VerifyError** exception at runtime.",
         "Overriding a final method com.intellij.openapi.actionSystem.AnAction.isEnabledInModalContext() : boolean"
     )
   }
 
   @Test
   fun staticAccessOfNonStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.staticAccessOnInstance() : void has static field access instruction *getstatic* referencing an instance field fields.FieldsContainer.instanceField : int, what might have been caused by incompatible change of the field from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.staticAccessOnInstance() : void has static field access instruction *getstatic* referencing an instance field fields.FieldsContainer.instanceField : int, what might have been caused by incompatible change of the field from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute static access instruction *getstatic* on instance field fields.FieldsContainer.instanceField : int"
     )
   }
 
   @Test
   fun changeFinalNonStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.setOnFinalFieldFromNotInitMethod() : void has modifying instruction *putfield* referencing a final field fields.FieldsContainer.finalField : int. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.setOnFinalFieldFromNotInitMethod() : void has modifying instruction *putfield* referencing a final field fields.FieldsContainer.finalField : int. This can lead to **IllegalAccessError** exception at runtime.",
         "Attempt to change a final field fields.FieldsContainer.finalField : int"
     )
   }
 
   @Test
   fun changeFinalStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.setOnStaticFinalFieldFromNotClinitMethod() : void has modifying instruction *putstatic* referencing a final field fields.FieldsContainer.staticFinalField : int. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.setOnStaticFinalFieldFromNotClinitMethod() : void has modifying instruction *putstatic* referencing a final field fields.FieldsContainer.staticFinalField : int. This can lead to **IllegalAccessError** exception at runtime.",
         "Attempt to change a final field fields.FieldsContainer.staticFinalField : int"
     )
   }
 
   @Test
   fun abstractClassInstantiation() {
-    assertProblemFound("Method mock.plugin.news.NewProblems.abstractClass() : void has instantiation *new* instruction referencing an abstract class misc.BecomeAbstract. This can lead to **InstantiationError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.news.NewProblems.abstractClass() : void has instantiation *new* instruction referencing an abstract class misc.BecomeAbstract. This can lead to **InstantiationError** exception at runtime.",
         "Instantiation of an abstract class misc.BecomeAbstract"
     )
   }
 
   @Test
   fun interfaceInstantiation() {
-    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void has instantiation *new* instruction referencing an interface misc.BecomeInterface. This can lead to **InstantiationError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.news.NewProblems.newInterface() : void has instantiation *new* instruction referencing an interface misc.BecomeInterface. This can lead to **InstantiationError** exception at runtime.",
         "Instantiation of an interface misc.BecomeInterface"
     )
 
-    assertProblemFound("Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.news.NewProblems.newInterface() : void contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved constructor misc.BecomeInterface.<init>()"
     )
   }
 
   @Test
   fun nonStaticAccessOfStaticField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.instanceAccessOnStatic() : void has instance field access instruction *getfield* referencing static field fields.FieldsContainer.staticField : int, what might have been caused by incompatible change of the field to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.instanceAccessOnStatic() : void has instance field access instruction *getfield* referencing static field fields.FieldsContainer.staticField : int, what might have been caused by incompatible change of the field to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute instance access instruction *getfield* on static field fields.FieldsContainer.staticField : int"
     )
   }
 
   @Test
   fun superClassBecameInterface() {
-    assertProblemFound("Class mock.plugin.inheritance.SuperClassBecameInterface has a *super class* misc.BecomeInterface which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
+    assertProblemFound(
+        "Class mock.plugin.inheritance.SuperClassBecameInterface has a *super class* misc.BecomeInterface which is actually an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
         "Incompatible change of super class misc.BecomeInterface to interface"
     )
 
-    assertProblemFound("Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound(
+        "Constructor mock.plugin.inheritance.SuperClassBecameInterface.<init>() contains an *invokespecial* instruction referencing an unresolved constructor misc.BecomeInterface.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved constructor misc.BecomeInterface.<init>()"
     )
   }
 
   @Test
   fun invokeClassMethodOnInterface() {
-    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call(BecomeInterface b) : void has invocation *invokevirtual* instruction referencing a *class* method misc.BecomeInterface.invokeVirtualMethod() : void, but the method's host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeClassMethodOnInterface.Caller.call(BecomeInterface b) : void has invocation *invokevirtual* instruction referencing a *class* method misc.BecomeInterface.invokeVirtualMethod() : void, but the method's host misc.BecomeInterface is an *interface*. This can lead to **IncompatibleClassChangeError** at runtime.",
         "Incompatible change of class misc.BecomeInterface to interface"
     )
   }
 
   @Test
   fun superInterfaceBecameClass() {
-    assertProblemFound("Interface mock.plugin.inheritance.SuperInterfaceBecomeClass has a *super interface* misc.BecomeClass which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Interface mock.plugin.inheritance.SuperInterfaceBecomeClass has a *super interface* misc.BecomeClass which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Incompatible change of super interface misc.BecomeClass to class"
     )
   }
 
   @Test
   fun invokeInterfaceMethodOnClass() {
-    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call2(BecomeClass b) : void has invocation *invokeinterface* instruction referencing an *interface* method misc.BecomeClass.invokeInterfaceOnClass() : void, but the method's host misc.BecomeClass is a *class*. This can lead to **IncompatibleClassChangeError** at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeClassMethodOnInterface.Caller.call2(BecomeClass b) : void has invocation *invokeinterface* instruction referencing an *interface* method misc.BecomeClass.invokeInterfaceOnClass() : void, but the method's host misc.BecomeClass is a *class*. This can lead to **IncompatibleClassChangeError** at runtime.",
         "Incompatible change of interface misc.BecomeClass to class"
     )
   }
@@ -365,86 +380,99 @@ class VerificationCorrectnessTest {
 
   @Test
   fun inheritsFromFinalClass() {
-    assertProblemFound("Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.",
+    assertProblemFound(
+        "Class mock.plugin.finals.InheritFromFinalClass inherits from a final class finals.BecomeFinal. This can lead to **VerifyError** exception at runtime.",
         "Inheritance from a final class finals.BecomeFinal"
     )
   }
 
   @Test
   fun invokeStaticOnNonStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains *invokestatic* instruction referencing instance method invocation.InvocationProblems.wasStatic() : void, what might have been caused by incompatible change of the method from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeStaticOnInstance.InvocationProblemsUser.foo() : void contains *invokestatic* instruction referencing instance method invocation.InvocationProblems.wasStatic() : void, what might have been caused by incompatible change of the method from static to instance. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute *invokestatic* instruction on instance method invocation.InvocationProblems.wasStatic() : void"
     )
   }
 
   @Test
   fun invokeVirtualOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeVirtualOnStatic.SmartEnterProcessorUser.main() : void contains an *invokevirtual* instruction referencing a static method com.intellij.lang.SmartEnterProcessor.commit() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute instance instruction *invokevirtual* on a static method com.intellij.lang.SmartEnterProcessor.commit() : void"
     )
   }
 
   @Test
   fun invokeSpecialOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokespecial.Child.invokeSpecialOnStaticMethod() : void contains an *invokespecial* instruction referencing a static method invokespecial.AbstractParent.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute instance instruction *invokespecial* on a static method invokespecial.AbstractParent.becomeStatic() : void"
     )
   }
 
   @Test
   fun invokeInterfaceOnStaticMethod() {
-    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeClassMethodOnInterface.Caller.call3(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a static method statics.MethodBecameStatic.becomeStatic() : void, what might have been caused by incompatible change of the method to static. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute instance instruction *invokeinterface* on a static method statics.MethodBecameStatic.becomeStatic() : void"
     )
   }
 
   @Test
   fun abstractMethodInvocation() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.bar() : void contains an *invokespecial* instruction referencing a method invokespecial.AbstractParent.foo() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokespecial.Child.bar() : void contains an *invokespecial* instruction referencing a method invokespecial.AbstractParent.foo() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
         "Attempt to invoke an abstract method invokespecial.AbstractParent.foo() : void"
     )
   }
 
   @Test
   fun abstractMethodInvocationZeroMaximallySpecificMethods() {
-    assertProblemFound("Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokespecial.Child.zeroMaximallySpecificMethods() : void contains an *invokespecial* instruction referencing a method invokespecial.SuperInterface.deletedBody() : void which doesn't have an implementation. This can lead to **AbstractMethodError** exception at runtime.",
         "Attempt to invoke an abstract method invokespecial.SuperInterface.deletedBody() : void"
     )
   }
 
   @Test
   fun invokeInterfaceOnPrivateMethod() {
-    assertProblemFound("Method mock.plugin.invokeClassMethodOnInterface.Caller.call4(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a private method statics.MethodBecameStatic.privateInterfaceMethodTestName() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.invokeClassMethodOnInterface.Caller.call4(MethodBecameStatic b) : void contains an *invokeinterface* instruction referencing a private method statics.MethodBecameStatic.privateInterfaceMethodTestName() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Attempt to execute an *invokeinterface* instruction on a private method statics.MethodBecameStatic.privateInterfaceMethodTestName() : void"
     )
   }
 
   @Test
   fun missingDefaultConstructor() {
-    assertProblemFound("Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound(
+        "Constructor mock.plugin.constructors.MissingDefaultConstructor.<init>() contains an *invokespecial* instruction referencing an unresolved constructor constructors.DeletedDefaultConstructor.<init>(). This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved constructor constructors.DeletedDefaultConstructor.<init>()"
     )
   }
 
   @Test
   fun missingStaticMethod() {
-    assertProblemFound("Method mock.plugin.MethodProblems.brokenNonFoundMethod() : void contains an *invokestatic* instruction referencing an unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.MethodProblems.brokenNonFoundMethod() : void contains an *invokestatic* instruction referencing an unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.",
         "Invocation of unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void"
     )
   }
 
   @Test
   fun missingVirtualMethod() {
-    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method invokevirtual.Child.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent)",
+    assertProblemFound(
+        "Method mock.plugin.non.existing.InvokeRemovedMethod.foo() : void contains an *invokevirtual* instruction referencing an unresolved method invokevirtual.Child.removedMethod() : void. " +
+            "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent)",
         "Invocation of unresolved method invokevirtual.Child.removedMethod() : void"
     )
   }
 
   @Test
   fun `method signature changed because the generic parameter type of the enclosing class deleted`() {
-    assertProblemFound("Method mock.plugin.generics.NoSuchMethodError.error(generics.Base base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(java.lang.Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
-        "Invocation of unresolved method generics.Base.foo(Number) : void")
+    assertProblemFound(
+        "Method mock.plugin.generics.NoSuchMethodError.error(generics.Base base) : void contains an *invokevirtual* instruction referencing an unresolved method generics.Base.foo(java.lang.Number) : void. This can lead to **NoSuchMethodError** exception at runtime.",
+        "Invocation of unresolved method generics.Base.foo(Number) : void"
+    )
 
     assertProblemFound(
         "Concrete class mock.plugin.generics.Subclass inherits from generics.Base but doesn't implement the abstract method foo(T arg0) : void. This can lead to **AbstractMethodError** exception at runtime.",
@@ -454,22 +482,26 @@ class VerificationCorrectnessTest {
 
   @Test
   fun constructorBecamePrivate() {
-    assertProblemFound("Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.AccessChangedProblem.foo() : void contains an *invokespecial* instruction referencing a private constructor com.intellij.openapi.diagnostic.LogUtil.<init>() inaccessible to a class mock.plugin.AccessChangedProblem. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal invocation of private constructor com.intellij.openapi.diagnostic.LogUtil.<init>()"
     )
   }
 
   @Test
   fun illegalAccessToPrivateOrProtectedOrPackagePrivateField() {
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.accessPrivateField() : void contains a *getfield* instruction referencing a private field fields.FieldsContainer.privateField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a private field fields.FieldsContainer.privateField : int"
     )
 
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.accessProtectedField() : void contains a *getfield* instruction referencing a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a protected field fields.otherPackage.OtherFieldsContainer.protectedField : int"
     )
 
-    assertProblemFound("Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.field.FieldProblemsContainer.accessPackageField() : void contains a *getfield* instruction referencing a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int inaccessible to a class mock.plugin.field.FieldProblemsContainer. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to a package-private field fields.otherPackage.OtherFieldsContainer.packageField : int"
     )
   }
@@ -515,7 +547,8 @@ The following classes of 'non' are not resolved:
 
   @Test
   fun multipleDefaultMethodsOfInvokeSpecial() {
-    assertProblemFound("Method mock.plugin.inheritance.SubclassMultipleMethods.baz() : void contains an *invokespecial* instruction referencing a method reference mock.plugin.inheritance.MultipleMethods.foo() : void which has multiple default implementations: inheritance.MultipleDefaultMethod1.foo() : void and inheritance.MultipleDefaultMethod2.foo() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
+    assertProblemFound(
+        "Method mock.plugin.inheritance.SubclassMultipleMethods.baz() : void contains an *invokespecial* instruction referencing a method reference mock.plugin.inheritance.MultipleMethods.foo() : void which has multiple default implementations: inheritance.MultipleDefaultMethod1.foo() : void and inheritance.MultipleDefaultMethod2.foo() : void. This can lead to **IncompatibleClassChangeError** exception at runtime.",
         "Multiple default implementations of method mock.plugin.inheritance.MultipleMethods.foo() : void"
     )
   }
@@ -527,67 +560,78 @@ The following classes of 'non' are not resolved:
 
   @Test
   fun illegalAccessToPackagePrivateClass() {
-    assertProblemFound("Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void. This can lead to **IllegalAccessError** exception at runtime.",
+    assertProblemFound(
+        "Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to package-private class access.other.BecamePackagePrivate"
     )
   }
 
   @Test
   fun `method of the IDE class was invoked virtually on plugin's subclass`() {
-    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeVirtual() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
-        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
+    assertProblemFound(
+        "Method mock.plugin.non.existing.InvokeRemovedMethod.invokeVirtual() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
+            "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
+            "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
   }
 
   @Test
   fun `static method of the IDE class was invoked on plugin's subclass`() {
-    assertProblemFound("Method mock.plugin.non.existing.InvokeRemovedMethod.invokeStatic() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
-        "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
-        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
+    assertProblemFound(
+        "Method mock.plugin.non.existing.InvokeRemovedMethod.invokeStatic() : void contains an *invokevirtual* instruction referencing an unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void. " +
+            "This can lead to **NoSuchMethodError** exception at runtime. The method might have been declared in the super class (invokevirtual.Parent) " +
+            "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Invocation of unresolved method mock.plugin.non.existing.InheritMethod.removedMethod() : void"
     )
   }
 
   @Test
   fun `instance field of the IDE class was accessed on plugin's subclass`() {
-    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent)",
+    assertProblemFound(
+        "Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getfield* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.removedField : int. " +
+            "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.removedField : int"
     )
   }
 
   @Test
   fun `final static field of the IDE interface was accessed in plugin`() {
-    assertProblemFound("Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : java.lang.Object. " +
-        "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent) " +
-        "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
+    assertProblemFound(
+        "Method mock.plugin.non.existing.AccessRemovedField.foo() : void contains a *getstatic* instruction referencing an unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : java.lang.Object. " +
+            "This can lead to **NoSuchFieldError** exception at runtime. The field might have been declared in the super class (invokevirtual.Parent) " +
+            "or in the super interfaces (interfaces.SomeInterface, interfaces.SomeInterface2)",
         "Access to unresolved field mock.plugin.non.existing.InheritField.FINAL_FIELD : Object"
     )
   }
 
   @Test
   fun `virtual method became protected in superclass that a class doesn't have access to`() {
-    assertProblemFound("Method mock.plugin.access.VirtualAccess.virtualMethodBecameProtected() : void contains an *invokevirtual* instruction referencing access.AccessProblemDerived.foo() : void " +
-        "which is resolved to a protected method access.AccessProblemBase.foo() : void inaccessible to a class mock.plugin.access.VirtualAccess. " +
-        "This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal invocation of protected method access.AccessProblemBase.foo() : void")
+    assertProblemFound(
+        "Method mock.plugin.access.VirtualAccess.virtualMethodBecameProtected() : void contains an *invokevirtual* instruction referencing access.AccessProblemDerived.foo() : void " +
+            "which is resolved to a protected method access.AccessProblemBase.foo() : void inaccessible to a class mock.plugin.access.VirtualAccess. " +
+            "This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal invocation of protected method access.AccessProblemBase.foo() : void"
+    )
   }
 
   @Test
   fun `field became protected in superclass that a class doesn't have access to`() {
-    assertProblemFound("Method mock.plugin.access.VirtualAccess.inheritedFieldBecameProtected() : void contains a *getfield* instruction referencing access.AccessProblemDerived.x : int " +
-        "which is resolved to a protected field access.AccessProblemBase.x : int inaccessible to a class mock.plugin.access.VirtualAccess. " +
-        "This can lead to **IllegalAccessError** exception at runtime.",
-        "Illegal access to a protected field access.AccessProblemBase.x : int")
+    assertProblemFound(
+        "Method mock.plugin.access.VirtualAccess.inheritedFieldBecameProtected() : void contains a *getfield* instruction referencing access.AccessProblemDerived.x : int " +
+            "which is resolved to a protected field access.AccessProblemBase.x : int inaccessible to a class mock.plugin.access.VirtualAccess. " +
+            "This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal access to a protected field access.AccessProblemBase.x : int"
+    )
   }
 
   @Test
   fun `kotlin default method without JvmDefault must be re-implemented in Java subclasses`() {
-    assertProblemFound("Concrete class mock.plugin.defaults.kotlin.JavaInheritor inherits from defaults.kotlin.I but " +
-        "doesn't implement the abstract method noDefault() : int. This can lead to **AbstractMethodError** exception at runtime.",
-        "Abstract method defaults.kotlin.I.noDefault() : int is not implemented")
+    assertProblemFound(
+        "Concrete class mock.plugin.defaults.kotlin.JavaInheritor inherits from defaults.kotlin.I but " +
+            "doesn't implement the abstract method noDefault() : int. This can lead to **AbstractMethodError** exception at runtime.",
+        "Abstract method defaults.kotlin.I.noDefault() : int is not implemented"
+    )
   }
 
   @Test

@@ -87,6 +87,7 @@ start:1.0
 |    |    \--- (failed) f (optional): plugin e is not found
 |    \--- some.module:IU-181.1 [declaring module some.module]
 \--- c:1.0 (*)
-""".trim(), prettyPresentation)
+""".trim(), prettyPresentation
+    )
   }
 }

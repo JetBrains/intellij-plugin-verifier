@@ -8,9 +8,11 @@ import java.time.Instant
 /**
  * File lock is used to indicate that the [file]
  * is locked in the [file repository] [FileRepository],
- * thus it cannot be removed until the lock is [released] [release]
+ * thus it cannot be removed until the lock is released.
  * by the lock owner.
  */
-abstract class FileLock(lockTime: Instant,
-                        val file: Path,
-                        val fileSize: SpaceAmount) : ResourceLock<Path>(lockTime, FileInfo(file, fileSize))
+abstract class FileLock(
+    lockTime: Instant,
+    val file: Path,
+    val fileSize: SpaceAmount
+) : ResourceLock<Path>(lockTime, FileInfo(file, fileSize))

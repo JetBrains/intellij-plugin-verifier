@@ -23,9 +23,11 @@ sealed class SymbolicReference : Serializable {
   }
 }
 
-data class MethodReference(val hostClass: ClassReference,
-                           val methodName: String,
-                           val methodDescriptor: String) : SymbolicReference() {
+data class MethodReference(
+    val hostClass: ClassReference,
+    val methodName: String,
+    val methodDescriptor: String
+) : SymbolicReference() {
 
   override fun equals(other: Any?) = other is MethodReference
       && hostClass == other.hostClass
@@ -39,9 +41,11 @@ data class MethodReference(val hostClass: ClassReference,
 }
 
 
-data class FieldReference(val hostClass: ClassReference,
-                          val fieldName: String,
-                          val fieldDescriptor: String) : SymbolicReference() {
+data class FieldReference(
+    val hostClass: ClassReference,
+    val fieldName: String,
+    val fieldDescriptor: String
+) : SymbolicReference() {
 
   override fun equals(other: Any?) = other is FieldReference
       && fieldName == other.fieldName

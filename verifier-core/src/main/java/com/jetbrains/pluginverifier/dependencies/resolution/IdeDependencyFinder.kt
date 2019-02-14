@@ -10,9 +10,11 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * dependency among the [bundled] [Ide.getBundledPlugins] [ide] plugins,
  * or the [last compatible] [LastCompatibleVersionSelector] plugin in the [PluginRepository].
  */
-class IdeDependencyFinder(private val ide: Ide,
-                          private val pluginRepository: PluginRepository,
-                          pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
+class IdeDependencyFinder(
+    private val ide: Ide,
+    private val pluginRepository: PluginRepository,
+    pluginDetailsCache: PluginDetailsCache
+) : DependencyFinder {
 
   private val bundledPluginFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
 
@@ -31,8 +33,10 @@ class IdeDependencyFinder(private val ide: Ide,
     if (repositoryPlugin !is DependencyFinder.Result.NotFound) {
       return repositoryPlugin
     }
-    return DependencyFinder.Result.NotFound("Dependency $dependency is neither resolved among bundled plugins of ${ide.version}, " +
-        "nor is there compatible version available in $pluginRepository")
+    return DependencyFinder.Result.NotFound(
+        "Dependency $dependency is neither resolved among bundled plugins of ${ide.version}, " +
+            "nor is there compatible version available in $pluginRepository"
+    )
   }
 
 }

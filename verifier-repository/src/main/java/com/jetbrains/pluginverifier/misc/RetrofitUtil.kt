@@ -22,14 +22,16 @@ fun createOkHttpClient(
     timeOut: Long,
     timeUnit: TimeUnit
 ) = OkHttpClient.Builder()
-    .dispatcher(Dispatcher(
-        Executors.newCachedThreadPool(
-            ThreadFactoryBuilder()
-                .setNameFormat("Dispatcher")
-                .setDaemon(true)
-                .build()
+    .dispatcher(
+        Dispatcher(
+            Executors.newCachedThreadPool(
+                ThreadFactoryBuilder()
+                    .setNameFormat("Dispatcher")
+                    .setDaemon(true)
+                    .build()
+            )
         )
-    ))
+    )
     .addInterceptor { chain: Interceptor.Chain ->
       // Manually handle PUT redirect,
       // can be removed when this issue will be fixed https://github.com/square/okhttp/issues/3111
@@ -45,11 +47,13 @@ fun createOkHttpClient(
     .connectTimeout(timeOut, timeUnit)
     .readTimeout(timeOut, timeUnit)
     .writeTimeout(timeOut, timeUnit)
-    .addInterceptor(HttpLoggingInterceptor().setLevel(
-        if (needLog) {
-          HttpLoggingInterceptor.Level.BASIC
-        } else {
-          HttpLoggingInterceptor.Level.NONE
-        }
-    ))
+    .addInterceptor(
+        HttpLoggingInterceptor().setLevel(
+            if (needLog) {
+              HttpLoggingInterceptor.Level.BASIC
+            } else {
+              HttpLoggingInterceptor.Level.NONE
+            }
+        )
+    )
     .build()!!

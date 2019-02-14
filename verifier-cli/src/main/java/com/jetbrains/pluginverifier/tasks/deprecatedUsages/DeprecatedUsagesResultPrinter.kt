@@ -81,10 +81,12 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
               }
             }
             teamCityLog.testStdErr(testName, fullTestMessage)
-            teamCityLog.testFailed(testName, "There " + "is".pluralize(deprecatedIdeApiToPluginUsages.size) + " ${deprecatedIdeApiToPluginUsages.size} deprecated API " +
+            teamCityLog.testFailed(
+                testName, "There " + "is".pluralize(deprecatedIdeApiToPluginUsages.size) + " ${deprecatedIdeApiToPluginUsages.size} deprecated API " +
                 "element".pluralize(deprecatedIdeApiToPluginUsages.size) + " in $verifiedIdeVersion used in the checked plugins.\n" +
                 "You can explore concrete usages' details by looking into the verification-results " +
-                "directory of a specific plugin (see the build artifacts), or via the Find External Usages action of the API Watcher plugin", "")
+                "directory of a specific plugin (see the build artifacts), or via the Find External Usages action of the API Watcher plugin", ""
+            )
           }
         }
 
@@ -114,7 +116,8 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
               }
             }
             teamCityLog.testStdErr(testName, fullTestMessage)
-            teamCityLog.testFailed(testName, "There " + "is".pluralize(unusedIdeApiElementsNumber) + " $unusedIdeApiElementsNumber deprecated API " +
+            teamCityLog.testFailed(
+                testName, "There " + "is".pluralize(unusedIdeApiElementsNumber) + " $unusedIdeApiElementsNumber deprecated API " +
                 "element".pluralize(unusedIdeApiElementsNumber) + " in $verifiedIdeVersion unused in the checked plugins.", ""
             )
           }

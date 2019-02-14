@@ -329,7 +329,8 @@ class MethodResolution(
 
         val superName = current.superName
         superName ?: break
-        current = clsResolver.resolveClassOrProblem(superName, current, problemRegistrar) { current.createClassLocation() } ?: return null
+        current = clsResolver.resolveClassOrProblem(superName, current, problemRegistrar) { current.createClassLocation() }
+            ?: return null
       }
     }
 

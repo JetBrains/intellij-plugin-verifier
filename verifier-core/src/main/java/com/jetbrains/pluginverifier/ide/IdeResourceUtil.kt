@@ -44,9 +44,11 @@ object IdeResourceUtil {
 
   fun dumbBrokenPluginsList(dumpBrokenPluginsFile: File, brokenPlugins: List<PluginInfo>) {
     PrintWriter(dumpBrokenPluginsFile.create()).use { out ->
-      out.println("// This file contains list of broken plugins.\n" +
-          "// Each line contains plugin ID and list of versions that are broken.\n" +
-          "// If plugin name or version contains a space you can quote it like in command line.\n")
+      out.println(
+          "// This file contains list of broken plugins.\n" +
+              "// Each line contains plugin ID and list of versions that are broken.\n" +
+              "// If plugin name or version contains a space you can quote it like in command line.\n"
+      )
 
       brokenPlugins.groupBy { it.pluginId }.forEach {
         out.print(ParametersListUtil.join(listOf(it.key)))

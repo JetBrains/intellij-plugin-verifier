@@ -30,13 +30,15 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
 
 }
 
-private class FieldsImplementation(val verifiableClass: ClassNode,
-                                   val verifiableMethod: MethodNode,
-                                   val instr: FieldInsnNode,
-                                   val ctx: VerificationContext,
-                                   val fieldOwner: String = instr.owner,
-                                   val fieldName: String = instr.name,
-                                   val fieldDescriptor: String = instr.desc) {
+private class FieldsImplementation(
+    val verifiableClass: ClassNode,
+    val verifiableMethod: MethodNode,
+    val instr: FieldInsnNode,
+    val ctx: VerificationContext,
+    val fieldOwner: String = instr.owner,
+    val fieldName: String = instr.name,
+    val fieldDescriptor: String = instr.desc
+) {
 
   private val instruction = Instruction.fromOpcode(instr.opcode) ?: throw IllegalArgumentException()
 
@@ -199,12 +201,14 @@ private class FieldsImplementation(val verifiableClass: ClassNode,
   private fun registerFieldNotFoundProblem(ownerNode: ClassNode) {
     val fieldReference = SymbolicReference.fieldOf(fieldOwner, fieldName, fieldDescriptor)
     val fieldOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
-    ctx.registerProblem(FieldNotFoundProblem(
-        fieldReference,
-        getFromMethod(),
-        fieldOwnerHierarchy,
-        instruction
-    ))
+    ctx.registerProblem(
+        FieldNotFoundProblem(
+            fieldReference,
+            getFromMethod(),
+            fieldOwnerHierarchy,
+            instruction
+        )
+    )
   }
 
   private fun checkFieldIsUnstable(resolvedField: FieldResolutionResult.Found) {

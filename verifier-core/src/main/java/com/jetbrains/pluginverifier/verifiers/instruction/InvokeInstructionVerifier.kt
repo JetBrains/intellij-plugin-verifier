@@ -284,12 +284,14 @@ private class InvokeImplementation(
   private fun registerMethodNotFoundProblem(ownerNode: ClassNode) {
     val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
     val methodOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
-    ctx.registerProblem(MethodNotFoundProblem(
-        methodReference,
-        fromMethod,
-        instruction,
-        methodOwnerHierarchy
-    ))
+    ctx.registerProblem(
+        MethodNotFoundProblem(
+            methodReference,
+            fromMethod,
+            instruction,
+            methodOwnerHierarchy
+        )
+    )
   }
 
   /**

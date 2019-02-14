@@ -10,9 +10,11 @@ import com.jetbrains.pluginverifier.misc.appendWithSpaceIfNotBlank
  * when the next IDE EAP is published: all the JetBrains plugins must
  * be published to the Plugin Repository to make the EAP useful.
  */
-data class MissingCompatibleVersionProblem(val pluginId: String,
-                                           val ideVersion: IdeVersion,
-                                           private val details: String) {
+data class MissingCompatibleVersionProblem(
+    val pluginId: String,
+    val ideVersion: IdeVersion,
+    private val details: String
+) {
 
   override fun toString() = "For plugin '$pluginId' there are no versions compatible with $ideVersion " +
       "in the Plugin Repository" + details.appendWithSpaceIfNotBlank()

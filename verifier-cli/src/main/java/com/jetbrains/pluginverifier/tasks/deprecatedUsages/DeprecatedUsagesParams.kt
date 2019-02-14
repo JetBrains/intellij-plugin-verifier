@@ -9,11 +9,13 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
-class DeprecatedUsagesParams(pluginsSet: PluginsSet,
-                             val jdkPath: JdkPath,
-                             val ideDescriptor: IdeDescriptor,
-                             val dependencyFinder: DependencyFinder,
-                             val ideVersionForCompatiblePlugins: IdeVersion) : TaskParameters(pluginsSet) {
+class DeprecatedUsagesParams(
+    pluginsSet: PluginsSet,
+    val jdkPath: JdkPath,
+    val ideDescriptor: IdeDescriptor,
+    val dependencyFinder: DependencyFinder,
+    val ideVersionForCompatiblePlugins: IdeVersion
+) : TaskParameters(pluginsSet) {
 
   override val presentableText
     get() = """

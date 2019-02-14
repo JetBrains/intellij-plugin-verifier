@@ -47,8 +47,8 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
 
   private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
     pluginFile.use {
-      val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME) ?:
-          return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+      val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
+          ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
       return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
     }
   }
@@ -65,7 +65,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     try {
       val bean = extractPluginBean(inputStream)
 
-      if(!validateBean) return PluginCreationSuccess(bean.toPlugin(), emptyList())
+      if (!validateBean) return PluginCreationSuccess(bean.toPlugin(), emptyList())
 
       val beanValidationResult = validateTeamcityPluginBean(bean)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {

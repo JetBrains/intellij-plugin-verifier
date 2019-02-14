@@ -8,8 +8,10 @@ import java.nio.file.Path
  * Holds class files  [resolver] [jdkClassesResolver] of the JDK
  * which is used to verify the plugins.
  */
-data class JdkDescriptor(val jdkClassesResolver: Resolver,
-                         val homeDir: Path) : Closeable {
+data class JdkDescriptor(
+    val jdkClassesResolver: Resolver,
+    val homeDir: Path
+) : Closeable {
   override fun toString(): String = homeDir.toAbsolutePath().toString()
 
   override fun close() = jdkClassesResolver.close()

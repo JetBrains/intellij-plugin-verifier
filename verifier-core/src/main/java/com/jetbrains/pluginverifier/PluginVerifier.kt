@@ -75,8 +75,10 @@ class PluginVerifier(
       pluginReporters.reportVerificationResult(verificationResult)
 
       val elapsedTime = System.currentTimeMillis() - startTime
-      pluginReporters.reportMessage("Finished verification of $verificationTarget against $plugin " +
-          "in ${"%.2f".format(elapsedTime / 1000.0)} seconds: " + verificationResult.toString())
+      pluginReporters.reportMessage(
+          "Finished verification of $verificationTarget against $plugin " +
+              "in ${"%.2f".format(elapsedTime / 1000.0)} seconds: " + verificationResult.toString()
+      )
       return verificationResult
     } finally {
       pluginReporters.closeLogged()

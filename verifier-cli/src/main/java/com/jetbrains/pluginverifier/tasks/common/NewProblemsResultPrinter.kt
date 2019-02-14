@@ -94,15 +94,17 @@ class NewProblemsResultPrinter(
       checkIfInterrupted()
 
       if (lastCompatibleVersion != null) {
-        append("There is a newer version '${lastCompatibleVersion.version}' compatible with $newIdeVersion " +
-            "in the Plugin Repository. Anyway the ${plugin.version} has been checked because this check configuration " +
-            "tracks breaking API changes of the IntelliJ Platform between $baseIdeVersion and $newIdeVersion, " +
-            "not the plugins' incompatibilities."
+        append(
+            "There is a newer version '${lastCompatibleVersion.version}' compatible with $newIdeVersion " +
+                "in the Plugin Repository. Anyway the ${plugin.version} has been checked because this check configuration " +
+                "tracks breaking API changes of the IntelliJ Platform between $baseIdeVersion and $newIdeVersion, " +
+                "not the plugins' incompatibilities."
         )
       } else {
-        append("Though the '${plugin.version}' cannot be installed in $newIdeVersion, " +
-            "incompatible API changes are discouraged and should be avoided as stated in " +
-            "the API compatibility policy: https://confluence.jetbrains.com/display/IDEA/IntelliJ+Platform+API+compatibility+policy"
+        append(
+            "Though the '${plugin.version}' cannot be installed in $newIdeVersion, " +
+                "incompatible API changes are discouraged and should be avoided as stated in " +
+                "the API compatibility policy: https://confluence.jetbrains.com/display/IDEA/IntelliJ+Platform+API+compatibility+policy"
         )
       }
       appendln()

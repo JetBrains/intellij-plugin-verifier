@@ -82,16 +82,18 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
           val untilBuild = attributes?.getNamedItem("until-build")?.textContent?.let { IdeVersion.createIdeVersionIfValid(it) }
 
           if (id.isNotEmpty() && version.isNotEmpty() && downloadStr.isNotEmpty()) {
-            result.add(CustomPluginInfo(
-                id,
-                "Vcs Hosting Multi-Push",
-                version,
-                "JetBrains",
-                URL(buildServerUrl, "$CONFIGURATION_PATH/.lastSuccessful/$downloadStr"),
-                URL(buildServerUrl, CONFIGURATION_PATH),
-                sinceBuild,
-                untilBuild
-            ))
+            result.add(
+                CustomPluginInfo(
+                    id,
+                    "Vcs Hosting Multi-Push",
+                    version,
+                    "JetBrains",
+                    URL(buildServerUrl, "$CONFIGURATION_PATH/.lastSuccessful/$downloadStr"),
+                    URL(buildServerUrl, CONFIGURATION_PATH),
+                    sinceBuild,
+                    untilBuild
+                )
+            )
           }
         }
       }

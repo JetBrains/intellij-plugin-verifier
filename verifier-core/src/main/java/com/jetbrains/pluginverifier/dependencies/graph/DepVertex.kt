@@ -12,8 +12,10 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
  * In the final [results] [com.jetbrains.pluginverifier.results.VerificationResult] the [DepVertex] will be converted to the
  * API version [dependency node] [com.jetbrains.pluginverifier.dependencies.DependencyNode].
  */
-data class DepVertex(val dependencyId: String,
-                     val dependencyResult: DependencyFinder.Result) {
+data class DepVertex(
+    val dependencyId: String,
+    val dependencyResult: DependencyFinder.Result
+) {
 
   override fun equals(other: Any?) = other is DepVertex && dependencyId == other.dependencyId
 

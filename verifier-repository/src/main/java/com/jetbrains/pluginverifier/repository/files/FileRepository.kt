@@ -16,10 +16,12 @@ import java.time.Clock
  * File repository is the refinement of the
  * [resource repository] [ResourceRepository] for files.
  */
-class FileRepository<K>(sweepPolicy: SweepPolicy<K>,
-                        resourceProvider: ResourceProvider<K, Path>,
-                        clock: Clock = Clock.systemUTC(),
-                        presentableName: String = "FileRepository") {
+class FileRepository<K>(
+    sweepPolicy: SweepPolicy<K>,
+    resourceProvider: ResourceProvider<K, Path>,
+    clock: Clock = Clock.systemUTC(),
+    presentableName: String = "FileRepository"
+) {
   private val resourceRepository = ResourceRepositoryImpl(
       sweepPolicy,
       clock,

@@ -14,9 +14,7 @@ import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
 /**
- * The 'check-trunk-api' task that runs the verification
- * of a [trunk] [CheckTrunkApiParams.trunkIde] and a [release] [CheckTrunkApiParams.releaseIde] IDEs
- * and reports the new API breakages.
+ * The 'check-trunk-api' task that runs the verification of a trunk and a release IDEs and reports the new API breakages.
  */
 class CheckTrunkApiTask(
     private val parameters: CheckTrunkApiParams,
@@ -55,27 +53,31 @@ class CheckTrunkApiTask(
       val tasks = arrayListOf<PluginVerifier>()
 
       for (pluginInfo in pluginsSet.pluginsToCheck) {
-        tasks.add(PluginVerifier(
-            pluginInfo,
-            reportage,
-            parameters.problemsFilters,
-            false,
-            pluginDetailsCache,
-            releaseResolverProvider,
-            releaseTarget,
-            releaseIde.brokenPlugins
-        ))
+        tasks.add(
+            PluginVerifier(
+                pluginInfo,
+                reportage,
+                parameters.problemsFilters,
+                false,
+                pluginDetailsCache,
+                releaseResolverProvider,
+                releaseTarget,
+                releaseIde.brokenPlugins
+            )
+        )
 
-        tasks.add(PluginVerifier(
-            pluginInfo,
-            reportage,
-            parameters.problemsFilters,
-            false,
-            pluginDetailsCache,
-            trunkResolverProvider,
-            trunkTarget,
-            trunkIde.brokenPlugins
-        ))
+        tasks.add(
+            PluginVerifier(
+                pluginInfo,
+                reportage,
+                parameters.problemsFilters,
+                false,
+                pluginDetailsCache,
+                trunkResolverProvider,
+                trunkTarget,
+                trunkIde.brokenPlugins
+            )
+        )
       }
 
       val results = verifierExecutor.verify(tasks)

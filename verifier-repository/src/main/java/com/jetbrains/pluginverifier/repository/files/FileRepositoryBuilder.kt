@@ -63,9 +63,11 @@ class FileRepositoryBuilder<K> {
     return this
   }
 
-  private fun <K> processAvailableFiles(fileRepository: FileRepository<K>,
-                                        repositoryDir: Path,
-                                        keyProvider: (Path) -> K?) {
+  private fun <K> processAvailableFiles(
+      fileRepository: FileRepository<K>,
+      repositoryDir: Path,
+      keyProvider: (Path) -> K?
+  ) {
     if (repositoryDir.exists()) {
       for (file in repositoryDir.listFiles()) {
         val key = keyProvider(file)

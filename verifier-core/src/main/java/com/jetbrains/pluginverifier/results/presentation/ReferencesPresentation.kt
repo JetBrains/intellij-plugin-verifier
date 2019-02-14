@@ -17,9 +17,11 @@ val MethodReference.methodOrConstructorWord: String
     "method"
   }
 
-fun MethodReference.formatMethodReference(hostClassOption: HostClassOption,
-                                          methodParameterTypeOption: MethodParameterTypeOption,
-                                          methodReturnTypeOption: MethodReturnTypeOption): String = buildString {
+fun MethodReference.formatMethodReference(
+    hostClassOption: HostClassOption,
+    methodParameterTypeOption: MethodParameterTypeOption,
+    methodReturnTypeOption: MethodReturnTypeOption
+): String = buildString {
   val formattedHost = hostClass.formatHost(hostClassOption)
   if (formattedHost.isNotEmpty()) {
     append("$formattedHost.")
@@ -60,8 +62,10 @@ private fun FieldReference.getFieldType(fieldTypeOption: FieldTypeOption): Strin
   return JvmDescriptorsPresentation.convertJvmDescriptorToNormalPresentation(fieldDescriptor, converter)
 }
 
-private fun MethodReference.getMethodParametersAndReturnType(methodParameterTypeOption: MethodParameterTypeOption,
-                                                             methodReturnTypeOption: MethodReturnTypeOption): Pair<List<String>, String> {
+private fun MethodReference.getMethodParametersAndReturnType(
+    methodParameterTypeOption: MethodParameterTypeOption,
+    methodReturnTypeOption: MethodReturnTypeOption
+): Pair<List<String>, String> {
   val paramConverter = if (methodParameterTypeOption == MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME) toSimpleJavaClassName else toFullJavaClassName
   val returnConverter = if (methodReturnTypeOption == MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME) toSimpleJavaClassName else toFullJavaClassName
   val (parametersTypes, rawReturnType) = JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)

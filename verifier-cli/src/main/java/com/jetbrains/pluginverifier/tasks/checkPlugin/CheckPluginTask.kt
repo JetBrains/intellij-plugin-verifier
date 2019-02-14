@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
@@ -14,26 +13,28 @@ import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
 /**
- * The 'check-plugin' [task] [Task] that verifies
+ * The 'check-plugin' task that verifies
  * each plugin from the [CheckPluginParams.pluginsSet]
  * against each IDE from the [CheckPluginParams.ideDescriptors].
  *
- * If one [verified] [CheckPluginParams.pluginsSet] plugin depends on
+ * If one verified plugins depends on
  * another verified plugin then the [dependency resolution] [DependencyFinder]
  * prefers the verified plugin to a plugin from the [PluginRepository].
  */
-class CheckPluginTask(private val parameters: CheckPluginParams,
-                      private val pluginRepository: PluginRepository,
-                      private val pluginDetailsCache: PluginDetailsCache) : Task {
+class CheckPluginTask(
+    private val parameters: CheckPluginParams,
+    private val pluginRepository: PluginRepository,
+    private val pluginDetailsCache: PluginDetailsCache
+) : Task {
 
   /**
    * Creates the [DependencyFinder] that:
-   * 1) Resolves the [dependency] [PluginDependency] among the [verified] [CheckPluginParams.pluginsSet] plugins.
+   * 1) Resolves the dependency among the verified plugins.
    * The 'check-plugin' task searches dependencies among the verified plugins:
    * suppose plugins A and B are verified simultaneously and A depends on B.
    * Then B must be resolved to the local plugin when the plugin A is verified.
    *
-   * 2) If not found, resolves the [dependency] [PluginDependency] using the [IdeDependencyFinder].
+   * 2) If not found, resolves the dependency using the [IdeDependencyFinder].
    */
   private fun createDependencyFinder(ideDescriptor: IdeDescriptor): DependencyFinder {
     val localFinder = RepositoryDependencyFinder(parameters.pluginsSet.localRepository, LastVersionSelector(), pluginDetailsCache)

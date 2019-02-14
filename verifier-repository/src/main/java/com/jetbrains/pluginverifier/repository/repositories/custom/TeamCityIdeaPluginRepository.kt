@@ -38,6 +38,7 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
         }
     return parsePluginsList(document, buildServerUrl)
   }
+
   override fun toString() = "JetBrains TeamCity Plugin Repository"
 
   private interface TeamCityPluginRepositoryConnector {

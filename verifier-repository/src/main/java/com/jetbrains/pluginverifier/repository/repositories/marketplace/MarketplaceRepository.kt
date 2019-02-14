@@ -47,7 +47,8 @@ class MarketplaceRepository(
         "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
         "com.intellij.modules.php", "com.jetbrains.php",
         "com.intellij.modules.python", "Pythonid",
-        "com.intellij.modules.swift.lang", "com.intellij.clion-swift")
+        "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
+    )
   }
 
   private val repositoryConnector = Retrofit.Builder()

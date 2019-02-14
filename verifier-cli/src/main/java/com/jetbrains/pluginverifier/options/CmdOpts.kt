@@ -18,9 +18,11 @@ open class CmdOpts(
     @set:Argument("ignore-specific-missing-optional-dependencies", alias = "ignore-specific-missing-opt-deps", delimiter = ":")
     var ignoreMissingOptionalDeps: Array<String> = arrayOf(),
 
-    @set:Argument("documented-problems-url", alias = "dpu", description = "The URL of the page containing documented problems that must not be reported. " +
+    @set:Argument(
+        "documented-problems-url", alias = "dpu", description = "The URL of the page containing documented problems that must not be reported. " +
         "By default it is $DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL that contains the sources of the page of " +
-        "SDK Documentation: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html")
+        "SDK Documentation: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
+    )
     var documentedProblemsPageUrl: String = DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL,
 
     @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (e.g. /usr/lib/jvm/java-8-oracle). If not specified, the JDK from 'JAVA_HOME' will be chosen.")
@@ -44,8 +46,10 @@ open class CmdOpts(
     @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin ids. The broken plugins are those which contain at least one problem as a result of the verification")
     var dumpBrokenPluginsFile: String? = null,
 
-    @set:Argument("plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check" +
-        "Each line of the file is either '<plugin_id>' (check ALL builds of the plugin) or '@<plugin_id>' (check only LAST build of the plugin).")
+    @set:Argument(
+        "plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check" +
+        "Each line of the file is either '<plugin_id>' (check ALL builds of the plugin) or '@<plugin_id>' (check only LAST build of the plugin)."
+    )
     var pluginsToCheckFile: String? = null,
 
     @set:Argument("external-prefixes", alias = "ex-prefixes", delimiter = ":", description = "The prefixes of classes from the external libraries. The Verifier will not report 'No such class' for such classes.")

@@ -86,7 +86,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           description = "<description></description>"
         },
-        listOf(PropertyNotSpecified("description", "plugin.xml")))
+        listOf(PropertyNotSpecified("description", "plugin.xml"))
+    )
   }
 
   @Test
@@ -95,7 +96,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           name = ""
         },
-        listOf(PropertyNotSpecified("name", "plugin.xml")))
+        listOf(PropertyNotSpecified("name", "plugin.xml"))
+    )
   }
 
   @Test
@@ -115,7 +117,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           vendor = ""
         },
-        listOf(PropertyNotSpecified("vendor", "plugin.xml")))
+        listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+    )
   }
 
   @Test
@@ -133,7 +136,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = ""
         },
-        listOf(PropertyNotSpecified("idea-version", "plugin.xml")))
+        listOf(PropertyNotSpecified("idea-version", "plugin.xml"))
+    )
   }
 
   @Test
@@ -142,7 +146,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           depends = listOf("")
         },
-        listOf(InvalidDependencyBean("plugin.xml")))
+        listOf(InvalidDependencyBean("plugin.xml"))
+    )
   }
 
   @Test
@@ -151,7 +156,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           modules = listOf("")
         },
-        listOf(InvalidModuleBean("plugin.xml")))
+        listOf(InvalidModuleBean("plugin.xml"))
+    )
   }
 
   @Test
@@ -160,7 +166,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = "<idea-version/>"
         },
-        listOf(SinceBuildNotSpecified("plugin.xml")))
+        listOf(SinceBuildNotSpecified("plugin.xml"))
+    )
   }
 
   @Test
@@ -169,7 +176,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="131."/>"""
         },
-        listOf(InvalidSinceBuild("plugin.xml", "131.")))
+        listOf(InvalidSinceBuild("plugin.xml", "131."))
+    )
   }
 
   @Test
@@ -178,7 +186,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="131.1" until-build="141."/>"""
         },
-        listOf(InvalidUntilBuild("plugin.xml", "141.")))
+        listOf(InvalidUntilBuild("plugin.xml", "141."))
+    )
   }
 
   @Test
@@ -187,7 +196,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
         },
-        listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1"))))
+        listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1")))
+    )
   }
 
   @Test
@@ -196,7 +206,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           vendor = """<vendor></vendor>"""
         },
-        listOf(PropertyNotSpecified("vendor", "plugin.xml")))
+        listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+    )
 
     `test valid plugin xml`(
         perfectXmlBuilder.modify {
@@ -220,7 +231,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="129.0.*"/>"""
         },
-        listOf(InvalidSinceBuild("plugin.xml", "129.0.*")))
+        listOf(InvalidSinceBuild("plugin.xml", "129.0.*"))
+    )
   }
 
   @Test
@@ -229,7 +241,8 @@ class InvalidPluginsTest {
         perfectXmlBuilder.modify {
           description = "<description>Описание без английского, но достаточно длинное</description>"
         },
-        listOf(NonLatinDescription()))
+        listOf(NonLatinDescription())
+    )
   }
 
   @Test
@@ -240,12 +253,14 @@ class InvalidPluginsTest {
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
         },
-        listOf(ShortDescription()))
+        listOf(ShortDescription())
+    )
   }
 
   @Test
   fun `default values`() {
-    `test invalid plugin xml`("""<idea-plugin>
+    `test invalid plugin xml`(
+        """<idea-plugin>
       <id>com.your.company.unique.plugin.id</id>
       <name>Plugin display name here</name>
       <version>1.0</version>
@@ -273,7 +288,8 @@ class InvalidPluginsTest {
         PropertyWithDefaultValue("plugin.xml", "vendor"),
         PropertyWithDefaultValue("plugin.xml", "vendor url"),
         PropertyWithDefaultValue("plugin.xml", "vendor email")
-    ))
+    )
+    )
   }
 
   private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {

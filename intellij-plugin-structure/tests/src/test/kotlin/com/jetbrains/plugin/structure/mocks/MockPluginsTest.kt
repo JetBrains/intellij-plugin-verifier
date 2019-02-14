@@ -198,14 +198,16 @@ class MockPluginsTest : BaseMockPluginTest() {
 
     val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
     val allClasses = mainResolvers.flatMap { it.allClasses }.toSet()
-    assertSetsEqual(setOf(
-        "packagename/ClassOne",
-        "packagename/InFileClassOne",
-        "packagename/ClassOne\$ClassOneInnerStatic",
-        "packagename/ClassOne\$ClassOneInner",
-        "packagename/InFileClassOne",
-        "packagename/subpackage/ClassTwo"
-    ), allClasses)
+    assertSetsEqual(
+        setOf(
+            "packagename/ClassOne",
+            "packagename/InFileClassOne",
+            "packagename/ClassOne\$ClassOneInnerStatic",
+            "packagename/ClassOne\$ClassOneInner",
+            "packagename/InFileClassOne",
+            "packagename/subpackage/ClassTwo"
+        ), allClasses
+    )
     assertSetsEqual(setOf("packagename", "packagename/subpackage"), mainResolvers.flatMap { it.allPackages }.toSet())
     assertTrue(mainResolvers.any { it.containsPackage("packagename") })
     assertTrue(mainResolvers.any { it.containsPackage("packagename/subpackage") })
@@ -226,11 +228,13 @@ class MockPluginsTest : BaseMockPluginTest() {
     val jarFileResolver = compileServerJar as JarFileResolver
     assertSetsEqual(setOf("com.example.service.Service"), jarFileResolver.implementedServiceProviders)
     val implementationNames = jarFileResolver.readServiceImplementationNames("com.example.service.Service")
-    assertSetsEqual(setOf(
-        "com.some.compile.library.One",
-        "com.some.compile.library.Two",
-        "com.some.compile.library.Three"
-    ), implementationNames)
+    assertSetsEqual(
+        setOf(
+            "com.some.compile.library.One",
+            "com.some.compile.library.Two",
+            "com.some.compile.library.Three"
+        ), implementationNames
+    )
   }
 
   private fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {

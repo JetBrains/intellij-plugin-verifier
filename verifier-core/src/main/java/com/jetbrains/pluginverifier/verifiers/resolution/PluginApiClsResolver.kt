@@ -22,11 +22,13 @@ import java.io.Closeable
  * and is not resolved among its classes, a "Class not found" problem
  * will be reported.
  */
-class PluginApiClsResolver(private val checkedPluginResolver: Resolver,
-                           private val basePluginResolver: Resolver,
-                           private val jdkClassesResolver: Resolver,
-                           private val closeableResources: List<Closeable>,
-                           private val basePluginPackageFilter: PackageFilter) : ClsResolver {
+class PluginApiClsResolver(
+    private val checkedPluginResolver: Resolver,
+    private val basePluginResolver: Resolver,
+    private val jdkClassesResolver: Resolver,
+    private val closeableResources: List<Closeable>,
+    private val basePluginPackageFilter: PackageFilter
+) : ClsResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(

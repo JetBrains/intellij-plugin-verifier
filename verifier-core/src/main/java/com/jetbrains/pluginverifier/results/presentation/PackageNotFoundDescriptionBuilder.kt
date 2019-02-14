@@ -38,9 +38,10 @@ object PackageNotFoundDescriptionBuilder {
     }
     appendln(".")
 
-    appendln("Probably the package '$normalPackageName' belongs to a library or dependency that is not resolved by the checker.\n" +
-        "It is also possible, however, that this package was actually removed from a dependency causing the detected problems. " +
-        "Access to unresolved classes at runtime may lead to **NoSuchClassError**."
+    appendln(
+        "Probably the package '$normalPackageName' belongs to a library or dependency that is not resolved by the checker.\n" +
+            "It is also possible, however, that this package was actually removed from a dependency causing the detected problems. " +
+            "Access to unresolved classes at runtime may lead to **NoSuchClassError**."
     )
 
     val (showClasses, hideClasses) = if (missingClassesNumber < NOT_FOUND_CLASSES_SAMPLES + MINIMUM_HIDDEN) {

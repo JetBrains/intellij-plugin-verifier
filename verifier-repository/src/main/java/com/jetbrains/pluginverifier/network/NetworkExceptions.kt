@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.network
 
-import java.lang.RuntimeException
-
 abstract class BaseNetworkException : RuntimeException {
 
   val serverUrl: String

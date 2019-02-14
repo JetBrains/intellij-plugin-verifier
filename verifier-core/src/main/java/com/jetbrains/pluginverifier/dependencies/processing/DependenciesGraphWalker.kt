@@ -3,9 +3,11 @@ package com.jetbrains.pluginverifier.dependencies.processing
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
-data class DependenciesGraphWalker(val graph: DependenciesGraph,
-                                   val onVisit: (DependencyNode) -> Unit,
-                                   val onExit: (DependencyNode) -> Unit) {
+data class DependenciesGraphWalker(
+    val graph: DependenciesGraph,
+    val onVisit: (DependencyNode) -> Unit,
+    val onExit: (DependencyNode) -> Unit
+) {
 
   private val visited: MutableSet<DependencyNode> = hashSetOf()
 

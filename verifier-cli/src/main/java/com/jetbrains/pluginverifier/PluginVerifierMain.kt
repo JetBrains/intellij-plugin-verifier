@@ -83,12 +83,14 @@ object PluginVerifierMain {
     var freeArgs = Args.parse(opts, args, false)
 
     if (freeArgs.isEmpty()) {
-      System.err.println("""The command is not specified. Should be one of 'check-plugin' or 'check-ide'.
+      System.err.println(
+          """The command is not specified. Should be one of 'check-plugin' or 'check-ide'.
   Example: java -jar verifier.jar -r /usr/lib/jvm/java-8-oracle check-plugin /tmp/Kotlin /tmp/IU-162.2032.8 /tmp/IU-163.1024 /tmp/IU-163.7277
         OR java -jar verifier.jar check-ide /tmp/IU-162.2032.8
 
   More examples on https://github.com/JetBrains/intellij-plugin-verifier/
-""")
+"""
+      )
       Args.usage(System.err, CmdOpts())
 
       exitProcess(1)

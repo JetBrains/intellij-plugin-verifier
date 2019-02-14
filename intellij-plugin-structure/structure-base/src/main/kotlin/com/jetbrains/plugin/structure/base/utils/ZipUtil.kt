@@ -39,10 +39,11 @@ fun archiveDirectory(
   FileUtils.forceMkdirParent(destination.absoluteFile)
   val archiver = createArchiver(destination.extension).apply {
     enableLogging(ConsoleLogger(Logger.LEVEL_ERROR, "Unarchive logger"))
-    addFileSet(DefaultFileSet
-        .fileSet(directory)
-        .prefixed(if (includeDirectory) directory.name + "/" else "")
-        .includeEmptyDirs(includeEmptyDirectories)
+    addFileSet(
+        DefaultFileSet
+            .fileSet(directory)
+            .prefixed(if (includeDirectory) directory.name + "/" else "")
+            .includeEmptyDirs(includeEmptyDirectories)
     )
     destFile = destination.absoluteFile
   }

@@ -35,27 +35,35 @@ class IllegalFieldAccessProblem(
 
   override val fullDescription
     get() = buildString {
-      append("Method {0} contains a *{1}* instruction referencing ".formatMessage(
-          accessor.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
-          instruction
-      ))
+      append(
+          "Method {0} contains a *{1}* instruction referencing ".formatMessage(
+              accessor.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, NO_PARAMETER_NAMES),
+              instruction
+          )
+      )
 
       val actualFieldPresentation = inaccessibleField.formatFieldLocation(FULL_HOST_NAME, FULL_TYPE)
       if (fieldBytecodeReference.hostClass.className == inaccessibleField.hostClass.className) {
-        append("a {0} field {1} ".formatMessage(
-            fieldAccess,
-            actualFieldPresentation
-        ))
+        append(
+            "a {0} field {1} ".formatMessage(
+                fieldAccess,
+                actualFieldPresentation
+            )
+        )
       } else {
-        append("{0} which is resolved to a {1} field {2} ".formatMessage(
-            fieldBytecodeReference.formatFieldReference(FULL_HOST_NAME, FULL_TYPE),
-            fieldAccess,
-            actualFieldPresentation
-        ))
+        append(
+            "{0} which is resolved to a {1} field {2} ".formatMessage(
+                fieldBytecodeReference.formatFieldReference(FULL_HOST_NAME, FULL_TYPE),
+                fieldAccess,
+                actualFieldPresentation
+            )
+        )
       }
-      append("inaccessible to a class {0}. ".formatMessage(
-          accessor.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
-      ))
+      append(
+          "inaccessible to a class {0}. ".formatMessage(
+              accessor.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)
+          )
+      )
       append("This can lead to **IllegalAccessError** exception at runtime.")
     }
 

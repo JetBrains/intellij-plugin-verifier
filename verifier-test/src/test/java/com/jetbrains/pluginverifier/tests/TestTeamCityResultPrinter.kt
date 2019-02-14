@@ -45,24 +45,28 @@ class TestTeamCityResultPrinter {
     val mockRepository = mockRepository(mockUpdateInfos)
     val updateInfos = mockRepository.pluginInfos
     val output = getTeamCityOutput(mockRepository, updateInfos)
-    Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
+    Assert.assertEquals(
+        """##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
 ##teamcity[testFinished name='(version)']
 ##teamcity[testStarted name='(version 2 - newest)']
 ##teamcity[testFinished name='(version 2 - newest)']
 ##teamcity[testSuiteFinished name='id']
-""", output)
+""", output
+    )
   }
 
   @Test
   fun `no repository connection lead to no -newest suffix`() {
     val mockPluginRepository = noConnectionPluginRepository()
     val output = getTeamCityOutput(mockPluginRepository, listOf(mockPluginRepository.createMockPluginInfo("id", "v")))
-    Assert.assertEquals("""##teamcity[testSuiteStarted name='id']
+    Assert.assertEquals(
+        """##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
 ##teamcity[testSuiteFinished name='id']
-""", output)
+""", output
+    )
   }
 
   private fun getTeamCityOutput(pluginRepository: MockPluginRepositoryAdapter, pluginInfos: List<PluginInfo>): String {
@@ -76,14 +80,14 @@ class TestTeamCityResultPrinter {
           AllMissingDependencyIgnoring
       )
       tcPrinter.printResults(
-            pluginInfos.map {
-              VerificationResult.OK().apply {
-                plugin = it
-                verificationTarget = VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145"))
-                dependenciesGraph = DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList())
-              }
+          pluginInfos.map {
+            VerificationResult.OK().apply {
+              plugin = it
+              verificationTarget = VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145"))
+              dependenciesGraph = DependenciesGraph(dependencyNode, listOf(dependencyNode), emptyList())
             }
-        )
+          }
+      )
       stringWriter.toString()
     }
   }

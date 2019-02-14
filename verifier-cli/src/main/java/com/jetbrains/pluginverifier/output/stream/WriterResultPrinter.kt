@@ -12,8 +12,10 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
 
-class WriterResultPrinter(private val out: PrintWriter,
-                          private val missingDependencyIgnoring: MissingDependencyIgnoring) : ResultPrinter {
+class WriterResultPrinter(
+    private val out: PrintWriter,
+    private val missingDependencyIgnoring: MissingDependencyIgnoring
+) : ResultPrinter {
 
   override fun printResults(results: List<VerificationResult>) {
     results.forEach {
@@ -43,9 +45,11 @@ class WriterResultPrinter(private val out: PrintWriter,
     }
   }
 
-  private fun printMissingDependencies(verificationResult: VerificationResult.MissingDependencies,
-                                       verificationTarget: VerificationTarget,
-                                       plugin: PluginInfo) {
+  private fun printMissingDependencies(
+      verificationResult: VerificationResult.MissingDependencies,
+      verificationTarget: VerificationTarget,
+      plugin: PluginInfo
+  ) {
     printDependencies(verificationResult)
     printWarnings(verificationTarget, plugin, verificationResult.pluginStructureWarnings)
     printProblems(verificationTarget, plugin, verificationResult.compatibilityProblems)
@@ -59,9 +63,11 @@ class WriterResultPrinter(private val out: PrintWriter,
     printMissingOptionalDependencies(optionalDependencies)
   }
 
-  private fun printProblemsResult(verificationTarget: VerificationTarget,
-                                  plugin: PluginInfo,
-                                  verificationResult: VerificationResult.CompatibilityProblems) {
+  private fun printProblemsResult(
+      verificationTarget: VerificationTarget,
+      plugin: PluginInfo,
+      verificationResult: VerificationResult.CompatibilityProblems
+  ) {
     printProblems(verificationTarget, plugin, verificationResult.compatibilityProblems)
     printWarnings(verificationTarget, plugin, verificationResult.pluginStructureWarnings)
   }

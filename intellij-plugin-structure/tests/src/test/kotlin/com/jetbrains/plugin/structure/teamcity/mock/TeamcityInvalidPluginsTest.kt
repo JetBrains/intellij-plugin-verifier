@@ -19,7 +19,6 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.lang.IllegalArgumentException
 
 class TeamcityInvalidPluginsTest {
   val DESCRIPTOR_PATH = "teamcity-plugin.xml"
@@ -113,7 +112,8 @@ class TeamcityInvalidPluginsTest {
         perfectXmlBuilder.modify {
           name = ""
         },
-        listOf(PropertyNotSpecified("name")))
+        listOf(PropertyNotSpecified("name"))
+    )
   }
 
 
@@ -123,7 +123,8 @@ class TeamcityInvalidPluginsTest {
         perfectXmlBuilder.modify {
           displayName = ""
         },
-        listOf(PropertyNotSpecified("display-name")))
+        listOf(PropertyNotSpecified("display-name"))
+    )
   }
 
   @Test
@@ -132,7 +133,8 @@ class TeamcityInvalidPluginsTest {
         perfectXmlBuilder.modify {
           displayName = "<display-name>My plugin</display-name>"
         },
-        listOf(ForbiddenWordInPluginName))
+        listOf(ForbiddenWordInPluginName)
+    )
   }
 
   @Test
@@ -141,7 +143,8 @@ class TeamcityInvalidPluginsTest {
         perfectXmlBuilder.modify {
           displayName = "<display-name>Teamcity runner</display-name>"
         },
-        listOf(ForbiddenWordInPluginName))
+        listOf(ForbiddenWordInPluginName)
+    )
   }
 
   @Test
@@ -150,6 +153,7 @@ class TeamcityInvalidPluginsTest {
         perfectXmlBuilder.modify {
           version = ""
         },
-        listOf(PropertyNotSpecified("version")))
+        listOf(PropertyNotSpecified("version"))
+    )
   }
 }

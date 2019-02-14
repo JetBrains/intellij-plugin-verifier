@@ -124,9 +124,9 @@ class CheckTrunkApiParamsBuilder(
     pluginsSet.addPluginFilter(ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(trunkIdeDescriptor.ide)))
 
     println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" +
-        pluginsSet.pluginsToCheck
-            .sortedBy { (it as UpdateInfo).updateId }
-            .listPresentationInColumns(4, 60)
+                pluginsSet.pluginsToCheck
+                    .sortedBy { (it as UpdateInfo).updateId }
+                    .listPresentationInColumns(4, 60)
     )
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
@@ -149,8 +149,10 @@ class CheckTrunkApiParamsBuilder(
   }
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
-      ?: throw IllegalArgumentException("Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
-          "See https://www.jetbrains.com/intellij-repository/releases/")
+      ?: throw IllegalArgumentException(
+          "Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
+              "See https://www.jetbrains.com/intellij-repository/releases/"
+      )
 
 }
 
@@ -164,10 +166,12 @@ class CheckTrunkApiOpts {
   @set:Argument("major-ide-path", alias = "mip", description = "The path to release (major) IDE build with which to compare API problems in trunk (master) IDE build.")
   var majorIdePath: String? = null
 
-  @set:Argument("release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
+  @set:Argument(
+      "release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
       "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
       "The Plugin Verifier will read the plugin descriptors from every plugin-like file under the specified directory." +
-      "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present, and from the public repository, otherwise.")
+      "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present, and from the public repository, otherwise."
+  )
   var releaseLocalPluginRepositoryRoot: String? = null
 
   @set:Argument("trunk-jetbrains-plugins", alias = "tjbp", description = "The same as --release-local-repository but specifies the local repository of the trunk IDE.")

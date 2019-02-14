@@ -19,7 +19,8 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
     private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
   }
 
-  private val executor = Executors.newFixedThreadPool(concurrentWorkers,
+  private val executor = Executors.newFixedThreadPool(
+      concurrentWorkers,
       ThreadFactoryBuilder()
           .setDaemon(true)
           .setNameFormat("verifier-%d")

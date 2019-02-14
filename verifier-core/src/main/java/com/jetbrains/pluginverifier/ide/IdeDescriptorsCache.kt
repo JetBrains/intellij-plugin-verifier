@@ -77,8 +77,7 @@ class IdeDescriptorsCache(
   /**
    * Implementation of the [ResourceProvider] that provides the IDE files from the [ideFilesBank].
    */
-  private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank)
-    : ResourceProvider<IdeVersion, IdeDescriptor> {
+  private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
       val result = ideFilesBank.getIdeFile(key)

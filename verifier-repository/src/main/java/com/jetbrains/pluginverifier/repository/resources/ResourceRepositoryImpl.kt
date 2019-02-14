@@ -19,13 +19,15 @@ import java.util.concurrent.FutureTask
  * that can be safely used in a concurrent environment
  * where the resources can be added, accessed and removed by multiple threads.
  */
-class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R, K>,
-                                   private val clock: Clock,
-                                   private val resourceProvider: ResourceProvider<K, R>,
-                                   initialWeight: ResourceWeight,
-                                   weigher: (R) -> ResourceWeight,
-                                   disposer: (R) -> Unit,
-                                   private val presentableName: String = "ResourceRepository") : ResourceRepository<R, K> {
+class ResourceRepositoryImpl<R, K>(
+    private val evictionPolicy: EvictionPolicy<R, K>,
+    private val clock: Clock,
+    private val resourceProvider: ResourceProvider<K, R>,
+    initialWeight: ResourceWeight,
+    weigher: (R) -> ResourceWeight,
+    disposer: (R) -> Unit,
+    private val presentableName: String = "ResourceRepository"
+) : ResourceRepository<R, K> {
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
   private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer, logger)
@@ -242,10 +244,11 @@ class ResourceRepositoryImpl<R, K>(private val evictionPolicy: EvictionPolicy<R,
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        logger.debug("It's time to evict unused resources. " +
-            "Total weight: ${resourcesRegistrar.totalWeight}. " +
-            "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
-            " will be evicted with total weight $disposedTotalWeight"
+        logger.debug(
+            "It's time to evict unused resources. " +
+                "Total weight: ${resourcesRegistrar.totalWeight}. " +
+                "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
+                " will be evicted with total weight $disposedTotalWeight"
         )
         for (resource in resourcesForEviction) {
           remove(resource.key)

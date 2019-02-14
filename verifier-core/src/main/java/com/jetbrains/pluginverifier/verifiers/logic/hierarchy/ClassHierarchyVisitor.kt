@@ -7,10 +7,12 @@ class ClassHierarchyVisitor(private val visitInterfaces: Boolean) {
 
   private val visitedClasses = hashSetOf<String>()
 
-  fun visitClassHierarchy(currentClass: ClassHierarchy,
-                          visitSelf: Boolean,
-                          onEnter: (ClassHierarchy) -> Boolean,
-                          onExit: (ClassHierarchy) -> Unit = {}) {
+  fun visitClassHierarchy(
+      currentClass: ClassHierarchy,
+      visitSelf: Boolean,
+      onEnter: (ClassHierarchy) -> Boolean,
+      onExit: (ClassHierarchy) -> Unit = {}
+  ) {
     visitedClasses.add(currentClass.name)
 
     if (visitSelf && !onEnter(currentClass)) {

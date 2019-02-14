@@ -110,10 +110,12 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
  * has been cancelled.
  */
 @Throws(InterruptedException::class)
-fun copyInputStreamToFileWithProgress(inputStream: InputStream,
-                                      expectedSize: Long,
-                                      destinationFile: File,
-                                      progress: (Double) -> Unit) {
+fun copyInputStreamToFileWithProgress(
+    inputStream: InputStream,
+    expectedSize: Long,
+    destinationFile: File,
+    progress: (Double) -> Unit
+) {
   val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
   progress(0.0)

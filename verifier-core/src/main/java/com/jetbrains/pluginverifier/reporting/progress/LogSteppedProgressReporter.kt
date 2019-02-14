@@ -3,9 +3,11 @@ package com.jetbrains.pluginverifier.reporting.progress
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import org.slf4j.Logger
 
-class LogSteppedProgressReporter(logger: Logger,
-                                 private val logMessageProvider: (Double) -> String,
-                                 private val step: Double) : LogReporter<Double>(logger) {
+class LogSteppedProgressReporter(
+    logger: Logger,
+    private val logMessageProvider: (Double) -> String,
+    private val step: Double
+) : LogReporter<Double>(logger) {
 
   private var lastCompleted: Double = 0.0
 

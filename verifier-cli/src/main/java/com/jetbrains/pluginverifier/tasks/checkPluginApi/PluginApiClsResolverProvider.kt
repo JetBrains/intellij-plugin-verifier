@@ -13,10 +13,12 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
 import com.jetbrains.pluginverifier.verifiers.resolution.PluginApiClsResolver
 import java.io.Closeable
 
-class PluginApiClsResolverProvider(private val jdkDescriptorCache: JdkDescriptorsCache,
-                                   private val jdkPath: JdkPath,
-                                   private val basePluginResolver: Resolver,
-                                   private val basePluginPackageFilter: PackageFilter) : ClsResolverProvider {
+class PluginApiClsResolverProvider(
+    private val jdkDescriptorCache: JdkDescriptorsCache,
+    private val jdkPath: JdkPath,
+    private val basePluginResolver: Resolver,
+    private val basePluginPackageFilter: PackageFilter
+) : ClsResolverProvider {
 
   override fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder): ClsResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()

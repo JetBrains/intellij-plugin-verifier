@@ -142,12 +142,14 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 
 class CheckPluginApiOpts {
 
-  @set:Argument("plugin-packages", alias = "pp", delimiter = ",", description = "Specifies plugin's packages, classes of which are supposed to be resolved in this plugin.\n" +
+  @set:Argument(
+      "plugin-packages", alias = "pp", delimiter = ",", description = "Specifies plugin's packages, classes of which are supposed to be resolved in this plugin.\n" +
       "They are used to detect 'No such class' problems: if a verified plugin references a class belonging to one of the packages and it was not " +
       "resolved in class files of the specific base plugin, it means that the class was removed/moved, leading to binary incompatibility\n" +
       "The list is set up using comma separator. It is possible to exclude an inner package in case it doesn't belong to the base plugin\n" +
       "The syntax for each package is as follows: [+|-]<package>\n" +
-      "Example: -plugin-packages org.jetbrains.kotlin,org.kotlin,-org.jetbrains.kotlin.extension")
+      "Example: -plugin-packages org.jetbrains.kotlin,org.kotlin,-org.jetbrains.kotlin.extension"
+  )
   var pluginPackages: Array<String> = arrayOf()
 
 }

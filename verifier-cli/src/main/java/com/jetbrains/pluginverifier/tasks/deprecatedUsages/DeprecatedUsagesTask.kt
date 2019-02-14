@@ -14,9 +14,11 @@ import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
 
-class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams,
-                           val pluginRepository: PluginRepository,
-                           val pluginDetailsCache: PluginDetailsCache) : Task {
+class DeprecatedUsagesTask(
+    private val parameters: DeprecatedUsagesParams,
+    val pluginRepository: PluginRepository,
+    val pluginDetailsCache: PluginDetailsCache
+) : Task {
 
   override fun execute(
       reportage: Reportage,

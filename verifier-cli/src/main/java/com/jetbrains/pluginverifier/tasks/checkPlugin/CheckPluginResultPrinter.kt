@@ -11,8 +11,10 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
 
-class CheckPluginResultPrinter(private val outputOptions: OutputOptions,
-                               private val pluginRepository: PluginRepository) : TaskResultPrinter {
+class CheckPluginResultPrinter(
+    private val outputOptions: OutputOptions,
+    private val pluginRepository: PluginRepository
+) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckPluginResult) {
