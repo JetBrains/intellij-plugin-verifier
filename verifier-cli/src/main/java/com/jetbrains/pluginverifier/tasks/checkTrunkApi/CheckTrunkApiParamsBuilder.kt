@@ -115,7 +115,9 @@ class CheckTrunkApiParamsBuilder(
             .filterNot {
               val pluginId = it.pluginId
               releaseLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty() ||
-                  trunkLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty()
+                  trunkLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty() ||
+                  releaseIdeDescriptor.ide.getPluginById(pluginId) != null ||
+                  trunkIdeDescriptor.ide.getPluginById(pluginId) != null
             }
             .sortedByDescending { (it as UpdateInfo).updateId }
     )
