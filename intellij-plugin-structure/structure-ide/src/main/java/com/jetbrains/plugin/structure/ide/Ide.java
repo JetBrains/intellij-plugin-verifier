@@ -31,11 +31,10 @@ public abstract class Ide {
   public abstract List<IdePlugin> getBundledPlugins();
 
   /**
-   * Returns the plugin instance with the specified plugin id (it's a value of plugin.xml {@literal <id>} tag). The
-   * plugin is either <i>custom</i> or <i>bundled</i>.
+   * Finds bundled plugin with specified plugin id.
    *
    * @param pluginId plugin id
-   * @return the plugin with the specified id
+   * @return bundled plugin with the specified id, or null if such plugin is not found
    */
   @Nullable
   final public IdePlugin getPluginById(@NotNull String pluginId) {
@@ -48,10 +47,10 @@ public abstract class Ide {
   }
 
   /**
-   * Returns the plugin which has the definition of the given module.
+   * Finds bundled plugin containing the definition of the given module.
    *
    * @param moduleId module id
-   * @return the plugin with definition of the module
+   * @return bundled plugin with definition of the module, or null if such plugin is not found
    */
   @Nullable
   final public IdePlugin getPluginByModule(@NotNull String moduleId) {
