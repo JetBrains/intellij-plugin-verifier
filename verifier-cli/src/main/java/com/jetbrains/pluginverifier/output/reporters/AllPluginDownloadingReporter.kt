@@ -35,7 +35,7 @@ class AllPluginDownloadingReporter(
   }
 
   private fun reportDownloadingStatistics() {
-    val distinctReports = collectingReporter.getReported().distinctBy { it.pluginInfo }
+    val distinctReports = collectingReporter.allReported.distinctBy { it.pluginInfo }
 
     var totalDownloadDuration = Duration.ZERO
     var totalDownloaded = SpaceAmount.ZERO_SPACE

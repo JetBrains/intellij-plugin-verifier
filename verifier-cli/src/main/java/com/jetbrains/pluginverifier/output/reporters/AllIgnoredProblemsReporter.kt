@@ -32,7 +32,7 @@ class AllIgnoredProblemsReporter(private val outputOptions: OutputOptions) : Rep
 
   private fun saveIdeIgnoredProblems() {
     for ((verificationTarget, collectingReporter) in targetToProblemsCollector) {
-      val allIgnoredProblems = collectingReporter.getReported()
+      val allIgnoredProblems = collectingReporter.allReported
       if (allIgnoredProblems.isNotEmpty()) {
         val ignoredProblemsText = formatManyIgnoredProblems(verificationTarget, allIgnoredProblems)
         val ignoredProblemsFile = outputOptions.getTargetReportDirectory(verificationTarget)

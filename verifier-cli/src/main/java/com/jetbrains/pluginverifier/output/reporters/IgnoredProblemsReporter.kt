@@ -33,7 +33,7 @@ class IgnoredProblemsReporter(
   }
 
   private fun saveIgnoredProblems() {
-    val allIgnoredProblems = collectingReporter.getReported()
+    val allIgnoredProblems = collectingReporter.allReported
     if (allIgnoredProblems.isNotEmpty()) {
       val ignoredProblemsFile = pluginVerificationDirectory.resolve("ignored-problems.txt")
       ignoredProblemsFile.writeText(

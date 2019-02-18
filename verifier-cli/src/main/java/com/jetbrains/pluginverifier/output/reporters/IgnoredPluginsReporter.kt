@@ -27,7 +27,7 @@ class IgnoredPluginsReporter(private val outputOptions: OutputOptions) : Reporte
   }
 
   private fun saveIgnoredPlugins() {
-    val allIgnoredPlugins = collectingReporter.getReported()
+    val allIgnoredPlugins = collectingReporter.allReported
     for ((verificationTarget, ignoredPlugins) in allIgnoredPlugins.groupBy { it.verificationTarget }) {
       val ignoredPluginsFile = outputOptions.getTargetReportDirectory(verificationTarget)
           .resolve("all-ignored-plugins.txt")
