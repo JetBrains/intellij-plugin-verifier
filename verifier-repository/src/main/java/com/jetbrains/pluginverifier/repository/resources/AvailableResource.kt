@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 /**
  * Descriptor of the resource available at the moment in the [ResourceRepository].
  */
-open class AvailableResource<out R, out K>(
+open class AvailableResource<out R, out K, W : ResourceWeight<W>>(
     /**
      * The key of the resource in the [repository] [ResourceRepository]
      */
@@ -13,7 +13,7 @@ open class AvailableResource<out R, out K>(
     /**
      * Resource descriptor
      */
-    val resourceInfo: ResourceInfo<R>,
+    val resourceInfo: ResourceInfo<R, W>,
     /**
      * Usage statistics of the resource
      */

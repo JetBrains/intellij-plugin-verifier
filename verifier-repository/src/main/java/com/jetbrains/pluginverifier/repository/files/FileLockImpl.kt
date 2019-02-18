@@ -4,10 +4,11 @@ import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import java.nio.file.Path
 
-internal class FileLockImpl(private val resourceLock: ResourceLock<Path>) : FileLock(
+internal class FileLockImpl(private val resourceLock: ResourceLock<Path, SpaceWeight>) : FileLock(
     resourceLock.lockTime,
+    resourceLock.fetchDuration,
     resourceLock.resource,
-    (resourceLock.resourceWeight as SpaceWeight).spaceAmount
+    resourceLock.resourceWeight.spaceAmount
 ) {
 
   override fun release() = resourceLock.release()

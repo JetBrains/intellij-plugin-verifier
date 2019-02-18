@@ -11,12 +11,12 @@ import java.nio.file.Path
  * This information is used by the [SweepPolicy] to determine the set
  * of files to be deleted on the cleanup procedure.
  */
-data class SweepInfo<out K>(private val evictionInfo: EvictionInfo<Path, K>) {
+data class SweepInfo<out K>(private val evictionInfo: EvictionInfo<Path, K, SpaceWeight>) {
   /**
    * The total amount of disk space used at the moment
    */
   val totalSpaceUsed: SpaceAmount
-    get() = (evictionInfo.totalWeight as SpaceWeight).spaceAmount
+    get() = evictionInfo.totalWeight.spaceAmount
 
   /**
    * All the currently available files

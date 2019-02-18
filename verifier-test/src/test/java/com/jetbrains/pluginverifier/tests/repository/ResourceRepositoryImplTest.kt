@@ -87,7 +87,7 @@ class ResourceRepositoryImplTest {
 
     //The first half of the resources must be removed immediately
     //While the second half must be removed after the locks are released
-    val resourceLocks = arrayListOf<ResourceLock<Closeable>>()
+    val resourceLocks = arrayListOf<ResourceLock<Closeable, SizeWeight>>()
     for (i in 0 until size) {
       val repositoryResult = resourceRepository.get(i) as ResourceRepositoryResult.Found
       val lockedResource = repositoryResult.lockedResource

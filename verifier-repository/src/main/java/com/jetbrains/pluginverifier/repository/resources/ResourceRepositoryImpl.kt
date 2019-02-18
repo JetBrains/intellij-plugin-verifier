@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -19,22 +20,22 @@ import java.util.concurrent.FutureTask
  * that can be safely used in a concurrent environment
  * where the resources can be added, accessed and removed by multiple threads.
  */
-class ResourceRepositoryImpl<R, K>(
-    private val evictionPolicy: EvictionPolicy<R, K>,
+class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
+    private val evictionPolicy: EvictionPolicy<R, K, W>,
     private val clock: Clock,
     private val resourceProvider: ResourceProvider<K, R>,
-    initialWeight: ResourceWeight,
-    weigher: (R) -> ResourceWeight,
+    initialWeight: W,
+    weigher: (R) -> W,
     disposer: (R) -> Unit,
     private val presentableName: String = "ResourceRepository"
-) : ResourceRepository<R, K> {
+) : ResourceRepository<R, K, W> {
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
-  private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K>(initialWeight, weigher, disposer, logger)
+  private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K, W>(initialWeight, weigher, disposer, logger)
 
   private var nextLockId = 0L
 
-  private val key2Locks = hashMapOf<K, MutableSet<ResourceLockImpl<R, K>>>()
+  private val key2Locks = hashMapOf<K, MutableSet<ResourceLockImpl<R, K, W>>>()
 
   private val removeQueue = hashSetOf<K>()
 
@@ -116,19 +117,19 @@ class ResourceRepositoryImpl<R, K>(
   }
 
   @Synchronized
-  private fun registerLock(key: K): ResourceLock<R> {
+  private fun registerLock(key: K, duration: Duration): ResourceLock<R, W> {
     check(resourcesRegistrar.has(key))
     val resourceInfo = resourcesRegistrar.get(key)!!
     val now = updateUsageStatistics(key)
     val lockId = nextLockId++
-    val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
+    val lock = ResourceLockImpl(now, resourceInfo, duration, key, lockId, this)
     logger.debug("get($key): lock is registered $lock ")
     key2Locks.getOrPut(key) { hashSetOf() }.add(lock)
     return lock
   }
 
   @Synchronized
-  internal fun releaseLock(lock: ResourceLockImpl<R, K>) {
+  internal fun releaseLock(lock: ResourceLockImpl<R, K, W>) {
     val key = lock.key
     val resourceLocks = key2Locks[key]
     if (resourceLocks != null) {
@@ -160,11 +161,12 @@ class ResourceRepositoryImpl<R, K>(
   }
 
   @Throws(InterruptedException::class)
-  private fun getOrWait(key: K): ResourceRepositoryResult<R> {
+  private fun getOrWait(key: K): ResourceRepositoryResult<R, W> {
     checkIfInterrupted()
+    val startTime = clock.instant()
     val (fetchTask, runInCurrentThread) = synchronized(this) {
       if (resourcesRegistrar.has(key)) {
-        val lock = registerLock(key)
+        val lock = registerLock(key, Duration.ZERO)
         logger.debug("get($key): the resource is available and a lock is registered $lock")
         return ResourceRepositoryResult.Found(lock)
       }
@@ -203,7 +205,12 @@ class ResourceRepositoryImpl<R, K>(
           throw RuntimeException("Failed to fetch result", e)
         }
       }
-      return provideResult.registerLockIfProvided(key)
+      val duration = if (runInCurrentThread) {
+        Duration.between(startTime, clock.instant())
+      } else {
+        Duration.ZERO
+      }
+      return provideResult.registerLockIfProvided(key, duration)
     } finally {
       synchronized(this) {
         additionWaitingThreads.compute(key) { _, v -> if (v!! == 1) null else (v - 1) }
@@ -222,9 +229,9 @@ class ResourceRepositoryImpl<R, K>(
     return provideResult
   }
 
-  private fun ProvideResult<R>.registerLockIfProvided(key: K) = when (this) {
-    is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key))
-    is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound<R>(reason)
+  private fun ProvideResult<R>.registerLockIfProvided(key: K, duration: Duration) = when (this) {
+    is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key, duration))
+    is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound<R, W>(reason)
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }
 
@@ -274,12 +281,12 @@ class ResourceRepositoryImpl<R, K>(
    * @throws InterruptedException if the current thread has been interrupted while waiting for the resource.
    */
   @Throws(InterruptedException::class)
-  override fun get(key: K): ResourceRepositoryResult<R> {
+  override fun get(key: K): ResourceRepositoryResult<R, W> {
     val result = getOrWait(key)
     /**
      * Release the lock if the cleanup procedure has failed.
      */
-    (result as? ResourceRepositoryResult.Found<*>)?.lockedResource?.closeOnException {
+    (result as? ResourceRepositoryResult.Found<*, *>)?.lockedResource?.closeOnException {
       cleanup()
     }
     return result

@@ -27,7 +27,7 @@ class ResourceCacheTest {
     val elementsNum = 10
     val openedResources = Collections.synchronizedMap(hashMapOf<Int, Closeable>())
 
-    val resourceCache: ResourceCache<Closeable, Int> = createSizeLimitedResourceCache(
+    val resourceCache = createSizeLimitedResourceCache(
         elementsNum,
         object : ResourceProvider<Int, Closeable> {
           override fun provide(key: Int): ProvideResult.Provided<Closeable> {

@@ -12,8 +12,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Clock
-import java.time.Duration
-import java.time.Instant
 
 /**
  * Resource cache is intended to cache any resources which
@@ -37,7 +35,7 @@ import java.time.Instant
  * While there are available "slots" in the cache, the resources are not disposed.
  * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
  */
-class ResourceCache<R, in K>(
+class ResourceCache<R, in K, W : ResourceWeight<W>>(
     /**
      * [ResourceProvider] that provides the
      * requested resources by [keys] [K].
@@ -56,15 +54,15 @@ class ResourceCache<R, in K>(
      * [EvictionPolicy] that manages eviction of resources
      * held in this cache.
      */
-    evictionPolicy: EvictionPolicy<R, K>,
+    evictionPolicy: EvictionPolicy<R, K, W>,
     /**
      * Initial weight of the resources held in this cache.
      */
-    initialWeight: ResourceWeight,
+    initialWeight: W,
     /**
      * Weigher of the resources held in this cache.
      */
-    weigher: (R) -> ResourceWeight,
+    weigher: (R) -> W,
     /**
      * The cache name that can be used for logging and debugging purposes
      */
@@ -131,7 +129,7 @@ class ResourceCache<R, in K>(
    * [closed] [ResourceCacheEntry.close] after being used.
    */
   @Throws(InterruptedException::class)
-  fun getResourceCacheEntry(key: K): ResourceCacheEntryResult<R> {
+  fun getResourceCacheEntry(key: K): ResourceCacheEntryResult<R, W> {
     /**
      * Cancel the fetching if _this_ resource cache is already closed.
      */
@@ -140,13 +138,12 @@ class ResourceCache<R, in K>(
         throw InterruptedException()
       }
     }
-    val startTime = Instant.now()
     val repositoryResult = resourceRepository.get(key)
     val lockedResource = with(repositoryResult) {
       when (this) {
-        is ResourceRepositoryResult.Found -> lockedResource
-        is ResourceRepositoryResult.Failed -> return ResourceCacheEntryResult.Failed(reason, error)
-        is ResourceRepositoryResult.NotFound -> return ResourceCacheEntryResult.NotFound(reason)
+        is ResourceRepositoryResult.Found<R, W> -> lockedResource
+        is ResourceRepositoryResult.Failed<*, *> -> return ResourceCacheEntryResult.Failed(reason, error)
+        is ResourceRepositoryResult.NotFound<*, *> -> return ResourceCacheEntryResult.NotFound(reason)
       }
     }
     /**
@@ -163,8 +160,7 @@ class ResourceCache<R, in K>(
         throw InterruptedException()
       }
       return lockedResource.closeOnException {
-        val fetchTime = Duration.between(startTime, Instant.now())
-        ResourceCacheEntryResult.Found(ResourceCacheEntry(lockedResource), fetchTime)
+        ResourceCacheEntryResult.Found(ResourceCacheEntry(lockedResource))
       }
     }
   }
@@ -176,7 +172,7 @@ fun <K, R> createSizeLimitedResourceCache(
     resourceProvider: ResourceProvider<K, R>,
     disposer: (R) -> Unit,
     presentableName: String
-) = ResourceCache(
+): ResourceCache<R, K, SizeWeight> = ResourceCache(
     resourceProvider,
     disposer,
     SizeEvictionPolicy(cacheSize),

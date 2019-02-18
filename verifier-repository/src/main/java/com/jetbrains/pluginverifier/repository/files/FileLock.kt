@@ -1,8 +1,10 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import java.nio.file.Path
+import java.time.Duration
 import java.time.Instant
 
 /**
@@ -13,6 +15,7 @@ import java.time.Instant
  */
 abstract class FileLock(
     lockTime: Instant,
+    fetchDuration: Duration,
     val file: Path,
     val fileSize: SpaceAmount
-) : ResourceLock<Path>(lockTime, FileInfo(file, fileSize))
+) : ResourceLock<Path, SpaceWeight>(lockTime, FileInfo(file, fileSize), fetchDuration)

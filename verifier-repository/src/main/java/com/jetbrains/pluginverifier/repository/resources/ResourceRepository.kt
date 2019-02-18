@@ -22,7 +22,7 @@ package com.jetbrains.pluginverifier.repository.resources
  * used by all the available files. Once the space exceeds the limit, the unused files
  * become evicted. The files for eviction are chosen using a configurable [policy] [EvictionPolicy].
  */
-interface ResourceRepository<R, K> {
+interface ResourceRepository<R, K, W : ResourceWeight<W>> {
 
   /**
    * Provides a resource by [key].
@@ -38,7 +38,7 @@ interface ResourceRepository<R, K> {
    * for the resource, so it will be protected against
    * deletions by other threads.
    */
-  fun get(key: K): ResourceRepositoryResult<R>
+  fun get(key: K): ResourceRepositoryResult<R, W>
 
   /**
    * Adds the [resource] by specified [key] to this repository
@@ -107,7 +107,7 @@ interface ResourceRepository<R, K> {
    *
    * The returned value is a copy of the internal set.
    */
-  fun getAvailableResources(): List<AvailableResource<R, K>>
+  fun getAvailableResources(): List<AvailableResource<R, K, W>>
 
   /**
    * Perform the cleanup procedure that frees the resources

@@ -7,9 +7,8 @@ package com.jetbrains.pluginverifier.repository.resources
  * It is used to determine a set of resources for deletion on the
  * [cleanup] [EvictionPolicy] procedure.
  */
-interface ResourceWeight : Comparable<ResourceWeight> {
+interface ResourceWeight<W : ResourceWeight<W>> : Comparable<W> {
+  operator fun plus(other: W): W
 
-  operator fun plus(other: ResourceWeight): ResourceWeight
-
-  operator fun minus(other: ResourceWeight): ResourceWeight
+  operator fun minus(other: W): W
 }

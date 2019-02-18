@@ -10,21 +10,21 @@ import org.slf4j.Logger
  * weights of the resources in a controlled way and the [disposer] used to deallocate
  * the resources being removed.
  */
-internal class RepositoryResourcesRegistrar<R, K>(
-    initWeight: ResourceWeight,
-    private val weigher: (R) -> ResourceWeight,
+internal class RepositoryResourcesRegistrar<R, K, W : ResourceWeight<W>>(
+    initWeight: W,
+    private val weigher: (R) -> W,
     private val disposer: (R) -> Unit,
     private val logger: Logger
 ) {
 
-  private var _totalWeight: ResourceWeight = initWeight
+  private var _totalWeight: W = initWeight
 
-  private val _resources = hashMapOf<K, ResourceInfo<R>>()
+  private val _resources = hashMapOf<K, ResourceInfo<R, W>>()
 
-  val totalWeight: ResourceWeight
+  val totalWeight: W
     get() = _totalWeight
 
-  val resources: Map<K, ResourceInfo<R>>
+  val resources: Map<K, ResourceInfo<R, W>>
     get() = _resources.toMap()
 
   /**

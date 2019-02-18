@@ -14,14 +14,14 @@ import java.nio.file.Path
  */
 class AvailableFile<out K>(
     key: K,
-    resourceInfo: ResourceInfo<Path>,
+    resourceInfo: ResourceInfo<Path, SpaceWeight>,
     usageStatistic: UsageStatistic,
     isLocked: Boolean
-) : AvailableResource<Path, K>(key, resourceInfo, usageStatistic, isLocked) {
+) : AvailableResource<Path, K, SpaceWeight>(key, resourceInfo, usageStatistic, isLocked) {
   /**
    * File descriptor
    */
   val fileInfo: FileInfo
-    get() = FileInfo(resourceInfo.resource, (resourceInfo.weight as SpaceWeight).spaceAmount)
+    get() = FileInfo(resourceInfo.resource, resourceInfo.weight.spaceAmount)
 
 }
