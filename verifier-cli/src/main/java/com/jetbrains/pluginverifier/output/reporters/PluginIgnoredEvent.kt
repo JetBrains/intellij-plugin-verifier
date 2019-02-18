@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.reporting.ignoring
+package com.jetbrains.pluginverifier.output.reporters
 
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.repository.PluginInfo

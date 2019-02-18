@@ -4,7 +4,10 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
+import com.jetbrains.pluginverifier.reporting.downloading.PluginDownloadReport
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
@@ -12,6 +15,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import java.io.Closeable
+import java.time.Duration
 
 /**
  * Set of configured [reporters] [Reporter] used to report and save the verification stages and results.
@@ -29,6 +33,10 @@ data class Reporters(
      * Reporters of progress
      */
     val progressReporters: List<Reporter<Double>> = emptyList(),
+    /**
+     * Reporters of plugin downloading statistics
+     */
+    val downloadReporters: List<Reporter<PluginDownloadReport>> = emptyList(),
     /**
      * Reporters of plugins' warnings [PluginStructureWarning]
      */
@@ -69,6 +77,10 @@ data class Reporters(
 
   fun reportProgress(completed: Double) {
     progressReporters.forEach { it.report(completed) }
+  }
+
+  fun reportDownloading(pluginInfo: PluginInfo, downloadDuration: Duration, pluginSize: SpaceAmount) {
+    downloadReporters.forEach { it.report(PluginDownloadReport(pluginInfo, downloadDuration, pluginSize)) }
   }
 
   fun reportNewProblemDetected(problem: CompatibilityProblem) {
@@ -115,6 +127,7 @@ data class Reporters(
     messageReporters.forEach { it.closeLogged() }
     progressReporters.forEach { it.closeLogged() }
     problemsReporters.forEach { it.closeLogged() }
+    downloadReporters.forEach { it.closeLogged() }
     pluginStructureWarningsReporters.forEach { it.closeLogged() }
     pluginStructureErrorsReporters.forEach { it.closeLogged() }
     dependenciesGraphReporters.forEach { it.closeLogged() }

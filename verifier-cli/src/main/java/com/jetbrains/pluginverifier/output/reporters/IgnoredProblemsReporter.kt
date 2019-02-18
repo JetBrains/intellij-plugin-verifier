@@ -1,10 +1,11 @@
-package com.jetbrains.pluginverifier.reporting.ignoring
+package com.jetbrains.pluginverifier.output.reporters
 
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.writeText
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import java.nio.file.Path
 
 /**

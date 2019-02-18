@@ -1,17 +1,18 @@
-package com.jetbrains.pluginverifier.reporting.ignoring
+package com.jetbrains.pluginverifier.output.reporters
 
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.writeText
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter
-import java.nio.file.Path
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 
 /**
  * Collects all [ProblemIgnoredEvent] for all [VerificationTarget]s
  * and saves them to `<verification-home>/<verification-target>/all-ignored-problems.txt` files.
  */
-class AllIgnoredProblemsReporter(private val verificationReportsDirectory: Path) : Reporter<ProblemIgnoredEvent> {
+class AllIgnoredProblemsReporter(private val outputOptions: OutputOptions) : Reporter<ProblemIgnoredEvent> {
 
   private val targetToProblemsCollector = hashMapOf<VerificationTarget, CollectingReporter<ProblemIgnoredEvent>>()
 
@@ -34,8 +35,7 @@ class AllIgnoredProblemsReporter(private val verificationReportsDirectory: Path)
       val allIgnoredProblems = collectingReporter.getReported()
       if (allIgnoredProblems.isNotEmpty()) {
         val ignoredProblemsText = formatManyIgnoredProblems(verificationTarget, allIgnoredProblems)
-        val ignoredProblemsFile = verificationTarget
-            .getReportDirectory(verificationReportsDirectory)
+        val ignoredProblemsFile = outputOptions.getTargetReportDirectory(verificationTarget)
             .resolve("all-ignored-problems.txt")
 
         ignoredProblemsFile.writeText(ignoredProblemsText)

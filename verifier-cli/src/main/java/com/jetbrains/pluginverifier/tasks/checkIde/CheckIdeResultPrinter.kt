@@ -19,17 +19,15 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckIdeResult) {
-      if (outputOptions.needTeamCityLog) {
-        printTcLog(outputOptions.teamCityGroupType, this)
+      if (outputOptions.teamCityLog != null) {
+        printTcLog(outputOptions.teamCityGroupType, this, outputOptions.teamCityLog)
       } else {
         printOnStdOut(this)
       }
 
       HtmlResultPrinter(
           VerificationTarget.Ide(ideVersion),
-          VerificationTarget.Ide(ideVersion)
-              .getReportDirectory(outputOptions.verificationReportsDirectory)
-              .resolve("report.html"),
+          outputOptions.getTargetReportDirectory(VerificationTarget.Ide(ideVersion)).resolve("report.html"),
           outputOptions.missingDependencyIgnoring
       ).printResults(results)
 
@@ -43,9 +41,8 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
     }
   }
 
-  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult) {
+  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult, tcLog: TeamCityLog) {
     with(checkIdeResult) {
-      val tcLog = TeamCityLog(System.out)
       val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository, outputOptions.missingDependencyIgnoring)
       resultPrinter.printResults(results)
       resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)

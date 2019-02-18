@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
@@ -7,6 +8,9 @@ import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -43,7 +47,24 @@ class VerifierService(
 
   private val lastVerifiedDate = hashMapOf<ScheduledVerification, Instant>()
 
-  private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
+  private val reportage = object : Reportage {
+    override fun createPluginReporters(
+        pluginInfo: PluginInfo,
+        verificationTarget: VerificationTarget
+    ) = Reporters()
+
+    override fun logVerificationStage(stageMessage: String) = Unit
+
+    override fun logPluginVerificationIgnored(
+        pluginInfo: PluginInfo,
+        verificationTarget: VerificationTarget,
+        reason: String
+    ) = Unit
+
+    override fun close() = Unit
+  }
+
+  private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), reportage)
 
   override fun doServe() {
     val allScheduledVerifications = try {
@@ -87,7 +108,8 @@ class VerifierService(
         ideDescriptorsCache,
         jdkDescriptorsCache,
         pluginRepository,
-        ignoreProblemsFilters
+        ignoreProblemsFilters,
+        reportage
     )
 
     val taskDescriptor = taskManager.enqueue(
@@ -136,8 +158,10 @@ class VerifierService(
       try {
         verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
       } catch (e: ServerUnavailable503Exception) {
-        logger.info("Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
-            "Stop all the scheduled verification tasks.")
+        logger.info(
+            "Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
+                "Stop all the scheduled verification tasks."
+        )
         pauseVerification()
       } catch (e: Exception) {
         logger.error("Unable to send verification result for $plugin", e)

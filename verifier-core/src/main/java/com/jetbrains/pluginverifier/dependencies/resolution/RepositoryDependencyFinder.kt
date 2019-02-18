@@ -9,7 +9,11 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * The [pluginVersionSelector] is used to select a specific version of the plugin
  * if multiple versions are available.
  */
-class RepositoryDependencyFinder(private val pluginRepository: PluginRepository, private val pluginVersionSelector: PluginVersionSelector, private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
+class RepositoryDependencyFinder(
+    private val pluginRepository: PluginRepository,
+    private val pluginVersionSelector: PluginVersionSelector,
+    private val pluginDetailsCache: PluginDetailsCache
+) : DependencyFinder {
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     if (dependency.isModule) {
@@ -27,7 +31,10 @@ class RepositoryDependencyFinder(private val pluginRepository: PluginRepository,
   private fun selectPluginVersion(pluginId: String): DependencyFinder.Result {
     val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)
     return when (selectResult) {
-      is PluginVersionSelector.Result.Selected -> DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo))
+      is PluginVersionSelector.Result.Selected -> {
+        val cacheEntryResult = pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo)
+        DependencyFinder.Result.DetailsProvided(cacheEntryResult)
+      }
       is PluginVersionSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
   }

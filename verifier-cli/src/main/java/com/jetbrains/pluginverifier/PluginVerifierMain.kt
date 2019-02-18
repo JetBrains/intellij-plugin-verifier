@@ -11,10 +11,6 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
-import com.jetbrains.pluginverifier.reporting.common.LogReporter
-import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredPluginsReporter
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
-import com.jetbrains.pluginverifier.reporting.verification.ReportageImpl
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -121,13 +117,8 @@ object PluginVerifierMain {
       pluginDetailsCache: PluginDetailsCache,
       opts: CmdOpts
   ) {
-    val verificationReportsDirectory = OptionsParser.getVerificationReportsDirectory(opts)
-    println("Verification reports directory: $verificationReportsDirectory")
-
-    createReportage(
-        verificationReportsDirectory
-    ).use { reportage ->
-
+    val outputOptions = OptionsParser.parseOutputOptions(opts)
+    VerificationReportage(outputOptions).use { reportage ->
       val runner = findTaskRunner(command)
       val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache, reportage)
 
@@ -142,9 +133,9 @@ object PluginVerifierMain {
       val taskResult = parameters.use {
         println("Task ${runner.commandName} parameters:\n$parameters")
 
-        val concurrentWorkers = estimateNumberOfConcurrentWorkers()
+        val concurrentWorkers = getConcurrencyLevel()
         JdkDescriptorsCache().use { jdkDescriptorCache ->
-          VerifierExecutor(concurrentWorkers).use { verifierExecutor ->
+          VerifierExecutor(concurrentWorkers, reportage).use { verifierExecutor ->
             runner
                 .createTask(parameters, pluginRepository, pluginDetailsCache)
                 .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
@@ -152,14 +143,19 @@ object PluginVerifierMain {
         }
       }
 
-      val outputOptions = OptionsParser.parseOutputOptions(opts, verificationReportsDirectory)
       val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
       taskResultsPrinter.printResults(taskResult)
 
     }
   }
 
-  private fun estimateNumberOfConcurrentWorkers(): Int {
+  private fun getConcurrencyLevel(): Int {
+    val fromProperty = System.getProperty("intellij.plugin.verifier.concurrency.level")?.toIntOrNull()
+    if (fromProperty != null) {
+      check(0 < fromProperty && fromProperty <= 64) { "Concurrency level must be between 1 and 64, but was $fromProperty" }
+      return fromProperty
+    }
+
     val availableMemory = Runtime.getRuntime().maxMemory().bytesToSpaceAmount()
     val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
     /**
@@ -181,14 +177,6 @@ object PluginVerifierMain {
     val property = System.getProperty(propertyName)?.toLong() ?: defaultAmount
     val megabytes = SpaceAmount.ofMegabytes(property)
     return DiskSpaceSetting(megabytes)
-  }
-
-  private fun createReportage(verificationReportsDirectory: Path): Reportage {
-    val logger = LoggerFactory.getLogger("verification")
-    val messageReporters = listOf(LogReporter<String>(logger))
-    val reportersProvider = DirectoryLayoutReportersProvider(verificationReportsDirectory)
-    val ignoredPluginsReporter = IgnoredPluginsReporter(verificationReportsDirectory)
-    return ReportageImpl(reportersProvider, messageReporters, ignoredPluginsReporter)
   }
 
   private fun findTaskRunner(command: String?) = commandRunners.find { command == it.commandName }

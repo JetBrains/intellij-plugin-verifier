@@ -104,7 +104,7 @@ class VerificationCorrectnessTest {
                 )
             )
 
-            VerifierExecutor(4).use { verifierExecutor ->
+            VerifierExecutor(4, reportage).use { verifierExecutor ->
               verifierExecutor.verify(tasks).single()
             }
           }

@@ -10,5 +10,5 @@ data class ProblemIgnoredEvent(
     val problem: CompatibilityProblem,
     val reason: String
 ) {
-  override fun toString(): String = "Problem of the plugin $plugin against $verificationTarget has been ignored: $reason:\n    $problem"
+  override fun toString() = "Problem of $plugin against $verificationTarget has been ignored: $reason:\n    $problem"
 }

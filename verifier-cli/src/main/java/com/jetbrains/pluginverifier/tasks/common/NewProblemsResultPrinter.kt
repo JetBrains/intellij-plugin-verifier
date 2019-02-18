@@ -30,21 +30,21 @@ class NewProblemsResultPrinter(
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as NewProblemsResult) {
-      if (outputOptions.needTeamCityLog) {
-        printResults(this)
+      if (outputOptions.teamCityLog != null) {
+        printResults(this, outputOptions.teamCityLog)
       } else {
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
 
       HtmlResultPrinter(
           baseTarget,
-          baseTarget.getReportDirectory(outputOptions.verificationReportsDirectory).resolve("report.html"),
+          outputOptions.getTargetReportDirectory(baseTarget).resolve("report.html"),
           outputOptions.missingDependencyIgnoring
       ).printResults(baseResults)
 
       HtmlResultPrinter(
           newTarget,
-          newTarget.getReportDirectory(outputOptions.verificationReportsDirectory).resolve("report.html"),
+          outputOptions.getTargetReportDirectory(newTarget).resolve("report.html"),
           outputOptions.missingDependencyIgnoring
       ).printResults(newResults)
     }
@@ -111,9 +111,7 @@ class NewProblemsResultPrinter(
     }
   }
 
-  private fun printResults(newProblemsResult: NewProblemsResult) {
-    val tcLog = TeamCityLog(System.out)
-
+  private fun printResults(newProblemsResult: NewProblemsResult, tcLog: TeamCityLog) {
     val allPlugin2Problems = newProblemsResult.getNewPluginProblems()
     val allProblem2Plugins = Multimaps.invertFrom(allPlugin2Problems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
     val allProblems = allProblem2Plugins.keySet()

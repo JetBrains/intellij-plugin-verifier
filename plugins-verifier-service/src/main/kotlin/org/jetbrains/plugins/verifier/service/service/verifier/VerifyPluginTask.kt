@@ -11,10 +11,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
-import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
@@ -35,7 +32,8 @@ class VerifyPluginTask(
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val pluginRepository: PluginRepository,
-    private val problemsFilters: List<ProblemsFilter>
+    private val problemsFilters: List<ProblemsFilter>,
+    private val reportage: Reportage
 ) : Task<VerificationResult>("Check ${scheduledVerification.ideVersion} against ${scheduledVerification.updateInfo}", "VerifyPlugin"),
     Comparable<VerifyPluginTask> {
 
@@ -45,7 +43,6 @@ class VerifyPluginTask(
       when (cacheEntry) {
         is IdeDescriptorsCache.Result.Found -> {
           val ideDescriptor = cacheEntry.ideDescriptor
-          val reportage = createReportage(progress)
           checkPluginWithIde(ideDescriptor, reportage)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
@@ -58,10 +55,7 @@ class VerifyPluginTask(
     }
   }
 
-  private fun checkPluginWithIde(
-      ideDescriptor: IdeDescriptor,
-      reportage: Reportage
-  ): VerificationResult {
+  private fun checkPluginWithIde(ideDescriptor: IdeDescriptor, reportage: Reportage): VerificationResult {
     val dependencyFinder = IdeDependencyFinder(
         ideDescriptor.ide,
         pluginRepository,
@@ -88,30 +82,6 @@ class VerifyPluginTask(
         .verify(tasks)
         .single()
   }
-
-  private fun createDelegatingReporter(progress: ProgressIndicator): Reporter<Double> {
-    return object : Reporter<Double> {
-      override fun report(t: Double) {
-        progress.fraction = t
-      }
-
-      override fun close() = Unit
-    }
-  }
-
-  private fun createReportage(progress: ProgressIndicator) =
-      object : Reportage {
-        override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
-            Reporters(
-                progressReporters = listOf(createDelegatingReporter(progress))
-            )
-
-        override fun logVerificationStage(stageMessage: String) = Unit
-
-        override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
-
-        override fun close() = Unit
-      }
 
   /**
    * Comparison result is used by the task manager

@@ -11,7 +11,7 @@ import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-open class FileReporter<in T>(
+class FileReporter<in T>(
     private val file: Path,
     private val lineProvider: (T) -> String = { it.toString() }
 ) : Reporter<T> {

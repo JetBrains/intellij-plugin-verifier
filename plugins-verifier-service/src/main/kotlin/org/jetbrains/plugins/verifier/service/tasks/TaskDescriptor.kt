@@ -61,7 +61,7 @@ data class TaskDescriptor(
     append("(")
     append("Id=$taskId; ")
     append("State=$state; ")
-    append("Time=${elapsedTime.formatDuration("S")} ms; ")
+    append("Time=${elapsedTime.formatDuration()}; ")
     append("Progress=" + progress.fraction + "; ")
     append("Text=" + progress.text + "; ")
     append("Task-name=$presentableName")

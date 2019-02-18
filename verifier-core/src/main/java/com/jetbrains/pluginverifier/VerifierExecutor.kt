@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.pluginverifier.misc.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.*
 
@@ -13,11 +13,7 @@ import java.util.concurrent.*
  *
  * The [VerifierExecutor] can be reused for several verifications.
  */
-class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
-
-  companion object {
-    private val LOG = LoggerFactory.getLogger(VerifierExecutor::class.java)
-  }
+class VerifierExecutor(private val concurrentWorkers: Int, private val reportage: Reportage) : Closeable {
 
   private val executor = Executors.newFixedThreadPool(
       concurrentWorkers,
@@ -96,7 +92,7 @@ class VerifierExecutor(private val concurrentWorkers: Int) : Closeable {
             //Fatal error because no worker can throw exceptions other than InterruptedException
             throw RuntimeException("Fatal: worker finished abruptly", e.cause)
           }
-          LOG.info("Finished $finished of ${workers.size} verifications: ${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}")
+          reportage.logVerificationStage("Finished $finished of ${workers.size} verifications: ${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}")
           results.add(result)
           break
         }

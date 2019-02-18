@@ -95,8 +95,7 @@ class IdeDependencyFinderTest {
 
     val start = DepVertex("myPlugin", DependencyFinder.Result.FoundPlugin(startPlugin))
     val graph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
-    val depGraphBuilder = DepGraphBuilder(ideDependencyFinder)
-    depGraphBuilder.buildDependenciesGraph(graph, start)
+    DepGraphBuilder(ideDependencyFinder).buildDependenciesGraph(graph, start)
 
     val dependenciesGraph = DepGraph2ApiGraphConverter(IdeVersion.createIdeVersion("IU-181.1")).convert(graph, start)
     val deps = dependenciesGraph.vertices.map { it.pluginId }

@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.*
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
@@ -29,7 +30,7 @@ object OptionsParser {
 
   private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
 
-  fun getVerificationReportsDirectory(opts: CmdOpts): Path {
+  private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
     val dir = opts.verificationReportsDir?.let { File(it) }
     if (dir != null) {
       if (dir.exists() && dir.listFiles().orEmpty().isNotEmpty()) {
@@ -43,13 +44,18 @@ object OptionsParser {
     return Paths.get(directoryName).createDir()
   }
 
-  fun parseOutputOptions(opts: CmdOpts, verificationReportsDirectory: Path) = OutputOptions(
-      createMissingDependencyIgnoring(opts),
-      opts.needTeamCityLog,
-      TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-      opts.dumpBrokenPluginsFile,
-      verificationReportsDirectory
-  )
+  fun parseOutputOptions(opts: CmdOpts): OutputOptions {
+    val verificationReportsDirectory = getVerificationReportsDirectory(opts)
+    println("Verification reports directory: $verificationReportsDirectory")
+    val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
+    return OutputOptions(
+        verificationReportsDirectory,
+        teamCityLog,
+        TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
+        createMissingDependencyIgnoring(opts),
+        opts.dumpBrokenPluginsFile
+    )
+  }
 
   private fun createMissingDependencyIgnoring(opts: CmdOpts): MissingDependencyIgnoring {
     if (opts.ignoreAllMissingOptionalDeps) {

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.parameters.jdk
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
+import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -12,7 +13,7 @@ import java.io.Closeable
  */
 class JdkDescriptorsCache : Closeable {
 
-  private val resourceCache = createSizeLimitedResourceCache(
+  private val descriptorsCache = createSizeLimitedResourceCache(
       3,
       JdkClassesResourceProvider(),
       { it.close() },
@@ -25,10 +26,10 @@ class JdkDescriptorsCache : Closeable {
    * that protects the [JdkDescriptor] from eviction
    * from the cache until the entry is closed.
    */
-  fun getJdkResolver(path: JdkPath): ResourceCacheEntryResult<JdkDescriptor> =
-      resourceCache.getResourceCacheEntry(path)
+  fun getJdkResolver(path: JdkPath): ResourceCacheEntryResult<JdkDescriptor, SizeWeight> =
+      descriptorsCache.getResourceCacheEntry(path)
 
-  override fun close() = resourceCache.close()
+  override fun close() = descriptorsCache.close()
 
   private inner class JdkClassesResourceProvider : ResourceProvider<JdkPath, JdkDescriptor> {
     override fun provide(key: JdkPath): ProvideResult<JdkDescriptor> {

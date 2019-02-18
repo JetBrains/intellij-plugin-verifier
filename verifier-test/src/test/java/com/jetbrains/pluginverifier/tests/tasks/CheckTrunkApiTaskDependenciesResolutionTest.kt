@@ -135,17 +135,16 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
           pluginDetailsCache,
           EmptyPluginRepository
       )
-      val verifierExecutor = VerifierExecutor(4)
       val reportage = object : Reportage {
         override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             Reporters()
-
         override fun logVerificationStage(stageMessage: String) = Unit
 
         override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
 
         override fun close() = Unit
       }
+      val verifierExecutor = VerifierExecutor(4, reportage)
 
       val checkTrunkApiResult = checkTrunkApiTask.execute(reportage, verifierExecutor, JdkDescriptorsCache(), pluginDetailsCache)
 

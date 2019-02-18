@@ -2,16 +2,13 @@ package com.jetbrains.pluginverifier.reporting.common
 
 import com.jetbrains.pluginverifier.reporting.Reporter
 
-class CollectingReporter<T> : Reporter<T> {
-
-  private val reported = arrayListOf<T>()
-
-  fun getReported(): List<T> = reported
-
+/**
+ * Reporter that ignores [close] called on [delegate].
+ */
+class CloseIgnoringDelegateReporter<T>(private val delegate: Reporter<T>) : Reporter<T> {
   override fun report(t: T) {
-    reported += t
+    delegate.report(t)
   }
 
   override fun close() = Unit
-
 }

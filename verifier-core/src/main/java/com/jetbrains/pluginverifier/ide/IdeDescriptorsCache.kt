@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
+import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
@@ -19,7 +20,7 @@ class IdeDescriptorsCache(
     ideFilesBank: IdeFilesBank
 ) : Closeable {
 
-  private val resourceCache = createSizeLimitedResourceCache(
+  private val descriptorsCache = createSizeLimitedResourceCache(
       cacheSize,
       IdeDescriptorResourceProvider(ideFilesBank),
       { it.close() },
@@ -33,7 +34,7 @@ class IdeDescriptorsCache(
    */
   @Throws(InterruptedException::class)
   fun getIdeDescriptorCacheEntry(ideVersion: IdeVersion): Result {
-    val resourceCacheEntryResult = resourceCache.getResourceCacheEntry(ideVersion)
+    val resourceCacheEntryResult = descriptorsCache.getResourceCacheEntry(ideVersion)
     return with(resourceCacheEntryResult) {
       when (this) {
         is ResourceCacheEntryResult.Found -> Result.Found(resourceCacheEntry)
@@ -50,7 +51,7 @@ class IdeDescriptorsCache(
     /**
      * Resource [entry] [resourceCacheEntry] has been fetched.
      */
-    data class Found(private val resourceCacheEntry: ResourceCacheEntry<IdeDescriptor>) : Result() {
+    data class Found(private val resourceCacheEntry: ResourceCacheEntry<IdeDescriptor, SizeWeight>) : Result() {
 
       val ideDescriptor: IdeDescriptor
         get() = resourceCacheEntry.resource
@@ -94,5 +95,5 @@ class IdeDescriptorsCache(
     }
   }
 
-  override fun close() = resourceCache.close()
+  override fun close() = descriptorsCache.close()
 }

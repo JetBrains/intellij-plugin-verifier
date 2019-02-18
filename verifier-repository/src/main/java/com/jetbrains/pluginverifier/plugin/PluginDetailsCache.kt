@@ -7,11 +7,14 @@ import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
+import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import java.io.Closeable
+import java.time.Duration
 
 /**
  * This cache is intended to open and cache [PluginDetails] for
@@ -26,7 +29,7 @@ class PluginDetailsCache(
     val pluginDetailsProvider: PluginDetailsProvider
 ) : Closeable {
 
-  private val resourceCache = createSizeLimitedResourceCache(
+  private val pluginDetailsCache = createSizeLimitedResourceCache(
       cacheSize,
       PluginDetailsResourceProvider(pluginFileProvider, pluginDetailsProvider),
       { it.close() },
@@ -39,29 +42,29 @@ class PluginDetailsCache(
    */
   @Throws(InterruptedException::class)
   fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result {
-    return with(resourceCache.getResourceCacheEntry(pluginInfo)) {
-      when (this) {
-        is ResourceCacheEntryResult.Found -> {
-          with(resourceCacheEntry.resource) {
-            when (this) {
-              is PluginDetailsProvider.Result.Provided ->
-                Result.Provided(resourceCacheEntry, pluginDetails)
+    val cacheEntryResult = pluginDetailsCache.getResourceCacheEntry(pluginInfo)
+    return when (cacheEntryResult) {
+      is ResourceCacheEntryResult.Found -> {
+        val cacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result, SizeWeight> = cacheEntryResult.resourceCacheEntry
+        val resource = cacheEntry.resource
+        @Suppress("UNCHECKED_CAST")
+        when (resource) {
+          is PluginDetailsProvider.Result.Provided ->
+            Result.Provided(cacheEntry as ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>)
 
-              is PluginDetailsProvider.Result.InvalidPlugin ->
-                Result.InvalidPlugin(resourceCacheEntry, pluginErrors)
+          is PluginDetailsProvider.Result.InvalidPlugin ->
+            Result.InvalidPlugin(cacheEntry as ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>)
 
-              is PluginDetailsProvider.Result.Failed ->
-                Result.Failed(reason, error)
-            }
-          }
+          is PluginDetailsProvider.Result.Failed ->
+            Result.Failed(resource.reason, resource.error)
         }
-        is ResourceCacheEntryResult.Failed -> Result.Failed(message, error)
-        is ResourceCacheEntryResult.NotFound -> Result.FileNotFound(message)
       }
+      is ResourceCacheEntryResult.Failed -> Result.Failed(cacheEntryResult.message, cacheEntryResult.error)
+      is ResourceCacheEntryResult.NotFound -> Result.FileNotFound(cacheEntryResult.message)
     }
   }
 
-  override fun close() = resourceCache.close()
+  override fun close() = pluginDetailsCache.close()
 
   /**
    * Represents possible results of the [getPluginDetailsCacheEntry].
@@ -71,22 +74,23 @@ class PluginDetailsCache(
 
     /**
      * The [pluginDetails] are successfully provided.
+     * They are locked with [resourceCacheEntry].
      */
-    data class Provided(
-        /**
-         * [ResourceCacheEntry] that protects the
-         * [pluginDetails] until the entry is closed.
-         */
-        private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result>,
+    data class Provided(private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>) : Result() {
+      /**
+       * The provided [PluginDetails].
+       *
+       * It **must not** be closed directly because it will be closed
+       * by the [ResourceCache] at [resourceCacheEntry] disposition time.
+       */
+      val pluginDetails: PluginDetails
+        get() = resourceCacheEntry.resource.pluginDetails
 
-        /**
-         * The provided [PluginDetails].
-         *
-         * It _must not_ be closed directly as it will be closed
-         * by the [ResourceCache] at the entry disposition time.
-         */
-        val pluginDetails: PluginDetails
-    ) : Result() {
+      val fetchDuration: Duration
+        get() = resourceCacheEntry.resource.pluginDetails.fetchDuration
+
+      val pluginSize: SpaceAmount
+        get() = resourceCacheEntry.resource.pluginDetails.pluginSize
 
       override fun close() = resourceCacheEntry.close()
     }
@@ -95,27 +99,19 @@ class PluginDetailsCache(
      * The [PluginDetails] are not provided because the plugin
      * passed to [getPluginDetailsCacheEntry] is [invalid] [pluginErrors].
      */
-    data class InvalidPlugin(
-        /**
-         * [Resource cache entry] [ResourceCacheEntry] that protects the
-         * [pluginDetails] until the entry is closed.
-         */
-        private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result>,
+    data class InvalidPlugin(private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>) : Result() {
 
-        /**
-         * The [errors] [PluginProblem.Level.ERROR] of the plugin
-         * that make it invalid. It can also contain the [warnings] [PluginProblem.Level.WARNING]
-         * of the plugin's structure.
-         */
-        val pluginErrors: List<PluginProblem>
-    ) : Result() {
+      /**
+       * The [errors] [PluginProblem.Level.ERROR] and [warnings] [PluginProblem.Level.WARNING] of the plugin structure.
+       */
+      val pluginErrors: List<PluginProblem>
+        get() = resourceCacheEntry.resource.pluginErrors
 
       override fun close() = resourceCacheEntry.close()
     }
 
     /**
-     * The [getPluginDetailsCacheEntry] is failed with [error].
-     * The presentable reason is [reason].
+     * The [getPluginDetailsCacheEntry] is failed with [error] and presentable reason of [reason].
      */
     data class Failed(val reason: String, val error: Throwable) : Result() {
       override fun close() = Unit

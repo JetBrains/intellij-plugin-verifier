@@ -3,13 +3,18 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.buildList
+import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.reporters.*
 import com.jetbrains.pluginverifier.reporting.Reporter
+import com.jetbrains.pluginverifier.reporting.common.CloseIgnoringDelegateReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
+import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
-import com.jetbrains.pluginverifier.reporting.ignoring.AllIgnoredProblemsReporter
-import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredProblemsReporter
+import com.jetbrains.pluginverifier.reporting.downloading.PluginDownloadReport
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.reporting.verification.ReportersProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -21,6 +26,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -51,11 +57,36 @@ import java.nio.file.Paths
  *                 ...
  * ```
  */
-class DirectoryLayoutReportersProvider(private val verificationReportsDirectory: Path) : ReportersProvider {
+class VerificationReportage(private val outputOptions: OutputOptions) : Reportage {
 
-  override fun getPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): Reporters {
-    val pluginVerificationDirectory = verificationTarget
-        .getReportDirectory(verificationReportsDirectory)
+  private val verificationLogger = LoggerFactory.getLogger("verification")
+  private val messageReporters = listOf(LogReporter<String>(verificationLogger))
+  private val ignoredPluginsReporters = listOf(IgnoredPluginsReporter(outputOptions))
+  private val allIgnoredProblemsReporter = AllIgnoredProblemsReporter(outputOptions)
+  private val allPluginDownloadingReporter = AllPluginDownloadingReporter(outputOptions, verificationLogger)
+
+  override fun close() {
+    messageReporters.forEach { it.closeLogged() }
+    ignoredPluginsReporters.forEach { it.closeLogged() }
+    allIgnoredProblemsReporter.closeLogged()
+    allPluginDownloadingReporter.closeLogged()
+  }
+
+  override fun logVerificationStage(stageMessage: String) {
+    messageReporters.forEach { it.report(stageMessage) }
+  }
+
+  override fun logPluginVerificationIgnored(
+      pluginInfo: PluginInfo,
+      verificationTarget: VerificationTarget,
+      reason: String
+  ) {
+    ignoredPluginsReporters.forEach { it.report(PluginIgnoredEvent(pluginInfo, verificationTarget, reason)) }
+  }
+
+  @Synchronized
+  override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget): Reporters {
+    val pluginVerificationDirectory = outputOptions.getTargetReportDirectory(verificationTarget)
         .resolve("plugins")
         .resolve(createPluginVerificationDirectory(pluginInfo))
 
@@ -63,6 +94,7 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
         createResultsReporters(pluginVerificationDirectory),
         createMessageReporters(pluginVerificationDirectory),
         emptyList(),
+        createDownloadReporters(pluginVerificationDirectory),
         createPluginStructureWarningsReporters(pluginVerificationDirectory),
         createPluginStructureErrorsReporters(pluginVerificationDirectory),
         createProblemReporters(pluginVerificationDirectory),
@@ -73,6 +105,12 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
         createExperimentalApiReporters(pluginVerificationDirectory)
     )
   }
+
+  private fun createDownloadReporters(pluginVerificationDirectory: Path): List<Reporter<PluginDownloadReport>> =
+      buildList {
+        add(FileReporter(pluginVerificationDirectory.resolve("downloading.txt")))
+        add(CloseIgnoringDelegateReporter(allPluginDownloadingReporter))
+      }
 
   /**
    * Creates a directory for reports of the plugin in the verified IDE:
@@ -146,7 +184,7 @@ class DirectoryLayoutReportersProvider(private val verificationReportsDirectory:
       pluginVerificationDirectory: Path,
       verificationTarget: VerificationTarget
   ) = buildList<Reporter<ProblemIgnoredEvent>> {
-    add(AllIgnoredProblemsReporter(verificationReportsDirectory))
+    add(CloseIgnoringDelegateReporter(allIgnoredProblemsReporter))
     add(IgnoredProblemsReporter(pluginVerificationDirectory, verificationTarget))
   }
 

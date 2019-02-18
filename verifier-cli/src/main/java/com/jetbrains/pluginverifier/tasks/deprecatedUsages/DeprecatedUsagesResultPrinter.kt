@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -29,8 +28,8 @@ class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val plugin
 
   override fun printResults(taskResult: TaskResult) {
     val deprecatedUsagesResult = taskResult as DeprecatedUsagesResult
-    if (outputOptions.needTeamCityLog) {
-      val teamCityLog = TeamCityLog(System.out)
+    val teamCityLog = outputOptions.teamCityLog
+    if (teamCityLog != null) {
       with(deprecatedUsagesResult) {
         val deprecatedIdeApiToPluginUsages = hashMapOf<Location, MutableMap<PluginInfo, Int>>()
         for ((plugin, pluginUsages) in pluginDeprecatedUsages) {

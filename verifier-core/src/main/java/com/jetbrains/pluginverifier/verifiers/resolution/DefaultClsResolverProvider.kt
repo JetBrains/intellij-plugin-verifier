@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.warnings.IdePackagesBundledWarning
 import org.jgrapht.DirectedGraph
@@ -39,20 +40,42 @@ class DefaultClsResolverProvider(
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
-      resultHolder: ResultHolder
+      resultHolder: ResultHolder,
+      pluginReporters: Reporters
   ): ClsResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     findMistakenlyBundledIdeClasses(pluginResolver, resultHolder)
 
     val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
-    return try {
+    try {
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
       resultHolder.dependenciesGraph = apiGraph
       resultHolder.addCycleWarningIfExists(apiGraph)
-      provide(pluginResolver, depGraph)
+      val clsResolver = provide(pluginResolver, depGraph)
+      reportDownloadedDependencies(depGraph, pluginReporters)
+      return clsResolver
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
       throw e
+    }
+  }
+
+  private fun reportDownloadedDependencies(
+      depGraph: DirectedGraph<DepVertex, DepEdge>,
+      pluginReporters: Reporters
+  ) {
+    for (depVertex in depGraph.vertexSet()) {
+      val dependencyResult = depVertex.dependencyResult
+      if (dependencyResult is DependencyFinder.Result.DetailsProvided) {
+        val cacheResult = dependencyResult.pluginDetailsCacheResult
+        if (cacheResult is PluginDetailsCache.Result.Provided) {
+          pluginReporters.reportDownloading(
+              cacheResult.pluginDetails.pluginInfo,
+              cacheResult.fetchDuration,
+              cacheResult.pluginSize
+          )
+        }
+      }
     }
   }
 

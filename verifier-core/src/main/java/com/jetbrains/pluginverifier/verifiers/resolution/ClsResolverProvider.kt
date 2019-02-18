@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.reporting.verification.Reporters
 
 /**
  * Provides a concrete implementation of [ClsResolver]
@@ -12,6 +13,6 @@ interface ClsResolverProvider {
   /**
    * Provides a [ClsResolver] to be used in the current verification.
    */
-  fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder): ClsResolver
+  fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder, pluginReporters: Reporters): ClsResolver
 
 }

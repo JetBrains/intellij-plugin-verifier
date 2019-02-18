@@ -56,9 +56,6 @@ class PluginVerifier(
         resultHolder.addProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
       }
 
-      /**
-       * Run bytecode verification.
-       */
       try {
         loadPluginAndVerify()
       } catch (ie: InterruptedException) {
@@ -129,16 +126,19 @@ class PluginVerifier(
   }
 
   private fun loadPluginAndVerify() {
-    pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use {
-      when (it) {
+    pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
+      when (cacheEntry) {
         is PluginDetailsCache.Result.Provided -> {
-          val pluginDetails = it.pluginDetails
+          pluginReporters.reportDownloading(cacheEntry.pluginDetails.pluginInfo, cacheEntry.fetchDuration, cacheEntry.pluginSize)
+          val pluginDetails = cacheEntry.pluginDetails
           pluginDetails.pluginWarnings.forEach { resultHolder.addPluginErrorOrWarning(it) }
           verifyClasses(pluginDetails)
         }
-        is PluginDetailsCache.Result.InvalidPlugin -> it.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
-        is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = it.reason
-        is PluginDetailsCache.Result.Failed -> resultHolder.failedToDownloadReason = "Plugin $plugin was not downloaded due to ${it.error.message}"
+        is PluginDetailsCache.Result.InvalidPlugin -> {
+          cacheEntry.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
+        }
+        is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = cacheEntry.reason
+        is PluginDetailsCache.Result.Failed -> resultHolder.failedToDownloadReason = "Plugin $plugin was not downloaded due to ${cacheEntry.error.message}"
       }
     }
   }
@@ -157,7 +157,7 @@ class PluginVerifier(
       return
     }
 
-    clsResolverProvider.provide(pluginDetails, resultHolder).use { clsResolver ->
+    clsResolverProvider.provide(pluginDetails, resultHolder, pluginReporters).use { clsResolver ->
       val verificationContext = VerificationContext(
           plugin,
           verificationTarget,

@@ -46,7 +46,7 @@ enum class SpaceUnit(val symbol: String) {
 
   abstract fun toGigabytes(amount: Long): Double
 
-  fun to(amount: Long, spaceUnit: SpaceUnit) = when (spaceUnit) {
+  fun to(amount: Long, spaceUnit: SpaceUnit): Double = when (spaceUnit) {
     SpaceUnit.BYTE -> toBytes(amount)
     SpaceUnit.KILO_BYTE -> toKilobytes(amount)
     SpaceUnit.MEGA_BYTE -> toMegabytes(amount)

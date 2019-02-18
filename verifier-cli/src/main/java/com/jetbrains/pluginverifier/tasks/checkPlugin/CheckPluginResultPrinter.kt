@@ -18,8 +18,8 @@ class CheckPluginResultPrinter(
 
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckPluginResult) {
-      if (outputOptions.needTeamCityLog) {
-        printTcLog(true)
+      if (outputOptions.teamCityLog != null) {
+        printTcLog(true, outputOptions.teamCityLog)
       } else {
         printOnStdout(this)
       }
@@ -27,17 +27,14 @@ class CheckPluginResultPrinter(
       results.groupBy { it.verificationTarget }.forEach { verificationTarget, resultsOfIde ->
         HtmlResultPrinter(
             verificationTarget,
-            verificationTarget
-                .getReportDirectory(outputOptions.verificationReportsDirectory)
-                .resolve("report.html"),
+            outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html"),
             outputOptions.missingDependencyIgnoring
         ).printResults(resultsOfIde)
       }
     }
   }
 
-  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean) {
-    val tcLog = TeamCityLog(System.out)
+  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog) {
     TeamCityResultPrinter(
         tcLog,
         outputOptions.teamCityGroupType,

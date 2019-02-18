@@ -79,6 +79,10 @@ class TeamCityLog(private val out: PrintWriter) {
     return Test(testName)
   }
 
+  fun buildStatisticValue(key: String, value: Number) {
+    out.printf("##teamcity[buildStatisticValue key='${escape(key)}' value='$value']\n")
+  }
+
   inner class Test(private val testName: String) : Closeable {
 
     override fun close() {

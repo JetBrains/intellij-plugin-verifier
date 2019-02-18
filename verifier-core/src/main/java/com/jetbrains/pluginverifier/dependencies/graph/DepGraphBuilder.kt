@@ -55,9 +55,13 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
     is DependencyFinder.Result.NotFound -> null
   }
 
-  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>) =
-      directedGraph.vertexSet()
-          .find { pluginDependency.id == it.dependencyId }
-          ?: DepVertex(pluginDependency.id, dependencyFinder.findPluginDependency(pluginDependency))
+  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex {
+    val existingVertex = directedGraph.vertexSet().find { pluginDependency.id == it.dependencyId }
+    if (existingVertex != null) {
+      return existingVertex
+    }
+    val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
+    return DepVertex(pluginDependency.id, dependencyResult)
+  }
 
 }

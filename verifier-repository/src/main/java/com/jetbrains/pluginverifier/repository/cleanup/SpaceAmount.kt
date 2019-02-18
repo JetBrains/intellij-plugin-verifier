@@ -46,7 +46,7 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
   override fun compareTo(other: SpaceAmount) =
       bytes.compareTo(other.bytes)
 
-  fun to(spaceUnit: SpaceUnit) = SpaceUnit.BYTE.to(bytes, spaceUnit)
+  fun to(spaceUnit: SpaceUnit): Double = SpaceUnit.BYTE.to(bytes, spaceUnit)
 
   fun presentableAmount(): String {
     val preferredUnit = when {
