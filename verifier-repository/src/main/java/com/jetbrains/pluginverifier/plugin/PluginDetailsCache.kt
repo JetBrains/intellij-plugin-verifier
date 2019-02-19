@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -81,7 +80,7 @@ class PluginDetailsCache(
        * The provided [PluginDetails].
        *
        * It **must not** be closed directly because it will be closed
-       * by the [ResourceCache] at [resourceCacheEntry] disposition time.
+       * when this result is closed.
        */
       val pluginDetails: PluginDetails
         get() = resourceCacheEntry.resource.pluginDetails
