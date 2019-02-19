@@ -4,8 +4,7 @@ import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 
 /**
- * Resource weight equal to the number of resources
- * available in the [repository] [com.jetbrains.pluginverifier.repository.resources.ResourceRepository].
+ * Resource weight equal to the number of available resources.
  */
 data class SizeWeight(val size: Long) : ResourceWeight<SizeWeight> {
 

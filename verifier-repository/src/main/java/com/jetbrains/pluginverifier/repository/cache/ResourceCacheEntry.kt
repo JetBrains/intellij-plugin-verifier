@@ -25,7 +25,7 @@ data class ResourceCacheEntry<out R, W : ResourceWeight<W>>(private val resource
 
   /**
    * The resource being [fetched] [ResourceCache.getResourceCacheEntry].
-   * It will be deallocated when _this_ entry is [closed] [close].
+   * It will be released when _this_ entry is [closed] [close].
    */
   val resource: R
     get() = resourceInfo.resource
@@ -37,7 +37,7 @@ data class ResourceCacheEntry<out R, W : ResourceWeight<W>>(private val resource
     get() = resourceInfo.weight
 
   /**
-   * Amount of time spent on fetching the entry.
+   * Amount of time spent on fetching the entry from the cache.
    */
   val fetchDuration: Duration
     get() = resourceLock.fetchDuration
