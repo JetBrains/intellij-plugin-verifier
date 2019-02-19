@@ -29,6 +29,7 @@ class FileReporter<in T>(
     null
   }
 
+  @Synchronized
   override fun report(t: T) {
     val line = lineProvider(t)
     lock.withLock {

@@ -16,6 +16,7 @@ class AllIgnoredProblemsReporter(private val outputOptions: OutputOptions) : Rep
 
   private val targetToProblemsCollector = hashMapOf<VerificationTarget, CollectingReporter<ProblemIgnoredEvent>>()
 
+  @Synchronized
   override fun report(t: ProblemIgnoredEvent) {
     targetToProblemsCollector
         .getOrPut(t.verificationTarget) { CollectingReporter() }

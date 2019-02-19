@@ -9,10 +9,9 @@ class CollectingReporter<T> : Reporter<T> {
   val allReported: List<T>
     get() = _reported
 
+  @Synchronized
   override fun report(t: T) {
-    if (t != null) {
-      _reported += t
-    }
+    _reported += t
   }
 
   override fun close() = Unit
