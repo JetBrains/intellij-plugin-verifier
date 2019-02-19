@@ -86,10 +86,10 @@ class PluginDetailsCache(
         get() = resourceCacheEntry.resource.pluginDetails
 
       val fetchDuration: Duration
-        get() = resourceCacheEntry.resource.pluginDetails.fetchDuration
+        get() = resourceCacheEntry.resource.fetchDuration
 
       val pluginSize: SpaceAmount
-        get() = resourceCacheEntry.resource.pluginDetails.pluginSize
+        get() = resourceCacheEntry.resource.pluginSize
 
       override fun close() = resourceCacheEntry.close()
     }
@@ -105,6 +105,15 @@ class PluginDetailsCache(
        */
       val pluginErrors: List<PluginProblem>
         get() = resourceCacheEntry.resource.pluginErrors
+
+      val pluginInfo: PluginInfo
+        get() = resourceCacheEntry.resource.pluginInfo
+
+      val fetchDuration: Duration
+        get() = resourceCacheEntry.resource.fetchDuration
+
+      val pluginSize: SpaceAmount
+        get() = resourceCacheEntry.resource.pluginSize
 
       override fun close() = resourceCacheEntry.close()
     }

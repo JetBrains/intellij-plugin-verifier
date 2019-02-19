@@ -4,9 +4,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider.Result
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
 import java.nio.file.Path
+import java.time.Duration
 
 /**
  * [Provides] [providePluginDetails] the [PluginDetails] of the plugins.
@@ -17,6 +19,7 @@ interface PluginDetailsProvider {
   /**
    * Creates [PluginDetails] for a plugin from [pluginFile].
    */
+  @Throws(IllegalArgumentException::class)
   fun providePluginDetails(pluginFile: Path): Result
 
   /**
@@ -35,11 +38,20 @@ interface PluginDetailsProvider {
    */
   sealed class Result : Closeable {
 
-    data class Provided(val pluginDetails: PluginDetails) : Result() {
+    data class Provided(
+        val pluginDetails: PluginDetails,
+        val fetchDuration: Duration,
+        val pluginSize: SpaceAmount
+    ) : Result() {
       override fun close() = pluginDetails.close()
     }
 
-    data class InvalidPlugin(val pluginErrors: List<PluginProblem>) : Result() {
+    data class InvalidPlugin(
+        val pluginInfo: PluginInfo,
+        val pluginErrors: List<PluginProblem>,
+        val fetchDuration: Duration,
+        val pluginSize: SpaceAmount
+    ) : Result() {
       override fun close() = Unit
     }
 

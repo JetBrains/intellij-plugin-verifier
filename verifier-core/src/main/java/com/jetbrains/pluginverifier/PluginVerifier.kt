@@ -135,6 +135,7 @@ class PluginVerifier(
           verifyClasses(pluginDetails)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> {
+          pluginReporters.reportDownloading(cacheEntry.pluginInfo, cacheEntry.fetchDuration, cacheEntry.pluginSize)
           cacheEntry.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
         }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = cacheEntry.reason

@@ -74,6 +74,12 @@ class DefaultClsResolverProvider(
               cacheResult.fetchDuration,
               cacheResult.pluginSize
           )
+        } else if (cacheResult is PluginDetailsCache.Result.InvalidPlugin) {
+          pluginReporters.reportDownloading(
+              cacheResult.pluginInfo,
+              cacheResult.fetchDuration,
+              cacheResult.pluginSize
+          )
         }
       }
     }

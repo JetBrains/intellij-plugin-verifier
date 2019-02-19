@@ -5,10 +5,8 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
-import java.time.Duration
 
 /**
  * Holder of plugin's resources necessary for verification.
@@ -43,12 +41,6 @@ class PluginDetails(
     private val pluginFileLock: FileLock?
 
 ) : Closeable {
-
-  val fetchDuration: Duration
-    get() = pluginFileLock?.fetchDuration ?: Duration.ZERO
-
-  val pluginSize: SpaceAmount
-    get() = pluginFileLock?.fileSize ?: SpaceAmount.ZERO_SPACE
 
   override fun close() {
     pluginClassesLocations.closeLogged()
