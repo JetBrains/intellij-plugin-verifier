@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache.Result.Provided
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
@@ -28,7 +27,7 @@ class PluginDetailsCache(
     val pluginDetailsProvider: PluginDetailsProvider
 ) : Closeable {
 
-  private val pluginDetailsCache = createSizeLimitedResourceCache(
+  private val internalCache = createSizeLimitedResourceCache(
       cacheSize,
       PluginDetailsResourceProvider(pluginFileProvider, pluginDetailsProvider),
       { it.close() },
@@ -36,46 +35,44 @@ class PluginDetailsCache(
   )
 
   /**
-   * Provides the [PluginDetails] of the given [pluginInfo]
-   * wrapped in a [Result].
+   * Provides the [PluginDetails] of the given [pluginInfo] wrapped in a [Result].
    */
   @Throws(InterruptedException::class)
   fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result {
-    val cacheEntryResult = pluginDetailsCache.getResourceCacheEntry(pluginInfo)
-    return when (cacheEntryResult) {
+    val internalResult = internalCache.getResourceCacheEntry(pluginInfo)
+    return when (internalResult) {
       is ResourceCacheEntryResult.Found -> {
-        val cacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result, SizeWeight> = cacheEntryResult.resourceCacheEntry
-        val resource = cacheEntry.resource
+        val internalEntry = internalResult.resourceCacheEntry
+        val pluginDetailsProviderResult = internalEntry.resource
         @Suppress("UNCHECKED_CAST")
-        when (resource) {
+        when (pluginDetailsProviderResult) {
           is PluginDetailsProvider.Result.Provided ->
-            Result.Provided(cacheEntry as ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>)
+            Result.Provided(internalEntry as ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>)
 
           is PluginDetailsProvider.Result.InvalidPlugin ->
-            Result.InvalidPlugin(cacheEntry as ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>)
+            Result.InvalidPlugin(internalEntry as ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>)
 
           is PluginDetailsProvider.Result.Failed ->
-            Result.Failed(resource.reason, resource.error)
+            Result.Failed(pluginDetailsProviderResult.reason, pluginDetailsProviderResult.error)
         }
       }
-      is ResourceCacheEntryResult.Failed -> Result.Failed(cacheEntryResult.message, cacheEntryResult.error)
-      is ResourceCacheEntryResult.NotFound -> Result.FileNotFound(cacheEntryResult.message)
+      is ResourceCacheEntryResult.Failed -> Result.Failed(internalResult.message, internalResult.error)
+      is ResourceCacheEntryResult.NotFound -> Result.FileNotFound(internalResult.message)
     }
   }
 
-  override fun close() = pluginDetailsCache.close()
+  override fun close() = internalCache.close()
 
   /**
    * Represents possible results of the [getPluginDetailsCacheEntry].
-   * It must be closed after usage to release the [Provided.resourceCacheEntry].
+   * It **must be** closed after usage.
    */
   sealed class Result : Closeable {
 
     /**
      * The [pluginDetails] are successfully provided.
-     * They are locked with [resourceCacheEntry].
      */
-    data class Provided(private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>) : Result() {
+    data class Provided(private val internalEntry: ResourceCacheEntry<PluginDetailsProvider.Result.Provided, SizeWeight>) : Result() {
       /**
        * The provided [PluginDetails].
        *
@@ -83,50 +80,58 @@ class PluginDetailsCache(
        * when this result is closed.
        */
       val pluginDetails: PluginDetails
-        get() = resourceCacheEntry.resource.pluginDetails
+        get() = internalEntry.resource.pluginDetails
 
       val fetchDuration: Duration
-        get() = resourceCacheEntry.resource.fetchDuration
+        get() = if (internalEntry.fetchDuration == Duration.ZERO) {
+          Duration.ZERO
+        } else {
+          internalEntry.resource.fetchDuration
+        }
 
       val pluginSize: SpaceAmount
-        get() = resourceCacheEntry.resource.pluginSize
+        get() = internalEntry.resource.pluginSize
 
-      override fun close() = resourceCacheEntry.close()
+      override fun close() = internalEntry.close()
     }
 
     /**
-     * The [PluginDetails] are not provided because the plugin
-     * passed to [getPluginDetailsCacheEntry] is [invalid] [pluginErrors].
+     * [PluginDetails] are not provided because the plugin
+     * passed to [getPluginDetailsCacheEntry] is invalid.
      */
-    data class InvalidPlugin(private val resourceCacheEntry: ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>) : Result() {
+    data class InvalidPlugin(private val internalEntry: ResourceCacheEntry<PluginDetailsProvider.Result.InvalidPlugin, SizeWeight>) : Result() {
 
       /**
-       * The [errors] [PluginProblem.Level.ERROR] and [warnings] [PluginProblem.Level.WARNING] of the plugin structure.
+       * The errors and warnings of the plugin structure.
        */
       val pluginErrors: List<PluginProblem>
-        get() = resourceCacheEntry.resource.pluginErrors
+        get() = internalEntry.resource.pluginErrors
 
       val pluginInfo: PluginInfo
-        get() = resourceCacheEntry.resource.pluginInfo
+        get() = internalEntry.resource.pluginInfo
 
       val fetchDuration: Duration
-        get() = resourceCacheEntry.resource.fetchDuration
+        get() = if (internalEntry.fetchDuration == Duration.ZERO) {
+          Duration.ZERO
+        } else {
+          internalEntry.resource.fetchDuration
+        }
 
       val pluginSize: SpaceAmount
-        get() = resourceCacheEntry.resource.pluginSize
+        get() = internalEntry.resource.pluginSize
 
-      override fun close() = resourceCacheEntry.close()
+      override fun close() = internalEntry.close()
     }
 
     /**
-     * The [getPluginDetailsCacheEntry] is failed with [error] and presentable reason of [reason].
+     * [getPluginDetailsCacheEntry] has failed with [error] and presentable reason of [reason].
      */
     data class Failed(val reason: String, val error: Throwable) : Result() {
       override fun close() = Unit
     }
 
     /**
-     * The [PluginDetails] are not provided because the file
+     * [PluginDetails] are not provided because the file
      * of the plugin passed to [getPluginDetailsCacheEntry] is not found.
      */
     data class FileNotFound(val reason: String) : Result() {
@@ -134,29 +139,32 @@ class PluginDetailsCache(
     }
   }
 
-  /**
-   * The bridge class that friends the [ResourceProvider] and [PluginDetailsProvider].
-   */
-  private class PluginDetailsResourceProvider(
-      val pluginFileProvider: PluginFileProvider,
-      val pluginDetailsProvider: PluginDetailsProvider
-  ) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
+}
 
-    override fun provide(key: PluginInfo) = when (key) {
-      is LocalPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
-      is BundledPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
-      else -> provideFileAndDetails(key)
-    }
+/**
+ * Bridge utility class that maps [PluginDetailsProvider] to [ResourceProvider].
+ */
+private class PluginDetailsResourceProvider(
+    val pluginFileProvider: PluginFileProvider,
+    val pluginDetailsProvider: PluginDetailsProvider
+) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
 
-    private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-      return with(pluginFileProvider.getPluginFile(pluginInfo)) {
-        when (this) {
-          is PluginFileProvider.Result.Found -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(pluginInfo, pluginFileLock))
-          is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
-          is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
+  override fun provide(key: PluginInfo) = when (key) {
+    is LocalPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+    is BundledPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+    else -> provideFileAndDetails(key)
+  }
+
+  private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+    return with(pluginFileProvider.getPluginFile(pluginInfo)) {
+      when (this) {
+        is PluginFileProvider.Result.Found -> {
+          val pluginDetailsResult = pluginDetailsProvider.providePluginDetails(pluginInfo, pluginFileLock)
+          ProvideResult.Provided(pluginDetailsResult)
         }
+        is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
+        is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
       }
     }
   }
-
 }
