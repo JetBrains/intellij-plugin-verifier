@@ -35,26 +35,25 @@ class AllPluginDownloadingReporter(
   }
 
   private fun reportDownloadingStatistics() {
-    val distinctReports = collectingReporter.allReported.distinctBy { it.pluginInfo }
-
     var totalDownloadDuration = Duration.ZERO
-    var totalDownloaded = SpaceAmount.ZERO_SPACE
-    var totalSpaceUsed = SpaceAmount.ZERO_SPACE
+    var totalDownloadedAmount = SpaceAmount.ZERO_SPACE
 
-    for (report in distinctReports) {
-      totalSpaceUsed += report.pluginSize
+    for (report in collectingReporter.allReported) {
       if (report.downloadDuration != Duration.ZERO) {
         totalDownloadDuration += report.downloadDuration
-        totalDownloaded += report.pluginSize
+        totalDownloadedAmount += report.pluginSize
       }
     }
 
+    val totalSpaceUsed = collectingReporter.allReported.distinctBy { it.pluginInfo }
+        .fold(SpaceAmount.ZERO_SPACE) { acc, report -> acc + report.pluginSize }
+
     verificationLogger.info("Total time spent downloading plugins and their dependencies: ${totalDownloadDuration.formatDuration()}")
-    verificationLogger.info("Total amount of plugins and dependencies downloaded: ${totalDownloaded.presentableAmount()}")
+    verificationLogger.info("Total amount of plugins and dependencies downloaded: ${totalDownloadedAmount.presentableAmount()}")
     verificationLogger.info("Total amount of space used for plugins and dependencies: ${totalSpaceUsed.presentableAmount()}")
     if (outputOptions.teamCityLog != null) {
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.time.ms", totalDownloadDuration.toMillis())
-      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloaded.to(SpaceUnit.BYTE).toLong())
+      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloadedAmount.to(SpaceUnit.BYTE).toLong())
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.total.space.used", totalSpaceUsed.to(SpaceUnit.BYTE).toLong())
     }
   }
