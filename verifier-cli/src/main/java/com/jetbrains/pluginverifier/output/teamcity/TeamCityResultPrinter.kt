@@ -37,7 +37,7 @@ class TeamCityResultPrinter(
      */
     fun convertProblemClassNameToSentence(clazz: Class<CompatibilityProblem>): String {
       val name = clazz.name.substringAfterLast(".")
-      var words = name.split("(?=[A-Z])".toRegex())
+      var words = name.split("(?=[A-Z])".toRegex()).dropWhile { it.isEmpty() }
       if (words.isEmpty()) {
         return name.toLowerCase()
       }
