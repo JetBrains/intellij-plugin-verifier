@@ -35,13 +35,13 @@ class DownloadProvider<in K>(
 
   @Throws(InterruptedException::class)
   override fun provide(key: K): ProvideResult<Path> {
-    val downloadBlock = downloadStatistics.downloadStarted()
+    val downloadEvent = downloadStatistics.downloadStarted()
     val tempDirectory = createTempDirectoryForDownload(key)
     try {
       return with(downloader.download(key, tempDirectory)) {
         when (this) {
           is DownloadResult.Downloaded -> {
-            downloadBlock.downloadEnded(downloadedFileOrDirectory.fileSize)
+            downloadEvent.downloadEnded(downloadedFileOrDirectory.fileSize)
             saveDownloadedFileToFinalDestination(key, downloadedFileOrDirectory, extension, isDirectory)
           }
           is DownloadResult.NotFound -> ProvideResult.NotFound(reason)

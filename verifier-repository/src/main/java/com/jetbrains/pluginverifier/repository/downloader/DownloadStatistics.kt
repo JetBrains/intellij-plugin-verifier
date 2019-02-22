@@ -13,15 +13,14 @@ class DownloadStatistics {
   private val events = Collections.synchronizedList(arrayListOf<DownloadEvent>())
 
   @Synchronized
-  private fun reportEvent(startInstant: Instant, endInstant: Instant, downloadedAmount: SpaceAmount) {
-    events += DownloadEvent(startInstant, endInstant, downloadedAmount)
+  private fun reportEvent(downloadEvent: DownloadEvent) {
+    events += downloadEvent
   }
 
-  fun getTotalDownloadedAmount(): SpaceAmount {
-    return events.fold(SpaceAmount.ZERO_SPACE) { acc, event ->
-      acc + event.amount
-    }
-  }
+  fun getTotalDownloadedAmount(): SpaceAmount =
+      events.fold(SpaceAmount.ZERO_SPACE) { acc, event ->
+        acc + event.downloadedAmount
+      }
 
   fun getTotalAstronomicalDownloadDuration(): Duration {
     //Use sweep line algorithm, because events may intersect.
@@ -44,14 +43,19 @@ class DownloadStatistics {
     return totalDuration
   }
 
-  fun downloadStarted(): DownloadBlock {
-    val startInstant = Instant.now()
-    return DownloadBlock(startInstant)
-  }
+  fun downloadStarted(): DownloadEvent =
+      DownloadEvent(Instant.now())
 
-  inner class DownloadBlock(private val startInstant: Instant) {
+  inner class DownloadEvent(
+      internal val startInstant: Instant,
+      internal var endInstant: Instant = Instant.EPOCH,
+      internal var downloadedAmount: SpaceAmount = SpaceAmount.ZERO_SPACE
+  ) {
+    @Synchronized
     fun downloadEnded(downloadedAmount: SpaceAmount) {
-      reportEvent(startInstant, Instant.now(), downloadedAmount)
+      this.endInstant = Instant.now()
+      this.downloadedAmount = downloadedAmount
+      reportEvent(this)
     }
   }
 }
