@@ -109,7 +109,8 @@ object PluginVerifierMain {
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
 
     VerificationReportage(outputOptions).use { reportage ->
-      val taskResult = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
+      val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
+      val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
 
         runner.getParametersBuilder(
             pluginRepository,
