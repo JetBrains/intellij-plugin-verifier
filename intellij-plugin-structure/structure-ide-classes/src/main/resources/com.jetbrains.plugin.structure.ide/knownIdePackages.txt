@@ -239,5 +239,6 @@ com.theoryinpractice.testng
 git4idea
 icons
 ie.wombat
-jetbrains
+jetbrains.communicator
+jetbrains.plugins
 jetbrains.coverage.report
