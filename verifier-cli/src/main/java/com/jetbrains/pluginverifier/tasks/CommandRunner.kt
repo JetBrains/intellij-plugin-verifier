@@ -25,11 +25,7 @@ abstract class CommandRunner {
       reportage: Reportage
   ): TaskParametersBuilder
 
-  abstract fun createTask(
-      parameters: TaskParameters,
-      pluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
-  ): Task
+  abstract fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository): Task
 
   abstract fun createTaskResultsPrinter(
       outputOptions: OutputOptions,

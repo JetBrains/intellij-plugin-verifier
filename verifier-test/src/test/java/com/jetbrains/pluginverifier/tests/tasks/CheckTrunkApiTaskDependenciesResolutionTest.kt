@@ -130,11 +130,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     }
 
     PluginDetailsCache(10, pluginFileProvider, createPluginDetailsProviderForTest()).use { pluginDetailsCache ->
-      val checkTrunkApiTask = CheckTrunkApiTask(
-          checkTrunkApiParams,
-          pluginDetailsCache,
-          EmptyPluginRepository
-      )
+      val checkTrunkApiTask = CheckTrunkApiTask(checkTrunkApiParams, EmptyPluginRepository)
       val reportage = object : Reportage {
         override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             Reporters()

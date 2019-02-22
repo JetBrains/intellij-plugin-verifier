@@ -22,11 +22,8 @@ class CheckIdeRunner : CommandRunner() {
       reportage: Reportage
   ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
 
-  override fun createTask(
-      parameters: TaskParameters,
-      pluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
-  ) = CheckIdeTask(parameters as CheckIdeParams)
+  override fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository) =
+      CheckIdeTask(parameters as CheckIdeParams)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       CheckIdeResultPrinter(outputOptions, pluginRepository)

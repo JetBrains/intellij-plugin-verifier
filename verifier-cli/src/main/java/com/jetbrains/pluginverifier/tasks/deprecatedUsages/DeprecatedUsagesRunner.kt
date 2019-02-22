@@ -24,9 +24,8 @@ class DeprecatedUsagesRunner : CommandRunner() {
 
   override fun createTask(
       parameters: TaskParameters,
-      pluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
-  ) = DeprecatedUsagesTask(parameters as DeprecatedUsagesParams, pluginRepository, pluginDetailsCache)
+      pluginRepository: PluginRepository
+  ) = DeprecatedUsagesTask(parameters as DeprecatedUsagesParams, pluginRepository)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       DeprecatedUsagesResultPrinter(outputOptions, pluginRepository)

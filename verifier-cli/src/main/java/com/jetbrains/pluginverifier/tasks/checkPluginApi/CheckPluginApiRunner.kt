@@ -22,11 +22,8 @@ class CheckPluginApiRunner : CommandRunner() {
       reportage: Reportage
   ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider, reportage)
 
-  override fun createTask(
-      parameters: TaskParameters,
-      pluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
-  ) = CheckPluginApiTask(parameters as CheckPluginApiParams)
+  override fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository) =
+      CheckPluginApiTask(parameters as CheckPluginApiParams)
 
   override fun createTaskResultsPrinter(
       outputOptions: OutputOptions,

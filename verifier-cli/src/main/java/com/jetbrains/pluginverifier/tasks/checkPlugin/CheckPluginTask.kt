@@ -21,11 +21,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvi
  * another verified plugin then the [dependency resolution] [DependencyFinder]
  * prefers the verified plugin to a plugin from the [PluginRepository].
  */
-class CheckPluginTask(
-    private val parameters: CheckPluginParams,
-    private val pluginRepository: PluginRepository,
-    private val pluginDetailsCache: PluginDetailsCache
-) : Task {
+class CheckPluginTask(private val parameters: CheckPluginParams, private val pluginRepository: PluginRepository) : Task {
 
   /**
    * Creates the [DependencyFinder] that:
@@ -36,7 +32,7 @@ class CheckPluginTask(
    *
    * 2) If not found, resolves the dependency using the [IdeDependencyFinder].
    */
-  private fun createDependencyFinder(ideDescriptor: IdeDescriptor): DependencyFinder {
+  private fun createDependencyFinder(ideDescriptor: IdeDescriptor, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
     val localFinder = RepositoryDependencyFinder(parameters.pluginsSet.localRepository, LastVersionSelector(), pluginDetailsCache)
     val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return ChainDependencyFinder(listOf(localFinder, ideDependencyFinder))
@@ -50,7 +46,7 @@ class CheckPluginTask(
   ): CheckPluginResult {
     with(parameters) {
       val tasks = ideDescriptors.flatMap { ideDescriptor ->
-        val dependencyFinder = createDependencyFinder(ideDescriptor)
+        val dependencyFinder = createDependencyFinder(ideDescriptor, pluginDetailsCache)
         pluginsSet.pluginsToCheck.map {
           PluginVerifier(
               it,

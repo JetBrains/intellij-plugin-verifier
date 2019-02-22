@@ -16,11 +16,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvi
 /**
  * The 'check-trunk-api' task that runs the verification of a trunk and a release IDEs and reports the new API breakages.
  */
-class CheckTrunkApiTask(
-    private val parameters: CheckTrunkApiParams,
-    private val pluginDetailsCache: PluginDetailsCache,
-    pluginRepository: PluginRepository
-) : Task {
+class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val pluginRepository: PluginRepository) : Task {
 
   override fun execute(
       reportage: Reportage,
@@ -29,8 +25,8 @@ class CheckTrunkApiTask(
       pluginDetailsCache: PluginDetailsCache
   ): NewProblemsResult {
     with(parameters) {
-      val releaseFinder = createDependencyFinder(parameters.releaseIde.ide, parameters.releaseLocalPluginsRepository)
-      val trunkFinder = createDependencyFinder(parameters.trunkIde.ide, parameters.trunkLocalPluginsRepository)
+      val releaseFinder = createDependencyFinder(parameters.releaseIde.ide, parameters.releaseLocalPluginsRepository, pluginDetailsCache)
+      val trunkFinder = createDependencyFinder(parameters.trunkIde.ide, parameters.trunkLocalPluginsRepository, pluginDetailsCache)
 
       val releaseTarget = VerificationTarget.Ide(releaseIde.ideVersion)
       val trunkTarget = VerificationTarget.Ide(trunkIde.ideVersion)
@@ -91,16 +87,11 @@ class CheckTrunkApiTask(
     }
   }
 
-  private val releaseCompatibleFinder = RepositoryDependencyFinder(
-      pluginRepository,
-      LastCompatibleVersionSelector(parameters.releaseIde.ideVersion),
-      pluginDetailsCache
-  )
-
-  private fun createDependencyFinder(ide: Ide, localPluginRepository: PluginRepository): DependencyFinder {
+  private fun createDependencyFinder(ide: Ide, localPluginRepository: PluginRepository, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
     val bundledFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
+    val releaseDependencyFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
     val localRepositoryDependencyFinder = RepositoryDependencyFinder(localPluginRepository, LastVersionSelector(), pluginDetailsCache)
-    val findersChain = listOf(bundledFinder, localRepositoryDependencyFinder, releaseCompatibleFinder)
+    val findersChain = listOf(bundledFinder, localRepositoryDependencyFinder, releaseDependencyFinder)
     return ChainDependencyFinder(findersChain)
   }
 

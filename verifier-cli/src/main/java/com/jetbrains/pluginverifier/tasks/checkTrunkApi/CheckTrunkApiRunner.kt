@@ -21,9 +21,8 @@ class CheckTrunkApiRunner : CommandRunner() {
 
   override fun createTask(
       parameters: TaskParameters,
-      pluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
-  ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams, pluginDetailsCache, pluginRepository)
+      pluginRepository: PluginRepository
+  ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams, pluginRepository)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       NewProblemsResultPrinter(outputOptions, pluginRepository)

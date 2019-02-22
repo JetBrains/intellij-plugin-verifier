@@ -123,7 +123,7 @@ object PluginVerifierMain {
           JdkDescriptorsCache().use { jdkDescriptorCache ->
             VerifierExecutor(concurrentWorkers, reportage).use { verifierExecutor ->
               runner
-                  .createTask(parameters, pluginRepository, pluginDetailsCache)
+                  .createTask(parameters, pluginRepository)
                   .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
             }
           }
