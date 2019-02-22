@@ -16,6 +16,14 @@ buildscript {
 allprojects {
   apply plugin: 'java'
   apply plugin: 'kotlin'
+
+  repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
+    maven { url "https://www.jetbrains.com/intellij-repository/releases" }
+    maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  }
 }
 
 jar {
@@ -28,17 +36,6 @@ jar {
   from {
     (configurations.compile + configurations.runtime).collect { it.isDirectory() ? it : zipTree(it) }
   }
-}
-
-repositories {
-  mavenCentral()
-}
-
-repositories {
-  mavenLocal()
-  maven { url "http://dl.bintray.com/jetbrains/intellij-plugin-service" }
-  maven { url "https://www.jetbrains.com/intellij-repository/releases" }
-  maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
 }
 
 sourceCompatibility = 1.8
@@ -59,7 +56,7 @@ dependencies {
 
   testCompile 'junit:junit:4.12'
   testCompile project(':')
-  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: '1.198'
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: 'dev'
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile 'org.apache.commons:commons-text:1.6'
 }
