@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -117,12 +116,12 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
   }
 
   @Synchronized
-  private fun registerLock(key: K, duration: Duration): ResourceLock<R, W> {
+  private fun registerLock(key: K): ResourceLock<R, W> {
     check(resourcesRegistrar.has(key))
     val resourceInfo = resourcesRegistrar.get(key)!!
     val now = updateUsageStatistics(key)
     val lockId = nextLockId++
-    val lock = ResourceLockImpl(now, resourceInfo, duration, key, lockId, this)
+    val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
     logger.debug("get($key): lock is registered $lock ")
     key2Locks.getOrPut(key) { hashSetOf() }.add(lock)
     return lock
@@ -163,10 +162,9 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
   @Throws(InterruptedException::class)
   private fun getOrWait(key: K): ResourceRepositoryResult<R, W> {
     checkIfInterrupted()
-    val startTime = clock.instant()
     val (fetchTask, runInCurrentThread) = synchronized(this) {
       if (resourcesRegistrar.has(key)) {
-        val lock = registerLock(key, Duration.ZERO)
+        val lock = registerLock(key)
         logger.debug("get($key): the resource is available and a lock is registered $lock")
         return ResourceRepositoryResult.Found(lock)
       }
@@ -205,12 +203,7 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
           throw RuntimeException("Failed to fetch result", e)
         }
       }
-      val duration = if (runInCurrentThread) {
-        Duration.between(startTime, clock.instant())
-      } else {
-        Duration.ZERO
-      }
-      return provideResult.registerLockIfProvided(key, duration)
+      return provideResult.registerLockIfProvided(key)
     } finally {
       synchronized(this) {
         additionWaitingThreads.compute(key) { _, v -> if (v!! == 1) null else (v - 1) }
@@ -229,8 +222,8 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
     return provideResult
   }
 
-  private fun ProvideResult<R>.registerLockIfProvided(key: K, duration: Duration) = when (this) {
-    is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key, duration))
+  private fun ProvideResult<R>.registerLockIfProvided(key: K) = when (this) {
+    is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key))
     is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound<R, W>(reason)
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }

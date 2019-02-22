@@ -10,11 +10,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import java.nio.file.Path
-import java.time.Duration
 
 /**
  * Main implementation of the [PluginDetailsProvider] that
@@ -36,25 +34,20 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
   override fun providePluginDetails(
       pluginInfo: PluginInfo,
       idePlugin: IdePlugin
-  ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null, Duration.ZERO, SpaceAmount.ZERO_SPACE)
+  ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null)
 
   private fun createPluginDetails(
       pluginFile: Path,
       pluginFileLock: FileLock?,
       pluginInfo: PluginInfo?
   ) = with(idePluginManager.createPlugin(pluginFile.toFile())) {
-    val fetchDuration = pluginFileLock?.fetchDuration ?: Duration.ZERO
-    val pluginSize = pluginFileLock?.fileSize ?: SpaceAmount.ZERO_SPACE
-
     when (this) {
       is PluginCreationSuccess -> {
         readPluginClasses(
             pluginInfo ?: LocalPluginInfo(plugin),
             plugin,
             warnings,
-            pluginFileLock,
-            fetchDuration,
-            pluginSize
+            pluginFileLock
         )
       }
 
@@ -63,7 +56,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
           throw IllegalArgumentException("Invalid plugin from file $pluginFile: ${errorsAndWarnings.joinToString()}")
         }
         pluginFileLock.closeLogged()
-        PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, errorsAndWarnings, fetchDuration, pluginSize)
+        PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, errorsAndWarnings)
       }
     }
   }
@@ -72,9 +65,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
       pluginInfo: PluginInfo,
       idePlugin: IdePlugin,
       warnings: List<PluginProblem>,
-      pluginFileLock: FileLock?,
-      fetchDuration: Duration,
-      pluginSize: SpaceAmount
+      pluginFileLock: FileLock?
   ): PluginDetailsProvider.Result {
 
     val pluginClassesLocations = try {
@@ -92,9 +83,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
             warnings,
             pluginClassesLocations,
             pluginFileLock
-        ),
-        fetchDuration,
-        pluginSize
+        )
     )
   }
 

@@ -4,7 +4,6 @@ import com.jetbrains.pluginverifier.repository.resources.ResourceInfo
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 import java.io.Closeable
-import java.time.Duration
 
 /**
  * This class represents the [successful] [ResourceCacheEntryResult.Found]
@@ -35,12 +34,6 @@ data class ResourceCacheEntry<out R, W : ResourceWeight<W>>(private val resource
    */
   val resourceWeight: W
     get() = resourceInfo.weight
-
-  /**
-   * Amount of time spent on fetching the entry from the cache.
-   */
-  val fetchDuration: Duration
-    get() = resourceLock.fetchDuration
 
   override fun close() {
     resourceLock.close()

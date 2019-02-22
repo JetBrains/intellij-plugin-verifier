@@ -51,37 +51,10 @@ class DefaultClsResolverProvider(
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
       resultHolder.dependenciesGraph = apiGraph
       resultHolder.addCycleWarningIfExists(apiGraph)
-      val clsResolver = provide(pluginResolver, depGraph)
-      reportDownloadedDependencies(depGraph, pluginReporters)
-      return clsResolver
+      return provide(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
       throw e
-    }
-  }
-
-  private fun reportDownloadedDependencies(
-      depGraph: DirectedGraph<DepVertex, DepEdge>,
-      pluginReporters: Reporters
-  ) {
-    for (depVertex in depGraph.vertexSet()) {
-      val dependencyResult = depVertex.dependencyResult
-      if (dependencyResult is DependencyFinder.Result.DetailsProvided) {
-        val cacheResult = dependencyResult.pluginDetailsCacheResult
-        if (cacheResult is PluginDetailsCache.Result.Provided) {
-          pluginReporters.reportDownloading(
-              cacheResult.pluginDetails.pluginInfo,
-              cacheResult.fetchDuration,
-              cacheResult.pluginSize
-          )
-        } else if (cacheResult is PluginDetailsCache.Result.InvalidPlugin) {
-          pluginReporters.reportDownloading(
-              cacheResult.pluginInfo,
-              cacheResult.fetchDuration,
-              cacheResult.pluginSize
-          )
-        }
-      }
     }
   }
 

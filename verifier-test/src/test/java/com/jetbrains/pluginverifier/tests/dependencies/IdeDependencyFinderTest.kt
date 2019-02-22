@@ -17,7 +17,6 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFileProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
@@ -31,7 +30,6 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.Closeable
 import java.nio.file.Path
-import java.time.Duration
 
 class IdeDependencyFinderTest {
 
@@ -141,9 +139,7 @@ class IdeDependencyFinderTest {
                   emptyMap()
               ),
               null
-          ),
-          Duration.ZERO,
-          SpaceAmount.ZERO_SPACE
+          )
       )
     }
 

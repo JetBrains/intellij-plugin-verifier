@@ -77,7 +77,7 @@ object OptionsParser {
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
-      return IdeVersion.createIdeVersionIfValid(build!!)
+      return IdeVersion.createIdeVersionIfValid(build)
           ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
     }
     return null

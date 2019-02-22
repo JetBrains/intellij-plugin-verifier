@@ -129,13 +129,11 @@ class PluginVerifier(
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
       when (cacheEntry) {
         is PluginDetailsCache.Result.Provided -> {
-          pluginReporters.reportDownloading(cacheEntry.pluginDetails.pluginInfo, cacheEntry.fetchDuration, cacheEntry.pluginSize)
           val pluginDetails = cacheEntry.pluginDetails
           pluginDetails.pluginWarnings.forEach { resultHolder.addPluginErrorOrWarning(it) }
           verifyClasses(pluginDetails)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> {
-          pluginReporters.reportDownloading(cacheEntry.pluginInfo, cacheEntry.fetchDuration, cacheEntry.pluginSize)
           cacheEntry.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
         }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = cacheEntry.reason

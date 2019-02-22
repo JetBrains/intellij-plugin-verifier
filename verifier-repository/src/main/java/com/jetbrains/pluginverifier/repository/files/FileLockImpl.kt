@@ -6,7 +6,6 @@ import java.nio.file.Path
 
 internal class FileLockImpl(private val resourceLock: ResourceLock<Path, SpaceWeight>) : FileLock(
     resourceLock.lockTime,
-    resourceLock.fetchDuration,
     resourceLock.resource,
     resourceLock.resourceWeight.spaceAmount
 ) {

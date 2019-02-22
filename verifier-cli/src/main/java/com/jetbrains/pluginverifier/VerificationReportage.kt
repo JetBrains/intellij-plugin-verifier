@@ -6,13 +6,15 @@ import com.jetbrains.pluginverifier.misc.buildList
 import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.reporters.*
+import com.jetbrains.pluginverifier.output.reporters.AllIgnoredProblemsReporter
+import com.jetbrains.pluginverifier.output.reporters.IgnoredPluginsReporter
+import com.jetbrains.pluginverifier.output.reporters.IgnoredProblemsReporter
+import com.jetbrains.pluginverifier.output.reporters.PluginIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CloseIgnoringDelegateReporter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
-import com.jetbrains.pluginverifier.reporting.downloading.PluginDownloadReport
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
@@ -63,13 +65,11 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
   private val messageReporters = listOf(LogReporter<String>(verificationLogger))
   private val ignoredPluginsReporters = listOf(IgnoredPluginsReporter(outputOptions))
   private val allIgnoredProblemsReporter = AllIgnoredProblemsReporter(outputOptions)
-  private val allPluginDownloadingReporter = AllPluginDownloadingReporter(outputOptions, verificationLogger)
 
   override fun close() {
     messageReporters.forEach { it.closeLogged() }
     ignoredPluginsReporters.forEach { it.closeLogged() }
     allIgnoredProblemsReporter.closeLogged()
-    allPluginDownloadingReporter.closeLogged()
   }
 
   override fun logVerificationStage(stageMessage: String) {
@@ -94,7 +94,6 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
         createResultsReporters(pluginVerificationDirectory),
         createMessageReporters(pluginVerificationDirectory),
         emptyList(),
-        createDownloadReporters(pluginVerificationDirectory),
         createPluginStructureWarningsReporters(pluginVerificationDirectory),
         createPluginStructureErrorsReporters(pluginVerificationDirectory),
         createProblemReporters(pluginVerificationDirectory),
@@ -105,12 +104,6 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
         createExperimentalApiReporters(pluginVerificationDirectory)
     )
   }
-
-  private fun createDownloadReporters(pluginVerificationDirectory: Path): List<Reporter<PluginDownloadReport>> =
-      buildList {
-        add(FileReporter(pluginVerificationDirectory.resolve("downloading.txt")))
-        add(CloseIgnoringDelegateReporter(allPluginDownloadingReporter))
-      }
 
   /**
    * Creates a directory for reports of the plugin in the verified IDE:

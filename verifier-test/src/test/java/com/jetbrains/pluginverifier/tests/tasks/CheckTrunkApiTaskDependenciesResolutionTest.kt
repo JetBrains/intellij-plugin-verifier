@@ -20,7 +20,6 @@ import com.jetbrains.pluginverifier.plugin.PluginFileProvider
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
@@ -38,7 +37,6 @@ import org.junit.Test
 import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.Duration
 
 /**
  * This test verifies that the following [plugin dependencies] [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency]
@@ -205,9 +203,9 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginDetailsProvider.Result {
         val details = infoToDetails[pluginInfo]
         if (details != null) {
-          return PluginDetailsProvider.Result.Provided(details, Duration.ZERO, SpaceAmount.ZERO_SPACE)
+          return PluginDetailsProvider.Result.Provided(details)
         }
-        return PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, emptyList(), Duration.ZERO, SpaceAmount.ZERO_SPACE)
+        return PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, emptyList())
       }
 
       override fun providePluginDetails(pluginFile: Path) = throw UnsupportedOperationException()
@@ -223,9 +221,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
                   emptyMap()
               ),
               null
-          ),
-          Duration.ZERO,
-          SpaceAmount.ZERO_SPACE
+          )
       )
     }
   }

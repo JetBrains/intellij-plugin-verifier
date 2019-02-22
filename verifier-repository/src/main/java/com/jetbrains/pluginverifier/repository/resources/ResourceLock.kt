@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository.resources
 
 import java.io.Closeable
-import java.time.Duration
 import java.time.Instant
 
 /**
@@ -19,12 +18,7 @@ abstract class ResourceLock<out R, W : ResourceWeight<W>>(
     /**
      * The descriptor of the locked resource.
      */
-    val resourceInfo: ResourceInfo<R, W>,
-
-    /**
-     * Amount of time spent on fetching the resource.
-     */
-    val fetchDuration: Duration
+    val resourceInfo: ResourceInfo<R, W>
 
 ) : Closeable {
 

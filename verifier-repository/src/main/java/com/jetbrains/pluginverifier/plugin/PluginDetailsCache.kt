@@ -6,13 +6,11 @@ import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
-import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import java.io.Closeable
-import java.time.Duration
 
 /**
  * This cache is intended to open and cache [PluginDetails] for
@@ -82,16 +80,6 @@ class PluginDetailsCache(
       val pluginDetails: PluginDetails
         get() = internalEntry.resource.pluginDetails
 
-      val fetchDuration: Duration
-        get() = if (internalEntry.fetchDuration == Duration.ZERO) {
-          Duration.ZERO
-        } else {
-          internalEntry.resource.fetchDuration
-        }
-
-      val pluginSize: SpaceAmount
-        get() = internalEntry.resource.pluginSize
-
       override fun close() = internalEntry.close()
     }
 
@@ -109,16 +97,6 @@ class PluginDetailsCache(
 
       val pluginInfo: PluginInfo
         get() = internalEntry.resource.pluginInfo
-
-      val fetchDuration: Duration
-        get() = if (internalEntry.fetchDuration == Duration.ZERO) {
-          Duration.ZERO
-        } else {
-          internalEntry.resource.fetchDuration
-        }
-
-      val pluginSize: SpaceAmount
-        get() = internalEntry.resource.pluginSize
 
       override fun close() = internalEntry.close()
     }
