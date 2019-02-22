@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 
 /**
  * The 'check-trunk-api' task that runs the verification of a trunk and a release IDEs and reports the new API breakages.
@@ -31,14 +31,14 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
       val releaseTarget = VerificationTarget.Ide(releaseIde.ideVersion)
       val trunkTarget = VerificationTarget.Ide(trunkIde.ideVersion)
 
-      val releaseResolverProvider = DefaultClsResolverProvider(
+      val releaseResolverProvider = DefaultClassResolverProvider(
           releaseFinder,
           jdkDescriptorCache,
           parameters.jdkPath,
           releaseIde,
           parameters.externalClassesPackageFilter
       )
-      val trunkResolverProvider = DefaultClsResolverProvider(
+      val trunkResolverProvider = DefaultClassResolverProvider(
           trunkFinder,
           jdkDescriptorCache,
           parameters.jdkPath,

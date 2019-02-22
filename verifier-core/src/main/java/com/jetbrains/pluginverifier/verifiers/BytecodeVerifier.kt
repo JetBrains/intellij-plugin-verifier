@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolution
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
@@ -75,9 +75,9 @@ class BytecodeVerifier {
   }
 
   private fun verifyClass(className: String, verificationContext: VerificationContext) {
-    val clsResolution = verificationContext.clsResolver.resolveClass(className)
-    if (clsResolution is ClsResolution.Found && shouldVerify(clsResolution.node)) {
-      verifyClassNode(clsResolution.node, verificationContext)
+    val classResolution = verificationContext.classResolver.resolveClass(className)
+    if (classResolution is ClassResolution.Found && shouldVerify(classResolution.node)) {
+      verifyClassNode(classResolution.node, verificationContext)
     }
   }
 

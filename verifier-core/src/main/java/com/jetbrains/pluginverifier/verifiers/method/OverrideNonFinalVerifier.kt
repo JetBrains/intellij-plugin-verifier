@@ -27,7 +27,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
 
     val superClass = clazz.superName
 
-    if (superClass == null || superClass.startsWith("[") || ctx.clsResolver.isExternalClass(superClass)) {
+    if (superClass == null || superClass.startsWith("[") || ctx.classResolver.isExternalClass(superClass)) {
       return
     }
 

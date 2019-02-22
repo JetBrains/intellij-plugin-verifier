@@ -28,21 +28,21 @@ import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.Closeable
 
 /**
- * [ClsResolverProvider] that provides the [DefaultClsResolver].
+ * [ClassResolverProvider] that provides the [DefaultClassResolver].
  */
-class DefaultClsResolverProvider(
+class DefaultClassResolverProvider(
     private val dependencyFinder: DependencyFinder,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val jdkPath: JdkPath,
     private val ideDescriptor: IdeDescriptor,
     private val externalClassesPackageFilter: PackageFilter
-) : ClsResolverProvider {
+) : ClassResolverProvider {
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
       resultHolder: ResultHolder,
       pluginReporters: Reporters
-  ): ClsResolver {
+  ): ClassResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     findMistakenlyBundledIdeClasses(pluginResolver, resultHolder)
 
@@ -68,7 +68,7 @@ class DefaultClsResolverProvider(
   private fun provide(
       pluginResolver: Resolver,
       depGraph: DirectedGraph<DepVertex, DepEdge>
-  ): ClsResolver {
+  ): ClassResolver {
     val dependenciesResults = depGraph.vertexSet().map { it.dependencyResult }
     val dependenciesResolver = createDependenciesResolver(depGraph)
 
@@ -77,7 +77,7 @@ class DefaultClsResolverProvider(
       is ResourceCacheEntryResult.Found -> {
         val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkClassesResolver
         val closeableResources = listOf<Closeable>(jdkCacheEntry.resourceCacheEntry) + dependenciesResults
-        DefaultClsResolver(
+        DefaultClassResolver(
             pluginResolver,
             dependenciesResolver,
             jdkClassesResolver,

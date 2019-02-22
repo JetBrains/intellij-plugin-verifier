@@ -5,14 +5,14 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 
 /**
- * Provides a concrete implementation of [ClsResolver]
+ * Provides a concrete implementation of [ClassResolver]
  * for the current verification.
  */
-interface ClsResolverProvider {
+interface ClassResolverProvider {
 
   /**
-   * Provides a [ClsResolver] to be used in the current verification.
+   * Provides a [ClassResolver] to be used in the current verification.
    */
-  fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder, pluginReporters: Reporters): ClsResolver
+  fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder, pluginReporters: Reporters): ClassResolver
 
 }

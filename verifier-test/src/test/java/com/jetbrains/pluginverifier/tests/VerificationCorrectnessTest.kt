@@ -30,7 +30,7 @@ import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -92,7 +92,7 @@ class VerificationCorrectnessTest {
                     emptyList(),
                     true,
                     pluginDetailsCache,
-                    DefaultClsResolverProvider(
+                    DefaultClassResolverProvider(
                         EmptyDependencyFinder,
                         jdkDescriptorCache,
                         jdkPath,

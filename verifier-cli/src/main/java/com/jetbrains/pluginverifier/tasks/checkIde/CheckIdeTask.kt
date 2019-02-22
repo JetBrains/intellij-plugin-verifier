@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 
 class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
 
@@ -26,7 +26,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
                 problemsFilters,
                 false,
                 pluginDetailsCache,
-                DefaultClsResolverProvider(
+                DefaultClassResolverProvider(
                     dependencyFinder,
                     jdkDescriptorCache,
                     jdkPath,

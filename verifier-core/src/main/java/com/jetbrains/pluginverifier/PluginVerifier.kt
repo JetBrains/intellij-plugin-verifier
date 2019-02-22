@@ -20,7 +20,7 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.PluginIsMarkedIncompatibleProblem
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolverProvider
 import java.util.concurrent.Callable
 
 /**
@@ -34,7 +34,7 @@ class PluginVerifier(
     private val problemFilters: List<ProblemsFilter>,
     private val findDeprecatedApiUsages: Boolean,
     private val pluginDetailsCache: PluginDetailsCache,
-    private val clsResolverProvider: ClsResolverProvider,
+    private val classResolverProvider: ClassResolverProvider,
     private val verificationTarget: VerificationTarget,
     private val incompatiblePlugins: Set<PluginIdAndVersion>
 ) : Callable<VerificationResult> {
@@ -156,14 +156,14 @@ class PluginVerifier(
       return
     }
 
-    clsResolverProvider.provide(pluginDetails, resultHolder, pluginReporters).use { clsResolver ->
+    classResolverProvider.provide(pluginDetails, resultHolder, pluginReporters).use { classResolver ->
       val verificationContext = VerificationContext(
           plugin,
           verificationTarget,
           resultHolder,
           findDeprecatedApiUsages,
           problemFilters,
-          clsResolver
+          classResolver
       )
       BytecodeVerifier().verify(checkClasses, verificationContext) {
         pluginReporters.reportProgress(it)

@@ -43,7 +43,7 @@ private class InvokeImplementation(
       instruction,
       fromMethod,
       ctx,
-      ctx.clsResolver
+      ctx.classResolver
   )
 
   fun verify() {

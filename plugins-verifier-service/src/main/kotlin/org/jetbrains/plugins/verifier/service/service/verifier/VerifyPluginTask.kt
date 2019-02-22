@@ -14,15 +14,13 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.jetbrains.plugins.verifier.service.tasks.TaskCancelledException
 
 /**
- * [Task] verifies the [plugin] [updateInfo]
- * against the [ideVersion] in the [verifierExecutor]
- * using the [JDK] [jdkPath].
+ * Task that verifies the plugin against IDE using JDK.
  */
 class VerifyPluginTask(
     private val scheduledVerification: ScheduledVerification,
@@ -68,7 +66,7 @@ class VerifyPluginTask(
         problemsFilters,
         true,
         pluginDetailsCache,
-        DefaultClsResolverProvider(
+        DefaultClassResolverProvider(
             dependencyFinder,
             jdkDescriptorsCache,
             jdkPath,

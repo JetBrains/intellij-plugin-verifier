@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolution
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
-object EmptyClsResolver : ClsResolver {
-  override fun resolveClass(className: String) = ClsResolution.NotFound
+object EmptyClassResolver : ClassResolver {
+  override fun resolveClass(className: String) = ClassResolution.NotFound
 
   override fun isExternalClass(className: String) = false
 

@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import java.io.Closeable
 
 /**
- * [ClsResolver] that resolves classes in the following order:
+ * [ClassResolver] that resolves classes in the following order:
  * 1) Verified plugin
  * 2) Classes of a plugin against which the plugin is verified
  * 3) Classes of JDK
@@ -22,13 +22,13 @@ import java.io.Closeable
  * and is not resolved among its classes, a "Class not found" problem
  * will be reported.
  */
-class PluginApiClsResolver(
+class PluginApiClassResolver(
     private val checkedPluginResolver: Resolver,
     private val basePluginResolver: Resolver,
     private val jdkClassesResolver: Resolver,
     private val closeableResources: List<Closeable>,
     private val basePluginPackageFilter: PackageFilter
-) : ClsResolver {
+) : ClassResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(
@@ -43,9 +43,9 @@ class PluginApiClsResolver(
 
   override fun packageExists(packageName: String) = cachingResolver.containsPackage(packageName)
 
-  override fun resolveClass(className: String): ClsResolution {
+  override fun resolveClass(className: String): ClassResolution {
     if (isExternalClass(className)) {
-      return ClsResolution.ExternalClass
+      return ClassResolution.ExternalClass
     }
     return cachingResolver.resolveClassSafely(className)
   }

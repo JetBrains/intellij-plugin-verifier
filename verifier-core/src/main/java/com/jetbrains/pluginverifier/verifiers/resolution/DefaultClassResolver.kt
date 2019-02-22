@@ -8,20 +8,20 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import java.io.Closeable
 
 /**
- * Default implementation of [ClsResolver] that resolves classes in the following order:
+ * Default implementation of [ClassResolver] that resolves classes in the following order:
  * 1) Verified plugin
  * 2) JDK classes
  * 3) IDE classes
  * 4) Class of plugin's dependencies
  */
-class DefaultClsResolver(
+class DefaultClassResolver(
     private val pluginResolver: Resolver,
     private val dependenciesResolver: Resolver,
     private val jdkClassesResolver: Resolver,
     private val ideResolver: Resolver,
     private val externalClassesPackageFilter: PackageFilter,
     private val closeableResources: List<Closeable>
-) : ClsResolver {
+) : ClassResolver {
 
   private val cachingResolver = CacheResolver(
       UnionResolver.create(
@@ -40,9 +40,9 @@ class DefaultClsResolver(
 
   override fun packageExists(packageName: String) = cachingResolver.containsPackage(packageName)
 
-  override fun resolveClass(className: String): ClsResolution {
+  override fun resolveClass(className: String): ClassResolution {
     if (isExternalClass(className)) {
-      return ClsResolution.ExternalClass
+      return ClassResolution.ExternalClass
     }
     return cachingResolver.resolveClassSafely(className)
   }

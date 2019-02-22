@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
 data class VerificationContext(
     val plugin: PluginInfo,
@@ -20,7 +20,7 @@ data class VerificationContext(
     val resultHolder: ResultHolder,
     val findUnstableApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
-    val clsResolver: ClsResolver
+    val classResolver: ClassResolver
 ) : ProblemRegistrar {
 
   override fun registerProblem(problem: CompatibilityProblem) {
@@ -66,9 +66,9 @@ data class VerificationContext(
       elementHost: ClassLocation,
       usageHostClass: ClassLocation
   ): Boolean {
-    val usageHostOrigin = clsResolver.getOriginOfClass(usageHostClass.className)
+    val usageHostOrigin = classResolver.getOriginOfClass(usageHostClass.className)
     if (usageHostOrigin == ClassFileOrigin.PLUGIN_INTERNAL_CLASS) {
-      val deprecatedHostOrigin = clsResolver.getOriginOfClass(elementHost.className)
+      val deprecatedHostOrigin = classResolver.getOriginOfClass(elementHost.className)
       return deprecatedHostOrigin == ClassFileOrigin.IDE_CLASS || deprecatedHostOrigin == ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
     }
     return false

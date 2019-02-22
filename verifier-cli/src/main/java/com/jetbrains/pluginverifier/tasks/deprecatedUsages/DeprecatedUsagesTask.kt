@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val pluginRepository: PluginRepository) : Task {
 
@@ -29,7 +29,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
           emptyList(),
           true,
           pluginDetailsCache,
-          DefaultClsResolverProvider(
+          DefaultClassResolverProvider(
               dependencyFinder,
               jdkDescriptorCache,
               parameters.jdkPath,

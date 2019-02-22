@@ -9,26 +9,26 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolverProvider
-import com.jetbrains.pluginverifier.verifiers.resolution.PluginApiClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.PluginApiClassResolver
 import java.io.Closeable
 
-class PluginApiClsResolverProvider(
+class PluginApiClassResolverProvider(
     private val jdkDescriptorCache: JdkDescriptorsCache,
     private val jdkPath: JdkPath,
     private val basePluginResolver: Resolver,
     private val basePluginPackageFilter: PackageFilter
-) : ClsResolverProvider {
+) : ClassResolverProvider {
 
-  override fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder, pluginReporters: Reporters): ClsResolver {
+  override fun provide(checkedPluginDetails: PluginDetails, resultHolder: ResultHolder, pluginReporters: Reporters): ClassResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     return with(jdkDescriptorCache.getJdkResolver(jdkPath)) {
       when (this) {
         is ResourceCacheEntryResult.Found -> {
           val jdkClassesResolver = resourceCacheEntry.resource.jdkClassesResolver
           val closeableResources = listOf<Closeable>(resourceCacheEntry)
-          PluginApiClsResolver(pluginResolver, basePluginResolver, jdkClassesResolver, closeableResources, basePluginPackageFilter)
+          PluginApiClassResolver(pluginResolver, basePluginResolver, jdkClassesResolver, closeableResources, basePluginPackageFilter)
         }
         is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", error)
         is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: $message")

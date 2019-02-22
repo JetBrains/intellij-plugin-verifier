@@ -10,12 +10,12 @@ import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolution
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
-fun ClsResolver.resolveClassOrProblem(
+fun ClassResolver.resolveClassOrProblem(
     className: String,
     lookup: ClassNode,
     problemRegistrar: ProblemRegistrar,
@@ -24,7 +24,7 @@ fun ClsResolver.resolveClassOrProblem(
   val resolution = resolveClass(className)
   return with(resolution) {
     when (this) {
-      is ClsResolution.Found -> {
+      is ClassResolution.Found -> {
         if (!isClassAccessibleToOtherClass(node, lookup)) {
           problemRegistrar.registerProblem(IllegalClassAccessProblem(node.createClassLocation(), node.access.getAccessType(), lookupLocation()))
           return null
@@ -39,16 +39,16 @@ fun ClsResolver.resolveClassOrProblem(
         }
         node
       }
-      ClsResolution.ExternalClass -> null
-      ClsResolution.NotFound -> {
+      ClassResolution.ExternalClass -> null
+      ClassResolution.NotFound -> {
         problemRegistrar.registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
         null
       }
-      is ClsResolution.InvalidClassFile -> {
+      is ClassResolution.InvalidClassFile -> {
         problemRegistrar.registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), asmError))
         null
       }
-      is ClsResolution.FailedToReadClassFile -> {
+      is ClassResolution.FailedToReadClassFile -> {
         problemRegistrar.registerProblem(FailedToReadClassFileProblem(ClassReference(className), lookupLocation(), reason))
         null
       }
@@ -62,26 +62,26 @@ fun VerificationContext.resolveClassOrProblem(
     lookup: ClassNode,
     lookupLocation: () -> Location
 ): ClassNode? {
-  return clsResolver.resolveClassOrProblem(className, lookup, this, lookupLocation)
+  return classResolver.resolveClassOrProblem(className, lookup, this, lookupLocation)
 }
 
 fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLocation: () -> Location) {
-  if (!clsResolver.isExternalClass(className) && !clsResolver.classExists(className)) {
+  if (!classResolver.isExternalClass(className) && !classResolver.classExists(className)) {
     registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
   }
 }
 
 @Suppress("UNCHECKED_CAST")
-private fun ClsResolver.resolveAllDirectParents(classNode: ClassNode, problemRegistrar: ProblemRegistrar): List<ClassNode> {
+private fun ClassResolver.resolveAllDirectParents(classNode: ClassNode, problemRegistrar: ProblemRegistrar): List<ClassNode> {
   val parents = classNode.superName.singletonOrEmpty() + classNode.getInterfaces().orEmpty()
   return parents.mapNotNull { resolveClassOrProblem(it, classNode, problemRegistrar) { classNode.createClassLocation() } }
 }
 
-fun ClsResolver.isSubclassOf(child: ClassNode, possibleParent: ClassNode, problemRegistrar: ProblemRegistrar): Boolean =
+fun ClassResolver.isSubclassOf(child: ClassNode, possibleParent: ClassNode, problemRegistrar: ProblemRegistrar): Boolean =
     isSubclassOf(child, possibleParent.name, problemRegistrar)
 
 fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean =
-    clsResolver.isSubclassOf(child, possibleParent, this)
+    classResolver.isSubclassOf(child, possibleParent, this)
 
 fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentName: String): Boolean {
   if (childClassName == possibleParentName) {
@@ -91,11 +91,11 @@ fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentN
 }
 
 fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
-  val childClass = (clsResolver.resolveClass(childClassName) as? ClsResolution.Found)?.node ?: return false
-  return clsResolver.isSubclassOf(childClass, possibleParentName, this)
+  val childClass = (classResolver.resolveClass(childClassName) as? ClassResolution.Found)?.node ?: return false
+  return classResolver.isSubclassOf(childClass, possibleParentName, this)
 }
 
-fun ClsResolver.isSubclassOf(
+fun ClassResolver.isSubclassOf(
     child: ClassNode,
     possibleParentName: String,
     problemRegistrar: ProblemRegistrar

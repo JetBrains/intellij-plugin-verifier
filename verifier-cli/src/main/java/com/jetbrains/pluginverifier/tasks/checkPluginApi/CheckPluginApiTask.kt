@@ -25,8 +25,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
       val basePluginResolver = basePluginDetails.pluginClassesLocations.createPluginResolver()
       val newPluginResolver = newPluginDetails.pluginClassesLocations.createPluginResolver()
 
-      val baseClsResolverProvider = PluginApiClsResolverProvider(jdkDescriptorCache, jdkPath, basePluginResolver, basePluginPackageFilter)
-      val newClsResolverProvider = PluginApiClsResolverProvider(jdkDescriptorCache, jdkPath, newPluginResolver, basePluginPackageFilter)
+      val baseClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, basePluginResolver, basePluginPackageFilter)
+      val newClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, newPluginResolver, basePluginPackageFilter)
 
       val pluginsToCheck = pluginsSet.pluginsToCheck
 
@@ -39,7 +39,7 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 problemsFilters,
                 false,
                 pluginDetailsCache,
-                baseClsResolverProvider,
+                baseClassResolverProvider,
                 baseTarget,
                 emptySet()
             )
@@ -52,7 +52,7 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 problemsFilters,
                 false,
                 pluginDetailsCache,
-                newClsResolverProvider,
+                newClassResolverProvider,
                 newTarget,
                 emptySet()
             )

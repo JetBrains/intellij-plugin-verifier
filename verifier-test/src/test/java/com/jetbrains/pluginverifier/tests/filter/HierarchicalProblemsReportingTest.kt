@@ -17,7 +17,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
 import com.jetbrains.pluginverifier.tests.mocks.PUBLIC_MODIFIERS
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolver
 import net.bytebuddy.ByteBuddy
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
@@ -136,7 +136,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
   private fun createVerificationContextForHierarchicalTest(): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
     return createSimpleVerificationContext().copy(
-        clsResolver = DefaultClsResolver(
+        classResolver = DefaultClassResolver(
             FixedClassesResolver.create(classes),
             EmptyResolver,
             EmptyResolver,

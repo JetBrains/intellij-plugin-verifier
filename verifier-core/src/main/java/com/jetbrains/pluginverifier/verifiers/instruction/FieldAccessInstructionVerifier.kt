@@ -183,7 +183,7 @@ private class FieldsImplementation(
 
     val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass) { getFromMethod() } ?: return null
 
-    val lookupResult = FieldResolution(fieldName, fieldDescriptor, ctx.clsResolver, ctx).resolveField(ownerNode)
+    val lookupResult = FieldResolution(fieldName, fieldDescriptor, ctx.classResolver, ctx).resolveField(ownerNode)
     return when (lookupResult) {
       FieldResolutionResult.Abort -> null
       FieldResolutionResult.NotFound -> {

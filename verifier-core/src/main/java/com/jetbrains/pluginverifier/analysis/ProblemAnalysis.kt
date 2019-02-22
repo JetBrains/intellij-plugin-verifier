@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.analysis
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.ClsResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
 /**
  * Returns name of the class that induces the problem.
@@ -43,13 +43,13 @@ fun CompatibilityProblem.getClassInducingProblem(): String? {
 }
 
 /**
- * Returns the top-most package of the given [className] that is not available in this [ClsResolver].
+ * Returns the top-most package of the given [className] that is not available in this [ClassResolver].
  *
  * If all packages of the specified class exist, `null` is returned.
  * If the class has default (empty) package, and that default package
  * is not available, then "" is returned.
  */
-private fun ClsResolver.getTopMostMissingPackage(className: String): String? {
+private fun ClassResolver.getTopMostMissingPackage(className: String): String? {
   if ('/' !in className) {
     return if (packageExists("")) {
       null
@@ -95,7 +95,7 @@ fun VerificationContext.analyzeMissingClasses(resultHolder: ResultHolder) {
 
   for (classNotFoundProblem in classNotFoundProblems) {
     val className = classNotFoundProblem.unresolved.className
-    val missingPackage = clsResolver.getTopMostMissingPackage(className)
+    val missingPackage = classResolver.getTopMostMissingPackage(className)
     if (missingPackage != null) {
       packageToMissingProblems
           .getOrPut(missingPackage) { hashSetOf() }

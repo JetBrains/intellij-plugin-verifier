@@ -8,13 +8,12 @@ import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.tests.mocks.EmptyClsResolver
+import com.jetbrains.pluginverifier.tests.mocks.EmptyClassResolver
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import org.junit.Assert
 
 /**
- * These tests assert that the [documented] [DocumentedProblemsFilter]
- * problems are indeed excluded from the verification reports.
+ * These tests assert that the documented problems are indeed excluded from the verification reports.
  */
 abstract class BaseDocumentedProblemsReportingTest {
 
@@ -44,7 +43,7 @@ abstract class BaseDocumentedProblemsReportingTest {
       ResultHolder(),
       false,
       emptyList(),
-      EmptyClsResolver
+      EmptyClassResolver
   )
 
 }

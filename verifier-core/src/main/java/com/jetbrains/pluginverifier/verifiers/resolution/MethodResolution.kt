@@ -22,7 +22,7 @@ class MethodResolution(
     private val instruction: Instruction,
     private val callerLocation: MethodLocation,
     private val problemRegistrar: ProblemRegistrar,
-    private val clsResolver: ClsResolver
+    private val classResolver: ClassResolver
 ) {
 
   private val methodName = methodReference.methodName
@@ -75,7 +75,7 @@ class MethodResolution(
     interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
     method lookup succeeds.
     */
-    val objectClass = clsResolver.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode, problemRegistrar) { interfaceNode.createClassLocation() }
+    val objectClass = classResolver.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, interfaceNode, problemRegistrar) { interfaceNode.createClassLocation() }
         ?: return MethodResolutionResult.Abort
     val objectMethod = objectClass.getMethods().orEmpty().firstOrNull { it.name == methodName && it.desc == methodDescriptor && it.isPublic() && !it.isStatic() }
     if (objectMethod != null) {
@@ -126,7 +126,7 @@ class MethodResolution(
     return allMatching.filter { (definingClass) ->
       //Check that [definingClass] is not a parent of any other interface.
       allMatching.none { (otherDefiningClass) ->
-        otherDefiningClass.name != definingClass.name && clsResolver.isSubclassOf(otherDefiningClass, definingClass, problemRegistrar)
+        otherDefiningClass.name != definingClass.name && classResolver.isSubclassOf(otherDefiningClass, definingClass, problemRegistrar)
       }
     }
   }
@@ -149,7 +149,7 @@ class MethodResolution(
 
       cur.getInterfaces().orEmpty().forEach {
         if (it !in visited) {
-          val resolveClass = clsResolver.resolveClassOrProblem(it, cur, problemRegistrar) { cur.createClassLocation() }
+          val resolveClass = classResolver.resolveClassOrProblem(it, cur, problemRegistrar) { cur.createClassLocation() }
               ?: return null
           visited.add(it)
           queue.add(resolveClass)
@@ -159,7 +159,7 @@ class MethodResolution(
       val superName = cur.superName
       if (superName != null) {
         if (superName !in visited) {
-          val resolvedSuper = clsResolver.resolveClassOrProblem(superName, cur, problemRegistrar) { cur.createClassLocation() }
+          val resolvedSuper = classResolver.resolveClassOrProblem(superName, cur, problemRegistrar) { cur.createClassLocation() }
               ?: return null
           visited.add(superName)
           queue.add(resolvedSuper)
@@ -250,7 +250,7 @@ class MethodResolution(
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = clsResolver.resolveClassOrProblem(superName, currentClass, problemRegistrar) { currentClass.createClassLocation() }
+      val resolvedSuper = classResolver.resolveClassOrProblem(superName, currentClass, problemRegistrar) { currentClass.createClassLocation() }
           ?: return MethodResolutionResult.Abort
       val lookupResult = resolveClassMethodStep2(resolvedSuper)
       when (lookupResult) {
@@ -319,7 +319,7 @@ class MethodResolution(
         If a match is found, then it is the method to be invoked.
     */
     if (!classRef.isInterface() && classRef.superName != null) {
-      var current: ClassNode = clsResolver.resolveClassOrProblem(classRef.superName, classRef, problemRegistrar) { classRef.createClassLocation() }
+      var current: ClassNode = classResolver.resolveClassOrProblem(classRef.superName, classRef, problemRegistrar) { classRef.createClassLocation() }
           ?: return null
       while (true) {
         val match = current.getMethods().orEmpty().find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc }
@@ -329,7 +329,7 @@ class MethodResolution(
 
         val superName = current.superName
         superName ?: break
-        current = clsResolver.resolveClassOrProblem(superName, current, problemRegistrar) { current.createClassLocation() }
+        current = classResolver.resolveClassOrProblem(superName, current, problemRegistrar) { current.createClassLocation() }
             ?: return null
       }
     }
@@ -339,7 +339,7 @@ class MethodResolution(
        the same name and descriptor as the resolved method, then it is the method to be invoked.
     */
     if (classRef.isInterface()) {
-      val objectClass = clsResolver.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, classRef, problemRegistrar) { classRef.createClassLocation() }
+      val objectClass = classResolver.resolveClassOrProblem(CommonClassNames.JAVA_LANG_OBJECT, classRef, problemRegistrar) { classRef.createClassLocation() }
           ?: return null
       val match = objectClass.getMethods().orEmpty().find { it.name == resolvedMethod.name && it.desc == resolvedMethod.desc && it.isPublic() }
       if (match != null) {

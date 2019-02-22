@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClsResolverProvider
+import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 
 /**
  * The 'check-plugin' task that verifies
@@ -54,7 +54,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
               problemsFilters,
               true,
               pluginDetailsCache,
-              DefaultClsResolverProvider(
+              DefaultClassResolverProvider(
                   dependencyFinder,
                   jdkDescriptorCache,
                   jdkPath,

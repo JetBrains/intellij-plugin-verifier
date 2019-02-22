@@ -30,7 +30,7 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
         classNode,
         true,
         onEnter = { parent ->
-          val parentOrigin = context.clsResolver.getOriginOfClass(parent.name)
+          val parentOrigin = context.classResolver.getOriginOfClass(parent.name)
           if (parentOrigin != null) {
             className2Hierarchy[parent.name] = ClassHierarchy(
                 parent.name,

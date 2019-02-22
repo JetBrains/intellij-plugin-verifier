@@ -10,13 +10,13 @@ import java.io.Closeable
  * depending on what verification is performed.
  *
  * They provide methods to [resolve] [resolveClass] classes
- * by names and determine their [origin] [getOriginOfClass] locations.
+ * by names and determine their origin locations.
  */
-interface ClsResolver : Closeable {
+interface ClassResolver : Closeable {
   /**
    * Attempts to resolve class by [className].
    */
-  fun resolveClass(className: String): ClsResolution
+  fun resolveClass(className: String): ClassResolution
 
   /**
    * Returns `true` if class by [className]
@@ -31,7 +31,7 @@ interface ClsResolver : Closeable {
   fun classExists(className: String): Boolean
 
   /**
-   * Returns origin [location] [ClassFileOrigin] of class by [className].
+   * Returns origin location of class by [className].
    */
   fun getOriginOfClass(className: String): ClassFileOrigin?
 
@@ -42,17 +42,17 @@ interface ClsResolver : Closeable {
 }
 
 /**
- * Resolves class [className] in [this] resolver and returns corresponding [ClsResolution].
+ * Resolves class [className] in [this] resolver and returns corresponding [ClassResolution].
  */
-fun Resolver.resolveClassSafely(className: String): ClsResolution =
+fun Resolver.resolveClassSafely(className: String): ClassResolution =
     try {
       findClass(className)
-          ?.let { ClsResolution.Found(it) }
-          ?: ClsResolution.NotFound
+          ?.let { ClassResolution.Found(it) }
+          ?: ClassResolution.NotFound
     } catch (e: InvalidClassFileException) {
-      ClsResolution.InvalidClassFile(e.asmError)
+      ClassResolution.InvalidClassFile(e.asmError)
     } catch (ie: InterruptedException) {
       throw ie
     } catch (e: Exception) {
-      ClsResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
+      ClassResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
     }
