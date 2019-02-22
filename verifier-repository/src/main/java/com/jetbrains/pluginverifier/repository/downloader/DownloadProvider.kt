@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
 import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -25,6 +26,8 @@ class DownloadProvider<in K>(
 
   private val downloadDirectory = destinationDirectory.resolve(DOWNLOADS_DIRECTORY)
 
+  val downloadStatistics = DownloadStatistics()
+
   init {
     destinationDirectory.createDir()
     downloadDirectory.forceDeleteIfExists()
@@ -32,11 +35,15 @@ class DownloadProvider<in K>(
 
   @Throws(InterruptedException::class)
   override fun provide(key: K): ProvideResult<Path> {
+    val downloadBlock = downloadStatistics.downloadStarted()
     val tempDirectory = createTempDirectoryForDownload(key)
     try {
       return with(downloader.download(key, tempDirectory)) {
         when (this) {
-          is DownloadResult.Downloaded -> saveDownloadedFileToFinalDestination(key, downloadedFileOrDirectory, extension, isDirectory)
+          is DownloadResult.Downloaded -> {
+            downloadBlock.downloadEnded(downloadedFileOrDirectory.fileSize)
+            saveDownloadedFileToFinalDestination(key, downloadedFileOrDirectory, extension, isDirectory)
+          }
           is DownloadResult.NotFound -> ProvideResult.NotFound(reason)
           is DownloadResult.FailedToDownload -> ProvideResult.Failed(reason, error)
         }

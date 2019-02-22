@@ -5,13 +5,14 @@ import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.pluginverifier.misc.formatDuration
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
-import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
@@ -95,57 +96,62 @@ object PluginVerifierMain {
     val command = freeArgs[0]
     freeArgs = freeArgs.drop(1)
 
-    val pluginDownloadDirDiskSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
+    val runner = findTaskRunner(command)
+    val outputOptions = OptionsParser.parseOutputOptions(opts)
+
     val pluginRepository = MarketplaceRepository(URL(pluginRepositoryUrl))
+    val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5 * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
+    val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
 
     val ideRepository = ReleaseIdeRepository()
-
-    val ideFilesDiskSetting = getIdeDownloadDirDiskSpaceSetting()
+    val ideFilesDiskSetting = getDiskSpaceSetting("plugin.verifier.cache.ide.dir.max.space", 10 * 1024)
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
-    val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
-    PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider).use {
-      runVerification(command, freeArgs, pluginRepository, ideFilesBank, it, opts)
-    }
-  }
 
-  private fun runVerification(
-      command: String,
-      freeArgs: List<String>,
-      pluginRepository: PluginRepository,
-      ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache,
-      opts: CmdOpts
-  ) {
-    val outputOptions = OptionsParser.parseOutputOptions(opts)
     VerificationReportage(outputOptions).use { reportage ->
-      val runner = findTaskRunner(command)
-      val parametersBuilder = runner.getParametersBuilder(pluginRepository, ideFilesBank, pluginDetailsCache, reportage)
+      val taskResult = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
 
-      val parameters = try {
-        parametersBuilder.build(opts, freeArgs)
-      } catch (e: IllegalArgumentException) {
-        LOG.error("Unable to prepare verification parameters", e)
-        System.err.println(e.message)
-        exitProcess(1)
-      }
+        runner.getParametersBuilder(
+            pluginRepository,
+            ideFilesBank,
+            pluginDetailsCache,
+            reportage
+        ).build(opts, freeArgs).use { parameters ->
+          reportage.logVerificationStage("Task ${runner.commandName} parameters:\n$parameters")
 
-      val taskResult = parameters.use {
-        println("Task ${runner.commandName} parameters:\n$parameters")
-
-        val concurrentWorkers = getConcurrencyLevel()
-        JdkDescriptorsCache().use { jdkDescriptorCache ->
-          VerifierExecutor(concurrentWorkers, reportage).use { verifierExecutor ->
-            runner
-                .createTask(parameters, pluginRepository, pluginDetailsCache)
-                .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
+          val concurrentWorkers = getConcurrencyLevel()
+          JdkDescriptorsCache().use { jdkDescriptorCache ->
+            VerifierExecutor(concurrentWorkers, reportage).use { verifierExecutor ->
+              runner
+                  .createTask(parameters, pluginRepository, pluginDetailsCache)
+                  .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
+            }
           }
         }
       }
 
       val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
       taskResultsPrinter.printResults(taskResult)
+      reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+    }
+  }
 
+  private fun VerificationReportage.reportDownloadStatistics(outputOptions: OutputOptions, pluginFilesBank: PluginFilesBank) {
+    val downloadStatistics = pluginFilesBank.downloadStatistics
+    val totalSpaceUsed = pluginFilesBank.getAvailablePluginFiles().fold(SpaceAmount.ZERO_SPACE) { acc, availableFile ->
+      acc + availableFile.resourceInfo.weight.spaceAmount
+    }
+
+    val totalDownloadedAmount = downloadStatistics.getTotalDownloadedAmount()
+    val totalDownloadDuration = downloadStatistics.getTotalAstronomicalDownloadDuration()
+
+    logVerificationStage("Total time spent downloading plugins and their dependencies: ${totalDownloadDuration.formatDuration()}")
+    logVerificationStage("Total amount of plugins and dependencies downloaded: ${totalDownloadedAmount.presentableAmount()}")
+    logVerificationStage("Total amount of space used for plugins and dependencies: ${totalSpaceUsed.presentableAmount()}")
+    if (outputOptions.teamCityLog != null) {
+      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.time.ms", totalDownloadDuration.toMillis())
+      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloadedAmount.to(SpaceUnit.BYTE).toLong())
+      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.total.space.used", totalSpaceUsed.to(SpaceUnit.BYTE).toLong())
     }
   }
 
@@ -167,13 +173,7 @@ object PluginVerifierMain {
     return concurrencyLevel
   }
 
-  private fun getIdeDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
-      ofMegabytes("plugin.verifier.cache.ide.dir.max.space", 5 * 1024)
-
-  private fun getPluginDownloadDirDiskSpaceSetting(): DiskSpaceSetting =
-      ofMegabytes("plugin.verifier.cache.dir.max.space", 5 * 1024)
-
-  private fun ofMegabytes(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
+  private fun getDiskSpaceSetting(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
     val property = System.getProperty(propertyName)?.toLong() ?: defaultAmount
     val megabytes = SpaceAmount.ofMegabytes(property)
     return DiskSpaceSetting(megabytes)
