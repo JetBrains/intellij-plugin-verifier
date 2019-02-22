@@ -59,7 +59,7 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
             checkNotNull(apiSignature) { "<val> before <item>" }
             checkNotNull(apiEventAnnotation) { "<val> before <annotation>" }
             checkEquals("name", xmlInput.getAttributeLocalName(0))
-            checkEquals(apiEventAnnotation!!.valueName, xmlInput.getAttributeValue(0))
+            checkEquals(apiEventAnnotation.valueName, xmlInput.getAttributeValue(0))
 
             checkEquals("val", xmlInput.getAttributeLocalName(1))
             val value = xmlInput.getAttributeValue(1).unescapeHtml()
@@ -70,7 +70,7 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
               AvailableSinceAnnotation -> IntroducedIn(IdeVersion.createIdeVersion(clearValue))
               ScheduledForRemovalAnnotation -> RemovedIn(IdeVersion.createIdeVersion(clearValue))
             }
-            return apiSignature!! to apiEvent
+            return apiSignature to apiEvent
           }
         }
       }
