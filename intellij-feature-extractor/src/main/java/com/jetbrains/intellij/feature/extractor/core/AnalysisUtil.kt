@@ -44,7 +44,7 @@ object AnalysisUtil {
 
     var producer: Value? = null
 
-    val interpreter = object : SourceInterpreter(Opcodes.ASM7) {
+    val interpreter = object : SourceInterpreter() {
       override fun returnOperation(insn: AbstractInsnNode?, value: SourceValue?, expected: SourceValue?) {
         producer = value
         super.returnOperation(insn, value, expected)

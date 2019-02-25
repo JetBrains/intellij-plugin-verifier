@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileExceptio
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.io.File;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class AsmUtil {
+
+  public static final int ASM_API_LEVEL = Opcodes.ASM7;
 
   @NotNull
   public static ClassNode readClassNode(@NotNull String className,

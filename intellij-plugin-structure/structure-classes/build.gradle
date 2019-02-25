@@ -1,7 +1,7 @@
 dependencies {
   compile project(':structure-base')
 
-  def asmVersion = '7.0-beta'
+  def asmVersion = '7.0'
 
   compile group: 'org.ow2.asm', name: 'asm', version: asmVersion
   compile group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion

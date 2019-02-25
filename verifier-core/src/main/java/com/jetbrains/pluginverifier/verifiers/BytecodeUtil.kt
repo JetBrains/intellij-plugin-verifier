@@ -5,8 +5,6 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
 
-const val ASM_API_LEVEL = Opcodes.ASM7
-
 @Suppress("UNCHECKED_CAST")
 fun MethodNode.getParameterNames(): List<String> {
   val arguments = Type.getArgumentTypes(desc)

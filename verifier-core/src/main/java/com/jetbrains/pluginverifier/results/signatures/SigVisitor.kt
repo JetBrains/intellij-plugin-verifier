@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.signatures
 
-import com.jetbrains.pluginverifier.verifiers.ASM_API_LEVEL
+import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.signature.SignatureVisitor
 
 
@@ -20,11 +20,11 @@ class SigVisitor : SignatureVisitor {
     val UNBOUNDED_CLASS_TYPE_ARGUMENT_INDICATOR = SigVisitor()
   }
 
-  constructor() : super(ASM_API_LEVEL) {
+  constructor() : super(AsmUtil.ASM_API_LEVEL) {
     formalTypeParameterName = null
   }
 
-  private constructor(formalTypeParameterName: String) : super(ASM_API_LEVEL) {
+  private constructor(formalTypeParameterName: String) : super(AsmUtil.ASM_API_LEVEL) {
     this.formalTypeParameterName = formalTypeParameterName
   }
 
