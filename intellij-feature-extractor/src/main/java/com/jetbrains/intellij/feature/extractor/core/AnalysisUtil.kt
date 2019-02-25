@@ -1,6 +1,7 @@
 package com.jetbrains.intellij.feature.extractor.core
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
@@ -44,7 +45,7 @@ object AnalysisUtil {
 
     var producer: Value? = null
 
-    val interpreter = object : SourceInterpreter() {
+    val interpreter = object : SourceInterpreter(AsmUtil.ASM_API_LEVEL) {
       override fun returnOperation(insn: AbstractInsnNode?, value: SourceValue?, expected: SourceValue?) {
         producer = value
         super.returnOperation(insn, value, expected)
