@@ -1,11 +1,9 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.servlets.info.IgnoredProblemsPage
 import org.jetbrains.plugins.verifier.service.server.servlets.info.StatusPage
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.service.verifier.ScheduledVerification
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
@@ -18,7 +16,6 @@ class InfoServlet : BaseServlet() {
     val path = getPath(req, resp) ?: return
     when {
       path.endsWith("control-service") -> controlService(req, resp)
-      path.endsWith("unignore-verification") -> unignoreVerification(req, resp)
       path.endsWith("modify-ignored-problems") -> modifyIgnoredProblems(req, resp)
       path.endsWith("ignored-problems") -> ignoredProblems(resp)
       else -> processStatus(resp)
@@ -58,21 +55,6 @@ class InfoServlet : BaseServlet() {
 
   private fun ignoredProblems(resp: HttpServletResponse) {
     sendHtml(resp, IgnoredProblemsPage(serverContext.serviceDAO.ignoreConditions).generate())
-  }
-
-  private fun unignoreVerification(req: HttpServletRequest, resp: HttpServletResponse) {
-    val updateId = req.getParameter("updateId")?.toIntOrNull()
-        ?: return sendBadRequest(resp, "Parameter 'updateId' must be specified")
-
-    val ideVersion = req.getParameter("ideVersion")?.let { IdeVersion.createIdeVersionIfValid(it) }
-        ?: return sendBadRequest(resp, "Parameter 'ideVersion' must be specified")
-
-    val updateInfo = serverContext.pluginRepository.getPluginInfoById(updateId)
-        ?: return sendBadRequest(resp, "Update #$updateId is not found in ${serverContext.pluginRepository}")
-
-    val scheduledVerification = ScheduledVerification(updateInfo, ideVersion)
-    serverContext.verificationResultsFilter.forceVerificationResult(scheduledVerification)
-    sendOk(resp, "Verification $scheduledVerification has been unignored")
   }
 
   private fun controlService(req: HttpServletRequest, resp: HttpServletResponse) {

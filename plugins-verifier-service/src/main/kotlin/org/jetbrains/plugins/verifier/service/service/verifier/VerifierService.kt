@@ -86,7 +86,7 @@ class VerifierService(
   private fun ScheduledVerification.shouldVerify(now: Instant) =
       this !in scheduledVerifications
           && !isCheckedRecently(this, now)
-          && !verificationResultsFilter.shouldIgnoreVerification(this, now)
+          && verificationResultsFilter.shouldStartVerification(this, now)
 
   private fun isCheckedRecently(scheduledVerification: ScheduledVerification, now: Instant): Boolean {
     val lastTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
@@ -153,8 +153,7 @@ class VerifierService(
       scheduledVerification: ScheduledVerification
   ) {
     logger.info("Verified $scheduledVerification: $verificationVerdict")
-    val decision = verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)
-    if (decision == VerificationResultFilter.Result.Send) {
+    if (verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)) {
       try {
         verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
       } catch (e: ServerUnavailable503Exception) {
@@ -166,8 +165,8 @@ class VerifierService(
       } catch (e: Exception) {
         logger.error("Unable to send verification result for $plugin", e)
       }
-    } else if (decision is VerificationResultFilter.Result.Ignore) {
-      logger.info("Verification result for $plugin against $verificationTarget has been ignored: ${decision.ignoreReason}")
+    } else {
+      logger.info("Verification result for $plugin against $verificationTarget has been ignored")
     }
   }
 

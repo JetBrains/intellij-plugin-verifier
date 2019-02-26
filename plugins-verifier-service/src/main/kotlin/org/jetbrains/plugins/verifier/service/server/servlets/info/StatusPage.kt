@@ -2,8 +2,10 @@ package org.jetbrains.plugins.verifier.service.server.servlets.info
 
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
+import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
+import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import java.time.ZoneId
@@ -97,29 +99,37 @@ class StatusPage(private val serverContext: ServerContext) {
           }
         }
 
-        val ignoredVerifications = serverContext.verificationResultsFilter.ignoredVerifications
-        if (ignoredVerifications.isNotEmpty()) {
+        val failedFetchAttempts = serverContext.verificationResultsFilter.failedFetchAttempts
+        if (failedFetchAttempts.isNotEmpty()) {
           h2 {
-            +"Ignored verification results"
+            +"Non-downloadable plugins"
           }
           table("width: 100%") {
             tr {
-              th(style = "width: 20%") { +"Plugin" }
-              th(style = "width: 10%") { +"IDE" }
-              th(style = "width: 10%") { +"Time" }
-              th(style = "width: 30%") { +"Verdict" }
-              th(style = "width: 30%") { +"Reason" }
+              th(style = "width: 30%") { +"Plugin" }
+              th(style = "width: 70%") { +"Reason" }
             }
-            ignoredVerifications
-                .forEach { (scheduledVerification, ignore) ->
-                  tr {
-                    td { +scheduledVerification.updateInfo.toString() }
-                    td { +scheduledVerification.ideVersion.toString() }
-                    td { +DATE_FORMAT.format(ignore.verificationEndTime) }
-                    td { +ignore.verificationVerdict }
-                    td { +ignore.ignoreReason }
+            for ((updateInfo, attempts) in failedFetchAttempts) {
+              tr {
+                td { +updateInfo.toString() }
+                td {
+                  +buildString {
+                    appendln("We have tried to verifier $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
+                    val limitTimes = minOf(5, attempts.size)
+                    appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
+                    for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {
+                      appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
+                      val reason = if (attempt.verificationResult is VerificationResult.FailedToDownload) {
+                        attempt.verificationResult.failedToDownloadReason
+                      } else {
+                        attempt.verificationResult.notFoundReason
+                      }
+                      appendln("        $reason")
+                    }
                   }
                 }
+              }
+            }
           }
         }
 
