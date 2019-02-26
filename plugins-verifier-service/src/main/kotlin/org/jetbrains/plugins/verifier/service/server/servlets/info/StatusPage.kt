@@ -113,18 +113,20 @@ class StatusPage(private val serverContext: ServerContext) {
               tr {
                 td { +updateInfo.toString() }
                 td {
-                  +buildString {
-                    appendln("We have tried to verifier $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
-                    val limitTimes = minOf(5, attempts.size)
-                    appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
-                    for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {
-                      appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
-                      val reason = if (attempt.verificationResult is VerificationResult.FailedToDownload) {
-                        attempt.verificationResult.failedToDownloadReason
-                      } else {
-                        attempt.verificationResult.notFoundReason
+                  pre {
+                    +buildString {
+                      appendln("We have tried to verifier $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
+                      val limitTimes = minOf(5, attempts.size)
+                      appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
+                      for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {
+                        appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
+                        val reason = if (attempt.verificationResult is VerificationResult.FailedToDownload) {
+                          attempt.verificationResult.failedToDownloadReason
+                        } else {
+                          attempt.verificationResult.notFoundReason
+                        }
+                        appendln("        $reason")
                       }
-                      appendln("        $reason")
                     }
                   }
                 }
