@@ -3,7 +3,6 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Companion.TOO_MANY_PROBLEMS_THRESHOLD
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Ignore
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter.Result.Send
 import org.slf4j.LoggerFactory
@@ -15,11 +14,6 @@ import java.time.temporal.ChronoUnit
  * Utility class used to control which verifications
  * should actually be sent to the Plugins Repository.
  *
- * Some verifications may be uncertain, such as those
- * that report too many problems ([TOO_MANY_PROBLEMS_THRESHOLD]).
- * For such verifications it is better to investigate the reasons
- * manually than simply send them to confused end users.
- *
  * This class maintains a set of [ignoredVerifications].
  * That is possible to manually [force][forceVerificationResult]
  * verifications so that they will be sent later on.
@@ -27,8 +21,6 @@ import java.time.temporal.ChronoUnit
 class VerificationResultFilter {
 
   companion object {
-    private const val TOO_MANY_PROBLEMS_THRESHOLD = 300
-
     private const val RECHECK_ATTEMPTS = 3
 
     private val RECHECK_ATTEMPT_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
@@ -57,8 +49,10 @@ class VerificationResultFilter {
    * Determines whether we have to ignore the [scheduledVerification].
    */
   @Synchronized
-  fun shouldIgnoreVerification(scheduledVerification: ScheduledVerification,
-                               now: Instant): Boolean {
+  fun shouldIgnoreVerification(
+      scheduledVerification: ScheduledVerification,
+      now: Instant
+  ): Boolean {
     /**
      * We allow forced verifications.
      */
@@ -111,15 +105,7 @@ class VerificationResultFilter {
       return Send
     }
 
-    var decision = if (scheduledVerification.manually) {
-      Send
-    } else {
-      verificationResult.checkTooManyProblems(verificationEndTime)
-    }
-    if (decision === Send) {
-      decision = verificationResult.checkFailedToFetch(scheduledVerification.updateInfo, verificationEndTime)
-    }
-
+    val decision = verificationResult.checkFailedToFetch(scheduledVerification.updateInfo, verificationEndTime)
     if (decision is Ignore) {
       LOG.info("Verification $scheduledVerification is ignored: ${decision.ignoreReason}")
       _ignoredVerifications[scheduledVerification] = decision
@@ -183,32 +169,6 @@ class VerificationResultFilter {
   }
 
   /**
-   * Checks if this verification reports [too many] [TOO_MANY_PROBLEMS_THRESHOLD]
-   * compatibility problems and should not be sent to the Marketplace.
-   */
-  private fun VerificationResult.checkTooManyProblems(verificationEndTime: Instant): Result {
-    val compatibilityProblems = when (this) {
-      is VerificationResult.OK -> emptySet()
-      is VerificationResult.StructureWarnings -> emptySet()
-      is VerificationResult.InvalidPlugin -> emptySet()
-      is VerificationResult.NotFound -> emptySet()
-      is VerificationResult.FailedToDownload -> emptySet()
-      is VerificationResult.MissingDependencies -> compatibilityProblems
-      is VerificationResult.CompatibilityProblems -> compatibilityProblems
-    }
-
-    if (compatibilityProblems.size > TOO_MANY_PROBLEMS_THRESHOLD) {
-      return Ignore(
-          toString(),
-          verificationEndTime,
-          "There are too many compatibility problems between $plugin and $verificationTarget: ${compatibilityProblems.size}"
-      )
-    }
-
-    return Send
-  }
-
-  /**
    * Possible decisions on whether to send a verification result: either [Send] or [Ignore].
    */
   sealed class Result {
@@ -221,9 +181,11 @@ class VerificationResultFilter {
     /**
      * The verification result has been ignored by some [reason][ignoreReason].
      */
-    data class Ignore(val verificationVerdict: String,
-                      val verificationEndTime: Instant,
-                      val ignoreReason: String) : Result()
+    data class Ignore(
+        val verificationVerdict: String,
+        val verificationEndTime: Instant,
+        val ignoreReason: String
+    ) : Result()
 
   }
 
