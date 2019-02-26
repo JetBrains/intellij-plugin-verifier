@@ -25,7 +25,13 @@ class DotNetMockPluginTest : BaseMockPluginTest() {
     Assert.assertEquals("Some summary", plugin.summary)
     Assert.assertEquals("ReSharper 8.2 compatibility", plugin.changeNotes)
     Assert.assertEquals("Copyright 2014 JetBrains", plugin.copyright)
-    Assert.assertEquals(listOf(DotNetDependency("ReSharper", "[8.0, 8.3)")), plugin.dependencies)
+    Assert.assertEquals(
+        listOf(
+            DotNetDependency("ReSharper", "[8.0, 8.3)"),
+            DotNetDependency("Wave", "183.0.0")
+        ),
+        plugin.dependencies
+    )
   }
 
   private fun testMockWarnings(problems: List<PluginProblem>) {

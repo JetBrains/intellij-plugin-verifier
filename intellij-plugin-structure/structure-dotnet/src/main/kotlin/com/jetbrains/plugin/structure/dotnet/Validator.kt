@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
 internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
 
-  val dependencies = bean.dependencies
   val id = bean.id
   val description = bean.description
 
@@ -17,7 +16,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
     problems.add(PropertyNotSpecified("id"))
   }
 
-  if (dependencies != null && dependencies.any { it.id == "Wave" }) {
+  if (bean.getAllDependencies().any { it.id == "Wave" }) {
     if (id != null && !id.contains('.')) {
       problems.add(InvalidIdError)
     }

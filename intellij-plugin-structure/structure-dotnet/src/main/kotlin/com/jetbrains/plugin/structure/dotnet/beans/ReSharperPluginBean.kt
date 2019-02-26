@@ -20,6 +20,15 @@ class ReSharperPluginBean {
   val licenseUrl by JXML / "metadata" / "licenseUrl" / XText
   val copyright by JXML / "metadata" / "copyright" / XText
   val dependencies by JXML / "metadata" / "dependencies" / XElements("dependency") / XSub(DotNetDependencyBean::class.java)
+  val dependencyGroups by JXML / "metadata" / "dependencies" / XElements("group") / XSub(GroupDependencyBean::class.java)
+
+  fun getAllDependencies(): List<DotNetDependencyBean> {
+    return dependencies.orEmpty() + dependencyGroups?.map { it.dependencies.orEmpty() }?.flatten().orEmpty()
+  }
+}
+
+class GroupDependencyBean {
+  val dependencies by JXML / XElements("dependency") / XSub(DotNetDependencyBean::class.java)
 }
 
 class DotNetDependencyBean {
@@ -41,6 +50,6 @@ fun ReSharperPluginBean.toPlugin(): ReSharperPlugin {
       pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
       changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
       authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
-      dependencies = dependencies?.map { DotNetDependency(it.id!!, it.version!!) } ?: emptyList()
+      dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version!!) }
   )
 }
