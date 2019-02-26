@@ -19,12 +19,13 @@ import java.util.concurrent.TimeUnit
  *
  * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
-class FeatureExtractorService(taskManager: TaskManager,
-                              private val featureServiceProtocol: FeatureServiceProtocol,
-                              private val ideDescriptorsCache: IdeDescriptorsCache,
-                              private val pluginDetailsCache: PluginDetailsCache,
-                              private val ideRepository: IdeRepository)
-  : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
+class FeatureExtractorService(
+    taskManager: TaskManager,
+    private val featureServiceProtocol: FeatureServiceProtocol,
+    private val ideDescriptorsCache: IdeDescriptorsCache,
+    private val pluginDetailsCache: PluginDetailsCache,
+    private val ideRepository: IdeRepository
+) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
 
   private val scheduledUpdates = linkedMapOf<UpdateInfo, TaskDescriptor>()
 

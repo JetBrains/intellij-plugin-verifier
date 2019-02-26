@@ -21,11 +21,13 @@ import java.util.concurrent.TimeUnit
  * Service implementations may want to de-allocate resources when the service is stopped. This can be done
  * by overriding the [onStop].
  */
-abstract class BaseService(val serviceName: String,
-                           private val initialDelay: Long,
-                           private val period: Long,
-                           private val timeUnit: TimeUnit,
-                           protected val taskManager: TaskManager) {
+abstract class BaseService(
+    val serviceName: String,
+    private val initialDelay: Long,
+    private val period: Long,
+    private val timeUnit: TimeUnit,
+    protected val taskManager: TaskManager
+) {
 
   enum class State {
     NOT_STARTED, SLEEPING, RUNNING, PAUSED, STOPPED

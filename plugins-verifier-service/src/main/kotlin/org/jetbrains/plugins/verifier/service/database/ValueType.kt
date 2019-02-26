@@ -28,8 +28,10 @@ sealed class ValueType<T> {
    * [ValueType] of any value that can be converted
    * to and obtained from a string.
    */
-  class StringBased<T>(val toString: (T) -> String,
-                       val fromString: (String) -> T) : ValueType<T>() {
+  class StringBased<T>(
+      val toString: (T) -> String,
+      val fromString: (String) -> T
+  ) : ValueType<T>() {
 
     override val serializer = object : Serializer<T> {
       override fun serialize(out: DataOutput2, value: T) {

@@ -7,9 +7,11 @@ import java.nio.file.Paths
 /**
  * Provides handy access to the settings and system properties.
  */
-enum class Settings(val key: String,
-                    private val default: (() -> String?)? = null,
-                    val encrypted: Boolean = false) {
+enum class Settings(
+    val key: String,
+    private val default: (() -> String?)? = null,
+    val encrypted: Boolean = false
+) {
   APP_HOME_DIRECTORY("verifier.service.home.directory"),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),

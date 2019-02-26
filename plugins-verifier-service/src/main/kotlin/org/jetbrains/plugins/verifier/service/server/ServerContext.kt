@@ -21,19 +21,21 @@ import java.nio.file.Path
  *
  * Server context must be closed on the server shutdown to de-allocate resources.
  */
-class ServerContext(val applicationHomeDirectory: Path,
-                    val appVersion: String?,
-                    val ideRepository: IdeRepository,
-                    val ideFilesBank: IdeFilesBank,
-                    val pluginRepository: MarketplaceRepository,
-                    val taskManager: TaskManager,
-                    val authorizationData: AuthorizationData,
-                    val jdkDescriptorsCache: JdkDescriptorsCache,
-                    val startupSettings: List<Settings>,
-                    val serviceDAO: ServiceDAO,
-                    val ideDescriptorsCache: IdeDescriptorsCache,
-                    val pluginDetailsCache: PluginDetailsCache,
-                    val verificationResultsFilter: VerificationResultFilter) : Closeable {
+class ServerContext(
+    val applicationHomeDirectory: Path,
+    val appVersion: String?,
+    val ideRepository: IdeRepository,
+    val ideFilesBank: IdeFilesBank,
+    val pluginRepository: MarketplaceRepository,
+    val taskManager: TaskManager,
+    val authorizationData: AuthorizationData,
+    val jdkDescriptorsCache: JdkDescriptorsCache,
+    val startupSettings: List<Settings>,
+    val serviceDAO: ServiceDAO,
+    val ideDescriptorsCache: IdeDescriptorsCache,
+    val pluginDetailsCache: PluginDetailsCache,
+    val verificationResultsFilter: VerificationResultFilter
+) : Closeable {
 
   private val _allServices = arrayListOf<BaseService>()
 

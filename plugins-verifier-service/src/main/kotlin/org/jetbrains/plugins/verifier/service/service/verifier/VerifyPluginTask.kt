@@ -60,22 +60,24 @@ class VerifyPluginTask(
         pluginDetailsCache
     )
 
-    val tasks = listOf(PluginVerifier(
-        scheduledVerification.updateInfo,
-        reportage,
-        problemsFilters,
-        true,
-        pluginDetailsCache,
-        DefaultClassResolverProvider(
-            dependencyFinder,
-            jdkDescriptorsCache,
-            jdkPath,
-            ideDescriptor,
-            PackageFilter(emptyList())
-        ),
-        VerificationTarget.Ide(ideDescriptor.ideVersion),
-        ideDescriptor.brokenPlugins
-    ))
+    val tasks = listOf(
+        PluginVerifier(
+            scheduledVerification.updateInfo,
+            reportage,
+            problemsFilters,
+            true,
+            pluginDetailsCache,
+            DefaultClassResolverProvider(
+                dependencyFinder,
+                jdkDescriptorsCache,
+                jdkPath,
+                ideDescriptor,
+                PackageFilter(emptyList())
+            ),
+            VerificationTarget.Ide(ideDescriptor.ideVersion),
+            ideDescriptor.brokenPlugins
+        )
+    )
     return verifierExecutor
         .verify(tasks)
         .single()
