@@ -87,12 +87,38 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
     }
   }
 
-  private fun createDependencyFinder(ide: Ide, localPluginRepository: PluginRepository, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
+  /**
+   * Creates [DependencyFinder] that searches dependencies using the following order:
+   * 1) Bundled with [ide]
+   * 2) Available in the local repository [localPluginRepository].
+   * 3) Compatible with the **release** IDE
+   */
+  private fun createDependencyFinder(
+      ide: Ide,
+      localPluginRepository: PluginRepository,
+      pluginDetailsCache: PluginDetailsCache
+  ): DependencyFinder {
     val bundledFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
-    val releaseDependencyFinder = RepositoryDependencyFinder(pluginRepository, LastCompatibleVersionSelector(parameters.releaseIde.ideVersion), pluginDetailsCache)
-    val localRepositoryDependencyFinder = RepositoryDependencyFinder(localPluginRepository, LastVersionSelector(), pluginDetailsCache)
-    val findersChain = listOf(bundledFinder, localRepositoryDependencyFinder, releaseDependencyFinder)
-    return ChainDependencyFinder(findersChain)
+
+    val localRepositoryDependencyFinder = RepositoryDependencyFinder(
+        localPluginRepository,
+        LastVersionSelector(),
+        pluginDetailsCache
+    )
+
+    val releaseDependencyFinder = RepositoryDependencyFinder(
+        pluginRepository,
+        LastCompatibleVersionSelector(parameters.releaseIde.ideVersion),
+        pluginDetailsCache
+    )
+
+    return ChainDependencyFinder(
+        listOf(
+            bundledFinder,
+            localRepositoryDependencyFinder,
+            releaseDependencyFinder
+        )
+    )
   }
 
 }
