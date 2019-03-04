@@ -13,7 +13,8 @@ import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
 class CheckTrunkApiParams(
-    val pluginsSet: PluginsSet,
+    val releasePluginsSet: PluginsSet,
+    val trunkPluginsSet: PluginsSet,
     val jdkPath: JdkPath,
     val trunkIde: IdeDescriptor,
     val releaseIde: IdeDescriptor,

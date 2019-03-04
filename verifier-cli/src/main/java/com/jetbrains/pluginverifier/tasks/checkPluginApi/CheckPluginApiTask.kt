@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
+import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
 
 class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
 
@@ -17,7 +17,7 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
       verifierExecutor: VerifierExecutor,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
-  ): NewProblemsResult {
+  ): TwoTargetsVerificationResults {
     with(parameters) {
       val baseTarget = VerificationTarget.Plugin(basePluginDetails.pluginInfo)
       val newTarget = VerificationTarget.Plugin(newPluginDetails.pluginInfo)
@@ -60,7 +60,7 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
       }
 
       val results = verifierExecutor.verify(verifiers)
-      return NewProblemsResult.create(
+      return TwoTargetsVerificationResults(
           baseTarget,
           results.filter { it.verificationTarget == baseTarget },
           newTarget,

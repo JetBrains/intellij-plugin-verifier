@@ -48,16 +48,25 @@ data class PluginsSet(
    */
   val ignoredPlugins: Map<PluginInfo, String>
     get() = scheduledPlugins.asSequence().mapNotNull { plugin ->
-      val ignore = pluginFilters.asSequence()
-          .map { it.shouldVerifyPlugin(plugin) }
-          .filterIsInstance<PluginFilter.Result.Ignore>()
-          .firstOrNull()
-      if (ignore == null) {
-        null
+      val ignoreReason = getReasonToNotVerify(plugin)
+      if (ignoreReason != null) {
+        plugin to ignoreReason
       } else {
-        plugin to ignore.reason
+        null
       }
     }.toMap()
+
+  private fun getReasonToNotVerify(pluginInfo: PluginInfo): String? {
+    return pluginFilters.asSequence()
+        .map { it.shouldVerifyPlugin(pluginInfo) }
+        .filterIsInstance<PluginFilter.Result.Ignore>()
+        .firstOrNull()
+        ?.reason
+  }
+
+  fun shouldVerifyPlugin(pluginInfo: PluginInfo): Boolean {
+    return getReasonToNotVerify(pluginInfo) != null
+  }
 
   /**
    * Plugins' files that have been specified for check

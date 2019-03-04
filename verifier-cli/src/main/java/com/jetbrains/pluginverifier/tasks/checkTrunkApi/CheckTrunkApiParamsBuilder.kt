@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -13,7 +14,9 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
+import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
@@ -104,40 +107,75 @@ class CheckTrunkApiParamsBuilder(
         ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
         ?: EmptyPluginRepository
 
-    reportage.logVerificationStage("Requesting a list of plugins compatible with the RELEASE IDE $releaseVersion")
-    val releaseCompatibleVersions = pluginRepository.retry("fetch last compatible updates with $releaseVersion") {
+    val message = "Requesting a list of plugins compatible with the release IDE $releaseVersion"
+    reportage.logVerificationStage(message)
+    val releaseCompatibleVersions = pluginRepository.retry(message) {
       getLastCompatiblePlugins(releaseVersion)
     }
 
-    val pluginsSet = PluginsSet()
-    pluginsSet.schedulePlugins(
-        releaseCompatibleVersions
-            .filterNot {
-              val pluginId = it.pluginId
-              releaseLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty() ||
-                  trunkLocalRepository.getAllVersionsOfPlugin(pluginId).isNotEmpty() ||
-                  releaseIdeDescriptor.ide.getPluginById(pluginId) != null ||
-                  trunkIdeDescriptor.ide.getPluginById(pluginId) != null
-            }
-            .sortedByDescending { (it as UpdateInfo).updateId }
-    )
+    val releaseExcludedPluginsFilter = ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(releaseIdeDescriptor.ide))
+    val releaseIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(releaseLocalRepository)
+    val releaseBundledFilter = IgnoreBundledPluginsFilter(releaseIdeDescriptor.ide)
 
-    pluginsSet.addPluginFilter(ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(releaseIdeDescriptor.ide)))
-    pluginsSet.addPluginFilter(ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(trunkIdeDescriptor.ide)))
+    val releasePluginsSet = PluginsSet()
+    releasePluginsSet.addPluginFilter(releaseExcludedPluginsFilter)
+    releasePluginsSet.addPluginFilter(releaseIgnoreInLocalRepositoryFilter)
+    releasePluginsSet.addPluginFilter(releaseBundledFilter)
 
-    println("The following updates will be checked with both #$trunkVersion and #$releaseVersion:\n" +
-                pluginsSet.pluginsToCheck
-                    .sortedBy { (it as UpdateInfo).updateId }
-                    .listPresentationInColumns(4, 60)
-    )
+    releasePluginsSet.schedulePlugins(releaseCompatibleVersions)
+    for ((pluginInfo, ignoreReason) in releasePluginsSet.ignoredPlugins) {
+      reportage.logPluginVerificationIgnored(pluginInfo, VerificationTarget.Ide(releaseVersion), ignoreReason)
+    }
 
-    pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(releaseVersion), reason)
-      reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(trunkVersion), reason)
+    val trunkExcludedPluginsFilter = ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(trunkIdeDescriptor.ide))
+    val trunkIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(trunkLocalRepository)
+    val trunkBundledFilter = IgnoreBundledPluginsFilter(trunkIdeDescriptor.ide)
+
+    val trunkPluginsSet = PluginsSet()
+    trunkPluginsSet.addPluginFilter(trunkExcludedPluginsFilter)
+    trunkPluginsSet.addPluginFilter(trunkIgnoreInLocalRepositoryFilter)
+    trunkPluginsSet.addPluginFilter(trunkBundledFilter)
+
+    //Verify the same plugin versions as for the release IDE.
+    trunkPluginsSet.schedulePlugins(releaseCompatibleVersions)
+
+    //For plugins that are not compatible with the trunk IDE verify their latest versions, too.
+    //This is in order to check if found compatibility problems are also present in the latest version.
+    val latestCompatibleVersions = arrayListOf<PluginInfo>()
+    for (pluginInfo in releaseCompatibleVersions) {
+      if (!pluginInfo.isCompatibleWith(trunkVersion)) {
+        val lastCompatibleVersion = pluginRepository.getLastCompatibleVersionOfPlugin(trunkVersion, pluginInfo.pluginId)
+        if (lastCompatibleVersion != null && lastCompatibleVersion != pluginInfo) {
+          latestCompatibleVersions += lastCompatibleVersion
+        }
+      }
+    }
+    trunkPluginsSet.schedulePlugins(latestCompatibleVersions)
+
+    for ((pluginInfo, ignoreReason) in trunkPluginsSet.ignoredPlugins) {
+      reportage.logPluginVerificationIgnored(pluginInfo, VerificationTarget.Ide(trunkVersion), ignoreReason)
+    }
+
+    val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }
+    if (releasePluginsToCheck.isNotEmpty()) {
+      reportage.logVerificationStage(
+          "The following updates will be checked with both $trunkVersion and #$releaseVersion:\n" +
+              releasePluginsToCheck
+                  .listPresentationInColumns(4, 60)
+      )
+    }
+
+    val trunkLatestPluginsToCheck = latestCompatibleVersions.filter { trunkPluginsSet.shouldVerifyPlugin(it) }
+    if (trunkLatestPluginsToCheck.isNotEmpty()) {
+      reportage.logVerificationStage(
+          "The following updates will be checked with $trunkVersion only for comparison with the release versions of the same plugins:\n" +
+              trunkLatestPluginsToCheck.listPresentationInColumns(4, 60)
+      )
     }
 
     return CheckTrunkApiParams(
-        pluginsSet,
+        releasePluginsSet,
+        trunkPluginsSet,
         OptionsParser.getJdkPath(opts),
         trunkIdeDescriptor,
         releaseIdeDescriptor,
@@ -148,6 +186,24 @@ class CheckTrunkApiParamsBuilder(
         releaseLocalRepository,
         trunkLocalRepository
     )
+  }
+
+  private class IgnorePluginsAvailableInOtherRepositoryFilter(val repository: PluginRepository) : PluginFilter {
+    override fun shouldVerifyPlugin(pluginInfo: PluginInfo): PluginFilter.Result {
+      if (repository.getAllVersionsOfPlugin(pluginInfo.pluginId).isNotEmpty()) {
+        return PluginFilter.Result.Ignore("Plugin is available in $repository")
+      }
+      return PluginFilter.Result.Verify
+    }
+  }
+
+  private class IgnoreBundledPluginsFilter(val ide: Ide) : PluginFilter {
+    override fun shouldVerifyPlugin(pluginInfo: PluginInfo): PluginFilter.Result {
+      if (ide.getPluginById(pluginInfo.pluginId) != null) {
+        return PluginFilter.Result.Ignore("Plugin is bundled with $ide")
+      }
+      return PluginFilter.Result.Verify
+    }
   }
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)

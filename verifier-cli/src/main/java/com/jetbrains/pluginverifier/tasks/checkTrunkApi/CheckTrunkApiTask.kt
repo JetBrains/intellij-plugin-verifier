@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.tasks.common.NewProblemsResult
+import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 
 /**
@@ -23,7 +23,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
       verifierExecutor: VerifierExecutor,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
-  ): NewProblemsResult {
+  ): TwoTargetsVerificationResults {
     with(parameters) {
       val releaseFinder = createDependencyFinder(parameters.releaseIde.ide, parameters.releaseLocalPluginsRepository, pluginDetailsCache)
       val trunkFinder = createDependencyFinder(parameters.trunkIde.ide, parameters.trunkLocalPluginsRepository, pluginDetailsCache)
@@ -48,37 +48,35 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
 
       val tasks = arrayListOf<PluginVerifier>()
 
-      for (pluginInfo in pluginsSet.pluginsToCheck) {
-        tasks.add(
-            PluginVerifier(
-                pluginInfo,
-                reportage,
-                parameters.problemsFilters,
-                false,
-                pluginDetailsCache,
-                releaseResolverProvider,
-                releaseTarget,
-                releaseIde.brokenPlugins
-            )
+      for (pluginInfo in releasePluginsSet.pluginsToCheck) {
+        tasks += PluginVerifier(
+            pluginInfo,
+            reportage,
+            parameters.problemsFilters,
+            false,
+            pluginDetailsCache,
+            releaseResolverProvider,
+            releaseTarget,
+            releaseIde.brokenPlugins
         )
+      }
 
-        tasks.add(
-            PluginVerifier(
-                pluginInfo,
-                reportage,
-                parameters.problemsFilters,
-                false,
-                pluginDetailsCache,
-                trunkResolverProvider,
-                trunkTarget,
-                trunkIde.brokenPlugins
-            )
+      for (pluginInfo in trunkPluginsSet.pluginsToCheck) {
+        tasks += PluginVerifier(
+            pluginInfo,
+            reportage,
+            parameters.problemsFilters,
+            false,
+            pluginDetailsCache,
+            trunkResolverProvider,
+            trunkTarget,
+            trunkIde.brokenPlugins
         )
       }
 
       val results = verifierExecutor.verify(tasks)
 
-      return NewProblemsResult.create(
+      return TwoTargetsVerificationResults(
           releaseTarget,
           results.filter { it.verificationTarget == releaseTarget },
           trunkTarget,

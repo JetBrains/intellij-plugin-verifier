@@ -227,6 +227,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
     pluginsSet.schedulePlugin(LocalPluginRepository().addLocalPlugin(pluginToCheck))
     return CheckTrunkApiParams(
         pluginsSet,
+        pluginsSet,
         TestJdkDescriptorProvider.getJdkPathForTests(),
         IdeDescriptor(trunkIde, EmptyResolver, null, emptySet()),
         IdeDescriptor(releaseIde, EmptyResolver, null, emptySet()),

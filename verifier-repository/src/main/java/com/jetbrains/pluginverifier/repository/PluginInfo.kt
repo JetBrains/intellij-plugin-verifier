@@ -45,6 +45,22 @@ abstract class PluginInfo(
   fun isCompatibleWith(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
 
+  val presentableSinceUntilRange: String
+    get() {
+      val sinceCode = sinceBuild?.asStringWithoutProductCode()
+      val untilCode = untilBuild?.asStringWithoutProductCode()
+      if (sinceCode != null) {
+        if (untilCode != null) {
+          return "$sinceCode — $untilCode"
+        }
+        return "$sinceCode+"
+      }
+      if (untilCode != null) {
+        return "1.0 — $untilCode"
+      }
+      return "all"
+    }
+
   open val presentableName
     get() = "$pluginId $version"
 
