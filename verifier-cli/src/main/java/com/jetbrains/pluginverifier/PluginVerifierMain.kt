@@ -118,7 +118,7 @@ object PluginVerifierMain {
             pluginDetailsCache,
             reportage
         ).build(opts, freeArgs).use { parameters ->
-          reportage.logVerificationStage("Task ${runner.commandName} parameters:\n$parameters")
+          reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
           val concurrentWorkers = getConcurrencyLevel()
           JdkDescriptorsCache().use { jdkDescriptorCache ->

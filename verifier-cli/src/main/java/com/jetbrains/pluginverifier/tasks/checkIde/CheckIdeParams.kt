@@ -11,14 +11,14 @@ import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
 class CheckIdeParams(
-    pluginsSet: PluginsSet,
+    val pluginsSet: PluginsSet,
     val jdkPath: JdkPath,
     val ideDescriptor: IdeDescriptor,
     val externalClassesPackageFilter: PackageFilter,
     val problemsFilters: List<ProblemsFilter>,
     val dependencyFinder: DependencyFinder,
     val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>
-) : TaskParameters(pluginsSet) {
+) : TaskParameters {
 
   override val presentableText
     get() = """

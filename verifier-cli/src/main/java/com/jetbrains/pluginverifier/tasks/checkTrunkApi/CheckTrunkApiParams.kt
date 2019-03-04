@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
 class CheckTrunkApiParams(
-    pluginsSet: PluginsSet,
+    val pluginsSet: PluginsSet,
     val jdkPath: JdkPath,
     val trunkIde: IdeDescriptor,
     val releaseIde: IdeDescriptor,
@@ -23,7 +23,7 @@ class CheckTrunkApiParams(
     private val releaseIdeFile: FileLock,
     val releaseLocalPluginsRepository: PluginRepository,
     val trunkLocalPluginsRepository: PluginRepository
-) : TaskParameters(pluginsSet) {
+) : TaskParameters {
   override val presentableText: String
     get() = """
       |Trunk IDE        : $trunkIde

@@ -9,12 +9,12 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 class CheckPluginParams(
-    pluginsSet: PluginsSet,
+    val pluginsSet: PluginsSet,
     val jdkPath: JdkPath,
     val ideDescriptors: List<IdeDescriptor>,
     val externalClassesPackageFilter: PackageFilter,
     val problemsFilters: List<ProblemsFilter>
-) : TaskParameters(pluginsSet) {
+) : TaskParameters {
 
   override val presentableText
     get() = """
