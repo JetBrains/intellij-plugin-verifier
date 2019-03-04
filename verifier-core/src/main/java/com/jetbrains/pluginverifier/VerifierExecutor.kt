@@ -39,7 +39,7 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val reportage
     val completionService = ExecutorCompletionService<VerificationResult>(executor)
     val workers = arrayListOf<Future<VerificationResult>>()
     try {
-      for (task in tasks) {
+      for (task in sortVerificationTasks(tasks)) {
         val worker = try {
           completionService.submit(task)
         } catch (e: RejectedExecutionException) {
@@ -58,6 +58,13 @@ class VerifierExecutor(private val concurrentWorkers: Int, private val reportage
       throw e
     }
   }
+
+  /**
+   * Sort verification tasks to increase chances that two verifications of the same plugin
+   * would be executed shortly, and therefore caches, such as plugin details cache, would be warmed-up.
+   */
+  private fun sortVerificationTasks(tasks: List<PluginVerifier>) =
+      tasks.sortedBy { it.plugin.pluginId }
 
   /**
    * Waits for all [workers] to complete.

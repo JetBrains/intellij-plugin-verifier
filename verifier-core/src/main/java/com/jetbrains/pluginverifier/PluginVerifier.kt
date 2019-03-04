@@ -29,7 +29,7 @@ import java.util.concurrent.Callable
  * and returns [VerificationResult].
  */
 class PluginVerifier(
-    private val plugin: PluginInfo,
+    val plugin: PluginInfo,
     reportage: Reportage,
     private val problemFilters: List<ProblemsFilter>,
     private val findDeprecatedApiUsages: Boolean,
