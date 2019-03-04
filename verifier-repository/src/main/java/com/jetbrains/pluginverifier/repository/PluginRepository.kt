@@ -13,7 +13,7 @@ interface PluginRepository {
   fun getAllPlugins(): List<PluginInfo>
 
   /**
-   * Returns all plugins compatible with this [ideVersion].
+   * Returns the latest plugins' versions compatible with [ideVersion].
    */
   fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo>
 
