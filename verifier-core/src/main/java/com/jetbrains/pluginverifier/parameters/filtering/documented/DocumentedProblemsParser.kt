@@ -73,24 +73,19 @@ class DocumentedProblemsParser {
     }
   }
 
-  fun parse(pageBody: String): List<DocumentedProblem> = pageBody.lineSequence()
-      .map { it.trim() }
-      /**
-       * Matches column definition lines like
-       * | a | b |
-       */
-      .filter { it.startsWith(COLUMNS_DELIMITER) && it.endsWith(COLUMNS_DELIMITER) && it.count { it == COLUMNS_DELIMITER } == 3 }
-      /**
-       * Extracts content of the first column
-       */
-      .map { it.substring(1, it.length - 1).split(COLUMNS_DELIMITER) }
-      .filter { it.size == 2 && it[0].isNotBlank() }
-      .map { it[0].trim() }
-      /**
-       * Parses DocumentedProblem by the column's text
-       */
-      .mapNotNull { parseDescription(it) }
-      .toList()
+  fun parse(pageBody: String): List<DocumentedProblem> {
+    val documentedProblems = arrayListOf<DocumentedProblem>()
+    val lines = pageBody.lines()
+    for (index in lines.indices) {
+      if (lines[index].startsWith(": ") && index > 0) {
+        val documentedProblem = parseDescription(lines[index - 1].trim())
+        if (documentedProblem != null) {
+          documentedProblems += documentedProblem
+        }
+      }
+    }
+    return documentedProblems
+  }
 
   private fun parseDescription(text: String): DocumentedProblem? {
     val unwrappedMarkdown = unwrapMarkdownTags(text)
