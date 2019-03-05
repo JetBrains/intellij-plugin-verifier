@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import java.io.Serializable
 
 /**
  * Represents an edge in the [DependenciesGraph],
@@ -11,6 +10,6 @@ data class DependencyEdge(
     val from: DependencyNode,
     val to: DependencyNode,
     val dependency: PluginDependency
-) : Serializable {
+) {
   override fun toString() = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
 }

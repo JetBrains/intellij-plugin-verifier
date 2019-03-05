@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import java.io.Serializable
-
 /**
  * Base class for all compatibility problems.
  *
@@ -18,7 +16,7 @@ import java.io.Serializable
  * it is good to add an if-clause to
  * [com.jetbrains.pluginverifier.analysis.ProblemAnalysisKt.getHostClassOfProblem].
  */
-abstract class CompatibilityProblem : Serializable {
+abstract class CompatibilityProblem {
 
   abstract val problemType: String
 

@@ -3,11 +3,10 @@ package com.jetbrains.plugin.structure.intellij.version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
-public abstract class IdeVersion implements Comparable<IdeVersion>, Serializable {
+public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   /**
    * Tries to parse specified string as IDE version and throws an {@link IllegalArgumentException}

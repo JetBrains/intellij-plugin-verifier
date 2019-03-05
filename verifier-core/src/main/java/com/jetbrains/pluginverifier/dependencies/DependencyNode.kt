@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.dependencies
 
-import java.io.Serializable
-
 /**
  * Represents a node in the [DependenciesGraph].
  *
@@ -14,10 +12,6 @@ data class DependencyNode(
     val pluginId: String,
     val version: String,
     val missingDependencies: List<MissingDependency>
-) : Serializable {
+) {
   override fun toString() = "$pluginId:$version"
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
 }

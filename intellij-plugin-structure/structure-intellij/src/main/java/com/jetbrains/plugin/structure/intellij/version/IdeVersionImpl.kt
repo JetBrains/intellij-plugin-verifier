@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.version
 
 import com.jetbrains.plugin.structure.intellij.utils.StringUtil
-import java.io.InvalidObjectException
-import java.io.ObjectInputStream
-import java.io.Serializable
 import java.util.*
 
 class IdeVersionImpl(
@@ -33,6 +30,7 @@ class IdeVersionImpl(
 
 
   override fun getComponents() = components.clone()
+
   override fun getBaselineVersion() = components[0]
 
   override fun getProductCode() = productCode
@@ -43,21 +41,7 @@ class IdeVersionImpl(
 
   override fun isSnapshot() = isSnapshot
 
-  // writeReplace method for the serialization proxy pattern
-  private fun writeReplace(): Any = SerializationProxy(asString())
-
-  // readObject method for the serialization proxy pattern
-  @Suppress("UNUSED_PARAMETER")
-  private fun readObject(stream: ObjectInputStream): Unit = throw InvalidObjectException("Proxy required")
-
-  private class SerializationProxy(val version: String) : Serializable {
-    // readResolve method for SerializationProxy
-    private fun readResolve(): Any = fromString(version)
-  }
-
   companion object {
-
-    private const val serialVersionUID = 0L
 
     private const val BUILD_NUMBER = "__BUILD_NUMBER__"
     private const val STAR = "*"

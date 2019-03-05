@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
-import java.io.Serializable
 import java.util.*
 
 /**
@@ -10,7 +9,7 @@ import java.util.*
  * such as [class][ClassLocation], [method][MethodLocation]
  * or [field][FieldLocation].
  */
-sealed class Location : Serializable {
+sealed class Location {
   abstract val presentableLocation: String
 
   abstract val elementType: ElementType

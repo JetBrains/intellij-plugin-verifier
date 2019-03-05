@@ -1,9 +1,8 @@
 package com.jetbrains.plugin.structure.base.plugin
 
-import java.io.Serializable
 import java.util.*
 
-abstract class PluginProblem : Serializable {
+abstract class PluginProblem {
 
   abstract val level: Level
 

@@ -1,10 +1,9 @@
 package com.jetbrains.pluginverifier.results.reference
 
 import com.jetbrains.pluginverifier.results.presentation.*
-import java.io.Serializable
 import java.util.*
 
-sealed class SymbolicReference : Serializable {
+sealed class SymbolicReference {
   companion object {
 
     fun methodOf(

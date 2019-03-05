@@ -18,9 +18,4 @@ class PluginIdAndVersion(
       && version == other.version
 
   override fun hashCode() = Objects.hash(pluginId, version)
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
-
 }

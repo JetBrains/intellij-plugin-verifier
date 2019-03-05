@@ -1,12 +1,11 @@
 package com.jetbrains.pluginverifier.results.usage
 
 import com.jetbrains.pluginverifier.results.location.Location
-import java.io.Serializable
 
 /**
  * Base class for all usages of API in bytecode.
  */
-abstract class ApiUsage : Serializable {
+abstract class ApiUsage {
 
   /**
    * API element being used
@@ -39,9 +38,5 @@ abstract class ApiUsage : Serializable {
   abstract override fun hashCode(): Int
 
   final override fun toString() = fullDescription
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
 
 }

@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
-import java.io.Serializable
 
 /**
  * Represents possible results of verifying [plugin] against [verificationTarget].
@@ -27,7 +26,7 @@ import java.io.Serializable
  * - [NotFound]
  * - [FailedToDownload]
  */
-sealed class VerificationResult : Serializable {
+sealed class VerificationResult {
 
   /**
    * Verified plugin.
@@ -124,10 +123,6 @@ sealed class VerificationResult : Serializable {
   class OK : VerificationResult() {
     override val verificationVerdict
       get() = "OK"
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -138,10 +133,6 @@ sealed class VerificationResult : Serializable {
   class StructureWarnings : VerificationResult() {
     override val verificationVerdict
       get() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -206,10 +197,6 @@ sealed class VerificationResult : Serializable {
 
     val directMissingDependencies: List<MissingDependency>
       get() = dependenciesGraph.verifiedPlugin.missingDependencies
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -226,10 +213,6 @@ sealed class VerificationResult : Serializable {
           append(" and ").append(pluginStructureWarnings.size).append(" ").append("warning".pluralize(pluginStructureWarnings.size))
         }
       }
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -240,10 +223,6 @@ sealed class VerificationResult : Serializable {
   class InvalidPlugin : VerificationResult() {
     override val verificationVerdict
       get() = "Plugin is invalid"
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -254,10 +233,6 @@ sealed class VerificationResult : Serializable {
   class NotFound : VerificationResult() {
     override val verificationVerdict
       get() = "Plugin is not found"
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
   /**
@@ -269,10 +244,6 @@ sealed class VerificationResult : Serializable {
   class FailedToDownload : VerificationResult() {
     override val verificationVerdict
       get() = "Failed to download plugin"
-
-    companion object {
-      private const val serialVersionUID = 0L
-    }
   }
 
 }

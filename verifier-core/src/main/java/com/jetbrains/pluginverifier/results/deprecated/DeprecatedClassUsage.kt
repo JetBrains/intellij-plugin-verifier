@@ -32,8 +32,4 @@ class DeprecatedClassUsage(
       && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiElement, usageLocation)
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
 }

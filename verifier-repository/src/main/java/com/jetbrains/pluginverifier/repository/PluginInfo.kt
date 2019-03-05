@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import java.io.Serializable
 
 /**
  * Identifier of a plugin.
@@ -37,7 +36,7 @@ abstract class PluginInfo(
      * Vendor of the plugin.
      */
     val vendor: String?
-) : Serializable {
+) {
 
   /**
    * Checks whether this plugin is compatible with [ideVersion].
@@ -65,9 +64,4 @@ abstract class PluginInfo(
     get() = "$pluginId $version"
 
   final override fun toString() = presentableName
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
-
 }

@@ -39,9 +39,4 @@ class UpdateInfo(
       && updateId == other.updateId
 
   override fun hashCode() = Objects.hash(pluginId, version, updateId)
-
-  companion object {
-    private const val serialVersionUID = 0L
-  }
-
 }
