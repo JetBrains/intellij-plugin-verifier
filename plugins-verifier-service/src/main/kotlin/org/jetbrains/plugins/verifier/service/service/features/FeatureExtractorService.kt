@@ -91,6 +91,7 @@ class FeatureExtractorService(
       logger.info("Plugin $updateInfo is processed: $result")
       try {
         featureServiceProtocol.sendExtractedFeatures(this)
+        logger.info("Features of $updateInfo have been successfully sent to the Marketplace.")
       } catch (e: ServerUnavailable503Exception) {
         logger.info("Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
         pauseFeaturesExtraction()
