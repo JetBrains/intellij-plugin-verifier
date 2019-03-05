@@ -25,7 +25,7 @@ class DocumentedProblemsParser {
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(s[0].toInternalName(), "<init>") },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method became final.*") to { s -> DocMethodBecameFinal(s[0].toInternalName(), s[1]) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method marked final.*") to { s -> DocMethodMarkedFinal(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor visibility changed.*") to { s -> DocMethodVisibilityChanged(s[0].toInternalName(), "<init>") },
         Regex("($IDENTIFIER)$S($IDENTIFIER) field removed") to { s -> DocFieldRemoved(s[0].toInternalName(), s[1]) },
         Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(s[0].toInternalName(), s[1]) },

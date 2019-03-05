@@ -72,9 +72,9 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
 }
 
 /**
- * <class name>.<method name> method became final
+ * <class name>.<method name> method marked final
  */
-data class DocMethodBecameFinal(val hostClass: String, val methodName: String) : DocumentedProblem {
+data class DocMethodMarkedFinal(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean =
       problem is OverridingFinalMethodProblem && problem.finalMethod.hostClass.className == hostClass && problem.finalMethod.methodName == methodName
 }

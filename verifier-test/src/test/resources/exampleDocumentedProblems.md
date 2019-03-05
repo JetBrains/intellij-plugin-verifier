@@ -49,7 +49,7 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 | `com.example.Inner.Class` class removed | Use other class instead |
 | `com.example.SomeClass.abstractMethodWithParams(int, boolean)` abstract method added | Implement the method in implementations |
 | `com.example.RemovedConstructorWithParams(OneParam, TwoParam)` constructor removed | Use something else |
-| `com.example.MethodHolder#methodBecameFinal(SomeParams)` method became final | Override something else |
+| `com.example.MethodHolder#methodMarkedFinal(SomeParams)` method marked final | Override something else |
 | `com.example.MethodHolder#abstractMethodSeparatedWithDash(SomeParams)` abstract method added | Implement it |
 
 ## More changes
