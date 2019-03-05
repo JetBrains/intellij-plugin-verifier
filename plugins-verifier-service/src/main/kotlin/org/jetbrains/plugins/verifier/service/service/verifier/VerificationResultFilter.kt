@@ -15,17 +15,43 @@ class VerificationResultFilter {
     private const val RECHECK_ATTEMPTS = 3
 
     private val RECHECK_ATTEMPT_TIMEOUT = Duration.of(10, ChronoUnit.MINUTES)
+
+    private val CLEANUP_TIMEOUT = Duration.ofHours(12)
   }
+
+  private var lastCleanupTime = Instant.EPOCH
 
   private val _failedFetchAttempts = hashMapOf<UpdateInfo, MutableList<VerificationAttempt>>()
 
   val failedFetchAttempts: Map<UpdateInfo, List<VerificationAttempt>>
     @Synchronized
-    //Make a deep copy
-    get() = _failedFetchAttempts.mapValues { it.value.toList() }
+    get() {
+      doCleanup()
+      //Make a deep copy
+      return _failedFetchAttempts.mapValues { it.value.toList() }
+    }
+
+  @Synchronized
+  private fun doCleanup() {
+    val nowInstant = Instant.now()
+    if (lastCleanupTime.plus(CLEANUP_TIMEOUT) < nowInstant) {
+      lastCleanupTime = nowInstant
+      val iterator = _failedFetchAttempts.iterator()
+      while (iterator.hasNext()) {
+        val attempts = iterator.next().value
+        if (attempts.isNotEmpty()) {
+          val lastAttemptInstant = attempts.map { it.verificationEndTime }.max()!!
+          if (lastAttemptInstant.plus(CLEANUP_TIMEOUT) < nowInstant) {
+            iterator.remove()
+          }
+        }
+      }
+    }
+  }
 
   @Synchronized
   fun shouldStartVerification(scheduledVerification: ScheduledVerification, nowTime: Instant): Boolean {
+    doCleanup()
     val failedAttempts = _failedFetchAttempts[scheduledVerification.updateInfo]
     if (failedAttempts == null || failedAttempts.isEmpty()) {
       return true
@@ -41,6 +67,7 @@ class VerificationResultFilter {
       verificationEndTime: Instant,
       scheduledVerification: ScheduledVerification
   ): Boolean {
+    doCleanup()
     val updateInfo = scheduledVerification.updateInfo
     if (verificationResult !is VerificationResult.NotFound && verificationResult !is VerificationResult.FailedToDownload) {
       //Clear failed attempts for plugins that were successfully downloaded and verified.
