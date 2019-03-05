@@ -37,6 +37,8 @@ class ResultHolder {
 
   var failedToDownloadReason: String? = null
 
+  var failedToDownloadError: Throwable? = null
+
   var notFoundReason: String? = null
 
   private val pluginErrorsAndWarnings: MutableSet<PluginProblem> = hashSetOf()

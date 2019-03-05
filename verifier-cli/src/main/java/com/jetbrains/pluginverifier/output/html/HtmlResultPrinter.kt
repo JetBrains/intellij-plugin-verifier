@@ -147,8 +147,8 @@ class HtmlResultPrinter(
         is VerificationResult.StructureWarnings -> printWarnings(pluginStructureWarnings)
         is VerificationResult.CompatibilityProblems -> printProblems(compatibilityProblems)
         is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErrors.joinToString(), result.plugin.pluginId)
-        is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", notFoundReason)
-        is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", failedToDownloadReason)
+        is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", notFoundReason!!)
+        is VerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", failedToDownloadReason!!)
         is VerificationResult.MissingDependencies -> printMissingDependenciesResult(this)
       }
     }

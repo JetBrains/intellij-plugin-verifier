@@ -118,8 +118,9 @@ class PluginVerifier(
       pluginStructureWarnings = resultHolder.pluginStructureWarnings
       pluginStructureErrors = resultHolder.pluginStructureErrors
       compatibilityProblems = resultHolder.compatibilityProblems
-      failedToDownloadReason = resultHolder.failedToDownloadReason.orEmpty()
-      notFoundReason = resultHolder.notFoundReason.orEmpty()
+      failedToDownloadReason = resultHolder.failedToDownloadReason
+      failedToDownloadError = resultHolder.failedToDownloadError
+      notFoundReason = resultHolder.notFoundReason
       deprecatedUsages = resultHolder.deprecatedUsages
       experimentalApiUsages = resultHolder.experimentalApiUsages
     }
@@ -137,7 +138,10 @@ class PluginVerifier(
           cacheEntry.pluginErrors.forEach { resultHolder.addPluginErrorOrWarning(it) }
         }
         is PluginDetailsCache.Result.FileNotFound -> resultHolder.notFoundReason = cacheEntry.reason
-        is PluginDetailsCache.Result.Failed -> resultHolder.failedToDownloadReason = "Plugin $plugin was not downloaded due to ${cacheEntry.error.message}"
+        is PluginDetailsCache.Result.Failed -> {
+          resultHolder.failedToDownloadReason = cacheEntry.reason
+          resultHolder.failedToDownloadError = cacheEntry.error
+        }
       }
     }
   }

@@ -148,14 +148,12 @@ class VerifierService(
   }
 
   //Do not synchronize: results sending is performed from background threads.
-  private fun VerificationResult.onSuccess(
-      taskDescriptor: TaskDescriptor,
-      scheduledVerification: ScheduledVerification
-  ) {
-    logger.info("Verified $scheduledVerification: $verificationVerdict")
+  private fun VerificationResult.onSuccess(taskDescriptor: TaskDescriptor, scheduledVerification: ScheduledVerification) {
+    logVerificationResult(scheduledVerification)
     if (verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)) {
       try {
         verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
+        logger.info("Verification result has been successfully sent for $scheduledVerification")
       } catch (e: ServerUnavailable503Exception) {
         logger.info(
             "Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
@@ -167,6 +165,15 @@ class VerifierService(
       }
     } else {
       logger.info("Verification result for $plugin against $verificationTarget has been ignored")
+    }
+  }
+
+  private fun VerificationResult.logVerificationResult(scheduledVerification: ScheduledVerification) {
+    val message = "Finished verification $scheduledVerification: $verificationVerdict"
+    if (this is VerificationResult.FailedToDownload) {
+      logger.info(message, failedToDownloadError!!)
+    } else {
+      logger.info(message)
     }
   }
 

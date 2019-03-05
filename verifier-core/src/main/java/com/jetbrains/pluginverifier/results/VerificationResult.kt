@@ -83,14 +83,21 @@ sealed class VerificationResult {
    *
    * _This field is applicable only for the [FailedToDownload] result type._
    */
-  var failedToDownloadReason: String = ""
+  var failedToDownloadReason: String? = null
+
+  /**
+   * Contains the exception causing this [non-downloadable] [FailedToDownload] result.
+   *
+   * _This field is applicable only for the [FailedToDownload] result type._
+   */
+  var failedToDownloadError: Throwable? = null
 
   /**
    * Contains the reason of a [not-found] [NotFound] result.
    *
    * _This field is applicable only for the [NotFound] result type._
    */
-  var notFoundReason: String = ""
+  var notFoundReason: String? = null
 
   /**
    * Contains [deprecated] [DeprecatedApiUsage] IDE API usages inside the plugin.
@@ -226,24 +233,24 @@ sealed class VerificationResult {
   }
 
   /**
-   * The [plugin] is not found during the verification by some [failedToDownloadReason].
+   * The [plugin] is not found during the verification by some reason [notFoundReason].
    *
-   * _The available field is only the [failedToDownloadReason]._
+   * _The available field is only the [notFoundReason]._
    */
   class NotFound : VerificationResult() {
     override val verificationVerdict
-      get() = "Plugin is not found"
+      get() = "Plugin is not found: $notFoundReason"
   }
 
   /**
    * The [plugin] is registered in the Plugin Repository database
    * but its file couldn't be obtained by some [failedToDownloadReason].
    *
-   * _The available field is only the [failedToDownloadReason]._
+   * _The available fields are [failedToDownloadReason] and [failedToDownloadError]._
    */
   class FailedToDownload : VerificationResult() {
     override val verificationVerdict
-      get() = "Failed to download plugin"
+      get() = "Failed to download plugin: $failedToDownloadReason"
   }
 
 }
