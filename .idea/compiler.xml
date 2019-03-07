@@ -102,6 +102,8 @@
       <module name="org.jetbrains.intellij.plugins.verifier-test.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.verifier.plugins-verifier-service.main" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.verifier.plugins-verifier-service.test" target="1.8" />
+      <module name="plugins-verifier-service.main" target="1.8" />
+      <module name="plugins-verifier-service.test" target="1.8" />
       <module name="plugins-verifier-service_main" target="1.8" />
       <module name="plugins-verifier-service_test" target="1.8" />
       <module name="structure-base_main" target="1.8" />

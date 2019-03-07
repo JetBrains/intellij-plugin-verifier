@@ -11,7 +11,7 @@ buildscript {
   }
 }
 
-def extractorVersion = '1.0'
+def extractorVersion = project.hasProperty('featureExtractorVersion') ? project.featureExtractorVersion : 'dev'
 def intellijStructureVersion = 'dev'
 
 configure(allprojects) {
