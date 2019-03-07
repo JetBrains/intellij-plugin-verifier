@@ -73,7 +73,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
       IdePluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return PluginDetailsProvider.Result.Failed("Unable to read class files of $idePlugin", e)
+      return PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginClassFilesProblem(e.localizedMessage)))
     }
 
     return PluginDetailsProvider.Result.Provided(

@@ -155,7 +155,7 @@ class PluginVerifier(
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       pluginReporters.reportException("Failed to select classes for check for $plugin", e)
-      resultHolder.addPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
+      resultHolder.addPluginErrorOrWarning(UnableToReadPluginClassFilesProblem(e.localizedMessage))
       return
     }
 
