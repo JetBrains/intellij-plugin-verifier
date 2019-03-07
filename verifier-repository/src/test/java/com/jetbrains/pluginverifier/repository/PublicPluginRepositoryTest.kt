@@ -5,10 +5,12 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Test
 import java.net.URL
 
 @HostReachableRule.HostReachable("https://plugins.jetbrains.com")
+@Ignore
 class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
 
   companion object {
