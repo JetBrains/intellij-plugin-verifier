@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
@@ -13,8 +16,6 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.misc.closeLogged
-import com.jetbrains.pluginverifier.misc.closeOnException
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
@@ -110,9 +111,8 @@ class DefaultClassResolverProvider(
           if (cacheResult is PluginDetailsCache.Result.Provided) {
             val pluginResolver = try {
               cacheResult.pluginDetails.pluginClassesLocations.createPluginResolver()
-            } catch (ie: InterruptedException) {
-              throw ie
             } catch (e: Exception) {
+              e.rethrowIfInterrupted()
               continue
             }
             dependenciesResolvers.add(pluginResolver)

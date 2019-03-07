@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.createClassLocation
 import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
@@ -32,7 +31,7 @@ class ClassParentsVisitor(
       emptyList()
     }
 
-    val superParents = currentClass.superName.singletonOrEmpty() + interfaces
+    val superParents = listOfNotNull(currentClass.superName) + interfaces
 
     for (superParent in superParents) {
       if (superParent !in visitedClasses) {

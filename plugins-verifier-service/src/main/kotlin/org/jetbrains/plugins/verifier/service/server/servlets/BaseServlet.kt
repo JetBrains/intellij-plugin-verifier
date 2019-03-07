@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.server.servlets
 import com.github.salomonbrys.kotson.fromJson
 import com.github.salomonbrys.kotson.typeToken
 import com.google.gson.Gson
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.startup.ServerStartupListener
 import org.slf4j.LoggerFactory
@@ -49,6 +50,7 @@ abstract class BaseServlet : HttpServlet() {
     return try {
       fromJson(part.inputStream)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       logger.error("Unable to deserialize part $partName", e)
       null
     }
@@ -59,6 +61,7 @@ abstract class BaseServlet : HttpServlet() {
     return try {
       GSON.fromJson<T>(parameter)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       logger.error("Unable to deserialize parameter $parameterName: $parameter", e)
       null
     }

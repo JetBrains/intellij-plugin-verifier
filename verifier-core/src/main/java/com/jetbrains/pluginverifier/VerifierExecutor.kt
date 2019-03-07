@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.results.VerificationResult

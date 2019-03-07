@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.startup
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
@@ -106,6 +107,7 @@ class ServerStartupListener : ServletContextListener {
     try {
       return createServiceDAO(databasePath)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.error("Unable to open/create database", e)
       LOG.info("Flag to clear database on corruption is " + if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean() == true) "ON" else "OFF")
       if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) {
@@ -116,6 +118,7 @@ class ServerStartupListener : ServletContextListener {
           LOG.info("Successfully recreated database")
           return recreatedDAO
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           LOG.error("Fatal error creating database: ${e.message}", e)
           throw e
         }

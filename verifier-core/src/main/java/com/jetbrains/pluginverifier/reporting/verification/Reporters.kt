@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.reporting.verification
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier

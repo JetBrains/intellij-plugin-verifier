@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
-import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -32,7 +34,7 @@ class CheckIdeParamsBuilder(
       throw IllegalArgumentException("IDE path must be a directory: $ideFile")
     }
     reportage.logVerificationStage("Reading classes of IDE $ideFile")
-    OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor ->
+    OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor: IdeDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
@@ -94,9 +96,8 @@ class CheckIdeParamsBuilder(
       return try {
         val ideVersion = IdeVersion.createIdeVersion(communityVersion)
         pluginRepository.getLastCompatibleVersionOfPlugin(ideVersion, pluginId)
-      } catch (ie: InterruptedException) {
-        throw ie
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         null
       }
     }

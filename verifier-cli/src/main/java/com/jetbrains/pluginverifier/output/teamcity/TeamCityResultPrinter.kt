@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.output.teamcity
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
@@ -339,9 +340,8 @@ class TeamCityResultPrinter(
                   .values.toList()
             }
           }
-        } catch (ie: InterruptedException) {
-          throw ie
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           LOG.info("Unable to determine the last compatible updates of IDE $it", e)
           it to emptyList<PluginInfo>()
         }

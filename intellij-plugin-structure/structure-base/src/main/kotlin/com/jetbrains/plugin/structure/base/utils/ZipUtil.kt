@@ -69,7 +69,13 @@ fun File.extractTo(destination: File): File {
   val unArchiver = createUnArchiver(this)
   unArchiver.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, ""))
   unArchiver.destDirectory = destination
-  unArchiver.extract()
+  checkIfInterrupted()
+  try {
+    unArchiver.extract()
+  } catch (e: Exception) {
+    e.rethrowIfInterrupted()
+    throw e
+  }
   return destination
 }
 

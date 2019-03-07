@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
@@ -94,9 +96,8 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   override fun download(key: K, tempDirectory: Path): DownloadResult {
     val downloadUrl = try {
       urlProvider(key)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       return DownloadResult.FailedToDownload("Invalid URL", e)
     } ?: return DownloadResult.NotFound("Unknown URL for $key")
 
@@ -107,12 +108,10 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     checkIfInterrupted()
     return try {
       doDownload(key, downloadUrl, tempDirectory)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: NotFound404ResponseException) {
       DownloadResult.NotFound("Resource is not found by $downloadUrl")
     } catch (e: Exception) {
-      checkIfInterrupted()
+      e.rethrowIfInterrupted()
       DownloadResult.FailedToDownload("Unable to download $key: ${e.message}", e)
     }
   }

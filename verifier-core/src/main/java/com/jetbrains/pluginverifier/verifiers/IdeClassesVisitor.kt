@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
@@ -28,9 +29,8 @@ class IdeClassesVisitor {
 
     val classNode = try {
       findClass(className)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       null
     }
     if (classNode != null) {

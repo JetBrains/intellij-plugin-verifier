@@ -22,6 +22,10 @@ fun File.forceDeleteIfExists() {
 fun File.deleteLogged(): Boolean = try {
   forceDeleteIfExists()
   true
+} catch (ie: InterruptedException) {
+  Thread.currentThread().interrupt()
+  LOG.info("Cannot delete file because of interruption:  $this")
+  false
 } catch (e: Exception) {
   LOG.error("Unable to delete $this", e)
   false

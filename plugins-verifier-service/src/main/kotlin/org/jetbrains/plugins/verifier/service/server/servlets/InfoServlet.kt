@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server.servlets
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.servlets.info.IgnoredProblemsPage
 import org.jetbrains.plugins.verifier.service.server.servlets.info.StatusPage
@@ -39,6 +40,7 @@ class InfoServlet : BaseServlet() {
     val ignoreConditions = try {
       parseIgnoreConditions(ignoredProblems)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       val msg = "Unable to parse ignored problems: ${e.message}"
       logger.warn(msg, e)
       return sendBadRequest(resp, msg)

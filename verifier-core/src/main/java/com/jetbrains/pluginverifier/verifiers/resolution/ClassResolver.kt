@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import java.io.Closeable
@@ -51,8 +52,7 @@ fun Resolver.resolveClassSafely(className: String): ClassResolution =
           ?: ClassResolution.NotFound
     } catch (e: InvalidClassFileException) {
       ClassResolution.InvalidClassFile(e.asmError)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       ClassResolution.FailedToReadClassFile(e.message ?: e.javaClass.name)
     }

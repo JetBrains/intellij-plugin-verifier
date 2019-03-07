@@ -3,6 +3,7 @@ package com.jetbrains.intellij.feature.extractor
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.core.*
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.Ide
@@ -46,9 +47,8 @@ object FeaturesExtractor {
       ide.bundledPlugins.mapNotNull {
         try {
           IdePluginClassesFinder.findPluginClasses(it, additionalKeys = emptyList())
-        } catch (ie: InterruptedException) {
-          throw ie
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
           null
         }
@@ -74,6 +74,7 @@ object FeaturesExtractor {
     try {
       classNode = resolver.findClass(epImplementorClass.replace('.', '/')) ?: return null
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.debug("Unable to get plugin $plugin class file `$epImplementorClass`", e)
       return null
     }

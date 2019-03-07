@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.network.NonSuccessfulResponseException
@@ -97,6 +98,7 @@ class FeatureExtractorService(
         logger.info("Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
         pauseFeaturesExtraction()
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         //TODO: remove this check when the Marketplace is fixed.
         if (e is NonSuccessfulResponseException && e.responseCode == 409) {
           logger.info("Marketplace is still responding HTTP 409: Conflict on attempt to send update results")

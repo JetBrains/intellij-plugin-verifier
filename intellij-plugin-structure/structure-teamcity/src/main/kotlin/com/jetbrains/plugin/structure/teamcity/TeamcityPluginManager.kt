@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
 import com.jetbrains.plugin.structure.teamcity.problems.IncorrectTeamCityPluginFile
 import org.jdom2.input.JDOMParseException
@@ -76,12 +77,8 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
       val lineNumber = e.lineNumber
       val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
-      if (Thread.currentThread().isInterrupted) {
-        throw InterruptedException()
-      }
+      e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor from $streamName", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME))
     }

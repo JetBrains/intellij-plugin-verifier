@@ -3,10 +3,10 @@ package com.jetbrains.pluginverifier.repository.repositories.marketplace
 import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
 import com.google.gson.Gson
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import okhttp3.HttpUrl
@@ -83,9 +83,8 @@ class MarketplaceRepository(
             .getPluginUpdates(pluginId).executeSuccessfully().body()
             .updateIds
             .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
-      } catch (ie: InterruptedException) {
-        throw ie
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         emptyList()
       }
 
@@ -182,11 +181,10 @@ class MarketplaceRepository(
             .getUpdateInfosForIdsBetween(start, end)
             .executeSuccessfully().body()
             .map { it.toUpdateInfo() }
-      } catch (ie: InterruptedException) {
-        throw ie
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         LOG.info("Unable to request [$start; $end] UpdateInfos", e)
-        requestSingleUpdateInfo(updateId).singletonOrEmpty()
+        listOfNotNull(requestSingleUpdateInfo(updateId))
       }
     }
 
@@ -196,9 +194,8 @@ class MarketplaceRepository(
               .getUpdateInfoById(updateId)
               .executeSuccessfully().body()
               .toUpdateInfo()
-        } catch (ie: InterruptedException) {
-          throw ie
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           LOG.error("Unable to request UpdateInfo #$updateId", e)
           null
         }

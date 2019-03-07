@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalClassUsage
 import com.jetbrains.pluginverifier.results.location.Location
@@ -73,7 +72,7 @@ fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLoca
 
 @Suppress("UNCHECKED_CAST")
 private fun ClassResolver.resolveAllDirectParents(classNode: ClassNode, problemRegistrar: ProblemRegistrar): List<ClassNode> {
-  val parents = classNode.superName.singletonOrEmpty() + classNode.getInterfaces().orEmpty()
+  val parents = listOfNotNull(classNode.superName) + classNode.getInterfaces().orEmpty()
   return parents.mapNotNull { resolveClassOrProblem(it, classNode, problemRegistrar) { classNode.createClassLocation() } }
 }
 

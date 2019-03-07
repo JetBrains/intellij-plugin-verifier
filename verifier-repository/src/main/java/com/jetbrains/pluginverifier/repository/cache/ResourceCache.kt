@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository.cache
 
-import com.jetbrains.pluginverifier.misc.closeOnException
+import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.pluginverifier.repository.cleanup.SizeEvictionPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider

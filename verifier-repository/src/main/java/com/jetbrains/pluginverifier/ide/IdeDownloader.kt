@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.base.utils.extractTo
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
@@ -21,9 +22,8 @@ class IdeDownloader : Downloader<AvailableIde> {
   override fun download(key: AvailableIde, tempDirectory: Path): DownloadResult {
     return try {
       downloadIde(key, key.version, tempDirectory)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       DownloadResult.FailedToDownload("Unable to download $key", e)
     }
   }

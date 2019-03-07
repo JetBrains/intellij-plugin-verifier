@@ -6,6 +6,7 @@ import okhttp3.Dispatcher
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import java.net.URL
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -57,3 +58,13 @@ fun createOkHttpClient(
         )
     )
     .build()!!
+
+/**
+ * `equals()` for URL that doesn't require internet connection in contrast to [URL.equals]
+ */
+fun URL.safeEquals(other: URL): Boolean = toExternalForm().trimEnd('/') == other.toExternalForm().trimEnd('/')
+
+/**
+ * `hashCode()` for URL that doesn't require internet connection in contrast to [URL.hashCode]
+ */
+fun URL.safeHashCode(): Int = toExternalForm().trim('/').hashCode()

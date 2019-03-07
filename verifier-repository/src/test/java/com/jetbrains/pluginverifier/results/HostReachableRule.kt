@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.results
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.results.HostReachableRule.HostReachable
 import org.junit.Assume
 import org.junit.rules.TestRule
@@ -46,6 +47,7 @@ class HostReachableRule : TestRule {
     connection.getInputStream().close()
     true
   } catch (e: Exception) {
+    e.rethrowIfInterrupted()
     System.err.println(messageHost(host))
     e.printStackTrace()
     false

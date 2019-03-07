@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.common
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.reporting.Reporter
 import org.slf4j.Logger
@@ -25,6 +26,7 @@ class FileReporter<in T>(
   private fun openFileWriter(): BufferedWriter? = try {
     Files.newBufferedWriter(file.create())
   } catch (e: Exception) {
+    e.rethrowIfInterrupted()
     ERROR_LOGGER.error("Failed to open file writer for $file", e)
     null
   }
@@ -40,6 +42,7 @@ class FileReporter<in T>(
         try {
           fileWriter?.appendln(line)
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           isClosed = true
           ERROR_LOGGER.error("Failed to report into $file", e)
         }
@@ -54,6 +57,7 @@ class FileReporter<in T>(
         try {
           fileWriter?.close()
         } catch (e: Exception) {
+          e.rethrowIfInterrupted()
           ERROR_LOGGER.error("Failed to close file writer for $file", e)
         }
       }

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter

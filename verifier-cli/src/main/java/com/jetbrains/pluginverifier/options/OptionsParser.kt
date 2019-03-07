@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.options
 
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
@@ -119,16 +119,15 @@ object OptionsParser {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = safeCreateDocumentedProblemsFilter(opts)
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
-    return ignoredProblemsFilter.singletonOrEmpty() +
-        documentedProblemsFilter.singletonOrEmpty() +
-        codeProblemsFilter.singletonOrEmpty()
+    return listOfNotNull(ignoredProblemsFilter) +
+        listOfNotNull(documentedProblemsFilter) +
+        listOfNotNull(codeProblemsFilter)
   }
 
   private fun safeCreateDocumentedProblemsFilter(opts: CmdOpts) = try {
     DocumentedProblemsFilter.createFilter(opts.documentedProblemsPageUrl)
-  } catch (ie: InterruptedException) {
-    throw ie
   } catch (e: Exception) {
+    e.rethrowIfInterrupted()
     LOG.error(
         "Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
             "The problems described on the page will not be ignored.", e
@@ -149,9 +148,8 @@ object OptionsParser {
           ignoreConditions.add(IgnoreCondition.parseCondition(line))
         }
       }
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       throw IllegalArgumentException("Unable to parse ignored problems file $ignoreProblemsFile", e)
     }
 

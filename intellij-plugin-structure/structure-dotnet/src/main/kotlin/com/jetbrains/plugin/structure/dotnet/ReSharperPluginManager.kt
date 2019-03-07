@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.dotnet.beans.extractPluginBean
 import com.jetbrains.plugin.structure.dotnet.beans.toPlugin
 import com.jetbrains.plugin.structure.dotnet.problems.IncorrectDotNetPluginFile
@@ -67,9 +68,10 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       return PluginCreationSuccess(bean.toPlugin(), beanValidationResult)
     } catch (e: JDOMParseException) {
       val lineNumber = e.lineNumber
-      val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
+      val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor from $streamName", e)
       return PluginCreationFail(UnableToReadDescriptor(streamName))
     }

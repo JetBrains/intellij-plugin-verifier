@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
@@ -161,6 +162,7 @@ class VerifierService(
         )
         pauseVerification()
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         logger.error("Unable to send verification result for $plugin", e)
       }
     } else {

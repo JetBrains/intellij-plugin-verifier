@@ -100,8 +100,8 @@ abstract class BaseService(
         logger.info("$serviceName is going to start")
         doServe()
       } catch (ie: InterruptedException) {
-        logger.info("$serviceName has been interrupted")
         Thread.currentThread().interrupt()
+        logger.info("$serviceName has been interrupted")
       } catch (e: Exception) {
         logger.error("$serviceName failed to serve", e)
       } finally {

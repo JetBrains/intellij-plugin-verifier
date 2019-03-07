@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.google.common.base.Suppliers
 import com.google.gson.annotations.SerializedName
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -69,6 +70,7 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
     val artifacts = try {
       index.executeSuccessfully().body().artifacts
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       if (channel == Channel.NIGHTLY) {
         throw IOException("Failed to fetch index from nightly channel. This channel is only accessible with JetBrains VPN connection", e)
       }

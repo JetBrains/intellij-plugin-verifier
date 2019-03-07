@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank.Result.Found
 import com.jetbrains.pluginverifier.misc.isDirectory
@@ -109,9 +110,8 @@ private class IdeDownloadProvider(
   override fun provide(key: IdeVersion): ProvideResult<Path> {
     val availableIde = try {
       ideRepository.fetchAvailableIde(key)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       return ProvideResult.Failed("Failed to find IDE $key ", e)
     } ?: return ProvideResult.NotFound("IDE $key is not available")
 

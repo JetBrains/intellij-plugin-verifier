@@ -1,9 +1,8 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.misc.buildList
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.reporters.AllIgnoredProblemsReporter
@@ -186,4 +185,6 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
         add(FileReporter(pluginVerificationDirectory.resolve("log.txt")))
       }
 
+  private inline fun <T> buildList(builderAction: MutableList<T>.() -> Unit): List<T> =
+      arrayListOf<T>().apply(builderAction)
 }

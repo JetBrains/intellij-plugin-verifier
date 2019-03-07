@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -36,9 +37,8 @@ class JdkDescriptorsCache : Closeable {
       val jdkPath = key.jdkPath
       val resolver = try {
         JdkResolverCreator.createJdkResolver(jdkPath.toFile())
-      } catch (ie: InterruptedException) {
-        throw ie
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         return ProvideResult.Failed("Failed to read JDK classes $key: $jdkPath", e)
       }
       return ProvideResult.Provided(JdkDescriptor(resolver, jdkPath))

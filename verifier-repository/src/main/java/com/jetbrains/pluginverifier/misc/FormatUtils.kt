@@ -2,6 +2,41 @@ package com.jetbrains.pluginverifier.misc
 
 import org.atteo.evo.inflector.English
 import java.text.MessageFormat
+import java.time.Duration
+
+private const val IN_SECOND = 1000
+private const val IN_MINUTE = 60 * IN_SECOND
+private const val IN_HOUR = 60 * IN_MINUTE
+private const val IN_DAY = 24 * IN_HOUR
+
+fun Duration.formatDuration(): String {
+  var millis = toMillis()
+  val days = millis / IN_DAY
+  millis %= IN_DAY
+
+  val hours = millis / IN_HOUR
+  millis %= IN_HOUR
+
+  val minutes = millis / IN_MINUTE
+  millis %= IN_MINUTE
+
+  val seconds = millis / IN_SECOND
+  millis %= IN_SECOND
+
+  if (days > 0) {
+    return "$days d $hours h $minutes m"
+  }
+  if (hours > 0) {
+    return "$hours h $minutes m $seconds s"
+  }
+  if (minutes > 0) {
+    return "$minutes m $seconds s $millis ms"
+  }
+  if (seconds > 0) {
+    return "$seconds s $millis ms"
+  }
+  return "$millis ms"
+}
 
 fun String.formatMessage(vararg args: Any): String = MessageFormat(this).format(args)
 

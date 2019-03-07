@@ -20,7 +20,7 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.jetbrains.plugins.verifier.service.tasks.TaskCancelledException
 
 /**
- * Task that verifies the plugin against IDE using JDK.
+ * Task that performs [scheduledVerification].
  */
 class VerifyPluginTask(
     private val scheduledVerification: ScheduledVerification,

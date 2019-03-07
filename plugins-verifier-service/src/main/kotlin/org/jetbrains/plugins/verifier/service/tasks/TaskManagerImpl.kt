@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.tasks
 
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import org.slf4j.LoggerFactory
 import java.time.Instant
@@ -182,6 +183,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
     try {
       callbacks.onSuccess(result, this)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.error("Failed 'onSuccess' callback for $this with result $result", e)
     }
   }
@@ -193,6 +195,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
     try {
       callbacks.onError(error, this)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.error("Failed 'onError' callback for $this with error ${error.message}", e)
     }
   }
@@ -216,6 +219,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
     try {
       callbacks.onCompletion(this)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.error("Failed 'onCompletion' callback for $this", e)
     }
   }

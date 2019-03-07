@@ -1,14 +1,12 @@
 package com.jetbrains.pluginverifier.misc
 
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import org.apache.commons.io.FileUtils
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Collectors
-
-private val LOG = LoggerFactory.getLogger("FileUtils")
 
 fun String.toSystemIndependentName() = replace('\\', '/')
 
@@ -18,14 +16,6 @@ fun File.forceDeleteIfExists() {
   if (exists()) {
     FileUtils.forceDelete(this)
   }
-}
-
-fun File.deleteLogged(): Boolean = try {
-  forceDeleteIfExists()
-  true
-} catch (e: Exception) {
-  LOG.error("Unable to delete $this", e)
-  false
 }
 
 fun File.createDir(): File {

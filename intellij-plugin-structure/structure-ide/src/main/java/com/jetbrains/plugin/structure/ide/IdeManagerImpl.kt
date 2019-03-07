@@ -4,6 +4,7 @@ import com.google.common.base.Joiner
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlXIncludePathResolver
@@ -155,6 +156,7 @@ class IdeManagerImpl : IdeManager() {
         }
       }
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       LOG.warn("Unable to create plugin from sources: $pluginFile", e)
     }
 

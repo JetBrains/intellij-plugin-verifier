@@ -1,6 +1,7 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -257,6 +258,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return try {
       findClass(className)
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       return null
     }
   }
@@ -327,6 +329,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       null
     }
   } catch (e: Exception) {
+    e.rethrowIfInterrupted()
     LOG.info("Unable to read class files of a plugin $idePlugin bundled to $ide: ${e.message}")
     null
   }

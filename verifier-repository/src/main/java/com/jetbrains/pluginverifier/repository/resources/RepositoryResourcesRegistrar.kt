@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.resources
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import org.slf4j.Logger
 
 /**
@@ -76,9 +77,8 @@ internal class RepositoryResourcesRegistrar<R, K, W : ResourceWeight<W>>(
     try {
       logger.debug("dispose($key)")
       disposer(resource)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       logger.error("unable to dispose the resource $resource", e)
     }
   }

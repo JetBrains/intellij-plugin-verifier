@@ -1,10 +1,11 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.analysis.analyzeMissingClasses
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
-import com.jetbrains.pluginverifier.misc.closeLogged
 import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
@@ -58,9 +59,8 @@ class PluginVerifier(
 
       try {
         loadPluginAndVerify()
-      } catch (ie: InterruptedException) {
-        throw ie
       } catch (e: Exception) {
+        e.rethrowIfInterrupted()
         //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
         pluginReporters.reportMessage("Failed with exception: ${e.message}")
         throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
@@ -152,9 +152,8 @@ class PluginVerifier(
      */
     val checkClasses = try {
       selectClassForCheck(pluginDetails)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       pluginReporters.reportException("Failed to select classes for check for $plugin", e)
       resultHolder.addPluginErrorOrWarning(UnableToReadPluginClassFilesProblem())
       return

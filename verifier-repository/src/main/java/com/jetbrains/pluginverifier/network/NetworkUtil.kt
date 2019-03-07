@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.network
 
-import com.jetbrains.pluginverifier.misc.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response

@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
-import com.jetbrains.pluginverifier.misc.singletonOrEmpty
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 
 class ClassHierarchyVisitor(private val visitInterfaces: Boolean) {
@@ -25,7 +24,7 @@ class ClassHierarchyVisitor(private val visitInterfaces: Boolean) {
       emptyList()
     }
 
-    val superParents = currentClass.superClass.singletonOrEmpty() + interfaces
+    val superParents = listOfNotNull(currentClass.superClass) + interfaces
 
     superParents
         .asSequence()

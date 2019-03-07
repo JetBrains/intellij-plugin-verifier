@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.files.FileNameMapper
@@ -63,9 +64,8 @@ class DownloadProvider<in K>(
     val destination = createDestinationFileForKey(key, extension, isDirectory)
     try {
       moveFileOrDirectory(tempDownloadedFile, destination)
-    } catch (ie: InterruptedException) {
-      throw ie
     } catch (e: Exception) {
+      e.rethrowIfInterrupted()
       return ProvideResult.Failed("Unable to download $key", e)
     }
     return ProvideResult.Provided(destination)
