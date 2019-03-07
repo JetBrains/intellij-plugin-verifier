@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.network.NonSuccessfulResponseException
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -96,7 +97,12 @@ class FeatureExtractorService(
         logger.info("Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
         pauseFeaturesExtraction()
       } catch (e: Exception) {
-        logger.error("Failed to send features result for $updateInfo", e)
+        //TODO: remove this check when the Marketplace is fixed.
+        if (e is NonSuccessfulResponseException && e.responseCode == 409) {
+          logger.info("Marketplace is still responding HTTP 409: Conflict on attempt to send update results")
+        } else {
+          logger.error("Failed to send features result for $updateInfo", e)
+        }
       }
     }
   }
