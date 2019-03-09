@@ -1,6 +1,7 @@
 package org.jetbrains.ide.diff.builder.persistence
 
 import com.jetbrains.plugin.structure.base.utils.archiveDirectory
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.*
 import org.jetbrains.ide.diff.builder.api.ApiEvent

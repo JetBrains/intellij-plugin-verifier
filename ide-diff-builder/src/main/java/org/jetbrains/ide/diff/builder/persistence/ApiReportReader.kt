@@ -1,7 +1,12 @@
 package org.jetbrains.ide.diff.builder.persistence
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.extension
+import com.jetbrains.pluginverifier.misc.isDirectory
+import com.jetbrains.pluginverifier.misc.readText
+import com.jetbrains.pluginverifier.misc.toSystemIndependentName
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter

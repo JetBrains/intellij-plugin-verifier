@@ -1,7 +1,6 @@
 package org.jetbrains.ide.diff.builder.persistence
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.checkEquals
 import org.jetbrains.ide.diff.builder.api.ApiEvent
 import org.jetbrains.ide.diff.builder.api.IntroducedIn
 import org.jetbrains.ide.diff.builder.api.RemovedIn
@@ -43,12 +42,12 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
       if (xmlInput.eventType == XMLStreamReader.START_ELEMENT) {
         when (xmlInput.localName) {
           "item" -> {
-            checkEquals("name", xmlInput.getAttributeLocalName(0))
+            check("name" == xmlInput.getAttributeLocalName(0))
             val itemName = xmlInput.getAttributeValue(0).unescapeHtml()
             apiSignature = parseApiSignature(packageName, itemName)
           }
           "annotation" -> {
-            checkEquals("name", xmlInput.getAttributeLocalName(0))
+            check("name" == xmlInput.getAttributeLocalName(0))
             apiEventAnnotation = when (xmlInput.getAttributeValue(0)) {
               AvailableSinceAnnotation.annotationName -> AvailableSinceAnnotation
               ScheduledForRemovalAnnotation.annotationName -> ScheduledForRemovalAnnotation
@@ -58,10 +57,10 @@ class ApiXmlReader(private val packageName: String, private val reader: Reader) 
           "val" -> {
             checkNotNull(apiSignature) { "<val> before <item>" }
             checkNotNull(apiEventAnnotation) { "<val> before <annotation>" }
-            checkEquals("name", xmlInput.getAttributeLocalName(0))
-            checkEquals(apiEventAnnotation.valueName, xmlInput.getAttributeValue(0))
+            check("name" == xmlInput.getAttributeLocalName(0))
+            check(apiEventAnnotation.valueName == xmlInput.getAttributeValue(0))
 
-            checkEquals("val", xmlInput.getAttributeLocalName(1))
+            check("val" == xmlInput.getAttributeLocalName(1))
             val value = xmlInput.getAttributeValue(1).unescapeHtml()
 
             check(value.startsWith('\"') && value.endsWith('\"')) { value }

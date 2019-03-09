@@ -1,6 +1,7 @@
 package org.jetbrains.ide.diff.builder.cli
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IntelliJIdeRepository
