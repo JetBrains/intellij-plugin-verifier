@@ -82,8 +82,8 @@ final class PluginCreator {
 
       if (bean.dependencies != null) {
         for (PluginDependencyBean dependencyBean : bean.dependencies) {
-          if (StringUtil.isEmpty(dependencyBean.pluginId)) {
-            registerProblem(new InvalidDependencyBean(myDescriptorPath));
+          if (StringUtil.isEmptyOrSpaces(dependencyBean.pluginId) || dependencyBean.pluginId.contains("\n")) {
+            registerProblem(new InvalidDependencyId(myDescriptorPath, dependencyBean.pluginId));
           }
         }
       }

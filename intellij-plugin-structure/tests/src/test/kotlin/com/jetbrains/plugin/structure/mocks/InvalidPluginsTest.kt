@@ -141,12 +141,23 @@ class InvalidPluginsTest {
   }
 
   @Test
-  fun `invalid dependency bean`() {
+  fun `invalid empty dependency bean`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          depends = listOf("")
+          depends = "<depends></depends>"
         },
-        listOf(InvalidDependencyBean("plugin.xml"))
+        listOf(InvalidDependencyId("plugin.xml", ""))
+    )
+  }
+
+  @Test
+  fun `invalid dependency tag containing new line characters bean`() {
+    val dependencyId = "\ncom.intellij.modules.java\n"
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          depends = "<depends>$dependencyId</depends>"
+        },
+        listOf(InvalidDependencyId("plugin.xml", dependencyId))
     )
   }
 

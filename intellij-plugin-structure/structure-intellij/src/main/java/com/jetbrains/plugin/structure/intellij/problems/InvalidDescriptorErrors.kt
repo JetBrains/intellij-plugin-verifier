@@ -12,9 +12,9 @@ class PropertyWithDefaultValue(descriptorPath: String, private val propertyName:
     get() = PluginProblem.Level.ERROR
 }
 
-class InvalidDependencyBean(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+class InvalidDependencyId(descriptorPath: String, private val invalidPluginId: String) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
-    get() = "dependency id is not specified"
+    get() = "dependency id is invalid: '${invalidPluginId.trim()}' cannot be empty and must not contain new line characters"
 
   override val level
     get() = PluginProblem.Level.ERROR

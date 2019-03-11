@@ -11,7 +11,7 @@ data class PluginXmlBuilder(
     var changeNotes: String = "",
     var ideaVersion: String = "",
     var modules: List<String> = emptyList(),
-    var depends: List<String> = emptyList(),
+    var depends: String = "",
     var additionalContent: String = ""
 ) {
 
@@ -25,7 +25,7 @@ data class PluginXmlBuilder(
   $changeNotes
   $ideaVersion
   ${modules.map { "<module value=\"$it\"/>" }.joinToString(separator = "\n")}
-  ${depends.map { "<depends>$it</depends>" }.joinToString(separator = "\n")}
+  $depends
   $additionalContent
   $ideaPluginTagClose
 """
@@ -40,7 +40,7 @@ val perfectXmlBuilder: PluginXmlBuilder
     description = "<description>this description is looooooooooong enough</description>"
     changeNotes = "<change-notes>these change-notes are looooooooooong enough</change-notes>"
     ideaVersion = """<idea-version since-build="131.1"/>"""
-    depends = listOf("com.intellij.modules.lang")
+    depends = "<depends>com.intellij.modules.lang</depends>"
   }
 
 fun PluginXmlBuilder.modify(block: PluginXmlBuilder.() -> Unit): String {
