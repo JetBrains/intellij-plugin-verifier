@@ -105,10 +105,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                           "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
                   )
                   if (latestPluginVerification != null) {
-                    appendln(
-                        "We have also verified the newest version ${latestPluginVerification.plugin.presentableName}, " +
-                            "which is compatible with ${newTarget.ideVersion}. "
-                    )
+                    appendln("We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName}")
                   } else {
                     appendln("There are no newer versions of the plugin compatible with ${newTarget.ideVersion} ")
                   }
@@ -128,9 +125,9 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                   appendln(problem.fullDescription)
                   if (latestPluginVerification != null) {
                     if (latestPluginVerification.isKnownProblem(problem)) {
-                      appendln("This problem also takes place in the newest version of the plugin ${plugin.getFullPluginCoordinates()}")
+                      appendln("This problem also takes place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
                     } else {
-                      appendln("This problem does not take place in the newest version of the plugin ${plugin.getFullPluginCoordinates()}")
+                      appendln("This problem does not take place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
                     }
                   }
                 }
