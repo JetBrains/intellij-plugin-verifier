@@ -71,11 +71,6 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
         for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.shortDescription }) {
           val testName = "($shortDescription)"
           tcLog.testStarted(testName).use {
-            val testMessage = buildString {
-              appendln(shortDescription)
-              appendln("This problem is detected for $newTarget but not for $baseTarget.")
-            }
-
             val plugin2Problems = ArrayListMultimap.create<PluginInfo, CompatibilityProblem>()
             for (problem in problemsWithShortDescription) {
               for (plugin in allProblem2Plugins.get(problem)) {
@@ -83,41 +78,24 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
-            val testDetails = buildString {
-              for ((plugin, problems) in plugin2Problems.asMap()) {
-                appendln()
-                appendln(plugin.getFullPluginCoordinates())
-
-                val latestPluginVerification = if (newTarget is VerificationTarget.Ide) {
-                  newPluginIdToVerifications.get(plugin.pluginId).find {
-                    it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
-                  }
-                } else {
-                  null
+            val testDetails = StringBuilder()
+            for ((plugin, problems) in plugin2Problems.asMap()) {
+              val latestPluginVerification = if (newTarget is VerificationTarget.Ide) {
+                newPluginIdToVerifications.get(plugin.pluginId).find {
+                  it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
                 }
+              } else {
+                null
+              }
 
-                if (baseTarget is VerificationTarget.Ide
-                    && newTarget is VerificationTarget.Ide
-                    && !plugin.isCompatibleWith(newTarget.ideVersion)
-                ) {
-                  appendln(
-                      "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
-                          "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
-                  )
-                  if (latestPluginVerification != null) {
-                    appendln("We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName}")
-                  } else {
-                    appendln("There are no newer versions of the plugin compatible with ${newTarget.ideVersion} ")
-                  }
-                }
-                appendln()
+              val twoResults = pluginToTwoResults[plugin]
+              val missingDependenciesNote = if (twoResults != null) {
+                getMissingDependenciesNote(twoResults.oldResult, twoResults.newResult)
+              } else {
+                ""
+              }
 
-                val twoResults = pluginToTwoResults[plugin]
-                if (twoResults != null) {
-                  appendMissingDependenciesNotes(twoResults.oldResult, twoResults.newResult)
-                }
-                appendln()
-
+              val compatibilityProblems = buildString {
                 for ((index, problem) in problems.withIndex()) {
                   if (problems.size > 1) {
                     append("${index + 1}) ")
@@ -132,8 +110,59 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                   }
                 }
               }
+
+              val compatibilityNote = buildString {
+                if (baseTarget is VerificationTarget.Ide
+                    && newTarget is VerificationTarget.Ide
+                    && !plugin.isCompatibleWith(newTarget.ideVersion)
+                ) {
+                  appendln(
+                      "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
+                          "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
+                  )
+                  if (latestPluginVerification != null) {
+                    appendln(
+                        "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
+                            "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
+                    )
+                    val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
+                    if (latestVersionSameProblemsCount > 0) {
+                      appendln(
+                          "The newest version has $latestPluginVerification/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
+                              "and thus it has also been affected by the change."
+                      )
+                    } else {
+                      appendln("The newest version has none of the problems of the old version and thus it may be considered unaffected by this change.")
+                    }
+                  } else {
+                    appendln("There are no newer versions of the plugin compatible with ${newTarget.ideVersion}. ")
+                  }
+                }
+              }
+
+              with(testDetails) {
+                if (isNotEmpty()) {
+                  appendln()
+                  appendln()
+                }
+
+                appendln(plugin.getFullPluginCoordinates())
+                appendln(compatibilityNote)
+                if (missingDependenciesNote.isNotEmpty()) {
+                  appendln()
+                  appendln(missingDependenciesNote)
+                  appendln()
+                }
+                appendln(compatibilityProblems)
+              }
             }
-            tcLog.testFailed(testName, testMessage, testDetails)
+
+            val testMessage = buildString {
+              appendln(shortDescription)
+              appendln("This problem is detected for $newTarget but not for $baseTarget.")
+            }
+
+            tcLog.testFailed(testName, testMessage, testDetails.toString())
           }
         }
       }
@@ -160,11 +189,13 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   private fun VerificationResult.getResolvedDependency(dependency: PluginDependency) =
       dependenciesGraph.getResolvedDependency(dependency)
 
-  private fun StringBuilder.appendMissingDependenciesNotes(baseResult: VerificationResult, newResult: VerificationResult) {
+  private fun getMissingDependenciesNote(baseResult: VerificationResult, newResult: VerificationResult): String {
     val baseMissingDependencies = baseResult.getDirectMissingDependencies()
     val newMissingDependencies = newResult.getDirectMissingDependencies()
-
-    if (newMissingDependencies.isNotEmpty()) {
+    if (newMissingDependencies.isEmpty()) {
+      return ""
+    }
+    return buildString {
       appendln("Note: some problems might have been caused by missing dependencies: [")
       for ((dependency, missingReason) in newMissingDependencies) {
         append("    $dependency: $missingReason")
