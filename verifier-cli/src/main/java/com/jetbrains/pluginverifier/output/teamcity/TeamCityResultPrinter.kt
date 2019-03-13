@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.Browseable
@@ -218,8 +217,8 @@ class TeamCityResultPrinter(
   ) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
-        is VerificationResult.CompatibilityProblems -> printProblems(plugin, testName, verificationResult.compatibilityProblems)
-        is VerificationResult.MissingDependencies -> printMissingDependencies(plugin, verificationResult, testName)
+        is VerificationResult.CompatibilityProblems -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, emptyList())
+        is VerificationResult.MissingDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingDependencies)
         is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
         is VerificationResult.OK,
         is VerificationResult.StructureWarnings,
@@ -230,33 +229,41 @@ class TeamCityResultPrinter(
     }
   }
 
-  private fun printMissingDependencies(
+  private fun printCompatibilityProblemsAndMissingDependencies(
       plugin: PluginInfo,
-      verificationResult: VerificationResult.MissingDependencies,
-      testName: String
+      testName: String,
+      problems: Set<CompatibilityProblem>,
+      missingDependencies: List<MissingDependency>
   ) {
-    val problems = verificationResult.compatibilityProblems
-    val missingDependencies = verificationResult.directMissingDependencies
-    if (problems.isNotEmpty() || missingDependencies.any { !it.dependency.isOptional }) {
-      val overview = buildString {
-        append(getPluginOverviewLink(plugin)).append("\n")
+    val overview = buildString {
+      appendln(getPluginOverviewLink(plugin))
+      if (problems.isNotEmpty()) {
+        appendln("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
+      }
+
+      val filteredMissingDependencies = missingDependencies.filter {
+        !it.dependency.isOptional || !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency)
+      }
+
+      if (filteredMissingDependencies.isNotEmpty()) {
         if (problems.isNotEmpty()) {
-          append("$plugin has ${"problem".pluralizeWithNumber(problems.size)}\n")
+          appendln("Some problems might have been caused by missing dependencies: ")
         }
-        val mandatoryMissing = missingDependencies.filterNot { it.dependency.isOptional }
-        val optionalNotExcludedMissing = missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) }
-        if (mandatoryMissing.isNotEmpty() || optionalNotExcludedMissing.isNotEmpty()) {
-          if (problems.isNotEmpty()) {
-            append("Some problems might have been caused by missing plugins:").append('\n')
-          }
-          appendMissingDependencies(mandatoryMissing)
-          appendMissingDependencies(optionalNotExcludedMissing)
+        for (missingDependency in filteredMissingDependencies) {
+          appendln("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
         }
       }
-      val problemsContent = getMissingDependenciesProblemsContent(verificationResult)
-      tcLog.testStdErr(testName, overview)
-      tcLog.testFailed(testName, problemsContent, "")
     }
+
+    val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
+    val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+      getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
+    } else {
+      getProblemsContent(problems)
+    }
+
+    tcLog.testStdErr(testName, overview)
+    tcLog.testFailed(testName, problemsContent, "")
   }
 
   private fun getPluginOverviewLink(plugin: PluginInfo): String {
@@ -270,55 +277,28 @@ class TeamCityResultPrinter(
     tcLog.testFailed(versionTestName, message, "")
   }
 
-  private fun printProblems(
-      plugin: PluginInfo,
-      testName: String,
-      problems: Set<CompatibilityProblem>
-  ) {
-    val overview = getPluginOverviewLink(plugin) + "\n$plugin has ${problems.size} ${"problem".pluralize(problems.size)}\n"
-    val problemsContent = getProblemsContent(problems)
-    tcLog.testStdErr(testName, problemsContent)
-    tcLog.testFailed(testName, overview, "")
-  }
-
-  private fun getProblemsContent(problems: Set<CompatibilityProblem>): String =
-      problems.groupBy({ it.shortDescription }, { it.fullDescription }).entries
-          .joinToString(separator = "\n") { (short, fulls) ->
-            "#$short\n" + fulls.joinToString(separator = "\n") { "    $it" }
-          }
-
-  private fun getMissingDependenciesProblemsContent(verificationResult: VerificationResult.MissingDependencies): String {
-    val problems = verificationResult.compatibilityProblems
-    val missingDependencies = verificationResult.directMissingDependencies
-
-    val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
-    return if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
-      getTooManyUnknownClassesProblems(missingDependencies, notFoundClassesProblems, problems)
-    } else {
-      getProblemsContent(problems)
+  private fun getProblemsContent(problems: Iterable<CompatibilityProblem>): String = buildString {
+    for ((shortDescription, problemsWithShortDescription) in problems.groupBy { it.shortDescription }) {
+      appendln("#$shortDescription")
+      for (compatibilityProblem in problemsWithShortDescription) {
+        appendln("    ${compatibilityProblem.fullDescription}")
+      }
     }
   }
 
   private fun getTooManyUnknownClassesProblems(
-      missingDependencies: List<MissingDependency>,
       notFoundClassesProblems: List<ClassNotFoundProblem>,
       problems: Set<CompatibilityProblem>
   ): String {
-    val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems }.sortedBy { it.javaClass.name }.toSet())
+    val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems })
     return buildString {
       appendln("There are too many missing classes (${notFoundClassesProblems.size});")
-      appendln("it's probably because of missing plugins or modules: ${missingDependencies.map { it.dependency }.joinToString()};")
+      appendln("it's probably because of missing plugins or modules")
       appendln("some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];")
       if (otherProblems.isNotEmpty()) {
         appendln("Other problems: ")
         appendln(otherProblems)
       }
-    }
-  }
-
-  private fun StringBuilder.appendMissingDependencies(missingDeps: List<MissingDependency>) {
-    missingDeps.forEach {
-      append("Missing ${it.dependency}: ${it.missingReason}").append('\n')
     }
   }
 
