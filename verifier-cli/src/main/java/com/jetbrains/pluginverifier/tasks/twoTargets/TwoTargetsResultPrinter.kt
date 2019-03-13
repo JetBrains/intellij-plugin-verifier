@@ -135,7 +135,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                       appendln("The newest version has none of the problems of the old version and thus it may be considered unaffected by this change.")
                     }
                   } else {
-                    appendln("There are no newer versions of the plugin compatible with ${newTarget.ideVersion}. ")
+                    appendln("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
                   }
                 }
               }
