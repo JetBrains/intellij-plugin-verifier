@@ -157,14 +157,12 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
           state = TaskDescriptor.State.SUCCESS
           progress.text = "Success" + if (result != Unit) ": $result" else ""
           descriptor.successTask(result, callbacks)
-        } catch (e: TaskCancelledException) {
-          state = TaskDescriptor.State.CANCELLED
-          progress.text = e.message
-          LOG.info("Task ${task.presentableName} was cancelled: ${e.message}", e.cause)
         } catch (e: InterruptedException) {
           state = TaskDescriptor.State.CANCELLED
-          progress.text = "Interrupted"
-          LOG.info("Task was interrupted: ${task.presentableName} ", e)
+          progress.text = "Cancelled"
+          val message = "Task has been cancelled: ${task.presentableName}"
+          LOG.info(message)
+          LOG.debug(message, e)
         } catch (e: Throwable) {
           state = TaskDescriptor.State.ERROR
           progress.text = "Finished with error: ${e.message}"

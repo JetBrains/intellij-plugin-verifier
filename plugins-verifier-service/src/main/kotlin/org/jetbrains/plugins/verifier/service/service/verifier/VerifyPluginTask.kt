@@ -17,7 +17,6 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
-import org.jetbrains.plugins.verifier.service.tasks.TaskCancelledException
 
 /**
  * Task that performs [scheduledVerification].
@@ -44,10 +43,10 @@ class VerifyPluginTask(
           checkPluginWithIde(ideDescriptor, reportage)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
-          throw TaskCancelledException("IDE ${scheduledVerification.ideVersion} is not found: " + cacheEntry.reason)
+          throw IllegalStateException("IDE ${scheduledVerification.ideVersion} is not found: " + cacheEntry.reason)
         }
         is IdeDescriptorsCache.Result.Failed -> {
-          throw TaskCancelledException("Failed to get ${scheduledVerification.ideVersion}: ${cacheEntry.reason}", cacheEntry.error)
+          throw IllegalStateException("Failed to get ${scheduledVerification.ideVersion}: ${cacheEntry.reason}", cacheEntry.error)
         }
       }
     }
