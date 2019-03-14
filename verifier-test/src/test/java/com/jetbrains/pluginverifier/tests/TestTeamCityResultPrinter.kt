@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -76,8 +75,7 @@ class TestTeamCityResultPrinter {
       val tcPrinter = TeamCityResultPrinter(
           tcLog,
           TeamCityResultPrinter.GroupBy.BY_PLUGIN,
-          pluginRepository,
-          AllMissingDependencyIgnoring
+          pluginRepository
       )
       tcPrinter.printResults(
           pluginInfos.map {

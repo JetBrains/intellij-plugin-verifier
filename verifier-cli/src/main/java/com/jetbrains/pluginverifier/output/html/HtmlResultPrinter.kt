@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.output.html
 
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
-import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
@@ -17,8 +15,7 @@ import java.nio.file.Path
 
 class HtmlResultPrinter(
     private val verificationTarget: VerificationTarget,
-    private val htmlFile: Path,
-    private val missingDependencyIgnoring: MissingDependencyIgnoring
+    private val htmlFile: Path
 ) : ResultPrinter {
 
   override fun printResults(results: List<VerificationResult>) {
@@ -157,8 +154,9 @@ class HtmlResultPrinter(
   private fun HtmlBuilder.printMissingDependenciesResult(verificationResult: VerificationResult.MissingDependencies) {
     printProblems(verificationResult.compatibilityProblems)
     val missingDependencies = verificationResult.directMissingDependencies
-    printMissingDependencies(missingDependencies.filterNot { it.dependency.isOptional })
-    printMissingDependencies(missingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) })
+    for (missingDependency in missingDependencies) {
+      printShortAndFullDescription("missing dependency: $missingDependency", missingDependency.missingReason)
+    }
   }
 
   private fun HtmlBuilder.printWarnings(warnings: Set<PluginStructureWarning>) {
@@ -168,10 +166,6 @@ class HtmlResultPrinter(
         br()
       }
     }
-  }
-
-  private fun HtmlBuilder.printMissingDependencies(nonOptionals: List<MissingDependency>) {
-    nonOptionals.forEach { printShortAndFullDescription("missing dependency: $it", it.missingReason) }
   }
 
   private fun loadReportScript() = HtmlResultPrinter::class.java.getResource("/reportScript.js").readText()

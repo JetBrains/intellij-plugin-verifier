@@ -32,14 +32,12 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
       HtmlResultPrinter(
           baseTarget,
-          outputOptions.getTargetReportDirectory(baseTarget).resolve("report.html"),
-          outputOptions.missingDependencyIgnoring
+          outputOptions.getTargetReportDirectory(baseTarget).resolve("report.html")
       ).printResults(baseResults)
 
       HtmlResultPrinter(
           newTarget,
-          outputOptions.getTargetReportDirectory(newTarget).resolve("report.html"),
-          outputOptions.missingDependencyIgnoring
+          outputOptions.getTargetReportDirectory(newTarget).resolve("report.html")
       ).printResults(newResults)
     }
   }

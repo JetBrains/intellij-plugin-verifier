@@ -27,8 +27,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
       HtmlResultPrinter(
           VerificationTarget.Ide(ideVersion),
-          outputOptions.getTargetReportDirectory(VerificationTarget.Ide(ideVersion)).resolve("report.html"),
-          outputOptions.missingDependencyIgnoring
+          outputOptions.getTargetReportDirectory(VerificationTarget.Ide(ideVersion)).resolve("report.html")
       ).printResults(results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
@@ -43,7 +42,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
   private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult, tcLog: TeamCityLog) {
     with(checkIdeResult) {
-      val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository, outputOptions.missingDependencyIgnoring)
+      val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository)
       resultPrinter.printResults(results)
       resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
       val totalProblemsNumber = results.flatMap {
@@ -69,7 +68,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
   private fun printOnStdOut(checkIdeResult: CheckIdeResult) {
     with(checkIdeResult) {
       val printWriter = PrintWriter(System.out)
-      val resultPrinter = WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring)
+      val resultPrinter = WriterResultPrinter(printWriter)
       resultPrinter.printResults(results)
       printWriter.flush()
     }

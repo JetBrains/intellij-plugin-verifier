@@ -27,8 +27,7 @@ class CheckPluginResultPrinter(
       results.groupBy { it.verificationTarget }.forEach { verificationTarget, resultsOfIde ->
         HtmlResultPrinter(
             verificationTarget,
-            outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html"),
-            outputOptions.missingDependencyIgnoring
+            outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
         ).printResults(resultsOfIde)
       }
     }
@@ -38,8 +37,7 @@ class CheckPluginResultPrinter(
     TeamCityResultPrinter(
         tcLog,
         outputOptions.teamCityGroupType,
-        pluginRepository,
-        outputOptions.missingDependencyIgnoring
+        pluginRepository
     ).printResults(results)
 
     TeamCityResultPrinter.printInvalidPluginFiles(tcLog, invalidPluginFiles)
@@ -69,7 +67,7 @@ class CheckPluginResultPrinter(
   private fun printOnStdout(checkPluginResult: CheckPluginResult) {
     with(checkPluginResult) {
       val printWriter = PrintWriter(System.out)
-      val writerResultPrinter = WriterResultPrinter(printWriter, outputOptions.missingDependencyIgnoring)
+      val writerResultPrinter = WriterResultPrinter(printWriter)
       writerResultPrinter.printResults(results)
       writerResultPrinter.printInvalidPluginFiles(invalidPluginFiles)
       printWriter.flush()

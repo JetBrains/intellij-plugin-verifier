@@ -1,10 +1,8 @@
 package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
-import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -12,10 +10,7 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
 
-class WriterResultPrinter(
-    private val out: PrintWriter,
-    private val missingDependencyIgnoring: MissingDependencyIgnoring
-) : ResultPrinter {
+class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
   override fun printResults(results: List<VerificationResult>) {
     results.forEach {
@@ -50,17 +45,14 @@ class WriterResultPrinter(
       verificationTarget: VerificationTarget,
       plugin: PluginInfo
   ) {
-    printDependencies(verificationResult)
+    if (verificationResult.directMissingDependencies.isNotEmpty()) {
+      out.println("    Some problems might have been caused by missing dependencies:")
+      for (missingDependency in verificationResult.directMissingDependencies) {
+        out.println("        ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      }
+    }
     printWarnings(verificationTarget, plugin, verificationResult.pluginStructureWarnings)
     printProblems(verificationTarget, plugin, verificationResult.compatibilityProblems)
-  }
-
-  private fun printDependencies(verificationResult: VerificationResult.MissingDependencies) {
-    val mandatoryDependencies = verificationResult.directMissingDependencies.filterNot { it.dependency.isOptional }
-    printMissingMandatoryDependencies(mandatoryDependencies)
-
-    val optionalDependencies = verificationResult.directMissingDependencies.filter { it.dependency.isOptional && !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency) }
-    printMissingOptionalDependencies(optionalDependencies)
   }
 
   private fun printProblemsResult(
@@ -70,20 +62,6 @@ class WriterResultPrinter(
   ) {
     printProblems(verificationTarget, plugin, verificationResult.compatibilityProblems)
     printWarnings(verificationTarget, plugin, verificationResult.pluginStructureWarnings)
-  }
-
-  private fun printMissingMandatoryDependencies(missingMandatory: List<MissingDependency>) {
-    if (missingMandatory.isNotEmpty()) {
-      out.println("   Some problems might have been caused by missing non-optional dependencies:")
-      missingMandatory.map { it.toString() }.forEach { out.println("        $it") }
-    }
-  }
-
-  private fun printMissingOptionalDependencies(missingOptional: List<MissingDependency>) {
-    if (missingOptional.isNotEmpty()) {
-      out.println("    Missing optional dependencies:")
-      missingOptional.forEach { out.println("        ${it.dependency}: ${it.missingReason}") }
-    }
   }
 
   private fun printWarnings(verificationTarget: VerificationTarget, plugin: PluginInfo, warnings: Set<PluginStructureWarning>) {

@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
-import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -25,8 +24,7 @@ import org.slf4j.LoggerFactory
 class TeamCityResultPrinter(
     private val tcLog: TeamCityLog,
     private val groupBy: GroupBy,
-    private val repository: PluginRepository,
-    private val missingDependencyIgnoring: MissingDependencyIgnoring
+    private val repository: PluginRepository
 ) : ResultPrinter {
 
   companion object {
@@ -235,35 +233,34 @@ class TeamCityResultPrinter(
       problems: Set<CompatibilityProblem>,
       missingDependencies: List<MissingDependency>
   ) {
-    val overview = buildString {
-      appendln(getPluginOverviewLink(plugin))
-      if (problems.isNotEmpty()) {
-        appendln("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
-      }
-
-      val filteredMissingDependencies = missingDependencies.filter {
-        !it.dependency.isOptional || !missingDependencyIgnoring.ignoreMissingOptionalDependency(it.dependency)
-      }
-
-      if (filteredMissingDependencies.isNotEmpty()) {
+    val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
+    if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {
+      val overview = buildString {
+        appendln(getPluginOverviewLink(plugin))
         if (problems.isNotEmpty()) {
-          appendln("Some problems might have been caused by missing dependencies: ")
+          appendln("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
         }
-        for (missingDependency in filteredMissingDependencies) {
-          appendln("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
+
+        if (missingDependencies.isNotEmpty()) {
+          if (problems.isNotEmpty()) {
+            appendln("Some problems might have been caused by missing dependencies: ")
+          }
+          for (missingDependency in missingDependencies) {
+            appendln("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
+          }
         }
       }
-    }
 
-    val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
-    val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
-      getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
-    } else {
-      getProblemsContent(problems)
-    }
+      val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
+      val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+        getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
+      } else {
+        getProblemsContent(problems)
+      }
 
-    tcLog.testStdErr(testName, overview)
-    tcLog.testFailed(testName, problemsContent, "")
+      tcLog.testStdErr(testName, overview)
+      tcLog.testFailed(testName, problemsContent, "")
+    }
   }
 
   private fun getPluginOverviewLink(plugin: PluginInfo): String {

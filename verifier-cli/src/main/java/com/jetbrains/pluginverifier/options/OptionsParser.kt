@@ -8,9 +8,6 @@ import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.settings.dependencies.AllMissingDependencyIgnoring
-import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
-import com.jetbrains.pluginverifier.output.settings.dependencies.SpecifiedMissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.*
@@ -52,16 +49,8 @@ object OptionsParser {
         verificationReportsDirectory,
         teamCityLog,
         TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-        createMissingDependencyIgnoring(opts),
         opts.dumpBrokenPluginsFile
     )
-  }
-
-  private fun createMissingDependencyIgnoring(opts: CmdOpts): MissingDependencyIgnoring {
-    if (opts.ignoreAllMissingOptionalDeps) {
-      return AllMissingDependencyIgnoring
-    }
-    return SpecifiedMissingDependencyIgnoring(opts.ignoreMissingOptionalDeps.toSet())
   }
 
   fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {

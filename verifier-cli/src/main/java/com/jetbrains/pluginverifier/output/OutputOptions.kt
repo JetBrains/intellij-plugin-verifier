@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.output.settings.dependencies.MissingDependencyIgnoring
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import java.nio.file.Path
@@ -11,7 +10,6 @@ data class OutputOptions(
     private val verificationReportsDirectory: Path,
     val teamCityLog: TeamCityLog?,
     val teamCityGroupType: TeamCityResultPrinter.GroupBy,
-    val missingDependencyIgnoring: MissingDependencyIgnoring,
     val dumpBrokenPluginsFile: String?
 ) {
 
