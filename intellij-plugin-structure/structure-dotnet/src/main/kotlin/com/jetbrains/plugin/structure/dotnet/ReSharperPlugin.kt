@@ -25,4 +25,4 @@ data class ReSharperPlugin(
   override val pluginVersion = parsedVersion.normalizedVersionString
 }
 
-data class DotNetDependency(val id: String, val versionRange: String)
+data class DotNetDependency(val id: String, val versionRange: String?)

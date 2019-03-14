@@ -50,6 +50,6 @@ fun ReSharperPluginBean.toPlugin(): ReSharperPlugin {
       pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
       changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
       authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
-      dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version!!) }
+      dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version) }
   )
 }
