@@ -109,7 +109,7 @@ class ServerStartupListener : ServletContextListener {
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.error("Unable to open/create database", e)
-      LOG.info("Flag to clear database on corruption is " + if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean() == true) "ON" else "OFF")
+      LOG.info("Flag to clear database on corruption is " + if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) "ON" else "OFF")
       if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) {
         LOG.info("Trying to recreate database")
         databasePath.deleteLogged()
