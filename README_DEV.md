@@ -27,18 +27,11 @@ Currently, the dependencies between the above projects are:
 - **intellij-plugin-structure** - independent module
 - **intellij-feature-extractor** - depends on the **intellij-plugin-structure**
 - **intellij-plugin-verifier** - depends on the **intellij-plugin-structure**
-- **plugins-verifier-service** - depends on the **intellij-feature-extractor** and **intellij-plugin-verifier**
+- **plugins-verifier-service** - composite build dependency on **intellij-feature-extractor**, **intellij-plugin-verifier** and **intellij-plugin-structure**. 
 
 ####Configuring the local environment
 
-1) Install the **intellij-plugin-structure** module locally by running 'gladle publishToMavenLocal' or 
-a 'Install intellij-plugin-structure locally' run configuration.
+Import the **plugins-verifier-service** module as root. IDEA must automatically import
+other modules using Gradle Composite Builds feature.
 
-2) Install the **intellij-feature-extractor** module locally by running the 'gladle publishToMavenLocal' or running 
-a 'Install intellij-feature-extractor locally' run configuration.
-
-3) Install the **intellij-plugin-verifier** module locally by running the 'gladle publishToMavenLocal' or running 
-a 'Install intellij-plugin-verifier locally' run configuration.
-
-4) If you face compilation errors in the plugins-verifier-service module, run the 'gradle war' or
-a 'Build war plugins-verifier-service' run configuration.  
+Optionally, import the **ide-diff-builder** module.
