@@ -1,6 +1,6 @@
 def projectVersion = project.hasProperty('verifierProjectVersion') ? project.verifierProjectVersion : 'dev'
 def isDevMode = projectVersion == 'dev'
-def intellijStructureVersion = 'dev'
+def intellijStructureVersion = "3.60" //'dev'
 if (!isDevMode) {
   if (project.hasProperty('intellijStructureVersion')) {
     intellijStructureVersion = project.intellijStructureVersion
@@ -65,6 +65,7 @@ configure(allprojects) {
   repositories {
     mavenCentral()
     mavenLocal()
+    maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   }
