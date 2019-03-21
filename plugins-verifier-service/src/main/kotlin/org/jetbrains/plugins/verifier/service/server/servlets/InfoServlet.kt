@@ -5,12 +5,14 @@ import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.servlets.info.IgnoredProblemsPage
 import org.jetbrains.plugins.verifier.service.server.servlets.info.StatusPage
 import org.jetbrains.plugins.verifier.service.service.BaseService
+import javax.servlet.annotation.WebServlet
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 /**
  * The servlet handling requests of the server status, health and parameters.
  */
+@WebServlet(name = "info", urlPatterns = ["/info/*"])
 class InfoServlet : BaseServlet() {
 
   override fun doPost(req: HttpServletRequest, resp: HttpServletResponse) {

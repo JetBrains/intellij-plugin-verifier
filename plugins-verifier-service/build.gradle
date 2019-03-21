@@ -1,7 +1,4 @@
 buildscript {
-
-  ext.kotlin_version = '1.3.21'
-
   repositories {
     jcenter()
     mavenLocal()
@@ -12,7 +9,6 @@ buildscript {
   }
   dependencies {
     classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.6'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
 
     /**
@@ -24,16 +20,31 @@ buildscript {
   }
 }
 
+plugins {
+  id "war"
+  id "org.springframework.boot" version "2.1.3.RELEASE"
+  id "io.spring.dependency-management" version "1.0.7.RELEASE"
+  id "org.jetbrains.kotlin.jvm" version "1.3.21"
+  id "org.jetbrains.kotlin.plugin.spring" version "1.3.21"
+}
+
+compileKotlin {
+  sourceCompatibility = JavaVersion.VERSION_1_8
+  targetCompatibility = JavaVersion.VERSION_1_8
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+}
+
+
 def serviceVersion = project.hasProperty('verifierServiceProjectVersion') ? project.verifierServiceProjectVersion : '1.0'
 
 configure(allprojects) {
   version = serviceVersion
   group = "org.jetbrains.intellij.plugins.verifier"
 
-  apply plugin: "war"
-  apply plugin: 'kotlin'
   apply plugin: 'idea'
-  apply plugin: 'java'
   apply plugin: 'com.google.protobuf'
   apply plugin: "com.dorongold.task-tree"
 
@@ -44,7 +55,7 @@ configure(allprojects) {
     }
   }
 
-  war {
+  bootWar {
     manifest {
       attributes 'Plugin-Verifier-Service-Version': version
     }
@@ -89,9 +100,20 @@ configure(allprojects) {
     maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   }
 
+  configurations {
+    developmentOnly
+    runtimeClasspath {
+      extendsFrom developmentOnly
+    }
+  }
+
   dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web'
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+    developmentOnly "org.springframework.boot:spring-boot-devtools"
+
     testCompile 'junit:junit:4.12'
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib"
     compile group: 'commons-io', name: 'commons-io', version: '2.5'
     compile 'com.github.salomonbrys.kotson:kotson:2.4.0'
     compile 'com.google.code.gson:gson:2.7'
@@ -104,9 +126,8 @@ configure(allprojects) {
     compile 'org.mapdb:mapdb:3.0.5'
 
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.24'
-    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     runtime "org.codehaus.groovy:groovy:2.4.12"
-    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 
     compile "commons-fileupload:commons-fileupload:1.3.1"
 

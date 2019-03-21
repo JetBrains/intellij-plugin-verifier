@@ -34,11 +34,13 @@ import java.util.jar.Manifest
 import javax.servlet.ServletContext
 import javax.servlet.ServletContextEvent
 import javax.servlet.ServletContextListener
+import javax.servlet.annotation.WebListener
 
 /**
  * Startup initializer that configures the [server context] [ServerContext]
  * according to passed [settings] [Settings].
  */
+@WebListener
 class ServerStartupListener : ServletContextListener {
 
   companion object {
