@@ -24,7 +24,7 @@ fun VerificationContext.resolveClassOrProblem(
   return when (resolution) {
     is ClassResolution.Found -> {
       val node = resolution.node
-      if (!isClassAccessibleToOtherClass(node, lookup)) {
+      if (!isKotlinDefaultConstructorMarker(node) && !isClassAccessibleToOtherClass(node, lookup)) {
         registerProblem(IllegalClassAccessProblem(node.createClassLocation(), node.access.getAccessType(), lookupLocation()))
         return null
       }
@@ -60,6 +60,13 @@ fun VerificationContext.resolveClassOrProblem(
     }
   }
 }
+
+/**
+ * Default constructor marker is used in Kotlin byte-code. It is package-private but is never instantiated
+ * because actual passed value of it is always null.
+ */
+private fun isKotlinDefaultConstructorMarker(node: ClassNode): Boolean =
+    node.name == "kotlin/jvm/internal/DefaultConstructorMarker"
 
 private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): List<ClassNode> {
   val parents = listOfNotNull(classNode.superName) + classNode.getInterfaces().orEmpty()
