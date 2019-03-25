@@ -57,11 +57,11 @@ class PluginApiClassResolver(
     }
     val basePluginLocation = basePluginResolver.getClassLocation(className)
     if (basePluginLocation != null) {
-      return ClassFileOrigin.ClassOfPluginDependency(basePluginLocation)
+      return ClassFileOrigin.ClassOfPluginDependency
     }
     val jdkLocation = jdkClassesResolver.getClassLocation(className)
     if (jdkLocation != null) {
-      return ClassFileOrigin.JdkClass(jdkLocation)
+      return ClassFileOrigin.JdkClass
     }
     return null
   }

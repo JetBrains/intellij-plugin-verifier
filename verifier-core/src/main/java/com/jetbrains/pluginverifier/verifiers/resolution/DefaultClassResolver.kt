@@ -54,15 +54,15 @@ class DefaultClassResolver(
     }
     val jdkLocation = jdkClassesResolver.getClassLocation(className)
     if (jdkLocation != null) {
-      return ClassFileOrigin.JdkClass(jdkLocation)
+      return ClassFileOrigin.JdkClass
     }
     val ideLocation = ideResolver.getClassLocation(className)
     if (ideLocation != null) {
-      return ClassFileOrigin.IdeClass(ideLocation)
+      return ClassFileOrigin.IdeClass
     }
     val dependenciesLocation = dependenciesResolver.getClassLocation(className)
     if (dependenciesLocation != null) {
-      return ClassFileOrigin.ClassOfPluginDependency(dependenciesLocation)
+      return ClassFileOrigin.ClassOfPluginDependency
     }
     return null
   }
