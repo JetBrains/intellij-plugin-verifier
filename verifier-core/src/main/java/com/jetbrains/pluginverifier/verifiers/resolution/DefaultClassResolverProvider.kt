@@ -51,7 +51,7 @@ class DefaultClassResolverProvider(
     try {
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
       resultHolder.dependenciesGraph = apiGraph
-      resultHolder.addCycleWarningIfExists(apiGraph)
+      resultHolder.addDependenciesWarnings(apiGraph)
       return provide(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
