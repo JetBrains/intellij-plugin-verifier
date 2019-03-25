@@ -247,6 +247,14 @@ class VerificationCorrectnessTest {
   }
 
   @Test
+  fun `usages of discouraging JDK classes`() {
+    assertDeprecatedUsageFound(
+        "JDK 8 specific class javax.activity.ActivityCompletedException is referenced in mock.plugin.discouraging.DiscouragingJdkClassUser.missingInIdeAndNewJdk(ActivityCompletedException) : void. " +
+            "This class is neither available in JDK 9+ nor is it available in IDE distribution. This may lead to compatibility problems when running the IDE with newer JDK versions."
+    )
+  }
+
+  @Test
   fun `field of the deprecated class usage`() {
     assertDeprecatedUsageFound("Deprecated class deprecated.DeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.field() : void")
   }

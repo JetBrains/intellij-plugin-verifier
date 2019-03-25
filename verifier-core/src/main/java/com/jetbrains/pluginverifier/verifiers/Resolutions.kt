@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedClassUsage
+import com.jetbrains.pluginverifier.results.deprecated.DiscouragingJdkClassUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalClassUsage
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
@@ -9,6 +10,7 @@ import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -29,6 +31,13 @@ fun VerificationContext.resolveClassOrProblem(
       val classDeprecated = node.getDeprecationInfo()
       if (classDeprecated != null) {
         registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation(), classDeprecated))
+      }
+      if (node.isDiscouragingJdkClass()) {
+        val classOrigin = classResolver.getOriginOfClass(node.name)
+        if (classOrigin is ClassFileOrigin.IdeClass || classOrigin is ClassFileOrigin.JdkClass) {
+          val isClassProvidedByIde = classOrigin is ClassFileOrigin.IdeClass
+          registerDeprecatedUsage(DiscouragingJdkClassUsage(node.createClassLocation(), lookupLocation(), isClassProvidedByIde))
+        }
       }
       val experimentalApi = node.isExperimentalApi()
       if (experimentalApi) {

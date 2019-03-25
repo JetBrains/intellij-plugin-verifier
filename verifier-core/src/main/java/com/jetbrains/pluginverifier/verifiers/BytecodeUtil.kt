@@ -136,7 +136,9 @@ fun FieldNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
 
 fun MethodNode.isBridgeMethod(): Boolean = access and Opcodes.ACC_BRIDGE != 0
 
-fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = extractPackage(first.name) == extractPackage(second.name)
+fun ClassNode.getJavaPackage(): String = name.substringBeforeLast('/', "").replace("/", ".")
+
+fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = first.getJavaPackage() == second.getJavaPackage()
 
 @Suppress("UNCHECKED_CAST")
 fun ClassNode.getInvisibleAnnotations() = invisibleAnnotations as? List<AnnotationNode>
@@ -178,5 +180,3 @@ fun AnnotationNode.getAnnotationValue(key: String): Any? {
  * C and D are members of the same run-time package (§5.3).
  */
 fun isClassAccessibleToOtherClass(me: ClassNode, other: ClassNode): Boolean = me.isPublic() || haveTheSamePackage(me, other)
-
-private fun extractPackage(className: String): String = className.substringBeforeLast('/', "")

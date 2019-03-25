@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.results.deprecated.DiscouragingJdkClassUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -37,7 +38,7 @@ data class VerificationContext(
     if (findUnstableApiUsages) {
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
-      if (shouldIndexDeprecatedClass(deprecatedElementHost, usageHostClass)) {
+      if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
         resultHolder.addDeprecatedUsage(deprecatedApiUsage)
       }
     }
@@ -47,7 +48,7 @@ data class VerificationContext(
     if (findUnstableApiUsages) {
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
-      if (shouldIndexDeprecatedClass(elementHostClass, usageHostClass)) {
+      if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
         resultHolder.addExperimentalUsage(experimentalApiUsage)
       }
     }
@@ -62,11 +63,11 @@ data class VerificationContext(
    * and it is not deprecated JDK API nor plugin's internal
    * deprecated API.
    */
-  private fun shouldIndexDeprecatedClass(elementHost: ClassLocation, usageHostClass: ClassLocation): Boolean {
+  private fun shouldIndexDeprecatedClass(usageHostClass: ClassLocation, apiHostClass: ClassLocation): Boolean {
     val usageHostOrigin = classResolver.getOriginOfClass(usageHostClass.className)
     if (usageHostOrigin is ClassFileOrigin.PluginClass) {
-      val deprecatedHostOrigin = classResolver.getOriginOfClass(elementHost.className)
-      return deprecatedHostOrigin is ClassFileOrigin.IdeClass || deprecatedHostOrigin is ClassFileOrigin.ClassOfPluginDependency
+      val apiHostOrigin = classResolver.getOriginOfClass(apiHostClass.className)
+      return apiHostOrigin is ClassFileOrigin.IdeClass || apiHostOrigin is ClassFileOrigin.ClassOfPluginDependency
     }
     return false
   }
