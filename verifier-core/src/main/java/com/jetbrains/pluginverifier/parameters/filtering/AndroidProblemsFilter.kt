@@ -22,8 +22,8 @@ class AndroidProblemsFilter : ProblemsFilter {
       verificationContext: VerificationContext
   ): ProblemsFilter.Result {
     val inducingClass = problem.getClassInducingProblem()
-    val report = inducingClass?.belongsToAndroid() ?: false
-    return if (report) {
+        ?: return ProblemsFilter.Result.Report
+    return if (inducingClass.belongsToAndroid()) {
       ProblemsFilter.Result.Report
     } else {
       ProblemsFilter.Result.Ignore("the problem doesn't belong to Android subsystem")
