@@ -10,77 +10,52 @@ import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
-
-fun ClassResolver.resolveClassOrProblem(
-    className: String,
-    lookup: ClassNode,
-    problemRegistrar: ProblemRegistrar,
-    lookupLocation: () -> Location
-): ClassNode? {
-  val resolution = resolveClass(className)
-  return with(resolution) {
-    when (this) {
-      is ClassResolution.Found -> {
-        if (!isClassAccessibleToOtherClass(node, lookup)) {
-          problemRegistrar.registerProblem(IllegalClassAccessProblem(node.createClassLocation(), node.access.getAccessType(), lookupLocation()))
-          return null
-        }
-        val classDeprecated = node.getDeprecationInfo()
-        if (classDeprecated != null) {
-          problemRegistrar.registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation(), classDeprecated))
-        }
-        val experimentalApi = node.isExperimentalApi()
-        if (experimentalApi) {
-          problemRegistrar.registerExperimentalApiUsage(ExperimentalClassUsage(node.createClassLocation(), lookupLocation()))
-        }
-        node
-      }
-      ClassResolution.ExternalClass -> null
-      ClassResolution.NotFound -> {
-        problemRegistrar.registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
-        null
-      }
-      is ClassResolution.InvalidClassFile -> {
-        problemRegistrar.registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), asmError))
-        null
-      }
-      is ClassResolution.FailedToReadClassFile -> {
-        problemRegistrar.registerProblem(FailedToReadClassFileProblem(ClassReference(className), lookupLocation(), reason))
-        null
-      }
-    }
-  }
-}
-
 
 fun VerificationContext.resolveClassOrProblem(
     className: String,
     lookup: ClassNode,
     lookupLocation: () -> Location
 ): ClassNode? {
-  return classResolver.resolveClassOrProblem(className, lookup, this, lookupLocation)
-}
-
-fun VerificationContext.checkClassExistsOrExternal(className: String, lookupLocation: () -> Location) {
-  if (!classResolver.isExternalClass(className) && !classResolver.classExists(className)) {
-    registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
+  val resolution = classResolver.resolveClass(className)
+  return when (resolution) {
+    is ClassResolution.Found -> {
+      val node = resolution.node
+      if (!isClassAccessibleToOtherClass(node, lookup)) {
+        registerProblem(IllegalClassAccessProblem(node.createClassLocation(), node.access.getAccessType(), lookupLocation()))
+        return null
+      }
+      val classDeprecated = node.getDeprecationInfo()
+      if (classDeprecated != null) {
+        registerDeprecatedUsage(DeprecatedClassUsage(node.createClassLocation(), lookupLocation(), classDeprecated))
+      }
+      val experimentalApi = node.isExperimentalApi()
+      if (experimentalApi) {
+        registerExperimentalApiUsage(ExperimentalClassUsage(node.createClassLocation(), lookupLocation()))
+      }
+      node
+    }
+    ClassResolution.ExternalClass -> null
+    ClassResolution.NotFound -> {
+      registerProblem(ClassNotFoundProblem(ClassReference(className), lookupLocation()))
+      null
+    }
+    is ClassResolution.InvalidClassFile -> {
+      registerProblem(InvalidClassFileProblem(ClassReference(className), lookupLocation(), resolution.asmError))
+      null
+    }
+    is ClassResolution.FailedToReadClassFile -> {
+      registerProblem(FailedToReadClassFileProblem(ClassReference(className), lookupLocation(), resolution.reason))
+      null
+    }
   }
 }
 
-@Suppress("UNCHECKED_CAST")
-private fun ClassResolver.resolveAllDirectParents(classNode: ClassNode, problemRegistrar: ProblemRegistrar): List<ClassNode> {
+private fun VerificationContext.resolveAllDirectParents(classNode: ClassNode): List<ClassNode> {
   val parents = listOfNotNull(classNode.superName) + classNode.getInterfaces().orEmpty()
-  return parents.mapNotNull { resolveClassOrProblem(it, classNode, problemRegistrar) { classNode.createClassLocation() } }
+  return parents.mapNotNull { resolveClassOrProblem(it, classNode) { classNode.createClassLocation() } }
 }
-
-fun ClassResolver.isSubclassOf(child: ClassNode, possibleParent: ClassNode, problemRegistrar: ProblemRegistrar): Boolean =
-    isSubclassOf(child, possibleParent.name, problemRegistrar)
-
-fun VerificationContext.isSubclassOf(child: ClassNode, possibleParent: ClassNode): Boolean =
-    classResolver.isSubclassOf(child, possibleParent, this)
 
 fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentName: String): Boolean {
   if (childClassName == possibleParentName) {
@@ -91,19 +66,15 @@ fun VerificationContext.isSubclassOrSelf(childClassName: String, possibleParentN
 
 fun VerificationContext.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
   val childClass = (classResolver.resolveClass(childClassName) as? ClassResolution.Found)?.node ?: return false
-  return classResolver.isSubclassOf(childClass, possibleParentName, this)
+  return isSubclassOf(childClass, possibleParentName)
 }
 
-fun ClassResolver.isSubclassOf(
-    child: ClassNode,
-    possibleParentName: String,
-    problemRegistrar: ProblemRegistrar
-): Boolean {
+fun VerificationContext.isSubclassOf(child: ClassNode, possibleParentName: String): Boolean {
   if (possibleParentName == CommonClassNames.JAVA_LANG_OBJECT) {
     return true
   }
 
-  val directParents = resolveAllDirectParents(child, problemRegistrar)
+  val directParents = resolveAllDirectParents(child)
 
   val queue = LinkedList<ClassNode>()
   queue.addAll(directParents)
@@ -117,7 +88,7 @@ fun ClassResolver.isSubclassOf(
       return true
     }
 
-    resolveAllDirectParents(node, problemRegistrar).filterNot { it.name in visited }.forEach {
+    resolveAllDirectParents(node).filterNot { it.name in visited }.forEach {
       visited.add(it.name)
       queue.addLast(it)
     }

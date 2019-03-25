@@ -29,7 +29,7 @@ private class InvokeImplementation(
     val verifiableClass: ClassNode,
     val verifiableMethod: MethodNode,
     val instr: MethodInsnNode,
-    val ctx: VerificationContext,
+    val context: VerificationContext,
     val methodOwner: String = instr.owner,
     val methodName: String = instr.name,
     val methodDescriptor: String = instr.desc
@@ -42,19 +42,18 @@ private class InvokeImplementation(
       SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor),
       instruction,
       fromMethod,
-      ctx,
-      ctx.classResolver
+      context
   )
 
   fun verify() {
     if (methodOwner.startsWith("[")) {
       val arrayType = methodOwner.extractClassNameFromDescr()
       if (arrayType != null) {
-        ctx.checkClassExistsOrExternal(arrayType) { fromMethod }
+        context.resolveClassOrProblem(arrayType, verifiableClass) { fromMethod }
       }
       return
     }
-    val ownerNode = ctx.resolveClassOrProblem(methodOwner, verifiableClass) { fromMethod } ?: return
+    val ownerNode = context.resolveClassOrProblem(methodOwner, verifiableClass) { fromMethod } ?: return
 
     when (instruction) {
       Instruction.INVOKE_VIRTUAL -> processInvokeVirtual(ownerNode)
@@ -74,7 +73,7 @@ private class InvokeImplementation(
        */
       val methodDeclaration = createMethodLocation(resolved.definingClass, resolved.methodNode)
       val caller = fromMethod
-      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodDeclaration, caller, instruction))
+      context.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodDeclaration, caller, instruction))
     }
   }
 
@@ -104,7 +103,7 @@ private class InvokeImplementation(
      */
     if (resolved.methodNode.isStatic()) {
       val resolvedMethod = createMethodLocation(resolved.definingClass, resolved.methodNode)
-      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, fromMethod, instruction))
+      context.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, fromMethod, instruction))
     }
 
     /*
@@ -130,9 +129,9 @@ private class InvokeImplementation(
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassNode = if (resolved.methodNode.name != "<init>" && (!ownerNode.isInterface() && methodOwner == verifiableClass.superName) && verifiableClass.isSuperFlag()) {
-      ctx.resolveClassOrProblem(verifiableClass.superName, verifiableClass) { fromMethod } ?: return
+      context.resolveClassOrProblem(verifiableClass.superName, verifiableClass) { fromMethod } ?: return
     } else {
-      ctx.resolveClassOrProblem(methodOwner, verifiableClass) { fromMethod } ?: return
+      context.resolveClassOrProblem(methodOwner, verifiableClass) { fromMethod } ?: return
     }
 
     /*
@@ -150,7 +149,7 @@ private class InvokeImplementation(
        */
       if (!verifiableMethod.isSynthetic() || !verifiableMethod.isBridgeMethod()) {
         val methodDeclaration = createMethodLocation(resolvedMethod.definingClass, resolvedMethod.methodNode)
-        ctx.registerProblem(AbstractMethodInvocationProblem(methodDeclaration, fromMethod, instruction))
+        context.registerProblem(AbstractMethodInvocationProblem(methodDeclaration, fromMethod, instruction))
       }
     }
   }
@@ -170,11 +169,11 @@ private class InvokeImplementation(
      */
     if (resolved.methodNode.isPrivate() || isTestPrivateInterfaceMethod(resolved.methodNode)) {
       val resolvedMethod = createMethodLocation(resolved.definingClass, resolved.methodNode)
-      ctx.registerProblem(InvokeInterfaceOnPrivateMethodProblem(resolvedMethod, fromMethod))
+      context.registerProblem(InvokeInterfaceOnPrivateMethodProblem(resolvedMethod, fromMethod))
     }
     if (resolved.methodNode.isStatic()) {
       val resolvedMethod = createMethodLocation(resolved.definingClass, resolved.methodNode)
-      ctx.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, fromMethod, instruction))
+      context.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(resolvedMethod, fromMethod, instruction))
     }
 
     /**
@@ -241,7 +240,7 @@ private class InvokeImplementation(
     if (!resolved.methodNode.isStatic()) {
       val methodDeclaration = createMethodLocation(resolved.definingClass, resolved.methodNode)
       val caller = fromMethod
-      ctx.registerProblem(InvokeStaticOnInstanceMethodProblem(methodDeclaration, caller))
+      context.registerProblem(InvokeStaticOnInstanceMethodProblem(methodDeclaration, caller))
     }
   }
 
@@ -283,8 +282,8 @@ private class InvokeImplementation(
 
   private fun registerMethodNotFoundProblem(ownerNode: ClassNode) {
     val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
-    val methodOwnerHierarchy = ClassHierarchyBuilder(ctx).buildClassHierarchy(ownerNode)
-    ctx.registerProblem(
+    val methodOwnerHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(ownerNode)
+    context.registerProblem(
         MethodNotFoundProblem(
             methodReference,
             fromMethod,
@@ -317,7 +316,7 @@ private class InvokeImplementation(
       }
     } else if (methodNode.isProtected()) {
       if (!haveTheSamePackage(verifiableClass, definingClass)) {
-        if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
+        if (!context.isSubclassOf(verifiableClass, definingClass.name)) {
           accessProblem = AccessType.PROTECTED
         }
       }
@@ -333,7 +332,7 @@ private class InvokeImplementation(
       val methodDeclaration = createMethodLocation(resolvedMethod.definingClass, resolvedMethod.methodNode)
       val methodReference = SymbolicReference.methodOf(methodOwner, methodName, methodDescriptor)
       val problem = IllegalMethodAccessProblem(methodReference, methodDeclaration, accessProblem, fromMethod, instruction)
-      ctx.registerProblem(problem)
+      context.registerProblem(problem)
       return null
     }
     checkMethodIsUnstable(resolvedMethod)
@@ -344,10 +343,10 @@ private class InvokeImplementation(
     with(resolvedMethod) {
       val methodDeprecated = methodNode.getDeprecationInfo()
       if (methodDeprecated != null) {
-        ctx.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), fromMethod, methodDeprecated))
+        context.registerDeprecatedUsage(DeprecatedMethodUsage(createMethodLocation(definingClass, methodNode), fromMethod, methodDeprecated))
       }
       if (methodNode.isExperimentalApi()) {
-        ctx.registerExperimentalApiUsage(ExperimentalMethodUsage(createMethodLocation(definingClass, methodNode), fromMethod))
+        context.registerExperimentalApiUsage(ExperimentalMethodUsage(createMethodLocation(definingClass, methodNode), fromMethod))
       }
     }
   }

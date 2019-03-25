@@ -143,7 +143,7 @@ private class FieldsImplementation(
         }
       fieldNode.isProtected() -> {
         if (!haveTheSamePackage(verifiableClass, definingClass)) {
-          if (!ctx.isSubclassOf(verifiableClass, definingClass)) {
+          if (!ctx.isSubclassOf(verifiableClass, definingClass.name)) {
             accessProblem = AccessType.PROTECTED
           }
         }
@@ -183,7 +183,7 @@ private class FieldsImplementation(
 
     val ownerNode = ctx.resolveClassOrProblem(fieldOwner, verifiableClass) { getFromMethod() } ?: return null
 
-    val lookupResult = FieldResolution(fieldName, fieldDescriptor, ctx.classResolver, ctx).resolveField(ownerNode)
+    val lookupResult = FieldResolution(fieldName, fieldDescriptor, ctx).resolveField(ownerNode)
     return when (lookupResult) {
       FieldResolutionResult.Abort -> null
       FieldResolutionResult.NotFound -> {

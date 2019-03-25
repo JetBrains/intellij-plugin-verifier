@@ -10,8 +10,7 @@ import org.objectweb.asm.tree.ClassNode
 class FieldResolution(
     private val fieldName: String,
     private val fieldDescriptor: String,
-    private val classResolver: ClassResolver,
-    private val problemRegistrar: ProblemRegistrar
+    private val context: VerificationContext
 ) {
 
   fun resolveField(currentClass: ClassNode): FieldResolutionResult {
@@ -30,7 +29,7 @@ class FieldResolution(
      * of the specified class or interface C.
      */
     for (anInterface in currentClass.getInterfaces().orEmpty()) {
-      val resolvedInterface = classResolver.resolveClassOrProblem(anInterface, currentClass, problemRegistrar) { currentClass.createClassLocation() }
+      val resolvedInterface = context.resolveClassOrProblem(anInterface, currentClass) { currentClass.createClassLocation() }
           ?: return FieldResolutionResult.Abort
 
       val lookupResult = resolveField(resolvedInterface)
@@ -46,7 +45,7 @@ class FieldResolution(
      */
     val superName = currentClass.superName
     if (superName != null) {
-      val resolvedSuper = classResolver.resolveClassOrProblem(superName, currentClass, problemRegistrar) { currentClass.createClassLocation() }
+      val resolvedSuper = context.resolveClassOrProblem(superName, currentClass) { currentClass.createClassLocation() }
           ?: return FieldResolutionResult.Abort
       val lookupResult = resolveField(resolvedSuper)
       when (lookupResult) {

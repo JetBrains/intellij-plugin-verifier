@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.checkClassExistsOrExternal
 import com.jetbrains.pluginverifier.verifiers.createMethodLocation
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
+import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.TryCatchBlockNode
@@ -15,7 +15,7 @@ class MethodTryCatchVerifier : MethodVerifier {
     for (block in blocks) {
       val catchException = block.type ?: continue
       val descr = catchException.extractClassNameFromDescr() ?: continue
-      ctx.checkClassExistsOrExternal(descr, { createMethodLocation(clazz, method) })
+      ctx.resolveClassOrProblem(descr, clazz) { createMethodLocation(clazz, method) }
     }
   }
 }
