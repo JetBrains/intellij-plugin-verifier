@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
-import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
-import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
-import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.*
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
 import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
@@ -29,6 +26,7 @@ class BytecodeVerifier {
   private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
 
   private val classVerifiers = arrayOf(
+      PluginClassFileVersionVerifier(),
       SuperClassVerifier(),
       InterfacesVerifier(),
       AbstractMethodVerifier(),

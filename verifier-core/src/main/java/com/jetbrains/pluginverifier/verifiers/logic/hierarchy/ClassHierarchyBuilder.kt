@@ -13,7 +13,7 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
     val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
         CommonClassNames.JAVA_LANG_OBJECT,
         false,
-        ClassFileOrigin.JDK_CLASS,
+        ClassFileOrigin.JdkClass,
         null,
         emptyList()
     )

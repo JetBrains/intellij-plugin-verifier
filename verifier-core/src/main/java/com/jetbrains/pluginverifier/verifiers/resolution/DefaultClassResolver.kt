@@ -36,7 +36,7 @@ class DefaultClassResolver(
 
   override fun isExternalClass(className: String) = externalClassesPackageFilter.accept(className)
 
-  override fun classExists(className: String) = getOriginOfClass(className) != null
+  override fun classExists(className: String) = cachingResolver.containsClass(className)
 
   override fun packageExists(packageName: String) = cachingResolver.containsPackage(packageName)
 
@@ -48,17 +48,21 @@ class DefaultClassResolver(
   }
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {
-    if (pluginResolver.containsClass(className)) {
-      return ClassFileOrigin.PLUGIN_INTERNAL_CLASS
+    val pluginLocation = pluginResolver.getClassLocation(className)
+    if (pluginLocation != null) {
+      return ClassFileOrigin.PluginClass(pluginLocation)
     }
-    if (jdkClassesResolver.containsClass(className)) {
-      return ClassFileOrigin.JDK_CLASS
+    val jdkLocation = jdkClassesResolver.getClassLocation(className)
+    if (jdkLocation != null) {
+      return ClassFileOrigin.JdkClass(jdkLocation)
     }
-    if (ideResolver.containsClass(className)) {
-      return ClassFileOrigin.IDE_CLASS
+    val ideLocation = ideResolver.getClassLocation(className)
+    if (ideLocation != null) {
+      return ClassFileOrigin.IdeClass(ideLocation)
     }
-    if (dependenciesResolver.containsClass(className)) {
-      return ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
+    val dependenciesLocation = dependenciesResolver.getClassLocation(className)
+    if (dependenciesLocation != null) {
+      return ClassFileOrigin.ClassOfPluginDependency(dependenciesLocation)
     }
     return null
   }

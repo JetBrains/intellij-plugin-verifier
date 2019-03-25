@@ -39,7 +39,7 @@ class PluginApiClassResolver(
   override fun isExternalClass(className: String) =
       !basePluginPackageFilter.accept(className) && !cachingResolver.containsClass(className)
 
-  override fun classExists(className: String) = getOriginOfClass(className) != null
+  override fun classExists(className: String) = cachingResolver.containsClass(className)
 
   override fun packageExists(packageName: String) = cachingResolver.containsPackage(packageName)
 
@@ -51,14 +51,17 @@ class PluginApiClassResolver(
   }
 
   override fun getOriginOfClass(className: String): ClassFileOrigin? {
-    if (checkedPluginResolver.containsClass(className)) {
-      return ClassFileOrigin.PLUGIN_INTERNAL_CLASS
+    val checkPluginLocation = checkedPluginResolver.getClassLocation(className)
+    if (checkPluginLocation != null) {
+      return ClassFileOrigin.PluginClass(checkPluginLocation)
     }
-    if (basePluginResolver.containsClass(className)) {
-      return ClassFileOrigin.CLASS_OF_PLUGIN_DEPENDENCY
+    val basePluginLocation = basePluginResolver.getClassLocation(className)
+    if (basePluginLocation != null) {
+      return ClassFileOrigin.ClassOfPluginDependency(basePluginLocation)
     }
-    if (jdkClassesResolver.containsClass(className)) {
-      return ClassFileOrigin.JDK_CLASS
+    val jdkLocation = jdkClassesResolver.getClassLocation(className)
+    if (jdkLocation != null) {
+      return ClassFileOrigin.JdkClass(jdkLocation)
     }
     return null
   }

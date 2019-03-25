@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+
 /**
  * Represents possible locations of a class file.
  *
@@ -18,13 +20,12 @@ package com.jetbrains.pluginverifier.verifiers.resolution
  * If a class is not found in the previous paths,
  * a "no such class" problem may be reported.
  */
-enum class ClassFileOrigin {
-  PLUGIN_INTERNAL_CLASS,
+sealed class ClassFileOrigin {
+  class PluginClass(val containingResolver: Resolver) : ClassFileOrigin()
 
-  JDK_CLASS,
+  object ClassOfPluginDependency : ClassFileOrigin()
 
-  IDE_CLASS,
+  object IdeClass : ClassFileOrigin()
 
-  CLASS_OF_PLUGIN_DEPENDENCY
-
+  object JdkClass : ClassFileOrigin()
 }
