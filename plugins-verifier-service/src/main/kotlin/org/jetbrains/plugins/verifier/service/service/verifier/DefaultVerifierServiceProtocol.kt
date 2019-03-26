@@ -4,8 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.byteArrayMediaType
 import com.jetbrains.pluginverifier.network.executeSuccessfully
+import com.jetbrains.pluginverifier.network.octetStreamMediaType
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -58,7 +58,7 @@ class DefaultVerifierServiceProtocol(
         authorizationToken,
         updateInfo.updateId,
         verificationResponse.ideVersion,
-        RequestBody.create(byteArrayMediaType, verificationResponse.toByteArray())
+        RequestBody.create(octetStreamMediaType, verificationResponse.toByteArray())
     ).executeSuccessfully()
 
     retrofitConnector.sendVerificationResult(
