@@ -47,12 +47,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
      */
     val contentDisposition = headers().get("Content-Disposition")
     if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-      val fileName = contentDisposition.substringAfter(FILENAME).substringBefore(";")
-      val path = if (fileName.startsWith('\"') && fileName.endsWith('\"')) {
-        fileName.drop(1).dropLast(1)
-      } else {
-        fileName
-      }
+      val path = contentDisposition.substringAfter(FILENAME).substringBefore(";").removeSurrounding("\"")
       val extension = guessExtensionByPath(path)
       if (extension != null) {
         return extension
