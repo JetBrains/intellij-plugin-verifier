@@ -11,10 +11,6 @@ package com.jetbrains.pluginverifier.results.problems
  *
  * Each problem has a certain [problemType],
  * which can be used to group similar problems.
- *
- * If you add a new implementation of [CompatibilityProblem],
- * it is good to add an if-clause to
- * [com.jetbrains.pluginverifier.analysis.ProblemAnalysisKt.getHostClassOfProblem].
  */
 abstract class CompatibilityProblem {
 
