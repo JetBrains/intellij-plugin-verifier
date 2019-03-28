@@ -264,6 +264,14 @@ private fun VerificationResult.isKnownProblem(problem: CompatibilityProblem): Bo
   }
 
   return when (problem) {
+    is ClassNotFoundProblem -> {
+      knownProblems.any { it is PackageNotFoundProblem && problem in it.classNotFoundProblems }
+    }
+    is PackageNotFoundProblem -> {
+      problem.classNotFoundProblems.all { classNotFoundProblem ->
+        isKnownProblem(classNotFoundProblem)
+      }
+    }
     is MethodNotFoundProblem -> {
       /*
       Problem "Method is not accessible" changed to "Method is not found":

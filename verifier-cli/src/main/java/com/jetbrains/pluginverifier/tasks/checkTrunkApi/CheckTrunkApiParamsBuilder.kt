@@ -111,7 +111,7 @@ class CheckTrunkApiParamsBuilder(
     reportage.logVerificationStage(message)
     val releaseCompatibleVersions = pluginRepository.retry(message) {
       getLastCompatiblePlugins(releaseVersion)
-    }
+    }.filter { (it as UpdateInfo).updateId == 6328 }
 
     val releaseExcludedPluginsFilter = ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(releaseIdeDescriptor.ide))
     val releaseIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(releaseLocalRepository)
