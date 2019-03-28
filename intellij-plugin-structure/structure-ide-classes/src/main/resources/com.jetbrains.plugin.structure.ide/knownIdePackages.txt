@@ -247,7 +247,6 @@ com.sixrr.inspectjs
 com.siyeh.ig
 com.theoryinpractice.testng
 git4idea
-icons
 ie.wombat
 jetbrains.communicator
 jetbrains.plugins
