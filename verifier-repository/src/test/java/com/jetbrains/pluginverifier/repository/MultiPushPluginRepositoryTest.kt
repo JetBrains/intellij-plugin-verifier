@@ -11,7 +11,7 @@ import java.io.ByteArrayInputStream
 import java.net.URL
 import javax.xml.parsers.DocumentBuilderFactory
 
-@HostReachableRule.HostReachable("https://google.com")
+@HostReachableRule.HostReachable("https://buildserver.labs.intellij.net")
 class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginRepository>() {
 
   companion object {

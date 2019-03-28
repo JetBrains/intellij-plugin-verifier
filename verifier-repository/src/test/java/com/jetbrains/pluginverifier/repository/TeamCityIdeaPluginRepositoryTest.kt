@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.net.URL
 
-@HostReachableRule.HostReachable("https://google.com")
+@HostReachableRule.HostReachable("https://buildserver.labs.intellij.net")
 class TeamCityIdeaPluginRepositoryTest : BaseRepositoryTest<TeamCityIdeaPluginRepository>() {
 
   companion object {

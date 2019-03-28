@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.net.URL
 
-@HostReachableRule.HostReachable("https://google.com")
+@HostReachableRule.HostReachable("https://ea-engine.labs.intellij.net")
 class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyzerPluginRepository>() {
 
   companion object {
