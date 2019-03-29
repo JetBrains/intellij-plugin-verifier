@@ -77,7 +77,7 @@ class StatusPage(private val serverContext: ServerContext) {
             val serviceName = service.serviceName
             li {
               +(serviceName + " - ${service.getState()}")
-              form("control-$serviceName", "display: inline;", "/info/control-service", method = "post") {
+              form("control-$serviceName", "display: inline;", "/control-service", method = "post") {
                 input("submit", "command", "start")
                 input("submit", "command", "resume")
                 input("submit", "command", "pause")
