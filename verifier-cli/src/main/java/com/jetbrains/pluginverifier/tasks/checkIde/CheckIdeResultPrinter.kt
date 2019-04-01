@@ -56,7 +56,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
           is VerificationResult.FailedToDownload -> emptySet()
         }
       }.distinctBy { it.shortDescription }.size
-      val affectedPluginsCnt = results.distinctBy { it.verificationTarget }.size
+      val affectedPluginsCnt = results.distinctBy { it.plugin }.size
       if (totalProblemsNumber > 0) {
         tcLog.buildStatusFailure("IDE $ideVersion has " + "problem".pluralizeWithNumber(totalProblemsNumber) + " affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt))
       } else {
