@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
-import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -28,13 +26,14 @@ object OptionsParser {
   private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
 
   private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
-    val dir = opts.verificationReportsDir?.let { File(it) }
-    if (dir != null) {
-      if (dir.exists() && dir.listFiles().orEmpty().isNotEmpty()) {
-        LOG.info("Delete the verification directory ${dir.absolutePath} because it isn't empty")
-        dir.deleteLogged()
+    val reportDirectory = opts.verificationReportsDir?.let { Paths.get(it) }
+    if (reportDirectory != null) {
+      if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
+        LOG.info("Delete the verification directory ${reportDirectory.toAbsolutePath()} because it isn't empty")
+        reportDirectory.deleteLogged()
       }
-      dir.createDir()
+      reportDirectory.createDir()
+      return reportDirectory
     }
     val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
     val directoryName = ("verification-$nowTime").replaceInvalidFileNameCharacters()
