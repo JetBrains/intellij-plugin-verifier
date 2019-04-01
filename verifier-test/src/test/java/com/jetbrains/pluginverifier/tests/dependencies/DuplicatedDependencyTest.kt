@@ -33,7 +33,7 @@ class DuplicatedDependencyTest {
 
     val resultHolder = ResultHolder()
     resultHolder.addDependenciesWarnings(dependenciesGraph)
-    assertEquals(setOf(PluginStructureWarning(DuplicatedDependencyWarning(a, b).message)), resultHolder.pluginStructureWarnings)
+    assertEquals(setOf(PluginStructureWarning(DuplicatedDependencyWarning(a, "b").message)), resultHolder.pluginStructureWarnings)
   }
 
 }

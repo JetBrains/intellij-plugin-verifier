@@ -5,12 +5,12 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 data class DuplicatedDependencyWarning(
     val verifiedPlugin: DependencyNode,
-    val dependencyNode: DependencyNode
+    val dependencyId: String
 ) : PluginProblem() {
 
   override val level
     get() = Level.WARNING
 
   override val message: String
-    get() = "Plugin $verifiedPlugin has duplicated dependency declaration on $dependencyNode"
+    get() = "Plugin $verifiedPlugin has duplicated dependency declaration: $dependencyId"
 }

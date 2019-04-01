@@ -84,7 +84,7 @@ class ResultHolder {
 
   private fun addDuplicatedDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
     val verifiedPlugin = dependenciesGraph.verifiedPlugin
-    val directDependencies = dependenciesGraph.edges.filter { it.from == verifiedPlugin }.map { it.to }
+    val directDependencies = dependenciesGraph.edges.filter { it.from == verifiedPlugin }.map { it.dependency.id }
     val duplicatedDependencies = directDependencies.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
     for (duplicatedDependency in duplicatedDependencies) {
       addPluginErrorOrWarning(DuplicatedDependencyWarning(verifiedPlugin, duplicatedDependency))
