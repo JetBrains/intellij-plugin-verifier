@@ -14,7 +14,6 @@ import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
  * These problems should not be reported in the verification results.
  *
  * @see [PR-1140](https://youtrack.jetbrains.com/issue/PR-1140)
- * @author Sergey Patrikeev
  */
 interface DocumentedProblem {
   fun isDocumenting(problem: CompatibilityProblem, verificationContext: VerificationContext): Boolean

@@ -6,10 +6,6 @@ import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.createVerification
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-
-/**
- * @author Dennis.Ushakov
- */
 class OverrideNonFinalVerifier : MethodVerifier {
 
 

@@ -25,13 +25,10 @@ import org.xml.sax.InputSource;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author mike
- */
 @SuppressWarnings("unchecked")
 public class JDOMUtil {
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
@@ -97,7 +94,7 @@ public class JDOMUtil {
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     //to prevent closing the supplied stream from InputStreamReader.close()
     InputStream copied = copyInputStream(stream);
-    try (InputStreamReader reader = new InputStreamReader(copied, Charset.forName("UTF-8"))) {
+    try (InputStreamReader reader = new InputStreamReader(copied, StandardCharsets.UTF_8)) {
       SAXBuilder saxBuilder = new SAXBuilder();
       saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
       return saxBuilder.build(reader);

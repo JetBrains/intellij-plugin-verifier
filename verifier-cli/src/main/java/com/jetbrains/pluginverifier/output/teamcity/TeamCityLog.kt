@@ -4,9 +4,6 @@ import java.io.Closeable
 import java.io.PrintStream
 import java.io.PrintWriter
 
-/**
- * @author Sergey Evdokimov
- */
 class TeamCityLog(private val out: PrintWriter) {
 
   constructor(printStream: PrintStream) : this(PrintWriter(printStream, true))

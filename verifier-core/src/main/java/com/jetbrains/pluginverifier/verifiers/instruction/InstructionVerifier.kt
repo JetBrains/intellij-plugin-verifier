@@ -6,9 +6,6 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-/**
- * @author Dennis.Ushakov
- */
 interface InstructionVerifier : Opcodes {
   fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext)
 }

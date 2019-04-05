@@ -17,8 +17,6 @@ import org.objectweb.asm.tree.MethodNode
 
 /**
  * Verifies GETSTATIC, PUTSTATIC, GETFIELD and PUTFIELD instructions
- *
- * @author Sergey Patrikeev
  */
 class FieldAccessInstructionVerifier : InstructionVerifier {
 

@@ -9,8 +9,6 @@ import org.objectweb.asm.tree.ClassNode
 
 /**
  * Check that all explicitly defined interfaces exist and are indeed interfaces (not classes).
-
- * @author Dennis.Ushakov
  */
 class InterfacesVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {

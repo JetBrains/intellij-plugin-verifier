@@ -22,12 +22,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Leonid Shalupov
- * <p/>
- * This versions comparator is much smarter than StringUtil.compareVersionNumbers
- * E.g: is used for TeamCity plugins and Ruby gems versions
- */
 public class VersionComparatorUtil {
   private static final Pattern WORDS_SPLITTER = Pattern.compile("\\d+|[^\\d]+");
   private static final VersionTokenType[] VALUES = VersionTokenType.values();

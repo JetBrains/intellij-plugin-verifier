@@ -10,8 +10,6 @@ import org.objectweb.asm.tree.ClassNode
 
 /**
  * Check that superclass exists and is indeed a class (not interface).
- *
- * @author Dennis.Ushakov
  */
 class SuperClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {

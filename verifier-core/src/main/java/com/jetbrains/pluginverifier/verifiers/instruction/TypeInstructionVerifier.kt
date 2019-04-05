@@ -11,8 +11,6 @@ import org.objectweb.asm.tree.TypeInsnNode
 
 /**
  * Processing of NEW, ANEWARRAY, CHECKCAST and INSTANCEOF instructions.
-
- * @author Dennis.Ushakov
  */
 class TypeInstructionVerifier : InstructionVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
