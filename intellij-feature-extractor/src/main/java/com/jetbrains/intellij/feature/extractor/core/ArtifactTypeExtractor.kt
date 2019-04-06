@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.MethodInsnNode
  */
 class ArtifactTypeExtractor(resolver: Resolver) : Extractor(resolver) {
   override fun extractImpl(classNode: ClassNode): List<String>? {
-    val init = classNode.findMethod({ it.name == "<init>" }) ?: return null
+    val init = classNode.findMethod { it.name == "<init>" } ?: return null
     val instructions = init.instructionsAsList()
     val superInitIndex = instructions.indexOfLast { it is MethodInsnNode && it.opcode == Opcodes.INVOKESPECIAL && it.name == "<init>" && it.owner == classNode.superName }
     if (superInitIndex == -1) {

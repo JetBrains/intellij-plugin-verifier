@@ -60,7 +60,7 @@ class HtmlResultPrinter(
       }
       div {
         pluginResults
-            .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR, { it.plugin.version }))
+            .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR) { it.plugin.version })
             .forEach { printPluginResult(it) }
       }
     }

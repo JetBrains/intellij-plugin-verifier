@@ -14,7 +14,9 @@ import org.objectweb.asm.tree.MethodInsnNode
  */
 class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
 
-  private val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
+  companion object {
+    private const val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
+  }
 
   override fun extractImpl(classNode: ClassNode): List<String>? {
     if (classNode.superName == CONFIGURATION_BASE) {
@@ -38,7 +40,8 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
       }
       return null
     } else {
-      val method = classNode.findMethod({ it.name == "getId" && Type.getArgumentTypes(it.desc).isEmpty() }) ?: return null
+      val method = classNode.findMethod { it.name == "getId" && Type.getArgumentTypes(it.desc).isEmpty() }
+          ?: return null
       if (method.isAbstract()) {
         return null
       }

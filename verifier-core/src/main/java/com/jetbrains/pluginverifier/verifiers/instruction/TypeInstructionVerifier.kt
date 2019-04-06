@@ -19,7 +19,7 @@ class TypeInstructionVerifier : InstructionVerifier {
     val desc = instr.desc
     val className = desc.extractClassNameFromDescr() ?: return
 
-    val aClass = ctx.resolveClassOrProblem(className, clazz, { createMethodLocation(clazz, method) }) ?: return
+    val aClass = ctx.resolveClassOrProblem(className, clazz) { createMethodLocation(clazz, method) } ?: return
 
     if (instr.opcode == Opcodes.NEW) {
       if (aClass.isInterface()) {

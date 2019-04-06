@@ -22,6 +22,6 @@ class LdcInstructionVerifier : InstructionVerifier {
     // then the named class is resolved (§5.4.3.1)
     //During resolution of a symbolic reference to a class, any of the exceptions pertaining
     // to class resolution (§5.4.3.1) can be thrown.
-    ctx.resolveClassOrProblem(className, clazz, { createMethodLocation(clazz, method) })
+    ctx.resolveClassOrProblem(className, clazz) { createMethodLocation(clazz, method) }
   }
 }

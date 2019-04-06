@@ -10,7 +10,7 @@ import org.objectweb.asm.tree.ClassNode
 class InheritFromFinalClassVerifier : ClassVerifier {
   override fun verify(clazz: ClassNode, ctx: VerificationContext) {
     val superClassName = clazz.superName ?: return
-    val supClass = ctx.resolveClassOrProblem(superClassName, clazz, { clazz.createClassLocation() }) ?: return
+    val supClass = ctx.resolveClassOrProblem(superClassName, clazz) { clazz.createClassLocation() } ?: return
     if (supClass.isFinal()) {
       val child = clazz.createClassLocation()
       val finalClass = supClass.createClassLocation()

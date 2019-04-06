@@ -16,6 +16,6 @@ class MultiANewArrayInstructionVerifier : InstructionVerifier {
 
     //During resolution of the symbolic reference to the class, array, or interface type,
     // any of the exceptions documented in §5.4.3.1 can be thrown.
-    ctx.resolveClassOrProblem(descr, clazz, { createMethodLocation(clazz, method) })
+    ctx.resolveClassOrProblem(descr, clazz) { createMethodLocation(clazz, method) }
   }
 }

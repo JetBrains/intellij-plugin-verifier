@@ -15,7 +15,7 @@ class InterfacesVerifier : ClassVerifier {
     //If any of the classes or interfaces named as direct superinterfaces of C is not in fact an interface, loading throws an IncompatibleClassChangeError.
     @Suppress("UNCHECKED_CAST")
     (clazz.interfaces as List<String>)
-        .mapNotNull { ctx.resolveClassOrProblem(it, clazz, { clazz.createClassLocation() }) }
+        .mapNotNull { ctx.resolveClassOrProblem(it, clazz) { clazz.createClassLocation() } }
         .filterNot { it.isInterface() }
         .forEach { ctx.registerProblem(SuperInterfaceBecameClassProblem(clazz.createClassLocation(), it.createClassLocation())) }
   }
