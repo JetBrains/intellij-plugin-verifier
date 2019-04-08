@@ -35,7 +35,7 @@ class CheckPluginParamsBuilder(
     val pluginToTestArg = freeArgs[0]
     when {
       pluginToTestArg.startsWith("@") -> {
-        pluginsParsing.addPluginsFromFile(
+        pluginsParsing.addPluginsListedInFile(
             Paths.get(pluginToTestArg.substringAfter("@")),
             ideVersions
         )

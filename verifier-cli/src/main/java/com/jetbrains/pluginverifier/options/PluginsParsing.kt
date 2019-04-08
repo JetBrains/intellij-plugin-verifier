@@ -71,7 +71,7 @@ class PluginsParsing(
    * - `#<update-id>` - update #<update-id> is added
    * - <plugin-path> - plugin from local <plugin-path> is added
    */
-  fun addPluginsFromFile(
+  fun addPluginsListedInFile(
       pluginsListFile: Path,
       ideVersions: List<IdeVersion>
   ) {
