@@ -39,7 +39,7 @@ class CheckIdeParamsBuilder(
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
       val pluginsSet = PluginsSet()
-      PluginsParsing(pluginRepository, reportage, pluginsSet).addByPluginIds(opts, ideDescriptor.ideVersion)
+      PluginsParsing(pluginRepository, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideDescriptor.ideVersion)
 
       val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
       val excludedFilter = ExcludedPluginFilter(excludedPlugins)

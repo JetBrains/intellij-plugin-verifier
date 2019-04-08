@@ -41,8 +41,8 @@ class CheckPluginParamsBuilder(
         )
       }
       pluginToTestArg.matches("#\\d+".toRegex()) -> {
-        val updateId = Integer.parseInt(pluginToTestArg.drop(1))
-        pluginsParsing.addUpdate(updateId)
+        val updateId = pluginToTestArg.drop(1).toInt()
+        pluginsParsing.addUpdateById(updateId)
       }
       else -> {
         pluginsParsing.addPluginFile(Paths.get(pluginToTestArg), true)

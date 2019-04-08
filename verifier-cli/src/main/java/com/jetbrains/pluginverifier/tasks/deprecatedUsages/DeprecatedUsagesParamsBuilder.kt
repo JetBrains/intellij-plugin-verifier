@@ -40,7 +40,7 @@ class DeprecatedUsagesParamsBuilder(
         ?: ideDescriptor.ideVersion
 
     val pluginsSet = PluginsSet()
-    PluginsParsing(pluginRepository, reportage, pluginsSet).addByPluginIds(opts, ideVersion)
+    PluginsParsing(pluginRepository, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideVersion)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
       reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
