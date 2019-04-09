@@ -4,13 +4,6 @@ import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.net.URL
 
-/**
- * Parser of the data-services index - https://data.services.jetbrains.com/products.
- *
- * [Parses] [parseAvailableIdes] list of [Product]s to list of [AvailableIde]s.
- *
- * It recognises only products listed in [productCodeMapping] and ignores the rest.
- */
 internal class DataServicesIndexParser {
   internal fun parseAvailableIdes(products: List<Product>): List<AvailableIde> {
     val availableIdes = arrayListOf<AvailableIde>()
