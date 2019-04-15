@@ -21,8 +21,9 @@ import javax.xml.parsers.DocumentBuilderFactory
  */
 class ExceptionAnalyzerPluginRepository : CustomPluginRepository() {
 
-  companion object {
+  private companion object {
     val EA_PLUGIN_WEB_URL = URL("https://ea-engine.labs.intellij.net")
+    val EA_PLUGIN_SOURCE_CODE_URL = URL("http://git.labs.intellij.net/?p=idea/exa.git;a=shortlog;h=refs/heads/master")
   }
 
   private val repositoryConnector = Retrofit.Builder()
@@ -50,7 +51,8 @@ class ExceptionAnalyzerPluginRepository : CustomPluginRepository() {
             it.version,
             "JetBrains",
             URL(EA_PLUGIN_WEB_URL, '/' + it.url),
-            EA_PLUGIN_WEB_URL
+            EA_PLUGIN_WEB_URL,
+            EA_PLUGIN_SOURCE_CODE_URL
         )
       }
 

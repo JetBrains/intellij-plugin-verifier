@@ -58,6 +58,7 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
 
   companion object {
     private const val CONFIGURATION_PATH = "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"
+    private val SOURCE_CODE_URL = URL("https://upsource.jetbrains.com/IDEA-MULTIPUSH")
 
     fun parsePluginsList(document: Document, buildServerUrl: URL): List<CustomPluginInfo> {
       document.normalize()
@@ -90,6 +91,7 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
                     "JetBrains",
                     URL(buildServerUrl, "$CONFIGURATION_PATH/.lastSuccessful/$downloadStr"),
                     URL(buildServerUrl, CONFIGURATION_PATH),
+                    SOURCE_CODE_URL,
                     sinceBuild,
                     untilBuild
                 )

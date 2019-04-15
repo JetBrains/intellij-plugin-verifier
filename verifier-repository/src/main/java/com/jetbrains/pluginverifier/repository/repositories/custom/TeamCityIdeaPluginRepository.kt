@@ -47,6 +47,8 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
   }
 
   companion object {
+    private val TEAM_CITY_SOURCE_CODE_URL = URL("https://upsource.jetbrains.com/teamcity-idea")
+
     fun parsePluginsList(document: Document, buildServerUrl: URL) =
         parsePluginsListXml(document).map {
           CustomPluginInfo(
@@ -55,7 +57,8 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
               it.version,
               "JetBrains",
               URL(buildServerUrl, "/update/${it.url}"),
-              buildServerUrl
+              buildServerUrl,
+              TEAM_CITY_SOURCE_CODE_URL
           )
         }
   }

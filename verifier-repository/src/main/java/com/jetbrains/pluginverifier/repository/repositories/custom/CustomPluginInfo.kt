@@ -19,6 +19,7 @@ class CustomPluginInfo(
     vendor: String,
     override val downloadUrl: URL,
     override val browserUrl: URL,
+    val sourceCodeUrl: URL?,
     sinceBuild: IdeVersion? = null,
     untilBuild: IdeVersion? = null
 ) : Downloadable, Browseable, PluginInfo(
