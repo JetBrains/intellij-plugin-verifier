@@ -13,6 +13,7 @@ import okhttp3.HttpUrl
 import org.slf4j.LoggerFactory
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLEncoder
 import java.time.Duration
@@ -207,6 +208,15 @@ class MarketplaceRepository(
           IdeVersion.createIdeVersionIfValid(this)
         }
 
+    private fun parseSourceCodeUrl(url: String?): URL? {
+      url ?: return null
+      return try {
+        URL(url)
+      } catch (e: MalformedURLException) {
+        null
+      }
+    }
+
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
         pluginId,
         pluginName,
@@ -214,6 +224,7 @@ class MarketplaceRepository(
         sinceString.prepareIdeVersion(),
         untilString.prepareIdeVersion(),
         vendor,
+        parseSourceCodeUrl(sourceCodeUrl),
         getDownloadUrl(updateId),
         updateId,
         getBrowserUrl(pluginId),

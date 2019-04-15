@@ -17,6 +17,7 @@ class UpdateInfo(
     sinceBuild: IdeVersion?,
     untilBuild: IdeVersion?,
     vendor: String,
+    val sourceCodeUrl: URL?,
     override val downloadUrl: URL,
     val updateId: Int,
     override val browserUrl: URL,

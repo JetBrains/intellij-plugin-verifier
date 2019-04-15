@@ -39,6 +39,7 @@ internal data class JsonUpdateInfo(
     @SerializedName("vendor") val vendor: String,
     @SerializedName("since") val sinceString: String,
     @SerializedName("until") val untilString: String,
+    @SerializedName("sourceCodeUrl") val sourceCodeUrl: String?,
     @SerializedName("tags") val tags: List<String>?
 )
 
