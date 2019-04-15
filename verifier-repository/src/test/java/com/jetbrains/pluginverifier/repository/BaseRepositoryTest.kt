@@ -5,10 +5,8 @@ import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert
 import org.junit.Before
-import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.w3c.dom.Document
@@ -20,12 +18,6 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Base test for [PluginRepository]s implementations.
  */
 abstract class BaseRepositoryTest<R : PluginRepository> {
-
-  companion object {
-    @ClassRule
-    @JvmField
-    var hostReachableRule = HostReachableRule()
-  }
 
   @Rule
   @JvmField

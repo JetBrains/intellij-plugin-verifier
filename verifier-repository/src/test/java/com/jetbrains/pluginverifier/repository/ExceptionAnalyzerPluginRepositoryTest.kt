@@ -1,21 +1,28 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
+import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.ExceptionAnalyzerPluginRepository
-import com.jetbrains.pluginverifier.results.HostReachableRule
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assume
 import org.junit.Test
 import java.net.URL
 
-@HostReachableRule.HostReachable("https://ea-engine.labs.intellij.net")
 class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyzerPluginRepository>() {
 
-  companion object {
-    val eaWebUrl = URL("https://ea-engine.labs.intellij.net")
-  }
+  override fun createRepository(): ExceptionAnalyzerPluginRepository {
+    val repositoryUrl = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_REPOSITORY_URL.getUrl()
+    val sourceCodeUrl = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_SOURCE_CODE_URL.getUrl()
 
-  override fun createRepository() = ExceptionAnalyzerPluginRepository()
+    Assume.assumeNotNull(repositoryUrl)
+    Assume.assumeNotNull(sourceCodeUrl)
+
+    Assume.assumeTrue(checkHostIsAvailable(repositoryUrl!!))
+    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
+
+    return ExceptionAnalyzerPluginRepository(repositoryUrl, sourceCodeUrl)
+  }
 
   @Test
   fun `verify plugin info`() {
@@ -27,14 +34,15 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
     assertEquals("JetBrains", pluginInfo.vendor)
     assertEquals(null, pluginInfo.sinceBuild)
     assertEquals(null, pluginInfo.untilBuild)
-    assertEquals(URL(eaWebUrl, "/ExceptionAnalyzer.zip"), pluginInfo.downloadUrl)
-    assertEquals(eaWebUrl, pluginInfo.browserUrl)
+    val url = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_REPOSITORY_URL.getUrl()
+    assertEquals(URL(url, "/ExceptionAnalyzer.zip"), pluginInfo.downloadUrl)
+    assertEquals(url, pluginInfo.browserUrl)
   }
 
   @Test
   fun `download some plugin`() {
     val allPlugins = repository.getAllPlugins()
-    Assert.assertFalse(allPlugins.isEmpty())
+    assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins.first()
     checkDownloadPlugin(pluginInfo)
   }

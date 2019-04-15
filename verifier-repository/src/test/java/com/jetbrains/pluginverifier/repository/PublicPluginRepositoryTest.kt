@@ -3,12 +3,10 @@ package com.jetbrains.pluginverifier.repository
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert.*
 import org.junit.Test
 import java.net.URL
 
-@HostReachableRule.HostReachable("https://plugins.jetbrains.com")
 class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
 
   companion object {

@@ -1,9 +1,11 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
+import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.MultiPushPluginRepository
-import com.jetbrains.pluginverifier.results.HostReachableRule
 import org.junit.Assert.*
+import org.junit.Assume
 import org.junit.Test
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
@@ -11,17 +13,23 @@ import java.io.ByteArrayInputStream
 import java.net.URL
 import javax.xml.parsers.DocumentBuilderFactory
 
-@HostReachableRule.HostReachable("https://buildserver.labs.intellij.net")
 class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginRepository>() {
 
-  companion object {
-    val buildServerUrl = URL("https://buildserver.labs.intellij.net")
+  override fun createRepository(): MultiPushPluginRepository {
+    val buildServerUrl = CustomPluginRepositoryProperties.MULTI_PUSH_PLUGIN_BUILD_SERVER_URL.getUrl()
+    val sourceCodeUrl = CustomPluginRepositoryProperties.MULTI_PUSH_PLUGIN_SOURCE_CODE_URL.getUrl()
+
+    Assume.assumeNotNull(buildServerUrl)
+    Assume.assumeNotNull(sourceCodeUrl)
+
+    Assume.assumeTrue(checkHostIsAvailable(buildServerUrl!!))
+    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
+
+    return MultiPushPluginRepository(buildServerUrl, sourceCodeUrl)
   }
 
-  override fun createRepository() = MultiPushPluginRepository(buildServerUrl)
-
   @Test
-  fun `plugin list`() {
+  fun `request plugins list from real endpoint`() {
     val allPlugins = repository.getAllPlugins()
     assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins[0]
@@ -30,8 +38,9 @@ class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginReposito
     assertEquals("JetBrains", pluginInfo.vendor)
     assertNotNull(pluginInfo.sinceBuild)
     assertNotNull(pluginInfo.untilBuild)
-    assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"), pluginInfo.browserUrl)
-    assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-${pluginInfo.version}.zip"), pluginInfo.downloadUrl)
+    val buildServerUrl = CustomPluginRepositoryProperties.MULTI_PUSH_PLUGIN_BUILD_SERVER_URL.getUrl()
+    assertEquals(buildServerUrl, pluginInfo.browserUrl)
+    assertEquals(URL(buildServerUrl!!.toExternalForm().trimEnd('/') + "/.lastSuccessful/vcs-hosting-idea-multipush-${pluginInfo.version}.zip"), pluginInfo.downloadUrl)
   }
 
   @Test
@@ -49,7 +58,8 @@ class MultiPushPluginRepositoryTest : BaseRepositoryTest<MultiPushPluginReposito
 
   @Test
   fun `parse plugins list for Multi-Push plugin`() {
-    val document = parseDocument("""
+    val document = parseDocument(
+        """
       <plugin-repository>
 <category name="VCS Integration">
 <idea-plugin size="286692">
@@ -67,17 +77,19 @@ Supports the multipush feature of the git-hosting, which allows to push commits 
 </idea-plugin>
 </category>
 </plugin-repository>
-    """.trimIndent())
+    """.trimIndent()
+    )
 
-    val list = MultiPushPluginRepository.parsePluginsList(document, buildServerUrl)
+    val placeholderUrl = URL("https://example.com")
+    val list = MultiPushPluginRepository.parsePluginsList(document, placeholderUrl, placeholderUrl)
     assertEquals(1, list.size)
     val pluginInfo = list[0]
     assertEquals(IdeVersion.createIdeVersion("182.671"), pluginInfo.sinceBuild)
     assertEquals(IdeVersion.createIdeVersion("183.1234"), pluginInfo.untilBuild)
     assertEquals("vcs-hosting-multipush", pluginInfo.pluginId)
     assertEquals("1.0.7", pluginInfo.version)
-    assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-1.0.7.zip"), pluginInfo.downloadUrl)
-    assertEquals(URL(buildServerUrl, "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"), pluginInfo.browserUrl)
+    assertEquals(URL(placeholderUrl.toExternalForm().trimEnd('/') + "/.lastSuccessful/vcs-hosting-idea-multipush-1.0.7.zip"), pluginInfo.downloadUrl)
+    assertEquals(placeholderUrl, pluginInfo.browserUrl)
   }
 
 }

@@ -18,8 +18,6 @@ import java.util.concurrent.TimeUnit
  *
  * This service periodically accesses the plugin repository, fetches plugins of which features should be extracted,
  * and sends the features' reports.
- *
- * See [Feature extractor integration with the plugin repository](https://confluence.jetbrains.com/display/PLREP/features-extractor+integration+with+the+plugins.jetbrains.com)
  */
 class FeatureExtractorService(
     taskManager: TaskManager,

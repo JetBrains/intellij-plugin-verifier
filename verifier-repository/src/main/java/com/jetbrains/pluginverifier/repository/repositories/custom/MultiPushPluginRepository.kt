@@ -4,66 +4,54 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import org.w3c.dom.Document
 import org.w3c.dom.Node
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.http.GET
+import retrofit2.http.Url
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * [PluginRepository] of Multi-Push Git plugin,
- * which is built on https://buildserver.labs.intellij.net
- *
- * Build configuration:
- * https://buildserver.labs.intellij.net/viewType.html?buildTypeId=ijplatform_master_Idea_Experiments_BuildMultiPushPlugin
- *
- * Plugin list can be obtained in:
- * https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/plugins.xml
- *
- * Plugin can be downloaded by similar URL:
- * https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/vcs-hosting-idea-multipush-1.0.7.zip
+ * [PluginRepository] for Multi-Push Git plugin, which is hosted in TeamCity build configuration.
  */
-class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginRepository() {
+class MultiPushPluginRepository(private val buildConfigurationUrl: URL, private val sourceCodeUrl: URL) : CustomPluginRepository() {
 
   private val repositoryConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(HttpUrl.get(buildServerUrl))
+        .baseUrl("https://unused.com")
         .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
         .build()
         .create(MultiPushPluginRepositoryConnector::class.java)
   }
 
   override val repositoryUrl: URL
-    get() = buildServerUrl
+    get() = buildConfigurationUrl
 
   override fun requestAllPlugins(): List<CustomPluginInfo> {
+    val pluginsXmlUrl = buildConfigurationUrl.toExternalForm().trimEnd('/') + "/.lastSuccessful/plugins.xml"
     val document = repositoryConnector
-        .getPluginsList().executeSuccessfully()
+        .getPluginsList(pluginsXmlUrl).executeSuccessfully()
         .body().byteStream().use {
           DocumentBuilderFactory.newInstance()
               .newDocumentBuilder()
               .parse(it)
         }
-    return parsePluginsList(document, buildServerUrl)
+    return parsePluginsList(document, buildConfigurationUrl, sourceCodeUrl)
   }
 
   override fun toString() = "MultiPush Plugin Repository"
 
   private interface MultiPushPluginRepositoryConnector {
-    @GET("/guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin/.lastSuccessful/plugins.xml")
-    fun getPluginsList(): Call<ResponseBody>
+    @GET
+    fun getPluginsList(@Url url: String): Call<ResponseBody>
   }
 
   companion object {
-    private const val CONFIGURATION_PATH = "guestAuth/repository/download/ijplatform_master_Idea_Experiments_BuildMultiPushPlugin"
-    private val SOURCE_CODE_URL = URL("https://upsource.jetbrains.com/IDEA-MULTIPUSH")
-
-    fun parsePluginsList(document: Document, buildServerUrl: URL): List<CustomPluginInfo> {
+    internal fun parsePluginsList(document: Document, buildConfigurationUrl: URL, sourceCodeUrl: URL): List<CustomPluginInfo> {
       document.normalize()
       val documentElement = document.documentElement
       val nodeList = documentElement.getElementsByTagName("idea-plugin")
@@ -85,27 +73,25 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
           val sinceBuild = attributes?.getNamedItem("since-build")?.textContent?.let { IdeVersion.createIdeVersionIfValid(it) }
           val untilBuild = attributes?.getNamedItem("until-build")?.textContent?.let { IdeVersion.createIdeVersionIfValid(it) }
 
+          val downloadUrl = URL(buildConfigurationUrl.toExternalForm().trimEnd('/') + "/.lastSuccessful/$downloadStr")
+
           if (id.isNotEmpty() && version.isNotEmpty() && downloadStr.isNotEmpty()) {
-            result.add(
-                CustomPluginInfo(
-                    id,
-                    "Vcs Hosting Multi-Push",
-                    version,
-                    "JetBrains",
-                    URL(buildServerUrl, "$CONFIGURATION_PATH/.lastSuccessful/$downloadStr"),
-                    URL(buildServerUrl, CONFIGURATION_PATH),
-                    SOURCE_CODE_URL,
-                    sinceBuild,
-                    untilBuild
-                )
+            result += CustomPluginInfo(
+                id,
+                "Vcs Hosting Multi-Push",
+                version,
+                "JetBrains",
+                downloadUrl,
+                buildConfigurationUrl,
+                sourceCodeUrl,
+                sinceBuild,
+                untilBuild
             )
           }
         }
       }
       return result
     }
-
   }
-
 
 }

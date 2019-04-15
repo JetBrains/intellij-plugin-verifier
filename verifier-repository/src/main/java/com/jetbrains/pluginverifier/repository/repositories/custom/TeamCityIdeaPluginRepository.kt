@@ -14,13 +14,12 @@ import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * [PluginRepository] of JetBrains TeamCity Plugin for IntelliJ IDEA,
- * which is built on https://buildserver.labs.intellij.net
- *
- * The last available plugin version can be seen in
- * https://buildserver.labs.intellij.net/update/idea-plugins.xml.
+ * [PluginRepository] of JetBrains TeamCity Plugin for IntelliJ IDEA, which is built on TeamCity.
  */
-class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPluginRepository() {
+class TeamCityIdeaPluginRepository(
+    private val buildServerUrl: URL,
+    private val sourceCodeUrl: URL
+) : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
       .baseUrl(HttpUrl.get(buildServerUrl))
@@ -39,7 +38,7 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
               .newDocumentBuilder()
               .parse(it)
         }
-    return parsePluginsList(document, buildServerUrl)
+    return parsePluginsList(document, buildServerUrl, sourceCodeUrl)
   }
 
   override fun toString() = "JetBrains TeamCity Plugin Repository"
@@ -50,9 +49,7 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
   }
 
   companion object {
-    private val TEAM_CITY_SOURCE_CODE_URL = URL("https://upsource.jetbrains.com/teamcity-idea")
-
-    fun parsePluginsList(document: Document, buildServerUrl: URL) =
+    fun parsePluginsList(document: Document, buildServerUrl: URL, sourceCodeUrl: URL) =
         parsePluginsListXml(document).map {
           CustomPluginInfo(
               it.id,
@@ -61,7 +58,7 @@ class TeamCityIdeaPluginRepository(private val buildServerUrl: URL) : CustomPlug
               "JetBrains",
               URL(buildServerUrl, "/update/${it.url}"),
               buildServerUrl,
-              TEAM_CITY_SOURCE_CODE_URL
+              sourceCodeUrl
           )
         }
   }
