@@ -209,7 +209,9 @@ class MarketplaceRepository(
         }
 
     private fun parseSourceCodeUrl(url: String?): URL? {
-      url ?: return null
+      if (url.isNullOrBlank()) {
+        return null
+      }
       return try {
         URL(url)
       } catch (e: MalformedURLException) {
