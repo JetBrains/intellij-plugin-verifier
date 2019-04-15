@@ -18,3 +18,7 @@ dependencies {
 
   testCompile group: 'junit', name: 'junit', version: '4.11'
 }
+
+test {
+  systemProperties project.properties.findAll { key, _ -> key.startsWith("com.jetbrains.plugin.verifier.repository.custom.properties.") }
+}
