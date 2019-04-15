@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 /**
@@ -19,6 +20,8 @@ abstract class CustomPluginRepository : PluginRepository {
   private val allPluginsCache = Suppliers.memoizeWithExpiration({ requestAllPlugins() }, 1, TimeUnit.MINUTES)
 
   protected abstract fun requestAllPlugins(): List<CustomPluginInfo>
+
+  abstract val repositoryUrl: URL
 
   override fun getAllPlugins(): List<CustomPluginInfo> = allPluginsCache.get()
 

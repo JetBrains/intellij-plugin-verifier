@@ -38,6 +38,9 @@ class MultiPushPluginRepository(private val buildServerUrl: URL) : CustomPluginR
         .create(MultiPushPluginRepositoryConnector::class.java)
   }
 
+  override val repositoryUrl: URL
+    get() = buildServerUrl
+
   override fun requestAllPlugins(): List<CustomPluginInfo> {
     val document = repositoryConnector
         .getPluginsList().executeSuccessfully()

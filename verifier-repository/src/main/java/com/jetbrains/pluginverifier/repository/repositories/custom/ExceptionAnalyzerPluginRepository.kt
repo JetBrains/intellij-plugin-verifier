@@ -32,6 +32,9 @@ class ExceptionAnalyzerPluginRepository : CustomPluginRepository() {
       .build()
       .create(ExceptionAnalyzerRepositoryConnector::class.java)
 
+  override val repositoryUrl: URL
+    get() = EA_PLUGIN_WEB_URL
+
   override fun requestAllPlugins(): List<CustomPluginInfo> {
     val document = repositoryConnector.getPluginsList()
         .executeSuccessfully()
