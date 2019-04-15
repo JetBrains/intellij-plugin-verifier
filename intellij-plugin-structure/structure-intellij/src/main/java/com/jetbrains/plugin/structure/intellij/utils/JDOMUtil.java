@@ -16,7 +16,6 @@
 package com.jetbrains.plugin.structure.intellij.utils;
 
 import kotlin.io.ByteStreamsKt;
-import kotlin.io.ConstantsKt;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
 import org.jdom2.input.SAXBuilder;
@@ -114,7 +113,7 @@ public class JDOMUtil {
 
   @NotNull
   private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
-    return new ByteArrayInputStream(ByteStreamsKt.readBytes(is, ConstantsKt.DEFAULT_BUFFER_SIZE));
+    return new ByteArrayInputStream(ByteStreamsKt.readBytes(is));
   }
 
   private static class EmptyTextFilter extends AbstractFilter {
