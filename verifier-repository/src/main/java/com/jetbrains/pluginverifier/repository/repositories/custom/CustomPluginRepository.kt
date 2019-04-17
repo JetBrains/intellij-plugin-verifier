@@ -8,12 +8,7 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 
 /**
- * Base class for all repositories configured for a specific plugin.
- * For example, there are the following plugins configured specially:
- * 1) MultiPush plugin
- * 2) ExceptionAnalyzer plugin
- * 3) TeamCity IDEA plugin
- * 4) Upsource plugin
+ * Base class for all repositories configured for special plugins not available in the Marketplace.
  */
 abstract class CustomPluginRepository : PluginRepository {
 
