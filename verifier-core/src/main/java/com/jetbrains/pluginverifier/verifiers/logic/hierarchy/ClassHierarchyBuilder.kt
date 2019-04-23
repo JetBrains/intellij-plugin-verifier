@@ -2,9 +2,11 @@ package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.createClassLocation
 import com.jetbrains.pluginverifier.verifiers.isInterface
 import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
+import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode
 
 class ClassHierarchyBuilder(private val context: VerificationContext) {
@@ -26,7 +28,10 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
 
     val className2Hierarchy = hashMapOf<String, ClassHierarchy>()
 
-    createVerificationParentsVisitor(context, true).visitClass(
+    val parentsVisitor = ClassParentsVisitor(true) { subclassNode, superName ->
+      context.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
+    }
+    parentsVisitor.visitClass(
         classNode,
         true,
         onEnter = { parent ->

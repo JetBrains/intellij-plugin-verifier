@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProblem
 import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.createVerificationParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -32,7 +32,10 @@ class OverrideNonFinalVerifier : MethodVerifier {
      * doesn't override a final method.
      * Java interfaces are not allowed to have final methods so it works.
      */
-    createVerificationParentsVisitor(ctx, false).visitClass(clazz, false, onEnter = { parent ->
+    val parentsVisitor = ClassParentsVisitor(false) { subclassNode, superName ->
+      ctx.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
+    }
+    parentsVisitor.visitClass(clazz, false, onEnter = { parent ->
       val sameMethod = parent.getMethods().orEmpty().find { it.name == method.name && it.desc == method.desc }
       if (sameMethod != null && sameMethod.isFinal()) {
         val methodLocation = createMethodLocation(parent, sameMethod)

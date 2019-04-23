@@ -736,4 +736,20 @@ The following classes of 'removedClasses.removedWholePackage' are not resolved (
     assertExperimentalApiFound("Experimental API class experimental.ExperimentalApiClass is referenced in mock.plugin.experimental.ExperimentalApiUser.staticFunOfDeprecatedClass() : void. This class can be changed in a future release leading to incompatibilities")
     assertExperimentalApiFound("Experimental API class experimental.ExperimentalApiClass is referenced in mock.plugin.experimental.ExperimentalApiUser.clazz() : void. This class can be changed in a future release leading to incompatibilities")
   }
+
+  @Test
+  fun `inheritance from unresolved class must not lead to no method implementation problems`() {
+    assertProblemFound(
+        "Constructor mock.plugin.inheritUnresolvedClass.Inheritor.<init>() references an unresolved class inheritUnresolvedClass.UnresolvedMethodImplementor. This can lead to **NoSuchClassError** exception at runtime.",
+        "Access to unresolved class inheritUnresolvedClass.UnresolvedMethodImplementor"
+    )
+    assertProblemFound(
+        "Class mock.plugin.inheritUnresolvedClass.Inheritor references an unresolved class inheritUnresolvedClass.UnresolvedMethodImplementor. This can lead to **NoSuchClassError** exception at runtime.",
+        "Access to unresolved class inheritUnresolvedClass.UnresolvedMethodImplementor"
+    )
+    /*
+     * The next problem must not be reported because inheritance from unresolved class implies it.
+     * "Abstract method inheritUnresolvedClass.AbstractMethodsHolder.abstractMethod() : void is not implemented:"
+     */
+  }
 }

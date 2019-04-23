@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.logic.hierarchy
 
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.createClassLocation
-import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
 import org.objectweb.asm.tree.ClassNode
 
 class ClassParentsVisitor(
@@ -48,8 +45,3 @@ class ClassParentsVisitor(
   }
 
 }
-
-fun createVerificationParentsVisitor(context: VerificationContext, visitInterfaces: Boolean) =
-    ClassParentsVisitor(visitInterfaces) { subclassNode, superName ->
-      context.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
-    }

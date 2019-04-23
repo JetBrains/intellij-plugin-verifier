@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodOverridden
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodOverridden
 import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.createVerificationParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -19,7 +19,10 @@ class UnstableMethodOverriddenVerifier : MethodVerifier {
       return
     }
 
-    createVerificationParentsVisitor(ctx, true).visitClass(
+    val classParentsVisitor = ClassParentsVisitor(true) { subclassNode, superName ->
+      ctx.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
+    }
+    classParentsVisitor.visitClass(
         clazz,
         false,
         onEnter = { parent ->

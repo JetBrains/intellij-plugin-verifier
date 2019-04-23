@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.createVerificationParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
 import org.objectweb.asm.tree.ClassNode
 
 class AbstractMethodVerifier : ClassVerifier {
@@ -12,26 +12,35 @@ class AbstractMethodVerifier : ClassVerifier {
 
     val abstractMethods = hashMapOf<MethodSignature, MethodLocation>()
     val implementedMethods = hashMapOf<MethodSignature, MethodLocation>()
+    var hasUnresolvedParents = false
 
-    createVerificationParentsVisitor(ctx, true).visitClass(clazz, true, onEnter = { parent ->
+    val parentsVisitor = ClassParentsVisitor(true) { subclassNode, superName ->
+      val classNode = ctx.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
+      hasUnresolvedParents = hasUnresolvedParents || classNode == null
+      classNode
+    }
+
+    parentsVisitor.visitClass(clazz, true, onEnter = { parent ->
       parent.getMethods().orEmpty().forEach { method ->
         if (!method.isPrivate() && !method.isStatic()) {
           val methodLocation = createMethodLocation(parent, method)
           val methodSignature = MethodSignature(method.name, method.desc)
           if (method.isAbstract()) {
-            abstractMethods.put(methodSignature, methodLocation)
+            abstractMethods[methodSignature] = methodLocation
           } else {
-            implementedMethods.put(methodSignature, methodLocation)
+            implementedMethods[methodSignature] = methodLocation
           }
         }
       }
       true
     })
 
-    val currentClass = clazz.createClassLocation()
-    (abstractMethods.keys - implementedMethods.keys).forEach { method ->
-      val abstractMethod = abstractMethods[method]!!
-      ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, currentClass))
+    if (!hasUnresolvedParents) {
+      val currentClass = clazz.createClassLocation()
+      (abstractMethods.keys - implementedMethods.keys).forEach { method ->
+        val abstractMethod = abstractMethods[method]!!
+        ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, currentClass))
+      }
     }
   }
 
