@@ -292,13 +292,13 @@ class InvalidPluginsTest {
       </actions>
     </idea-plugin>
       """, listOf(
-        PropertyWithDefaultValue("plugin.xml", "id"),
-        PropertyWithDefaultValue("plugin.xml", "name"),
+        PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.ID),
+        PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME),
         DefaultDescription("plugin.xml"),
         DefaultChangeNotes("plugin.xml"),
-        PropertyWithDefaultValue("plugin.xml", "vendor"),
-        PropertyWithDefaultValue("plugin.xml", "vendor url"),
-        PropertyWithDefaultValue("plugin.xml", "vendor email")
+        PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR),
+        PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_URL),
+        PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL)
     )
     )
   }

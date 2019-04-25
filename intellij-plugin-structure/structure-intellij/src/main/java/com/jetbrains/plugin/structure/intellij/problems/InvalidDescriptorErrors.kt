@@ -3,9 +3,21 @@ package com.jetbrains.plugin.structure.intellij.problems
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
-class PropertyWithDefaultValue(descriptorPath: String, private val propertyName: String) : InvalidDescriptorProblem(descriptorPath) {
+class PropertyWithDefaultValue(
+    descriptorPath: String,
+    private val defaultProperty: DefaultProperty
+) : InvalidDescriptorProblem(descriptorPath) {
+
+  enum class DefaultProperty(val propertyName: String, val defaultValue: String) {
+    ID("<id>", "com.your.company.unique.plugin.id"),
+    NAME("<name>", "Plugin display name here"),
+    VENDOR("<vendor>", "YourCompany"),
+    VENDOR_URL("<vendor url>", "http://www.yourcompany.com"),
+    VENDOR_EMAIL("<vendor email>", "support@yourcompany.com")
+  }
+
   override val detailedMessage: String
-    get() = "<$propertyName> has default value"
+    get() = "${defaultProperty.propertyName} must not be equal to default value '${defaultProperty.defaultValue}'"
 
   override val level
     get() = Level.ERROR

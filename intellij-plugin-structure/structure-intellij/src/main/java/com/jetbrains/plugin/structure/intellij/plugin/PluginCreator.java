@@ -240,7 +240,7 @@ final class PluginCreator {
   private void validateId(@Nullable String id) {
     if (id != null) {
       if ("com.your.company.unique.plugin.id".equals(id)) {
-        registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "id"));
+        registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.ID));
       } else {
         validatePropertyLength("id", id, MAX_PROPERTY_LENGTH);
       }
@@ -251,7 +251,7 @@ final class PluginCreator {
     if (StringUtil.isEmpty(name)) {
       registerProblem(new PropertyNotSpecified("name", myDescriptorPath));
     } else if ("Plugin display name here".equals(name)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "name"));
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME));
     } else if ("plugin".contains(name)) {
       registerProblem(new PluginWordInPluginName(myDescriptorPath));
     } else {
@@ -325,17 +325,17 @@ final class PluginCreator {
     }
 
     if ("YourCompany".equals(vendorBean.name)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor"));
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR));
     }
     validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH);
 
     if ("http://www.yourcompany.com".equals(vendorBean.url)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor url"));
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL));
     }
     validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH);
 
     if ("support@yourcompany.com".equals(vendorBean.email)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, "vendor email"));
+      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL));
     }
     validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH);
   }
