@@ -9,6 +9,7 @@ plugins-verifier-service/src/generated
 .idea/gradle.xml
 .idea/modules.xml
 **/out/
+**/.gradle/
 for_tests/
 classes/*
 **/build
