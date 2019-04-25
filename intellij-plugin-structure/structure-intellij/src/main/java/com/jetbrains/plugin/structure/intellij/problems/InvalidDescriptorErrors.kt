@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
@@ -9,7 +8,7 @@ class PropertyWithDefaultValue(descriptorPath: String, private val propertyName:
     get() = "<$propertyName> has default value"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class InvalidDependencyId(descriptorPath: String, private val invalidPluginId: String) : InvalidDescriptorProblem(descriptorPath) {
@@ -17,7 +16,7 @@ class InvalidDependencyId(descriptorPath: String, private val invalidPluginId: S
     get() = "dependency id is invalid: '${invalidPluginId.trim()}' cannot be empty and must not contain new line characters"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
@@ -25,7 +24,7 @@ class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(descr
     get() = "module is empty. It must be specified as <module value=\"my.module\"/>"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class SinceBuildNotSpecified(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
@@ -33,7 +32,7 @@ class SinceBuildNotSpecified(descriptorPath: String) : InvalidDescriptorProblem(
     get() = "since build is not specified"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class InvalidSinceBuild(
@@ -44,7 +43,7 @@ class InvalidSinceBuild(
     get() = "invalid since build: $sinceBuild"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class InvalidUntilBuild(
@@ -55,7 +54,7 @@ class InvalidUntilBuild(
     get() = "invalid until build: $untilBuild"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class SinceBuildGreaterThanUntilBuild(
@@ -67,7 +66,7 @@ class SinceBuildGreaterThanUntilBuild(
     get() = "since build $sinceBuild is greater than until build $untilBuild"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class ErroneousSinceBuild(
@@ -100,7 +99,7 @@ class UnresolvedXIncludeElements(descriptorPath: String) : InvalidDescriptorProb
     get() = "unresolved xinclude elements"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class TooLongPropertyValue(
@@ -113,13 +112,13 @@ class TooLongPropertyValue(
     get() = "value of property '$propertyName' is too long. Its length is $propertyValueLength which is more than maximum $maxLength characters long"
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 }
 
 class DefaultDescription(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val detailedMessage
     get() = "value of <description> must not have default 'Enter short description for your plugin here.' or 'most HTML tags may be used'"

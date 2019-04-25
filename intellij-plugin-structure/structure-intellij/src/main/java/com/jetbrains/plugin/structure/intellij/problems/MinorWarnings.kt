@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 
 class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Plugin descriptor $descriptorPath does not include any module dependency tags. " +
@@ -14,7 +14,7 @@ class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
 class NonLatinDescription : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Please make sure to provide the description in English"
@@ -23,7 +23,7 @@ class NonLatinDescription : PluginProblem() {
 class ShortDescription : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Description is too short"
@@ -33,7 +33,7 @@ class ShortDescription : PluginProblem() {
 class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Default value in plugin descriptor $descriptorPath: <change-notes> shouldn't have 'Add change notes here' or 'most HTML tags may be used'"
@@ -42,7 +42,7 @@ class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
 class ShortChangeNotes(private val descriptorPath: String) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Too short <change-notes> in plugin descriptor $descriptorPath"
@@ -51,7 +51,7 @@ class ShortChangeNotes(private val descriptorPath: String) : PluginProblem() {
 class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Plugin name specified in $descriptorPath should not contain the word 'plugin'"
@@ -64,7 +64,7 @@ class MissingOptionalDependencyConfigurationFile(
 ) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.WARNING
+    get() = Level.WARNING
 
   override val message
     get() = "Configuration file $configurationFile for optional dependency $dependencyId is not found"

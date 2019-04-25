@@ -8,7 +8,7 @@ class IncorrectIntellijFile(fileName: String) : IncorrectPluginFile(fileName, ".
 class PluginZipIsEmpty : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Plugin file is empty"
@@ -18,7 +18,7 @@ class PluginZipIsEmpty : PluginProblem() {
 class PluginZipContainsUnknownFile(private val fileName: String) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Plugin .zip file contains an unexpected file '$fileName'"
@@ -28,7 +28,7 @@ class PluginZipContainsUnknownFile(private val fileName: String) : PluginProblem
 class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Plugin root directory must not contain multiple files: ${fileNames.joinToString()}"
@@ -38,7 +38,7 @@ class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : Plug
 class UnableToReadJarFile : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Invalid jar file"
@@ -48,7 +48,7 @@ class UnableToReadJarFile : PluginProblem() {
 class PluginLibDirectoryIsEmpty : PluginProblem() {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Directory 'lib' must not be empty"
