@@ -2,8 +2,10 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import org.junit.Assert
 import org.junit.Test
+import java.nio.file.Paths
 
 class TestSignatures {
   @Test
@@ -56,7 +58,11 @@ class TestSignatures {
     Assert.assertEquals(expectedResult, fromClass.toString())
   }
 
-  private fun genSomeClassLocation(className: String, signature: String) = ClassLocation(className, signature, Modifiers(0))
+  private fun genSomeClassLocation(className: String, signature: String) =
+      ClassLocation(className, signature, Modifiers(0), object : ClassFileOrigin {
+        override val classPath
+          get() = Paths.get("unused")
+      })
 
   @Test
   fun assertCollectionsMin() {

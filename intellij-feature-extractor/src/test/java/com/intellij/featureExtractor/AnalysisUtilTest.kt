@@ -6,12 +6,11 @@ import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
-@Suppress("UNCHECKED_CAST")
 class AnalysisUtilTest : FeatureExtractorTestBase() {
   @Test
   fun constantFunction() {
     val classNode = readClassNode("featureExtractor.common.ConstantHolder")
-    val methods = classNode.methods as List<MethodNode>
+    val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "myFunction", methods, ".constantValue")
     assertFunctionValueExtraction(classNode, "myRefFunction", methods, ".constantValue")
@@ -22,7 +21,7 @@ class AnalysisUtilTest : FeatureExtractorTestBase() {
   @Test
   fun concatenation() {
     val classNode = readClassNode("featureExtractor.common.ConstantHolder")
-    val methods = classNode.methods as List<MethodNode>
+    val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "concat", methods, ".constantValueConcat")
     assertFunctionValueExtraction(classNode, "concat2", methods, "prefix.constantValue.constantValue")

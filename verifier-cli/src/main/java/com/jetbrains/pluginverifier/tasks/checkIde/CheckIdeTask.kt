@@ -6,8 +6,10 @@ import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
 
@@ -34,7 +36,8 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
                     externalClassesPackageFilter
                 ),
                 VerificationTarget.Ide(ideDescriptor.ideVersion),
-                ideDescriptor.brokenPlugins
+                ideDescriptor.brokenPlugins,
+                listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
             )
           }
 

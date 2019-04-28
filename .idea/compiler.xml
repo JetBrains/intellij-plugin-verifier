@@ -192,6 +192,8 @@
       <module name="verifier-parent.verifier-cli.test" target="1.8" />
       <module name="verifier-parent.verifier-core.main" target="1.8" />
       <module name="verifier-parent.verifier-core.test" target="1.8" />
+      <module name="verifier-parent.verifier-intellij.main" target="1.8" />
+      <module name="verifier-parent.verifier-intellij.test" target="1.8" />
       <module name="verifier-parent.verifier-repository.main" target="1.8" />
       <module name="verifier-parent.verifier-repository.test" target="1.8" />
       <module name="verifier-parent.verifier-test.after-idea.main" target="1.8" />

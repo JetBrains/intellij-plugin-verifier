@@ -14,10 +14,10 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
+import com.jetbrains.pluginverifier.tests.mocks.MockClassFileOrigin
 import com.jetbrains.pluginverifier.tests.mocks.PUBLIC_MODIFIERS
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolver
+import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolution.IdePluginClassResolver
 import net.bytebuddy.ByteBuddy
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
@@ -40,7 +40,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
         MethodReference(classBReference, "foo", "()V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
+        JAVA_LANG_OBJECT_HIERARCHY
     )
 
     val constructorIsNotFoundProblem = with(methodFooIsNotFoundProblem) {
@@ -58,12 +58,13 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
             ClassLocation(
                 "org/test/other/B",
                 "",
-                PUBLIC_MODIFIERS
+                PUBLIC_MODIFIERS,
+                MockClassFileOrigin
             ),
             "foo",
             "()V",
             emptyList(),
-            "",
+            null,
             PUBLIC_MODIFIERS
         ),
         AccessType.PRIVATE,
@@ -84,19 +85,19 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     val fieldXNotFoundProblem = FieldNotFoundProblem(
         FieldReference(classBReference, "x", "I"),
         MOCK_METHOD_LOCATION,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
 
     val abstractMethodLocation = MethodLocation(
-        ClassLocation("org/test/I", "", PUBLIC_MODIFIERS),
+        ClassLocation("org/test/I", null, PUBLIC_MODIFIERS, MockClassFileOrigin),
         "abstractMethod",
         "()V",
         emptyList(),
-        "",
+        null,
         PUBLIC_MODIFIERS
     )
-    val incompleteClass = ClassLocation("org/test/IImplDerived", "", PUBLIC_MODIFIERS)
+    val incompleteClass = ClassLocation("org/test/IImplDerived", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         abstractMethodLocation,
@@ -133,10 +134,10 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     )
   }
 
-  private fun createVerificationContextForHierarchicalTest(): VerificationContext {
+  private fun createVerificationContextForHierarchicalTest(): PluginVerificationContext {
     val classes = buildClassesForHierarchicalTest()
     return createSimpleVerificationContext().copy(
-        classResolver = DefaultClassResolver(
+        classResolver = IdePluginClassResolver(
             FixedClassesResolver.create(classes),
             EmptyResolver,
             EmptyResolver,

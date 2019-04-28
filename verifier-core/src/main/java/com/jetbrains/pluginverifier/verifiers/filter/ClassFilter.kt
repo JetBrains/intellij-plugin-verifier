@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.filter
 
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 /**
  * Implementations of this interface determine whether
@@ -9,8 +9,8 @@ import org.objectweb.asm.tree.ClassNode
 interface ClassFilter {
 
   /**
-   * Determines whether [classNode] must be verified
+   * Determines whether [classFile] must be verified
    */
-  fun shouldVerify(classNode: ClassNode): Boolean
+  fun shouldVerify(classFile: ClassFile): Boolean
 
 }

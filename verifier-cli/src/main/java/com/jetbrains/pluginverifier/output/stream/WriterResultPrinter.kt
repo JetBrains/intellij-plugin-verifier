@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.output.stream
 
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult

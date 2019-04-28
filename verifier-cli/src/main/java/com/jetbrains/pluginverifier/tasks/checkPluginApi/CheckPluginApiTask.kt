@@ -7,8 +7,11 @@ import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.resolution.PluginApiClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
 
@@ -41,7 +44,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 pluginDetailsCache,
                 baseClassResolverProvider,
                 baseTarget,
-                emptySet()
+                emptySet(),
+                listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
             )
         )
 
@@ -54,7 +58,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
                 pluginDetailsCache,
                 newClassResolverProvider,
                 newTarget,
-                emptySet()
+                emptySet(),
+                listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
             )
         )
       }

@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.misc.formatMessage
+import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import java.util.*

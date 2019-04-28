@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.misc.formatMessage
+import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -50,7 +50,7 @@ class MethodNotFoundProblem(
     get() = buildString {
       append(descriptionMainPart)
       if (instruction != Instruction.INVOKE_SPECIAL) {
-        append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("method", methodOwnerHierarchy, true, true))
+        append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("method", methodOwnerHierarchy, true, true))
       }
     }
 

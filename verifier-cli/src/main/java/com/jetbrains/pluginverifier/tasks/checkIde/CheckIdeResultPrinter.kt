@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter

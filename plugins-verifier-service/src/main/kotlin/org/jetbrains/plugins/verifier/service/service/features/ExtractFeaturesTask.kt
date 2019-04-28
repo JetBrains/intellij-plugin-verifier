@@ -3,13 +3,13 @@ package org.jetbrains.plugins.verifier.service.service.features
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeRepository
-import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.jetbrains.plugins.verifier.service.setting.Settings

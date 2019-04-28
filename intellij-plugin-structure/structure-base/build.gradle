@@ -4,6 +4,9 @@ dependencies {
   compile group: 'commons-io', name: 'commons-io', version: '2.5'
   compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
 
+  //Provides English class capable of pluralizing english words.
+  compile group: 'org.atteo', name: 'evo-inflector', version: '1.2.2'
+
   compile("org.codehaus.plexus:plexus-archiver:4.1.0") {
     exclude group: "junit"
   }

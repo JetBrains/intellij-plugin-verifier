@@ -2,19 +2,15 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.problems.InheritFromFinalClassProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.createClassLocation
-import com.jetbrains.pluginverifier.verifiers.isFinal
-import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 class InheritFromFinalClassVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, ctx: VerificationContext) {
-    val superClassName = clazz.superName ?: return
-    val supClass = ctx.resolveClassOrProblem(superClassName, clazz) { clazz.createClassLocation() } ?: return
-    if (supClass.isFinal()) {
-      val child = clazz.createClassLocation()
-      val finalClass = supClass.createClassLocation()
-      ctx.registerProblem(InheritFromFinalClassProblem(child, finalClass))
+  override fun verify(classFile: ClassFile, context: VerificationContext) {
+    val superClassName = classFile.superName ?: return
+    val superClass = context.classResolver.resolveClassChecked(superClassName, classFile, context)
+        ?: return
+    if (superClass.isFinal) {
+      context.problemRegistrar.registerProblem(InheritFromFinalClassProblem(classFile.location, superClass.location))
     }
   }
 }

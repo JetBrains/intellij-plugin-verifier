@@ -1,19 +1,20 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
 object EmptyClassResolver : ClassResolver {
-  override fun resolveClass(className: String) = ClassResolution.NotFound
+  override fun resolveClassOrNull(className: String): ClassFile? = null
 
-  override fun isExternalClass(className: String) = false
-
-  override fun classExists(className: String) = false
+  override fun resolveClassChecked(
+      className: String,
+      referrer: ClassFileMember,
+      context: VerificationContext
+  ): ClassFile? = null
 
   override fun packageExists(packageName: String) = false
-
-  override fun getOriginOfClass(className: String): ClassFileOrigin? = null
 
   override fun close() = Unit
 }

@@ -3,16 +3,18 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.pluginverifier.results.access.AccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 
-@Suppress("UNCHECKED_CAST")
 fun MethodNode.getParameterNames(): List<String> {
   val arguments = Type.getArgumentTypes(desc)
   val argumentsNumber = arguments.size
   val offset = if (this.isStatic()) 0 else 1
   var parameterNames: List<String> = emptyList()
   if (localVariables != null) {
-    parameterNames = (localVariables as List<LocalVariableNode>).map { it.name }.drop(offset).take(argumentsNumber)
+    parameterNames = localVariables.map { it.name }.drop(offset).take(argumentsNumber)
   }
   if (parameterNames.size != argumentsNumber) {
     parameterNames = (0 until argumentsNumber).map { "arg$it" }
@@ -32,8 +34,9 @@ fun MethodNode.getParameterNames(): List<String> {
  * - `[[[Lcom/example/Example;` -> `com/example/Example`
  * - `I`, `D`, `B` -> `null`
  * - `[[I` -> `null`
+ * - `V` -> `null`
  */
-fun String.extractClassNameFromDescr(): String? {
+fun String.extractClassNameFromDescriptor(): String? {
   if (this == "V") {
     return null
   }
@@ -54,31 +57,12 @@ fun String.extractClassNameFromDescr(): String? {
 
 private fun String.isPrimitiveType(): Boolean = length == 1 && first() in "ZIJBFSDC"
 
-/**
- * A method is signature polymorphic if all of the following are true:
- * - It is declared in the java.lang.invoke.MethodHandle class.
- * - It has a single formal parameter of type Object[].
- * - It has a return type of Object.
- * - It has the ACC_VARARGS and ACC_NATIVE flags set.
- *
- * In Java SE 8, the only signature polymorphic methods are the invoke and invokeExact methods of the class java.lang.invoke.MethodHandle.
- */
-fun isSignaturePolymorphic(hostClass: String, methodNode: MethodNode): Boolean =
-    "java/lang/invoke/MethodHandle" == hostClass
-        && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.desc
-        && methodNode.isVararg()
-        && methodNode.isNative()
-
 fun Int.getAccessType(): AccessType = when {
   this and Opcodes.ACC_PUBLIC != 0 -> AccessType.PUBLIC
   this and Opcodes.ACC_PRIVATE != 0 -> AccessType.PRIVATE
   this and Opcodes.ACC_PROTECTED != 0 -> AccessType.PROTECTED
   else -> AccessType.PACKAGE_PRIVATE
 }
-
-fun MethodNode.isVararg(): Boolean = access and Opcodes.ACC_VARARGS != 0
-
-fun MethodNode.isNative(): Boolean = access and Opcodes.ACC_NATIVE != 0
 
 fun ClassNode.isFinal(): Boolean = access and Opcodes.ACC_FINAL != 0
 
@@ -116,10 +100,6 @@ fun MethodNode.isDefaultAccess(): Boolean = !isPublic() && !isProtected() && !is
 
 fun MethodNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
 
-fun MethodNode.isConstructor(): Boolean = name == "<init>"
-
-fun MethodNode.isClassInitializer(): Boolean = name == "<clinit>"
-
 fun ClassNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
 
 fun FieldNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
@@ -132,38 +112,8 @@ fun FieldNode.isStatic(): Boolean = access and Opcodes.ACC_STATIC != 0
 
 fun ClassNode.isSuperFlag(): Boolean = access and Opcodes.ACC_SUPER != 0
 
-fun ClassNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
-
-fun MethodNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
-
-fun FieldNode.isSynthetic(): Boolean = access and Opcodes.ACC_SYNTHETIC != 0
-
-fun MethodNode.isBridgeMethod(): Boolean = access and Opcodes.ACC_BRIDGE != 0
-
-fun ClassNode.getJavaPackage(): String = name.substringBeforeLast('/', "").replace("/", ".")
-
-fun haveTheSamePackage(first: ClassNode, second: ClassNode): Boolean = first.getJavaPackage() == second.getJavaPackage()
-
-@Suppress("UNCHECKED_CAST")
-fun ClassNode.getInvisibleAnnotations() = invisibleAnnotations as? List<AnnotationNode>
-
-@Suppress("UNCHECKED_CAST")
-fun MethodNode.getInvisibleAnnotations() = invisibleAnnotations as? List<AnnotationNode>
-
-@Suppress("UNCHECKED_CAST")
-fun FieldNode.getInvisibleAnnotations() = invisibleAnnotations as? List<AnnotationNode>
-
-@Suppress("UNCHECKED_CAST")
-fun ClassNode.getFields() = fields as? List<FieldNode>
-
-@Suppress("UNCHECKED_CAST")
-fun ClassNode.getMethods() = methods as? List<MethodNode>
-
-@Suppress("UNCHECKED_CAST")
-fun ClassNode.getInterfaces() = interfaces as? List<String>
-
 fun List<AnnotationNode>.findAnnotation(className: String): AnnotationNode? =
-    find { it.desc?.extractClassNameFromDescr() == className }
+    find { it.desc?.extractClassNameFromDescriptor() == className }
 
 fun AnnotationNode.getAnnotationValue(key: String): Any? {
   val vls = values ?: return null
@@ -176,11 +126,3 @@ fun AnnotationNode.getAnnotationValue(key: String): Any? {
   }
   return null
 }
-
-/**
- * Access Control
- * A class or interface C is accessible to a class or interface D if and only if either of the following is true:
- * C is public.
- * C and D are members of the same run-time package (§5.3).
- */
-fun isClassAccessibleToOtherClass(me: ClassNode, other: ClassNode): Boolean = me.isPublic() || haveTheSamePackage(me, other)

@@ -3,11 +3,11 @@ package com.jetbrains.pluginverifier.tasks.twoTargets
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimaps
+import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog

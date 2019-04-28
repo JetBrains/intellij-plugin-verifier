@@ -4,106 +4,91 @@ import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.pluginverifier.verifiers.clazz.*
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
-import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
-import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
+import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolution
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
-/**
- * Bytecode verification entry point, which takes as input
- * a [VerificationContext] and classes for verification, and
- * runs available bytecode verifiers against such configuration.
- */
-class BytecodeVerifier {
+class BytecodeVerifier(
+    private val verificationFilters: List<ClassFilter> = emptyList(),
+    additionalClassVerifiers: List<ClassVerifier> = emptyList(),
+    additionalMethodVerifiers: List<MethodVerifier> = emptyList(),
+    additionalFieldVerifiers: List<FieldVerifier> = emptyList(),
+    additionalInstructionVerifiers: List<InstructionVerifier> = emptyList()
+) {
 
-  private val verificationFilters = listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
+  private val fieldVerifiers = listOf<FieldVerifier>(FieldTypeVerifier()) + additionalFieldVerifiers
 
-  private val fieldVerifiers = arrayOf<FieldVerifier>(FieldTypeVerifier())
-
-  private val classVerifiers = arrayOf(
-      PluginClassFileVersionVerifier(),
+  private val classVerifiers = listOf(
       SuperClassVerifier(),
       InterfacesVerifier(),
       AbstractMethodVerifier(),
       InheritFromFinalClassVerifier()
-  )
+  ) + additionalClassVerifiers
 
-  private val methodVerifiers = arrayOf(
+  private val methodVerifiers = listOf(
       OverrideNonFinalVerifier(),
       MethodReturnTypeVerifier(),
       MethodArgumentTypesVerifier(),
       MethodLocalVarsVerifier(),
       MethodThrowsVerifier(),
-      MethodTryCatchVerifier(),
-      UnstableMethodOverriddenVerifier()
-  )
+      MethodTryCatchVerifier()
+  ) + additionalMethodVerifiers
 
-  private val instructionVerifiers = arrayOf(
+  private val instructionVerifiers = listOf(
       InvokeInstructionVerifier(),
       TypeInstructionVerifier(),
       LdcInstructionVerifier(),
       MultiANewArrayInstructionVerifier(),
       FieldAccessInstructionVerifier()
-  )
+  ) + additionalInstructionVerifiers
 
-  /**
-   * Runs bytecode verification for [classesToCheck]
-   * using the [verificationContext].
-   * Updates [progressIndicator] with percentage
-   * of processed classes.
-   */
   @Throws(InterruptedException::class)
   fun verify(
       classesToCheck: Set<String>,
-      verificationContext: VerificationContext,
+      context: VerificationContext,
       progressIndicator: (Double) -> Unit
   ) {
     if (classesToCheck.isNotEmpty()) {
       for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
         checkIfInterrupted()
-        verifyClass(className, verificationContext)
+        verifyClass(className, context)
         progressIndicator((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
       }
     }
+
+    groupMissingClassesToMissingPackages(context)
   }
 
-  private fun verifyClass(className: String, verificationContext: VerificationContext) {
-    val classResolution = verificationContext.classResolver.resolveClass(className)
-    if (classResolution is ClassResolution.Found && shouldVerify(classResolution.node)) {
-      verifyClassNode(classResolution.node, verificationContext)
+  private fun verifyClass(className: String, context: VerificationContext) {
+    val classFile = context.classResolver.resolveClassOrNull(className)
+    if (classFile != null && shouldVerify(classFile)) {
+      verifyClassFile(classFile, context)
     }
   }
 
-  private fun shouldVerify(classNode: ClassNode) = verificationFilters.all { it.shouldVerify(classNode) }
+  private fun shouldVerify(classFile: ClassFile) = verificationFilters.all { it.shouldVerify(classFile) }
 
-  @Suppress("UNCHECKED_CAST")
-  private fun verifyClassNode(node: ClassNode, ctx: VerificationContext) {
+  private fun verifyClassFile(classFile: ClassFile, context: VerificationContext) {
     for (verifier in classVerifiers) {
-      verifier.verify(node, ctx)
+      verifier.verify(classFile, context)
     }
 
-    val methods = node.methods as List<MethodNode>
-    for (method in methods) {
+    for (method in classFile.methods) {
       for (verifier in methodVerifiers) {
-        verifier.verify(node, method, ctx)
+        verifier.verify(method, context)
       }
 
-      method.instructions.iterator().forEach { instruction ->
+      method.instructions.forEach { instruction ->
         for (verifier in instructionVerifiers) {
-          verifier.verify(node, method, instruction as AbstractInsnNode, ctx)
+          verifier.verify(method, instruction, context)
         }
       }
     }
 
-    val fields = node.fields as List<FieldNode>
-    for (field in fields) {
+    for (field in classFile.fields) {
       for (verifier in fieldVerifiers) {
-        verifier.verify(node, field, ctx)
+        verifier.verify(field, context)
       }
     }
   }

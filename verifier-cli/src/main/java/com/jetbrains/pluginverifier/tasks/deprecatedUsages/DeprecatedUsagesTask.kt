@@ -1,18 +1,20 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val pluginRepository: PluginRepository) : Task {
 
@@ -37,7 +39,8 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
               PackageFilter(emptyList())
           ),
           VerificationTarget.Ide(ideDescriptor.ideVersion),
-          ideDescriptor.brokenPlugins
+          ideDescriptor.brokenPlugins,
+          listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
       )
     }
     reportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsSet.pluginsToCheck.size) + " is about to start")

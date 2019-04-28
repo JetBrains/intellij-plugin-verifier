@@ -13,8 +13,10 @@ import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 
@@ -74,7 +76,8 @@ class VerifyPluginTask(
                 PackageFilter(emptyList())
             ),
             VerificationTarget.Ide(ideDescriptor.ideVersion),
-            ideDescriptor.brokenPlugins
+            ideDescriptor.brokenPlugins,
+            listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
         )
     )
     return verifierExecutor

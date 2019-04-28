@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.deprecated.DeprecationInfo
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
 
 private const val SCHEDULED_FOR_REMOVAL_CLASS = "org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval"
 
@@ -14,17 +14,11 @@ private const val DEPRECATED_CLASS = "java/lang/Deprecated"
 
 private const val DEPRECATED_FOR_REMOVAL_KEY = "forRemoval"
 
-fun ClassNode.getDeprecationInfo(): DeprecationInfo? {
-  return findDeprecationInfo(getInvisibleAnnotations(), isDeprecated())
-}
+fun ClassFile.getDeprecationInfo(): DeprecationInfo? = findDeprecationInfo(invisibleAnnotations, isDeprecated)
 
-fun MethodNode.getDeprecationInfo(): DeprecationInfo? {
-  return findDeprecationInfo(getInvisibleAnnotations(), isDeprecated())
-}
+fun Method.getDeprecationInfo(): DeprecationInfo? = findDeprecationInfo(invisibleAnnotations, isDeprecated)
 
-fun FieldNode.getDeprecationInfo(): DeprecationInfo? {
-  return findDeprecationInfo(getInvisibleAnnotations(), isDeprecated())
-}
+fun Field.getDeprecationInfo(): DeprecationInfo? = findDeprecationInfo(invisibleAnnotations, isDeprecated)
 
 /**
  * Extracts [DeprecationInfo] for the following cases:

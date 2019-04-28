@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
-import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo

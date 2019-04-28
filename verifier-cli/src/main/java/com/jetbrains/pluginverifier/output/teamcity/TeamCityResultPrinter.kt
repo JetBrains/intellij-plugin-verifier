@@ -2,11 +2,11 @@ package com.jetbrains.pluginverifier.output.teamcity
 
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
-import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo

@@ -1,19 +1,17 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.misc.formatMessage
+import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import java.util.*
 
 /**
- * Indicates that a class [invalidClass] couldn't be read by ASM.
- * This class is used in [usage].
- * The ASM error is [asmError].
+ * Indicates that a class, which is used in [usage], couldn't be read.
  */
 class InvalidClassFileProblem(
     val invalidClass: ClassReference,
     val usage: Location,
-    val asmError: String
+    val message: String
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -23,9 +21,8 @@ class InvalidClassFileProblem(
     get() = "Invalid class-file {0}".formatMessage(invalidClass)
 
   override val fullDescription
-    get() = ("Class {0} referenced in {1} cannot be read using the ASM Java Bytecode engineering library. " +
-        "The internal ASM exception: {2}. You may try to recompile the class-file. " +
-        "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(invalidClass, usage, asmError)
+    get() = ("Class {0} referenced in {1} cannot be read: {2}. You may try to recompile the class-file. " +
+        "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(invalidClass, usage, message)
 
   override fun equals(other: Any?) = other is InvalidClassFileProblem
       && invalidClass == other.invalidClass

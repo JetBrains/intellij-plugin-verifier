@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.verifier.service.server.views
 
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.results.VerificationResult
@@ -120,7 +120,7 @@ class StatusPage(private val serverContext: ServerContext) : View {
                   td {
                     pre {
                       +buildString {
-                        appendln("We have tried to verifier $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
+                        appendln("We have tried to verify $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
                         val limitTimes = minOf(5, attempts.size)
                         appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
                         for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {

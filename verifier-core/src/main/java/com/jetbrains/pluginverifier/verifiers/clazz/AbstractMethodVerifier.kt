@@ -2,33 +2,32 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
-import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 class AbstractMethodVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, ctx: VerificationContext) {
-    if (clazz.isAbstract() || clazz.isInterface()) return
+  override fun verify(classFile: ClassFile, context: VerificationContext) {
+    if (classFile.isAbstract || classFile.isInterface) return
 
     val abstractMethods = hashMapOf<MethodSignature, MethodLocation>()
     val implementedMethods = hashMapOf<MethodSignature, MethodLocation>()
     var hasUnresolvedParents = false
 
-    val parentsVisitor = ClassParentsVisitor(true) { subclassNode, superName ->
-      val classNode = ctx.resolveClassOrProblem(superName, subclassNode) { subclassNode.createClassLocation() }
-      hasUnresolvedParents = hasUnresolvedParents || classNode == null
-      classNode
+    val parentsVisitor = ClassParentsVisitor(true) { subclassFile, superName ->
+      val parentFile = context.classResolver.resolveClassChecked(superName, subclassFile, context)
+      hasUnresolvedParents = hasUnresolvedParents || parentFile == null
+      parentFile
     }
 
-    parentsVisitor.visitClass(clazz, true, onEnter = { parent ->
-      parent.getMethods().orEmpty().forEach { method ->
-        if (!method.isPrivate() && !method.isStatic()) {
-          val methodLocation = createMethodLocation(parent, method)
-          val methodSignature = MethodSignature(method.name, method.desc)
-          if (method.isAbstract()) {
-            abstractMethods[methodSignature] = methodLocation
+    parentsVisitor.visitClass(classFile, true, onEnter = { parent ->
+      parent.methods.forEach { method ->
+        if (!method.isPrivate && !method.isStatic) {
+          val methodSignature = MethodSignature(method.name, method.descriptor)
+          if (method.isAbstract) {
+            abstractMethods[methodSignature] = method.location
           } else {
-            implementedMethods[methodSignature] = methodLocation
+            implementedMethods[methodSignature] = method.location
           }
         }
       }
@@ -36,10 +35,9 @@ class AbstractMethodVerifier : ClassVerifier {
     })
 
     if (!hasUnresolvedParents) {
-      val currentClass = clazz.createClassLocation()
       (abstractMethods.keys - implementedMethods.keys).forEach { method ->
         val abstractMethod = abstractMethods[method]!!
-        ctx.registerProblem(MethodNotImplementedProblem(abstractMethod, currentClass))
+        context.problemRegistrar.registerProblem(MethodNotImplementedProblem(abstractMethod, classFile.location))
       }
     }
   }

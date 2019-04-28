@@ -1,0 +1,10 @@
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'org.jgrapht:jgrapht-core:0.9.2'
+  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: intellijStructureVersion
+  compile project(':verifier-core')
+  compile project(':verifier-repository')
+}

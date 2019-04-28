@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
-import com.jetbrains.pluginverifier.misc.formatDuration
+import com.jetbrains.plugin.structure.base.utils.formatDuration
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor.State
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor.State.*
 import java.time.Duration

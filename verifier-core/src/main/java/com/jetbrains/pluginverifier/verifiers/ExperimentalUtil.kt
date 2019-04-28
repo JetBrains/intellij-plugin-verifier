@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 private const val EXPERIMENTAL_CLASS = "org/jetbrains/annotations/ApiStatus\$Experimental"
 
-fun ClassNode.isExperimentalApi() =
-    getInvisibleAnnotations()?.findAnnotation(EXPERIMENTAL_CLASS) != null
+fun ClassFile.isExperimentalApi() =
+    invisibleAnnotations.findAnnotation(EXPERIMENTAL_CLASS) != null
 
-fun MethodNode.isExperimentalApi() =
-    getInvisibleAnnotations()?.findAnnotation(EXPERIMENTAL_CLASS) != null
+fun Method.isExperimentalApi() =
+    invisibleAnnotations.findAnnotation(EXPERIMENTAL_CLASS) != null
 
-fun FieldNode.isExperimentalApi() =
-    getInvisibleAnnotations()?.findAnnotation(EXPERIMENTAL_CLASS) != null
+fun Field.isExperimentalApi() =
+    invisibleAnnotations.findAnnotation(EXPERIMENTAL_CLASS) != null

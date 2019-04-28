@@ -7,9 +7,10 @@ import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilte
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.EmptyClassResolver
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import org.junit.Assert
 
 /**
@@ -17,9 +18,18 @@ import org.junit.Assert
  */
 abstract class BaseDocumentedProblemsReportingTest {
 
+  protected companion object {
+    val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
+        "java/lang/Object",
+        false,
+        null,
+        emptyList()
+    )
+  }
+
   fun assertProblemsDocumented(
       problemAndItsDocumentation: List<Pair<CompatibilityProblem, DocumentedProblem>>,
-      verificationContext: VerificationContext
+      context: PluginVerificationContext
   ) {
     val problems = problemAndItsDocumentation.map { it.first }
     val documentedProblems = problemAndItsDocumentation.map { it.second }
@@ -29,7 +39,7 @@ abstract class BaseDocumentedProblemsReportingTest {
     for (problem in problems) {
       val shouldReportProblem = problemsFilter.shouldReportProblem(
           problem,
-          verificationContext
+          context
       )
       if (shouldReportProblem !is ProblemsFilter.Result.Ignore) {
         Assert.fail("Problem is not ignored:\n$problem")
@@ -37,7 +47,7 @@ abstract class BaseDocumentedProblemsReportingTest {
     }
   }
 
-  fun createSimpleVerificationContext() = VerificationContext(
+  fun createSimpleVerificationContext() = PluginVerificationContext(
       PluginIdAndVersion("pluginId", "1.0"),
       VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
       ResultHolder(),

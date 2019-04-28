@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 interface ClassVerifier {
-  fun verify(clazz: ClassNode, ctx: VerificationContext)
+  fun verify(classFile: ClassFile, context: VerificationContext)
 }

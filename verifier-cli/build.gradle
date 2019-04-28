@@ -1,6 +1,7 @@
 dependencies {
   runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-  compile project(':verifier-core')
+  compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
+  compile project(':verifier-intellij')
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'

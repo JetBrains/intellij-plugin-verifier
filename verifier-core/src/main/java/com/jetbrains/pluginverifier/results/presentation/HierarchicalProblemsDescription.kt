@@ -1,34 +1,33 @@
 package com.jetbrains.pluginverifier.results.presentation
 
-import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyVisitor
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
+import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyVisitor
 
 object HierarchicalProblemsDescription {
-  private fun findIdeSuperClassesAndInterfaces(ownerHierarchy: ClassHierarchy): Pair<Set<String>, Set<String>> {
-    val ideSuperClasses = hashSetOf<String>()
-    val ideSuperInterfaces = hashSetOf<String>()
+  private fun findCandidateSuperClassesAndInterfaces(ownerHierarchy: ClassHierarchy): Pair<Set<String>, Set<String>> {
+    val superClasses = hashSetOf<String>()
+    val superInterfaces = hashSetOf<String>()
     ClassHierarchyVisitor(true).visitClassHierarchy(ownerHierarchy, false, onEnter = { parent ->
-      if (parent.classOrigin is ClassFileOrigin.IdeClass) {
+      if (!parent.name.startsWith("java/")) {
         if (parent.isInterface) {
-          ideSuperInterfaces.add(parent.name)
+          superInterfaces.add(parent.name)
         } else {
-          ideSuperClasses.add(parent.name)
+          superClasses.add(parent.name)
         }
       }
       true
     })
-    return ideSuperClasses to ideSuperInterfaces
+    return superClasses to superInterfaces
   }
 
-  fun presentableElementMightHaveBeenDeclaredInIdeSuperTypes(
+  fun presentableElementMightHaveBeenDeclaredInSuperTypes(
       elementType: String,
       ownerHierarchy: ClassHierarchy,
       canBeDeclaredInSuperClass: Boolean,
       canBeDeclaredInSuperInterface: Boolean
   ): String {
-    val (allSuperClasses, allSuperInterfaces) = findIdeSuperClassesAndInterfaces(ownerHierarchy)
+    val (allSuperClasses, allSuperInterfaces) = findCandidateSuperClassesAndInterfaces(ownerHierarchy)
 
     val superClasses = if (canBeDeclaredInSuperClass) allSuperClasses else emptySet()
     val superInterfaces = if (canBeDeclaredInSuperInterface) allSuperInterfaces else emptySet()

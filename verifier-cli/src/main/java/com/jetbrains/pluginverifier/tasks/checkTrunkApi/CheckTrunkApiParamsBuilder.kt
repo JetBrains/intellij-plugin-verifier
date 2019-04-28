@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
@@ -8,7 +9,6 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.misc.listPresentationInColumns
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser

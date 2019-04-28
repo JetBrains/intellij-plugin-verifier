@@ -2,32 +2,29 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.problems.AbstractClassInstantiationProblem
 import com.jetbrains.pluginverifier.results.problems.InterfaceInstantiationProblem
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.TypeInsnNode
 
 /**
- * Processing of NEW, ANEWARRAY, CHECKCAST and INSTANCEOF instructions.
+ * Processing of `new`, `anewarray`, `checkcast`, `instanceof` instructions.
  */
 class TypeInstructionVerifier : InstructionVerifier {
-  override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
-    if (instr !is TypeInsnNode) return
+  override fun verify(method: Method, instructionNode: AbstractInsnNode, context: VerificationContext) {
+    if (instructionNode !is TypeInsnNode) return
 
-    val desc = instr.desc
-    val className = desc.extractClassNameFromDescr() ?: return
+    val className = instructionNode.desc.extractClassNameFromDescriptor() ?: return
 
-    val aClass = ctx.resolveClassOrProblem(className, clazz) { createMethodLocation(clazz, method) } ?: return
+    val typeClassFile = context.classResolver.resolveClassChecked(className, method, context) ?: return
 
-    if (instr.opcode == Opcodes.NEW) {
-      if (aClass.isInterface()) {
-        val interfaze = aClass.createClassLocation()
-        ctx.registerProblem(InterfaceInstantiationProblem(interfaze, createMethodLocation(clazz, method)))
-      } else if (aClass.isAbstract()) {
-        val classOrInterface = aClass.createClassLocation()
-        ctx.registerProblem(AbstractClassInstantiationProblem(classOrInterface, createMethodLocation(clazz, method)))
+    if (instructionNode.opcode == Opcodes.NEW) {
+      if (typeClassFile.isInterface) {
+        context.problemRegistrar.registerProblem(InterfaceInstantiationProblem(typeClassFile.location, method.location))
+      } else if (typeClassFile.isAbstract) {
+        context.problemRegistrar.registerProblem(AbstractClassInstantiationProblem(typeClassFile.location, method.location))
       }
     }
 

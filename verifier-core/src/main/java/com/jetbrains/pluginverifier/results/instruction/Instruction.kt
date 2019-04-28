@@ -16,15 +16,15 @@ enum class Instruction(private val type: String) {
 
   companion object {
     fun fromOpcode(opcode: Int): Instruction? = when (opcode) {
-      Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
-      Opcodes.INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
-      Opcodes.INVOKEINTERFACE -> Instruction.INVOKE_INTERFACE
-      Opcodes.INVOKESTATIC -> Instruction.INVOKE_STATIC
+      Opcodes.INVOKEVIRTUAL -> INVOKE_VIRTUAL
+      Opcodes.INVOKESPECIAL -> INVOKE_SPECIAL
+      Opcodes.INVOKEINTERFACE -> INVOKE_INTERFACE
+      Opcodes.INVOKESTATIC -> INVOKE_STATIC
 
-      Opcodes.PUTFIELD -> Instruction.PUT_FIELD
-      Opcodes.GETFIELD -> Instruction.GET_FIELD
-      Opcodes.PUTSTATIC -> Instruction.PUT_STATIC
-      Opcodes.GETSTATIC -> Instruction.GET_STATIC
+      Opcodes.PUTFIELD -> PUT_FIELD
+      Opcodes.GETFIELD -> GET_FIELD
+      Opcodes.PUTSTATIC -> PUT_STATIC
+      Opcodes.GETSTATIC -> GET_STATIC
       else -> null
     }
   }

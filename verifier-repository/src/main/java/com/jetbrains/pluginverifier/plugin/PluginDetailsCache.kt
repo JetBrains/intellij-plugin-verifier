@@ -37,8 +37,7 @@ class PluginDetailsCache(
    */
   @Throws(InterruptedException::class)
   fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result {
-    val internalResult = internalCache.getResourceCacheEntry(pluginInfo)
-    return when (internalResult) {
+    return when (val internalResult = internalCache.getResourceCacheEntry(pluginInfo)) {
       is ResourceCacheEntryResult.Found -> {
         val internalEntry = internalResult.resourceCacheEntry
         val pluginDetailsProviderResult = internalEntry.resource

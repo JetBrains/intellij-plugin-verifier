@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 
 /**

@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.repository.resources
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.pluginverifier.misc.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.results.presentation
 
-import com.jetbrains.pluginverifier.misc.pluralize
-import com.jetbrains.pluginverifier.misc.pluralizeWithNumber
+import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location

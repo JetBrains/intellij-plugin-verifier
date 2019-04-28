@@ -1,6 +1,7 @@
 rootProject.name = 'verifier-parent'
 include 'verifier-cli'
 include 'verifier-core'
+include 'verifier-intellij'
 include 'verifier-repository'
 
 include 'verifier-test'

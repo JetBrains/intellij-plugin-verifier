@@ -25,12 +25,14 @@ import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import org.hamcrest.core.Is.`is`
 import org.junit.AfterClass
 import org.junit.Assert.*
@@ -100,7 +102,8 @@ class VerificationCorrectnessTest {
                         externalClassesPackageFilter
                     ),
                     VerificationTarget.Ide(ideDescriptor.ideVersion),
-                    ideDescriptor.brokenPlugins
+                    ideDescriptor.brokenPlugins,
+                    listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
                 )
             )
 
@@ -571,6 +574,11 @@ The following classes of 'non' are not resolved:
     assertProblemFound(
         "Package-private class access.other.BecamePackagePrivate is not available at mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void. This can lead to **IllegalAccessError** exception at runtime.",
         "Illegal access to package-private class access.other.BecamePackagePrivate"
+    )
+
+    assertProblemFound(
+        "Method mock.plugin.access.IllegalAccess.classBecamePackagePrivate() : void contains an *invokespecial* instruction referencing a package-private constructor access.other.BecamePackagePrivate.<init>() inaccessible to a class mock.plugin.access.IllegalAccess. This can lead to **IllegalAccessError** exception at runtime.",
+        "Illegal invocation of package-private constructor access.other.BecamePackagePrivate.<init>()"
     )
   }
 

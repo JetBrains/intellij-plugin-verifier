@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.problems
 
-import com.jetbrains.pluginverifier.misc.formatMessage
+import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -43,7 +43,7 @@ class FieldNotFoundProblem(
       append(descriptionMainPart)
       //Instance fields can only be declared in super classes.
       val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
-      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInIdeSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
+      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
     }
 
   override fun equals(other: Any?) = other is FieldNotFoundProblem

@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.appendWithSpaceIfNotBlank
 
 /**
  * Represents a problem of type "No versions of plugin X compatible with IDE Y".
@@ -13,9 +12,9 @@ import com.jetbrains.pluginverifier.misc.appendWithSpaceIfNotBlank
 data class MissingCompatibleVersionProblem(
     val pluginId: String,
     val ideVersion: IdeVersion,
-    private val details: String
+    private val details: String?
 ) {
 
   override fun toString() = "For plugin '$pluginId' there are no versions compatible with $ideVersion " +
-      "in the Plugin Repository" + details.appendWithSpaceIfNotBlank()
+      "in the Plugin Repository" + if (details != null) " $details" else ""
 }

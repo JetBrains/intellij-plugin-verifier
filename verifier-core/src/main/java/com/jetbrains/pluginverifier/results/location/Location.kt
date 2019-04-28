@@ -2,10 +2,11 @@ package com.jetbrains.pluginverifier.results.location
 
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import java.util.*
 
 /**
- * Location in the Java bytecode of a programming element
+ * Location of a programming element in the Java bytecode
  * such as [class][ClassLocation], [method][MethodLocation]
  * or [field][FieldLocation].
  */
@@ -19,9 +20,14 @@ sealed class Location {
 
 data class ClassLocation(
     val className: String,
-    val signature: String,
-    val modifiers: Modifiers
+    val signature: String?,
+    val modifiers: Modifiers,
+    val classFileOrigin: ClassFileOrigin
 ) : Location() {
+
+  val packageName
+    get() = className.substringBeforeLast('/', "")
+
   override fun equals(other: Any?) = other is ClassLocation && className == other.className
 
   override fun hashCode() = className.hashCode()
@@ -44,7 +50,7 @@ data class FieldLocation(
     val hostClass: ClassLocation,
     val fieldName: String,
     val fieldDescriptor: String,
-    val signature: String,
+    val signature: String?,
     val modifiers: Modifiers
 ) : Location() {
 
@@ -67,7 +73,7 @@ data class MethodLocation(
     val methodName: String,
     val methodDescriptor: String,
     val parameterNames: List<String>,
-    val signature: String,
+    val signature: String?,
     val modifiers: Modifiers
 ) : Location() {
 

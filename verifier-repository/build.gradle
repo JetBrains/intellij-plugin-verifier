@@ -1,8 +1,4 @@
 dependencies {
-  //Provides English class which is capable of pluralizing english words.
-  compile 'org.atteo:evo-inflector:1.2.2'
-
-
   compile 'com.google.code.gson:gson:2.7'
 
   compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'

@@ -3,30 +3,16 @@ package com.jetbrains.pluginverifier.results.reference
 import com.jetbrains.pluginverifier.results.presentation.*
 import java.util.*
 
-sealed class SymbolicReference {
-  companion object {
-
-    fun methodOf(
-        hostClass: String,
-        methodName: String,
-        methodDescriptor: String
-    ) = MethodReference(ClassReference(hostClass), methodName, methodDescriptor)
-
-    fun fieldOf(
-        hostClass: String,
-        fieldName: String,
-        fieldDescriptor: String
-    ) = FieldReference(ClassReference(hostClass), fieldName, fieldDescriptor)
-
-    fun classOf(className: String) = ClassReference(className)
-  }
-}
+sealed class SymbolicReference
 
 data class MethodReference(
     val hostClass: ClassReference,
     val methodName: String,
     val methodDescriptor: String
 ) : SymbolicReference() {
+
+  constructor(hostClass: String, methodName: String, methodDescriptor: String)
+      : this(ClassReference(hostClass), methodName, methodDescriptor)
 
   override fun equals(other: Any?) = other is MethodReference
       && hostClass == other.hostClass
@@ -45,6 +31,9 @@ data class FieldReference(
     val fieldName: String,
     val fieldDescriptor: String
 ) : SymbolicReference() {
+
+  constructor(hostClass: String, fieldName: String, fieldDescriptor: String)
+      : this(ClassReference(hostClass), fieldName, fieldDescriptor)
 
   override fun equals(other: Any?) = other is FieldReference
       && fieldName == other.fieldName

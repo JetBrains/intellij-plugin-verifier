@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 val PUBLIC_MODIFIERS = Modifiers.of(Modifiers.Modifier.PUBLIC)
 
 val MOCK_METHOD_LOCATION = MethodLocation(
-    ClassLocation("SomeClass", "", PUBLIC_MODIFIERS),
+    ClassLocation("SomeClass", null, PUBLIC_MODIFIERS, MockClassFileOrigin),
     "someMethod",
     "()V",
     emptyList(),
-    "",
+    null,
     PUBLIC_MODIFIERS
 )

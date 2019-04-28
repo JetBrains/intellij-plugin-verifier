@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.utils.formatDuration
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
-import com.jetbrains.pluginverifier.misc.formatDuration
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions

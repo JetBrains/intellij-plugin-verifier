@@ -16,7 +16,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassHierarchyBuilder
+import com.jetbrains.pluginverifier.tests.mocks.MockClassFileOrigin
 import org.junit.Test
 
 class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
@@ -46,14 +46,14 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
         MethodReference(deletedClassRef, "foo", "()V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
+        JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted owner
     val fieldWithRemovedOwnerProblem = FieldNotFoundProblem(
         FieldReference(deletedClassRef, "x", "I"),
         MOCK_METHOD_LOCATION,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
 
@@ -64,14 +64,14 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
         MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
         MOCK_METHOD_LOCATION,
         Instruction.INVOKE_VIRTUAL,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY
+        JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted param type
     val fieldWithRemovedClassInType = FieldNotFoundProblem(
         FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
         MOCK_METHOD_LOCATION,
-        ClassHierarchyBuilder.JAVA_LANG_OBJECT_HIERARCHY,
+        JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
 
@@ -119,8 +119,8 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val clientImplName = "client/Implementation"
     val methodName = "foo"
 
-    val libInterface = ClassLocation(libInterfaceName, "", Modifiers.of(PUBLIC, INTERFACE, ABSTRACT))
-    val clientImplementation = ClassLocation(clientImplName, "", Modifiers.of(PUBLIC))
+    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), MockClassFileOrigin)
+    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), MockClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         MethodLocation(
@@ -128,7 +128,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
             methodName,
             "()V",
             emptyList(),
-            "",
+            null,
             Modifiers.of(PUBLIC, ABSTRACT)
         ),
         clientImplementation

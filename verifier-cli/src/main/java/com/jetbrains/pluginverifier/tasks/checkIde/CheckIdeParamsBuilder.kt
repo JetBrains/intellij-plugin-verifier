@@ -84,7 +84,7 @@ class CheckIdeParamsBuilder(
                 "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
             MissingCompatibleVersionProblem(it, ideVersion, details)
           } else {
-            MissingCompatibleVersionProblem(it, ideVersion, "")
+            MissingCompatibleVersionProblem(it, ideVersion, null)
           }
         }
   }

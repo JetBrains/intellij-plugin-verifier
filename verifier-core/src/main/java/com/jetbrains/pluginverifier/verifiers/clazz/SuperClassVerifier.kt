@@ -2,22 +2,20 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 
 import com.jetbrains.pluginverifier.results.problems.SuperClassBecameInterfaceProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.createClassLocation
-import com.jetbrains.pluginverifier.verifiers.isInterface
-import com.jetbrains.pluginverifier.verifiers.logic.CommonClassNames
-import com.jetbrains.pluginverifier.verifiers.resolveClassOrProblem
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 /**
  * Check that superclass exists and is indeed a class (not interface).
+ * If the class or interface named as the direct superclass of C is in fact an interface,
+ * class loading throws an IncompatibleClassChangeError.
  */
 class SuperClassVerifier : ClassVerifier {
-  override fun verify(clazz: ClassNode, ctx: VerificationContext) {
-    val superClassName = clazz.superName ?: CommonClassNames.JAVA_LANG_OBJECT
-    val superNode = ctx.resolveClassOrProblem(superClassName, clazz) { clazz.createClassLocation() } ?: return
-    //If the class or interface named as the direct superclass of C is in fact an interface, loading throws an IncompatibleClassChangeError.
-    if (superNode.isInterface()) {
-      ctx.registerProblem(SuperClassBecameInterfaceProblem(clazz.createClassLocation(), superNode.createClassLocation()))
+  override fun verify(classFile: ClassFile, context: VerificationContext) {
+    val superClassName = classFile.superName ?: "java/lang/Object"
+    val superClass = context.classResolver.resolveClassChecked(superClassName, classFile, context) ?: return
+
+    if (superClass.isInterface) {
+      context.problemRegistrar.registerProblem(SuperClassBecameInterfaceProblem(classFile.location, superClass.location))
     }
   }
 }

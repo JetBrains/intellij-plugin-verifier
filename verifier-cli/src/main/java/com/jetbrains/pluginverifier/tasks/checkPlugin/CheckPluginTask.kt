@@ -9,8 +9,10 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.verifiers.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
+import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 /**
  * The 'check-plugin' task that verifies
@@ -62,7 +64,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
                   externalClassesPackageFilter
               ),
               VerificationTarget.Ide(ideDescriptor.ideVersion),
-              ideDescriptor.brokenPlugins
+              ideDescriptor.brokenPlugins,
+              listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
           )
         }
       }

@@ -52,7 +52,7 @@ private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String 
     FieldTypeOption.SIMPLE_TYPE -> toSimpleJavaClassName
     FieldTypeOption.FULL_TYPE -> toFullJavaClassName
   }
-  return if (signature.isNotEmpty()) {
+  return if (signature != null) {
     convertTypeSignature(signature, descriptorConverter)
   } else {
     convertJvmDescriptorToNormalPresentation(fieldDescriptor, descriptorConverter)
@@ -67,7 +67,7 @@ fun ClassLocation.formatClassLocation(
     ClassOption.SIMPLE_NAME -> toSimpleJavaClassName
     ClassOption.FULL_NAME -> toFullJavaClassName
   }
-  return if (signature.isNotEmpty()) {
+  return if (signature != null) {
     when (classTypeSignatureOption) {
       ClassGenericsSignatureOption.NO_GENERICS -> converter(className)
       ClassGenericsSignatureOption.WITH_GENERICS -> converter(className) + JvmDescriptorsPresentation.convertClassSignature(signature, toSimpleJavaClassName)
@@ -136,7 +136,7 @@ private fun MethodLocation.methodParametersWithNamesAndReturnType(
     MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME -> toFullJavaClassName
     MethodReturnTypeOption.NO_RETURN_TYPE -> toSimpleJavaClassName
   }
-  val (parametersTypes, returnType) = if (signature.isNotEmpty()) {
+  val (parametersTypes, returnType) = if (signature != null) {
     JvmDescriptorsPresentation.convertMethodSignature(signature, paramsConverter)
   } else {
     val (paramsTs, returnT) = splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)

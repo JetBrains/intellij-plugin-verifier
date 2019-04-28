@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.output.html
 
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.misc.create
-import com.jetbrains.pluginverifier.misc.pluralize
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem

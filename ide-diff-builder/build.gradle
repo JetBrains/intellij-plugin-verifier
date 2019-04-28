@@ -22,6 +22,7 @@ allprojects {
     mavenLocal()
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+    maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
   }
 }
 
@@ -50,12 +51,14 @@ compileKotlin {
   }
 }
 
+def verifierVersion = project.hasProperty('verifierVersionDev') ? 'dev' : '1.210'
+
 dependencies {
   runtime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 
   testCompile 'junit:junit:4.12'
   testCompile project(':')
-  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: 'dev'
+  compile group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: verifierVersion
   compile 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   compile 'org.apache.commons:commons-text:1.6'
 }
