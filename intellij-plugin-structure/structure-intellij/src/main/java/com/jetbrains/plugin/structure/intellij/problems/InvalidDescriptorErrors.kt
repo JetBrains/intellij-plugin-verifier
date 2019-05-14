@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
