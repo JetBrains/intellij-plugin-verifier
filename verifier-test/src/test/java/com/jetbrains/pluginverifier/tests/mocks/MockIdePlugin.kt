@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -21,6 +22,7 @@ data class MockIdePlugin(
     override val vendorUrl: String? = null,
     override val changeNotes: String? = null,
     override val icons: List<PluginIcon> = emptyList(),
+    private val productDescriptor: ProductDescriptor? = null,
     private val dependencies: List<PluginDependency> = emptyList(),
     private val underlyingDocument: Document = Document(Element("idea-plugin")),
     private val optionalDescriptors: Map<String, IdePlugin> = emptyMap(),
@@ -50,4 +52,5 @@ data class MockIdePlugin(
 
   override fun getUnderlyingDocument() = underlyingDocument
 
+  override fun getProductDescriptor() = productDescriptor
 }
