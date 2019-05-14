@@ -1,14 +1,14 @@
-package org.jetbrains.plugins.verifier.service.server.servlets.info
+package org.jetbrains.plugins.verifier.service.server.views
 
-import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
-import java.io.PrintWriter
-import java.io.StringWriter
+import org.springframework.web.servlet.View
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Web page for managing ignored problems.
  */
-class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) {
+class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) : View {
   companion object {
     private const val CSS_STYLES = """
 <style>
@@ -50,8 +50,10 @@ class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) {
     """
   }
 
-  fun generate(): String {
-    return buildHtml {
+  override fun getContentType() = "text/html"
+
+  override fun render(model: MutableMap<String, *>?, request: HttpServletRequest, response: HttpServletResponse) {
+    return response.outputStream.buildHtml {
       head {
         unsafe(CSS_STYLES)
       }
@@ -65,7 +67,7 @@ class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) {
           br()
           +"    org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*  --- ignore for all versions of Kotlin plugin"
         }
-        form("ignoredProblemsForm", "", "/info/modify-ignored-problems", method = "post") {
+        form("ignoredProblemsForm", "", "/modify-ignored-problems", method = "post") {
           textarea("ignored_problems_form", "ignoredProblemsForm", "ignored.problems", "Enter ignored problems here") {
             getIgnoredProblemsLines().forEach {
               +it
@@ -87,18 +89,4 @@ class IgnoredProblemsPage(private val ignoreConditions: List<IgnoreCondition>) {
 
   private fun getIgnoredProblemsLines() = ignoreConditions.map { it.serializeCondition() }
 
-}
-
-/**
- * Builds HTML web page using provided builder [function].
- */
-fun buildHtml(function: HtmlBuilder.() -> Unit): String {
-  val stringWriter = StringWriter()
-  val printWriter = PrintWriter(stringWriter)
-  val htmlBuilder = HtmlBuilder(printWriter)
-  htmlBuilder.html {
-    htmlBuilder.function()
-  }
-  printWriter.close()
-  return stringWriter.toString()
 }

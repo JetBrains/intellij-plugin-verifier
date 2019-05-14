@@ -9,7 +9,6 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
 @SpringBootApplication
 @ServletComponentScan(
-    "org.jetbrains.plugins.verifier.service.server.servlets",
     "org.jetbrains.plugins.verifier.service.startup"
 )
 class VerificationServiceApplication : SpringBootServletInitializer() {

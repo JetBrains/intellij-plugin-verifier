@@ -1,0 +1,56 @@
+package org.jetbrains.plugins.verifier.service.server.controllers
+
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.server.exceptions.AuthenticationFailedException
+import org.jetbrains.plugins.verifier.service.server.views.IgnoredProblemsPage
+import org.jetbrains.plugins.verifier.service.startup.ServerStartupListener
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.servlet.View
+import javax.servlet.ServletContext
+
+@Controller
+class IgnoredProblemsController {
+  @Autowired
+  private lateinit var servletContext: ServletContext
+
+  protected val logger = LoggerFactory.getLogger(this::class.java)
+
+  @GetMapping("/info/ignored-problems")
+  fun ignoredProblemsPageEndpoint(): View {
+    val serverContext = servletContext.getAttribute(ServerStartupListener.SERVER_CONTEXT_KEY) as ServerContext
+    return IgnoredProblemsPage(serverContext.serviceDAO.ignoreConditions)
+  }
+
+  @PostMapping("/modify-ignored-problems")
+  fun modifyIgnoredProblemsEndpoint(
+      @RequestParam("ignored.problems") ignoredProblems: String,
+      @RequestParam("admin.password") adminPassword: String
+  ): String {
+    val serverContext = servletContext.getAttribute(ServerStartupListener.SERVER_CONTEXT_KEY) as ServerContext
+    if (adminPassword != serverContext.authorizationData.serviceAdminPassword) {
+      throw AuthenticationFailedException("Incorrect password")
+    }
+    val ignoreConditions = try {
+      parseIgnoreConditions(ignoredProblems)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      val msg = "Unable to parse ignored problems: ${e.message}"
+      logger.warn(msg, e)
+      throw IllegalArgumentException(msg)
+    }
+    serverContext.serviceDAO.replaceIgnoreConditions(ignoreConditions)
+    return "redirect:/info/ignored-problems"
+  }
+
+  private fun parseIgnoreConditions(ignoredProblems: String) = ignoredProblems.lines()
+      .map { it.trim() }
+      .filterNot { it.isEmpty() }
+      .map { IgnoreCondition.parseCondition(it) }
+}

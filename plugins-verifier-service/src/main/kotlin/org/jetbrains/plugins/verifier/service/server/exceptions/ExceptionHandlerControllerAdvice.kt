@@ -14,4 +14,8 @@ class ExceptionHandlerControllerAdvice {
   @ExceptionHandler(NotFoundException::class)
   @ResponseStatus(code = HttpStatus.NOT_FOUND)
   fun handleAuthenticationFailed(e: NotFoundException) = e.message
+
+  @ExceptionHandler(IllegalArgumentException::class)
+  @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+  fun handleIllegalArgumentException(e: IllegalArgumentException) = e.message
 }
