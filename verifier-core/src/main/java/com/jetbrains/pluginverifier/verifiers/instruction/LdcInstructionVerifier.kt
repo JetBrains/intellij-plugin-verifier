@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
+import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.createMethodLocation
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescr
@@ -14,14 +15,20 @@ class LdcInstructionVerifier : InstructionVerifier {
   override fun verify(clazz: ClassNode, method: MethodNode, instr: AbstractInsnNode, ctx: VerificationContext) {
     if (instr !is LdcInsnNode) return
 
-    val constant = instr.cst as? Type ?: return
+    val lookupLocation = { createMethodLocation(clazz, method) }
+    val type = instr.cst as? Type ?: return
+    if (type.sort == Type.OBJECT) {
+      checkTypeExists(type, ctx, clazz, lookupLocation)
+    } else if (type.sort == Type.METHOD) {
+      for (argumentType in type.argumentTypes) {
+        checkTypeExists(argumentType, ctx, clazz, lookupLocation)
+      }
+      checkTypeExists(type.returnType, ctx, clazz, lookupLocation)
+    }
+  }
 
-    val className = constant.descriptor.extractClassNameFromDescr() ?: return
-
-    //Otherwise, if the run-time constant pool entry is a symbolic reference to a class (§5.1),
-    // then the named class is resolved (§5.4.3.1)
-    //During resolution of a symbolic reference to a class, any of the exceptions pertaining
-    // to class resolution (§5.4.3.1) can be thrown.
-    ctx.resolveClassOrProblem(className, clazz) { createMethodLocation(clazz, method) }
+  private fun checkTypeExists(type: Type, ctx: VerificationContext, clazz: ClassNode, lookupLocation: () -> Location) {
+    val className = type.descriptor.extractClassNameFromDescr() ?: return
+    ctx.resolveClassOrProblem(className, clazz, lookupLocation)
   }
 }
