@@ -54,11 +54,9 @@ configure(allprojects) {
       outputDir = file("$buildDir/classes/main")
     }
   }
-
-  bootWar {
-    manifest {
-      attributes 'Plugin-Verifier-Service-Version': version
-    }
+  
+  springBoot {
+    buildInfo()
   }
 
   protobuf {

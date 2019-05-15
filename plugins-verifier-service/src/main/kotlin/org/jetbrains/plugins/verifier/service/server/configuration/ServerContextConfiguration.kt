@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.startup
+package org.jetbrains.plugins.verifier.service.server.configuration
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
@@ -29,28 +29,34 @@ import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetti
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
 import org.slf4j.LoggerFactory
+import org.springframework.boot.info.BuildProperties
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.nio.file.Path
-import java.util.jar.Manifest
-import javax.servlet.ServletContext
-import javax.servlet.ServletContextEvent
-import javax.servlet.ServletContextListener
-import javax.servlet.annotation.WebListener
 
-/**
- * Startup initializer that configures the [server context] [ServerContext]
- * according to passed [settings] [Settings].
- */
-@WebListener
-class ServerStartupListener : ServletContextListener {
-
+@Configuration
+class ServerContextConfiguration {
   companion object {
-    private val LOG = LoggerFactory.getLogger(ServerStartupListener::class.java)
-
-    const val SERVER_CONTEXT_KEY = "plugin.verifier.service.server.context"
+    private val LOG = LoggerFactory.getLogger(ServerContextConfiguration::class.java)
 
     private const val PLUGIN_DETAILS_CACHE_SIZE = 30
 
     private const val IDE_DESCRIPTORS_CACHE_SIZE = 10
+  }
+
+  @Bean
+  fun serverContext(buildProperties: BuildProperties): ServerContext {
+    LOG.info("Server is ready to start")
+
+    validateSystemProperties()
+    serverContext = createServerContext(buildProperties.version)
+
+    with(serverContext) {
+      addVerifierService()
+      addFeatureService()
+      addAvailableIdeService()
+    }
+    return serverContext
   }
 
   private lateinit var serverContext: ServerContext
@@ -142,24 +148,6 @@ class ServerStartupListener : ServletContextListener {
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
-  override fun contextInitialized(sce: ServletContextEvent) {
-    LOG.info("Server is ready to start")
-
-    validateSystemProperties()
-
-    val servletContext = sce.servletContext
-    val appVersion = getAppVersion(servletContext)
-    serverContext = createServerContext(appVersion)
-
-    with(serverContext) {
-      addVerifierService()
-      addFeatureService()
-      addAvailableIdeService()
-
-      servletContext.setAttribute(SERVER_CONTEXT_KEY, serverContext)
-    }
-  }
-
   private fun ServerContext.addVerifierService() {
     val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
     val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
@@ -206,16 +194,6 @@ class ServerStartupListener : ServletContextListener {
     if (Settings.ENABLE_AVAILABLE_IDE_SERVICE.getAsBoolean()) {
       availableIdeService.start()
     }
-  }
-
-  private fun getAppVersion(servletContext: ServletContext): String? =
-      servletContext.getResourceAsStream("/META-INF/MANIFEST.MF")?.use { inputStream ->
-        val manifest = Manifest(inputStream)
-        manifest.mainAttributes.getValue("Plugin-Verifier-Service-Version")
-      }
-
-  override fun contextDestroyed(sce: ServletContextEvent?) {
-    serverContext.close()
   }
 
   private fun validateSystemProperties() {

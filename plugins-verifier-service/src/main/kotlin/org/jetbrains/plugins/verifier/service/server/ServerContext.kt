@@ -12,8 +12,8 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResul
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import java.io.Closeable
 import java.nio.file.Path
+import javax.annotation.PreDestroy
 
 /**
  * Server context aggregates all services and settings necessary to run
@@ -35,7 +35,7 @@ class ServerContext(
     val ideDescriptorsCache: IdeDescriptorsCache,
     val pluginDetailsCache: PluginDetailsCache,
     val verificationResultsFilter: VerificationResultFilter
-) : Closeable {
+) {
 
   private val _allServices = arrayListOf<BaseService>()
 
@@ -46,7 +46,8 @@ class ServerContext(
     _allServices.add(service)
   }
 
-  override fun close() {
+  @PreDestroy
+  fun close() {
     allServices.forEach { it.stop() }
     taskManager.closeLogged()
     serviceDAO.closeLogged()
