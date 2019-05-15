@@ -34,6 +34,10 @@ fun MethodNode.getParameterNames(): List<String> {
  * - `[[I` -> `null`
  */
 fun String.extractClassNameFromDescr(): String? {
+  if (this == "V") {
+    return null
+  }
+
   //prepare array name
   val elementType = trimStart('[')
 
