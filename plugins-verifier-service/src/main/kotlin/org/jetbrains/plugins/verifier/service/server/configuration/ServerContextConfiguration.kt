@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.server.configuration
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.ReleaseIdeRepository
+import com.jetbrains.pluginverifier.ide.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
@@ -45,11 +45,14 @@ class ServerContextConfiguration {
   }
 
   @Bean
-  fun serverContext(buildProperties: BuildProperties): ServerContext {
+  fun serverContext(
+      buildProperties: BuildProperties,
+      ideRepository: IdeRepository
+  ): ServerContext {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
-    serverContext = createServerContext(buildProperties.version)
+    serverContext = createServerContext(buildProperties.version, ideRepository)
 
     with(serverContext) {
       addVerifierService()
@@ -61,7 +64,7 @@ class ServerContextConfiguration {
 
   private lateinit var serverContext: ServerContext
 
-  private fun createServerContext(appVersion: String?): ServerContext {
+  private fun createServerContext(appVersion: String?, ideRepository: IdeRepository): ServerContext {
     val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
     val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
     val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
@@ -74,8 +77,6 @@ class ServerContextConfiguration {
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
-
-    val ideRepository = ReleaseIdeRepository()
     val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val authorizationData = AuthorizationData(
