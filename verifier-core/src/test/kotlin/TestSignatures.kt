@@ -48,17 +48,17 @@ class TestSignatures {
   fun assertNonGenericClass() {
     assertClass(
         "org/some/Class\$Inner1\$Inner2",
-        "",
+        null,
         "org.some.Class.Inner1.Inner2"
     )
   }
 
-  private fun assertClass(className: String, signature: String, expectedResult: String) {
+  private fun assertClass(className: String, signature: String?, expectedResult: String) {
     val fromClass = genSomeClassLocation(className, signature)
     Assert.assertEquals(expectedResult, fromClass.toString())
   }
 
-  private fun genSomeClassLocation(className: String, signature: String) =
+  private fun genSomeClassLocation(className: String, signature: String?) =
       ClassLocation(className, signature, Modifiers(0), object : ClassFileOrigin {
         override val classPath
           get() = Paths.get("unused")
@@ -98,7 +98,7 @@ class TestSignatures {
         "org/some/Class",
         "<T:Ljava/lang/String;Object:Ljava/lang/Object;>Ljava/lang/Object;",
         listOf("myInt", "myFloat", "myObject"),
-        "",
+        null,
         "org.some.Class.name(int myInt, float myFloat, Object myObject) : String"
     )
   }
@@ -109,7 +109,7 @@ class TestSignatures {
       className: String,
       classSignature: String,
       parameterNames: List<String>,
-      signature: String,
+      signature: String?,
       expected: String
   ) {
     val methodLocation = MethodLocation(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, Modifiers(0))
