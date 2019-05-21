@@ -162,6 +162,19 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `superfluous dependency declaration`() {
+    val dependencyId = "superfluousDependencyId"
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          depends += "\n"
+          depends += "<depends optional=\"false\">$dependencyId</depends>"
+        },
+        listOf(SuperfluousNonOptionalDependencyDeclaration(dependencyId))
+    )
+  }
+
+
+  @Test
   fun `invalid module bean`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {

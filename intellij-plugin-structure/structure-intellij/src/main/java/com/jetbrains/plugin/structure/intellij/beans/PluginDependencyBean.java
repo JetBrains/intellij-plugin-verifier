@@ -4,7 +4,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlValue;
 
 public class PluginDependencyBean {
-  @XmlAttribute(name = "optional") public boolean optional;
+  @XmlAttribute(name = "optional") public Boolean optional;
   @XmlAttribute(name = "config-file") public String configFile;
-  @XmlValue public String pluginId;
+  @XmlValue public String dependencyId;
 }

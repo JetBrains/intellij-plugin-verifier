@@ -78,3 +78,11 @@ data class DuplicatedDependencyWarning(val dependencyId: String) : PluginProblem
   override val message: String
     get() = "Duplicated dependency on '$dependencyId'"
 }
+
+class SuperfluousNonOptionalDependencyDeclaration(private val dependencyId: String) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "Dependency declaration <depends optional=\"false\">$dependencyId</dependency> is superfluous. Dependencies are mandatory by default."
+}

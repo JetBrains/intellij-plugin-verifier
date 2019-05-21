@@ -84,11 +84,7 @@ final class PluginCreator {
       validateProductDescriptor(bean.productDescriptor);
 
       if (bean.dependencies != null) {
-        for (PluginDependencyBean dependencyBean : bean.dependencies) {
-          if (StringUtil.isEmptyOrSpaces(dependencyBean.pluginId) || dependencyBean.pluginId.contains("\n")) {
-            registerProblem(new InvalidDependencyId(myDescriptorPath, dependencyBean.pluginId));
-          }
-        }
+        validateDependencies(bean.dependencies);
       }
 
       if (bean.modules != null) {
@@ -97,6 +93,18 @@ final class PluginCreator {
             registerProblem(new InvalidModuleBean(myDescriptorPath));
           }
         }
+      }
+    }
+  }
+
+  private void validateDependencies(List<PluginDependencyBean> dependencies) {
+    for (PluginDependencyBean dependencyBean : dependencies) {
+      if (StringUtil.isEmptyOrSpaces(dependencyBean.dependencyId) || dependencyBean.dependencyId.contains("\n")) {
+        registerProblem(new InvalidDependencyId(myDescriptorPath, dependencyBean.dependencyId));
+      } else if (Boolean.TRUE.equals(dependencyBean.optional) && dependencyBean.configFile == null) {
+        registerProblem(new OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId, dependencyBean.dependencyId));
+      } else if (Boolean.FALSE.equals(dependencyBean.optional)) {
+        registerProblem(new SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId));
       }
     }
   }

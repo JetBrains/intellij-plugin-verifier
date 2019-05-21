@@ -7,7 +7,7 @@ public class PluginDependencyImpl implements PluginDependency {
   private final boolean myIsOptional;
   private final boolean myIsModule;
 
-  public PluginDependencyImpl(@NotNull String id, @NotNull final Boolean isOptional, boolean isModule) {
+  public PluginDependencyImpl(@NotNull String id, boolean isOptional, boolean isModule) {
     myId = id;
     myIsOptional = isOptional;
     myIsModule = isModule;

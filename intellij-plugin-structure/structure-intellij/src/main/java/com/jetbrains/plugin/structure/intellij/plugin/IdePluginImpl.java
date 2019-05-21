@@ -154,9 +154,10 @@ public class IdePluginImpl implements IdePlugin {
 
     if (bean.dependencies != null) {
       for (PluginDependencyBean dependencyBean : bean.dependencies) {
-        if (dependencyBean.pluginId != null) {
-          boolean isModule = dependencyBean.pluginId.startsWith(INTELLIJ_MODULES_PREFIX);
-          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.pluginId, dependencyBean.optional, isModule);
+        if (dependencyBean.dependencyId != null) {
+          boolean isModule = dependencyBean.dependencyId.startsWith(INTELLIJ_MODULES_PREFIX);
+          boolean isOptional = Boolean.TRUE.equals(dependencyBean.optional);
+          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule);
           myDependencies.add(dependency);
 
           if (dependency.isOptional() && dependencyBean.configFile != null) {
