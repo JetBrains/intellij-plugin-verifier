@@ -111,6 +111,6 @@ bintrayUpload.doFirst {
   println('Uploading IntelliJ structure ' + project.version + ' to bintray')
 }
 
-build.dependsOn project("tests").test
+test.dependsOn project(":tests").test
 publishToMavenLocal.dependsOn test
 bintrayUpload.dependsOn test
