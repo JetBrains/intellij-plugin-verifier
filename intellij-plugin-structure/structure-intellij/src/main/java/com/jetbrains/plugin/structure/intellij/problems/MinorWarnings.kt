@@ -58,14 +58,15 @@ class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem
 
 }
 
-class MissingOptionalDependencyConfigurationFile(
+class OptionalDependencyDescriptorResolutionProblem(
+    private val dependencyId: String,
     private val configurationFile: String,
-    private val dependencyId: String
+    private val problems: List<PluginProblem>
 ) : PluginProblem() {
 
   override val level
     get() = Level.WARNING
 
   override val message
-    get() = "Configuration file $configurationFile for optional dependency $dependencyId is not found"
+    get() = "Configuration file '$configurationFile' for optional dependency '$dependencyId' can't be resolved: ${problems.joinToString { it.message }}"
 }

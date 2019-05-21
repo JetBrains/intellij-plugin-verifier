@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 final class PluginCreator {
 
@@ -180,12 +181,19 @@ final class PluginCreator {
     return myPlugin.getOptionalDependenciesConfigFiles();
   }
 
-  public void addOptionalDescriptor(PluginDependency pluginDependency, String configurationFile, PluginCreator optionalCreator) {
-    PluginCreationResult<IdePlugin> pluginCreationResult = optionalCreator.getPluginCreationResult();
+  public void addOptionalDescriptor(PluginDependency pluginDependency,
+                                    String configurationFile,
+                                    PluginCreator optionalDependencyCreator) {
+    PluginCreationResult<IdePlugin> pluginCreationResult = optionalDependencyCreator.getPluginCreationResult();
     if (pluginCreationResult instanceof PluginCreationSuccess) {
       myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess<IdePlugin>) pluginCreationResult).getPlugin());
     } else {
-      registerProblem(new MissingOptionalDependencyConfigurationFile(configurationFile, pluginDependency.getId()));
+      List<PluginProblem> errorsAndWarnings = ((PluginCreationFail<IdePlugin>) pluginCreationResult)
+          .getErrorsAndWarnings()
+          .stream()
+          .filter(e -> e.getLevel() == PluginProblem.Level.ERROR)
+          .collect(Collectors.toList());
+      registerProblem(new OptionalDependencyDescriptorResolutionProblem(pluginDependency.getId(), configurationFile, errorsAndWarnings));
     }
   }
 

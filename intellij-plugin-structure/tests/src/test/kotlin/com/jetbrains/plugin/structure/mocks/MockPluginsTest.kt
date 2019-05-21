@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
@@ -15,7 +16,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.MissingOptionalDependencyConfigurationFile
+import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.hamcrest.collection.IsIn.isIn
@@ -64,8 +65,10 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   }
 
-  private fun testMockWarnings(problems: List<PluginProblem>) {
-    assertContains(problems, listOf(MissingOptionalDependencyConfigurationFile("missingFile", "missingDependency")))
+  private fun testMockWarnings(warnings: List<PluginProblem>) {
+    val expectedWarnings = listOf(OptionalDependencyDescriptorResolutionProblem("missingDependency", "missingFile", listOf(PluginDescriptorIsNotFound("missingFile"))))
+    assertEquals(expectedWarnings.size, warnings.size)
+    assertContains(warnings, expectedWarnings)
   }
 
   @Test
