@@ -217,11 +217,6 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   }
 
   private PluginCreator getMultipleDescriptorsResult(File root, String descriptorPath, String firstDescriptor, String secondDescriptor) {
-    if (firstDescriptor.compareTo(secondDescriptor) > 0) {
-      String temp = firstDescriptor;
-      firstDescriptor = secondDescriptor;
-      secondDescriptor = temp;
-    }
     return new PluginCreator(descriptorPath, new MultiplePluginDescriptorsInDistribution(firstDescriptor, secondDescriptor), root);
   }
 

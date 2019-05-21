@@ -19,12 +19,12 @@ class UnableToReadDescriptor(private val descriptorPath: String? = null) : Plugi
 }
 
 class MultiplePluginDescriptorsInDistribution(
-    private val firstFileName: String,
-    private val secondFileName: String
+    private val firstDescriptorPath: String,
+    private val secondDescriptorPath: String
 ) : PluginProblem() {
   override val level
     get() = PluginProblem.Level.ERROR
 
   override val message
-    get() = "Found multiple plugin descriptors '$firstFileName' and '$secondFileName'. Only one plugin must be bundled in a plugin distribution."
+    get() = "Found multiple plugin descriptors '${minOf(firstDescriptorPath, secondDescriptorPath)}' and '${maxOf(firstDescriptorPath, secondDescriptorPath)}'. Only one plugin must be bundled in a plugin distribution."
 }

@@ -43,10 +43,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
           continue
         }
         if (nugetDescriptor != null) {
-          //Ensure deterministic errors description.
-          val firstName = minOf(nugetDescriptor.name, entry.name)
-          val secondName = maxOf(nugetDescriptor.name, entry.name)
-          return PluginCreationFail(MultiplePluginDescriptorsInDistribution(firstName, secondName))
+          return PluginCreationFail(MultiplePluginDescriptorsInDistribution(nugetDescriptor.name, entry.name))
         }
         nugetDescriptor = entry
       }
