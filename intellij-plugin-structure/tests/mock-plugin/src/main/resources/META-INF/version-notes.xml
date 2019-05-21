@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <idea-plugin version="2">
     <!--This file will be x-included into the main plugin.xml using xi:include-->
-    <change-notes>change_notes</change-notes>
+    <change-notes>Change notes must be at least 40 characters long</change-notes>
 
 </idea-plugin>

@@ -52,11 +52,11 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertEquals("http://www.jetbrains.com", plugin.vendorUrl)
     assertEquals("JetBrains s.r.o.", plugin.vendor)
 
-    assertEquals("Kotlin language support", plugin.description)
+    assertEquals("Plugin description must be at least 40 characters long", plugin.description)
     assertEquals(IdeVersion.createIdeVersion("141.1009.5"), plugin.sinceBuild)
     assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.untilBuild)
 
-    assertEquals("change_notes", plugin.changeNotes)
+    assertEquals("Change notes must be at least 40 characters long", plugin.changeNotes)
 
     assertEquals("PABC", plugin.productDescriptor?.code)
     assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)

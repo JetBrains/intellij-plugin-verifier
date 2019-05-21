@@ -3,7 +3,7 @@
     <id>org.jetbrains.kotlin2</id>
 
     <name>Kotlin</name>
-    <description>Kotlin language support</description>
+    <description>Plugin description must be at least 40 characters long</description>
     <version>1.0.0-beta-1038-IJ141-17</version>
     <vendor logo="/icons/plugin.png" email="vendor_email" url="http://www.jetbrains.com">JetBrains s.r.o.
     </vendor>
