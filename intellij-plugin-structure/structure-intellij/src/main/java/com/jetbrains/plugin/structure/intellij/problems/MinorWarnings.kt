@@ -70,3 +70,11 @@ class OptionalDependencyDescriptorResolutionProblem(
   override val message
     get() = "Configuration file '$configurationFile' for optional dependency '$dependencyId' can't be resolved: ${problems.joinToString { it.message }}"
 }
+
+data class DuplicatedDependencyWarning(val dependencyId: String) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message: String
+    get() = "Duplicated dependency on '$dependencyId'"
+}

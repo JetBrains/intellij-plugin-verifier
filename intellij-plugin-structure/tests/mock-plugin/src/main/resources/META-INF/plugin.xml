@@ -21,6 +21,9 @@
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>
 
+    <depends>duplicatedDependencyId</depends>
+    <depends optional="true">duplicatedDependencyId</depends>
+
     <module value="one_module"/>
     <module value="two_module"/>
 

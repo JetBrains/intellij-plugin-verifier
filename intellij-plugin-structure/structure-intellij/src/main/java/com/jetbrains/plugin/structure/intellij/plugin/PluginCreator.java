@@ -161,11 +161,21 @@ final class PluginCreator {
 
   private void validatePlugin(IdePlugin plugin) {
     int moduleDependenciesCnt = 0;
-    for (PluginDependency dependency : plugin.getDependencies()) {
+    List<PluginDependency> dependencies = plugin.getDependencies();
+    for (PluginDependency dependency : dependencies) {
       if (dependency.isModule()) {
         moduleDependenciesCnt++;
       }
     }
+
+    dependencies.stream().map(PluginDependency::getId)
+        .collect(Collectors.groupingBy(e -> e, Collectors.counting()))
+        .entrySet().stream()
+        .filter(e -> e.getValue() > 1)
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toList())
+        .forEach(duplicatedDependencyId -> registerProblem(new DuplicatedDependencyWarning(duplicatedDependencyId)));
+
     if (moduleDependenciesCnt == 0) {
       registerProblem(new NoModuleDependencies(myDescriptorPath));
     }

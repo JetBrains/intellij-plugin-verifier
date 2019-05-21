@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
+import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -66,7 +67,14 @@ class MockPluginsTest : BaseMockPluginTest() {
   }
 
   private fun testMockWarnings(warnings: List<PluginProblem>) {
-    val expectedWarnings = listOf(OptionalDependencyDescriptorResolutionProblem("missingDependency", "missingFile", listOf(PluginDescriptorIsNotFound("missingFile"))))
+    val expectedWarnings = listOf(
+        OptionalDependencyDescriptorResolutionProblem(
+            "missingDependency",
+            "missingFile",
+            listOf(PluginDescriptorIsNotFound("missingFile"))
+        ),
+        DuplicatedDependencyWarning("duplicatedDependencyId")
+    )
     assertEquals(expectedWarnings.size, warnings.size)
     assertContains(warnings, expectedWarnings)
   }
@@ -176,7 +184,7 @@ class MockPluginsTest : BaseMockPluginTest() {
   }
 
   private fun testMockDependenciesAndModules(plugin: IdePlugin) {
-    assertEquals(7, plugin.dependencies.size.toLong())
+    assertEquals(9, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val dependencies = listOf(
         PluginDependencyImpl("JUnit", true, false),
@@ -185,7 +193,9 @@ class MockPluginsTest : BaseMockPluginTest() {
         PluginDependencyImpl("mandatoryDependency", false, false),
         PluginDependencyImpl("referenceFromRoot", true, false),
         PluginDependencyImpl("missingDependency", true, false),
-        PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true)
+        PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true),
+        PluginDependencyImpl("duplicatedDependencyId", false, false),
+        PluginDependencyImpl("duplicatedDependencyId", true, false)
     )
     assertContains(plugin.dependencies, dependencies)
 

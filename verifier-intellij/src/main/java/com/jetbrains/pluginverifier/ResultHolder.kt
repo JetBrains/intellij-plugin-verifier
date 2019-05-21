@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
-import com.jetbrains.pluginverifier.results.warnings.DuplicatedDependencyWarning
 
 /**
  * Aggregates the plugin verification results:
@@ -79,16 +78,6 @@ class ResultHolder {
 
   fun addDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
     addCycleWarning(dependenciesGraph)
-    addDuplicatedDependenciesWarnings(dependenciesGraph)
-  }
-
-  private fun addDuplicatedDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
-    val verifiedPlugin = dependenciesGraph.verifiedPlugin
-    val directDependencies = dependenciesGraph.edges.filter { it.from == verifiedPlugin }.map { it.dependency.id }
-    val duplicatedDependencies = directDependencies.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
-    for (duplicatedDependency in duplicatedDependencies) {
-      addPluginErrorOrWarning(DuplicatedDependencyWarning(verifiedPlugin, duplicatedDependency))
-    }
   }
 
   private fun addCycleWarning(dependenciesGraph: DependenciesGraph) {
