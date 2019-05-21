@@ -22,8 +22,8 @@ public class PluginBean {
   @XmlElement(name = "idea-version") public IdeaVersionBean ideaVersion;
   @XmlElement(name = "product-descriptor") public ProductDescriptorBean productDescriptor;
   @XmlElement(name = "is-internal") public boolean isInternal = true;
-  @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<PluginDependencyBean>();
-  @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<PluginHelpSetBean>();
+  @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<>();
+  @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<>();
   @XmlElement(name = "category") public String category;
   @XmlElement(name = "resource-bundle") public String resourceBundle;
   @XmlAttribute(name = "url") public String url = "";

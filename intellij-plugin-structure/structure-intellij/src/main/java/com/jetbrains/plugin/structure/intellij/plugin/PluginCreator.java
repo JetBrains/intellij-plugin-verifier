@@ -39,7 +39,7 @@ final class PluginCreator {
   private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
 
   private final IdePluginImpl myPlugin;
-  private final List<PluginProblem> myProblems = new ArrayList<PluginProblem>();
+  private final List<PluginProblem> myProblems = new ArrayList<>();
   private final String myDescriptorPath;
   private final boolean myValidateDescriptor;
   private final File myActualFile;
@@ -284,9 +284,9 @@ final class PluginCreator {
   @NotNull
   public PluginCreationResult<IdePlugin> getPluginCreationResult() {
     if (hasErrors()) {
-      return new PluginCreationFail<IdePlugin>(myProblems);
+      return new PluginCreationFail<>(myProblems);
     }
-    return new PluginCreationSuccess<IdePlugin>(myPlugin, myProblems);
+    return new PluginCreationSuccess<>(myPlugin, myProblems);
   }
 
   @NotNull

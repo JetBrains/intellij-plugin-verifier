@@ -13,7 +13,7 @@ public class PluginXmlUtil {
   private static final String[] CLASS_LIKE_STRINGS = new String[]{"class", "interface", "implementation", "instance"};
 
   private static Set<String> extractReferencedClasses(@NotNull Element rootElement) {
-    Set<String> referencedClasses = new HashSet<String>();
+    Set<String> referencedClasses = new HashSet<>();
     Iterator<Content> descendants = rootElement.getDescendants();
     while (descendants.hasNext()) {
       Content next = descendants.next();
@@ -51,7 +51,7 @@ public class PluginXmlUtil {
   }
 
   private static List<String> extractClasses(@NotNull String text) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     Matcher matcher = JAVA_CLASS_PATTERN.matcher(text);
     while (matcher.find()) {
       result.add(matcher.group().replace('.', '/'));

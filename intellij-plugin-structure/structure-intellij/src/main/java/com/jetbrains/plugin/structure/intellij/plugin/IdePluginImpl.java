@@ -20,11 +20,11 @@ import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.isEmpty;
 public class IdePluginImpl implements IdePlugin {
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
 
-  private final Set<String> myDefinedModules = new HashSet<String>();
-  private final List<PluginDependency> myDependencies = new ArrayList<PluginDependency>();
-  private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<PluginDependency, String>();
-  private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<String, IdePlugin>();
-  private final List<PluginIcon> icons = new ArrayList<PluginIcon>();
+  private final Set<String> myDefinedModules = new HashSet<>();
+  private final List<PluginDependency> myDependencies = new ArrayList<>();
+  private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<>();
+  private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<>();
+  private final List<PluginIcon> icons = new ArrayList<>();
   private Multimap<String, Element> myExtensions;
   private File myOriginalFile;
   private File myExtractDirectory;

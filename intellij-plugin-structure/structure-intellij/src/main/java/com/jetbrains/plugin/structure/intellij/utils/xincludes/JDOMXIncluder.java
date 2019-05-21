@@ -101,7 +101,7 @@ public class JDOMXIncluder {
         if (subTagName != null) {
           e = e.getChild(subTagName.substring(1));    // cut off the slash
         }
-        return new ArrayList<Content>(e.getContent());
+        return new ArrayList<>(e.getContent());
       } else
         return Collections.emptyList();
     } else {
@@ -185,7 +185,7 @@ public class JDOMXIncluder {
   }
 
   private List<Content> doResolve(@NotNull Element original, String base) throws XIncludeException {
-    Stack<String> bases = new Stack<String>();
+    Stack<String> bases = new Stack<>();
     if (base != null) bases.push(base);
 
     List<Content> result = resolve(original, bases);
@@ -199,7 +199,7 @@ public class JDOMXIncluder {
       return resolveXIncludeElement(original, bases);
     } else {
       Element resolvedElement = resolveNonXIncludeElement(original, bases);
-      List<Content> resultList = new ArrayList<Content>(1);
+      List<Content> resultList = new ArrayList<>(1);
       resultList.add(resolvedElement);
       return resultList;
     }
@@ -267,7 +267,7 @@ public class JDOMXIncluder {
       try {
         String encoding = element.getAttributeValue(ENCODING);
         String s = IOUtils.toString(remote, encoding);
-        List<Content> resultList = new ArrayList<Content>(1);
+        List<Content> resultList = new ArrayList<>(1);
         resultList.add(new Text(s));
         return resultList;
       } catch (IOException e) {
