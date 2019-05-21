@@ -28,9 +28,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.time.LocalDate
 
-/**
- * Created by Sergey Patrikeev
- */
 class MockPluginsTest : BaseMockPluginTest() {
   override fun getMockPluginBuildDirectory(): File = File("mock-plugin").resolve("build").resolve("mocks")
 
