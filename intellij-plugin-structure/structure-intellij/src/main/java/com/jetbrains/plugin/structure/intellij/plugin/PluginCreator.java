@@ -102,7 +102,7 @@ final class PluginCreator {
       if (StringUtil.isEmptyOrSpaces(dependencyBean.dependencyId) || dependencyBean.dependencyId.contains("\n")) {
         registerProblem(new InvalidDependencyId(myDescriptorPath, dependencyBean.dependencyId));
       } else if (Boolean.TRUE.equals(dependencyBean.optional) && dependencyBean.configFile == null) {
-        registerProblem(new OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId, dependencyBean.dependencyId));
+        registerProblem(new OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId));
       } else if (Boolean.FALSE.equals(dependencyBean.optional)) {
         registerProblem(new SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId));
       }

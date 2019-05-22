@@ -173,6 +173,17 @@ class InvalidPluginsTest {
     )
   }
 
+  @Test
+  fun `config-file must be specified`() {
+    val dependencyId = "someDependencyId"
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          depends += "\n"
+          depends += "<depends optional=\"true\">$dependencyId</depends>"
+        },
+        listOf(OptionalDependencyConfigFileNotSpecified(dependencyId))
+    )
+  }
 
   @Test
   fun `invalid module bean`() {

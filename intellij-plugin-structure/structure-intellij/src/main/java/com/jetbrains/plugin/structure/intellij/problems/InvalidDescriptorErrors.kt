@@ -32,14 +32,6 @@ class InvalidDependencyId(descriptorPath: String, private val invalidPluginId: S
     get() = Level.ERROR
 }
 
-class OptionalDependencyConfigFileNotSpecified(descriptorPath: String, private val optionalDependencyId: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "optional dependency declaration must specify \"config-file\""
-
-  override val level
-    get() = Level.ERROR
-}
-
 class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "module is empty. It must be specified as <module value=\"my.module\"/>"

@@ -86,3 +86,11 @@ class SuperfluousNonOptionalDependencyDeclaration(private val dependencyId: Stri
   override val message
     get() = "Dependency declaration <depends optional=\"false\">$dependencyId</dependency> is superfluous. Dependencies are mandatory by default."
 }
+
+class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId: String) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
+}
