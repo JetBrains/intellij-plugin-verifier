@@ -8,8 +8,10 @@ import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
@@ -45,20 +47,23 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository)
       resultPrinter.printResults(results)
       resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
-      val totalProblemsNumber = results.flatMap {
-        when (it) {
-          is VerificationResult.CompatibilityProblems -> it.compatibilityProblems
-          is VerificationResult.MissingDependencies -> it.compatibilityProblems
-          is VerificationResult.InvalidPlugin -> emptySet()
-          is VerificationResult.OK,
-          is VerificationResult.StructureWarnings,
-          is VerificationResult.NotFound,
-          is VerificationResult.FailedToDownload -> emptySet()
+      val problems = hashSetOf<CompatibilityProblem>()
+      val brokenPlugins = hashSetOf<PluginInfo>()
+      for (result in results) {
+        when (result) {
+          is VerificationResult.CompatibilityProblems -> {
+            problems += result.compatibilityProblems
+            brokenPlugins += result.plugin
+          }
+          is VerificationResult.MissingDependencies -> {
+            problems += result.compatibilityProblems
+            brokenPlugins += result.plugin
+          }
         }
-      }.distinctBy { it.shortDescription }.size
-      val affectedPluginsCnt = results.distinctBy { it.plugin }.size
-      if (totalProblemsNumber > 0) {
-        tcLog.buildStatusFailure("IDE $ideVersion has " + "problem".pluralizeWithNumber(totalProblemsNumber) + " affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt))
+      }
+      val problemsNumber = problems.distinctBy { it.shortDescription }.size
+      if (problemsNumber > 0) {
+        tcLog.buildStatusFailure("IDE $ideVersion has " + "problem".pluralizeWithNumber(problemsNumber) + " affecting " + "plugin".pluralizeWithNumber(brokenPlugins.size))
       } else {
         tcLog.buildStatusSuccess("IDE $ideVersion doesn't have broken API problems")
       }
