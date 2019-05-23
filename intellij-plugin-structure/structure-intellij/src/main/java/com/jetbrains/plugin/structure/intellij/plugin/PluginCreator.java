@@ -121,9 +121,6 @@ final class PluginCreator {
     if (StringUtil.isEmpty(productCode)) {
       registerProblem(new PropertyNotSpecified("code", myDescriptorPath));
     } else {
-      if (!productCode.startsWith("P") || productCode.length() < MIN_PRODUCT_CODE_LENGTH) {
-        registerProblem(new InvalidProductCode(myDescriptorPath));
-      }
       validatePropertyLength("Product code", productCode, MAX_PRODUCT_CODE_LENGTH);
     }
   }

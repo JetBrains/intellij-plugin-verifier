@@ -453,8 +453,7 @@ class InvalidPluginsTest {
         },
         listOf(
             ReleaseDateWrongFormat,
-            NotNumber("release-version", "plugin.xml"),
-            InvalidProductCode("plugin.xml")
+            NotNumber("release-version", "plugin.xml")
         )
     )
   }
