@@ -3,6 +3,8 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank.Result.Found
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.simpleName
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting

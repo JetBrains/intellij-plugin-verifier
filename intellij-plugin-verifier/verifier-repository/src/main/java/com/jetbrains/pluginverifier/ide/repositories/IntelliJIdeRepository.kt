@@ -1,9 +1,10 @@
-package com.jetbrains.pluginverifier.ide
+package com.jetbrains.pluginverifier.ide.repositories
 
 import com.google.common.base.Suppliers
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.AvailableIde
+import com.jetbrains.pluginverifier.ide.IntelliJRepositoryIndexParser
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import retrofit2.Call
@@ -82,11 +83,6 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
   private fun Channel.getIndexUrl() = "$repositoryUrl/index.json"
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
-
-  override fun fetchAvailableIde(ideVersion: IdeVersion): AvailableIde? {
-    val fullIdeVersion = ideVersion.setProductCodeIfAbsent("IU")
-    return fetchIndex().find { it.version == fullIdeVersion }
-  }
 
   override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.toLowerCase()})"
 

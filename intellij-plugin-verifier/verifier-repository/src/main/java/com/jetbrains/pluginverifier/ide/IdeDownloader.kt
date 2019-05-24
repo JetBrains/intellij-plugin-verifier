@@ -12,7 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * [Downloader] of the IDEs from the [IdeRepository].
+ * [Downloader] of the IDEs.
  */
 class IdeDownloader : Downloader<AvailableIde> {
 

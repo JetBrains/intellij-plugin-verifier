@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.ide
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
+import com.jetbrains.pluginverifier.ide.repositories.Product
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.net.URL

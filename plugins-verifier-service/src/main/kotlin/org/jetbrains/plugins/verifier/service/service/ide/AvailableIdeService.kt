@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.ide
 
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.util.concurrent.TimeUnit

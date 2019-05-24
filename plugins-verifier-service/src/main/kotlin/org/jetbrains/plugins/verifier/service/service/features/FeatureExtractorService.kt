@@ -2,7 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.ide.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.network.NonSuccessfulResponseException
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
