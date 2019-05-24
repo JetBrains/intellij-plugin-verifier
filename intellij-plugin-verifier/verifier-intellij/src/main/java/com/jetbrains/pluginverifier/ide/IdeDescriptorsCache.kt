@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
@@ -88,6 +89,7 @@ class IdeDescriptorsCache(
       val ideDescriptor = try {
         IdeDescriptor.create(ideLock.file, key, ideLock)
       } catch (e: Exception) {
+        ideLock.closeLogged()
         e.rethrowIfInterrupted()
         return ProvideResult.Failed("Unable to open IDE $key", e)
       }
