@@ -71,11 +71,9 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
   }
 
   private fun printOnStdOut(checkIdeResult: CheckIdeResult) {
-    with(checkIdeResult) {
-      val printWriter = PrintWriter(System.out)
-      val resultPrinter = WriterResultPrinter(printWriter)
-      resultPrinter.printResults(results)
-      printWriter.flush()
-    }
+    val printWriter = PrintWriter(System.out)
+    val resultPrinter = WriterResultPrinter(printWriter)
+    resultPrinter.printResults(checkIdeResult.results)
+    printWriter.flush()
   }
 }
