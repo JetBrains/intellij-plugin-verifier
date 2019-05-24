@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.exceptions.AuthenticationFailedException
 import org.jetbrains.plugins.verifier.service.server.views.IgnoredProblemsPage
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Controller
@@ -14,12 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
 class IgnoredProblemsController {
+
+  private companion object {
+    val logger: Logger = LoggerFactory.getLogger(IgnoredProblemsController::class.java)
+  }
+
   @Autowired
   private lateinit var serverContext: ServerContext
 
-  protected val logger = LoggerFactory.getLogger(this::class.java)
-
-  @GetMapping("/info/ignored-problems")
+  @GetMapping("/ignored-problems")
   fun ignoredProblemsPageEndpoint() = IgnoredProblemsPage(serverContext.serviceDAO.ignoreConditions)
 
   @PostMapping("/modify-ignored-problems")
@@ -39,7 +43,7 @@ class IgnoredProblemsController {
       throw IllegalArgumentException(msg)
     }
     serverContext.serviceDAO.replaceIgnoreConditions(ignoreConditions)
-    return "redirect:/info/ignored-problems"
+    return "redirect:/ignored-problems"
   }
 
   private fun parseIgnoreConditions(ignoredProblems: String) = ignoredProblems.lines()

@@ -27,7 +27,7 @@ class ServiceController {
     val service = serverContext.allServices.find { it.serviceName == serviceName }
         ?: throw NotFoundException("Service $serviceName is not found")
     changeServiceState(service, command)
-    return "redirect:/info/status"
+    return "redirect:/"
   }
 
   private fun changeServiceState(
