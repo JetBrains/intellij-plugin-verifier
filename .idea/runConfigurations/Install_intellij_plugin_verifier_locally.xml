@@ -2,7 +2,7 @@
   <configuration default="false" name="Install intellij-plugin-verifier-locally" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/intellij-plugin-verifier" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="" />
       <option name="taskDescriptions">
@@ -16,7 +16,7 @@
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
-    <method />
+    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+    <method v="2" />
   </configuration>
 </component>

@@ -4,7 +4,7 @@ This [repository](https://github.com/JetBrains/intellij-plugin-verifier/) holds 
 1) [intellij-plugin-structure](intellij-plugin-structure) - API for working with the IntelliJ Plugins and IntelliJ IDEs:
 reading the plugins' descriptors (_plugin.xml_ files), reading class files, veryfying the plugins' structures.
 
-2) [intellij-plugin-verifier](.) - a bytecode verification library used to verify the API binary compatibility of 
+2) [intellij-plugin-verifier](intellij-plugin-verifier) - a bytecode verification library used to verify the API binary compatibility of 
 IntelliJ plugins and IDE builds
 
 3) [intellij-feature-extractor](intellij-feature-extractor) - a library used to extract the plugins' additional features,

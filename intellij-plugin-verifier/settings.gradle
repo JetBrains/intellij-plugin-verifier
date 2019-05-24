@@ -1,4 +1,4 @@
-rootProject.name = 'verifier-parent'
+rootProject.name = 'intellij-plugin-verifier'
 include 'verifier-cli'
 include 'verifier-core'
 include 'verifier-intellij'
