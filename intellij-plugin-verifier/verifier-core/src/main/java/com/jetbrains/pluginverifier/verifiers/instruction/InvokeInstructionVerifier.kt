@@ -143,8 +143,7 @@ private class InvokeInstructionVerifierImpl(
      * It's a workaround for the fact that we can't compile an interface with a private method.
      */
     fun isTestPrivateInterfaceMethod(method: Method): Boolean =
-        System.getProperty("plugin.verifier.test.mode")?.toBoolean() == true
-            && method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
+        method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
 
     /*
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.

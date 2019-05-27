@@ -142,7 +142,6 @@ class VerificationCorrectnessTest {
     }
 
     private fun prepareTestEnvironment() {
-      System.setProperty("plugin.verifier.test.mode", "true")
       System.setProperty("plugin.verifier.test.private.interface.method.name", "privateInterfaceMethodTestName")
     }
 
