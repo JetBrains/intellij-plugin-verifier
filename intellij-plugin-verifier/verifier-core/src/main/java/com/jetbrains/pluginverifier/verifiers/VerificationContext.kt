@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
 interface VerificationContext {
@@ -7,7 +8,5 @@ interface VerificationContext {
 
   val problemRegistrar: ProblemRegistrar
 
-  val deprecatedApiRegistrar: DeprecatedApiRegistrar
-
-  val experimentalApiRegistrar: ExperimentalApiRegistrar
+  val apiUsageProcessors: List<ApiUsageProcessor>
 }

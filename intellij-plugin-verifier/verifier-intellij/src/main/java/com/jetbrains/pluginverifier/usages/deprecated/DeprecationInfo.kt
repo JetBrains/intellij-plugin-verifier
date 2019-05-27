@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.usages.deprecated
 
 /**
  * Contains additional information about deprecated API:

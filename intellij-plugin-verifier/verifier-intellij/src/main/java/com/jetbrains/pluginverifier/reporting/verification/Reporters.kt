@@ -6,11 +6,11 @@ import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import java.io.Closeable
 
 /**

@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.experimental
+package com.jetbrains.pluginverifier.usages.experimental
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureO
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.WITH_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
-import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
+import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class ExperimentalClassUsage(

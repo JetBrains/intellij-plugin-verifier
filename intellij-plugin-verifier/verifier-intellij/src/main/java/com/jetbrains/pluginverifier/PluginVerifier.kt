@@ -19,6 +19,9 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.resolution.ClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.PluginIsMarkedIncompatibleProblem
+import com.jetbrains.pluginverifier.usages.DeprecatedApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.DiscouragingClassUsageProcessor
+import com.jetbrains.pluginverifier.usages.ExperimentalApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
@@ -166,7 +169,8 @@ class PluginVerifier(
           resultHolder,
           findDeprecatedApiUsages,
           problemFilters,
-          classResolver
+          classResolver,
+          listOf(DeprecatedApiUsageProcessor(), ExperimentalApiUsageProcessor(), DiscouragingClassUsageProcessor())
       )
       BytecodeVerifier(
           classFilters,

@@ -53,7 +53,8 @@ abstract class BaseDocumentedProblemsReportingTest {
       ResultHolder(),
       false,
       emptyList(),
-      EmptyClassResolver
+      EmptyClassResolver,
+      emptyList()
   )
 
 }

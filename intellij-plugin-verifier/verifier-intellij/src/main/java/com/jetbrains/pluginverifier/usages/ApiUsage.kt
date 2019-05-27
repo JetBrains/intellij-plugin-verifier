@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.usage
+package com.jetbrains.pluginverifier.usages
 
 import com.jetbrains.pluginverifier.results.location.Location
 

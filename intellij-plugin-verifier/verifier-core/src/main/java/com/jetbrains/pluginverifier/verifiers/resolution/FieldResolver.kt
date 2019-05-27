@@ -1,16 +1,12 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.access.AccessType
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedFieldUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalFieldUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.FieldNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.IllegalFieldAccessProblem
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.getDeprecationInfo
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
-import com.jetbrains.pluginverifier.verifiers.isExperimentalApi
 import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 
 /**
@@ -34,7 +30,6 @@ class FieldResolver {
         }
         is FieldResolutionResult.Found -> {
           checkFieldIsAccessible(resolutionResult.field, fieldReference, callerMethod, instruction, context)
-          checkFieldIsUnstable(resolutionResult.field, callerMethod, context)
           resolutionResult.field
         }
       }
@@ -141,16 +136,6 @@ class FieldResolver {
               accessProblem
           )
       )
-    }
-  }
-
-  private fun checkFieldIsUnstable(field: Field, callerMethod: Method, context: VerificationContext) {
-    val fieldDeprecated = field.getDeprecationInfo()
-    if (fieldDeprecated != null) {
-      context.deprecatedApiRegistrar.registerDeprecatedUsage(DeprecatedFieldUsage(field.location, callerMethod.location, fieldDeprecated))
-    }
-    if (field.isExperimentalApi()) {
-      context.experimentalApiRegistrar.registerExperimentalApiUsage(ExperimentalFieldUsage(field.location, callerMethod.location))
     }
   }
 

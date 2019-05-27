@@ -1,6 +1,6 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.usages.deprecated
 
-import com.jetbrains.pluginverifier.results.usage.ApiUsage
+import com.jetbrains.pluginverifier.usages.ApiUsage
 
 /**
  * Base class for cases of deprecated API usages in bytecode.

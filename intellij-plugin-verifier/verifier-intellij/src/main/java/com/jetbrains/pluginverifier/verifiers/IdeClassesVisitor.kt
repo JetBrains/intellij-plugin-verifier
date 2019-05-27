@@ -4,7 +4,8 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.usages.getDeprecationInfo
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinPool
@@ -36,7 +37,7 @@ class IdeClassesVisitor {
     val classPath = getClassLocation(className)?.classPath?.firstOrNull()?.toPath()
 
     if (classNode != null && classPath != null) {
-      val classFile = ClassFile(classNode, IntelliJClassFileOrigin.IdeClass(classPath))
+      val classFile = ClassFileAsm(classNode, IntelliJClassFileOrigin.IdeClass(classPath))
 
       if (classFile.getDeprecationInfo() != null) {
         deprecatedElements.add(classFile.location)

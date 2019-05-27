@@ -10,14 +10,14 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.deprecated.DeprecationInfo
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.location.*
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 
 /**
  * Converts the internal verifier [result] [VerificationResult]

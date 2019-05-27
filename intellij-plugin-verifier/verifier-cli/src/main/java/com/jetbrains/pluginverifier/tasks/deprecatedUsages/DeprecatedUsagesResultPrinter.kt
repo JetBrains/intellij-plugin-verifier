@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
+import com.jetbrains.pluginverifier.usages.formatUsageLocation
 
 class DeprecatedUsagesResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 

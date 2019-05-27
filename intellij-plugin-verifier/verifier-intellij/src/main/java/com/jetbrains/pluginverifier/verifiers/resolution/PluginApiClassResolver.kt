@@ -62,7 +62,7 @@ class PluginApiClassResolver(
             cachedBasePluginResolver -> IntelliJClassFileOrigin.ClassOfPluginDependency(classPath)
             else -> error("")
           }
-          val classFile = ClassFile(classNode, classFileOrigin)
+          val classFile = ClassFileAsm(classNode, classFileOrigin)
           return ClassResolutionResult.Found(classFile)
         }
       }

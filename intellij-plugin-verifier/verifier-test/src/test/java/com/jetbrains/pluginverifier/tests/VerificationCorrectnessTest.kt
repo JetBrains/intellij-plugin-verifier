@@ -27,10 +27,10 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInf
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import org.hamcrest.core.Is.`is`

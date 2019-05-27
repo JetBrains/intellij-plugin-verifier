@@ -4,14 +4,17 @@ import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.deprecated.DiscouragingJdkClassUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.DeprecatedApiRegistrar
+import com.jetbrains.pluginverifier.usages.ExperimentalApiRegistrar
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.deprecated.DiscouragingJdkClassUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
 
@@ -21,15 +24,10 @@ data class PluginVerificationContext(
     val resultHolder: ResultHolder,
     val findUnstableApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
-    override val classResolver: ClassResolver
+    override val classResolver: ClassResolver,
+    override val apiUsageProcessors: List<ApiUsageProcessor>
 ) : VerificationContext, ProblemRegistrar, DeprecatedApiRegistrar, ExperimentalApiRegistrar {
   override val problemRegistrar
-    get() = this
-
-  override val deprecatedApiRegistrar
-    get() = this
-
-  override val experimentalApiRegistrar
     get() = this
 
   override val allProblems

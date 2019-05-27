@@ -221,8 +221,14 @@ private class InvokeInstructionVerifierImpl(
     }
   }
 
-  private fun resolveMethod(): Method? =
-      MethodResolver().resolveMethod(ownerClass, methodReference, instruction, callerMethod, context)
+  private fun resolveMethod(): Method? {
+    val method = MethodResolver().resolveMethod(ownerClass, methodReference, instruction, callerMethod, context)
+    if (method != null) {
+      val usageLocation = callerMethod.location
+      context.apiUsageProcessors.forEach { it.processApiUsage(method, usageLocation, context) }
+    }
+    return method
+  }
 
   private fun registerMethodNotFoundProblem(ownerClass: ClassFile) {
     val methodOwnerHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(ownerClass)

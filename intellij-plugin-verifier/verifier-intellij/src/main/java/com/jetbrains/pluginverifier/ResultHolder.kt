@@ -4,12 +4,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 
 /**
  * Aggregates the plugin verification results:

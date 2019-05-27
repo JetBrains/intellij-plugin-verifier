@@ -1,29 +1,33 @@
-package com.jetbrains.pluginverifier.results.experimental
+package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.presentation.FieldTypeOption
 import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HOST_NAME
 import com.jetbrains.pluginverifier.results.presentation.formatFieldLocation
-import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
+import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
-class ExperimentalFieldUsage(
+class DeprecatedFieldUsage(
     override val apiElement: FieldLocation,
-    override val usageLocation: Location
-) : ExperimentalApiUsage() {
+    override val usageLocation: Location,
+    deprecationInfo: DeprecationInfo
+) : DeprecatedApiUsage(deprecationInfo) {
 
   override val shortDescription
-    get() = "Experimental API field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
+    get() = "Deprecated field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
 
   override val fullDescription
     get() = buildString {
-      append("Experimental API field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
+      append("Deprecated field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
       append(" accessed in ${usageLocation.formatUsageLocation()}")
-      append(". This field can be changed in a future release leading to incompatibilities")
+      if (deprecationInfo.forRemoval) {
+        append(". This field will be removed in ")
+        append(deprecationInfo.untilVersion ?: " a future release")
+      }
     }
 
-  override fun equals(other: Any?) = other is ExperimentalFieldUsage
+  override fun equals(other: Any?) = other is DeprecatedFieldUsage
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
 

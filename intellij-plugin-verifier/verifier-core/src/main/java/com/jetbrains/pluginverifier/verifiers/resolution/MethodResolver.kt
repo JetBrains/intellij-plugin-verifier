@@ -1,15 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.access.AccessType
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodUsage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.getDeprecationInfo
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
-import com.jetbrains.pluginverifier.verifiers.isExperimentalApi
 import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 import java.util.*
 
@@ -34,7 +30,6 @@ class MethodResolver {
         }
         is MethodResolutionResult.Found -> {
           checkMethodIsAccessible(resolutionResult.method, context, methodReference, callerMethod, instruction)
-          checkMethodIsUnstable(resolutionResult.method, context, callerMethod)
           resolutionResult.method
         }
       }
@@ -115,16 +110,6 @@ class MethodResolver {
           instruction
       )
       context.problemRegistrar.registerProblem(problem)
-    }
-  }
-
-  private fun checkMethodIsUnstable(resolvedMethod: Method, context: VerificationContext, callerMethod: Method) {
-    val methodDeprecated = resolvedMethod.getDeprecationInfo()
-    if (methodDeprecated != null) {
-      context.deprecatedApiRegistrar.registerDeprecatedUsage(DeprecatedMethodUsage(resolvedMethod.location, callerMethod.location, methodDeprecated))
-    }
-    if (resolvedMethod.isExperimentalApi()) {
-      context.experimentalApiRegistrar.registerExperimentalApiUsage(ExperimentalMethodUsage(resolvedMethod.location, callerMethod.location))
     }
   }
 

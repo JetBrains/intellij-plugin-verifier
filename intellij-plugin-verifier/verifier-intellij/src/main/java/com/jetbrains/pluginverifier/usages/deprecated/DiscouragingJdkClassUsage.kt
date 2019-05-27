@@ -1,11 +1,11 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption
 import com.jetbrains.pluginverifier.results.presentation.ClassOption
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
-import com.jetbrains.pluginverifier.results.usage.formatUsageLocation
+import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 /**

@@ -8,11 +8,11 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.emptyDependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult.*
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 
 /**
  * Represents possible results of verifying [plugin] against [verificationTarget].

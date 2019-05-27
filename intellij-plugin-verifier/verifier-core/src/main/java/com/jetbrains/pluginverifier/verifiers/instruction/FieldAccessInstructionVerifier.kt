@@ -120,6 +120,12 @@ private class FieldAccessInstructionVerifierImpl(
     }
   }
 
-  private fun resolveField(): Field? =
-      FieldResolver().resolveField(fieldOwnerClass, fieldReference, context, callerMethod, instruction)
+  private fun resolveField(): Field? {
+    val field = FieldResolver().resolveField(fieldOwnerClass, fieldReference, context, callerMethod, instruction)
+    if (field != null) {
+      val usageLocation = callerMethod.location
+      context.apiUsageProcessors.forEach { it.processApiUsage(field, usageLocation, context) }
+    }
+    return field
+  }
 }

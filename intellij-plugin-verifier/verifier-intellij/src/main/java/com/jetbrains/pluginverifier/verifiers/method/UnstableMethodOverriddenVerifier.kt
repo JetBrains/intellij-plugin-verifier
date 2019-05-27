@@ -1,11 +1,13 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.jetbrains.pluginverifier.results.deprecated.DeprecatedMethodOverridden
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalMethodOverridden
+import com.jetbrains.pluginverifier.usages.DeprecatedApiRegistrar
+import com.jetbrains.pluginverifier.usages.ExperimentalApiRegistrar
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridden
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridden
+import com.jetbrains.pluginverifier.usages.getDeprecationInfo
+import com.jetbrains.pluginverifier.usages.isExperimentalApi
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.getDeprecationInfo
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
-import com.jetbrains.pluginverifier.verifiers.isExperimentalApi
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
@@ -31,8 +33,8 @@ class UnstableMethodOverriddenVerifier : MethodVerifier {
 
     if (sameMethod != null) {
       val methodDeprecated = sameMethod.getDeprecationInfo()
-      if (methodDeprecated != null) {
-        context.deprecatedApiRegistrar.registerDeprecatedUsage(
+      if (methodDeprecated != null && context is DeprecatedApiRegistrar) {
+        context.registerDeprecatedUsage(
             DeprecatedMethodOverridden(
                 sameMethod.location,
                 method.location,
@@ -42,8 +44,8 @@ class UnstableMethodOverriddenVerifier : MethodVerifier {
       }
 
       val experimentalApi = sameMethod.isExperimentalApi()
-      if (experimentalApi) {
-        context.experimentalApiRegistrar.registerExperimentalApiUsage(
+      if (experimentalApi && context is ExperimentalApiRegistrar) {
+        context.registerExperimentalApiUsage(
             ExperimentalMethodOverridden(
                 sameMethod.location,
                 method.location

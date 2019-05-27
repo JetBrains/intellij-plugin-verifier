@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.deprecated
+package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.NO_GENERICS

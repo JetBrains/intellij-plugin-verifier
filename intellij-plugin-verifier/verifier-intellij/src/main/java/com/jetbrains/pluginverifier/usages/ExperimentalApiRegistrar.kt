@@ -1,6 +1,6 @@
-package com.jetbrains.pluginverifier.verifiers
+package com.jetbrains.pluginverifier.usages
 
-import com.jetbrains.pluginverifier.results.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 
 interface ExperimentalApiRegistrar {
   fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage)
