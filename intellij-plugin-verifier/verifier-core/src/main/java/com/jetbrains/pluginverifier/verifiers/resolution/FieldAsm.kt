@@ -31,7 +31,7 @@ class FieldAsm(override val owner: ClassFile, private val asmNode: FieldNode) : 
   override val accessType
     get() = asmNode.access.getAccessType()
 
-  override val invisibleAnnotations
+  override val runtimeInvisibleAnnotations
     get() = asmNode.invisibleAnnotations.orEmpty()
 
 

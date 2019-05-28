@@ -19,7 +19,7 @@ interface ClassFile : ClassFileMember {
   val signature: String?
   val accessType: AccessType
   val javaVersion: Int
-  val invisibleAnnotations: List<AnnotationNode>
+  override val runtimeInvisibleAnnotations: List<AnnotationNode>
 
   val isAbstract: Boolean
   val isFinal: Boolean
@@ -29,5 +29,5 @@ interface ClassFile : ClassFileMember {
   val isPrivate: Boolean
   val isDefaultAccess: Boolean
   val isSuperFlag: Boolean
-  val isDeprecated: Boolean
+  override val isDeprecated: Boolean
 }

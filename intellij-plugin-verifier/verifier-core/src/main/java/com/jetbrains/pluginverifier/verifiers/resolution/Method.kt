@@ -25,7 +25,7 @@ interface Method : ClassFileMember {
   val isProtected: Boolean
   val isPrivate: Boolean
   val isDefaultAccess: Boolean
-  val isDeprecated: Boolean
+  override val isDeprecated: Boolean
   val isVararg: Boolean
   val isNative: Boolean
   val isSynthetic: Boolean
@@ -35,5 +35,5 @@ interface Method : ClassFileMember {
   val instructions: List<AbstractInsnNode>
   val tryCatchBlocks: List<TryCatchBlockNode>
   val localVariables: List<LocalVariableNode>
-  val invisibleAnnotations: List<AnnotationNode>
+  override val runtimeInvisibleAnnotations: List<AnnotationNode>
 }

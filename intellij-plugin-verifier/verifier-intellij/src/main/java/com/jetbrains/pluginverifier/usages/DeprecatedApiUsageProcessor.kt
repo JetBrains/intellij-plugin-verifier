@@ -13,30 +13,22 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 class DeprecatedApiUsageProcessor : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
     if (context is DeprecatedApiRegistrar) {
+      val deprecationInfo = classFileMember.getDeprecationInfo() ?: return
       when (classFileMember) {
         is ClassFile -> {
-          val classDeprecated = classFileMember.getDeprecationInfo()
-          if (classDeprecated != null) {
-            context.registerDeprecatedUsage(
-                DeprecatedClassUsage(classFileMember.location, usageLocation, classDeprecated)
-            )
-          }
+          context.registerDeprecatedUsage(
+              DeprecatedClassUsage(classFileMember.location, usageLocation, deprecationInfo)
+          )
         }
         is Method -> {
-          val methodDeprecated = classFileMember.getDeprecationInfo()
-          if (methodDeprecated != null) {
-            context.registerDeprecatedUsage(
-                DeprecatedMethodUsage(classFileMember.location, usageLocation, methodDeprecated)
-            )
-          }
+          context.registerDeprecatedUsage(
+              DeprecatedMethodUsage(classFileMember.location, usageLocation, deprecationInfo)
+          )
         }
         is Field -> {
-          val fieldDeprecated = classFileMember.getDeprecationInfo()
-          if (fieldDeprecated != null) {
-            context.registerDeprecatedUsage(
-                DeprecatedFieldUsage(classFileMember.location, usageLocation, fieldDeprecated)
-            )
-          }
+          context.registerDeprecatedUsage(
+              DeprecatedFieldUsage(classFileMember.location, usageLocation, deprecationInfo)
+          )
         }
       }
     }

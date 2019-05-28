@@ -53,7 +53,7 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
       asmNode.version - 44
     }
 
-  override val invisibleAnnotations
+  override val runtimeInvisibleAnnotations
     get() = asmNode.invisibleAnnotations.orEmpty()
 
 

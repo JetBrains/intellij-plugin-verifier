@@ -13,7 +13,7 @@ interface Field : ClassFileMember {
   val descriptor: String
   val signature: String?
   val accessType: AccessType
-  val invisibleAnnotations: List<AnnotationNode>
+  override val runtimeInvisibleAnnotations: List<AnnotationNode>
 
   val isStatic: Boolean
   val isFinal: Boolean
@@ -21,5 +21,5 @@ interface Field : ClassFileMember {
   val isProtected: Boolean
   val isPrivate: Boolean
   val isDefaultAccess: Boolean
-  val isDeprecated: Boolean
+  override val isDeprecated: Boolean
 }
