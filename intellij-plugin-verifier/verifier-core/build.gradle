@@ -3,5 +3,5 @@ repositories {
 }
 
 dependencies {
-  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-classes', version: intellijStructureVersion
+  implementation group: 'org.jetbrains.intellij.plugins', name: 'structure-classes', version: intellijStructureVersion
 }

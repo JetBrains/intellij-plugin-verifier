@@ -1,6 +1,6 @@
 dependencies {
-  compile project(':structure-base')
-  compile("org.jonnyzzz.kotlin.xml.bind:jdom:0.2.0") {
+  implementation project(':structure-base')
+  implementation("org.jonnyzzz.kotlin.xml.bind:jdom:0.2.0") {
     exclude group: "org.jetbrains.kotlin"
   }
 }

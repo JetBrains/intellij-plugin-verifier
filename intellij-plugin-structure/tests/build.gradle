@@ -1,15 +1,15 @@
 dependencies {
-  testCompile project(":")
-  testCompile project(":structure-ide")
-  testCompile project(":structure-ide-classes")
-  testCompile project(":structure-intellij")
-  testCompile project(":structure-intellij-classes")
-  testCompile project(":structure-teamcity")
-  testCompile project(":structure-dotnet")
-  testRuntime project("mock-plugin")
-  testCompile 'junit:junit:4.11'
-  testCompile 'org.hamcrest:hamcrest-library:1.3'
-  testRuntime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+  testImplementation project(":")
+  testImplementation project(":structure-ide")
+  testImplementation project(":structure-ide-classes")
+  testImplementation project(":structure-intellij")
+  testImplementation project(":structure-intellij-classes")
+  testImplementation project(":structure-teamcity")
+  testImplementation project(":structure-dotnet")
+  testRuntimeOnly project("mock-plugin")
+  testImplementation 'junit:junit:4.11'
+  testImplementation 'org.hamcrest:hamcrest-library:1.3'
+  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 }
 
 test.dependsOn('mock-plugin:prepareAllMocks', 'teamcity-mock-plugin:prepareAllMocks')

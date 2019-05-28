@@ -4,6 +4,7 @@ import com.google.common.base.Joiner
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExtension
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.*
@@ -15,9 +16,6 @@ import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePa
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.TrueFileFilter
-import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
@@ -124,7 +122,7 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readCompiledPlugins(compilationRoot: File): List<IdePlugin> {
-    val xmlFiles = FileUtils.listFiles(compilationRoot, WildcardFileFilter("*.xml"), TrueFileFilter.TRUE)
+    val xmlFiles = compilationRoot.listRecursivelyAllFilesWithExtension("xml")
     val pathResolver = getPathResolver(xmlFiles)
     return readCompiledPlugins(xmlFiles, pathResolver)
   }
@@ -146,8 +144,7 @@ class IdeManagerImpl : IdeManager() {
       descriptorPath: String
   ): IdePlugin? {
     try {
-      val creationResult = createManager(pathResolver).createPlugin(pluginFile, false, descriptorPath)
-      return when (creationResult) {
+      return when (val creationResult = createManager(pathResolver).createPlugin(pluginFile, false, descriptorPath)) {
         is PluginCreationSuccess -> creationResult.plugin
         is PluginCreationFail -> {
           val problems = creationResult.errorsAndWarnings

@@ -1,9 +1,11 @@
 dependencies {
-  compile project(":structure-base")
-  compile group: 'org.jdom', name: 'jdom', version: '2.0.2'
-  compile group: 'org.jsoup', name: 'jsoup', version: '1.9.2'
-  compile group: 'commons-io', name: 'commons-io', version: '2.5'
-  compile group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-  compile group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.1'
-  compile group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.3.0.1'
+  api project(":structure-base")
+  api group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
+  api group: 'org.jdom', name: 'jdom', version: '2.0.2'
+
+  implementation 'org.jsoup:jsoup:1.9.2'
+  implementation group: 'commons-io', name: 'commons-io', version: '2.5'
+  implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
+  implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.1'
+  implementation group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.3.0.1'
 }

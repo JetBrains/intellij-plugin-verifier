@@ -1,11 +1,14 @@
 dependencies {
-  compile project(':structure-base')
-
   def asmVersion = '7.0'
 
-  compile group: 'org.ow2.asm', name: 'asm', version: asmVersion
-  compile group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
-  compile group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
-  compile group: 'org.ow2.asm', name: 'asm-tree', version: asmVersion
-  compile group: 'org.ow2.asm', name: 'asm-analysis', version: asmVersion
+  api group: 'org.ow2.asm', name: 'asm', version: asmVersion
+  api group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
+  api group: 'org.ow2.asm', name: 'asm-util', version: asmVersion
+  api group: 'org.ow2.asm', name: 'asm-tree', version: asmVersion
+  api group: 'org.ow2.asm', name: 'asm-analysis', version: asmVersion
+
+  implementation project(':structure-base')
+
+  implementation group: 'commons-io', name: 'commons-io', version: '2.6'
+  implementation group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
 }

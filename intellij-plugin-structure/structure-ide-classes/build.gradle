@@ -1,9 +1,11 @@
-def jpsVersion = "182.4323.46"
+def platformVersion = "182.4323.46"
 
 dependencies {
-  compile project(':structure-ide')
-  compile project(':structure-classes')
+  api project(':structure-ide')
+  api project(':structure-classes')
 
-  compile "com.jetbrains.intellij.platform:jps-model-serialization:$jpsVersion"
-  compile "com.jetbrains.intellij.platform:jps-model-impl:$jpsVersion"
+  implementation "com.jetbrains.intellij.platform:util:$platformVersion"
+  implementation "com.jetbrains.intellij.platform:jps-model:$platformVersion"
+  implementation "com.jetbrains.intellij.platform:jps-model-impl:$platformVersion"
+  implementation "com.jetbrains.intellij.platform:jps-model-serialization:$platformVersion"
 }

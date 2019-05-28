@@ -71,7 +71,7 @@ task prepareMockClasses(type: Copy, dependsOn: [classes, compileLibraryJarTask])
   into mocksPath + separator + "mock-plugin-classes"
 
   def classesSpec = copySpec {
-    from sourceSets.main.output.classesDir
+    from sourceSets.main.output.classesDirs
     into "classes"
   }
 

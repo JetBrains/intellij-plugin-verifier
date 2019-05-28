@@ -1,12 +1,13 @@
 dependencies {
-  testCompile 'org.hamcrest:hamcrest-library:1.3'
-  
-  testRuntime group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
-  testRuntime project('mock-plugin')
-  compile project(':verifier-cli')
+  implementation project(':verifier-cli')
+
+  testImplementation 'org.hamcrest:hamcrest-library:1.3'
+
+  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+  testRuntimeOnly project('mock-plugin')
 
   //bytecode generation library
-  compile 'net.bytebuddy:byte-buddy:1.7.8'
+  implementation 'net.bytebuddy:byte-buddy:1.7.8'
 }
 
 task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build') {

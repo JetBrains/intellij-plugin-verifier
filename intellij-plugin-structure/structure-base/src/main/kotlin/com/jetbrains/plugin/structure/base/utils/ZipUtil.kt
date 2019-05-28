@@ -7,12 +7,14 @@ import org.codehaus.plexus.archiver.tar.TarArchiver
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver
 import org.codehaus.plexus.archiver.tar.TarGZipUnArchiver
 import org.codehaus.plexus.archiver.util.DefaultFileSet
+import org.codehaus.plexus.archiver.xz.XZUnArchiver
 import org.codehaus.plexus.archiver.zip.ZipArchiver
 import org.codehaus.plexus.archiver.zip.ZipUnArchiver
 import org.codehaus.plexus.logging.Logger
 import org.codehaus.plexus.logging.console.ConsoleLogger
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 
 /**
  * Archives [directory] to [destination].
@@ -49,6 +51,8 @@ fun archiveDirectory(
   }
   archiver.createArchive()
 }
+
+fun InputStream.xzInputStream(): InputStream = XZUnArchiver.getXZInputStream(this)
 
 private fun createArchiver(extension: String) =
     when (extension) {

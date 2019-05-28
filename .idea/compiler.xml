@@ -2,12 +2,6 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
-      <module name="ide-diff-builder.main" target="1.8" />
-      <module name="ide-diff-builder.mock-new-ide.main" target="1.8" />
-      <module name="ide-diff-builder.mock-new-ide.test" target="1.8" />
-      <module name="ide-diff-builder.mock-old-ide.main" target="1.8" />
-      <module name="ide-diff-builder.mock-old-ide.test" target="1.8" />
-      <module name="ide-diff-builder.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-feature-extractor.main" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-feature-extractor.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-feature-extractor.test-classes.main" target="1.8" />

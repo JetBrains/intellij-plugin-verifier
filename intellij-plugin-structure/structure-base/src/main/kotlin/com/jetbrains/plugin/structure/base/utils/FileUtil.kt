@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -18,6 +20,9 @@ fun File.forceDeleteIfExists() {
     FileUtils.forceDelete(this)
   }
 }
+
+fun File.listRecursivelyAllFilesWithExtension(extension: String): Collection<File> =
+    FileUtils.listFiles(this, WildcardFileFilter("*.$extension"), TrueFileFilter.TRUE)
 
 fun File.deleteLogged(): Boolean = try {
   forceDeleteIfExists()

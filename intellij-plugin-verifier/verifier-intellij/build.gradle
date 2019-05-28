@@ -3,8 +3,11 @@ repositories {
 }
 
 dependencies {
-  compile 'org.jgrapht:jgrapht-core:0.9.2'
-  compile group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: intellijStructureVersion
-  compile project(':verifier-core')
-  compile project(':verifier-repository')
+  api project(':verifier-core')
+  api project(':verifier-repository')
+
+  api 'org.jgrapht:jgrapht-core:0.9.2'
+
+  implementation 'org.jsoup:jsoup:1.9.2'
+  implementation group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: intellijStructureVersion
 }
