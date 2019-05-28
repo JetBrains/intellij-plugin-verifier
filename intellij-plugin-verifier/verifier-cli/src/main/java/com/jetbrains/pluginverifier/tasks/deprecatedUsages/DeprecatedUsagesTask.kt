@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.Task
-import com.jetbrains.pluginverifier.verifiers.IdeClassesVisitor
 import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
@@ -47,7 +46,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
     val results = verifierExecutor.verify(tasks)
     val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.toDeprecatedUsages() })
     reportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")
-    val deprecatedIdeApiElements = IdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
+    val deprecatedIdeApiElements = DeprecatedIdeClassesVisitor().detectIdeDeprecatedApiElements(ideDescriptor)
     reportage.logVerificationStage("All stages are complete")
     DeprecatedUsagesResult(
         ideDescriptor.ideVersion,

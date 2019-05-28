@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.verifiers
+package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -11,7 +11,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinPool
 import java.util.stream.Collectors
 
-class IdeClassesVisitor {
+class DeprecatedIdeClassesVisitor {
 
   fun detectIdeDeprecatedApiElements(ideDescriptor: IdeDescriptor): Set<Location> {
     val ideClassLoader = ideDescriptor.ideResolver
