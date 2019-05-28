@@ -10,12 +10,5 @@ data class AuthorizationData(
      * to execute protected verifier service's actions
      * (such as start/stop services, change runtime parameters)
      */
-    val serviceAdminPassword: String,
-
-
-    /**
-     * Token used to authorize the service in the Plugin Repository
-     */
-    val pluginRepositoryAuthorizationToken: String
-
+    val serviceAdminPassword: String
 )

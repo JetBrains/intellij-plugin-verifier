@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.setting
 
-import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -15,8 +14,6 @@ enum class Settings(
   APP_HOME_DIRECTORY("verifier.service.home.directory"),
   JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
-
-  PLUGINS_REPOSITORY_URL("verifier.service.plugins.repository.url", { PUBLIC_PLUGIN_REPOSITORY_URL }),
 
   CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" }),
 
@@ -34,8 +31,6 @@ enum class Settings(
    * IDE build which classes are used to extract plugins' features.
    */
   FEATURE_EXTRACTOR_IDE_BUILD("verifier.service.feature.extractor.ide.build", { "IU-183.5912.21" }),
-
-  PLUGIN_REPOSITORY_AUTHORIZATION_TOKEN("verifier.service.authorization.token", encrypted = true),
 
   TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "8" }),
 
@@ -56,8 +51,6 @@ enum class Settings(
     return get()
   }
 
-  fun getAsURL(): URL = URL(get().trimEnd('/'))
-
   fun getAsPath(): Path = Paths.get(get())
 
   fun getAsBoolean(): Boolean = get().toBoolean()
@@ -65,8 +58,4 @@ enum class Settings(
   fun getAsInt(): Int = get().toInt()
 
   fun getAsLong(): Long = get().toLong()
-
-  companion object {
-    private val PUBLIC_PLUGIN_REPOSITORY_URL = "https://plugins.jetbrains.com"
-  }
 }

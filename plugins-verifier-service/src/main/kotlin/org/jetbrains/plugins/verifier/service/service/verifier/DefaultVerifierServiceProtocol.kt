@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -22,7 +21,7 @@ import java.util.concurrent.TimeUnit
 
 
 class DefaultVerifierServiceProtocol(
-    authorizationData: AuthorizationData,
+    token: String,
     private val pluginRepository: MarketplaceRepository
 ) : VerifierServiceProtocol {
 
@@ -35,7 +34,7 @@ class DefaultVerifierServiceProtocol(
         .create(VerifierRetrofitConnector::class.java)
   }
 
-  private val authorizationToken = "Bearer ${authorizationData.pluginRepositoryAuthorizationToken}"
+  private val authorizationToken = "Bearer $token"
 
   override fun requestScheduledVerifications(): List<ScheduledVerification> =
       retrofitConnector

@@ -1,0 +1,5 @@
+verifier:
+  service:
+    plugins:
+      repository:
+        url: "https://plugins.jetbrains.com"

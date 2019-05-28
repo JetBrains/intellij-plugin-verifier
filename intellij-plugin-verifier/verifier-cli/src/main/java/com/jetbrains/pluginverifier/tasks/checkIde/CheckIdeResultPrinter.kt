@@ -59,6 +59,11 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
             problems += result.compatibilityProblems
             brokenPlugins += result.plugin
           }
+          is VerificationResult.OK,
+          is VerificationResult.StructureWarnings,
+          is VerificationResult.InvalidPlugin,
+          is VerificationResult.NotFound,
+          is VerificationResult.FailedToDownload -> Unit
         }
       }
       val problemsNumber = problems.distinctBy { it.shortDescription }.size

@@ -17,13 +17,13 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
-import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
+import org.jetbrains.plugins.verifier.service.service.features.FeatureServiceProtocol
+import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeProtocol
 import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeService
-import org.jetbrains.plugins.verifier.service.service.ide.DefaultAvailableIdeProtocol
-import org.jetbrains.plugins.verifier.service.service.verifier.DefaultVerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
+import org.jetbrains.plugins.verifier.service.service.verifier.VerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
@@ -47,24 +47,32 @@ class ServerContextConfiguration {
   @Bean
   fun serverContext(
       buildProperties: BuildProperties,
-      ideRepository: IdeRepository
+      ideRepository: IdeRepository,
+      pluginRepository: MarketplaceRepository,
+      availableIdeProtocol: AvailableIdeProtocol,
+      featureServiceProtocol: FeatureServiceProtocol,
+      verifierServiceProtocol: VerifierServiceProtocol
   ): ServerContext {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
-    serverContext = createServerContext(buildProperties.version, ideRepository)
+    serverContext = createServerContext(buildProperties.version, ideRepository, pluginRepository)
 
     with(serverContext) {
-      addVerifierService()
-      addFeatureService()
-      addAvailableIdeService()
+      addVerifierService(verifierServiceProtocol)
+      addFeatureService(featureServiceProtocol)
+      addAvailableIdeService(availableIdeProtocol)
     }
     return serverContext
   }
 
   private lateinit var serverContext: ServerContext
 
-  private fun createServerContext(appVersion: String?, ideRepository: IdeRepository): ServerContext {
+  private fun createServerContext(
+      appVersion: String?,
+      ideRepository: IdeRepository,
+      pluginRepository: MarketplaceRepository
+  ): ServerContext {
     val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
     val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
     val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
@@ -72,17 +80,12 @@ class ServerContextConfiguration {
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
-    val pluginRepositoryUrl = Settings.PLUGINS_REPOSITORY_URL.getAsURL()
-    val pluginRepository = MarketplaceRepository(pluginRepositoryUrl)
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
     val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
-    val authorizationData = AuthorizationData(
-        Settings.SERVICE_ADMIN_PASSWORD.get(),
-        Settings.PLUGIN_REPOSITORY_AUTHORIZATION_TOKEN.get()
-    )
+    val authorizationData = AuthorizationData(Settings.SERVICE_ADMIN_PASSWORD.get())
 
     val jdkDescriptorsCache = JdkDescriptorsCache()
 
@@ -149,8 +152,7 @@ class ServerContextConfiguration {
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
-  private fun ServerContext.addVerifierService() {
-    val verifierServiceProtocol = DefaultVerifierServiceProtocol(authorizationData, pluginRepository)
+  private fun ServerContext.addVerifierService(verifierServiceProtocol: VerifierServiceProtocol) {
     val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
     val verifierService = VerifierService(
         taskManager,
@@ -169,8 +171,7 @@ class ServerContextConfiguration {
     addService(verifierService)
   }
 
-  private fun ServerContext.addFeatureService() {
-    val featureServiceProtocol = DefaultFeatureServiceProtocol(authorizationData, pluginRepository)
+  private fun ServerContext.addFeatureService(featureServiceProtocol: FeatureServiceProtocol) {
     val featureService = FeatureExtractorService(
         taskManager,
         featureServiceProtocol,
@@ -184,8 +185,7 @@ class ServerContextConfiguration {
     }
   }
 
-  private fun ServerContext.addAvailableIdeService() {
-    val availableIdeProtocol = DefaultAvailableIdeProtocol(authorizationData, pluginRepository)
+  private fun ServerContext.addAvailableIdeService(availableIdeProtocol: AvailableIdeProtocol) {
     val availableIdeService = AvailableIdeService(
         taskManager,
         availableIdeProtocol,

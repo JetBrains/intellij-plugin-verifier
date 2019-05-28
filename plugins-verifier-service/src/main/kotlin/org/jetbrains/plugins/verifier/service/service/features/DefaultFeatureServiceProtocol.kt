@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
-import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -33,11 +32,11 @@ private interface FeaturesRetrofitConnector {
 }
 
 class DefaultFeatureServiceProtocol(
-    authorizationData: AuthorizationData,
+    token: String,
     private val pluginRepository: MarketplaceRepository
 ) : FeatureServiceProtocol {
 
-  private val authorizationToken = "Bearer ${authorizationData.pluginRepositoryAuthorizationToken}"
+  private val authorizationToken = "Bearer $token"
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
