@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.usages
+package com.jetbrains.pluginverifier.usages.experimental
 
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember

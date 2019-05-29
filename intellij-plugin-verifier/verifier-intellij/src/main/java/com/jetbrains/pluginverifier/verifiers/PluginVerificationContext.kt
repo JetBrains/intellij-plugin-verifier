@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
-import com.jetbrains.pluginverifier.usages.DeprecatedApiRegistrar
-import com.jetbrains.pluginverifier.usages.ExperimentalApiRegistrar
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiRegistrar
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.usages.deprecated.DiscouragingJdkClassUsage
+import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingJdkClassUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiRegistrar
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
@@ -22,11 +22,12 @@ data class PluginVerificationContext(
     val plugin: PluginInfo,
     val verificationTarget: VerificationTarget,
     val resultHolder: ResultHolder,
-    val findUnstableApiUsages: Boolean,
+    val checkApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     override val classResolver: ClassResolver,
     override val apiUsageProcessors: List<ApiUsageProcessor>
 ) : VerificationContext, ProblemRegistrar, DeprecatedApiRegistrar, ExperimentalApiRegistrar {
+
   override val problemRegistrar
     get() = this
 
@@ -48,7 +49,7 @@ data class PluginVerificationContext(
   }
 
   override fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    if (findUnstableApiUsages) {
+    if (checkApiUsages) {
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
       if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
@@ -58,7 +59,7 @@ data class PluginVerificationContext(
   }
 
   override fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
-    if (findUnstableApiUsages) {
+    if (checkApiUsages) {
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
       if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {

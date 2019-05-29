@@ -1,7 +1,8 @@
-package com.jetbrains.pluginverifier.usages
+package com.jetbrains.pluginverifier.usages.discouraging
 
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.usages.deprecated.DiscouragingJdkClassUsage
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember

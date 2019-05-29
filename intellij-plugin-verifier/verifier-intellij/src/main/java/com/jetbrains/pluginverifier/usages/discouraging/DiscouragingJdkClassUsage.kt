@@ -1,10 +1,12 @@
-package com.jetbrains.pluginverifier.usages.deprecated
+package com.jetbrains.pluginverifier.usages.discouraging
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption
 import com.jetbrains.pluginverifier.results.presentation.ClassOption
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 

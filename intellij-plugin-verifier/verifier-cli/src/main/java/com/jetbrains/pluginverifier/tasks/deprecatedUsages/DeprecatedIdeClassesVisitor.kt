@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.usages.getDeprecationInfo
+import com.jetbrains.pluginverifier.usages.deprecated.getDeprecationInfo
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
 import java.util.concurrent.Callable

@@ -1,9 +1,7 @@
-package com.jetbrains.pluginverifier.usages
+package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedClassUsage
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedFieldUsage
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodUsage
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember

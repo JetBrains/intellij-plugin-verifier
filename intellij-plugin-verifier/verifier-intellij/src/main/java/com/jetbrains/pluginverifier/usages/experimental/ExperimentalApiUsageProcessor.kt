@@ -1,9 +1,7 @@
-package com.jetbrains.pluginverifier.usages
+package com.jetbrains.pluginverifier.usages.experimental
 
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.usages.experimental.ExperimentalClassUsage
-import com.jetbrains.pluginverifier.usages.experimental.ExperimentalFieldUsage
-import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodUsage
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember

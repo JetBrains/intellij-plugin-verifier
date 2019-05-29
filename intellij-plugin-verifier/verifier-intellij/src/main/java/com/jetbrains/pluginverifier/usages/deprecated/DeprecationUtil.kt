@@ -1,6 +1,5 @@
-package com.jetbrains.pluginverifier.usages
+package com.jetbrains.pluginverifier.usages.deprecated
 
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember

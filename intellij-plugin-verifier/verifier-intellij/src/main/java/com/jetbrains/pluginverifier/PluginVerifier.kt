@@ -19,14 +19,16 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.resolution.ClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.PluginIsMarkedIncompatibleProblem
-import com.jetbrains.pluginverifier.usages.DeprecatedApiUsageProcessor
-import com.jetbrains.pluginverifier.usages.DiscouragingClassUsageProcessor
-import com.jetbrains.pluginverifier.usages.ExperimentalApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingClassUsageProcessor
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
-import com.jetbrains.pluginverifier.verifiers.method.UnstableMethodOverriddenVerifier
+import com.jetbrains.pluginverifier.verifiers.overriding.MethodOverridingVerifier
 import java.util.concurrent.Callable
 
 /**
@@ -38,7 +40,7 @@ class PluginVerifier(
     val plugin: PluginInfo,
     reportage: Reportage,
     private val problemFilters: List<ProblemsFilter>,
-    private val findDeprecatedApiUsages: Boolean,
+    private val checkApiUsages: Boolean,
     private val pluginDetailsCache: PluginDetailsCache,
     private val classResolverProvider: ClassResolverProvider,
     private val verificationTarget: VerificationTarget,
@@ -167,15 +169,28 @@ class PluginVerifier(
           plugin,
           verificationTarget,
           resultHolder,
-          findDeprecatedApiUsages,
+          checkApiUsages,
           problemFilters,
           classResolver,
-          listOf(DeprecatedApiUsageProcessor(), ExperimentalApiUsageProcessor(), DiscouragingClassUsageProcessor())
+          listOf(
+              DeprecatedApiUsageProcessor(),
+              ExperimentalApiUsageProcessor(),
+              DiscouragingClassUsageProcessor()
+          )
       )
       BytecodeVerifier(
           classFilters,
-          listOf(PluginClassFileVersionVerifier()),
-          listOf(UnstableMethodOverriddenVerifier())
+          listOf(
+              PluginClassFileVersionVerifier()
+          ),
+          listOf(
+              MethodOverridingVerifier(
+                  listOf(
+                      ExperimentalMethodOverridingProcessor(),
+                      DeprecatedMethodOverridingProcessor()
+                  )
+              )
+          )
       ).verify(checkClasses, context) {
         pluginReporters.reportProgress(it)
       }
