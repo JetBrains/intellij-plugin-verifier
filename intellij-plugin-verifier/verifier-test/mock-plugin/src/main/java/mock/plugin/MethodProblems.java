@@ -17,10 +17,20 @@ public class MethodProblems {
     NonExistingClass brokenLocalVar = null;
   }
 
+  /*expected(PROBLEM)
+  Access to unresolved class removedClasses.RemovedException
+
+  Method mock.plugin.MethodProblems.brokenThrows() : void references an unresolved class removedClasses.RemovedException. This can lead to **NoSuchClassError** exception at runtime.
+   */
   public void brokenThrows() throws RemovedException {
     throw new RemovedException();
   }
 
+  /*expected(PROBLEM)
+  Access to unresolved class removedClasses.RemovedException
+
+  Method mock.plugin.MethodProblems.brokenCatch() : void references an unresolved class removedClasses.RemovedException. This can lead to **NoSuchClassError** exception at runtime.
+  */
   public void brokenCatch() {
     try {
       throw new RemovedException();
@@ -41,6 +51,11 @@ public class MethodProblems {
     NonExistingClass.nonExistingMethod();
   }
 
+  /*expected(PROBLEM)
+  Invocation of unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void
+
+  Method mock.plugin.MethodProblems.brokenNonFoundMethod() : void contains an *invokestatic* instruction referencing an unresolved method com.intellij.openapi.actionSystem.AnAction.nonExistingMethod() : void. This can lead to **NoSuchMethodError** exception at runtime.
+  */
   public void brokenNonFoundMethod() {
     AnAction.nonExistingMethod();
   }
