@@ -9,6 +9,7 @@ include 'structure-ide'
 include 'structure-ide-classes'
 include 'tests'
 include 'tests:mock-plugin'
+include 'tests:mock-theme-plugin'
 include 'tests:mock-compile-library'
 include 'tests:teamcity-mock-plugin'
 

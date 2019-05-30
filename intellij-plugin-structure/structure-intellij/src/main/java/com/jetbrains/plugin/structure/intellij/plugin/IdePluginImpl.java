@@ -19,6 +19,7 @@ public class IdePluginImpl implements IdePlugin {
 
   private final Set<String> myDefinedModules = new HashSet<>();
   private final List<PluginDependency> myDependencies = new ArrayList<>();
+  private List<IdeTheme> myDeclaredThemes = new ArrayList<>();
   private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<>();
   private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<>();
   private final List<PluginIcon> icons = new ArrayList<>();
@@ -126,6 +127,17 @@ public class IdePluginImpl implements IdePlugin {
   @Nullable
   public String getUrl() {
     return myUrl;
+  }
+
+  @Override
+  @NotNull
+  public List<IdeTheme> getDeclaredThemes() {
+    return myDeclaredThemes;
+  }
+
+  public void setDeclaredThemes(@NotNull List<IdeTheme> declaredThemes) {
+    this.myDeclaredThemes.clear();
+    this.myDeclaredThemes.addAll(declaredThemes);
   }
 
   private void setInfoFromBean(PluginBean bean) {

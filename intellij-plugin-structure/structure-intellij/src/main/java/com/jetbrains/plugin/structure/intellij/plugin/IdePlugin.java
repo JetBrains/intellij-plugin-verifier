@@ -42,4 +42,7 @@ public interface IdePlugin extends Plugin {
 
   @Nullable
   ProductDescriptor getProductDescriptor();
+
+  @NotNull
+  List<IdeTheme> getDeclaredThemes();
 }

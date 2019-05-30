@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.NotNumber
@@ -29,6 +31,8 @@ internal class PluginCreator {
     private const val MAX_VERSION_LENGTH = 64
     private const val MAX_PROPERTY_LENGTH = 255
     private const val MAX_LONG_PROPERTY_LENGTH = 65535
+
+    private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
     private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
     val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
@@ -221,12 +225,22 @@ internal class PluginCreator {
     val document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver) ?: return null
     val bean = readDocumentIntoXmlBean(document) ?: return null
     validatePluginBean(bean)
-    if (hasErrors()) {
-      return null
-    }
+    if (hasErrors()) return null
     val plugin = IdePluginImpl(document, bean)
+    val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver)
+    plugin.declaredThemes = themeFiles
     validatePlugin(plugin)
     return if (hasErrors()) null else plugin
+  }
+
+  private fun readPluginThemes(plugin: IdePlugin, documentUrl: URL, pathResolver: XIncludePathResolver): List<IdeTheme> {
+    val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    return plugin.extensions[INTELLIJ_THEME_EXTENSION]
+        .mapNotNull { it.getAttribute("path")?.value }
+        // Absolute paths should be resolved from META-INF parent, not root.
+        .map { if (it.startsWith("/")) "..$it" else it }
+        .map { pathResolver.resolvePath(it, documentUrl.toString()) }
+        .map { mapper.readValue(it, IdeTheme::class.java) }
   }
 
   private fun resolveXIncludesOfDocument(originalDocument: Document, documentUrl: URL, pathResolver: XIncludePathResolver): Document? {
