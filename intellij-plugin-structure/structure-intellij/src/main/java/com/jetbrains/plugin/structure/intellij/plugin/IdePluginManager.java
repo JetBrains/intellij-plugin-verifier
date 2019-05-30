@@ -153,6 +153,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     } catch (JDOMParseException e) {
       int lineNumber = e.getLineNumber();
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
+      LOG.info("Unable to parse plugin descriptor " + filePath + " of plugin " + descriptorFile, e);
       return new PluginCreator(filePath, new UnexpectedDescriptorElements(message, filePath), pluginDirectory);
     } catch (Exception e) {
       LOG.info("Unable to read plugin descriptor " + filePath + " of plugin " + descriptorFile, e);
