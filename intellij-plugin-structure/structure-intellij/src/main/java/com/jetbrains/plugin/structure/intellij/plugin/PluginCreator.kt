@@ -57,8 +57,7 @@ internal class PluginCreator {
     this.descriptorPath = descriptorPath
     this.pluginFile = pluginFile
     this.validateDescriptor = validateDescriptor
-    plugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver)
-    plugin?.icons?.addAll(icons)
+    plugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver, icons)
   }
 
   constructor(descriptorPath: String, singleProblem: PluginProblem, pluginFile: File) {
@@ -274,7 +273,8 @@ internal class PluginCreator {
   private fun resolveDocumentAndValidateBean(
       originalDocument: Document,
       documentUrl: URL,
-      pathResolver: XIncludePathResolver
+      pathResolver: XIncludePathResolver,
+      icons: List<PluginIcon>
   ): IdePluginImpl? {
     val document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver) ?: return null
     val bean = readDocumentIntoXmlBean(document) ?: return null
@@ -283,6 +283,7 @@ internal class PluginCreator {
 
     val plugin = IdePluginImpl()
     plugin.underlyingDocument = document
+    plugin.icons.addAll(icons)
     plugin.setInfoFromBean(bean)
 
     val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver)
