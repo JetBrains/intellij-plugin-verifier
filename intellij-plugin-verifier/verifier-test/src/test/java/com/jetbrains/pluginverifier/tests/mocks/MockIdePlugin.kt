@@ -23,36 +23,19 @@ data class MockIdePlugin(
     override val vendorUrl: String? = null,
     override val changeNotes: String? = null,
     override val icons: List<PluginIcon> = emptyList(),
-    private val productDescriptor: ProductDescriptor? = null,
-    private val dependencies: List<PluginDependency> = emptyList(),
-    private val underlyingDocument: Document = Document(Element("idea-plugin")),
-    private val optionalDescriptors: Map<String, IdePlugin> = emptyMap(),
-    private val extensions: Multimap<String, Element> = HashMultimap.create(),
-    private val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
-    private val untilBuild: IdeVersion? = null,
-    private val definedModules: Set<String> = emptySet(),
-    private val originalFile: File? = null
+    override val productDescriptor: ProductDescriptor? = null,
+    override val dependencies: List<PluginDependency> = emptyList(),
+    override val underlyingDocument: Document = Document(Element("idea-plugin")),
+    override val optionalDescriptors: Map<String, IdePlugin> = emptyMap(),
+    override val extensions: Multimap<String, Element> = HashMultimap.create(),
+    override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
+    override val untilBuild: IdeVersion? = null,
+    override val definedModules: Set<String> = emptySet(),
+    override val originalFile: File? = null
 ) : IdePlugin {
-  override fun getDeclaredThemes(): List<IdeTheme> = emptyList()
+
+  override val declaredThemes = emptyList<IdeTheme>()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
       sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
-
-  override fun getUntilBuild() = untilBuild
-
-  override fun getSinceBuild() = sinceBuild
-
-  override fun getDefinedModules() = definedModules
-
-  override fun getOriginalFile() = originalFile
-
-  override fun getDependencies() = dependencies
-
-  override fun getExtensions() = extensions
-
-  override fun getOptionalDescriptors() = optionalDescriptors
-
-  override fun getUnderlyingDocument() = underlyingDocument
-
-  override fun getProductDescriptor() = productDescriptor
 }
