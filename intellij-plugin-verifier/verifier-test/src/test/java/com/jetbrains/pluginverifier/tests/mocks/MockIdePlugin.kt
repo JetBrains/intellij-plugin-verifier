@@ -4,6 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -32,6 +33,7 @@ data class MockIdePlugin(
     private val definedModules: Set<String> = emptySet(),
     private val originalFile: File? = null
 ) : IdePlugin {
+  override fun getDeclaredThemes(): List<IdeTheme> = emptyList()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
       sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
