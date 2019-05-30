@@ -39,6 +39,7 @@ internal class PluginCreator {
   }
 
   val pluginFile: File
+  val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = hashMapOf()
   private val descriptorPath: String
   private val validateDescriptor: Boolean
   private val plugin: IdePluginImpl?
@@ -57,7 +58,7 @@ internal class PluginCreator {
     this.pluginFile = pluginFile
     this.validateDescriptor = validateDescriptor
     plugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver)
-    plugin?.setIcons(icons)
+    plugin?.icons?.addAll(icons)
   }
 
   constructor(descriptorPath: String, singleProblem: PluginProblem, pluginFile: File) {
@@ -68,9 +69,6 @@ internal class PluginCreator {
     registerProblem(singleProblem)
     plugin = null
   }
-
-  val optionalDependenciesConfigurationFiles: Map<PluginDependency, String>
-    get() = plugin!!.optionalDependenciesConfigFiles
 
   val isSuccess: Boolean
     get() = !hasErrors()
@@ -89,7 +87,9 @@ internal class PluginCreator {
   ) {
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<*>) {
-      plugin!!.addOptionalDescriptor(configurationFile, (pluginCreationResult as PluginCreationSuccess<IdePlugin>).plugin)
+      val optionalPlugin = (pluginCreationResult as PluginCreationSuccess<IdePlugin>).plugin
+      plugin!!.optionalDescriptors[configurationFile] = optionalPlugin
+      plugin.extensions.putAll(optionalPlugin.extensions)
     } else {
       val errorsAndWarnings = (pluginCreationResult as PluginCreationFail<IdePlugin>)
           .errorsAndWarnings
@@ -101,11 +101,65 @@ internal class PluginCreator {
   fun hasOnlyInvalidDescriptorErrors(): Boolean =
       problems.all { it.level != PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
 
-  fun setOriginalFileAndExtractDir(originalFile: File, extractedDir: File) {
+  fun setOriginalFile(originalFile: File) {
     if (plugin != null) {
-      plugin.setOriginalPluginFile(originalFile)
-      plugin.extractDirectory = extractedDir
+      plugin.originalFile = originalFile
     }
+  }
+
+  private fun IdePluginImpl.setInfoFromBean(bean: PluginBean) {
+    pluginName = bean.name
+    pluginId = if (bean.id != null) bean.id else bean.name
+    url = bean.url
+    pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
+    definedModules.addAll(bean.modules)
+    extensions.putAll(bean.extensions)
+
+    val ideaVersionBean = bean.ideaVersion
+    if (ideaVersionBean != null) {
+      sinceBuild = if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
+      var untilBuild: String? = ideaVersionBean.untilBuild
+      if (untilBuild != null && untilBuild.isNotEmpty()) {
+        if (untilBuild.endsWith(".*")) {
+          val idx = untilBuild.lastIndexOf('.')
+          untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE
+        }
+        this.untilBuild = IdeVersion.createIdeVersion(untilBuild)
+      }
+    }
+
+    if (bean.dependencies != null) {
+      for (dependencyBean in bean.dependencies) {
+        if (dependencyBean.dependencyId != null) {
+          val isModule = dependencyBean.dependencyId.startsWith("com.intellij.modules.")
+          val isOptional = java.lang.Boolean.TRUE == dependencyBean.optional
+          val dependency = PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule)
+          dependencies += dependency
+
+          if (dependency.isOptional && dependencyBean.configFile != null) {
+            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
+          }
+        }
+      }
+    }
+
+    val vendorBean = bean.vendor
+    if (vendorBean != null) {
+      vendor = if (vendorBean.name != null) vendorBean.name.trim { it <= ' ' } else null
+      vendorUrl = vendorBean.url
+      vendorEmail = vendorBean.email
+    }
+    val productDescriptorBean = bean.productDescriptor
+    if (productDescriptorBean != null) {
+
+      productDescriptor = ProductDescriptor(
+          productDescriptorBean.code,
+          LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
+          Integer.parseInt(productDescriptorBean.releaseVersion)
+      )
+    }
+    changeNotes = bean.changeNotes
+    description = bean.description
   }
 
   private fun validatePluginBean(bean: PluginBean) {
@@ -226,9 +280,14 @@ internal class PluginCreator {
     val bean = readDocumentIntoXmlBean(document) ?: return null
     validatePluginBean(bean)
     if (hasErrors()) return null
-    val plugin = IdePluginImpl(document, bean)
+
+    val plugin = IdePluginImpl()
+    plugin.underlyingDocument = document
+    plugin.setInfoFromBean(bean)
+
     val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver)
-    plugin.declaredThemes = themeFiles
+    plugin.declaredThemes.addAll(themeFiles)
+
     validatePlugin(plugin)
     return if (hasErrors()) null else plugin
   }

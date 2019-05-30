@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -84,12 +83,8 @@ class IdePluginClassesFinder private constructor(
         readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
         additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
-      val extractDirectory = if (idePlugin is IdePluginImpl) {
-        idePlugin.extractDirectory
-      } else {
-        Settings.EXTRACT_DIRECTORY.getAsFile()
-      }
-      return findPluginClasses(idePlugin, extractDirectory!!, readMode, additionalKeys)
+      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile()
+      return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
     fun findPluginClasses(

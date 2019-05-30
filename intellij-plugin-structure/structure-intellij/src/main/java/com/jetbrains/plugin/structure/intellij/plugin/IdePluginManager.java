@@ -249,7 +249,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator resolveOptionalDependencies(@NotNull File jarOrDirectory,
                                                     @NotNull PluginCreator pluginCreator) {
     if (pluginCreator.isSuccess()) {
-      Map<PluginDependency, String> optionalConfigurationFiles = pluginCreator.getOptionalDependenciesConfigurationFiles();
+      Map<PluginDependency, String> optionalConfigurationFiles = pluginCreator.getOptionalDependenciesConfigFiles();
       return resolveOptionalDependencies(jarOrDirectory, optionalConfigurationFiles, pluginCreator);
     } else {
       return pluginCreator;
@@ -310,7 +310,6 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
                                                       boolean validateDescriptor,
                                                       @NotNull String descriptorPath) {
     PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath);
-    pluginCreator.setOriginalFileAndExtractDir(pluginFile, myExtractDirectory);
     return pluginCreator.getPluginCreationResult();
   }
 
@@ -327,6 +326,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     } else {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor);
     }
+    pluginCreator.setOriginalFile(pluginFile);
     return pluginCreator;
   }
 
