@@ -206,7 +206,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
         if (okOrPartiallyBrokenResult == null) {
           okOrPartiallyBrokenResult = innerCreator;
         } else {
-          return getMultipleDescriptorsResult(root, descriptorPath, okOrPartiallyBrokenResult.getActualFile().getName(), innerCreator.getActualFile().getName());
+          return getMultipleDescriptorsResult(root, descriptorPath, okOrPartiallyBrokenResult.getPluginFile().getName(), innerCreator.getPluginFile().getName());
         }
       }
     }

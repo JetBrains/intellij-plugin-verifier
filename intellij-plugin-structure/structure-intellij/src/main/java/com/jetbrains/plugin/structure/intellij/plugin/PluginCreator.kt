@@ -1,455 +1,399 @@
-package com.jetbrains.plugin.structure.intellij.plugin;
+package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.*;
-import com.jetbrains.plugin.structure.base.problems.*;
-import com.jetbrains.plugin.structure.intellij.beans.*;
-import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor;
-import com.jetbrains.plugin.structure.intellij.problems.*;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.JDOMXIncluder;
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver;
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
-import org.jdom2.Document;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jsoup.Jsoup;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.intellij.beans.*
+import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.JDOMXIncluder
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.jdom2.Document
+import org.jsoup.Jsoup
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.net.URL
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
-import java.io.File;
-import java.net.URL;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+internal class PluginCreator {
 
-final class PluginCreator {
+  companion object {
+    private val LOG = LoggerFactory.getLogger(PluginCreator::class.java)
 
-  private static final Logger LOG = LoggerFactory.getLogger(PluginCreator.class);
+    private const val MAX_PRODUCT_CODE_LENGTH = 15
+    private const val MAX_VERSION_LENGTH = 64
+    private const val MAX_PROPERTY_LENGTH = 255
+    private const val MAX_LONG_PROPERTY_LENGTH = 65535
 
-  public static DateTimeFormatter releaseDateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
-  private static final int MIN_PRODUCT_CODE_LENGTH = 4;
-  private static final int MAX_PRODUCT_CODE_LENGTH = 15;
-  private static final int MAX_VERSION_LENGTH = 64;
-  private static final int MAX_PROPERTY_LENGTH = 255;
-  private static final int MAX_LONG_PROPERTY_LENGTH = 65535;
+    private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
+    val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  }
 
-  private final IdePluginImpl myPlugin;
-  private final List<PluginProblem> myProblems = new ArrayList<>();
-  private final String myDescriptorPath;
-  private final boolean myValidateDescriptor;
-  private final File myActualFile;
+  val pluginFile: File
+  private val descriptorPath: String
+  private val validateDescriptor: Boolean
+  private val plugin: IdePluginImpl?
+  private val problems = arrayListOf<PluginProblem>()
 
-  PluginCreator(@NotNull String descriptorPath,
-                boolean validateDescriptor,
-                @NotNull Document document,
-                @NotNull URL documentUrl,
-                @NotNull XIncludePathResolver pathResolver,
-                @NotNull File actualFile,
-                @NotNull List<PluginIcon> icons) {
-    myDescriptorPath = descriptorPath;
-    myValidateDescriptor = validateDescriptor;
-    myActualFile = actualFile;
-    myPlugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver);
-    if (myPlugin != null) {
-      myPlugin.setIcons(icons);
+  constructor(
+      descriptorPath: String,
+      validateDescriptor: Boolean,
+      document: Document,
+      documentUrl: URL,
+      pathResolver: XIncludePathResolver,
+      pluginFile: File,
+      icons: List<PluginIcon>
+  ) {
+    this.descriptorPath = descriptorPath
+    this.pluginFile = pluginFile
+    this.validateDescriptor = validateDescriptor
+    plugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver)
+    plugin?.setIcons(icons)
+  }
+
+  constructor(descriptorPath: String, singleProblem: PluginProblem, pluginFile: File) {
+    require(singleProblem.level == PluginProblem.Level.ERROR) { "Only severe problems allowed here" }
+    this.descriptorPath = descriptorPath
+    this.pluginFile = pluginFile
+    this.validateDescriptor = true
+    registerProblem(singleProblem)
+    plugin = null
+  }
+
+  val optionalDependenciesConfigurationFiles: Map<PluginDependency, String>
+    get() = plugin!!.optionalDependenciesConfigFiles
+
+  val isSuccess: Boolean
+    get() = !hasErrors()
+
+  val pluginCreationResult: PluginCreationResult<IdePlugin>
+    get() = if (hasErrors()) {
+      PluginCreationFail(problems)
+    } else {
+      PluginCreationSuccess<IdePlugin>(plugin!!, problems)
+    }
+
+  fun addOptionalDescriptor(
+      pluginDependency: PluginDependency,
+      configurationFile: String,
+      optionalDependencyCreator: PluginCreator
+  ) {
+    val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
+    if (pluginCreationResult is PluginCreationSuccess<*>) {
+      plugin!!.addOptionalDescriptor(configurationFile, (pluginCreationResult as PluginCreationSuccess<IdePlugin>).plugin)
+    } else {
+      val errorsAndWarnings = (pluginCreationResult as PluginCreationFail<IdePlugin>)
+          .errorsAndWarnings
+          .filter { e -> e.level === PluginProblem.Level.ERROR }
+      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errorsAndWarnings))
     }
   }
 
-  PluginCreator(String descriptorPath, PluginProblem singleProblem, File actualFile) {
-    if (singleProblem.getLevel() != PluginProblem.Level.ERROR) {
-      throw new IllegalArgumentException("Only severe problems allowed here");
+  fun hasOnlyInvalidDescriptorErrors(): Boolean =
+      problems.all { it.level != PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
+
+  fun setOriginalFileAndExtractDir(originalFile: File, extractedDir: File) {
+    if (plugin != null) {
+      plugin.setOriginalPluginFile(originalFile)
+      plugin.extractDirectory = extractedDir
     }
-    myActualFile = actualFile;
-    myDescriptorPath = descriptorPath;
-    myValidateDescriptor = true;
-    myProblems.add(singleProblem);
-    myPlugin = null;
   }
 
-  private void validatePluginBean(PluginBean bean) {
-    if (myValidateDescriptor) {
-      validateAttributes(bean);
-      validateId(bean.id);
-      validateName(bean.name);
-      validateVersion(bean.pluginVersion);
-      validateDescription(bean.description);
-      validateChangeNotes(bean.changeNotes);
-      validateVendor(bean.vendor);
-      validateIdeaVersion(bean.ideaVersion);
-      validateProductDescriptor(bean.productDescriptor);
+  private fun validatePluginBean(bean: PluginBean) {
+    if (validateDescriptor) {
+      validateAttributes(bean)
+      validateId(bean.id)
+      validateName(bean.name)
+      validateVersion(bean.pluginVersion)
+      validateDescription(bean.description)
+      validateChangeNotes(bean.changeNotes)
+      validateVendor(bean.vendor)
+      validateIdeaVersion(bean.ideaVersion)
+      validateProductDescriptor(bean.productDescriptor)
 
       if (bean.dependencies != null) {
-        validateDependencies(bean.dependencies);
+        validateDependencies(bean.dependencies)
       }
 
-      if (bean.modules != null) {
-        for (String module : bean.modules) {
-          if (StringUtil.isEmpty(module)) {
-            registerProblem(new InvalidModuleBean(myDescriptorPath));
-          }
-        }
+      if (bean.modules?.any { it.isEmpty() } == true) {
+        registerProblem(InvalidModuleBean(descriptorPath))
       }
     }
   }
 
-  private void validateDependencies(List<PluginDependencyBean> dependencies) {
-    for (PluginDependencyBean dependencyBean : dependencies) {
-      if (StringUtil.isEmptyOrSpaces(dependencyBean.dependencyId) || dependencyBean.dependencyId.contains("\n")) {
-        registerProblem(new InvalidDependencyId(myDescriptorPath, dependencyBean.dependencyId));
-      } else if (Boolean.TRUE.equals(dependencyBean.optional) && dependencyBean.configFile == null) {
-        registerProblem(new OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId));
-      } else if (Boolean.FALSE.equals(dependencyBean.optional)) {
-        registerProblem(new SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId));
+  private fun validateDependencies(dependencies: List<PluginDependencyBean>) {
+    for (dependencyBean in dependencies) {
+      if (dependencyBean.dependencyId.isNullOrBlank() || dependencyBean.dependencyId.contains("\n")) {
+        registerProblem(InvalidDependencyId(descriptorPath, dependencyBean.dependencyId))
+      } else if (dependencyBean.optional == true && dependencyBean.configFile == null) {
+        registerProblem(OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId))
+      } else if (dependencyBean.optional == false) {
+        registerProblem(SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId))
       }
     }
   }
 
-  private void validateProductDescriptor(ProductDescriptorBean productDescriptor) {
+  private fun validateProductDescriptor(productDescriptor: ProductDescriptorBean?) {
     if (productDescriptor != null) {
-      validateProductCode(productDescriptor.code);
-      validateReleaseDate(productDescriptor.releaseDate);
-      validateReleaseVersion(productDescriptor.releaseVersion);
+      validateProductCode(productDescriptor.code)
+      validateReleaseDate(productDescriptor.releaseDate)
+      validateReleaseVersion(productDescriptor.releaseVersion)
     }
   }
 
-  private void validateProductCode(String productCode) {
-    if (StringUtil.isEmpty(productCode)) {
-      registerProblem(new PropertyNotSpecified("code", myDescriptorPath));
+  private fun validateProductCode(productCode: String?) {
+    if (productCode.isNullOrEmpty()) {
+      registerProblem(PropertyNotSpecified("code", descriptorPath))
     } else {
-      validatePropertyLength("Product code", productCode, MAX_PRODUCT_CODE_LENGTH);
+      validatePropertyLength("Product code", productCode, MAX_PRODUCT_CODE_LENGTH)
     }
   }
 
-  private void validateReleaseDate(String releaseDate) {
-    if (StringUtil.isEmpty(releaseDate)) {
-      registerProblem(new PropertyNotSpecified("release-date", myDescriptorPath));
+  private fun validateReleaseDate(releaseDate: String?) {
+    if (releaseDate.isNullOrEmpty()) {
+      registerProblem(PropertyNotSpecified("release-date", descriptorPath))
     } else {
       try {
-        LocalDate.parse(releaseDate, releaseDateFormatter);
-      } catch (DateTimeParseException e) {
-        registerProblem(ReleaseDateWrongFormat.INSTANCE);
+        LocalDate.parse(releaseDate, releaseDateFormatter)
+      } catch (e: DateTimeParseException) {
+        registerProblem(ReleaseDateWrongFormat)
       }
     }
   }
 
-  private void validateReleaseVersion(String releaseVersion) {
-    if (StringUtil.isEmpty(releaseVersion)) {
-      registerProblem(new PropertyNotSpecified("release-version", myDescriptorPath));
+  private fun validateReleaseVersion(releaseVersion: String?) {
+    if (releaseVersion.isNullOrEmpty()) {
+      registerProblem(PropertyNotSpecified("release-version", descriptorPath))
     } else {
       try {
-        Integer.valueOf(releaseVersion);
-      } catch (NumberFormatException e) {
-        registerProblem(new NotNumber("release-version", myDescriptorPath));
+        Integer.valueOf(releaseVersion)
+      } catch (e: NumberFormatException) {
+        registerProblem(NotNumber("release-version", descriptorPath))
       }
     }
   }
 
 
-  private void validateAttributes(@NotNull PluginBean bean) {
+  private fun validateAttributes(bean: PluginBean) {
     if (bean.url != null) {
-      validatePropertyLength("plugin url", bean.url, MAX_PROPERTY_LENGTH);
+      validatePropertyLength("plugin url", bean.url, MAX_PROPERTY_LENGTH)
     }
   }
 
-  private void validateVersion(String pluginVersion) {
-    if (StringUtil.isEmpty(pluginVersion)) {
-      registerProblem(new PropertyNotSpecified("version", myDescriptorPath));
+  private fun validateVersion(pluginVersion: String?) {
+    if (pluginVersion.isNullOrEmpty()) {
+      registerProblem(PropertyNotSpecified("version", descriptorPath))
     } else {
-      validatePropertyLength("version", pluginVersion, MAX_VERSION_LENGTH);
+      validatePropertyLength("version", pluginVersion, MAX_VERSION_LENGTH)
     }
   }
 
-  private void validatePlugin(IdePlugin plugin) {
-    int moduleDependenciesCnt = 0;
-    List<PluginDependency> dependencies = plugin.getDependencies();
-    for (PluginDependency dependency : dependencies) {
-      if (dependency.isModule()) {
-        moduleDependenciesCnt++;
-      }
+  private fun validatePlugin(plugin: IdePlugin) {
+    val dependencies = plugin.dependencies
+    dependencies.map { it.id }
+        .groupingBy { it }
+        .eachCount()
+        .filterValues { it > 1 }
+        .map { it.key }
+        .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
+
+    if (dependencies.count { it.isModule } == 0) {
+      registerProblem(NoModuleDependencies(descriptorPath))
     }
 
-    dependencies.stream().map(PluginDependency::getId)
-        .collect(Collectors.groupingBy(e -> e, Collectors.counting()))
-        .entrySet().stream()
-        .filter(e -> e.getValue() > 1)
-        .map(Map.Entry::getKey)
-        .collect(Collectors.toList())
-        .forEach(duplicatedDependencyId -> registerProblem(new DuplicatedDependencyWarning(duplicatedDependencyId)));
-
-    if (moduleDependenciesCnt == 0) {
-      registerProblem(new NoModuleDependencies(myDescriptorPath));
-    }
-
-    IdeVersion sinceBuild = plugin.getSinceBuild();
-    IdeVersion untilBuild = plugin.getUntilBuild();
-    if (sinceBuild != null && untilBuild != null && sinceBuild.compareTo(untilBuild) > 0) {
-      registerProblem(new SinceBuildGreaterThanUntilBuild(myDescriptorPath, sinceBuild, untilBuild));
+    val sinceBuild = plugin.sinceBuild
+    val untilBuild = plugin.untilBuild
+    if (sinceBuild != null && untilBuild != null && sinceBuild > untilBuild) {
+      registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
     }
   }
 
-  public Map<PluginDependency, String> getOptionalDependenciesConfigurationFiles() {
-    return myPlugin.getOptionalDependenciesConfigFiles();
-  }
-
-  public void addOptionalDescriptor(PluginDependency pluginDependency,
-                                    String configurationFile,
-                                    PluginCreator optionalDependencyCreator) {
-    PluginCreationResult<IdePlugin> pluginCreationResult = optionalDependencyCreator.getPluginCreationResult();
-    if (pluginCreationResult instanceof PluginCreationSuccess) {
-      myPlugin.addOptionalDescriptor(configurationFile, ((PluginCreationSuccess<IdePlugin>) pluginCreationResult).getPlugin());
-    } else {
-      List<PluginProblem> errorsAndWarnings = ((PluginCreationFail<IdePlugin>) pluginCreationResult)
-          .getErrorsAndWarnings()
-          .stream()
-          .filter(e -> e.getLevel() == PluginProblem.Level.ERROR)
-          .collect(Collectors.toList());
-      registerProblem(new OptionalDependencyDescriptorResolutionProblem(pluginDependency.getId(), configurationFile, errorsAndWarnings));
-    }
-  }
-
-  @Nullable
-  private IdePluginImpl resolveDocumentAndValidateBean(@NotNull Document originalDocument,
-                                                       @NotNull URL documentUrl,
-                                                       @NotNull XIncludePathResolver pathResolver) {
-    Document document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver);
-    if (document == null) {
-      return null;
-    }
-    PluginBean bean = readDocumentIntoXmlBean(document);
-    if (bean == null) {
-      return null;
-    }
-    validatePluginBean(bean);
+  private fun resolveDocumentAndValidateBean(
+      originalDocument: Document,
+      documentUrl: URL,
+      pathResolver: XIncludePathResolver
+  ): IdePluginImpl? {
+    val document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver) ?: return null
+    val bean = readDocumentIntoXmlBean(document) ?: return null
+    validatePluginBean(bean)
     if (hasErrors()) {
-      return null;
+      return null
     }
-    IdePluginImpl plugin = new IdePluginImpl(document, bean);
-    validatePlugin(plugin);
-    if (hasErrors()) {
-      return null;
+    val plugin = IdePluginImpl(document, bean)
+    validatePlugin(plugin)
+    return if (hasErrors()) null else plugin
+  }
+
+  private fun resolveXIncludesOfDocument(originalDocument: Document, documentUrl: URL, pathResolver: XIncludePathResolver): Document? {
+    return try {
+      JDOMXIncluder.resolve(originalDocument, documentUrl.toExternalForm(), false, pathResolver)
+    } catch (e: Exception) {
+      LOG.info("Unable to resolve x-include elements of descriptor $descriptorPath of $pluginFile", e)
+      registerProblem(UnresolvedXIncludeElements(descriptorPath))
+      null
     }
-    return plugin;
+
   }
 
-  @Nullable
-  private Document resolveXIncludesOfDocument(@NotNull Document originalDocument, @NotNull URL documentUrl, @NotNull XIncludePathResolver pathResolver) {
-    try {
-      return JDOMXIncluder.resolve(originalDocument, documentUrl.toExternalForm(), false, pathResolver);
-    } catch (Exception e) {
-      LOG.info("Unable to resolve x-include elements of descriptor " + myDescriptorPath + " of " + myActualFile, e);
-      registerProblem(new UnresolvedXIncludeElements(myDescriptorPath));
-      return null;
+  private fun readDocumentIntoXmlBean(document: Document): PluginBean? {
+    return try {
+      PluginBeanExtractor.extractPluginBean(document)
+    } catch (e: Exception) {
+      registerProblem(UnableToReadDescriptor(descriptorPath))
+      LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFile", e)
+      null
     }
+
   }
 
-  @Nullable
-  private PluginBean readDocumentIntoXmlBean(@NotNull Document document) {
-    try {
-      return PluginBeanExtractor.INSTANCE.extractPluginBean(document);
-    } catch (Exception e) {
-      registerProblem(new UnableToReadDescriptor(myDescriptorPath));
-      LOG.info("Unable to read plugin descriptor " + myDescriptorPath + " of " + myActualFile, e);
-      return null;
-    }
+  private fun registerProblem(problem: PluginProblem) {
+    problems += problem
   }
 
-  public File getActualFile() {
-    return myActualFile;
-  }
+  private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
 
-  public void registerProblem(@NotNull PluginProblem problem) {
-    myProblems.add(problem);
-  }
-
-  public boolean isSuccess() {
-    return !hasErrors();
-  }
-
-  public boolean hasOnlyInvalidDescriptorErrors() {
-    for (PluginProblem problem : getProblems()) {
-      if (problem.getLevel() == PluginProblem.Level.ERROR && !(problem instanceof InvalidDescriptorProblem)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  public boolean hasErrors() {
-    for (PluginProblem problem : getProblems()) {
-      if (problem.getLevel() == PluginProblem.Level.ERROR) return true;
-    }
-    return false;
-  }
-
-  @NotNull
-  public PluginCreationResult<IdePlugin> getPluginCreationResult() {
-    if (hasErrors()) {
-      return new PluginCreationFail<>(myProblems);
-    }
-    return new PluginCreationSuccess<>(myPlugin, myProblems);
-  }
-
-  @NotNull
-  public List<PluginProblem> getProblems() {
-    return myProblems;
-  }
-
-  public void setOriginalFileAndExtractDir(@NotNull File originalFile, @NotNull File extractedDir) {
-    if (myPlugin != null) {
-      myPlugin.setOriginalPluginFile(originalFile);
-      myPlugin.setExtractDirectory(extractedDir);
-    }
-  }
-
-  private void validateId(@Nullable String id) {
+  private fun validateId(id: String?) {
     if (id != null) {
-      if ("com.your.company.unique.plugin.id".equals(id)) {
-        registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.ID));
+      if ("com.your.company.unique.plugin.id" == id) {
+        registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID))
       } else {
-        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH);
+        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
       }
     }
   }
 
-  private void validateName(@Nullable String name) {
-    if (StringUtil.isEmpty(name)) {
-      registerProblem(new PropertyNotSpecified("name", myDescriptorPath));
-    } else if ("Plugin display name here".equals(name)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME));
-    } else if ("plugin".contains(name)) {
-      registerProblem(new PluginWordInPluginName(myDescriptorPath));
-    } else {
-      validatePropertyLength("name", name, MAX_PROPERTY_LENGTH);
+  private fun validateName(name: String?) {
+    when {
+      name.isNullOrEmpty() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
+      "Plugin display name here" == name -> registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME))
+      "plugin".contains(name) -> registerProblem(PluginWordInPluginName(descriptorPath))
+      else -> validatePropertyLength("name", name, MAX_PROPERTY_LENGTH)
     }
   }
 
-  private void validateDescription(@Nullable String htmlDescription) {
-    if (StringUtil.isEmpty(htmlDescription)) {
-      registerProblem(new PropertyNotSpecified("description", myDescriptorPath));
-      return;
+  private fun validateDescription(htmlDescription: String?) {
+    if (htmlDescription.isNullOrEmpty()) {
+      registerProblem(PropertyNotSpecified("description", descriptorPath))
+      return
     }
-    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH);
+    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH)
 
-    String textDescription = Jsoup.parseBodyFragment(htmlDescription).text();
+    val textDescription = Jsoup.parseBodyFragment(htmlDescription).text()
 
-    if (textDescription.length() < 40) {
-      registerProblem(new ShortDescription());
-      return;
-    }
-
-    if (textDescription.contains("Enter short description for your plugin here.") ||
-        textDescription.contains("most HTML tags may be used")) {
-      registerProblem(new DefaultDescription(myDescriptorPath));
-      return;
+    if (textDescription.length < 40) {
+      registerProblem(ShortDescription())
+      return
     }
 
-    int latinSymbols = StringUtil.numberOfPatternMatches(textDescription, Pattern.compile("[A-Za-z]|\\s"));
+    if (textDescription.contains("Enter short description for your plugin here.") || textDescription.contains("most HTML tags may be used")) {
+      registerProblem(DefaultDescription(descriptorPath))
+      return
+    }
+
+    val latinSymbols = latinSymbolsRegex.findAll(textDescription).count()
     if (latinSymbols < 40) {
-      registerProblem(new NonLatinDescription());
+      registerProblem(NonLatinDescription())
     }
   }
 
-  private void validateChangeNotes(@Nullable String changeNotes) {
-    if (StringUtil.isEmptyOrSpaces(changeNotes)) {
+  private fun validateChangeNotes(changeNotes: String?) {
+    if (changeNotes.isNullOrBlank()) {
       //Too many plugins don't specify the change-notes, so it's too strict to require them.
       //But if specified, let's check that the change-notes are long enough.
-      return;
+      return
     }
 
-    if (changeNotes.length() < 40) {
-      registerProblem(new ShortChangeNotes(myDescriptorPath));
-      return;
+    if (changeNotes.length < 40) {
+      registerProblem(ShortChangeNotes(descriptorPath))
+      return
     }
 
-    if (changeNotes.contains("Add change notes here") ||
-        changeNotes.contains("most HTML tags may be used")) {
-      registerProblem(new DefaultChangeNotes(myDescriptorPath));
+    if (changeNotes.contains("Add change notes here") || changeNotes.contains("most HTML tags may be used")) {
+      registerProblem(DefaultChangeNotes(descriptorPath))
     }
 
-    validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH);
+    validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH)
   }
 
-  private void validatePropertyLength(@NotNull String propertyName, @NotNull String propertyValue, int maxLength) {
-    if (propertyValue.length() > maxLength) {
-      registerProblem(new TooLongPropertyValue(myDescriptorPath, propertyName, propertyValue.length(), maxLength));
+  private fun validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int) {
+    if (propertyValue.length > maxLength) {
+      registerProblem(TooLongPropertyValue(descriptorPath, propertyName, propertyValue.length, maxLength))
     }
   }
 
-  private void validateVendor(PluginVendorBean vendorBean) {
+  private fun validateVendor(vendorBean: PluginVendorBean?) {
     if (vendorBean == null) {
-      registerProblem(new PropertyNotSpecified("vendor", myDescriptorPath));
-      return;
+      registerProblem(PropertyNotSpecified("vendor", descriptorPath))
+      return
     }
 
-    if (StringUtil.isEmptyOrSpaces(vendorBean.url) &&
-        StringUtil.isEmptyOrSpaces(vendorBean.email) &&
-        StringUtil.isEmptyOrSpaces(vendorBean.name)) {
-      registerProblem(new PropertyNotSpecified("vendor", myDescriptorPath));
-      return;
+    if (vendorBean.url.isNullOrBlank() && vendorBean.email.isNullOrBlank() && vendorBean.name.isNullOrBlank()) {
+      registerProblem(PropertyNotSpecified("vendor", descriptorPath))
+      return
     }
 
-    if ("YourCompany".equals(vendorBean.name)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR));
+    if ("YourCompany" == vendorBean.name) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR))
     }
-    validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH);
+    validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH)
 
-    if ("http://www.yourcompany.com".equals(vendorBean.url)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL));
+    if ("http://www.yourcompany.com" == vendorBean.url) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL))
     }
-    validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH);
+    validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH)
 
-    if ("support@yourcompany.com".equals(vendorBean.email)) {
-      registerProblem(new PropertyWithDefaultValue(myDescriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL));
+    if ("support@yourcompany.com" == vendorBean.email) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL))
     }
-    validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH);
+    validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH)
   }
 
-  private void validateSinceBuild(@Nullable String sinceBuild) {
+  private fun validateSinceBuild(sinceBuild: String?) {
     if (sinceBuild == null) {
-      registerProblem(new SinceBuildNotSpecified(myDescriptorPath));
+      registerProblem(SinceBuildNotSpecified(descriptorPath))
     } else {
-      IdeVersion sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild);
+      val sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild)
       if (sinceBuildParsed == null) {
-        registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
+        registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
       } else {
-        if (sinceBuildParsed.getBaselineVersion() < 130 && sinceBuild.endsWith(".*")) {
-          registerProblem(new InvalidSinceBuild(myDescriptorPath, sinceBuild));
+        if (sinceBuildParsed.baselineVersion < 130 && sinceBuild.endsWith(".*")) {
+          registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
         }
-        if (sinceBuildParsed.getBaselineVersion() > 2000) {
-          registerProblem(new ErroneousSinceBuild(myDescriptorPath, sinceBuildParsed));
+        if (sinceBuildParsed.baselineVersion > 2000) {
+          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
         }
       }
     }
   }
 
-  private void validateUntilBuild(@NotNull String untilBuild) {
-    IdeVersion untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild);
+  private fun validateUntilBuild(untilBuild: String) {
+    val untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild)
     if (untilBuildParsed == null) {
-      registerProblem(new InvalidUntilBuild(myDescriptorPath, untilBuild));
+      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      if (untilBuildParsed.getBaselineVersion() > 2000) {
-        registerProblem(new ErroneousUntilBuild(myDescriptorPath, untilBuildParsed));
+      if (untilBuildParsed.baselineVersion > 2000) {
+        registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
       }
     }
   }
 
-  private void validateIdeaVersion(IdeaVersionBean versionBean) {
+  private fun validateIdeaVersion(versionBean: IdeaVersionBean?) {
     if (versionBean == null) {
-      registerProblem(new PropertyNotSpecified("idea-version", myDescriptorPath));
-      return;
+      registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
+      return
     }
 
-    String sinceBuild = versionBean.sinceBuild;
-    validateSinceBuild(sinceBuild);
+    val sinceBuild = versionBean.sinceBuild
+    validateSinceBuild(sinceBuild)
 
-    String untilBuild = versionBean.untilBuild;
+    val untilBuild = versionBean.untilBuild
     if (untilBuild != null) {
-      validateUntilBuild(untilBuild);
+      validateUntilBuild(untilBuild)
     }
   }
 

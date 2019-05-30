@@ -178,8 +178,8 @@ public class IdePluginImpl implements IdePlugin {
 
       myProductDescriptor = new ProductDescriptor(
           productDescriptorBean.code,
-          LocalDate.parse(productDescriptorBean.releaseDate, PluginCreator.releaseDateFormatter),
-          Integer.valueOf(productDescriptorBean.releaseVersion)
+          LocalDate.parse(productDescriptorBean.releaseDate, PluginCreator.Companion.getReleaseDateFormatter()),
+          Integer.parseInt(productDescriptorBean.releaseVersion)
       );
     }
     myNotes = bean.changeNotes;
