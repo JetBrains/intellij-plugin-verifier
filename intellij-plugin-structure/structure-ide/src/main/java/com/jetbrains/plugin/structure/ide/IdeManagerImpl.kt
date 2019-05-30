@@ -108,7 +108,7 @@ class IdeManagerImpl : IdeManager() {
     override fun resolvePath(relativePath: String, base: String?) = try {
       //try the parent resolver
       val res = super.resolvePath(relativePath, base)
-      URLUtil.openStream(res)
+      URLUtil.openStream(res).close()
       res
     } catch (e: IOException) {
       resolveOutputDirectories(relativePath, base)
