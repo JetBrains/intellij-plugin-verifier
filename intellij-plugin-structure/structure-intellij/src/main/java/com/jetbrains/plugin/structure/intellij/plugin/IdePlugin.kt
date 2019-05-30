@@ -1,48 +1,33 @@
-package com.jetbrains.plugin.structure.intellij.plugin;
+package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.google.common.collect.Multimap;
-import com.jetbrains.plugin.structure.base.plugin.Plugin;
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.collect.Multimap
+import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.jdom2.Document
+import org.jdom2.Element
 
-import java.io.File;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.File
 
-public interface IdePlugin extends Plugin {
-  @Nullable
-  IdeVersion getSinceBuild();
+interface IdePlugin : Plugin {
+  val sinceBuild: IdeVersion?
 
-  @Nullable
-  IdeVersion getUntilBuild();
+  val untilBuild: IdeVersion?
 
-  boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion);
+  val extensions: Multimap<String, Element>
 
-  @NotNull
-  Multimap<String, Element> getExtensions();
+  val dependencies: List<PluginDependency>
 
-  @NotNull
-  List<PluginDependency> getDependencies();
+  val definedModules: Set<String>
 
-  @NotNull
-  Set<String> getDefinedModules();
+  val optionalDescriptors: Map<String, IdePlugin>
 
-  @NotNull
-  Map<String, IdePlugin> getOptionalDescriptors();
+  val underlyingDocument: Document
 
-  @NotNull
-  Document getUnderlyingDocument();
+  val originalFile: File?
 
-  @Nullable
-  File getOriginalFile();
+  val productDescriptor: ProductDescriptor?
 
-  @Nullable
-  ProductDescriptor getProductDescriptor();
+  val declaredThemes: List<IdeTheme>
 
-  @NotNull
-  List<IdeTheme> getDeclaredThemes();
+  fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }

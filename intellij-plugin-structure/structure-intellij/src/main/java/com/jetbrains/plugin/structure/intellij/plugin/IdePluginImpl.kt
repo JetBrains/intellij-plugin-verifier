@@ -1,272 +1,193 @@
-package com.jetbrains.plugin.structure.intellij.plugin;
+package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import com.jetbrains.plugin.structure.base.plugin.PluginIcon;
-import com.jetbrains.plugin.structure.intellij.beans.*;
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
-import org.jdom2.Document;
-import org.jdom2.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.collect.Multimap
+import com.google.common.collect.Multimaps
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.jdom2.Document
+import org.jdom2.Element
+import java.io.File
+import java.time.LocalDate
+import java.util.*
 
-import java.io.File;
-import java.time.LocalDate;
-import java.util.*;
+class IdePluginImpl internal constructor(
+    private val underlyingDocument: Document,
+    bean: PluginBean
+) : IdePlugin {
 
-public class IdePluginImpl implements IdePlugin {
-  private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
-
-  private final Set<String> myDefinedModules = new HashSet<>();
-  private final List<PluginDependency> myDependencies = new ArrayList<>();
-  private List<IdeTheme> myDeclaredThemes = new ArrayList<>();
-  private final Map<PluginDependency, String> myOptionalConfigFiles = new HashMap<>();
-  private final Map<String, IdePlugin> myOptionalDescriptors = new HashMap<>();
-  private final List<PluginIcon> icons = new ArrayList<>();
-  private Multimap<String, Element> myExtensions;
-  private File myOriginalFile;
-  private File myExtractDirectory;
-  private Document myUnderlyingDocument;
-  private String myPluginName;
-  private String myPluginVersion;
-  private String myPluginId;
-  private String myPluginVendor;
-  private String myVendorEmail;
-  private String myVendorUrl;
-  private String myDescription;
-  private String myUrl;
-  private String myNotes;
-  private IdeVersion mySinceBuild;
-  private IdeVersion myUntilBuild;
-  private ProductDescriptor myProductDescriptor;
-
-  IdePluginImpl(@NotNull Document underlyingDocument, @NotNull PluginBean bean) {
-    myUnderlyingDocument = underlyingDocument;
-    setInfoFromBean(bean);
+  companion object {
+    private const val INTELLIJ_MODULES_PREFIX = "com.intellij.modules."
   }
 
-  @Override
-  @NotNull
-  public Multimap<String, Element> getExtensions() {
-    return Multimaps.unmodifiableMultimap(myExtensions);
+  private val definedModules = hashSetOf<String>()
+  private val dependencies = arrayListOf<PluginDependency>()
+  private val declaredThemes = arrayListOf<IdeTheme>()
+  private val optionalConfigFiles = hashMapOf<PluginDependency, String>()
+  private val optionalDescriptors = hashMapOf<String, IdePlugin>()
+  private val _icons = arrayListOf<PluginIcon>()
+  private var extensions: Multimap<String, Element>? = null
+  private var originalFile: File? = null
+
+  var extractDirectory: File? = null
+
+  override val icons: List<PluginIcon>
+    get() = Collections.unmodifiableList(_icons)
+
+  override var pluginName: String? = null
+    private set
+
+  override var pluginVersion: String? = null
+    private set
+
+  override var pluginId: String? = null
+    private set
+
+  override var vendor: String? = null
+    private set
+
+  override var vendorEmail: String? = null
+    private set
+
+  override var vendorUrl: String? = null
+    private set
+
+  override var description: String? = null
+    private set
+
+  override var url: String? = null
+    private set
+
+  override var changeNotes: String? = null
+    private set
+
+  private var sinceBuild: IdeVersion? = null
+  private var untilBuild: IdeVersion? = null
+  private var productDescriptor: ProductDescriptor? = null
+
+  internal val optionalDependenciesConfigFiles: Map<PluginDependency, String>
+    get() = Collections.unmodifiableMap(optionalConfigFiles)
+
+  init {
+    setInfoFromBean(bean)
   }
 
-  @Override
-  @NotNull
-  public List<PluginDependency> getDependencies() {
-    return Collections.unmodifiableList(myDependencies);
+  override fun getExtensions(): Multimap<String, Element> =
+      Multimaps.unmodifiableMultimap(extensions!!)
+
+  override fun getDependencies(): List<PluginDependency> =
+      Collections.unmodifiableList(dependencies)
+
+  override fun getSinceBuild(): IdeVersion? =
+      sinceBuild
+
+  override fun getUntilBuild(): IdeVersion? =
+      untilBuild
+
+  override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean =
+      if (sinceBuild == null) {
+        true
+      } else {
+        sinceBuild!! <= ideVersion && (untilBuild == null || ideVersion <= untilBuild!!)
+      }
+
+  override fun getDefinedModules(): Set<String> = Collections.unmodifiableSet(definedModules)
+
+  override fun getDeclaredThemes(): List<IdeTheme> = declaredThemes
+
+  fun setDeclaredThemes(declaredThemes: List<IdeTheme>) {
+    this.declaredThemes.clear()
+    this.declaredThemes.addAll(declaredThemes)
   }
 
-  @Nullable
-  public IdeVersion getSinceBuild() {
-    return mySinceBuild;
-  }
+  private fun setInfoFromBean(bean: PluginBean) {
+    pluginName = bean.name
+    pluginId = if (bean.id != null) bean.id else bean.name
+    url = bean.url
+    pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
+    definedModules.addAll(bean.modules)
+    extensions = bean.extensions
 
-  @Override
-  @Nullable
-  public IdeVersion getUntilBuild() {
-    return myUntilBuild;
-  }
-
-  @Override
-  public boolean isCompatibleWithIde(@NotNull IdeVersion ideVersion) {
-    //noinspection SimplifiableIfStatement
-    if (mySinceBuild == null) return true;
-
-    return mySinceBuild.compareTo(ideVersion) <= 0 && (myUntilBuild == null || ideVersion.compareTo(myUntilBuild) <= 0);
-  }
-
-  @Nullable
-  @Override
-  public String getPluginName() {
-    return myPluginName;
-  }
-
-  @Override
-  @Nullable
-  public String getPluginVersion() {
-    return myPluginVersion;
-  }
-
-  @Nullable
-  @Override
-  public String getPluginId() {
-    return myPluginId;
-  }
-
-  @Override
-  public String getVendor() {
-    return myPluginVendor;
-  }
-
-  @Override
-  @NotNull
-  public Set<String> getDefinedModules() {
-    return Collections.unmodifiableSet(myDefinedModules);
-  }
-
-  @Nullable
-  @Override
-  public String getDescription() {
-    return myDescription;
-  }
-
-  @Override
-  @Nullable
-  public String getVendorEmail() {
-    return myVendorEmail;
-  }
-
-  @Override
-  @Nullable
-  public String getVendorUrl() {
-    return myVendorUrl;
-  }
-
-  @Override
-  @Nullable
-  public String getUrl() {
-    return myUrl;
-  }
-
-  @Override
-  @NotNull
-  public List<IdeTheme> getDeclaredThemes() {
-    return myDeclaredThemes;
-  }
-
-  public void setDeclaredThemes(@NotNull List<IdeTheme> declaredThemes) {
-    this.myDeclaredThemes.clear();
-    this.myDeclaredThemes.addAll(declaredThemes);
-  }
-
-  private void setInfoFromBean(PluginBean bean) {
-    myPluginName = bean.name;
-    myPluginId = bean.id != null ? bean.id : bean.name;
-    myUrl = bean.url;
-    myPluginVersion = bean.pluginVersion != null ? bean.pluginVersion.trim() : null;
-    myDefinedModules.addAll(bean.modules);
-    myExtensions = bean.extensions;
-
-    IdeaVersionBean ideaVersionBean = bean.ideaVersion;
+    val ideaVersionBean = bean.ideaVersion
     if (ideaVersionBean != null) {
-      mySinceBuild = ideaVersionBean.sinceBuild != null ? IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) : null;
-      String untilBuild = ideaVersionBean.untilBuild;
-      if (untilBuild != null && !untilBuild.isEmpty()) {
+      sinceBuild = if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
+      var untilBuild: String? = ideaVersionBean.untilBuild
+      if (untilBuild != null && untilBuild.isNotEmpty()) {
         if (untilBuild.endsWith(".*")) {
-          int idx = untilBuild.lastIndexOf('.');
-          untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE;
+          val idx = untilBuild.lastIndexOf('.')
+          untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE
         }
-        myUntilBuild = IdeVersion.createIdeVersion(untilBuild);
+        this.untilBuild = IdeVersion.createIdeVersion(untilBuild)
       }
     }
 
     if (bean.dependencies != null) {
-      for (PluginDependencyBean dependencyBean : bean.dependencies) {
+      for (dependencyBean in bean.dependencies) {
         if (dependencyBean.dependencyId != null) {
-          boolean isModule = dependencyBean.dependencyId.startsWith(INTELLIJ_MODULES_PREFIX);
-          boolean isOptional = Boolean.TRUE.equals(dependencyBean.optional);
-          PluginDependency dependency = new PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule);
-          myDependencies.add(dependency);
+          val isModule = dependencyBean.dependencyId.startsWith(INTELLIJ_MODULES_PREFIX)
+          val isOptional = java.lang.Boolean.TRUE == dependencyBean.optional
+          val dependency = PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule)
+          dependencies.add(dependency)
 
-          if (dependency.isOptional() && dependencyBean.configFile != null) {
-            myOptionalConfigFiles.put(dependency, dependencyBean.configFile);
+          if (dependency.isOptional && dependencyBean.configFile != null) {
+            optionalConfigFiles[dependency] = dependencyBean.configFile
           }
         }
       }
     }
 
-    PluginVendorBean vendorBean = bean.vendor;
+    val vendorBean = bean.vendor
     if (vendorBean != null) {
-      myPluginVendor = vendorBean.name != null ? vendorBean.name.trim() : null;
-      myVendorUrl = vendorBean.url;
-      myVendorEmail = vendorBean.email;
+      vendor = if (vendorBean.name != null) vendorBean.name.trim { it <= ' ' } else null
+      vendorUrl = vendorBean.url
+      vendorEmail = vendorBean.email
     }
-    ProductDescriptorBean productDescriptorBean = bean.productDescriptor;
+    val productDescriptorBean = bean.productDescriptor
     if (productDescriptorBean != null) {
 
-      myProductDescriptor = new ProductDescriptor(
+      productDescriptor = ProductDescriptor(
           productDescriptorBean.code,
-          LocalDate.parse(productDescriptorBean.releaseDate, PluginCreator.Companion.getReleaseDateFormatter()),
+          LocalDate.parse(productDescriptorBean.releaseDate, PluginCreator.releaseDateFormatter),
           Integer.parseInt(productDescriptorBean.releaseVersion)
-      );
+      )
     }
-    myNotes = bean.changeNotes;
-    myDescription = bean.description;
+    changeNotes = bean.changeNotes
+    description = bean.description
   }
 
-  @Override
-  @Nullable
-  public String getChangeNotes() {
-    return myNotes;
+  override fun getOptionalDescriptors(): Map<String, IdePlugin> =
+      Collections.unmodifiableMap(optionalDescriptors)
+
+  fun setIcons(icons: List<PluginIcon>) {
+    this._icons.clear()
+    this._icons.addAll(icons)
   }
 
-  @NotNull
-  @Override
-  public Map<String, IdePlugin> getOptionalDescriptors() {
-    return Collections.unmodifiableMap(myOptionalDescriptors);
+  internal fun addOptionalDescriptor(configurationFile: String, optionalPlugin: IdePlugin) {
+    optionalDescriptors[configurationFile] = optionalPlugin
+    extensions!!.putAll(optionalPlugin.extensions)
   }
 
-  @NotNull
-  @Override
-  public List<PluginIcon> getIcons() {
-    return Collections.unmodifiableList(icons);
+  override fun getUnderlyingDocument(): Document = underlyingDocument.clone()
+
+  override fun getOriginalFile(): File? = originalFile
+
+  internal fun setOriginalPluginFile(originalFile: File) {
+    this.originalFile = originalFile
   }
 
-  public void setIcons(List<PluginIcon> icons) {
-    this.icons.clear();
-    this.icons.addAll(icons);
+  override fun getProductDescriptor(): ProductDescriptor? {
+    return productDescriptor
   }
 
-  void addOptionalDescriptor(@NotNull String configurationFile, @NotNull IdePlugin optionalPlugin) {
-    myOptionalDescriptors.put(configurationFile, optionalPlugin);
-    myExtensions.putAll(optionalPlugin.getExtensions());
-  }
-
-  @NotNull
-  @Override
-  public Document getUnderlyingDocument() {
-    return myUnderlyingDocument.clone();
-  }
-
-  @Nullable
-  @Override
-  public File getOriginalFile() {
-    return myOriginalFile;
-  }
-
-  @Nullable
-  @Override
-  public ProductDescriptor getProductDescriptor() {
-    return myProductDescriptor;
-  }
-
-  void setOriginalPluginFile(@NotNull File originalFile) {
-    myOriginalFile = originalFile;
-  }
-
-  public File getExtractDirectory() {
-    return myExtractDirectory;
-  }
-
-  void setExtractDirectory(File extractDirectory) {
-    this.myExtractDirectory = extractDirectory;
-  }
-
-  @NotNull
-  Map<PluginDependency, String> getOptionalDependenciesConfigFiles() {
-    return Collections.unmodifiableMap(myOptionalConfigFiles);
-  }
-
-  @Override
-  public String toString() {
-    String id = myPluginId;
+  override fun toString(): String {
+    var id = pluginId
     if (id == null || id.isEmpty()) {
-      id = myPluginName;
+      id = pluginName
     }
     if (id == null || id.isEmpty()) {
-      id = myUrl;
+      id = url
     }
-    return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");
+    return id!! + if (pluginVersion != null) ":" + pluginVersion!! else ""
   }
 }
