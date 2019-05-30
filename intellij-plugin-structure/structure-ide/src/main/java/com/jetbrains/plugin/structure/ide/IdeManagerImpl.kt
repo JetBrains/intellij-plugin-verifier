@@ -102,6 +102,23 @@ class IdeManagerImpl : IdeManager() {
           throw XIncludeException(exc)
         }
       }
+
+      //todo: workaround
+      if (relativePath.endsWith(".theme.json")) {
+        val adjustedPath = when {
+          relativePath.startsWith("../") -> relativePath.substringAfter("../")
+          relativePath.startsWith("/") -> relativePath.substringAfter("/")
+          else -> relativePath
+        }
+
+        for (xmlFilePath in xmlFiles.values) {
+          val themeFile = xmlFilePath.parentFile?.parentFile?.resolve(adjustedPath)
+          if (themeFile != null && themeFile.exists()) {
+            return themeFile.toURI().toURL()
+          }
+        }
+      }
+
       throw XIncludeException("Unable to resolve " + normalizedPath + if (base != null) " against $base" else "")
     }
 
