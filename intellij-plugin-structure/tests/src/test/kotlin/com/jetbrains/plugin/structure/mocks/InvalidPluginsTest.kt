@@ -420,6 +420,19 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `plugin specifies unresolved theme path`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          additionalContent = """
+            <extensions defaultExtensionNs="com.intellij">
+    <themeProvider id="someId" path="/unresolved.theme.theme.json"/>
+  </extensions>
+          """.trimIndent()
+        }, listOf(UnableToReadTheme("plugin.xml", "/unresolved.theme.theme.json"))
+    )
+  }
+
+  @Test
   fun `since or until build with year instead of branch number`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {

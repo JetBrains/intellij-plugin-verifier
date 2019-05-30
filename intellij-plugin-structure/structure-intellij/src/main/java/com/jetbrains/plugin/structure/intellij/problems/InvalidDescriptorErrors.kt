@@ -139,9 +139,16 @@ class DefaultDescription(descriptorPath: String) : InvalidDescriptorProblem(desc
 
 object ReleaseDateWrongFormat : PluginProblem() {
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
   override val message
     get() = "Property <release-date> must be of YYYYMMDD format"
 }
 
+class UnableToReadTheme(descriptorPath: String, private val themePath: String) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage: String
+    get() = "unable to read theme by path '$themePath'"
+
+  override val level
+    get() = Level.ERROR
+}

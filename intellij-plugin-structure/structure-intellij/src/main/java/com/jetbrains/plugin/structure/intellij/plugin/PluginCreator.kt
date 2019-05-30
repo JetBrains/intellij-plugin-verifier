@@ -35,6 +35,9 @@ internal class PluginCreator {
     private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
     private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
+
+    private val jsonMapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
     val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
   }
 
@@ -286,21 +289,36 @@ internal class PluginCreator {
     plugin.icons.addAll(icons)
     plugin.setInfoFromBean(bean)
 
-    val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver)
+    val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver) ?: return null
     plugin.declaredThemes.addAll(themeFiles)
 
     validatePlugin(plugin)
     return if (hasErrors()) null else plugin
   }
 
-  private fun readPluginThemes(plugin: IdePlugin, documentUrl: URL, pathResolver: XIncludePathResolver): List<IdeTheme> {
-    val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    return plugin.extensions[INTELLIJ_THEME_EXTENSION]
-        .mapNotNull { it.getAttribute("path")?.value }
-        // Absolute paths should be resolved from META-INF parent, not root.
-        .map { if (it.startsWith("/")) "..$it" else it }
-        .map { pathResolver.resolvePath(it, documentUrl.toString()) }
-        .map { mapper.readValue(it, IdeTheme::class.java) }
+  private fun readPluginThemes(
+      plugin: IdePlugin,
+      documentUrl: URL,
+      pathResolver: XIncludePathResolver
+  ): List<IdeTheme>? {
+    val pluginThemePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION].mapNotNull { it.getAttribute("path")?.value }
+
+    val themes = arrayListOf<IdeTheme>()
+
+    for (themePath in pluginThemePaths) {
+      // Absolute paths should be resolved from META-INF parent, not root.
+      val adjustedPath = if (themePath.startsWith("/")) "..$themePath" else themePath
+      val theme = try {
+        val themeUrl = pathResolver.resolvePath(adjustedPath, documentUrl.toString())
+        jsonMapper.readValue(themeUrl, IdeTheme::class.java)
+      } catch (e: Exception) {
+        LOG.info("Unable to resolve plugin theme path: $themePath declared in $descriptorPath", e)
+        registerProblem(UnableToReadTheme(descriptorPath, themePath))
+        return null
+      }
+      themes += theme
+    }
+    return themes
   }
 
   private fun resolveXIncludesOfDocument(originalDocument: Document, documentUrl: URL, pathResolver: XIncludePathResolver): Document? {
