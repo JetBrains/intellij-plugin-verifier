@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.version
 
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil
 import java.util.*
 
 class IdeVersionImpl(
@@ -12,7 +11,7 @@ class IdeVersionImpl(
   override fun asString(includeProductCode: Boolean, includeSnapshotMarker: Boolean): String {
     val builder = StringBuilder()
 
-    if (includeProductCode && !StringUtil.isEmpty(productCode)) {
+    if (includeProductCode && productCode.isNotEmpty()) {
       builder.append(productCode).append('-')
     }
 

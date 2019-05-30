@@ -1,13 +1,13 @@
 package com.jetbrains.plugin.structure.ide;
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
@@ -40,7 +40,7 @@ public abstract class Ide {
   final public IdePlugin getPluginById(@NotNull String pluginId) {
     for (IdePlugin plugin : getBundledPlugins()) {
       String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
-      if (StringUtil.equal(id, pluginId))
+      if (Objects.equals(id, pluginId))
         return plugin;
     }
     return null;

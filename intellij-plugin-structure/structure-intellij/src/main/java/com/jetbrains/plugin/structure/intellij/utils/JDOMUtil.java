@@ -27,6 +27,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("unchecked")
 public class JDOMUtil {
@@ -41,7 +42,7 @@ public class JDOMUtil {
     //noinspection SimplifiableIfStatement
     if (e1 == null || e2 == null) return false;
 
-    return StringUtil.equal(e1.getName(), e2.getName())
+    return Objects.equals(e1.getName(), e2.getName())
         && attListsEqual(e1.getAttributes(), e2.getAttributes())
         && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
   }

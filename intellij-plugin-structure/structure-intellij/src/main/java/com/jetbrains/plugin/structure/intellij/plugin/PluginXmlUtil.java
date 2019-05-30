@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
+import kotlin.text.StringsKt;
 import org.jdom2.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ public class PluginXmlUtil {
 
   private static boolean isClassLikeName(@NotNull String label) {
     for (String string : CLASS_LIKE_STRINGS) {
-      if (StringUtil.containsIgnoreCase(label, string)) {
+      if (StringsKt.contains(label, string, true)) {
         return true;
       }
     }

@@ -4,7 +4,6 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon;
 import com.jetbrains.plugin.structure.intellij.beans.*;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -14,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
-
-import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.isEmpty;
 
 public class IdePluginImpl implements IdePlugin {
   private static final String INTELLIJ_MODULES_PREFIX = "com.intellij.modules.";
@@ -143,7 +140,7 @@ public class IdePluginImpl implements IdePlugin {
     if (ideaVersionBean != null) {
       mySinceBuild = ideaVersionBean.sinceBuild != null ? IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) : null;
       String untilBuild = ideaVersionBean.untilBuild;
-      if (!StringUtil.isEmpty(untilBuild)) {
+      if (untilBuild != null && !untilBuild.isEmpty()) {
         if (untilBuild.endsWith(".*")) {
           int idx = untilBuild.lastIndexOf('.');
           untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE;
@@ -252,10 +249,10 @@ public class IdePluginImpl implements IdePlugin {
   @Override
   public String toString() {
     String id = myPluginId;
-    if (isEmpty(id)) {
+    if (id == null || id.isEmpty()) {
       id = myPluginName;
     }
-    if (isEmpty(id)) {
+    if (id == null || id.isEmpty()) {
       id = myUrl;
     }
     return id + (getPluginVersion() != null ? ":" + getPluginVersion() : "");

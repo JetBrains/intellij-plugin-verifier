@@ -16,6 +16,7 @@
 package com.jetbrains.plugin.structure.intellij.utils;
 
 import kotlin.Pair;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -147,8 +148,8 @@ public class URLUtil {
 
   @NotNull
   public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
-    String fileURL = StringUtil.replace(file.toURI().toASCIIString(), "!", "%21");
-    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
+    String fileURL = file.toURI().toASCIIString().replace("!", "%21");
+    return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringsKt.trimStart(pathInJar, '/'));
   }
 
   /**

@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlXIncludePathResolver
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil
 import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
@@ -220,7 +219,7 @@ class IdeManagerImpl : IdeManager() {
     when {
       URLUtil.FILE_PROTOCOL == descriptorUrl.protocol -> {
         val descriptorFile = URLUtil.urlToFile(descriptorUrl)
-        val pathname = StringUtil.toSystemIndependentName(descriptorFile.path).substringBeforeLast(descriptorPath)
+        val pathname = descriptorFile.path.replace('\\', '/').substringBeforeLast(descriptorPath)
         val pluginDir = File(pathname).parentFile
         return safeCreatePlugin(pluginDir, pathResolver, descriptorPath)
       }

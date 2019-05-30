@@ -10,10 +10,10 @@ import com.jetbrains.plugin.structure.intellij.problems.IncorrectIntellijFile;
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty;
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
-import com.jetbrains.plugin.structure.intellij.utils.StringUtil;
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil;
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver;
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver;
+import kotlin.text.StringsKt;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import static com.jetbrains.plugin.structure.intellij.utils.StringUtil.toSystemIndependentName;
 
 public final class IdePluginManager implements PluginManager<IdePlugin> {
 
@@ -136,7 +134,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private String getZipEntryName(@NotNull String descriptorPath) {
     if (descriptorPath.startsWith("../")) {
-      return StringUtil.trimStart(descriptorPath, "../");
+      return StringsKt.substringAfter(descriptorPath, "../", descriptorPath);
     }
     return META_INF + File.separator + descriptorPath;
   }
@@ -236,7 +234,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator loadPluginInfoFromJarOrDirectory(@NotNull File jarOrDirectory,
                                                          @NotNull String descriptorPath,
                                                          boolean validateDescriptor) {
-    descriptorPath = toSystemIndependentName(descriptorPath);
+    descriptorPath = descriptorPath.replace('\\', '/');
     PluginCreator pluginCreator;
     if (jarOrDirectory.isDirectory()) {
       pluginCreator = loadPluginInfoFromDir(jarOrDirectory, descriptorPath, validateDescriptor);
@@ -272,7 +270,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   private PluginCreator resolveOptionalConfigurationFile(@NotNull File jarOrDirectory, @NotNull String configurationFile) {
     if (configurationFile.startsWith("/" + META_INF + "/")) {
-      configurationFile = StringUtil.trimStart(configurationFile, "/" + META_INF + "/");
+      configurationFile = StringsKt.substringAfter(configurationFile, "/" + META_INF + "/", configurationFile);
     }
     return loadPluginInfoFromJarOrDirectory(jarOrDirectory, configurationFile, false);
   }
