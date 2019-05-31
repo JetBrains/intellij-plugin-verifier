@@ -1,9 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers
 
-import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.Location
@@ -27,7 +28,8 @@ import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
 data class PluginVerificationContext(
     val plugin: PluginInfo,
     val verificationTarget: VerificationTarget,
-    val resultHolder: ResultHolder,
+    val verificationResult: VerificationResult,
+    val ignoredProblems: IgnoredProblemsHolder,
     val checkApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     override val classResolver: ClassResolver,
@@ -43,20 +45,20 @@ data class PluginVerificationContext(
     get() = this
 
   override val allProblems
-    get() = resultHolder.compatibilityProblems
+    get() = verificationResult.compatibilityProblems
 
   override fun registerProblem(problem: CompatibilityProblem) {
     val shouldReportDecisions = problemFilters.map { it.shouldReportProblem(problem, this) }
     val ignoreDecisions = shouldReportDecisions.filterIsInstance<ProblemsFilter.Result.Ignore>()
-    if (ignoreDecisions.isNotEmpty()) {
-      resultHolder.addIgnoredProblem(problem, ignoreDecisions)
-    } else {
-      resultHolder.addProblem(problem)
+    if (ignoreDecisions.isNotEmpty() && problem !in verificationResult.compatibilityProblems) {
+      ignoredProblems.registerIgnoredProblem(problem, ignoreDecisions)
+    } else if (!ignoredProblems.isIgnored(problem)) {
+      verificationResult.compatibilityProblems += problem
     }
   }
 
   override fun unregisterProblem(problem: CompatibilityProblem) {
-    resultHolder.compatibilityProblems -= problem
+    verificationResult.compatibilityProblems -= problem
   }
 
   override fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
@@ -64,7 +66,7 @@ data class PluginVerificationContext(
       val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
       val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
       if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
-        resultHolder.addDeprecatedUsage(deprecatedApiUsage)
+        verificationResult.deprecatedUsages += deprecatedApiUsage
       }
     }
   }
@@ -74,26 +76,26 @@ data class PluginVerificationContext(
       val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
       val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
       if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
-        resultHolder.addExperimentalUsage(experimentalApiUsage)
+        verificationResult.experimentalApiUsages += experimentalApiUsage
       }
     }
   }
 
   override fun registerInternalApiUsage(internalApiUsage: InternalApiUsage) {
     if (checkApiUsages) {
-      resultHolder.addInternalApiUsage(internalApiUsage)
+      verificationResult.internalApiUsages += internalApiUsage
     }
   }
 
   override fun registerNonExtendableApiUsage(nonExtendableApiUsage: NonExtendableApiUsage) {
     if (checkApiUsages) {
-      resultHolder.addNonExtendableApiUsage(nonExtendableApiUsage)
+      verificationResult.nonExtendableApiUsages += nonExtendableApiUsage
     }
   }
 
   override fun registerOverrideOnlyMethodUsage(overrideOnlyMethodUsage: OverrideOnlyMethodUsage) {
     if (checkApiUsages) {
-      resultHolder.addOverrideOnlyUsage(overrideOnlyMethodUsage)
+      verificationResult.overrideOnlyMethodUsages += overrideOnlyMethodUsage
     }
   }
 

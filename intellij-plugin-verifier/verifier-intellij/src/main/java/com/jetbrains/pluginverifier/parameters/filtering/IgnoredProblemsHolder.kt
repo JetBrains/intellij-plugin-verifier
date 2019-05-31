@@ -7,7 +7,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
  */
 class IgnoredProblemsHolder {
 
-  val ignoredProblems = hashMapOf<CompatibilityProblem, List<ProblemsFilter.Result.Ignore>>()
+  val ignoredProblems: MutableMap<CompatibilityProblem, List<ProblemsFilter.Result.Ignore>> = hashMapOf()
 
   fun isIgnored(problem: CompatibilityProblem): Boolean =
       problem in ignoredProblems

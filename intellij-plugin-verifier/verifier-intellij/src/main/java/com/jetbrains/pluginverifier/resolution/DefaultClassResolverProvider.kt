@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
@@ -24,7 +23,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
-import com.jetbrains.pluginverifier.results.warnings.IdePackagesBundledWarning
+import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.IdePluginClassResolver
 import org.jgrapht.DirectedGraph
@@ -44,17 +44,17 @@ class DefaultClassResolverProvider(
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
-      resultHolder: ResultHolder,
+      verificationResult: VerificationResult,
       pluginReporters: Reporters
   ): ClassResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
-    findMistakenlyBundledIdeClasses(pluginResolver, resultHolder)
+    findMistakenlyBundledIdeClasses(pluginResolver, verificationResult)
 
     val depGraph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
     try {
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
-      resultHolder.dependenciesGraph = apiGraph
-      resultHolder.addDependenciesWarnings(apiGraph)
+      verificationResult.dependenciesGraph = apiGraph
+      verificationResult.addDependenciesWarnings(apiGraph)
       return createClassResolver(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
@@ -62,10 +62,32 @@ class DefaultClassResolverProvider(
     }
   }
 
-  private fun findMistakenlyBundledIdeClasses(pluginResolver: Resolver, resultHolder: ResultHolder) {
+  private fun VerificationResult.addDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
+    val cycles = dependenciesGraph.getAllCycles()
+    for (cycle in cycles) {
+      pluginStructureWarnings += PluginStructureWarning(
+          "The plugin is on a dependencies cycle: " + cycle.joinToString(separator = " -> ") + " -> " + cycle[0]
+      )
+    }
+  }
+
+  private fun findMistakenlyBundledIdeClasses(pluginResolver: Resolver, resultHolder: VerificationResult) {
     val idePackages = pluginResolver.allPackages.filter { KnownIdePackages.isKnownPackage(it) }
+    val message = buildString {
+      append("The plugin distribution contains IDE packages: ")
+      if (idePackages.size < 5) {
+        append(idePackages.joinToString())
+      } else {
+        append(idePackages.take(3).joinToString())
+        append(" and ${idePackages.size - 3} other")
+      }
+      append(". ")
+      append("Bundling IDE classes is considered bad practice and may lead to sophisticated compatibility problems. ")
+      append("Consider excluding IDE classes from the plugin distribution and reusing the IDE's classes. ")
+      append("If your plugin depends on classes of an IDE bundled plugin, explicitly specify dependency on that plugin instead of bundling it. ")
+    }
     if (idePackages.isNotEmpty()) {
-      resultHolder.addPluginErrorOrWarning(IdePackagesBundledWarning(idePackages))
+      resultHolder.pluginStructureWarnings += PluginStructureWarning(message)
     }
   }
 

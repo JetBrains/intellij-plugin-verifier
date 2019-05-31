@@ -98,7 +98,7 @@ class HtmlResultPrinter(
         printUpdateHeader(result)
       }
       div {
-        printVerificationResult(result)
+        printProblemsAndWarnings(result)
       }
     }
   }
@@ -121,19 +121,6 @@ class HtmlResultPrinter(
           is VerificationResult.FailedToDownload -> "Plugin ${result.plugin} is not downloaded from the Repository"
         }
       }
-    }
-  }
-
-  private fun HtmlBuilder.printVerificationResult(result: VerificationResult) {
-    printProblemsAndWarnings(result)
-    if (result.ignoredProblems.isNotEmpty()) {
-      printIgnoredProblems(result)
-    }
-  }
-
-  private fun HtmlBuilder.printIgnoredProblems(result: VerificationResult) {
-    printShortAndFullDescription("The following " + "problem".pluralize(result.ignoredProblems.size) + " " + "was".pluralize(result.ignoredProblems.size) + " ignored") {
-      printProblems(result.ignoredProblems)
     }
   }
 

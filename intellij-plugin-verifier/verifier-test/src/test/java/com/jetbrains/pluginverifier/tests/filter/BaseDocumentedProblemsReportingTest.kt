@@ -1,12 +1,13 @@
 package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
+import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.EmptyClassResolver
@@ -50,7 +51,8 @@ abstract class BaseDocumentedProblemsReportingTest {
   fun createSimpleVerificationContext() = PluginVerificationContext(
       PluginIdAndVersion("pluginId", "1.0"),
       VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
-      ResultHolder(),
+      VerificationResult.OK(),
+      IgnoredProblemsHolder(),
       false,
       emptyList(),
       EmptyClassResolver,

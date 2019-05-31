@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
@@ -56,7 +57,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
     )
   }
 
-  private fun VerificationResult.toDeprecatedUsages() = when (this) {
+  private fun VerificationResult.toDeprecatedUsages(): Set<DeprecatedApiUsage> = when (this) {
     is VerificationResult.OK -> deprecatedUsages
     is VerificationResult.StructureWarnings -> deprecatedUsages
     is VerificationResult.MissingDependencies -> deprecatedUsages

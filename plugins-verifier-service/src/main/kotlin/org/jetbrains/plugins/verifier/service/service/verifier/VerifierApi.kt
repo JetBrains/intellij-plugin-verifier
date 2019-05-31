@@ -79,7 +79,7 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsOptional(dependency.isOptional)
         .build()
 
-private fun VerificationResult.getPluginStructureWarnings() = with(this) {
+private fun VerificationResult.getPluginStructureWarnings(): Set<PluginStructureWarning> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.StructureWarnings -> pluginStructureWarnings
@@ -91,7 +91,7 @@ private fun VerificationResult.getPluginStructureWarnings() = with(this) {
   }
 }
 
-private fun VerificationResult.getDeprecatedUsages() = with(this) {
+private fun VerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> = with(this) {
   when (this) {
     is VerificationResult.OK -> deprecatedUsages
     is VerificationResult.StructureWarnings -> deprecatedUsages
@@ -103,7 +103,7 @@ private fun VerificationResult.getDeprecatedUsages() = with(this) {
   }
 }
 
-private fun VerificationResult.getExperimentalApiUsages() = with(this) {
+private fun VerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUsage> = with(this) {
   when (this) {
     is VerificationResult.OK -> experimentalApiUsages
     is VerificationResult.StructureWarnings -> experimentalApiUsages
@@ -115,7 +115,7 @@ private fun VerificationResult.getExperimentalApiUsages() = with(this) {
   }
 }
 
-private fun VerificationResult.getCompatibilityProblems() = with(this) {
+private fun VerificationResult.getCompatibilityProblems(): Set<CompatibilityProblem> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
     is VerificationResult.StructureWarnings -> emptySet()

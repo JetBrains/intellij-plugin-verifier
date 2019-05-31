@@ -126,7 +126,7 @@ class TeamCityResultPrinter(
     }
   }
 
-  private fun VerificationResult.getProblems() = when (this) {
+  private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = when (this) {
     is VerificationResult.CompatibilityProblems -> compatibilityProblems
     is VerificationResult.MissingDependencies -> compatibilityProblems
     is VerificationResult.OK,
