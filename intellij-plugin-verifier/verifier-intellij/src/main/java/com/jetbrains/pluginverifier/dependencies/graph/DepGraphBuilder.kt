@@ -11,11 +11,6 @@ import org.jgrapht.DirectedGraph
  */
 class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
-  /**
-   * Transitively resolves all the dependencies and adds
-   * corresponding [vertices] [DepVertex] to the [graph]
-   * starting from the [start].
-   */
   fun buildDependenciesGraph(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex) {
     checkIfInterrupted()
     if (!graph.containsVertex(start)) {

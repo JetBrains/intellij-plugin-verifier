@@ -54,7 +54,7 @@ class DefaultClassResolverProvider(
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
       resultHolder.dependenciesGraph = apiGraph
       resultHolder.addDependenciesWarnings(apiGraph)
-      return provide(pluginResolver, depGraph)
+      return createClassResolver(pluginResolver, depGraph)
     } catch (e: Throwable) {
       depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
       throw e
@@ -68,15 +68,14 @@ class DefaultClassResolverProvider(
     }
   }
 
-  private fun provide(
+  private fun createClassResolver(
       pluginResolver: Resolver,
       depGraph: DirectedGraph<DepVertex, DepEdge>
   ): ClassResolver {
     val dependenciesResults = depGraph.vertexSet().map { it.dependencyResult }
     val dependenciesResolver = createDependenciesResolver(depGraph)
 
-    val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)
-    return when (jdkCacheEntry) {
+    return when (val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)) {
       is ResourceCacheEntryResult.Found -> {
         val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkClassesResolver
         val closeableResources = listOf<Closeable>(jdkCacheEntry.resourceCacheEntry) + dependenciesResults
@@ -96,11 +95,11 @@ class DefaultClassResolverProvider(
 
   private fun buildDependenciesGraph(
       plugin: IdePlugin,
-      depGraph: DirectedGraph<DepVertex, DepEdge>
+      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
   ): DependenciesGraph {
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
-    DepGraphBuilder(dependencyFinder).buildDependenciesGraph(depGraph, start)
-    return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(depGraph, start)
+    DepGraphBuilder(dependencyFinder).buildDependenciesGraph(dependenciesGraph, start)
+    return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(dependenciesGraph, start)
   }
 
   private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {

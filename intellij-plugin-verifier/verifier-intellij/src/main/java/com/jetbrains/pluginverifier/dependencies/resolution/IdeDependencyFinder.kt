@@ -6,8 +6,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 /**
- * [DependencyFinder] that searches for the
- * dependency among the [bundled] [Ide.getBundledPlugins] [ide] plugins,
+ * [DependencyFinder] that searches for dependency among bundled plugins of the [ide],
  * or the [last compatible] [LastCompatibleVersionSelector] plugin in the [PluginRepository].
  */
 class IdeDependencyFinder(

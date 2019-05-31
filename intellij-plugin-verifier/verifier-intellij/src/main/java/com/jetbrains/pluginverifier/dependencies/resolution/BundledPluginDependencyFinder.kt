@@ -6,8 +6,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginsRepository
 
 /**
- * [DependencyFinder] that searches for the plugin
- * among the [bundled] [Ide.getBundledPlugins] [ide] plugins.
+ * [DependencyFinder] that searches for plugins among bundled plugins of the [ide].
  */
 class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
 
