@@ -410,8 +410,7 @@ private class MethodResolveImpl(
   }
 
   /**
-   * Resolves actual method to be invoked on 'invokespecial' instruction
-   * and the serial number of the successful lookup step.
+   * Resolves actual method to be invoked on 'invokespecial' instruction and the serial number of the successful lookup step.
    */
   fun lookupSpecialMethod(classRef: ClassFile, resolvedMethod: Method): Pair<Int, Method>? {
     /*
