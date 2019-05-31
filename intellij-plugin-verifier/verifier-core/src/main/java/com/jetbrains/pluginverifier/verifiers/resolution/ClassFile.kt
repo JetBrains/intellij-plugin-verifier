@@ -24,10 +24,10 @@ interface ClassFile : ClassFileMember {
   val isAbstract: Boolean
   val isFinal: Boolean
   val isInterface: Boolean
-  val isPublic: Boolean
-  val isProtected: Boolean
-  val isPrivate: Boolean
-  val isDefaultAccess: Boolean
+  override val isPublic: Boolean
+  override val isProtected: Boolean
+  override val isPrivate: Boolean
+  override val isDefaultAccess: Boolean
   val isSuperFlag: Boolean
   override val isDeprecated: Boolean
 }

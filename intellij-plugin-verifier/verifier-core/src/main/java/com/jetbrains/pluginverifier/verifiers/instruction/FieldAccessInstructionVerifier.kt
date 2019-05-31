@@ -35,7 +35,7 @@ class FieldAccessInstructionVerifier : InstructionVerifier {
     val ownerFile = context.classResolver.resolveClassChecked(fieldOwner, method, context)
     if (ownerFile != null) {
       val fieldReference = FieldReference(fieldOwner, instructionNode.name, instructionNode.desc)
-      FieldAccessInstructionVerifierImpl(method.owner, ownerFile, fieldReference, context, instruction, method).verify()
+      FieldAccessInstructionVerifierImpl(method.containingClassFile, ownerFile, fieldReference, context, instruction, method).verify()
     }
   }
 
@@ -76,7 +76,7 @@ private class FieldAccessInstructionVerifierImpl(
     */
 
     if (field.isFinal) {
-      if (field.owner.name != verifiedClass.name) {
+      if (field.containingClassFile.name != verifiedClass.name) {
         context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_FIELD))
       }
     }
@@ -104,7 +104,7 @@ private class FieldAccessInstructionVerifierImpl(
     must occur in the <clinit> method of the current class. Otherwise, an IllegalAccessError is thrown.
     */
     if (field.isFinal) {
-      if (field.owner.name != verifiedClass.name) {
+      if (field.containingClassFile.name != verifiedClass.name) {
         context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_STATIC))
       }
     }

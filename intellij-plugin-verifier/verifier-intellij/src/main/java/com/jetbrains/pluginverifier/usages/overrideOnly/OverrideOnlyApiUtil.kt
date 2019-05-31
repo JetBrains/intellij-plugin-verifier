@@ -7,4 +7,4 @@ private const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiSta
 
 fun Method.isOverrideOnlyMethod(): Boolean =
     runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
-        || owner.runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
+        || containingClassFile.runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null

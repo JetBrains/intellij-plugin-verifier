@@ -11,20 +11,17 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodNode
 
-class MethodAsm(override val owner: ClassFile, private val asmNode: MethodNode) : Method {
+class MethodAsm(override val containingClassFile: ClassFile, private val asmNode: MethodNode) : Method {
 
   override val location
     get() = MethodLocation(
-        owner.location,
+        containingClassFile.location,
         name,
         descriptor,
         asmNode.getParameterNames(),
         signature?.takeIf { it.isNotEmpty() },
         Modifiers(asmNode.access)
     )
-
-  override val containingClassFile
-    get() = owner
 
   override val name: String
     get() = asmNode.name

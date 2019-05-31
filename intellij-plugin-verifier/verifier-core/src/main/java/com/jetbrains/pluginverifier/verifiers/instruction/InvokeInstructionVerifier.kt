@@ -76,7 +76,7 @@ private class InvokeInstructionVerifierImpl(
     Otherwise, if the resolved method is an instance initialization method, and the class in which it is declared
     is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
      */
-    if (method.name == "<init>" && method.owner.name != methodReference.hostClass.className) {
+    if (method.name == "<init>" && method.containingClassFile.name != methodReference.hostClass.className) {
       registerMethodNotFoundProblem(ownerClass)
     }
 
@@ -110,8 +110,9 @@ private class InvokeInstructionVerifierImpl(
 
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
-    val classRef: ClassFile = if (method.name != "<init>" && (!ownerClass.isInterface && methodReference.hostClass.className == callerMethod.owner.superName) && callerMethod.owner.isSuperFlag) {
-      context.classResolver.resolveClassChecked(callerMethod.owner.superName!!, callerMethod, context) ?: return
+    val classRef: ClassFile = if (method.name != "<init>" && (!ownerClass.isInterface && methodReference.hostClass.className == callerMethod.containingClassFile.superName) && callerMethod.containingClassFile.isSuperFlag) {
+      context.classResolver.resolveClassChecked(callerMethod.containingClassFile.superName!!, callerMethod, context)
+          ?: return
     } else {
       context.classResolver.resolveClassChecked(methodReference.hostClass.className, callerMethod, context) ?: return
     }

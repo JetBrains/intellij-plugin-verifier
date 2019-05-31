@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.FieldNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.IllegalFieldAccessProblem
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
-import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 
 /**
  * Utility class that implements fields resolution strategy,
@@ -110,22 +108,7 @@ class FieldResolver {
       instruction: Instruction,
       context: VerificationContext
   ) {
-    var accessProblem: AccessType? = null
-
-    when {
-      field.isPrivate -> if (callerMethod.owner.name != field.owner.name) {
-        accessProblem = AccessType.PRIVATE
-      }
-      field.isProtected -> if (callerMethod.owner.packageName != field.owner.packageName) {
-        if (!context.classResolver.isSubclassOf(callerMethod.owner, field.owner.name)) {
-          accessProblem = AccessType.PROTECTED
-        }
-      }
-      field.isDefaultAccess -> if (callerMethod.owner.packageName != field.owner.packageName) {
-        accessProblem = AccessType.PACKAGE_PRIVATE
-      }
-    }
-
+    val accessProblem = detectAccessProblem(field, callerMethod, context)
     if (accessProblem != null) {
       context.problemRegistrar.registerProblem(
           IllegalFieldAccessProblem(

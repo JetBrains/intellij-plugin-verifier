@@ -15,7 +15,7 @@ class MethodOverridingVerifier(private val methodOverridingProcessors: List<Meth
       context.classResolver.resolveClassChecked(superName, subclassNode, context)
     }
     classParentsVisitor.visitClass(
-        method.owner,
+        method.containingClassFile,
         false,
         onEnter = { parent ->
           checkSuperMethod(method, parent, context)

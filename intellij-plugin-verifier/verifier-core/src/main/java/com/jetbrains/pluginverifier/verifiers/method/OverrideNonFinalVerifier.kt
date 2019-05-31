@@ -26,10 +26,10 @@ class OverrideNonFinalVerifier : MethodVerifier {
     val parentsVisitor = ClassParentsVisitor(false) { subclassFile, superName ->
       context.classResolver.resolveClassChecked(superName, subclassFile, context)
     }
-    parentsVisitor.visitClass(method.owner, false, onEnter = { parent ->
+    parentsVisitor.visitClass(method.containingClassFile, false, onEnter = { parent ->
       val sameMethod = parent.methods.find { it.name == method.name && it.descriptor == method.descriptor }
       if (sameMethod != null && sameMethod.isFinal) {
-        context.problemRegistrar.registerProblem(OverridingFinalMethodProblem(sameMethod.location, method.owner.location))
+        context.problemRegistrar.registerProblem(OverridingFinalMethodProblem(sameMethod.location, method.containingClassFile.location))
         false
       } else {
         true

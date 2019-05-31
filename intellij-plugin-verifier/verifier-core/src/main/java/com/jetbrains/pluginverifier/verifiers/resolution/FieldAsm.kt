@@ -5,19 +5,16 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.*
 import org.objectweb.asm.tree.FieldNode
 
-class FieldAsm(override val owner: ClassFile, private val asmNode: FieldNode) : Field {
+class FieldAsm(override val containingClassFile: ClassFile, private val asmNode: FieldNode) : Field {
 
   override val location
     get() = FieldLocation(
-        owner.location,
+        containingClassFile.location,
         name,
         descriptor,
         signature?.takeIf { it.isNotEmpty() },
         Modifiers(asmNode.access)
     )
-
-  override val containingClassFile
-    get() = owner
 
   override val name: String
     get() = asmNode.name

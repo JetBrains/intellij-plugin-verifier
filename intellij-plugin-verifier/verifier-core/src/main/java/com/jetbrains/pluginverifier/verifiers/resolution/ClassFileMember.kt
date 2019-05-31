@@ -11,4 +11,12 @@ interface ClassFileMember {
   val isDeprecated: Boolean
 
   val runtimeInvisibleAnnotations: List<AnnotationNode>
+
+  val isPublic: Boolean
+
+  val isProtected: Boolean
+
+  val isPrivate: Boolean
+
+  val isDefaultAccess: Boolean
 }

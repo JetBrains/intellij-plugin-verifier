@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.MethodReference
@@ -83,33 +82,17 @@ class MethodResolver {
       callerMethod: Method,
       instruction: Instruction
   ) {
-    var accessProblem: AccessType? = null
-
-    when {
-      resolvedMethod.isPrivate -> if (resolvedMethod.owner.name != callerMethod.owner.name) {
-        //accessing to private method of the other class
-        accessProblem = AccessType.PRIVATE
-      }
-      resolvedMethod.isProtected -> if (resolvedMethod.owner.packageName != callerMethod.owner.packageName) {
-        if (!context.classResolver.isSubclassOf(callerMethod.owner, resolvedMethod.owner.name)) {
-          accessProblem = AccessType.PROTECTED
-        }
-      }
-      resolvedMethod.isDefaultAccess -> if (resolvedMethod.owner.packageName != callerMethod.owner.packageName) {
-        //accessing to the method which is not available in the other package
-        accessProblem = AccessType.PACKAGE_PRIVATE
-      }
-    }
-
+    val accessProblem = detectAccessProblem(resolvedMethod, callerMethod, context)
     if (accessProblem != null) {
-      val problem = IllegalMethodAccessProblem(
-          methodReference,
-          resolvedMethod.location,
-          accessProblem,
-          callerMethod.location,
-          instruction
+      context.problemRegistrar.registerProblem(
+          IllegalMethodAccessProblem(
+              methodReference,
+              resolvedMethod.location,
+              accessProblem,
+              callerMethod.location,
+              instruction
+          )
       )
-      context.problemRegistrar.registerProblem(problem)
     }
   }
 
@@ -230,7 +213,8 @@ private class MethodResolveImpl(
     val allMatching = getSuperInterfaceMethods(start, predicate) ?: return null
     return allMatching.filter { method ->
       allMatching.none { otherMethod ->
-        otherMethod.owner.name != method.owner.name && context.classResolver.isSubclassOf(otherMethod.owner, method.owner.name)
+        otherMethod.containingClassFile.name != method.containingClassFile.name
+            && context.classResolver.isSubclassOf(otherMethod.containingClassFile, method.containingClassFile.name)
       }
     }
   }
@@ -328,7 +312,7 @@ private class MethodResolveImpl(
    * In Java SE 8, the only signature polymorphic methods are the invoke and invokeExact methods of the class java.lang.invoke.MethodHandle.
    */
   private fun isSignaturePolymorphic(methodNode: Method): Boolean =
-      "java/lang/invoke/MethodHandle" == methodNode.owner.name
+      "java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
           && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
           && methodNode.isVararg
           && methodNode.isNative

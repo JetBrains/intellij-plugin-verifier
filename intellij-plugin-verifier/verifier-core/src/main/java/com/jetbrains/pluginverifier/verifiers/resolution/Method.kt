@@ -11,7 +11,6 @@ interface Method : ClassFileMember {
   override val location: MethodLocation
   override val containingClassFile: ClassFile
 
-  val owner: ClassFile
   val name: String
   val descriptor: String
   val signature: String?
@@ -21,10 +20,10 @@ interface Method : ClassFileMember {
   val isAbstract: Boolean
   val isStatic: Boolean
   val isFinal: Boolean
-  val isPublic: Boolean
-  val isProtected: Boolean
-  val isPrivate: Boolean
-  val isDefaultAccess: Boolean
+  override val isPublic: Boolean
+  override val isProtected: Boolean
+  override val isPrivate: Boolean
+  override val isDefaultAccess: Boolean
   override val isDeprecated: Boolean
   val isVararg: Boolean
   val isNative: Boolean

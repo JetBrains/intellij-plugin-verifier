@@ -8,7 +8,6 @@ interface Field : ClassFileMember {
   override val location: FieldLocation
   override val containingClassFile: ClassFile
 
-  val owner: ClassFile
   val name: String
   val descriptor: String
   val signature: String?
@@ -17,9 +16,9 @@ interface Field : ClassFileMember {
 
   val isStatic: Boolean
   val isFinal: Boolean
-  val isPublic: Boolean
-  val isProtected: Boolean
-  val isPrivate: Boolean
-  val isDefaultAccess: Boolean
+  override val isPublic: Boolean
+  override val isProtected: Boolean
+  override val isPrivate: Boolean
+  override val isDefaultAccess: Boolean
   override val isDeprecated: Boolean
 }
