@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpt
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile;
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil;
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.CompositeXIncludePathResolver;
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver;
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver;
 import kotlin.text.StringsKt;
@@ -187,7 +188,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     }
     sortFilesWithRespectToRootDirectoryName(root, files);
 
-    XIncludePathResolver pathResolver = new PluginXmlXIncludePathResolver(Arrays.asList(files));
+    XIncludePathResolver libPathResolver = new PluginXmlXIncludePathResolver(Arrays.asList(files));
+    XIncludePathResolver pathResolver = new CompositeXIncludePathResolver(Arrays.asList(libPathResolver, myPathResolver));
 
     PluginCreator okOrPartiallyBrokenResult = null;
 
