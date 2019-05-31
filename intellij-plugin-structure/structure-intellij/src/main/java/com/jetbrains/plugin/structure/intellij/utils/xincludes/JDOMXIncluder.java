@@ -280,11 +280,9 @@ public class JDOMXIncluder {
   @NotNull
   private List<Content> parseRemote(Stack<String> bases, URL remote, @Nullable Element fallbackElement) {
     try {
-      Document doc = JDOMUtil.loadResourceDocument(remote);
       bases.push(remote.toExternalForm());
 
-      Element root = doc.getRootElement();
-
+      Element root = JDOMUtil.loadResourceDocument(remote).getRootElement();
       List<Content> list = resolve(root, bases);
 
       bases.pop();
