@@ -23,4 +23,28 @@ public class ApiStatus {
   public @interface ScheduledForRemoval {
     String inVersion() default "";
   }
+
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+      ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
+  })
+  public @interface Internal {
+  }
+
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+      ElementType.TYPE, ElementType.METHOD
+  })
+  public @interface NonExtendable {
+  }
+
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+      ElementType.TYPE, ElementType.METHOD
+  })
+  public @interface OverrideOnly {
+  }
 }
