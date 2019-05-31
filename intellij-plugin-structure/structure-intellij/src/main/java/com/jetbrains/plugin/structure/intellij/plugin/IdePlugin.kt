@@ -29,5 +29,7 @@ interface IdePlugin : Plugin {
 
   val declaredThemes: List<IdeTheme>
 
+  val useIdeClassLoader: Boolean
+
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }

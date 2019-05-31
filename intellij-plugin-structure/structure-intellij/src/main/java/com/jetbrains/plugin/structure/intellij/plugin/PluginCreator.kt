@@ -116,6 +116,7 @@ internal class PluginCreator {
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
     definedModules.addAll(bean.modules)
     extensions.putAll(bean.extensions)
+    useIdeClassLoader = bean.useIdeaClassLoader == true
 
     val ideaVersionBean = bean.ideaVersion
     if (ideaVersionBean != null) {

@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org"
-             allow-bundled-update="true">
+             allow-bundled-update="true" use-idea-classloader="true">
     <id>org.jetbrains.kotlin2</id>
 
     <name>Kotlin</name>

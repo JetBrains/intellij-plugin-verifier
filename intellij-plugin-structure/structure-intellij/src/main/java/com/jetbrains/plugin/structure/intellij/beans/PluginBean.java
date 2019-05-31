@@ -27,7 +27,7 @@ public class PluginBean {
   @XmlElement(name = "category") public String category;
   @XmlElement(name = "resource-bundle") public String resourceBundle;
   @XmlAttribute(name = "url") public String url = "";
-  @XmlAttribute(name = "use-idea-classloader") public boolean useIdeaClassLoader;
+  @XmlAttribute(name = "use-idea-classloader") public Boolean useIdeaClassLoader;
   @XmlAttribute(name = "allow-bundled-update") public boolean allowBundledUpdate;
 
   @XmlElement(name = "module")

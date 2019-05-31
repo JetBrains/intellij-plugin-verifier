@@ -56,6 +56,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.untilBuild)
 
     assertEquals("Change notes must be at least 40 characters long", plugin.changeNotes)
+    assertTrue(plugin.useIdeClassLoader)
 
     assertEquals("PABC", plugin.productDescriptor?.code)
     assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)

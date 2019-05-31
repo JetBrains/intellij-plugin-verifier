@@ -9,7 +9,6 @@ import org.jdom2.Element
 import java.io.File
 
 internal class IdePluginImpl : IdePlugin {
-
   override var pluginId: String? = null
 
   override var pluginName: String? = null
@@ -35,6 +34,8 @@ internal class IdePluginImpl : IdePlugin {
   override var changeNotes: String? = null
 
   override var url: String? = null
+
+  override var useIdeClassLoader: Boolean = false
 
   override var underlyingDocument: Document = Document()
 

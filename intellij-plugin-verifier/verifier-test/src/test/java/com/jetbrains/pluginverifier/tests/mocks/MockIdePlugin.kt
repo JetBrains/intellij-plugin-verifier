@@ -34,6 +34,8 @@ data class MockIdePlugin(
     override val originalFile: File? = null
 ) : IdePlugin {
 
+  override val useIdeClassLoader = false
+
   override val declaredThemes = emptyList<IdeTheme>()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
