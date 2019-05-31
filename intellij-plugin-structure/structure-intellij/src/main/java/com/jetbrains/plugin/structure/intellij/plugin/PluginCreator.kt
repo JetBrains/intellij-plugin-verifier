@@ -306,10 +306,16 @@ internal class PluginCreator {
     val themes = arrayListOf<IdeTheme>()
 
     for (themePath in pluginThemePaths) {
-      // Absolute paths should be resolved from META-INF parent, not root.
-      val adjustedPath = if (themePath.startsWith("/")) "..$themePath" else themePath
+      // Theme paths should be resolved from META-INF parent.
+      val baseUrl = documentUrl.toString().substringBefore("/META-INF") + "/"
+      val relativePath = if (themePath.startsWith("/")) {
+        themePath.substringAfter("/")
+      } else {
+        "META-INF/$themePath"
+      }
+
       val theme = try {
-        val themeUrl = pathResolver.resolvePath(adjustedPath, documentUrl.toString())
+        val themeUrl = pathResolver.resolvePath(relativePath, baseUrl)
         jsonMapper.readValue(themeUrl, IdeTheme::class.java)
       } catch (e: Exception) {
         LOG.info("Unable to resolve plugin theme path: $themePath declared in $descriptorPath", e)
