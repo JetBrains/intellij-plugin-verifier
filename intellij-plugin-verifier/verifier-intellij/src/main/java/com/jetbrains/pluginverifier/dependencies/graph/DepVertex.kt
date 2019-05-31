@@ -5,9 +5,9 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 /**
  * Node in the internal dependencies graph keeping the resolved plugin's resources.
  */
-data class DepVertex(val dependencyId: String, val dependencyResult: DependencyFinder.Result) {
+data class DepVertex(val pluginId: String, val dependencyResult: DependencyFinder.Result) {
 
-  override fun equals(other: Any?) = other is DepVertex && dependencyId == other.dependencyId
+  override fun equals(other: Any?) = other is DepVertex && pluginId == other.pluginId
 
-  override fun hashCode() = dependencyId.hashCode()
+  override fun hashCode() = pluginId.hashCode()
 }

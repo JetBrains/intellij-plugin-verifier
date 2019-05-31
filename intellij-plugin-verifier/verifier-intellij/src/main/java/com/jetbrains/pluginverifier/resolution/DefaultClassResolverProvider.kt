@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ResultHolder
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -49,7 +50,7 @@ class DefaultClassResolverProvider(
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     findMistakenlyBundledIdeClasses(pluginResolver, resultHolder)
 
-    val depGraph: DirectedGraph<DepVertex, DepEdge> = DefaultDirectedGraph(DepEdge::class.java)
+    val depGraph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
     try {
       val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
       resultHolder.dependenciesGraph = apiGraph
@@ -98,8 +99,33 @@ class DefaultClassResolverProvider(
       dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
   ): DependenciesGraph {
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
-    DepGraphBuilder(dependencyFinder).buildDependenciesGraph(dependenciesGraph, start)
+    val depGraphBuilder = DepGraphBuilder(dependencyFinder)
+    depGraphBuilder.addTransitiveDependencies(dependenciesGraph, start)
+    maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
     return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(dependenciesGraph, start)
+  }
+
+  /**
+   * If a plugin does not include any module dependency tags in its plugin.xml,
+   * it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA
+   * http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+   *
+   * But since we've recently extracted Java to a separate plugin, many plugins may stop working
+   * because they depend on Java plugin classes but do not explicitly declare a dependency onto 'com.intellij.modules.java'.
+   *
+   * So let's forcibly add Java as an optional dependency for such plugins.
+   */
+  private fun maybeAddOptionalJavaPluginDependency(
+      plugin: IdePlugin,
+      depGraphBuilder: DepGraphBuilder,
+      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
+  ) {
+    if (plugin.dependencies.none { it.isModule }) {
+      val javaModuleDependency = PluginDependencyImpl("com.intellij.modules.java", true, true)
+      val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
+      val javaPluginVertex = DepVertex(javaModuleDependency.id, dependencyResult)
+      depGraphBuilder.addTransitiveDependencies(dependenciesGraph, javaPluginVertex)
+    }
   }
 
   private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {

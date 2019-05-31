@@ -11,15 +11,15 @@ import org.jgrapht.DirectedGraph
  */
 class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
-  fun buildDependenciesGraph(graph: DirectedGraph<DepVertex, DepEdge>, start: DepVertex) {
+  fun addTransitiveDependencies(graph: DirectedGraph<DepVertex, DepEdge>, vertex: DepVertex) {
     checkIfInterrupted()
-    if (!graph.containsVertex(start)) {
-      graph.addVertex(start)
-      val plugin = start.dependencyResult.getPlugin()
+    if (!graph.containsVertex(vertex)) {
+      graph.addVertex(vertex)
+      val plugin = vertex.dependencyResult.getPlugin()
       if (plugin != null) {
         for (pluginDependency in plugin.dependencies) {
           val resolvedDependency = resolveDependency(pluginDependency, graph)
-          buildDependenciesGraph(graph, resolvedDependency)
+          addTransitiveDependencies(graph, resolvedDependency)
 
           /**
            * Skip the dependency on itself.
@@ -31,8 +31,8 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
            *   x-include /META-INF/DesignerCorePlugin.xml ->
            *   depends on module 'com.intellij.modules.lang'
            */
-          if (start.dependencyId != resolvedDependency.dependencyId) {
-            graph.addEdge(start, resolvedDependency, DepEdge(pluginDependency))
+          if (vertex.pluginId != resolvedDependency.pluginId) {
+            graph.addEdge(vertex, resolvedDependency, DepEdge(pluginDependency))
           }
         }
       }
@@ -51,7 +51,7 @@ class DepGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex {
-    val existingVertex = directedGraph.vertexSet().find { pluginDependency.id == it.dependencyId }
+    val existingVertex = directedGraph.vertexSet().find { pluginDependency.id == it.pluginId }
     if (existingVertex != null) {
       return existingVertex
     }
