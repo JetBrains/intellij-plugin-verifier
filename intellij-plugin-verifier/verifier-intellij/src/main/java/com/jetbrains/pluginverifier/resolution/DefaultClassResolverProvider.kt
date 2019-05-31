@@ -124,6 +124,7 @@ class DefaultClassResolverProvider(
     val depGraphBuilder = DepGraphBuilder(dependencyFinder)
     depGraphBuilder.addTransitiveDependencies(dependenciesGraph, start)
     maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
+    maybeAddBundledPluginsWithUseIdeaClassLoader(depGraphBuilder, dependenciesGraph)
     return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(dependenciesGraph, start)
   }
 
@@ -145,8 +146,28 @@ class DefaultClassResolverProvider(
     if (plugin.dependencies.none { it.isModule }) {
       val javaModuleDependency = PluginDependencyImpl("com.intellij.modules.java", true, true)
       val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
-      val javaPluginVertex = DepVertex(javaModuleDependency.id, dependencyResult)
+      val javaPluginVertex = DepVertex("com.intellij.java", dependencyResult)
       depGraphBuilder.addTransitiveDependencies(dependenciesGraph, javaPluginVertex)
+    }
+  }
+
+  /**
+   * Bundled plugins that specify `<idea-plugin use-idea-classloader="true">` are automatically added to
+   * platform class loader and may be referenced by other plugins without explicit dependency on them.
+   *
+   * We would like to emulate this behaviour by forcibly adding such plugins to the verification classpath.
+   */
+  private fun maybeAddBundledPluginsWithUseIdeaClassLoader(
+      depGraphBuilder: DepGraphBuilder,
+      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
+  ) {
+    for (bundledPlugin in ideDescriptor.ide.bundledPlugins) {
+      if (bundledPlugin.useIdeClassLoader) {
+        val dependencyResult = DependencyFinder.Result.FoundPlugin(bundledPlugin)
+        val dependencyId = (bundledPlugin.pluginId ?: bundledPlugin.pluginName)!!
+        val bundledVertex = DepVertex(dependencyId, dependencyResult)
+        depGraphBuilder.addTransitiveDependencies(dependenciesGraph, bundledVertex)
+      }
     }
   }
 
