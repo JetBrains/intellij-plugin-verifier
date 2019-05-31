@@ -11,11 +11,7 @@ public class DefaultXIncludePathResolver implements XIncludePathResolver {
   @Override
   public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
     try {
-      if (base != null) {
-        return new URL(new URL(base), relativePath);
-      } else {
-        return new URL(relativePath);
-      }
+      return base == null ? new URL(relativePath) : new URL(new URL(base), relativePath);
     } catch (MalformedURLException ex) {
       throw new XIncludeException(ex);
     }
