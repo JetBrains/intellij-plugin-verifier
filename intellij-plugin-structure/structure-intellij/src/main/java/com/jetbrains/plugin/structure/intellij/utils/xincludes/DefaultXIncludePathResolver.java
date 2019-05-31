@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class DefaultXIncludePathResolver implements XIncludePathResolver {
+final public class DefaultXIncludePathResolver implements XIncludePathResolver {
   @NotNull
   @Override
   public URL resolvePath(@NotNull String relativePath, @Nullable String base) {

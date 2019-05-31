@@ -6,11 +6,14 @@ import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
+import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URL
 
-class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathResolver() {
+class PluginXmlXIncludePathResolver(files: List<File>) : XIncludePathResolver {
+
+  private val defaultResolver = DefaultXIncludePathResolver()
 
   private val metaInfUrls = getMetaInfUrls(files)
 
@@ -33,7 +36,7 @@ class PluginXmlXIncludePathResolver(files: List<File>) : DefaultXIncludePathReso
           throw XIncludeException(e)
         }
       } else {
-        super.resolvePath(relativePath, base)
+        defaultResolver.resolvePath(relativePath, base)
       }
 
   private fun getRelativeUrl(base: URL, path: String) =

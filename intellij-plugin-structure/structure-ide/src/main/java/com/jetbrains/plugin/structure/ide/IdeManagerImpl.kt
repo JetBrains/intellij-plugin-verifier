@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResol
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 import java.net.URL
 
 class IdeManagerImpl : IdeManager() {
@@ -85,7 +84,9 @@ class IdeManagerImpl : IdeManager() {
    * <xi:include href="/META-INF/one.xml" xpointer="xpointer(/idea-plugin/\*)"/>
    * ```
    */
-  private class PluginFromSourceXIncludePathResolver(private val xmlFiles: Map<String, File>) : DefaultXIncludePathResolver() {
+  private class PluginFromSourceXIncludePathResolver(private val xmlFiles: Map<String, File>) : XIncludePathResolver {
+
+    private val defaultResolver = DefaultXIncludePathResolver()
 
     private fun resolveOutputDirectories(relativePath: String, base: String?): URL {
       val normalizedPath = if (relativePath.startsWith("./")) {
@@ -122,13 +123,15 @@ class IdeManagerImpl : IdeManager() {
       throw XIncludeException("Unable to resolve " + normalizedPath + if (base != null) " against $base" else "")
     }
 
-    override fun resolvePath(relativePath: String, base: String?) = try {
-      //try the parent resolver
-      val res = super.resolvePath(relativePath, base)
-      URLUtil.openStream(res).close()
-      res
-    } catch (e: IOException) {
-      resolveOutputDirectories(relativePath, base)
+    override fun resolvePath(relativePath: String, base: String?): URL {
+      try {
+        val url = defaultResolver.resolvePath(relativePath, base)
+        if (URLUtil.resourceExists(url) == ThreeState.YES) {
+          return url
+        }
+      } catch (ignored: Exception) {
+      }
+      return resolveOutputDirectories(relativePath, base)
     }
   }
 
