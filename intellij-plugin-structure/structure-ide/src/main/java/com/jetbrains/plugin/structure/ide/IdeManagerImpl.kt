@@ -4,7 +4,6 @@ import com.google.common.base.Joiner
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExtension
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.*
@@ -65,63 +64,9 @@ class IdeManagerImpl : IdeManager() {
     return readBuildNumber(buildTxtFile)
   }
 
-  /**
-   * [XIncludePathResolver] that resolves the plugin descriptors (`plugin.xml`)
-   * from the locally built IDE sources.
-   *
-   * The [xmlFiles] is a mapping from shortened .xml paths to XML files
-   * under the `/out/` directory of the locally built IDE.
-   * Those files may be referenced as <x-include> elements from `plugin.xml`.
-   *
-   * For example, the [xmlFiles] may be
-   * ```
-   * /META-INF/one.xml -> <path to one.xml >
-   * /META-INF/two.xml -> <path to two.xml>
-   * ```
-   *
-   * and a declaration in a `plugin.xml`:
-   * ```
-   * <xi:include href="/META-INF/one.xml" xpointer="xpointer(/idea-plugin/\*)"/>
-   * ```
-   */
-  private class PluginFromSourceXIncludePathResolver(private val xmlFiles: Map<String, File>) : XIncludePathResolver {
+  private class PluginFromSourceXIncludePathResolver(private val moduleRoots: Array<File>) : XIncludePathResolver {
 
     private val defaultResolver = DefaultXIncludePathResolver()
-
-    private fun resolveOutputDirectories(relativePath: String, base: String?): URL {
-      val normalizedPath = if (relativePath.startsWith("./")) {
-        "/META-INF/" + relativePath.substringAfter("./")
-      } else {
-        relativePath
-      }
-
-      val xmlFile = xmlFiles[normalizedPath]
-      if (xmlFile != null) {
-        try {
-          return xmlFile.toURI().toURL()
-        } catch (exc: Exception) {
-          throw XIncludeException(exc)
-        }
-      }
-
-      //todo: workaround
-      if (relativePath.endsWith(".theme.json")) {
-        val adjustedPath = when {
-          relativePath.startsWith("../") -> relativePath.substringAfter("../")
-          relativePath.startsWith("/") -> relativePath.substringAfter("/")
-          else -> relativePath
-        }
-
-        for (xmlFilePath in xmlFiles.values) {
-          val themeFile = xmlFilePath.parentFile?.parentFile?.resolve(adjustedPath)
-          if (themeFile != null && themeFile.exists()) {
-            return themeFile.toURI().toURL()
-          }
-        }
-      }
-
-      throw XIncludeException("Unable to resolve " + normalizedPath + if (base != null) " against $base" else "")
-    }
 
     override fun resolvePath(relativePath: String, base: String?): URL {
       try {
@@ -131,7 +76,22 @@ class IdeManagerImpl : IdeManager() {
         }
       } catch (ignored: Exception) {
       }
-      return resolveOutputDirectories(relativePath, base)
+
+      //Try to resolve path against module roots. [base] is ignored.
+
+      val adjustedPath = when {
+        relativePath.startsWith("./") -> "/META-INF/" + relativePath.substringAfter("./")
+        relativePath.startsWith("/") -> relativePath.substringAfter("/")
+        else -> relativePath
+      }
+
+      for (moduleRoot in moduleRoots) {
+        val file = moduleRoot.resolve(adjustedPath)
+        if (file.exists()) {
+          return URLUtil.fileToUrl(file)
+        }
+      }
+      throw XIncludeException("Unable to resolve $relativePath against $base in ${moduleRoots.size} module roots")
     }
   }
 
@@ -141,27 +101,26 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readCompiledPlugins(compilationRoot: File): List<IdePlugin> {
-    val xmlFiles = compilationRoot.listRecursivelyAllFilesWithExtension("xml")
-    val pathResolver = getPathResolver(xmlFiles)
-    return readCompiledPlugins(xmlFiles, pathResolver)
+    val moduleRoots = compilationRoot.listFiles()
+    val pathResolver = PluginFromSourceXIncludePathResolver(moduleRoots)
+    return readCompiledPlugins(moduleRoots, pathResolver)
   }
 
-  private fun readCompiledPlugins(xmlFiles: Collection<File>, pathResolver: XIncludePathResolver) =
-      xmlFiles
-          .asSequence()
-          .filter { "plugin.xml" == it.name }
-          .map { it.absoluteFile.parentFile }
-          .filter { "META-INF" == it.name && it.isDirectory && it.parentFile != null }
-          .map { it.parentFile }
-          .filter { it.isDirectory }
-          .mapNotNull { safeCreatePlugin(it, pathResolver, PLUGIN_XML) }
-          .toList()
+  private fun readCompiledPlugins(moduleRoots: Array<File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
+    val plugins = arrayListOf<IdePlugin>()
+    for (moduleRoot in moduleRoots) {
+      val pluginXmlFile = moduleRoot.resolve(META_INF).resolve(PLUGIN_XML)
+      if (pluginXmlFile.isFile) {
+        val plugin = safeCreatePlugin(moduleRoot, pathResolver, PLUGIN_XML)
+        if (plugin != null) {
+          plugins += plugin
+        }
+      }
+    }
+    return plugins
+  }
 
-  private fun safeCreatePlugin(
-      pluginFile: File,
-      pathResolver: XIncludePathResolver,
-      descriptorPath: String
-  ): IdePlugin? {
+  private fun safeCreatePlugin(pluginFile: File, pathResolver: XIncludePathResolver, descriptorPath: String): IdePlugin? {
     try {
       return when (val creationResult = createManager(pathResolver).createPlugin(pluginFile, false, descriptorPath)) {
         is PluginCreationSuccess -> creationResult.plugin
@@ -177,26 +136,6 @@ class IdeManagerImpl : IdeManager() {
     }
 
     return null
-  }
-
-  private fun getPathResolver(xmlFiles: Iterable<File>): XIncludePathResolver {
-    val xmlDescriptors = hashMapOf<String, File>()
-    for (xmlFile in xmlFiles) {
-      val xmlRoot = getXmlRoot(xmlFile)
-      if (xmlRoot != null) {
-        val relativePath = "/" + xmlFile.relativeTo(xmlRoot)
-        xmlDescriptors[relativePath] = xmlFile
-      }
-    }
-    return PluginFromSourceXIncludePathResolver(xmlDescriptors)
-  }
-
-  private fun getXmlRoot(xmlFile: File): File? {
-    var root: File? = xmlFile
-    while (root != null && !root.resolve("META-INF").isDirectory) {
-      root = root.parentFile
-    }
-    return root
   }
 
   private fun readPlatformPlugins(ideaDir: File, ideVersion: IdeVersion): List<IdePlugin> {

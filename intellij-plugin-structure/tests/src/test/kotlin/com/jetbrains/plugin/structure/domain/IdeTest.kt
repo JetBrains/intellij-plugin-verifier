@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.domain
 
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
@@ -88,23 +89,54 @@ class IdeTest {
     assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
   }
 
+  /**
+   * idea/
+   *   build.txt (IU-163.1.2.3)
+   *   .idea/
+   *   community/.idea
+   *   out/
+   *     classes/
+   *       production/
+   *         somePlugin/
+   *           META-INF/
+   *             plugin.xml (refers someTheme.theme.json)
+   *         themeHolder
+   *           someTheme.theme.json
+   */
   @Test
   fun `create idea from ultimate compiled sources`() {
-    val bundledPluginXmlContent = perfectXmlBuilder.asString()
-
     val ideaFolder = temporaryFolder.newFolder("idea")
     ideaFolder.resolve("build.txt").writeText("IU-163.1.2.3")
 
     ideaFolder.resolve(".idea").mkdirs()
     ideaFolder.resolve("community/.idea").mkdirs()
 
-    val productionDir = ideaFolder.resolve("out/classes/production")
-    productionDir.mkdirs()
+    val modulesRoot = ideaFolder.resolve("out/classes/production")
+    modulesRoot.mkdirs()
 
-    val bundledFolder = productionDir.resolve("somePlugin")
-    val bundledXml = bundledFolder.resolve("META-INF").resolve("plugin.xml")
+    val bundledPluginFolder = modulesRoot.resolve("somePlugin")
+    val bundledXml = bundledPluginFolder.resolve("META-INF").resolve("plugin.xml")
     bundledXml.parentFile.mkdirs()
+
+    val bundledPluginXmlContent = perfectXmlBuilder
+        .modify {
+          additionalContent = """
+            <extensions defaultExtensionNs="com.intellij">
+              <themeProvider id="someId" path="/someTheme.theme.json"/>
+            </extensions>
+          """.trimIndent()
+        }
     bundledXml.writeText(bundledPluginXmlContent)
+
+    val themeJson = modulesRoot.resolve("themeHolder").resolve("someTheme.theme.json")
+    themeJson.parentFile.mkdirs()
+    themeJson.writeText(
+        """{
+            "name": "someTheme",
+            "dark": true
+           }
+    """.trimIndent()
+    )
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
     assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
@@ -112,7 +144,8 @@ class IdeTest {
 
     val plugin = ide.bundledPlugins[0]!!
     assertThat(plugin.pluginId, `is`("someId"))
-    assertThat(plugin.originalFile, `is`(bundledFolder))
+    assertThat(plugin.originalFile, `is`(bundledPluginFolder))
+    assertThat(plugin.declaredThemes, `is`(listOf(IdeTheme("someTheme", true))))
   }
 
   @Test
