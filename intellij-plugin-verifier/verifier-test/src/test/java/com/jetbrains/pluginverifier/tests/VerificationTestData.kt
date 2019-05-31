@@ -19,6 +19,15 @@ fun parseExpectedDeprecated(): Sequence<DescriptionHolder> =
 fun parseExpectedExperimental(): Sequence<DescriptionHolder> =
     parseDescriptions("EXPERIMENTAL")
 
+fun parseInternalApiUsages(): Sequence<DescriptionHolder> =
+    parseDescriptions("INTERNAL")
+
+fun parseOverrideOnlyUsages(): Sequence<DescriptionHolder> =
+    parseDescriptions("OVERRIDE_ONLY")
+
+fun parseNonExtendable(): Sequence<DescriptionHolder> =
+    parseDescriptions("NON_EXTENDABLE")
+
 private val descriptionRegex = Regex("(.*?)\n\n(.*)", RegexOption.DOT_MATCHES_ALL)
 
 private fun parseDescriptions(type: String): Sequence<DescriptionHolder> =

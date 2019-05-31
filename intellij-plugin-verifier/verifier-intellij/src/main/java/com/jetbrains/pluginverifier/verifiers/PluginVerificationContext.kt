@@ -15,6 +15,12 @@ import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingJdkClassUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiRegistrar
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiRegistrar
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiRegistrar
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
 
@@ -26,8 +32,13 @@ data class PluginVerificationContext(
     val problemFilters: List<ProblemsFilter>,
     override val classResolver: ClassResolver,
     override val apiUsageProcessors: List<ApiUsageProcessor>
-) : VerificationContext, ProblemRegistrar, DeprecatedApiRegistrar, ExperimentalApiRegistrar {
-
+) : VerificationContext,
+    ProblemRegistrar,
+    DeprecatedApiRegistrar,
+    ExperimentalApiRegistrar,
+    OverrideOnlyRegistrar,
+    InternalApiRegistrar,
+    NonExtendableApiRegistrar {
   override val problemRegistrar
     get() = this
 
@@ -65,6 +76,24 @@ data class PluginVerificationContext(
       if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
         resultHolder.addExperimentalUsage(experimentalApiUsage)
       }
+    }
+  }
+
+  override fun registerInternalApiUsage(internalApiUsage: InternalApiUsage) {
+    if (checkApiUsages) {
+      resultHolder.addInternalApiUsage(internalApiUsage)
+    }
+  }
+
+  override fun registerNonExtendableApiUsage(nonExtendableApiUsage: NonExtendableApiUsage) {
+    if (checkApiUsages) {
+      resultHolder.addNonExtendableApiUsage(nonExtendableApiUsage)
+    }
+  }
+
+  override fun registerOverrideOnlyMethodUsage(overrideOnlyMethodUsage: OverrideOnlyMethodUsage) {
+    if (checkApiUsages) {
+      resultHolder.addOverrideOnlyUsage(overrideOnlyMethodUsage)
     }
   }
 

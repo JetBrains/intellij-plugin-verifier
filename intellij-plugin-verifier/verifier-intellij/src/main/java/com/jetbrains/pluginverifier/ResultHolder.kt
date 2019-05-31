@@ -10,6 +10,9 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.results.warnings.DependenciesCycleWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 
 /**
  * Aggregates the plugin verification results:
@@ -26,6 +29,12 @@ class ResultHolder {
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
 
   val experimentalApiUsages: MutableSet<ExperimentalApiUsage> = hashSetOf()
+
+  val internalApiUsages: MutableSet<InternalApiUsage> = hashSetOf()
+
+  val overrideOnlyMethodUsages: MutableSet<OverrideOnlyMethodUsage> = hashSetOf()
+
+  val nonExtendableApiUsages: MutableSet<NonExtendableApiUsage> = hashSetOf()
 
   var dependenciesGraph: DependenciesGraph? = null
 
@@ -49,6 +58,18 @@ class ResultHolder {
 
   fun addExperimentalUsage(experimentalApiUsage: ExperimentalApiUsage) {
     experimentalApiUsages.add(experimentalApiUsage)
+  }
+
+  fun addInternalApiUsage(internalApiUsage: InternalApiUsage) {
+    internalApiUsages.add(internalApiUsage)
+  }
+
+  fun addNonExtendableApiUsage(nonExtendableApiUsage: NonExtendableApiUsage) {
+    nonExtendableApiUsages.add(nonExtendableApiUsage)
+  }
+
+  fun addOverrideOnlyUsage(overrideOnlyMethodUsage: OverrideOnlyMethodUsage) {
+    overrideOnlyMethodUsages.add(overrideOnlyMethodUsage)
   }
 
   fun addProblem(problem: CompatibilityProblem) {

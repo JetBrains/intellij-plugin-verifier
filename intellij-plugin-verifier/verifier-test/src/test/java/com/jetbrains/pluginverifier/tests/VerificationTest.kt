@@ -62,6 +62,33 @@ class VerificationTest {
     assertSetsEqual(expectedExperimental, actualExperimental)
   }
 
+  @Test
+  fun `check that all override only violating method invocations are found`() {
+    val expectedOverrideOnlyUsages = parseOverrideOnlyUsages().toSet()
+    val actualOverrideOnly = verificationResult.overrideOnlyMethodUsages.mapTo(hashSetOf()) {
+      DescriptionHolder(it.shortDescription, it.fullDescription)
+    }
+    assertSetsEqual(expectedOverrideOnlyUsages, actualOverrideOnly)
+  }
+
+  @Test
+  fun `check that all internal API violating usages are found`() {
+    val expectedInternalApiUsages = parseInternalApiUsages().toSet()
+    val actualInternalUsages = verificationResult.internalApiUsages.mapTo(hashSetOf()) {
+      DescriptionHolder(it.shortDescription, it.fullDescription)
+    }
+    assertSetsEqual(expectedInternalApiUsages, actualInternalUsages)
+  }
+
+  @Test
+  fun `check that all non-extendable API violating usages are found`() {
+    val expectedNonExtendableUsages = parseNonExtendable().toSet()
+    val actualNonExtendableUsages = verificationResult.nonExtendableApiUsages.mapTo(hashSetOf()) {
+      DescriptionHolder(it.shortDescription, it.fullDescription)
+    }
+    assertSetsEqual(expectedNonExtendableUsages, actualNonExtendableUsages)
+  }
+
   private fun assertSetsEqual(expected: Set<DescriptionHolder>, actual: Set<DescriptionHolder>) {
     val allRedundant = actual - expected
     val allMissing = expected - actual

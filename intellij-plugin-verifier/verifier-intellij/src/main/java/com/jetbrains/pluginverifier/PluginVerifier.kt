@@ -24,6 +24,11 @@ import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverriding
 import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingClassUsageProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.internal.InternalMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheritedVerifier
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
@@ -131,6 +136,9 @@ class PluginVerifier(
       notFoundReason = resultHolder.notFoundReason
       deprecatedUsages = resultHolder.deprecatedUsages
       experimentalApiUsages = resultHolder.experimentalApiUsages
+      overrideOnlyMethodUsages = resultHolder.overrideOnlyMethodUsages
+      nonExtendableApiUsages = resultHolder.nonExtendableApiUsages
+      internalApiUsages = resultHolder.internalApiUsages
     }
   }
 
@@ -175,19 +183,24 @@ class PluginVerifier(
           listOf(
               DeprecatedApiUsageProcessor(),
               ExperimentalApiUsageProcessor(),
-              DiscouragingClassUsageProcessor()
+              DiscouragingClassUsageProcessor(),
+              InternalApiUsageProcessor(),
+              OverrideOnlyMethodUsageProcessor()
           )
       )
       BytecodeVerifier(
           classFilters,
           listOf(
-              PluginClassFileVersionVerifier()
+              PluginClassFileVersionVerifier(),
+              NonExtendableTypeInheritedVerifier()
           ),
           listOf(
               MethodOverridingVerifier(
                   listOf(
                       ExperimentalMethodOverridingProcessor(),
-                      DeprecatedMethodOverridingProcessor()
+                      DeprecatedMethodOverridingProcessor(),
+                      NonExtendableMethodOverridingProcessor(),
+                      InternalMethodOverridingProcessor()
                   )
               )
           )

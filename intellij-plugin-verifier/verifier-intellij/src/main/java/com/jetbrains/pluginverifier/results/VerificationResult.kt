@@ -13,6 +13,9 @@ import com.jetbrains.pluginverifier.results.structure.PluginStructureError
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 
 /**
  * Represents possible results of verifying [plugin] against [verificationTarget].
@@ -112,6 +115,27 @@ sealed class VerificationResult {
    * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
    */
   var experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet()
+
+  /**
+   * Contains violating usages of API marked with `@ApiStatus.Internal`.
+   *
+   * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
+   */
+  var internalApiUsages: Set<InternalApiUsage> = emptySet()
+
+  /**
+   * Contains violating usages of API marked with `@ApiStatus.NonExtendable`.
+   *
+   * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
+   */
+  var nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet()
+
+  /**
+   * Contains violating usages of API methods marked with `@ApiStatus.OverrideOnly`.
+   *
+   * _This field is applicable only for the [OK], [StructureWarnings], [MissingDependencies], and [CompatibilityProblems] result types._
+   */
+  var overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet()
 
   /**
    * Presentable verification verdict
