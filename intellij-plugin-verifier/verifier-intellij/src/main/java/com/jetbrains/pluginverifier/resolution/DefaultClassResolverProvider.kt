@@ -162,9 +162,10 @@ class DefaultClassResolverProvider(
       dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
   ) {
     for (bundledPlugin in ideDescriptor.ide.bundledPlugins) {
-      if (bundledPlugin.useIdeClassLoader) {
-        val dependencyResult = DependencyFinder.Result.FoundPlugin(bundledPlugin)
-        val dependencyId = (bundledPlugin.pluginId ?: bundledPlugin.pluginName)!!
+      if (bundledPlugin.useIdeClassLoader && bundledPlugin.pluginId != null) {
+        val dependencyId = bundledPlugin.pluginId!!
+        val pluginDependency = PluginDependencyImpl(dependencyId, true, false)
+        val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
         val bundledVertex = DepVertex(dependencyId, dependencyResult)
         depGraphBuilder.addTransitiveDependencies(dependenciesGraph, bundledVertex)
       }
