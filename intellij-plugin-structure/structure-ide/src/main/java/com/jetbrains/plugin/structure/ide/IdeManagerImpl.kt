@@ -1,11 +1,10 @@
 package com.jetbrains.plugin.structure.ide
 
-import com.google.common.base.Joiner
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlXIncludePathResolver
@@ -15,41 +14,51 @@ import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePa
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.IOException
 import java.net.URL
 
 class IdeManagerImpl : IdeManager() {
 
-  override fun createIde(ideDir: File): Ide = createIde(ideDir, null)
+  override fun createIde(idePath: File): Ide = createIde(idePath, null)
 
   override fun createIde(idePath: File, version: IdeVersion?): Ide {
-    check(idePath.exists()) { "IDE file doesn't exist: $idePath" }
-    val ideVersion = version ?: when {
-      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> readVersionFromIdeSources(idePath)
-      isDistributionIde(idePath) -> readIdeVersionFromDistribution(idePath)
-      else -> throw IllegalArgumentException("Invalid IDE: $idePath")
+    if (!idePath.isDirectory) {
+      throw IOException("Specified path does not exist or is not a directory: $idePath")
+    }
+    val fromCompiled = isCompiledCommunity(idePath) || isCompiledUltimate(idePath)
+    val fromDistribution = isDistributionIde(idePath)
+    if (!fromCompiled && !fromDistribution) {
+      throw InvalidIdeException(idePath, "IDE directory content is invalid")
     }
 
-    val bundledPlugins = when {
-      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> readCompiledPlugins(getCompiledClassesRoot(idePath)!!)
-      isDistributionIde(idePath) -> {
-        val jarFiles = idePath.resolve("lib").listFiles().orEmpty().filter { it.isJar() || it.isZip() }
-        val pathResolver = PluginXmlXIncludePathResolver(jarFiles)
-        val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
+    val ideVersion = version ?: if (fromCompiled) {
+      readVersionFromIdeSources(idePath)
+    } else {
+      readIdeVersionFromDistribution(idePath)
+    }
 
-        val bundledPlugins = readBundledPlugins(idePath, pathResolver)
-        val platformPlugins = readPlatformPlugins(pathResolver, jarFiles, product)
-
-        if (platformPlugins.none { it.pluginName == SPECIAL_PLUGIN_NAME }) {
-          LOG.warn("Platform plugin '$SPECIAL_PLUGIN_NAME' is not found")
-        }
-        bundledPlugins + platformPlugins
-      }
-      else -> throw IllegalArgumentException()
+    val bundledPlugins = if (fromCompiled) {
+      readCompiledBundledPlugins(idePath)
+    } else {
+      readDistributionBundledPlugins(idePath, ideVersion)
     }
 
     return IdeImpl(idePath, ideVersion, bundledPlugins)
+  }
+
+  private fun readDistributionBundledPlugins(idePath: File, ideVersion: IdeVersion): List<IdePlugin> {
+    val jarFiles = idePath.resolve("lib").listFiles().orEmpty().filter { it.isJar() || it.isZip() }
+    val pathResolver = PluginXmlXIncludePathResolver(jarFiles)
+    val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
+
+    val bundledPlugins = readBundledPlugins(idePath, pathResolver)
+    val platformPlugins = readPlatformPlugins(pathResolver, jarFiles, product, idePath)
+
+    if (platformPlugins.none { it.pluginId == "com.intellij" }) {
+      throw InvalidIdeException(idePath, "Platform plugins are not found")
+    }
+    return bundledPlugins + platformPlugins
   }
 
   private fun readIdeVersionFromDistribution(idePath: File): IdeVersion {
@@ -60,9 +69,10 @@ class IdeManagerImpl : IdeManager() {
         idePath.resolve("ultimate").resolve("community").resolve("build.txt")
     )
     val buildTxtFile = locations.find { it.exists() }
-        ?: throw IllegalArgumentException(
+        ?: throw InvalidIdeException(
+            idePath,
             "Build number is not found in the following files relative to $idePath: " +
-                locations.map { it.relativeTo(idePath) }.joinToString()
+                locations.joinToString { "'" + it.relativeTo(idePath) + "'" }
         )
     return readBuildNumber(buildTxtFile)
   }
@@ -73,11 +83,11 @@ class IdeManagerImpl : IdeManager() {
         idePath.resolve("community").resolve("build.txt")
     )
     val buildTxtFile = locations.find { it.exists() }
-        ?: throw IllegalArgumentException("Unable to find IDE version file (build.txt or community/build.txt)")
+        ?: throw InvalidIdeException(idePath, "Unable to find IDE version file 'build.txt' or 'community/build.txt'")
     return readBuildNumber(buildTxtFile)
   }
 
-  private class PluginFromSourceXIncludePathResolver(private val moduleRoots: Array<File>) : XIncludePathResolver {
+  private class BundledPluginFromSourceXIncludePathResolver(private val moduleRoots: Array<File>) : XIncludePathResolver {
 
     private val defaultResolver = DefaultXIncludePathResolver()
 
@@ -113,59 +123,38 @@ class IdeManagerImpl : IdeManager() {
     return IdeVersion.createIdeVersion(buildNumberString)
   }
 
-  private fun readCompiledPlugins(compilationRoot: File): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(idePath: File): List<IdePlugin> {
+    val compilationRoot = getCompiledClassesRoot(idePath)!!
     val moduleRoots = compilationRoot.listFiles()
-    val pathResolver = PluginFromSourceXIncludePathResolver(moduleRoots)
-    return readCompiledPlugins(moduleRoots, pathResolver)
+    val pathResolver = BundledPluginFromSourceXIncludePathResolver(moduleRoots)
+    return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver)
   }
 
-  private fun readCompiledPlugins(moduleRoots: Array<File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: Array<File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
     for (moduleRoot in moduleRoots) {
       val pluginXmlFile = moduleRoot.resolve(IdePluginManager.META_INF).resolve(IdePluginManager.PLUGIN_XML)
       if (pluginXmlFile.isFile) {
-        val plugin = safeCreatePlugin(moduleRoot, pathResolver, IdePluginManager.PLUGIN_XML)
-        if (plugin != null) {
-          plugins += plugin
-        }
+        plugins += createPluginExceptionally(idePath, moduleRoot, pathResolver, IdePluginManager.PLUGIN_XML)
       }
     }
     return plugins
-  }
-
-  private fun safeCreatePlugin(pluginFile: File, pathResolver: XIncludePathResolver, descriptorPath: String): IdePlugin? {
-    try {
-      return when (val creationResult = IdePluginManager.createManager(pathResolver).createPlugin(pluginFile, false, descriptorPath)) {
-        is PluginCreationSuccess -> creationResult.plugin
-        is PluginCreationFail -> {
-          val problems = creationResult.errorsAndWarnings
-          LOG.warn("Failed to read plugin " + pluginFile + ". Problems: " + Joiner.on(", ").join(problems))
-          null
-        }
-      }
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      LOG.warn("Unable to create plugin from sources: $pluginFile", e)
-    }
-
-    return null
   }
 
   private fun readPlatformPlugins(
       pathResolver: XIncludePathResolver,
       jarFiles: List<File>,
-      product: IntelliJPlatformProduct
+      product: IntelliJPlatformProduct,
+      idePath: File
   ): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
+    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
 
-    for (libFile in jarFiles) {
-      for (descriptorPath in listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")) {
-        val descriptorUrl = URLUtil.getJarEntryURL(libFile, "${IdePluginManager.META_INF}/$descriptorPath")
+    for (jarFile in jarFiles) {
+      for (descriptorPath in descriptorPaths) {
+        val descriptorUrl = URLUtil.getJarEntryURL(jarFile, "${IdePluginManager.META_INF}/$descriptorPath")
         if (URLUtil.resourceExists(descriptorUrl) == ThreeState.YES) {
-          val plugin = readPluginFromUrl(descriptorUrl, descriptorPath, pathResolver)
-          if (plugin != null) {
-            plugins.add(plugin)
-          }
+          plugins += createPluginExceptionally(idePath, jarFile, pathResolver, descriptorPath)
         }
       }
     }
@@ -173,43 +162,32 @@ class IdeManagerImpl : IdeManager() {
     return plugins
   }
 
-  private fun readPluginFromUrl(
-      descriptorUrl: URL,
-      descriptorPath: String,
-      pathResolver: XIncludePathResolver
-  ): IdePlugin? {
-    when {
-      URLUtil.FILE_PROTOCOL == descriptorUrl.protocol -> {
-        val descriptorFile = URLUtil.urlToFile(descriptorUrl)
-        val pathname = descriptorFile.path.replace('\\', '/').substringBeforeLast(descriptorPath)
-        val pluginDir = File(pathname).parentFile
-        return safeCreatePlugin(pluginDir, pathResolver, descriptorPath)
-      }
-      URLUtil.JAR_PROTOCOL == descriptorUrl.protocol -> {
-        val path = descriptorUrl.file
-        val pluginJar = URLUtil.urlToFile(URL(path.substringBefore(URLUtil.JAR_SEPARATOR)))
-        return safeCreatePlugin(pluginJar, pathResolver, descriptorPath)
-      }
-      else -> LOG.warn("Cannot load plugin from '$descriptorUrl'. Unknown URL protocol.")
-    }
-    return null
-  }
-
-  /**
-   * Reads plugins from the /plugins directory.
-   */
-  private fun readBundledPlugins(ideaDir: File, pathResolver: XIncludePathResolver): List<IdePlugin> {
-    val pluginsFiles = ideaDir.resolve("plugins").listFiles().orEmpty()
+  private fun readBundledPlugins(idePath: File, pathResolver: XIncludePathResolver): List<IdePlugin> {
+    val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
         .filter { it.isDirectory }
-        .mapNotNull { safeCreatePlugin(it, pathResolver, IdePluginManager.PLUGIN_XML) }
+        .map { createPluginExceptionally(idePath, it, pathResolver, IdePluginManager.PLUGIN_XML) }
+  }
+
+  private fun createPluginExceptionally(
+      idePath: File,
+      pluginFile: File,
+      pathResolver: XIncludePathResolver,
+      descriptorPath: String,
+      validateDescriptor: Boolean = false
+  ): IdePlugin = when (val creationResult = IdePluginManager
+      .createManager(pathResolver)
+      .createPlugin(pluginFile, validateDescriptor, descriptorPath)
+    ) {
+    is PluginCreationSuccess -> creationResult.plugin
+    is PluginCreationFail -> throw InvalidIdeException(
+        idePath,
+        "Bundled plugin '${pluginFile.relativeTo(idePath)}' is invalid: " +
+            creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
+    )
   }
 
   companion object {
-
-    private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
-
-    private const val SPECIAL_PLUGIN_NAME = "IDEA CORE"
 
     fun isCompiledUltimate(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
         ideaDir.resolve(".idea").isDirectory &&

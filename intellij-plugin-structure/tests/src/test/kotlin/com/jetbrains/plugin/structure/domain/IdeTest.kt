@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.domain
 
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
@@ -28,17 +29,17 @@ class IdeTest {
 
   @Test
   fun `version is not specified in distributed IDE`() {
-    val ideaFolder = temporaryFolder.newFolder("idea")
-    ideaFolder.resolve("lib").mkdirs()
+    val idePath = temporaryFolder.newFolder("idea")
+    idePath.resolve("lib").mkdirs()
 
-    expectedEx.expect(IllegalArgumentException::class.java)
+    val separator = File.separator
+    expectedEx.expect(InvalidIdeException::class.java)
     expectedEx.expectMessage(
-        "Build number is not found in the following files relative to $ideaFolder: " +
-            "build.txt, Resources${File.separator}build.txt, community${File.separator}build.txt, " +
-            "ultimate${File.separator}community${File.separator}build.txt"
+        "IDE by path '$idePath' is invalid: Build number is not found in the following files relative to $idePath: " +
+            "'build.txt', 'Resources${separator}build.txt', 'community${separator}build.txt', 'ultimate${separator}community${separator}build.txt'"
     )
 
-    IdeManager.createManager().createIde(ideaFolder)
+    IdeManager.createManager().createIde(idePath)
   }
 
   @Test
@@ -65,7 +66,8 @@ class IdeTest {
     val ideaPluginXml = temporaryFolder.newFolder().resolve("META-INF").resolve("plugin.xml")
     ideaPluginXml.parentFile.mkdirs()
     ideaPluginXml.writeText(perfectXmlBuilder.apply {
-      id = "<id>IDEA CORE</id>"
+      id = "<id>com.intellij</id>"
+      name = "<name>IDEA CORE</name>"
       modules = listOf("some.idea.module")
     }.asString())
 
@@ -84,7 +86,8 @@ class IdeTest {
     val bundledPlugin = ide.bundledPlugins[0]!!
     val ideaCorePlugin = ide.bundledPlugins[1]!!
     assertEquals("someId", bundledPlugin.pluginId)
-    assertEquals("IDEA CORE", ideaCorePlugin.pluginId)
+    assertEquals("com.intellij", ideaCorePlugin.pluginId)
+    assertEquals("IDEA CORE", ideaCorePlugin.pluginName)
     assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
     assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
   }

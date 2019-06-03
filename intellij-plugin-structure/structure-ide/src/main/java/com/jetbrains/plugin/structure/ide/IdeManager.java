@@ -24,9 +24,10 @@ public abstract class IdeManager {
    * @param idePath an IDE home directory
    * @return created IDE instance
    * @throws IOException if io-error occurs
+   * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull
-  public abstract Ide createIde(@NotNull File idePath) throws IOException;
+  public abstract Ide createIde(@NotNull File idePath) throws IOException, InvalidIdeException;
 
 
   /**
@@ -37,8 +38,9 @@ public abstract class IdeManager {
    * @param version version of the IDE
    * @return created IDE instance
    * @throws IOException if io-error occurs
+   * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull
-  public abstract Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException;
+  public abstract Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException, InvalidIdeException;
 
 }

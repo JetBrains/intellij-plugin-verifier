@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.ide.IdeManagerImpl
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledCommunity
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledUltimate
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributionIde
+import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.util.loadProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -28,7 +29,7 @@ object IdeResolverCreator {
     return when {
       isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode)
       isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode)
-      else -> throw IllegalArgumentException("Invalid IDE $ide at $idePath")
+      else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
   }
 
@@ -52,7 +53,7 @@ object IdeResolverCreator {
       resolvers += ClassFilesResolver(moduleRoot, readMode)
     }
 
-    if (IdeManagerImpl.isCompiledUltimate(idePath)) {
+    if (isCompiledUltimate(idePath)) {
       resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode)
     }
 
