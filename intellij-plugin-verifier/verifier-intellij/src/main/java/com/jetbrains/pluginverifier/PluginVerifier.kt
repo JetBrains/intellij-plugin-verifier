@@ -37,6 +37,7 @@ import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.overriding.MethodOverridingVerifier
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import java.util.concurrent.Callable
 
 /**
@@ -56,14 +57,7 @@ class PluginVerifier(
     private val classFilters: List<ClassFilter>
 ) : Callable<VerificationResult> {
 
-  private val verificationResult = VerificationResult.OK()
-
   private val ignoredProblems = IgnoredProblemsHolder()
-
-  init {
-    verificationResult.plugin = plugin
-    verificationResult.verificationTarget = verificationTarget
-  }
 
   private val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
 
@@ -73,6 +67,10 @@ class PluginVerifier(
     try {
       pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")
 
+      val verificationResult = VerificationResult.OK()
+      verificationResult.plugin = plugin
+      verificationResult.verificationTarget = verificationTarget
+
       /**
        * Register a special "marked incompatible" problem, if necessary.
        */
@@ -81,7 +79,7 @@ class PluginVerifier(
       }
 
       try {
-        loadPluginAndVerify()
+        loadPluginAndVerify(verificationResult)
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
         //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
@@ -160,13 +158,13 @@ class PluginVerifier(
     reportDependencyGraph(result.dependenciesGraph)
   }
 
-  private fun loadPluginAndVerify() {
+  private fun loadPluginAndVerify(verificationResult: VerificationResult.OK) {
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
       when (cacheEntry) {
         is PluginDetailsCache.Result.Provided -> {
           val pluginDetails = cacheEntry.pluginDetails
           pluginDetails.pluginWarnings.forEach { verificationResult.addPluginErrorOrWarning(it) }
-          verifyClasses(pluginDetails)
+          verifyClasses(pluginDetails, verificationResult)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> {
           cacheEntry.pluginErrors.forEach { verificationResult.addPluginErrorOrWarning(it) }
@@ -190,7 +188,7 @@ class PluginVerifier(
     }
   }
 
-  private fun verifyClasses(pluginDetails: PluginDetails) {
+  private fun verifyClasses(pluginDetails: PluginDetails, verificationResult: VerificationResult) {
     val checkClasses = try {
       selectClassesForCheck(pluginDetails)
     } catch (e: Exception) {
@@ -203,41 +201,50 @@ class PluginVerifier(
     }
 
     classResolverProvider.provide(pluginDetails, verificationResult, pluginReporters).use { classResolver ->
-      val context = PluginVerificationContext(
-          plugin,
-          verificationTarget,
-          verificationResult,
-          ignoredProblems,
-          checkApiUsages,
-          problemFilters,
-          classResolver,
-          listOf(
-              DeprecatedApiUsageProcessor(),
-              ExperimentalApiUsageProcessor(),
-              DiscouragingClassUsageProcessor(),
-              InternalApiUsageProcessor(),
-              OverrideOnlyMethodUsageProcessor()
-          )
+      val context = createVerificationContext(verificationResult, classResolver)
+      runByteCodeVerifier(checkClasses, context)
+    }
+  }
+
+  private fun createVerificationContext(
+      verificationResult: VerificationResult,
+      classResolver: ClassResolver
+  ) = PluginVerificationContext(
+      plugin,
+      verificationTarget,
+      verificationResult,
+      ignoredProblems,
+      checkApiUsages,
+      problemFilters,
+      classResolver,
+      listOf(
+          DeprecatedApiUsageProcessor(),
+          ExperimentalApiUsageProcessor(),
+          DiscouragingClassUsageProcessor(),
+          InternalApiUsageProcessor(),
+          OverrideOnlyMethodUsageProcessor()
       )
-      BytecodeVerifier(
-          classFilters,
-          listOf(
-              PluginClassFileVersionVerifier(),
-              NonExtendableTypeInheritedVerifier()
-          ),
-          listOf(
-              MethodOverridingVerifier(
-                  listOf(
-                      ExperimentalMethodOverridingProcessor(),
-                      DeprecatedMethodOverridingProcessor(),
-                      NonExtendableMethodOverridingProcessor(),
-                      InternalMethodOverridingProcessor()
-                  )
-              )
-          )
-      ).verify(checkClasses, context) {
-        pluginReporters.reportProgress(it)
-      }
+  )
+
+  private fun runByteCodeVerifier(checkClasses: Set<String>, context: PluginVerificationContext) {
+    BytecodeVerifier(
+        classFilters,
+        listOf(
+            PluginClassFileVersionVerifier(),
+            NonExtendableTypeInheritedVerifier()
+        ),
+        listOf(
+            MethodOverridingVerifier(
+                listOf(
+                    ExperimentalMethodOverridingProcessor(),
+                    DeprecatedMethodOverridingProcessor(),
+                    NonExtendableMethodOverridingProcessor(),
+                    InternalMethodOverridingProcessor()
+                )
+            )
+        )
+    ).verify(checkClasses, context) {
+      pluginReporters.reportProgress(it)
     }
   }
 
