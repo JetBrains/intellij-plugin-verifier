@@ -31,8 +31,10 @@ import java.util.regex.Pattern;
 
 public class JDOMXIncluder {
 
-  @NonNls
-  private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "https://www.w3.org/2001/XInclude";
+  private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
+
+  private static final String HTTPS_WWW_W3_ORG_2001_XINCLUDE = "https://www.w3.org/2001/XInclude";
+
   @NonNls
   private static final String XI = "xi";
   @NonNls
@@ -51,7 +53,8 @@ public class JDOMXIncluder {
   private static final String ENCODING = "encoding";
   @NonNls
   private static final String XPOINTER = "xpointer";
-  private static final Namespace XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
+  private static final Namespace HTTP_XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG_2001_XINCLUDE);
+  private static final Namespace HTTPS_XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTPS_WWW_W3_ORG_2001_XINCLUDE);
   //xpointer($1)
   @NonNls
   private static Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
@@ -70,7 +73,7 @@ public class JDOMXIncluder {
   }
 
   private static boolean isIncludeElement(Element element) {
-    return element.getName().equals(INCLUDE) && element.getNamespace().equals(XINCLUDE_NAMESPACE);
+    return element.getName().equals(INCLUDE) && (element.getNamespace().equals(HTTP_XINCLUDE_NAMESPACE) || element.getNamespace().equals(HTTPS_XINCLUDE_NAMESPACE));
   }
 
   @Nullable
