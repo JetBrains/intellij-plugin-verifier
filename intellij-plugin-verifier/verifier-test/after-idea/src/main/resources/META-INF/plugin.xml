@@ -1,11 +1,11 @@
 <idea-plugin version="2">
-    <id>DevKit</id>
-    <name>DevKit</name>
+    <id>com.intellij</id>
+    <name>IDEA CORE</name>
     <version>1.0</version>
-    <vendor email="nonono.com" url="https://www.HornsAndHooves.com">HornsAndHooves</vendor>
+    <vendor email="jetbrains.com" url="https://jetbrains.com">JetBrains</vendor>
 
     <description><![CDATA[
-      HornsAndHooves plugin
+      Some jetbrains plugin quite long description
     ]]></description>
 
     <idea-version since-build="131"/>
