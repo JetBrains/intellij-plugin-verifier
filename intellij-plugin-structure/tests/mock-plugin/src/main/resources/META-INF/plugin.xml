@@ -1,11 +1,11 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="http://kotlinlang.org"
+<idea-plugin xmlns:xi="https://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org"
              allow-bundled-update="true" use-idea-classloader="true">
     <id>org.jetbrains.kotlin2</id>
 
     <name>Kotlin</name>
     <description>Plugin description must be at least 40 characters long</description>
     <version>1.0.0-beta-1038-IJ141-17</version>
-    <vendor logo="/icons/plugin.png" email="vendor_email" url="http://www.jetbrains.com">JetBrains s.r.o.
+    <vendor logo="/icons/plugin.png" email="vendor_email" url="https://www.jetbrains.com">JetBrains s.r.o.
     </vendor>
 
     <idea-version since-build="141.1009.5" until-build="141.9999999"/>

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.parameters.filtering.documented
 
 /**
- * Parser of the markdown-formatted [Breaking API Changes page](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
+ * Parser of the markdown-formatted [Breaking API Changes page](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
  */
 class DocumentedProblemsParser {
 

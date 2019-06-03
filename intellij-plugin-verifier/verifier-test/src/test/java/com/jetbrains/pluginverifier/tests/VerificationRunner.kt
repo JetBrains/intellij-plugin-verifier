@@ -35,7 +35,7 @@ class VerificationRunner {
 
   fun runPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
     val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
-    val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("http://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
+    val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
     val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
     val pluginInfo = LocalPluginInfo(idePlugin)

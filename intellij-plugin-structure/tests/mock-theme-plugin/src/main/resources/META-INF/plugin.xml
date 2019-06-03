@@ -2,7 +2,7 @@
     <id>test.theme</id>
     <version>1.0.0</version>
     <name>Test theme name</name>
-    <vendor email="test@test.com" url="http://www.test.com">TestCompany</vendor>
+    <vendor email="test@test.com" url="https://www.test.com">TestCompany</vendor>
     <idea-version since-build="192.0.0" until-build="192.*"></idea-version>
 
     <description><![CDATA[
@@ -12,7 +12,7 @@ Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu 
 Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum
     ]]></description>
 
-    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+    <!-- please see https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
     <!-- uncomment to enable plugin in all products
     <depends>com.intellij.modules.lang</depends>

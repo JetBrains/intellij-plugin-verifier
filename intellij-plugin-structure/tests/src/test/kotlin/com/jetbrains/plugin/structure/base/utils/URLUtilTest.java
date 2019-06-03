@@ -68,7 +68,7 @@ public class URLUtilTest {
 
   @Test
   public void resourceExistsForRemoteUrl() throws Exception {
-    assertEquals(ThreeState.UNSURE, URLUtil.resourceExists(new URL("http://jetbrains.com")));
+    assertEquals(ThreeState.UNSURE, URLUtil.resourceExists(new URL("https://jetbrains.com")));
   }
 
   @Test

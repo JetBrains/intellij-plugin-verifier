@@ -42,13 +42,13 @@ class MockPluginsTest : BaseMockPluginTest() {
   }
 
   private fun testMockConfigs(plugin: IdePlugin) {
-    assertEquals("http://kotlinlang.org", plugin.url)
+    assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.pluginVersion)
     assertEquals("org.jetbrains.kotlin2", plugin.pluginId)
 
     assertEquals("vendor_email", plugin.vendorEmail)
-    assertEquals("http://www.jetbrains.com", plugin.vendorUrl)
+    assertEquals("https://www.jetbrains.com", plugin.vendorUrl)
     assertEquals("JetBrains s.r.o.", plugin.vendor)
 
     assertEquals("Plugin description must be at least 40 characters long", plugin.description)

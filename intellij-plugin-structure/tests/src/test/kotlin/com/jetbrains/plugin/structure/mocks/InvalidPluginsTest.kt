@@ -251,7 +251,7 @@ class InvalidPluginsTest {
 
     `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          vendor = """<vendor url="http://vendor.url"></vendor>"""
+          vendor = """<vendor url="https://vendor.url"></vendor>"""
         })
 
     `test valid plugin xml`(
@@ -299,7 +299,7 @@ class InvalidPluginsTest {
       <id>com.your.company.unique.plugin.id</id>
       <name>Plugin display name here</name>
       <version>1.0</version>
-      <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+      <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
       <description><![CDATA[
         Enter short description for your plugin here.<br>
         <em>most HTML tags may be used</em>
@@ -413,7 +413,7 @@ class InvalidPluginsTest {
   fun `plugin specifies unresolved xinclude element`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+          ideaPluginTagOpen = """<idea-plugin xmlns:xi="https://www.w3.org/2001/XInclude">"""
           additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
         }, listOf(UnresolvedXIncludeElements("plugin.xml"))
     )

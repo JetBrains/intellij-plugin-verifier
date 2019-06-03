@@ -131,7 +131,7 @@ class DefaultClassResolverProvider(
   /**
    * If a plugin does not include any module dependency tags in its plugin.xml,
    * it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA
-   * http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+   * https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
    *
    * But since we've recently extracted Java to a separate plugin, many plugins may stop working
    * because they depend on Java plugin classes but do not explicitly declare a dependency onto 'com.intellij.modules.java'.

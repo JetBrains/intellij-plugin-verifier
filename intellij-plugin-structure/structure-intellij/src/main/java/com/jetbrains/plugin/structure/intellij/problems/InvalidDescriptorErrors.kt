@@ -13,7 +13,7 @@ class PropertyWithDefaultValue(
     ID("<id>", "com.your.company.unique.plugin.id"),
     NAME("<name>", "Plugin display name here"),
     VENDOR("<vendor>", "YourCompany"),
-    VENDOR_URL("<vendor url>", "http://www.yourcompany.com"),
+    VENDOR_URL("<vendor url>", "https://www.yourcompany.com"),
     VENDOR_EMAIL("<vendor email>", "support@yourcompany.com")
   }
 

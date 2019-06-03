@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
 
 /**
  * The documented problems are described on the
- * [Breaking API Changes page](http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
+ * [Breaking API Changes page](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
  * These problems should not be reported in the verification results.
  *
  * @see [PR-1140](https://youtrack.jetbrains.com/issue/PR-1140)

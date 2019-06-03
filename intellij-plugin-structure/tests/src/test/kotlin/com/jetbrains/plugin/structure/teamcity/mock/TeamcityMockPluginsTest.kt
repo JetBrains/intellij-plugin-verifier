@@ -21,7 +21,7 @@ class TeamcityMockPluginsTest : BaseMockPluginTest() {
     assertEquals("teamcity_cloud-google", plugin.pluginId)
 
     assertEquals("email@example.org", plugin.vendorEmail)
-    assertEquals("http://www.jetbrains.com/", plugin.vendorUrl)
+    assertEquals("https://www.jetbrains.com/", plugin.vendorUrl)
     assertEquals("JetBrains, s.r.o.", plugin.vendor)
 
     assertEquals("Support for build agents running on Google Cloud", plugin.description)

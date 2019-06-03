@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<teamcity-plugin xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
                  xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
     <info>
         <name>cloud-google</name>
@@ -10,7 +10,7 @@
         <email>email@example.org</email>
         <vendor>
             <name>JetBrains, s.r.o.</name>
-            <url>http://www.jetbrains.com/</url>
+            <url>https://www.jetbrains.com/</url>
         </vendor>
     </info>
     <requirements min-build="2" max-build="3"/>

@@ -22,8 +22,8 @@ configure(allprojects) {
   targetCompatibility = 1.8
 
   repositories {
-    maven { url "http://repo.maven.apache.org/maven2" }
-    maven { url "http://dl.bintray.com/jonnyzzz/maven" }
+    maven { url "https://repo.maven.apache.org/maven2" }
+    maven { url "https://dl.bintray.com/jonnyzzz/maven" }
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
   }

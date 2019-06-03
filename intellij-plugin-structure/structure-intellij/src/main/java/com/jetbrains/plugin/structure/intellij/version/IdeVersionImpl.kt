@@ -150,7 +150,7 @@ class IdeVersionImpl(
 
     }
 
-    // See http://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
+    // See https://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
     private fun getBaseLineForHistoricBuilds(bn: Int) =
         when {
           bn >= 10000 -> 88 // Maia, 9x builds

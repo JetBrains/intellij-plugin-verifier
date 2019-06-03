@@ -15,7 +15,7 @@ open class CmdOpts(
     @set:Argument(
         "documented-problems-url", alias = "dpu", description = "The URL of the page containing documented problems that must not be reported. " +
         "By default it is $DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL that contains the sources of the page of " +
-        "SDK Documentation: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
+        "SDK Documentation: https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
     )
     var documentedProblemsPageUrl: String = DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL,
 

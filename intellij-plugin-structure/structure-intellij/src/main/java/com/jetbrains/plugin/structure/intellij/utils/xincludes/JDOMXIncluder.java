@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 public class JDOMXIncluder {
 
   @NonNls
-  private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude";
+  private static final String HTTP_WWW_W3_ORG_2001_XINCLUDE = "https://www.w3.org/2001/XInclude";
   @NonNls
   private static final String XI = "xi";
   @NonNls

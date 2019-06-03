@@ -441,7 +441,7 @@ internal class PluginCreator {
     }
     validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH)
 
-    if ("http://www.yourcompany.com" == vendorBean.url) {
+    if ("https://www.yourcompany.com" == vendorBean.url) {
       registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL))
     }
     validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH)

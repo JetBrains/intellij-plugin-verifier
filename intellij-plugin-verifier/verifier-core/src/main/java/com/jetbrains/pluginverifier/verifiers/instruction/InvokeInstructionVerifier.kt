@@ -174,7 +174,7 @@ private class InvokeInstructionVerifierImpl(
      * an interface (Java 8 allows static method in interfaces).
      *
      * This is a corresponding question on stack-overflow:
-     * http://stackoverflow.com/questions/42294217/binary-compatibility-of-changing-a-class-with-static-methods-to-interface-in-jav
+     * https://stackoverflow.com/questions/42294217/binary-compatibility-of-changing-a-class-with-static-methods-to-interface-in-jav
      */
     val method: Method = resolveMethod() ?: return
 

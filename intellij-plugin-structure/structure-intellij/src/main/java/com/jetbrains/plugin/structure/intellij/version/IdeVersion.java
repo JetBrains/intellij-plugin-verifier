@@ -51,7 +51,7 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
   /**
    * Returns a string presentation of {@code this} version.
    * For the details of the presentation form refer to
-   * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html">
+   * <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html">
    * <i>IntelliJ Build Number Ranges</i></a>.
    * <p>
    * Examples are:

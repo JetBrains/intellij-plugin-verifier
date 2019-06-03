@@ -6,7 +6,7 @@ statusListener OnConsoleStatusListener
 
 String timedPattern = "%20(%d{yyyy-MM-dd'T'HH:mm:ss}) %-22([%thread]) %-5level %-30.30(%logger{0}:%method) - %msg%n"
 
-//http://logback.qos.ch/manual/groovy.html
+//https://logback.qos.ch/manual/groovy.html
 appender('STDOUT', ConsoleAppender) {
   encoder(PatternLayoutEncoder) {
     pattern = timedPattern
