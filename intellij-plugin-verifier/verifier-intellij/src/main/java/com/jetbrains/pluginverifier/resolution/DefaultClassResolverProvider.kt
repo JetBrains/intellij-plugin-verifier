@@ -123,10 +123,29 @@ class DefaultClassResolverProvider(
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     val depGraphBuilder = DepGraphBuilder(dependencyFinder)
     depGraphBuilder.addTransitiveDependencies(dependenciesGraph, start)
-    maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
-    maybeAddBundledPluginsWithUseIdeaClassLoader(depGraphBuilder, dependenciesGraph)
+    if (shouldAddImplicitDependenciesOnPlatformPlugins()) {
+      maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
+      maybeAddBundledPluginsWithUseIdeaClassLoader(depGraphBuilder, dependenciesGraph)
+    }
     return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(dependenciesGraph, start)
   }
+
+  /**
+   * This option tells the verifier to supply Java and other platform plugins to the classpath of the verification.
+   * It is necessary to avoid a lot of problems like "Access to unresolved class <some class from Java plugin>".
+   *
+   * Java plugin used to be part of the platform. But starting from 2019.2 EAP it is a separate bundled plugin.
+   * Many plugins historically do not declare dependency onto Java plugin but require its classes.
+   * The dependency may be declared either via module 'com.intellij.modules.java' or via plugin id 'com.intellij.java'.
+   * IDE still loads Java plugin as part of the platform, using platform classloader, so plugins will continue to work.
+   * But this behaviour may be changed in future. We are going to notify external developers that their plugins
+   * reference Java-plugin classes without explicit dependency.
+   *
+   * [maybeAddOptionalJavaPluginDependency]
+   * [maybeAddBundledPluginsWithUseIdeaClassLoader]
+   */
+  private fun shouldAddImplicitDependenciesOnPlatformPlugins() =
+      System.getProperty("intellij.plugin.verifier.add.implicit.dependencies.on.platform.plugins") == "true"
 
   /**
    * If a plugin does not include any module dependency tags in its plugin.xml,
