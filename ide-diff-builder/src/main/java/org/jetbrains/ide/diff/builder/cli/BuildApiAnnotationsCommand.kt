@@ -218,7 +218,7 @@ class BuildApiAnnotationsCommand : Command {
   private fun createIdeFilesBank(idesDir: Path): IdeFilesBank {
     val gigabytes = System.getProperty("ides.dir.max.size.gb", "10").toInt()
     val diskSpaceSetting = DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE * gigabytes)
-    return IdeFilesBank(idesDir, allIdeMergingRepository, diskSpaceSetting)
+    return IdeFilesBank(idesDir, allIdeRepository, diskSpaceSetting)
   }
 
   private fun buildIdeDiffBetweenIdes(
