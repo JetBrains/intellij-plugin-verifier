@@ -57,8 +57,6 @@ class PluginVerifier(
     private val classFilters: List<ClassFilter>
 ) : Callable<VerificationResult> {
 
-  private val ignoredProblems = IgnoredProblemsHolder()
-
   private val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
 
   override fun call(): VerificationResult {
@@ -67,6 +65,7 @@ class PluginVerifier(
     try {
       pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")
 
+      val ignoredProblems = IgnoredProblemsHolder()
       val verificationResult = VerificationResult.OK()
       verificationResult.plugin = plugin
       verificationResult.verificationTarget = verificationTarget
@@ -79,7 +78,7 @@ class PluginVerifier(
       }
 
       try {
-        loadPluginAndVerify(verificationResult)
+        loadPluginAndVerify(verificationResult, ignoredProblems)
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
         //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
@@ -87,7 +86,7 @@ class PluginVerifier(
         throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
       }
 
-      pluginReporters.reportResults(verificationResult)
+      pluginReporters.reportResults(verificationResult, ignoredProblems)
 
       val elapsedTime = System.currentTimeMillis() - startTime
       pluginReporters.reportMessage(
@@ -141,7 +140,7 @@ class PluginVerifier(
     }
   }
 
-  private fun Reporters.reportResults(result: VerificationResult) {
+  private fun Reporters.reportResults(result: VerificationResult, ignoredProblems: IgnoredProblemsHolder) {
     reportVerificationResult(result)
     result.pluginStructureErrors.forEach { reportNewPluginStructureError(it) }
     result.pluginStructureWarnings.forEach { reportNewPluginStructureWarning(it) }
@@ -158,13 +157,13 @@ class PluginVerifier(
     reportDependencyGraph(result.dependenciesGraph)
   }
 
-  private fun loadPluginAndVerify(verificationResult: VerificationResult.OK) {
+  private fun loadPluginAndVerify(verificationResult: VerificationResult, ignoredProblems: IgnoredProblemsHolder) {
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
       when (cacheEntry) {
         is PluginDetailsCache.Result.Provided -> {
           val pluginDetails = cacheEntry.pluginDetails
           pluginDetails.pluginWarnings.forEach { verificationResult.addPluginErrorOrWarning(it) }
-          verifyClasses(pluginDetails, verificationResult)
+          verifyClasses(pluginDetails, verificationResult, ignoredProblems)
         }
         is PluginDetailsCache.Result.InvalidPlugin -> {
           cacheEntry.pluginErrors.forEach { verificationResult.addPluginErrorOrWarning(it) }
@@ -188,7 +187,11 @@ class PluginVerifier(
     }
   }
 
-  private fun verifyClasses(pluginDetails: PluginDetails, verificationResult: VerificationResult) {
+  private fun verifyClasses(
+      pluginDetails: PluginDetails,
+      verificationResult: VerificationResult,
+      ignoredProblems: IgnoredProblemsHolder
+  ) {
     val checkClasses = try {
       selectClassesForCheck(pluginDetails)
     } catch (e: Exception) {
@@ -201,14 +204,15 @@ class PluginVerifier(
     }
 
     classResolverProvider.provide(pluginDetails, verificationResult, pluginReporters).use { classResolver ->
-      val context = createVerificationContext(verificationResult, classResolver)
+      val context = createVerificationContext(classResolver, verificationResult, ignoredProblems)
       runByteCodeVerifier(checkClasses, context)
     }
   }
 
   private fun createVerificationContext(
+      classResolver: ClassResolver,
       verificationResult: VerificationResult,
-      classResolver: ClassResolver
+      ignoredProblems: IgnoredProblemsHolder
   ) = PluginVerificationContext(
       plugin,
       verificationTarget,
