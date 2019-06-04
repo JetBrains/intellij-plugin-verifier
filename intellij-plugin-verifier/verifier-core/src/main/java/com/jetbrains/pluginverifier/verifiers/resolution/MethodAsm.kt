@@ -1,10 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.base.utils.toList
-import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.getAccessType
+import com.jetbrains.pluginverifier.verifiers.getParameterNames
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.AnnotationNode
@@ -29,8 +29,8 @@ class MethodAsm(override val containingClassFile: ClassFile, private val asmNode
   override val descriptor: String
     get() = asmNode.desc
 
-  override val accessType: AccessType
-    get() = asmNode.access.getAccessType()
+  override val accessType
+    get() = getAccessType(asmNode.access)
 
   override val signature: String?
     get() = asmNode.signature
@@ -52,31 +52,37 @@ class MethodAsm(override val containingClassFile: ClassFile, private val asmNode
 
 
   override val isAbstract
-    get() = asmNode.isAbstract()
+    get() = asmNode.access and Opcodes.ACC_ABSTRACT != 0
 
   override val isStatic
-    get() = asmNode.isStatic()
+    get() = asmNode.access and Opcodes.ACC_STATIC != 0
 
   override val isFinal
-    get() = asmNode.isFinal()
+    get() = asmNode.access and Opcodes.ACC_FINAL != 0
 
   override val isPublic
-    get() = asmNode.isPublic()
+    get() = asmNode.access and Opcodes.ACC_PUBLIC != 0
 
   override val isProtected
-    get() = asmNode.isProtected()
+    get() = asmNode.access and Opcodes.ACC_PROTECTED != 0
 
   override val isPrivate
-    get() = asmNode.isPrivate()
+    get() = asmNode.access and Opcodes.ACC_PRIVATE != 0
 
-  override val isDefaultAccess
-    get() = asmNode.isDefaultAccess()
+  override val isPackagePrivate
+    get() = (asmNode.access and Opcodes.ACC_PUBLIC == 0) && (asmNode.access and Opcodes.ACC_PROTECTED == 0) && (asmNode.access and Opcodes.ACC_PRIVATE == 0)
 
   override val isDeprecated
-    get() = asmNode.isDeprecated()
+    get() = asmNode.access and Opcodes.ACC_DEPRECATED != 0
 
   override val isVararg
     get() = asmNode.access and Opcodes.ACC_VARARGS != 0
+
+  override val isConstructor: Boolean
+    get() = asmNode.name == "<init>"
+
+  override val isClassInitializer: Boolean
+    get() = asmNode.name == "<clinit>"
 
   override val isNative
     get() = asmNode.access and Opcodes.ACC_NATIVE != 0

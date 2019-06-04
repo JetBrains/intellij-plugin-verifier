@@ -30,7 +30,7 @@ fun detectAccessProblem(callee: ClassFileMember, caller: ClassFileMember, contex
           return AccessType.PROTECTED
         }
       }
-    callee.isDefaultAccess ->
+    callee.isPackagePrivate ->
       if (caller.containingClassFile.packageName != callee.containingClassFile.packageName) {
         return AccessType.PACKAGE_PRIVATE
       }

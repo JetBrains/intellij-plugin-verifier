@@ -4,14 +4,12 @@ import com.jetbrains.pluginverifier.results.access.AccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
 
 fun MethodNode.getParameterNames(): List<String> {
   val arguments = Type.getArgumentTypes(desc)
   val argumentsNumber = arguments.size
-  val offset = if (this.isStatic()) 0 else 1
+  val offset = if (this.access and Opcodes.ACC_STATIC != 0) 0 else 1
   var parameterNames: List<String> = emptyList()
   if (localVariables != null) {
     parameterNames = localVariables.map { it.name }.drop(offset).take(argumentsNumber)
@@ -57,60 +55,12 @@ fun String.extractClassNameFromDescriptor(): String? {
 
 private fun String.isPrimitiveType(): Boolean = length == 1 && first() in "ZIJBFSDC"
 
-fun Int.getAccessType(): AccessType = when {
-  this and Opcodes.ACC_PUBLIC != 0 -> AccessType.PUBLIC
-  this and Opcodes.ACC_PRIVATE != 0 -> AccessType.PRIVATE
-  this and Opcodes.ACC_PROTECTED != 0 -> AccessType.PROTECTED
+fun getAccessType(accessCode: Int): AccessType = when {
+  accessCode and Opcodes.ACC_PUBLIC != 0 -> AccessType.PUBLIC
+  accessCode and Opcodes.ACC_PRIVATE != 0 -> AccessType.PRIVATE
+  accessCode and Opcodes.ACC_PROTECTED != 0 -> AccessType.PROTECTED
   else -> AccessType.PACKAGE_PRIVATE
 }
-
-fun ClassNode.isFinal(): Boolean = access and Opcodes.ACC_FINAL != 0
-
-fun MethodNode.isFinal(): Boolean = access and Opcodes.ACC_FINAL != 0
-
-fun FieldNode.isFinal(): Boolean = access and Opcodes.ACC_FINAL != 0
-
-fun ClassNode.isInterface(): Boolean = access and Opcodes.ACC_INTERFACE != 0
-
-fun ClassNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
-
-fun ClassNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
-
-fun MethodNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
-
-fun FieldNode.isPrivate(): Boolean = access and Opcodes.ACC_PRIVATE != 0
-
-fun ClassNode.isPublic(): Boolean = access and Opcodes.ACC_PUBLIC != 0
-
-fun MethodNode.isPublic(): Boolean = access and Opcodes.ACC_PUBLIC != 0
-
-fun FieldNode.isPublic(): Boolean = access and Opcodes.ACC_PUBLIC != 0
-
-fun ClassNode.isDeprecated(): Boolean = access and Opcodes.ACC_DEPRECATED != 0
-
-fun MethodNode.isDeprecated(): Boolean = access and Opcodes.ACC_DEPRECATED != 0
-
-fun FieldNode.isDeprecated(): Boolean = access and Opcodes.ACC_DEPRECATED != 0
-
-fun ClassNode.isDefaultAccess(): Boolean = !isPublic() && !isPrivate() && !isProtected()
-
-fun FieldNode.isDefaultAccess(): Boolean = !isPublic() && !isProtected() && !isPrivate()
-
-fun MethodNode.isDefaultAccess(): Boolean = !isPublic() && !isProtected() && !isPrivate()
-
-fun MethodNode.isAbstract(): Boolean = access and Opcodes.ACC_ABSTRACT != 0
-
-fun ClassNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
-
-fun FieldNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
-
-fun MethodNode.isProtected(): Boolean = access and Opcodes.ACC_PROTECTED != 0
-
-fun MethodNode.isStatic(): Boolean = access and Opcodes.ACC_STATIC != 0
-
-fun FieldNode.isStatic(): Boolean = access and Opcodes.ACC_STATIC != 0
-
-fun ClassNode.isSuperFlag(): Boolean = access and Opcodes.ACC_SUPER != 0
 
 fun List<AnnotationNode>.findAnnotation(className: String): AnnotationNode? =
     find { it.desc?.extractClassNameFromDescriptor() == className }

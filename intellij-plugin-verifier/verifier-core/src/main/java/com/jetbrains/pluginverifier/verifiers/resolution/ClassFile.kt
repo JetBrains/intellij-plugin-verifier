@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import org.objectweb.asm.tree.AnnotationNode
 
@@ -17,7 +16,6 @@ interface ClassFile : ClassFileMember {
   val interfaces: List<String>
   val superName: String?
   val signature: String?
-  val accessType: AccessType
   val javaVersion: Int
   override val runtimeInvisibleAnnotations: List<AnnotationNode>
 
@@ -27,7 +25,7 @@ interface ClassFile : ClassFileMember {
   override val isPublic: Boolean
   override val isProtected: Boolean
   override val isPrivate: Boolean
-  override val isDefaultAccess: Boolean
+  override val isPackagePrivate: Boolean
   val isSuperFlag: Boolean
   override val isDeprecated: Boolean
 }

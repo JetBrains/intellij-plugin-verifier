@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.AnnotationNode
@@ -14,7 +13,6 @@ interface Method : ClassFileMember {
   val name: String
   val descriptor: String
   val signature: String?
-  val accessType: AccessType
   val exceptions: List<String>
 
   val isAbstract: Boolean
@@ -23,11 +21,12 @@ interface Method : ClassFileMember {
   override val isPublic: Boolean
   override val isProtected: Boolean
   override val isPrivate: Boolean
-  override val isDefaultAccess: Boolean
+  override val isPackagePrivate: Boolean
   override val isDeprecated: Boolean
+  val isConstructor: Boolean
+  val isClassInitializer: Boolean
   val isVararg: Boolean
   val isNative: Boolean
-  val isSynthetic: Boolean
   val isBridgeMethod: Boolean
 
   //ASM-specific classes are returned, to avoid mirroring of ASM classes. May be abstracted away of ASM, if necessary.

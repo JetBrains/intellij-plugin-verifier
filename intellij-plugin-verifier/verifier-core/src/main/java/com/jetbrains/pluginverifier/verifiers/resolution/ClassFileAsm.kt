@@ -2,12 +2,11 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.getAccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
 class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin: ClassFileOrigin) : ClassFile {
-
   override val location
     get() = ClassLocation(
         name,
@@ -44,7 +43,7 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
     get() = asmNode.signature
 
   override val accessType
-    get() = asmNode.access.getAccessType()
+    get() = getAccessType(asmNode.access)
 
   override val javaVersion
     get() = if (asmNode.version == Opcodes.V1_1) {
@@ -56,32 +55,35 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
   override val runtimeInvisibleAnnotations
     get() = asmNode.invisibleAnnotations.orEmpty()
 
-
   override val isAbstract
-    get() = asmNode.isAbstract()
+    get() = asmNode.access and Opcodes.ACC_ABSTRACT != 0
+
 
   override val isFinal
-    get() = asmNode.isFinal()
+    get() = asmNode.access and Opcodes.ACC_FINAL != 0
 
   override val isInterface
-    get() = asmNode.isInterface()
+    get() = asmNode.access and Opcodes.ACC_INTERFACE != 0
 
   override val isPublic
-    get() = asmNode.isPublic()
+    get() = asmNode.access and Opcodes.ACC_PUBLIC != 0
 
   override val isProtected
-    get() = asmNode.isProtected()
+    get() = asmNode.access and Opcodes.ACC_PROTECTED != 0
 
   override val isPrivate
-    get() = asmNode.isPrivate()
+    get() = asmNode.access and Opcodes.ACC_PRIVATE != 0
 
-  override val isDefaultAccess
-    get() = asmNode.isDefaultAccess()
+  override val isPackagePrivate
+    get() = (asmNode.access and Opcodes.ACC_PUBLIC == 0) && (asmNode.access and Opcodes.ACC_PRIVATE == 0) && (asmNode.access and Opcodes.ACC_PROTECTED == 0)
 
   override val isDeprecated
-    get() = asmNode.isDeprecated()
+    get() = asmNode.access and Opcodes.ACC_DEPRECATED != 0
 
   override val isSuperFlag
-    get() = asmNode.isSuperFlag()
+    get() = asmNode.access and Opcodes.ACC_SUPER != 0
+
+  override val isSynthetic: Boolean
+    get() = asmNode.access and Opcodes.ACC_SYNTHETIC != 0
 
 }
