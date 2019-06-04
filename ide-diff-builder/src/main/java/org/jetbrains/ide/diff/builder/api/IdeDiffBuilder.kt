@@ -69,8 +69,23 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     val introducedData = hashSetOf<ApiSignature>()
     val removedData = hashSetOf<ApiSignature>()
     return JdkResolverCreator.createJdkResolver(Resolver.ReadMode.SIGNATURES, jdkPath.jdkPath.toFile()).use { jdkResolver ->
-      appendIdeCoreData(oldIde, newIde, jdkResolver, introducedData, removedData)
-      appendBundledPluginsData(oldIde, newIde, jdkResolver, introducedData, removedData)
+      IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldPlatformResolver ->
+        IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newPlatformResolver ->
+          val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
+          Closeable { oldPluginClassLocations.closeAll() }.use {
+            val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
+            Closeable { newPluginClassLocations.closeAll() }.use {
+              val oldBundledPluginsResolvers = oldPluginClassLocations.map { it.getPluginClassesResolver() }
+              val newBundledPluginsResolvers = newPluginClassLocations.map { it.getPluginClassesResolver() }
+
+              val oldIdeResolver = UnionResolver.create(listOf(oldPlatformResolver) + oldBundledPluginsResolvers)
+              val newIdeResolver = UnionResolver.create(listOf(newPlatformResolver) + newBundledPluginsResolvers)
+
+              appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
+            }
+          }
+        }
+      }
       val apiSignatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
       val introducedIn = IntroducedIn(newIde.version)
       val removedIn = RemovedIn(newIde.version)
