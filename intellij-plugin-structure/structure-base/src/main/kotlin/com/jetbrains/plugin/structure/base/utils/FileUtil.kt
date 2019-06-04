@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.TrueFileFilter
 import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.slf4j.LoggerFactory
@@ -20,6 +21,9 @@ fun File.forceDeleteIfExists() {
     FileUtils.forceDelete(this)
   }
 }
+
+fun File.listRecursivelyAllFilesWithName(name: String): Collection<File> =
+    FileUtils.listFiles(this, NameFileFilter(name), TrueFileFilter.TRUE)
 
 fun File.listRecursivelyAllFilesWithExtension(extension: String): Collection<File> =
     FileUtils.listFiles(this, WildcardFileFilter("*.$extension"), TrueFileFilter.TRUE)
