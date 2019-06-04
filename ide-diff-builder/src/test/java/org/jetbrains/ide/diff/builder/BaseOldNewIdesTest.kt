@@ -15,7 +15,7 @@ abstract class BaseOldNewIdesTest {
     fun getNewIdeFile() = getMockIdesRoot().resolve("new-ide")
 
     private fun getMockIdesRoot(): File {
-      val testDataRoot = File("build/mock-ides")
+      val testDataRoot = File("build").resolve("mock-ides")
       if (testDataRoot.isDirectory) {
         return testDataRoot
       }

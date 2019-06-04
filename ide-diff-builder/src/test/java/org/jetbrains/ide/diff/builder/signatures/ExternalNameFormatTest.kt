@@ -3,15 +3,16 @@ package org.jetbrains.ide.diff.builder.signatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
+import org.jetbrains.ide.diff.builder.api.FakeClassFileOrigin
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.BeforeClass
 import org.junit.Test
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
 
 /**
  * Asserts that string presentations for API elements found
@@ -55,13 +56,13 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
 
   @Test
   fun `check class names`() {
-    val classNodes = ideResolver.allClasses.map { ideResolver.findClass(it)!! }
+    val classNodes = ideResolver.allClasses.map { findClassFile(it) }
     checkClasses(classNodes)
   }
 
   @Test
   fun `check many signatures from A`() {
-    val aClass = ideResolver.findClass("same/Same")!!
+    val aClass = findClassFile("same/Same")
     val methodName2externalName = mapOf(
         "<init>" to "same.Same Same(int)",
         "m1" to "same.Same void m1()",
@@ -87,10 +88,12 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
 
   @Test
   fun `check field names`() {
-    val aClass = ideResolver.findClass("same/Same")!!
-    val fieldNodes = aClass.getFields().orEmpty()
-    checkFields(fieldNodes, aClass)
+    val aClass = findClassFile("same/Same")
+    checkFields(aClass.fields)
   }
+
+  private fun findClassFile(className: String): ClassFile =
+      ClassFileAsm(ideResolver.findClass(className)!!, FakeClassFileOrigin)
 
   /**
    * Checks that external name of empty constructor of an inner class
@@ -108,39 +111,39 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
    */
   @Test
   fun `check default constructor of an inner class name`() {
-    val innerClass = ideResolver.findClass("same/Same\$Inner")!!
-    val nestedClass = ideResolver.findClass("same/Same\$Nested")!!
+    val innerClass = findClassFile("same/Same\$Inner")
+    val nestedClass = findClassFile("same/Same\$Nested")
     checkMethods(innerClass, mapOf("<init>" to "same.Same.Inner Inner()"))
     checkMethods(nestedClass, mapOf("<init>" to "same.Same.Nested Nested()"))
   }
 
-  private fun checkClasses(classNodes: List<ClassNode>) {
+  private fun checkClasses(classNodes: List<ClassFile>) {
     for ((className, expectedName) in className2externalName) {
-      val classNode = classNodes.find { it.name == className }
-      assertNotNull(className, classNode)
-      assertNotNull(classNode!!.name, expectedName)
+      val classFile = classNodes.find { it.name == className }
+      assertNotNull(className, classFile)
+      assertNotNull(classFile!!.name, expectedName)
 
-      val actualName = classNode.createClassLocation().toSignature().externalPresentation
+      val actualName = classFile.location.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }
 
-  private fun checkMethods(aClass: ClassNode, methodName2externalName: Map<String, String>) {
-    for (methodNode in aClass.getMethods().orEmpty()) {
+  private fun checkMethods(aClass: ClassFile, methodName2externalName: Map<String, String>) {
+    for (methodNode in aClass.methods) {
       val expectedName = methodName2externalName[methodNode.name]
       assertNotNull(methodNode.name, expectedName)
 
-      val actualName = createMethodLocation(aClass, methodNode).toSignature().externalPresentation
+      val actualName = methodNode.location.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }
 
-  private fun checkFields(fieldNodes: List<FieldNode>, aClass: ClassNode) {
+  private fun checkFields(fieldNodes: Sequence<Field>) {
     for (fieldNode in fieldNodes) {
       val expectedName = fieldName2externalName[fieldNode.name]
       assertNotNull(fieldNode.name, expectedName)
 
-      val actualName = createFieldLocation(aClass, fieldNode).toSignature().externalPresentation
+      val actualName = fieldNode.location.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }

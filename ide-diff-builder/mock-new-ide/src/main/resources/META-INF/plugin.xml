@@ -1,0 +1,13 @@
+<idea-plugin version="2">
+    <id>com.intellij</id>
+    <name>IDEA CORE</name>
+    <version>1.0</version>
+    <vendor email="jetbrains.com" url="https://jetbrains.com">JetBrains</vendor>
+
+    <description><![CDATA[
+      Some jetbrains plugin quite long description
+    ]]></description>
+
+    <idea-version since-build="131"/>
+
+</idea-plugin>

@@ -1,8 +1,8 @@
 package org.jetbrains.ide.diff.builder.cli
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeRepository
-import com.jetbrains.pluginverifier.ide.IntelliJIdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 

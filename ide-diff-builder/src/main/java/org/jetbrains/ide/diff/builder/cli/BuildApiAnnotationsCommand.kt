@@ -4,7 +4,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.IntelliJIdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -262,8 +262,7 @@ class BuildApiAnnotationsCommand : Command {
     val message = "________Downloading $ideVersion"
     LOG.info(message)
     return retry(message) {
-      val ideFile = getIdeFile(ideVersion)
-      when (ideFile) {
+      when (val ideFile = getIdeFile(ideVersion)) {
         is IdeFilesBank.Result.Found -> ideFile.ideFileLock
         is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ideVersion is not found: ${ideFile.reason}")
         is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ideVersion couldn't be downloaded: ${ideFile.reason}", ideFile.exception)

@@ -15,14 +15,14 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
-import com.jetbrains.pluginverifier.verifiers.*
-import com.jetbrains.pluginverifier.verifiers.logic.hierarchy.ClassParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.tree.FieldNode
-import org.objectweb.asm.tree.MethodNode
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.nio.file.Path
@@ -86,38 +86,6 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     }
   }
 
-  private fun appendIdeCoreData(
-      oldIde: Ide,
-      newIde: Ide,
-      jdkResolver: Resolver,
-      introducedData: MutableSet<ApiSignature>,
-      removedData: MutableSet<ApiSignature>
-  ) {
-    IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldIdeResolver ->
-      IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newIdeResolver ->
-        appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
-      }
-    }
-  }
-
-  private fun appendBundledPluginsData(
-      oldIde: Ide,
-      newIde: Ide,
-      jdkResolver: Resolver,
-      introducedData: MutableSet<ApiSignature>,
-      removedData: MutableSet<ApiSignature>
-  ) {
-    val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
-    Closeable { oldPluginClassLocations.closeAll() }.use {
-      val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
-      Closeable { newPluginClassLocations.closeAll() }.use {
-        val oldAllPluginsResolver = oldPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
-        val newAllPluginsResolver = newPluginClassLocations.map { it.getPluginClassesResolver() }.let { UnionResolver.create(it) }
-        appendData(oldAllPluginsResolver, newAllPluginsResolver, jdkResolver, introducedData, removedData)
-      }
-    }
-  }
-
   private fun appendData(
       oldResolver: Resolver,
       newResolver: Resolver,
@@ -153,8 +121,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
    * Appends all signatures available in [newClass] but not available in [oldClass].
    */
   private fun findAddedApi(
-      oldClass: ClassNode?,
-      newClass: ClassNode,
+      oldClass: ClassFile?,
+      newClass: ClassFile,
       oldResolver: Resolver,
       newResolver: Resolver,
       introducedData: MutableSet<ApiSignature>
@@ -165,33 +133,33 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         //Outer class is already added => no need to register this inner one.
         return
       }
-      introducedData += newClass.createClassLocation().toSignature()
+      introducedData += newClass.location.toSignature()
       return
     }
 
-    for (newMethod in newClass.getMethods().orEmpty()) {
+    for (newMethod in newClass.methods) {
       if (!newMethod.isAccessible() || newMethod.isIgnored() || isMethodOverriding(newMethod, newClass, newResolver)) {
         continue
       }
 
-      val oldMethod = oldClass.getMethods()?.find {
-        it.name == newMethod.name && it.desc == newMethod.desc && it.isAccessible() && !it.isIgnored()
+      val oldMethod = oldClass.methods.find {
+        it.name == newMethod.name && it.descriptor == newMethod.descriptor && it.isAccessible() && !it.isIgnored()
       }
       if (oldMethod == null) {
-        introducedData += createMethodLocation(newClass, newMethod).toSignature()
+        introducedData += newMethod.location.toSignature()
       }
     }
 
-    for (newField in newClass.getFields().orEmpty()) {
+    for (newField in newClass.fields) {
       if (!newField.isAccessible() || newField.isIgnored()) {
         continue
       }
 
-      val oldField = oldClass.getFields()?.find {
-        it.name == newField.name && it.desc == newField.desc && it.isAccessible() && !it.isIgnored()
+      val oldField = oldClass.fields.find {
+        it.name == newField.name && it.descriptor == newField.descriptor && it.isAccessible() && !it.isIgnored()
       }
       if (oldField == null) {
-        introducedData += createFieldLocation(newClass, newField).toSignature()
+        introducedData += newField.location.toSignature()
       }
     }
   }
@@ -200,8 +168,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
    * Appends all signatures available in [oldClass] but not available in [newClass].
    */
   private fun findRemovedApi(
-      oldClass: ClassNode,
-      newClass: ClassNode?,
+      oldClass: ClassFile,
+      newClass: ClassFile?,
       oldResolver: Resolver,
       newResolver: Resolver,
       removedData: MutableSet<ApiSignature>
@@ -212,33 +180,33 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
         //Outer class is already registered => no need to register this inner one.
         return
       }
-      removedData += oldClass.createClassLocation().toSignature()
+      removedData += oldClass.location.toSignature()
       return
     }
 
-    for (oldMethod in oldClass.getMethods().orEmpty()) {
+    for (oldMethod in oldClass.methods) {
       if (!oldMethod.isAccessible() || oldMethod.isIgnored() || isMethodOverriding(oldMethod, oldClass, oldResolver)) {
         continue
       }
 
-      val newMethod = newClass.getMethods()?.find {
-        it.name == oldMethod.name && it.desc == oldMethod.desc && it.isAccessible() && !it.isIgnored()
+      val newMethod = newClass.methods.find {
+        it.name == oldMethod.name && it.descriptor == oldMethod.descriptor && it.isAccessible() && !it.isIgnored()
       }
       if (newMethod == null) {
-        removedData += createMethodLocation(oldClass, oldMethod).toSignature()
+        removedData += oldMethod.location.toSignature()
       }
     }
 
-    for (oldField in oldClass.getFields().orEmpty()) {
+    for (oldField in oldClass.fields) {
       if (!oldField.isAccessible() || oldField.isIgnored()) {
         continue
       }
 
-      val newField = newClass.getFields()?.find {
-        it.name == oldField.name && it.desc == oldField.desc && it.isAccessible() && !it.isIgnored()
+      val newField = newClass.fields.find {
+        it.name == oldField.name && it.descriptor == oldField.descriptor && it.isAccessible() && !it.isIgnored()
       }
       if (newField == null) {
-        removedData += createFieldLocation(oldClass, oldField).toSignature()
+        removedData += oldField.location.toSignature()
       }
     }
   }
@@ -254,21 +222,21 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return null
   }
 
-  private fun Resolver.safeFindClass(className: String): ClassNode? {
+  private fun Resolver.safeFindClass(className: String): ClassFile? {
     return try {
-      findClass(className)
+      findClass(className)?.let { ClassFileAsm(it, FakeClassFileOrigin) }
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       return null
     }
   }
 
-  private fun isMethodOverriding(methodNode: MethodNode, classNode: ClassNode, resolver: Resolver): Boolean {
-    if (methodNode.isConstructor()
-        || methodNode.isClassInitializer()
-        || methodNode.isStatic()
-        || methodNode.isPrivate()
-        || methodNode.isDefaultAccess()
+  private fun isMethodOverriding(methodNode: Method, classNode: ClassFile, resolver: Resolver): Boolean {
+    if (methodNode.isConstructor
+        || methodNode.isClassInitializer
+        || methodNode.isStatic
+        || methodNode.isPrivate
+        || methodNode.isPackagePrivate
     ) {
       return false
     }
@@ -279,12 +247,12 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
 
     val isOverriding = AtomicBoolean()
     parentsVisitor.visitClass(classNode, false, onEnter = { parentClass ->
-      val hasSameMethod = parentClass.getMethods().orEmpty().any {
+      val hasSameMethod = parentClass.methods.any {
         it.name == methodNode.name
-            && it.desc == methodNode.desc
-            && !it.isStatic()
-            && !it.isPrivate()
-            && !it.isDefaultAccess()
+            && it.descriptor == methodNode.descriptor
+            && !it.isStatic
+            && !it.isPrivate
+            && !it.isPackagePrivate
       }
       if (hasSameMethod) {
         isOverriding.set(true)
@@ -369,16 +337,16 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
           || className.isSyntheticLikeName()
           || hasObfuscatedLikePackage(className)
 
-  private fun ClassNode.isAccessible() = !isPrivate() && !isDefaultAccess()
+  private fun ClassFile.isAccessible() = !isPrivate && !isPackagePrivate
 
-  private fun ClassNode.isIgnored() = isIgnoredClassName(name) || isSynthetic()
+  private fun ClassFile.isIgnored() = isIgnoredClassName(name) || isSynthetic
 
-  private fun MethodNode.isAccessible() = !isPrivate() && !isDefaultAccess()
+  private fun Method.isAccessible() = !isPrivate && !isPackagePrivate
 
-  private fun MethodNode.isIgnored() = isClassInitializer() || isBridgeMethod() || isSynthetic() || name.isSyntheticLikeName()
+  private fun Method.isIgnored() = isClassInitializer || isBridgeMethod || isSynthetic || name.isSyntheticLikeName()
 
-  private fun FieldNode.isAccessible() = !isPrivate() && !isDefaultAccess()
+  private fun Field.isAccessible() = !isPrivate && !isPackagePrivate
 
-  private fun FieldNode.isIgnored() = isSynthetic() || name.isSyntheticLikeName()
+  private fun Field.isIgnored() = isSynthetic || name.isSyntheticLikeName()
 
 }

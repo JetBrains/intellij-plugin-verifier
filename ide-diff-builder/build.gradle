@@ -24,10 +24,23 @@ jar {
         'Main-Class': 'org.jetbrains.ide.diff.builder.MainKt'
     )
   }
+}
 
+task fatJar(type: Jar) {
+  manifest.from jar.manifest
+  classifier = 'all'
   from {
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+  } {
+    exclude "META-INF/*.SF"
+    exclude "META-INF/*.DSA"
+    exclude "META-INF/*.RSA"
   }
+  with jar
+}
+
+artifacts {
+  fatJar
 }
 
 sourceCompatibility = 1.8
@@ -43,14 +56,14 @@ compileKotlin {
   }
 }
 
-def verifierVersion = project.hasProperty('verifierVersionDev') ? 'dev' : '1.210'
-
 dependencies {
   runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 
   testImplementation 'junit:junit:4.12'
   testImplementation project(':')
-  implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-core', version: verifierVersion
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+  implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-intellij', version: 'dev'
+  implementation group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: 'dev'
   implementation 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   implementation 'org.apache.commons:commons-text:1.6'
 }

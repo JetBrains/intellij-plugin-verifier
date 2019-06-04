@@ -2,14 +2,12 @@ package org.jetbrains.ide.diff.builder.persistence
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.extension
 import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.misc.readText
 import com.jetbrains.pluginverifier.misc.toSystemIndependentName
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.NameFileFilter
-import org.apache.commons.io.filefilter.TrueFileFilter
 import org.jetbrains.ide.diff.builder.api.ApiEvent
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
@@ -69,11 +67,9 @@ class ApiReportReader(private val reportPath: Path) : Closeable {
       if (reportPath.extension == "zip") {
         ZipXmlReaderSequence(ZipFile(reportPath.toFile()))
       } else {
-        val xmlFiles = FileUtils.listFiles(
-            reportPath.toFile(),
-            NameFileFilter(ANNOTATIONS_XML_FILE_NAME),
-            TrueFileFilter.INSTANCE
-        ).map { it.toPath().toAbsolutePath() }
+        val xmlFiles = reportPath.toFile()
+            .listRecursivelyAllFilesWithName(ANNOTATIONS_XML_FILE_NAME)
+            .map { it.toPath().toAbsolutePath() }
         FilesXmlReaderSequence(reportPath.toAbsolutePath(), xmlFiles)
       }
 

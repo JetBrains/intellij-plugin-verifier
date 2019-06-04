@@ -74,7 +74,7 @@ fun MethodLocation.toSignature(): MethodSignature {
 fun FieldLocation.toSignature() = FieldSignature(hostClass.toSignature(), fieldName)
 
 private fun MethodLocation.convertMethodSignature(): Pair<List<String>, String> {
-  return if (signature.isNotEmpty()) {
+  return if (!signature.isNullOrEmpty()) {
     val methodSignature = SigVisitor().also { SignatureReader(signature).accept(it) }.getMethodSignature()
     val formatOptions = FormatOptions(
         isInterface = false,
