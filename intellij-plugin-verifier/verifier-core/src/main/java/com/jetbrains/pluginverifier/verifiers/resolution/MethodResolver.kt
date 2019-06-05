@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.YesNoUnsure
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
 import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 import java.util.*
@@ -28,7 +29,7 @@ class MethodResolver {
           null
         }
         is MethodResolutionResult.Found -> {
-          checkMethodIsAccessible(resolutionResult.method, context, methodReference, callerMethod, instruction)
+          checkMethodIsAccessible(resolutionResult.method, methodReference, context, callerMethod, instruction)
           resolutionResult.method
         }
       }
@@ -65,29 +66,19 @@ class MethodResolver {
     )
   }
 
-  /**
-   * A field or method R is accessible to a class or interface D if and only if any of the following is true:
-   * - R is public.
-   * - R is protected and is declared in a class C, and D is either a subclass of C or C itself.
-   * Furthermore, if R is not static, then the symbolic reference to R must contain a symbolic reference
-   * to a class T, such that T is either a subclass of D, a superclass of D, or D itself.
-   * - R is either protected or has default access (that is, neither public nor protected nor private),
-   * and is declared by a class in the same run-time package as D.
-   * - R is private and is declared in D.
-   */
   private fun checkMethodIsAccessible(
-      resolvedMethod: Method,
-      context: VerificationContext,
+      method: Method,
       methodReference: MethodReference,
+      context: VerificationContext,
       callerMethod: Method,
       instruction: Instruction
   ) {
-    val accessProblem = detectAccessProblem(resolvedMethod, callerMethod, context)
+    val accessProblem = detectAccessProblem(method, methodReference, callerMethod, context)
     if (accessProblem != null) {
       context.problemRegistrar.registerProblem(
           IllegalMethodAccessProblem(
               methodReference,
-              resolvedMethod.location,
+              method.location,
               accessProblem,
               callerMethod.location,
               instruction
@@ -214,7 +205,7 @@ private class MethodResolveImpl(
     return allMatching.filter { method ->
       allMatching.none { otherMethod ->
         otherMethod.containingClassFile.name != method.containingClassFile.name
-            && context.classResolver.isSubclassOf(otherMethod.containingClassFile, method.containingClassFile.name)
+            && context.classResolver.isSubclassOf(otherMethod.containingClassFile, method.containingClassFile.name) == YesNoUnsure.YES
       }
     }
   }

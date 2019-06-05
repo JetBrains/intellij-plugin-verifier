@@ -4,10 +4,7 @@ import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentat
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
-import com.jetbrains.pluginverifier.verifiers.isSubclassOf
-import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
+import com.jetbrains.pluginverifier.verifiers.*
 
 /**
  * The documented problems are described on the
@@ -43,7 +40,7 @@ data class DocMethodRemoved(val hostClass: String, val methodName: String) : Doc
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass) == YesNoUnsure.YES
 }
 
 /**
@@ -56,7 +53,7 @@ data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: Str
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass) == YesNoUnsure.YES
           ||
           problem is MethodNotImplementedProblem
           && problem.abstractMethod.methodName == methodName
@@ -87,8 +84,8 @@ data class DocFinalMethodInherited(val changedClass: String, val newParent: Stri
       problem is OverridingFinalMethodProblem
           && problem.finalMethod.methodName == methodName
           && problem.finalMethod.hostClass.className == newParent
-          && context.classResolver.isSubclassOrSelf(problem.invalidClass.className, changedClass)
-          && context.classResolver.isSubclassOf(changedClass, newParent)
+          && YesNoUnsure.YES == context.classResolver.isSubclassOrSelf(problem.invalidClass.className, changedClass)
+          && YesNoUnsure.YES == context.classResolver.isSubclassOf(changedClass, newParent)
 }
 
 /**
@@ -101,7 +98,7 @@ data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: 
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is MethodNotFoundProblem
           && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass) == YesNoUnsure.YES
           ||
           problem is MethodNotImplementedProblem
           && problem.abstractMethod.methodName == methodName
@@ -118,7 +115,7 @@ data class DocFieldRemoved(val hostClass: String, val fieldName: String) : Docum
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
           && problem.unresolvedField.fieldName == fieldName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass) == YesNoUnsure.YES
 }
 
 /**
@@ -131,7 +128,7 @@ data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : D
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is FieldNotFoundProblem
           && problem.unresolvedField.fieldName == fieldName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass) == YesNoUnsure.YES
 }
 
 /**
@@ -166,7 +163,7 @@ data class DocAbstractMethodAdded(val hostClass: String, val methodName: String)
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is MethodNotImplementedProblem
           && problem.abstractMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.incompleteClass.className, hostClass)
+          && context.classResolver.isSubclassOrSelf(problem.incompleteClass.className, hostClass) == YesNoUnsure.YES
 }
 
 /**

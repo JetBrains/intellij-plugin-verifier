@@ -108,7 +108,7 @@ class FieldResolver {
       instruction: Instruction,
       context: VerificationContext
   ) {
-    val accessProblem = detectAccessProblem(field, callerMethod, context)
+    val accessProblem = detectAccessProblem(field, fieldReference, callerMethod, context)
     if (accessProblem != null) {
       context.problemRegistrar.registerProblem(
           IllegalFieldAccessProblem(
