@@ -1,15 +1,20 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.core.ArtifactTypeExtractor
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
+import com.jetbrains.intellij.feature.extractor.extractor.ArtifactTypeExtractor
 import org.junit.Assert
 import org.junit.Test
 
 class ArtifactTypeTest : FeatureExtractorTestBase() {
 
-  private fun assertExtractArtifactType(className: String, artifactTypes: List<String>) {
-    val node = readClassNode(className)
-    val list = ArtifactTypeExtractor(resolver).extract(node).featureNames
-    Assert.assertEquals(artifactTypes, list)
+  private fun assertExtractArtifactType(className: String, expectedArtifactTypes: List<String>) {
+    resetPluginExtensionPoint(ExtensionPoint.ARTIFACT_TYPE, className)
+    val featuresList = ArtifactTypeExtractor().extract(plugin, resolver)
+    Assert.assertEquals(
+        listOf(ExtensionPointFeatures(ExtensionPoint.ARTIFACT_TYPE, expectedArtifactTypes)),
+        featuresList
+    )
   }
 
   @Test

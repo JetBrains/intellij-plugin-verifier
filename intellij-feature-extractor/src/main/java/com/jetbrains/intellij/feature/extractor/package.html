@@ -18,7 +18,7 @@ The features are specified using IntelliJ API. There are following types of feat
     <li>File extensions<br>
         A plugin author implements abstract class <code>com.intellij.openapi.fileTypes.FileTypeFactory</code>
         and feeds the <code>com.intellij.openapi.fileTypes.FileTypeConsumer</code> to the only abstract method
-        with support file extensions.
+        with supported file extensions.
     </li>
     <li>Artifact types<br>
         A plugin author implements abstract class <code>com.intellij.packaging.artifacts.ArtifactType</code>
@@ -32,8 +32,8 @@ The features are specified using IntelliJ API. There are following types of feat
 In most cases the features are specified as string constants. The tool extracts the constant values from class files
 using bytecode analysis.
 There are tricky cases which are hard to analyse without running the plugin's code. In such cases the feature extractor
-may return incomplete results.
+may return incomplete results.<br>
 
-@see <a href="https://plugins.jetbrains.com/feature">Extracted plugin features</a>
+List of extracted plugin features can be seen on this <a href="https://plugins.jetbrains.com/feature">page</a>
 </body>
 </html>

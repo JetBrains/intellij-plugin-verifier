@@ -1,6 +1,8 @@
-package com.jetbrains.intellij.feature.extractor.core
+package com.jetbrains.intellij.feature.extractor.extractor
 
+import com.jetbrains.intellij.feature.extractor.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
@@ -12,15 +14,20 @@ import org.objectweb.asm.tree.MethodInsnNode
  * Extracts id of the run configuration
  * (as if com.intellij.execution.configurations.ConfigurationType.getId() is invoked)
  */
-class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
+class RunConfigurationExtractor : Extractor {
 
   companion object {
     private const val CONFIGURATION_BASE = "com/intellij/execution/configurations/ConfigurationTypeBase"
   }
 
-  override fun extractImpl(classNode: ClassNode): List<String>? {
+  override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
+    return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.CONFIGURATION_TYPE)
+        .mapNotNull { extractConfigurationTypes(it, resolver) }
+  }
+
+  private fun extractConfigurationTypes(classNode: ClassNode, resolver: Resolver): ExtensionPointFeatures? {
     if (classNode.superName == CONFIGURATION_BASE) {
-      val constructor = classNode.findMethod { it.name == "<init>" } ?: return null
+      val constructor = classNode.findMethod { it.isConstructor } ?: return null
       val frames = AnalysisUtil.analyzeMethodFrames(classNode, constructor)
       val constructorInstructions = constructor.instructionsAsList()
       val superInitIndex = constructorInstructions.indexOfLast {
@@ -34,11 +41,7 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
         return null
       }
       val value = AnalysisUtil.evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), constructorInstructions)
-      if (value != null) {
-        extractedAll = true
-        return listOf(value)
-      }
-      return null
+      return convertToResult(value)
     } else {
       val method = classNode.findMethod { it.name == "getId" && Type.getArgumentTypes(it.desc).isEmpty() }
           ?: return null
@@ -46,10 +49,14 @@ class RunConfigurationExtractor(resolver: Resolver) : Extractor(resolver) {
         return null
       }
       val value = AnalysisUtil.extractConstantFunctionValue(classNode, method, resolver)
-      return if (value == null) null else {
-        extractedAll = true
-        listOf(value)
-      }
+      return convertToResult(value)
     }
   }
+
+  private fun convertToResult(value: String?): ExtensionPointFeatures? =
+      if (value != null) {
+        ExtensionPointFeatures(ExtensionPoint.CONFIGURATION_TYPE, listOf(value))
+      } else {
+        null
+      }
 }

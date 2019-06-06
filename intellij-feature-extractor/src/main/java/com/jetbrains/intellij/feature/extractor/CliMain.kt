@@ -13,21 +13,21 @@ import java.io.File
  */
 fun main(args: Array<String>) {
   if (args.size != 2) {
-    throw IllegalArgumentException("Usage: <plugin> <idea>")
+    throw IllegalArgumentException("Usage: <plugin> <ide>")
   }
+  val jsonSerializer = Gson()
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
-  val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-  val result = when (pluginCreationResult) {
+  when (val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)) {
     is PluginCreationSuccess -> {
       val ide = IdeManager.createManager().createIde(ideaFile)
       IdeResolverCreator.createIdeResolver(ide).use { ideResolver ->
-        val extractorResult = FeaturesExtractor.extractFeatures(ide, ideResolver, pluginCreationResult.plugin)
-        extractorResult.features.forEach { println(Gson().toJson(it)) }
-        "All features extracted: ${extractorResult.extractedAll}"
+        val features = FeaturesExtractor.extractFeatures(ide, ideResolver, pluginCreationResult.plugin)
+        for (feature in features) {
+          println(jsonSerializer.toJson(feature))
+        }
       }
     }
     is PluginCreationFail -> "Plugin is invalid: " + pluginCreationResult.errorsAndWarnings.joinToString()
   }
-  println(result)
 }

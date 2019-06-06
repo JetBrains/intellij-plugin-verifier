@@ -1,4 +1,4 @@
-package com.jetbrains.intellij.feature.extractor.core
+package com.jetbrains.intellij.feature.extractor
 
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -21,6 +21,15 @@ fun ClassNode.findField(predicate: (FieldNode) -> Boolean): FieldNode? = fields.
 
 fun MethodNode.instructionsAsList(): List<AbstractInsnNode> = instructions.toArray().toList()
 
+val MethodNode.isConstructor: Boolean
+  get() = name == "<init>"
+
+val MethodNode.isClassInitializer: Boolean
+  get() = name == "<clinit>"
+
 fun Frame<SourceValue>.getOnStack(index: Int): Value? = this.getStack(this.stackSize - 1 - index)
 
 inline fun <reified T> T.replicate(n: Int): List<T> = Array(n) { this }.toList()
+
+val ClassNode.javaClassName: String
+  get() = name.replace('/', '.').replace('$', '.')

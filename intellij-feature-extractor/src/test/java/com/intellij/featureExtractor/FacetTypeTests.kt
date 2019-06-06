@@ -1,6 +1,8 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.core.FacetTypeExtractor
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
+import com.jetbrains.intellij.feature.extractor.extractor.FacetTypeExtractor
 import org.junit.Assert
 import org.junit.Test
 
@@ -21,11 +23,14 @@ class FacetTypeTests : FeatureExtractorTestBase() {
     assertExtractFacets("featureExtractor.facetType.FinalField", listOf("thisIsStringId"))
   }
 
-  private fun assertExtractFacets(className: String, listOf: List<String>) {
-    val node = readClassNode(className)
-    val extractor = FacetTypeExtractor(resolver)
-    val facetTypeId = extractor.extract(node).featureNames
-    Assert.assertEquals(listOf, facetTypeId)
+  private fun assertExtractFacets(className: String, expectedFacetTypes: List<String>) {
+    resetPluginExtensionPoint(ExtensionPoint.FACET_TYPE, className)
+    val extractor = FacetTypeExtractor()
+    val features = extractor.extract(plugin, resolver)
+    Assert.assertEquals(
+        listOf(ExtensionPointFeatures(ExtensionPoint.FACET_TYPE, expectedFacetTypes)),
+        features
+    )
   }
 
 }

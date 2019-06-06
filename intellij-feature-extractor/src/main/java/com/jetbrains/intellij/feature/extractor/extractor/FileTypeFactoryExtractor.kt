@@ -1,6 +1,8 @@
-package com.jetbrains.intellij.feature.extractor.core
+package com.jetbrains.intellij.feature.extractor.extractor
 
+import com.jetbrains.intellij.feature.extractor.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
@@ -12,7 +14,7 @@ import org.objectweb.asm.tree.analysis.Value
 /**
  * Extracts file extensions passed to consumer of FileTypeFactory.createFileTypes(FileTypeConsumer) from a class extending FileTypeFactory
  */
-class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
+class FileTypeFactoryExtractor : Extractor {
 
   companion object {
     private const val FILE_TYPE_FACTORY = "com/intellij/openapi/fileTypes/FileTypeFactory"
@@ -26,80 +28,81 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     private const val EXACT_NAME_MATCHER = "com/intellij/openapi/fileTypes/ExactFileNameMatcher"
 
     private const val EXTENSIONS_MATCHER = "com/intellij/openapi/fileTypes/ExtensionFileNameMatcher"
+
+    fun parseExtensionsList(extensions: String): List<String> = extensions.split(';').map(String::trim).filterNot(String::isEmpty).map { "*.$it" }
   }
 
-  override fun extractImpl(classNode: ClassNode): List<String>? {
+  override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
+    return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.FILE_TYPE_FACTORY)
+        .mapNotNull { extractFileTypes(it, resolver) }
+  }
+
+  private fun extractFileTypes(classNode: ClassNode, resolver: Resolver): ExtensionPointFeatures? {
     if (classNode.superName != FILE_TYPE_FACTORY) {
       return null
     }
-    val method = classNode.findMethod { it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract() }
-        ?: return null
+    val method = classNode.findMethod {
+      it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract()
+    } ?: return null
+
     val frames = AnalysisUtil.analyzeMethodFrames(classNode, method)
 
     val result = arrayListOf<String>()
-    extractedAll = true
-    var foundAnyConsumeInvocation = false
-
     val instructions = method.instructionsAsList()
-    instructions.forEachIndexed { index, insn ->
-      if (insn is MethodInsnNode) {
+    instructions.forEachIndexed { index, instruction ->
+      if (instruction is MethodInsnNode) {
 
-        if (insn.name == "consume" && insn.owner == FILE_TYPE_CONSUMER) {
+        if (instruction.name == "consume" && instruction.owner == FILE_TYPE_CONSUMER) {
 
-          if (insn.desc == EXPLICIT_EXTENSION) {
-            foundAnyConsumeInvocation = true
+          if (instruction.desc == EXPLICIT_EXTENSION) {
             val frame = frames[index]
             val stringValue = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
             if (stringValue != null) {
-              result.addAll(parse(stringValue))
-            } else {
-              extractedAll = false
+              result.addAll(parseExtensionsList(stringValue))
             }
-          } else if (insn.desc == FILE_TYPE_ONLY) {
-            foundAnyConsumeInvocation = true
+          } else if (instruction.desc == FILE_TYPE_ONLY) {
             val frame = frames[index]
             val fileTypeInstance = frame.getOnStack(0)
-            val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance)
+            val fromFileType = evaluateExtensionsOfFileType(fileTypeInstance, resolver)
             if (fromFileType != null) {
-              result.addAll(parse(fromFileType))
-            } else {
-              extractedAll = false
+              result.addAll(parseExtensionsList(fromFileType))
             }
-          } else if (insn.desc == FILENAME_MATCHERS) {
-            foundAnyConsumeInvocation = true
-            val extensions = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames)
+          } else if (instruction.desc == FILENAME_MATCHERS) {
+            val extensions = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames, resolver)
             if (extensions != null) {
               result.addAll(extensions)
-            } else {
-              extractedAll = false
             }
           }
         }
       }
     }
-
-    extractedAll = foundAnyConsumeInvocation && extractedAll
-
-    return result
+    return ExtensionPointFeatures(ExtensionPoint.FILE_TYPE_FACTORY, result)
   }
 
   private fun computeExtensionsPassedToFileNameMatcherArray(
       methodInstructions: List<AbstractInsnNode>,
       arrayUserInstructionIndex: Int,
-      frames: List<Frame<SourceValue>>
+      frames: List<Frame<SourceValue>>,
+      resolver: Resolver
   ): List<String>? {
     val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
     if (arrayProducer !is SourceValue || arrayProducer.insns.size != 1) {
       return null
     }
 
-    val anewArrayInsn = arrayProducer.insns.first()
-    if (anewArrayInsn is TypeInsnNode && anewArrayInsn.opcode == Opcodes.ANEWARRAY) {
-      val newArrayInsnIndex = methodInstructions.indexOf(anewArrayInsn)
-      if (newArrayInsnIndex == -1) {
+    val anewArrayInstruction = arrayProducer.insns.first()
+    if (anewArrayInstruction is TypeInsnNode && anewArrayInstruction.opcode == Opcodes.ANEWARRAY) {
+      val newArrayInstructionIndex = methodInstructions.indexOf(anewArrayInstruction)
+      if (newArrayInstructionIndex == -1) {
         return null
       }
-      return aggregateFileNameMatcherAsArrayElements(newArrayInsnIndex, arrayUserInstructionIndex, methodInstructions, frames)
+      return aggregateFileNameMatcherAsArrayElements(
+          newArrayInstructionIndex,
+          arrayUserInstructionIndex,
+          methodInstructions,
+          frames,
+          resolver
+      )
     }
     return null
   }
@@ -132,9 +135,11 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
    * of the i-th element of the array.
    */
   private fun aggregateFileNameMatcherAsArrayElements(
-      newArrayInsnIndex: Int,
+      newArrayInstructionIndex: Int,
       arrayUserInstructionIndex: Int,
-      methodInstructions: List<AbstractInsnNode>, frames: List<Frame<SourceValue>>
+      methodInstructions: List<AbstractInsnNode>,
+      frames: List<Frame<SourceValue>>,
+      resolver: Resolver
   ): List<String> {
     val dummyValue: AbstractInsnNode = object : AbstractInsnNode(-1) {
       override fun getType(): Int = -1
@@ -145,10 +150,10 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     }
 
     //insert dummy instructions to the end to prevent ArrayIndexOutOfBoundsException.
-    val insns = methodInstructions + dummyValue.replicate(10)
+    val instructions = methodInstructions + dummyValue.replicate(10)
 
     //skip the ANEWARRAY instruction
-    var pos = newArrayInsnIndex + 1
+    var pos = newArrayInstructionIndex + 1
 
     /*
     * NEW com/intellij/openapi/fileTypes/ExactFileNameMatcher
@@ -158,20 +163,20 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     */
     fun tryParseExactMatcherConstructorOfOneArgument(): String? {
       val oldPos = pos
-      val new = insns[pos++]
+      val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
-        if (insns[pos++].opcode == Opcodes.DUP) {
-          val argumentInsn = insns[pos++]
+        if (instructions[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
             val frame = frames[pos]
-            val initInvoke = insns[pos]
+            val initInvoke = instructions[pos]
             pos++
 
             if (initInvoke is MethodInsnNode
                 && initInvoke.name == "<init>"
                 && initInvoke.owner == EXACT_NAME_MATCHER
                 && initInvoke.desc == "(Ljava/lang/String;)V") {
-              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, insns)
+              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
                 return string
               }
@@ -192,16 +197,16 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     */
     fun tryParseExactMatcherConstructorOfTwoArguments(): String? {
       val oldPos = pos
-      val new = insns[pos++]
+      val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
-        if (insns[pos++].opcode == Opcodes.DUP) {
-          val argumentInsn = insns[pos++]
+        if (instructions[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
-            if (insns[pos].opcode == Opcodes.ICONST_0 || insns[pos].opcode == Opcodes.ICONST_1) {
+            if (instructions[pos].opcode == Opcodes.ICONST_0 || instructions[pos].opcode == Opcodes.ICONST_1) {
               pos++
 
               val frame = frames[pos]
-              val initInvoke = insns[pos]
+              val initInvoke = instructions[pos]
               pos++
 
               if (initInvoke is MethodInsnNode
@@ -209,7 +214,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
                   && initInvoke.owner == EXACT_NAME_MATCHER
                   && initInvoke.desc == "(Ljava/lang/String;Z)V") {
 
-                val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(1), resolver, frames, insns)
+                val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(1), resolver, frames, instructions)
                 if (string != null) {
                   return string
                 }
@@ -231,12 +236,12 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     */
     fun tryParseExtensionMatcher(): String? {
       val oldPos = pos
-      val new = insns[pos++]
+      val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXTENSIONS_MATCHER) {
-        if (insns[pos++].opcode == Opcodes.DUP) {
-          val argumentInsn = insns[pos++]
+        if (instructions[pos++].opcode == Opcodes.DUP) {
+          val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
-            val initInvoke = insns[pos]
+            val initInvoke = instructions[pos]
             val frame = frames[pos]
             pos++
 
@@ -245,7 +250,7 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
                 && initInvoke.owner == EXTENSIONS_MATCHER
                 && initInvoke.desc == "(Ljava/lang/String;)V") {
 
-              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, insns)
+              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
                 return "*.$string"
               }
@@ -273,10 +278,10 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
     * AASTORE
     */
     fun parseSetElement(i: Int): String? {
-      if (insns[pos++].opcode == Opcodes.DUP) {
-        if (i == AnalysisUtil.takeNumberFromIntInstruction(insns[pos++])) {
+      if (instructions[pos++].opcode == Opcodes.DUP) {
+        if (i == AnalysisUtil.takeNumberFromIntInstruction(instructions[pos++])) {
           val block = parseBlock() ?: return null
-          if (insns[pos++].opcode == Opcodes.AASTORE) {
+          if (instructions[pos++].opcode == Opcodes.AASTORE) {
             return block
           }
         }
@@ -286,22 +291,16 @@ class FileTypeExtractor(resolver: Resolver) : Extractor(resolver) {
 
     var i = 0
     while (pos < arrayUserInstructionIndex) {
-      val ithElement = parseSetElement(i++)
-      if (ithElement == null) {
-        extractedAll = false
-        return result
-      }
+      val ithElement = parseSetElement(i++) ?: return result
       result.add(ithElement)
     }
     return result
   }
 
-  private fun parse(semicoloned: String): List<String> = semicoloned.split(';').map(String::trim).filterNot(String::isEmpty).map { "*.$it" }
-
   /**
    * Extract value returned by com.intellij.openapi.fileTypes.FileType.getDefaultExtension
    */
-  private fun evaluateExtensionsOfFileType(value: Value?): String? {
+  private fun evaluateExtensionsOfFileType(value: Value?, resolver: Resolver): String? {
     if (value !is SourceValue || value.insns == null || value.insns.size != 1) {
       return null
     }

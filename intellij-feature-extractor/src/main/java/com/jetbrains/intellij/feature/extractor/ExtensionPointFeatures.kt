@@ -1,13 +1,22 @@
 package com.jetbrains.intellij.feature.extractor
 
 /**
+ * Extension point used by plugins to specify
+ * additional supported features.
+ */
+enum class ExtensionPoint(val extensionPointName: String) {
+  CONFIGURATION_TYPE("com.intellij.configurationType"),
+  FACET_TYPE("com.intellij.facetType"),
+  FILE_TYPE_FACTORY("com.intellij.fileTypeFactory"),
+  FILE_TYPE("com.intellij.fileType"),
+  ARTIFACT_TYPE("com.intellij.packaging.artifactType"),
+  MODULE_TYPE("com.intellij.moduleType")
+}
+
+/**
  * Holds all features of a single plugin's extension point.
  *
- * E.g. `com.intellij.openapi.fileTypes.FileTypeFactory` allows to specify
- * multiple supported file types in one instance.
- *
- * The plugin's extension point implementor class name is [epImplementorName] and
- * feature names is [featureNames]
+ * E.g. `com.intellij.openapi.fileTypes.FileTypeFactory` allows to specify multiple supported file types in one instance.
  */
 data class ExtensionPointFeatures(
     /**
@@ -15,10 +24,6 @@ data class ExtensionPointFeatures(
      * of the IntelliJ API class for a specific feature type
      */
     val extensionPoint: ExtensionPoint,
-    /**
-     * Class name of the plugin's implementation class
-     */
-    val epImplementorName: String,
     /**
      * Extracted feature name:
      *

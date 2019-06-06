@@ -1,4 +1,4 @@
-package com.jetbrains.intellij.feature.extractor.core
+package com.jetbrains.intellij.feature.extractor
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
@@ -38,7 +38,11 @@ object AnalysisUtil {
     return null
   }
 
-  fun extractConstantFunctionValue(classNode: ClassNode, methodNode: MethodNode, resolver: Resolver): String? {
+  fun extractConstantFunctionValue(
+      classNode: ClassNode,
+      methodNode: MethodNode,
+      resolver: Resolver
+  ): String? {
     if (methodNode.isAbstract()) {
       return null
     }
@@ -62,15 +66,20 @@ object AnalysisUtil {
   }
 
 
-  fun evaluateConstantString(value: Value?, resolver: Resolver, frames: List<Frame<SourceValue>>, instructions: List<AbstractInsnNode>): String? {
+  fun evaluateConstantString(
+      value: Value?,
+      resolver: Resolver,
+      frames: List<Frame<SourceValue>>,
+      instructions: List<AbstractInsnNode>
+  ): String? {
     if (value !is SourceValue) {
       return null
     }
 
-    val insns = value.insns ?: return null
+    val sourceInstructions = value.insns ?: return null
 
-    if (insns.size == 1) {
-      val producer = insns.first()
+    if (sourceInstructions.size == 1) {
+      val producer = sourceInstructions.first()
       if (producer is LdcInsnNode) {
         if (producer.cst is String) {
           return producer.cst as String
@@ -92,7 +101,11 @@ object AnalysisUtil {
     return null
   }
 
-  private fun evaluateConstantFieldValue(classNode: ClassNode, fieldNode: FieldNode, resolver: Resolver): String? {
+  private fun evaluateConstantFieldValue(
+      classNode: ClassNode,
+      fieldNode: FieldNode,
+      resolver: Resolver
+  ): String? {
     if (!fieldNode.isStatic()) {
       return null
     }
@@ -100,9 +113,9 @@ object AnalysisUtil {
     if (fieldNode.value is String) {
       return fieldNode.value as String
     }
-    val clinit = classNode.findMethod { it.name == "<clinit>" } ?: return null
-    val frames = AnalysisUtil.analyzeMethodFrames(classNode, clinit)
-    val instructions = clinit.instructionsAsList()
+    val classInitializer = classNode.findMethod { it.isClassInitializer } ?: return null
+    val frames = analyzeMethodFrames(classNode, classInitializer)
+    val instructions = classInitializer.instructionsAsList()
     val putStaticInstructionIndex = instructions.indexOfLast {
       it is FieldInsnNode
           && it.opcode == Opcodes.PUTSTATIC
@@ -129,11 +142,12 @@ object AnalysisUtil {
     }
     val result = StringBuilder()
     for (i in initIndex..producerIndex) {
-      val insnNode = instructions[i]
-      if (insnNode is MethodInsnNode && insnNode.name == "append" && insnNode.owner == STRING_BUILDER) {
+      val instructionNode = instructions[i]
+      if (instructionNode is MethodInsnNode && instructionNode.name == "append" && instructionNode.owner == STRING_BUILDER) {
         val frame = frames[i]
         val appendValue = frame.getOnStack(0)
-        val value = evaluateConstantString(appendValue, resolver, frames, instructions) ?: return null
+        val value = evaluateConstantString(appendValue, resolver, frames, instructions)
+            ?: return null
         result.append(value)
       }
     }

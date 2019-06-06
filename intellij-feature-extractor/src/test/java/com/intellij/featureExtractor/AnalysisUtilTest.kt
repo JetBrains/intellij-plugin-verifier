@@ -1,6 +1,6 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.core.AnalysisUtil
+import com.jetbrains.intellij.feature.extractor.AnalysisUtil
 import org.junit.Assert
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode

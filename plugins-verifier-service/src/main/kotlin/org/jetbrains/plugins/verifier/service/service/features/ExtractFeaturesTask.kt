@@ -2,10 +2,8 @@ package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
@@ -48,7 +46,13 @@ class ExtractFeaturesTask(
       NOT_FOUND,
       FAILED_TO_DOWNLOAD,
       BAD_PLUGIN,
+
+      //TODO: remove when plugin site stops recognizing it.
+      @Deprecated("it might be wrong to assume that 'all' features have been extracted.")
       EXTRACTED_ALL,
+
+      //TODO: remove when plugin site stops recognizing it.
+      @Deprecated("")
       EXTRACTED_PARTIALLY
     }
 
@@ -86,7 +90,13 @@ class ExtractFeaturesTask(
       pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
         with(it) {
           when (this) {
-            is PluginDetailsCache.Result.Provided -> runFeatureExtractor(ideDescriptor, pluginDetails.idePlugin)
+            is PluginDetailsCache.Result.Provided -> {
+              Result(
+                  updateInfo,
+                  Result.ResultType.EXTRACTED_PARTIALLY,
+                  FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, pluginDetails.idePlugin)
+              )
+            }
             is PluginDetailsCache.Result.FileNotFound -> {
               Result(
                   updateInfo,
@@ -98,7 +108,7 @@ class ExtractFeaturesTask(
               Result(
                   updateInfo,
                   Result.ResultType.BAD_PLUGIN,
-                  invalidPluginReason = "Plugin configuration is invalid: " + pluginErrors.filter { it.level == PluginProblem.Level.ERROR }.joinToString()
+                  invalidPluginReason = "Plugin is invalid: " + pluginErrors.joinToString()
               )
             }
             is PluginDetailsCache.Result.Failed -> {
@@ -112,14 +122,5 @@ class ExtractFeaturesTask(
           }
         }
       }
-
-  private fun runFeatureExtractor(ideDescriptor: IdeDescriptor, plugin: IdePlugin): Result {
-    val extractorResult = FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, plugin)
-    val resultType = when {
-      extractorResult.extractedAll -> Result.ResultType.EXTRACTED_ALL
-      else -> Result.ResultType.EXTRACTED_PARTIALLY
-    }
-    return Result(updateInfo, resultType, features = extractorResult.features)
-  }
 
 }

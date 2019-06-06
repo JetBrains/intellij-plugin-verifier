@@ -1,44 +1,29 @@
 package com.intellij.featureExtractor
 
-import com.jetbrains.intellij.feature.extractor.core.FileTypeExtractor
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
+import com.jetbrains.intellij.feature.extractor.extractor.FileTypeExtractor
+import com.jetbrains.intellij.feature.extractor.extractor.FileTypeFactoryExtractor
+import org.jdom2.Element
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FileTypeTest : FeatureExtractorTestBase() {
 
   @Test
-  fun fileTypeInstance() {
-    assertExtractFileTypes("featureExtractor.fileType.ByFileTypeFactory", listOf("*.mySomeExtension"))
-  }
+  fun fileType() {
+    val extensions = "one;two;three"
+    val expectedExtensions = FileTypeFactoryExtractor.parseExtensionsList(extensions)
 
-  private fun assertExtractFileTypes(className: String, extensions: List<String>) {
-    val node = readClassNode(className)
-    val result = FileTypeExtractor(resolver).extract(node)
-    val list = result.featureNames
-    assertTrue(result.extractedAll)
-    assertEquals(extensions, list)
-  }
+    val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
+    element.setAttribute("extensions", extensions)
+    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
 
-  @Test
-  fun nameMatcher() {
-    assertExtractFileTypes("featureExtractor.fileType.MatcherFileTypeFactory", listOf("firstExactName", "secondExactName", "*.nmextension"))
-  }
-
-
-  @Test
-  fun constantFileType() {
-    assertExtractFileTypes("featureExtractor.fileType.ConstantFileTypeFactory", listOf("*..someExtension"))
-  }
-
-  @Test
-  fun constantFunctionFileType() {
-    assertExtractFileTypes("featureExtractor.fileType.ConstantFunctionFileTypeFactory", listOf("*..constantValue"))
-  }
-
-  @Test
-  fun staticClinitConstant() {
-    assertExtractFileTypes("featureExtractor.fileType.StaticInitConstantFileTypeFactory", listOf("*.one", "*.two", "*.three"))
+    val features = FileTypeExtractor().extract(plugin, resolver)
+    assertEquals(
+        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, expectedExtensions)),
+        features
+    )
   }
 
 }

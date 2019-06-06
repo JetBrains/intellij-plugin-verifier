@@ -18,15 +18,25 @@ fun ExtractFeaturesTask.Result.prepareFeaturesResponse(): String {
 
 private fun convertFeatures(features: List<ExtensionPointFeatures>): List<ApiExtensionPointFeatures> = features.map {
   val apiExtensionPoint = convertExtensionPoint(it)
-  ApiExtensionPointFeatures(apiExtensionPoint, it.epImplementorName, it.featureNames)
+  ApiExtensionPointFeatures(apiExtensionPoint, it.featureNames)
 }
 
 private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint = when (it.extensionPoint) {
   ExtensionPoint.CONFIGURATION_TYPE -> ApiExtensionPoint.CONFIGURATION_TYPE
   ExtensionPoint.FACET_TYPE -> ApiExtensionPoint.FACET_TYPE
-  ExtensionPoint.FILE_TYPE -> ApiExtensionPoint.FILE_TYPE
   ExtensionPoint.ARTIFACT_TYPE -> ApiExtensionPoint.ARTIFACT_TYPE
   ExtensionPoint.MODULE_TYPE -> ApiExtensionPoint.MODULE_TYPE
+  /*
+  Plugin repository does not distinguish 'com.intellij.fileTypeFactory' and 'com.intellij.fileType'.
+
+  The former has been always available.
+  The latter was added on 04/06/2019 (https://github.com/JetBrains/intellij-community/commit/b2cbf95bf1b88ec4df760de5b30dc461bbcc8cd6)
+  and is considered the replacement of the FileTypeFactory.
+
+  Plugin repository merges all results to 'com.intellij.fileTypeFactory' because IDE requests "features" with 'com.intellij.fileTypeFactory'.
+   */
+  ExtensionPoint.FILE_TYPE_FACTORY -> ApiExtensionPoint.FILE_TYPE
+  ExtensionPoint.FILE_TYPE -> ApiExtensionPoint.FILE_TYPE
 }
 
 private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeaturesResult.ResultType = when (this) {
@@ -40,7 +50,6 @@ private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeatur
 
 private data class ApiExtensionPointFeatures(
     @SerializedName("extensionPoint") val extensionPoint: ApiExtensionPoint,
-    @SerializedName("implementorName") val epImplementorName: String,
     @SerializedName("featureNames") val featureNames: List<String>
 )
 
