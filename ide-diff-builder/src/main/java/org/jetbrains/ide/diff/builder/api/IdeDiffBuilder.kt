@@ -288,34 +288,19 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
    */
   private val pluginClassesLocationsKeys = IdePluginClassesFinder.MAIN_CLASSES_KEYS + listOf(CompileServerExtensionKey)
 
-  /**
-   * Merges all the classes by different locations (`/lib/`, `/classes/`, etc) into
-   * one resolver.
-   */
+  private fun readBundledPluginsClassesLocations(ide: Ide): List<IdePluginClassesLocations> =
+      ide.bundledPlugins.mapNotNull { readPluginClassesExceptionally(it) }
+
+  private fun readPluginClassesExceptionally(idePlugin: IdePlugin): IdePluginClassesLocations? {
+    if (idePlugin.pluginId in IGNORED_PLUGIN_IDS) {
+      return null
+    }
+    LOG.debug("Reading class files of a bundled plugin $idePlugin  (${idePlugin.originalFile})")
+    return IdePluginClassesFinder.findPluginClasses(idePlugin, Resolver.ReadMode.SIGNATURES, pluginClassesLocationsKeys)
+  }
+
   private fun IdePluginClassesLocations.getPluginClassesResolver(): Resolver =
       pluginClassesLocationsKeys.mapNotNull { getResolver(it) }.let { UnionResolver.create(it) }
-
-  /**
-   * Finds class files of all plugins bundled into the [ide].
-   *
-   * The results must be closed when no more required to free up possibly occupied disk space:
-   * plugins might have been extracted to a temporary directory.
-   */
-  private fun readBundledPluginsClassesLocations(ide: Ide): List<IdePluginClassesLocations> =
-      ide.bundledPlugins.mapNotNull { safeFindPluginClasses(ide, it) }
-
-  private fun safeFindPluginClasses(ide: Ide, idePlugin: IdePlugin): IdePluginClassesLocations? = try {
-    if (idePlugin.pluginId !in IGNORED_PLUGIN_IDS) {
-      LOG.debug("Reading class files of a plugin $idePlugin bundled into $ide")
-      IdePluginClassesFinder.findPluginClasses(idePlugin, Resolver.ReadMode.SIGNATURES, pluginClassesLocationsKeys)
-    } else {
-      null
-    }
-  } catch (e: Exception) {
-    e.rethrowIfInterrupted()
-    LOG.info("Unable to read class files of a plugin $idePlugin bundled to $ide: ${e.message}")
-    null
-  }
 
   private fun String.isSyntheticLikeName() = contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
 
