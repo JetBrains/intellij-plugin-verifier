@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 
 /**
  * Main feature extractor entry point.
@@ -24,37 +25,30 @@ object FeaturesExtractor {
 
   private val LOG = LoggerFactory.getLogger("FeaturesExtractor")
 
-  private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver = UnionResolver.create(
-      IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { this.getResolver(it) }
-  )
-
   fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: IdePlugin): ExtractorResult {
-    val bundledClassLocations = findBundledPluginClasses(ide)
-    try {
+    val bundledClassLocations = findBundledPluginClassesLocations(ide)
+    Closeable { bundledClassLocations.forEach { it.closeLogged() } }.use {
       val bundledResolvers = bundledClassLocations.map { it.constructMainPluginResolver() }
-      IdePluginClassesFinder.findPluginClasses(plugin, additionalKeys = emptyList()).use { pluginClassesLocations ->
+      IdePluginClassesFinder.findPluginClasses(plugin).use { pluginClassesLocations ->
         val pluginResolver = pluginClassesLocations.constructMainPluginResolver()
         //don't close this resolver, because ideResolver is to be closed by the caller.
         val resolver = UnionResolver.create(listOf(pluginResolver, ideResolver) + bundledResolvers)
-        return implementations(plugin, resolver)
+        return extractFeatures(plugin, resolver)
       }
-    } finally {
-      bundledClassLocations.forEach { it.closeLogged() }
     }
   }
 
-  private fun findBundledPluginClasses(ide: Ide): List<IdePluginClassesLocations> =
-      ide.bundledPlugins.mapNotNull {
-        try {
-          IdePluginClassesFinder.findPluginClasses(it, additionalKeys = emptyList())
-        } catch (e: Exception) {
-          e.rethrowIfInterrupted()
-          LOG.error("Unable to create IDE ($ide) bundled plugin ($it) resolver", e)
-          null
-        }
+  private fun findBundledPluginClassesLocations(ide: Ide) =
+      ide.bundledPlugins.map {
+        IdePluginClassesFinder.findPluginClasses(it)
       }
 
-  private fun implementations(plugin: IdePlugin, resolver: Resolver): ExtractorResult {
+  private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver =
+      UnionResolver.create(
+          IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { this.getResolver(it) }
+      )
+
+  private fun extractFeatures(plugin: IdePlugin, resolver: Resolver): ExtractorResult {
     val allEpFeatures = ExtensionPoint.values().map { epFeatures(plugin, it, resolver) }
     return ExtractorResult(allEpFeatures.flatMap { it.features }, allEpFeatures.all { it.extractedAll })
   }
@@ -69,7 +63,12 @@ object FeaturesExtractor {
     return ExtractorResult(allImplementorsFeatures.filterNotNull().map { it.first }.filterNot { it.featureNames.isEmpty() }, extractedAll)
   }
 
-  private fun extractEpFeatures(extensionPoint: ExtensionPoint, epImplementorClass: String, plugin: IdePlugin, resolver: Resolver): Pair<ExtensionPointFeatures, Boolean>? {
+  private fun extractEpFeatures(
+      extensionPoint: ExtensionPoint,
+      epImplementorClass: String,
+      plugin: IdePlugin,
+      resolver: Resolver
+  ): Pair<ExtensionPointFeatures, Boolean>? {
     val classNode: ClassNode
     try {
       classNode = resolver.findClass(epImplementorClass.replace('.', '/')) ?: return null
