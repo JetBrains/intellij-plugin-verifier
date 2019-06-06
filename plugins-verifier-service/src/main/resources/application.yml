@@ -10,3 +10,6 @@ verifier:
       feature:
         extractor:
           service: false
+      available:
+        ide:
+          service: false

@@ -55,12 +55,45 @@ class ServerContextConfiguration {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
-    serverContext = createServerContext(buildProperties.version, ideRepository, pluginRepository)
 
-    with(serverContext) {
-      addAvailableIdeService(availableIdeProtocol)
-    }
-    return serverContext
+    val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
+    val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
+    val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
+    val ideFilesDir = applicationHomeDir.resolve("ides").createDir()
+
+    val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
+
+    val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
+    val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
+    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
+    val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
+
+    val authorizationData = AuthorizationData(Settings.SERVICE_ADMIN_PASSWORD.get())
+
+    val jdkDescriptorsCache = JdkDescriptorsCache()
+
+    val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
+    val serviceDAO = openServiceDAO(applicationHomeDir)
+
+    val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
+    val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
+
+    val verificationResultsFilter = VerificationResultFilter()
+
+    return ServerContext(
+        buildProperties.version,
+        ideRepository,
+        ideFilesBank,
+        pluginRepository,
+        taskManager,
+        authorizationData,
+        jdkDescriptorsCache,
+        Settings.values().toList(),
+        serviceDAO,
+        ideDescriptorsCache,
+        pluginDetailsCache,
+        verificationResultsFilter
+    )
   }
 
   @Bean
@@ -112,51 +145,24 @@ class ServerContextConfiguration {
     return featureService
   }
 
-  private lateinit var serverContext: ServerContext
-
-  private fun createServerContext(
-      appVersion: String?,
-      ideRepository: IdeRepository,
-      pluginRepository: MarketplaceRepository
-  ): ServerContext {
-    val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
-    val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
-    val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
-    val ideFilesDir = applicationHomeDir.resolve("ides").createDir()
-
-    val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
-
-    val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
-    val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
-    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
-    val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
-
-    val authorizationData = AuthorizationData(Settings.SERVICE_ADMIN_PASSWORD.get())
-
-    val jdkDescriptorsCache = JdkDescriptorsCache()
-
-    val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
-    val serviceDAO = openServiceDAO(applicationHomeDir)
-
-    val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
-    val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
-
-    val verificationResultsFilter = VerificationResultFilter()
-
-    return ServerContext(
-        appVersion,
-        ideRepository,
-        ideFilesBank,
-        pluginRepository,
-        taskManager,
-        authorizationData,
-        jdkDescriptorsCache,
-        Settings.values().toList(),
-        serviceDAO,
-        ideDescriptorsCache,
-        pluginDetailsCache,
-        verificationResultsFilter
-    )
+  @Bean
+  fun availableIdeService(
+      serverContext: ServerContext,
+      availableIdeProtocol: AvailableIdeProtocol,
+      @Value("\${verifier.service.enable.available.ide.service}") enableService: Boolean
+  ): AvailableIdeService {
+    val availableIdeService = with(serverContext) {
+      AvailableIdeService(
+          taskManager,
+          availableIdeProtocol,
+          ideRepository
+      )
+    }
+    serverContext.addService(availableIdeService)
+    if (enableService) {
+      availableIdeService.start()
+    }
+    return availableIdeService
   }
 
   private fun openServiceDAO(applicationHomeDir: Path): ServiceDAO {
@@ -196,18 +202,6 @@ class ServerContextConfiguration {
 
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
-
-  private fun ServerContext.addAvailableIdeService(availableIdeProtocol: AvailableIdeProtocol) {
-    val availableIdeService = AvailableIdeService(
-        taskManager,
-        availableIdeProtocol,
-        ideRepository
-    )
-    addService(availableIdeService)
-    if (Settings.ENABLE_AVAILABLE_IDE_SERVICE.getAsBoolean()) {
-      availableIdeService.start()
-    }
-  }
 
   private fun validateSystemProperties() {
     LOG.info("Validating system properties")

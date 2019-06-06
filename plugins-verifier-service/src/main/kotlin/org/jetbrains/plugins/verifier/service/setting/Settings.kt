@@ -21,8 +21,6 @@ enum class Settings(
    */
   VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS("verifier.service.scheduler.period.seconds", { "10" }),
 
-  ENABLE_AVAILABLE_IDE_SERVICE("verifier.service.enable.available.ide.service", { "false" }),
-
   /**
    * IDE build which classes are used to extract plugins' features.
    */
