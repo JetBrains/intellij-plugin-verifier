@@ -119,7 +119,6 @@ class ServerContextConfiguration {
     if (enableService) {
       verifierService.start()
     }
-    serverContext.addService(verifierService)
     return verifierService
   }
 
@@ -138,7 +137,6 @@ class ServerContextConfiguration {
           ideRepository
       )
     }
-    serverContext.addService(featureService)
     if (enableService) {
       featureService.start()
     }
@@ -158,7 +156,6 @@ class ServerContextConfiguration {
           ideRepository
       )
     }
-    serverContext.addService(availableIdeService)
     if (enableService) {
       availableIdeService.start()
     }
