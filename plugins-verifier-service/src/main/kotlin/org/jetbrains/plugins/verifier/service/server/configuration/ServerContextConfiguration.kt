@@ -58,7 +58,6 @@ class ServerContextConfiguration {
     serverContext = createServerContext(buildProperties.version, ideRepository, pluginRepository)
 
     with(serverContext) {
-      addFeatureService(featureServiceProtocol)
       addAvailableIdeService(availableIdeProtocol)
     }
     return serverContext
@@ -89,6 +88,28 @@ class ServerContextConfiguration {
     }
     serverContext.addService(verifierService)
     return verifierService
+  }
+
+  @Bean
+  fun featureService(
+      serverContext: ServerContext,
+      featureServiceProtocol: FeatureServiceProtocol,
+      @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean
+  ): FeatureExtractorService {
+    val featureService = with(serverContext) {
+      FeatureExtractorService(
+          taskManager,
+          featureServiceProtocol,
+          ideDescriptorsCache,
+          pluginDetailsCache,
+          ideRepository
+      )
+    }
+    serverContext.addService(featureService)
+    if (enableService) {
+      featureService.start()
+    }
+    return featureService
   }
 
   private lateinit var serverContext: ServerContext
@@ -175,20 +196,6 @@ class ServerContextConfiguration {
 
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
-
-  private fun ServerContext.addFeatureService(featureServiceProtocol: FeatureServiceProtocol) {
-    val featureService = FeatureExtractorService(
-        taskManager,
-        featureServiceProtocol,
-        ideDescriptorsCache,
-        pluginDetailsCache,
-        ideRepository
-    )
-    addService(featureService)
-    if (Settings.ENABLE_FEATURE_EXTRACTOR_SERVICE.getAsBoolean()) {
-      featureService.start()
-    }
-  }
 
   private fun ServerContext.addAvailableIdeService(availableIdeProtocol: AvailableIdeProtocol) {
     val availableIdeService = AvailableIdeService(

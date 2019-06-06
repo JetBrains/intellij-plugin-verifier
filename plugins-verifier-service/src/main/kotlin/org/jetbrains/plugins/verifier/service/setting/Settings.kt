@@ -16,8 +16,6 @@ enum class Settings(
 
   CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" }),
 
-  ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
-
   /**
    * Specifies how often should the verifier service poll the verification queue from the Plugin Repository.
    */

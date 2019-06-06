@@ -7,3 +7,6 @@ verifier:
       plugin:
         verifier:
           service: false
+      feature:
+        extractor:
+          service: false
