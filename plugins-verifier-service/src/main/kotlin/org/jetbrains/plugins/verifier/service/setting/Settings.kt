@@ -12,13 +12,11 @@ enum class Settings(
     val encrypted: Boolean = false
 ) {
   APP_HOME_DIRECTORY("verifier.service.home.directory"),
-  JDK_8_HOME("verifier.service.jdk.8.dir"),
   MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
 
   CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" }),
 
   ENABLE_FEATURE_EXTRACTOR_SERVICE("verifier.service.enable.feature.extractor.service", { "false" }),
-  ENABLE_PLUGIN_VERIFIER_SERVICE("verifier.service.enable.plugin.verifier.service", { "false" }),
 
   /**
    * Specifies how often should the verifier service poll the verification queue from the Plugin Repository.

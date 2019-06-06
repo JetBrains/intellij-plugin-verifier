@@ -19,6 +19,7 @@ import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
+import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -38,11 +39,12 @@ class VerifierService(
     private val verifierServiceProtocol: VerifierServiceProtocol,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val jdkPath: JdkPath,
+    jdkPath: Path,
     private val verificationResultsFilter: VerificationResultFilter,
     private val pluginRepository: PluginRepository,
     private val serviceDAO: ServiceDAO
 ) : BaseService("VerifierService", 0, Settings.VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS.getAsLong(), TimeUnit.SECONDS, taskManager) {
+  private val jdkPath = JdkPath(jdkPath)
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
 

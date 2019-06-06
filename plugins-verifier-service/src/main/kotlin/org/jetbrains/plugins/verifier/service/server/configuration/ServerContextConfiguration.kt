@@ -7,7 +7,6 @@ import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.misc.createDir
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetti
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -50,8 +50,7 @@ class ServerContextConfiguration {
       ideRepository: IdeRepository,
       pluginRepository: MarketplaceRepository,
       availableIdeProtocol: AvailableIdeProtocol,
-      featureServiceProtocol: FeatureServiceProtocol,
-      verifierServiceProtocol: VerifierServiceProtocol
+      featureServiceProtocol: FeatureServiceProtocol
   ): ServerContext {
     LOG.info("Server is ready to start")
 
@@ -59,11 +58,37 @@ class ServerContextConfiguration {
     serverContext = createServerContext(buildProperties.version, ideRepository, pluginRepository)
 
     with(serverContext) {
-      addVerifierService(verifierServiceProtocol)
       addFeatureService(featureServiceProtocol)
       addAvailableIdeService(availableIdeProtocol)
     }
     return serverContext
+  }
+
+  @Bean
+  fun verifierService(
+      serverContext: ServerContext,
+      verifierServiceProtocol: VerifierServiceProtocol,
+      @Value("\${verifier.service.jdk.8.dir}") jdkPath: Path,
+      @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean
+  ): VerifierService {
+    val verifierService = with(serverContext) {
+      VerifierService(
+          taskManager,
+          jdkDescriptorsCache,
+          verifierServiceProtocol,
+          pluginDetailsCache,
+          ideDescriptorsCache,
+          jdkPath,
+          verificationResultsFilter,
+          pluginRepository,
+          serviceDAO
+      )
+    }
+    if (enableService) {
+      verifierService.start()
+    }
+    serverContext.addService(verifierService)
+    return verifierService
   }
 
   private lateinit var serverContext: ServerContext
@@ -98,7 +123,6 @@ class ServerContextConfiguration {
     val verificationResultsFilter = VerificationResultFilter()
 
     return ServerContext(
-        applicationHomeDir,
         appVersion,
         ideRepository,
         ideFilesBank,
@@ -151,25 +175,6 @@ class ServerContextConfiguration {
 
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
-
-  private fun ServerContext.addVerifierService(verifierServiceProtocol: VerifierServiceProtocol) {
-    val jdkPath = JdkPath(Settings.JDK_8_HOME.getAsPath())
-    val verifierService = VerifierService(
-        taskManager,
-        jdkDescriptorsCache,
-        verifierServiceProtocol,
-        pluginDetailsCache,
-        ideDescriptorsCache,
-        jdkPath,
-        verificationResultsFilter,
-        pluginRepository,
-        serviceDAO
-    )
-    if (Settings.ENABLE_PLUGIN_VERIFIER_SERVICE.getAsBoolean()) {
-      verifierService.start()
-    }
-    addService(verifierService)
-  }
 
   private fun ServerContext.addFeatureService(featureServiceProtocol: FeatureServiceProtocol) {
     val featureService = FeatureExtractorService(

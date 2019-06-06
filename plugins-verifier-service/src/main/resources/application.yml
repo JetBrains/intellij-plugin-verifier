@@ -3,3 +3,7 @@ verifier:
     plugins:
       repository:
         url: "https://plugins.jetbrains.com"
+    enable:
+      plugin:
+        verifier:
+          service: false

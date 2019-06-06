@@ -12,7 +12,6 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResul
 import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import java.nio.file.Path
 import javax.annotation.PreDestroy
 
 /**
@@ -22,7 +21,6 @@ import javax.annotation.PreDestroy
  * Server context must be closed on the server shutdown to de-allocate resources.
  */
 class ServerContext(
-    val applicationHomeDirectory: Path,
     val appVersion: String?,
     val ideRepository: IdeRepository,
     val ideFilesBank: IdeFilesBank,
