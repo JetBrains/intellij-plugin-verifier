@@ -15,17 +15,17 @@ class FileTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     val extensionsElements = plugin.extensions[ExtensionPoint.FILE_TYPE.extensionPointName]
-    val result = arrayListOf<ExtensionPointFeatures>()
+    val features = arrayListOf<ExtensionPointFeatures>()
     for (element in extensionsElements) {
-      val extensions = element.getAttributeValue("extensions")
-      if (extensions != null) {
-        val extensionsList = FileTypeFactoryExtractor.parseExtensionsList(extensions)
-        if (extensionsList.isNotEmpty()) {
-          result += ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, extensionsList)
-        }
+      val extensionsAndFileNames = arrayListOf<String>()
+      extensionsAndFileNames += FileTypeFactoryExtractor.parseExtensionsList(element.getAttributeValue("extensions"))
+      extensionsAndFileNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNames"))
+      extensionsAndFileNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNamesCaseInsensitive"))
+      if (extensionsAndFileNames.isNotEmpty()) {
+        features += ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, extensionsAndFileNames)
       }
     }
-    return result
+    return features
   }
 
 }

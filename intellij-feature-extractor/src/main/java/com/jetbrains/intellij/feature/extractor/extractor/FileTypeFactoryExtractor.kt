@@ -29,7 +29,14 @@ class FileTypeFactoryExtractor : Extractor {
 
     private const val EXTENSIONS_MATCHER = "com/intellij/openapi/fileTypes/ExtensionFileNameMatcher"
 
-    fun parseExtensionsList(extensions: String): List<String> = extensions.split(';').map(String::trim).filterNot(String::isEmpty).map { "*.$it" }
+    fun parseExtensionsList(extensions: String?): List<String> = splitSemicolonDelimitedList(extensions).map { "*.$it" }
+
+    fun splitSemicolonDelimitedList(semicolonDelimited: String?): List<String> {
+      if (semicolonDelimited.isNullOrBlank()) {
+        return emptyList()
+      }
+      return semicolonDelimited.split(';').map(String::trim).filterNot(String::isEmpty)
+    }
   }
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
