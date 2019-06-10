@@ -26,7 +26,6 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResul
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -37,7 +36,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 @Configuration
-class ServerContextConfiguration {
+class ServerContextConfiguration(
+    @Value("\${verifier.service.max.disk.space.mb}") maxDiskSpace: Long
+) {
   companion object {
     private val LOG = LoggerFactory.getLogger(ServerContextConfiguration::class.java)
 
@@ -57,8 +58,6 @@ class ServerContextConfiguration {
       @Value("\${verifier.service.clear.corrupted.database}") clearDatabaseOnCorruption: Boolean
   ): ServerContext {
     LOG.info("Server is ready to start")
-
-    validateSystemProperties()
 
     val applicationHomeDirPath = Paths.get(applicationHomeDir)
     applicationHomeDirPath.createDir()
@@ -88,7 +87,6 @@ class ServerContextConfiguration {
         ideFilesBank,
         pluginRepository,
         jdkDescriptorsCache,
-        Settings.values().toList(),
         serviceDAO,
         ideDescriptorsCache,
         pluginDetailsCache,
@@ -201,18 +199,11 @@ class ServerContextConfiguration {
     return ServiceDAO(MapDbServerDatabase(databasePath))
   }
 
-  private val maxDiskSpaceUsage = SpaceAmount.ofMegabytes(Settings.MAX_DISK_SPACE_MB.getAsLong().coerceAtLeast(10000))
+  private val maxDiskSpaceUsage = SpaceAmount.ofMegabytes(maxDiskSpace.coerceAtLeast(10000))
 
   private fun getIdeDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.IDE_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
   private fun getPluginDownloadDirDiskSpaceSetting() =
       DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
-
-  private fun validateSystemProperties() {
-    LOG.info("Validating system properties")
-    Settings.values().toList().forEach { setting ->
-      LOG.info("Property '${setting.key}' = '${setting.getUnsecured()}'")
-    }
-  }
 }

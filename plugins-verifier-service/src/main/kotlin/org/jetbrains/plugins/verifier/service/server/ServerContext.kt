@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import javax.annotation.PreDestroy
@@ -26,7 +25,6 @@ class ServerContext(
     val ideFilesBank: IdeFilesBank,
     val pluginRepository: MarketplaceRepository,
     val jdkDescriptorsCache: JdkDescriptorsCache,
-    val startupSettings: List<Settings>,
     val serviceDAO: ServiceDAO,
     val ideDescriptorsCache: IdeDescriptorsCache,
     val pluginDetailsCache: PluginDetailsCache,

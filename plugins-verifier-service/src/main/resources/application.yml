@@ -26,3 +26,7 @@ verifier:
     clear:
       corrupted:
         database: true
+    max:
+      disk:
+        space:
+          mb: 51200 # 50 * 1024

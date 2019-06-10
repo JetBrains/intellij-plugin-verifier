@@ -45,16 +45,6 @@ class StatusPage(
           h1 {
             +("Plugin Verifier Service ${serverContext.appVersion}")
           }
-          h2 {
-            +"Runtime parameters:"
-          }
-          ul {
-            serverContext.startupSettings.forEach { s ->
-              li {
-                +(s.key + " = " + if (s.encrypted) "*****" else s.get())
-              }
-            }
-          }
 
           h2 {
             +"Status:"
