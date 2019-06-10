@@ -23,7 +23,7 @@ enum class Settings(
   /**
    * IDE build which classes are used to extract plugins' features.
    */
-  FEATURE_EXTRACTOR_IDE_BUILD("verifier.service.feature.extractor.ide.build", { "IU-183.5912.21" }),
+
 
   TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "8" });
 

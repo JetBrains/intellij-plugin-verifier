@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.network.NonSuccessfulResponseException
@@ -24,9 +25,9 @@ class FeatureExtractorService(
     private val featureServiceProtocol: FeatureServiceProtocol,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val pluginDetailsCache: PluginDetailsCache,
-    private val ideRepository: IdeRepository
+    private val ideRepository: IdeRepository,
+    private val featureExtractorIdeVersion: IdeVersion
 ) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
-
   private val scheduledUpdates = linkedMapOf<UpdateInfo, TaskDescriptor>()
 
   override fun doServe() {
@@ -50,7 +51,8 @@ class FeatureExtractorService(
         updateInfo,
         ideDescriptorsCache,
         pluginDetailsCache,
-        ideRepository
+        ideRepository,
+        featureExtractorIdeVersion
     )
     val taskDescriptor = taskManager.enqueue(
         extractTask,

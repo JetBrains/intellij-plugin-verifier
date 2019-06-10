@@ -3,6 +3,7 @@ package org.jetbrains.plugins.verifier.service.server.configuration
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
@@ -125,7 +126,8 @@ class ServerContextConfiguration {
   fun featureService(
       serverContext: ServerContext,
       featureServiceProtocol: FeatureServiceProtocol,
-      @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean
+      @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean,
+      @Value("\${verifier.service.feature.extractor.ide.build}") featureExtractorIdeVersion: String
   ): FeatureExtractorService {
     val featureService = with(serverContext) {
       FeatureExtractorService(
@@ -133,7 +135,8 @@ class ServerContextConfiguration {
           featureServiceProtocol,
           ideDescriptorsCache,
           pluginDetailsCache,
-          ideRepository
+          ideRepository,
+          IdeVersion.createIdeVersion(featureExtractorIdeVersion)
       )
     }
     if (enableService) {

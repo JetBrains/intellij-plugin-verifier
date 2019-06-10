@@ -13,3 +13,7 @@ verifier:
       available:
         ide:
           service: false
+    feature:
+      extractor:
+        ide:
+          build: "IU-183.5912.21"

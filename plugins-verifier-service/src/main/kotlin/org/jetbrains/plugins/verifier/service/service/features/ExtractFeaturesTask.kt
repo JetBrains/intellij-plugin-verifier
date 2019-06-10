@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
 import org.slf4j.LoggerFactory
@@ -22,14 +21,13 @@ class ExtractFeaturesTask(
     val updateInfo: UpdateInfo,
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val pluginDetailsCache: PluginDetailsCache,
-    private val ideRepository: IdeRepository
+    private val ideRepository: IdeRepository,
+    private val featureExtractorIdeVersion: IdeVersion
 ) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo", "ExtractFeatures") {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(ExtractFeaturesTask::class.java)
   }
-
-  private val featureExtractorIdeVersion = IdeVersion.createIdeVersion(Settings.FEATURE_EXTRACTOR_IDE_BUILD.get())
 
   /**
    * Result of the [feature extractor service] [FeatureExtractorService] task.
