@@ -85,6 +85,7 @@ configure(allprojects) {
 
   dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    compile 'org.springframework.boot:spring-boot-starter-actuator'
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
     developmentOnly "org.springframework.boot:spring-boot-devtools"
 

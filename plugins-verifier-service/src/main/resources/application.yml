@@ -30,3 +30,8 @@ verifier:
       disk:
         space:
           mb: 51200 # 50 * 1024
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info, health, configprops
