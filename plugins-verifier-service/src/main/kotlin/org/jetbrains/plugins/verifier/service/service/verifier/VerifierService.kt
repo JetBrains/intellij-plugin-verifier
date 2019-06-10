@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
@@ -40,8 +41,10 @@ class VerifierService(
     private val jdkPath: Path,
     private val verificationResultsFilter: VerificationResultFilter,
     private val pluginRepository: PluginRepository,
-    private val serviceDAO: ServiceDAO
-) : BaseService("VerifierService", 0, Settings.VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS.getAsLong(), TimeUnit.SECONDS, taskManager) {
+    private val serviceDAO: ServiceDAO,
+    concurrency: Int,
+    period: Long
+) : BaseService("VerifierService", 0, period, TimeUnit.SECONDS, taskManager) {
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
 
@@ -64,7 +67,7 @@ class VerifierService(
     override fun close() = Unit
   }
 
-  private val verifierExecutor = VerifierExecutor(Settings.TASK_MANAGER_CONCURRENCY.getAsInt(), reportage)
+  private val verifierExecutor = VerifierExecutor(concurrency, reportage)
 
   override fun doServe() {
     val allScheduledVerifications = try {

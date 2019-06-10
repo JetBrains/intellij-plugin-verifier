@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import javax.annotation.PreDestroy
@@ -26,7 +25,6 @@ class ServerContext(
     val ideRepository: IdeRepository,
     val ideFilesBank: IdeFilesBank,
     val pluginRepository: MarketplaceRepository,
-    val taskManager: TaskManager,
     val jdkDescriptorsCache: JdkDescriptorsCache,
     val startupSettings: List<Settings>,
     val serviceDAO: ServiceDAO,
@@ -43,7 +41,6 @@ class ServerContext(
   @PreDestroy
   fun close() {
     allServices.forEach { it.stop() }
-    taskManager.closeLogged()
     serviceDAO.closeLogged()
     ideDescriptorsCache.closeLogged()
     pluginDetailsCache.closeLogged()

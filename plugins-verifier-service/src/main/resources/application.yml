@@ -20,3 +20,6 @@ verifier:
     scheduler:
       period:
         seconds: 10
+    task:
+      manager:
+        concurrency: 8

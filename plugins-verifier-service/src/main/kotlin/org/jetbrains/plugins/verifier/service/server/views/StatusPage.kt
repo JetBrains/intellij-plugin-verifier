@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.springframework.web.servlet.View
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -17,7 +18,10 @@ import javax.servlet.http.HttpServletResponse
 /**
  * Generates a web page containing service's health and runtime information.
  */
-class StatusPage(private val serverContext: ServerContext) : View {
+class StatusPage(
+    private val serverContext: ServerContext,
+    private val taskManager: TaskManager
+) : View {
   companion object {
     private val DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm:ss")
         .withZone(ZoneId.systemDefault())
@@ -140,8 +144,8 @@ class StatusPage(private val serverContext: ServerContext) : View {
             }
           }
 
-          val activeTasks = serverContext.taskManager.activeTasks
-          val lastFinishedTasks = serverContext.taskManager.lastFinishedTasks
+          val activeTasks = taskManager.activeTasks
+          val lastFinishedTasks = taskManager.lastFinishedTasks
 
           buildTaskTable("Finished tasks (20 latest)", lastFinishedTasks.sortedByDescending { it.endTime }.take(20))
 

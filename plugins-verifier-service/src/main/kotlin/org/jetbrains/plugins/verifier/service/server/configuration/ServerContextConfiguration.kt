@@ -17,6 +17,7 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
+import org.jetbrains.plugins.verifier.service.server.configuration.properties.TaskManagerProperties
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.features.FeatureServiceProtocol
 import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeProtocol
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierServiceProtocol
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
-import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
+import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
@@ -69,7 +70,6 @@ class ServerContextConfiguration {
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
-    val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
     val jdkDescriptorsCache = JdkDescriptorsCache()
 
@@ -86,7 +86,6 @@ class ServerContextConfiguration {
         ideRepository,
         ideFilesBank,
         pluginRepository,
-        taskManager,
         jdkDescriptorsCache,
         Settings.values().toList(),
         serviceDAO,
@@ -100,6 +99,8 @@ class ServerContextConfiguration {
   fun verifierService(
       serverContext: ServerContext,
       verifierServiceProtocol: VerifierServiceProtocol,
+      taskManager: TaskManager,
+      taskManagerProperties: TaskManagerProperties,
       @Value("\${verifier.service.jdk.8.dir}") jdkPath: Path,
       @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
       @Value("\${verifier.service.scheduler.period.seconds}") period: Long
@@ -115,6 +116,7 @@ class ServerContextConfiguration {
           verificationResultsFilter,
           pluginRepository,
           serviceDAO,
+          taskManagerProperties.concurrency!!,
           period
       )
     }
@@ -128,6 +130,7 @@ class ServerContextConfiguration {
   fun featureService(
       serverContext: ServerContext,
       featureServiceProtocol: FeatureServiceProtocol,
+      taskManager: TaskManager,
       @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean,
       @Value("\${verifier.service.feature.extractor.ide.build}") featureExtractorIdeVersion: String
   ): FeatureExtractorService {
@@ -151,6 +154,7 @@ class ServerContextConfiguration {
   fun availableIdeService(
       serverContext: ServerContext,
       availableIdeProtocol: AvailableIdeProtocol,
+      taskManager: TaskManager,
       @Value("\${verifier.service.enable.available.ide.service}") enableService: Boolean
   ): AvailableIdeService {
     val availableIdeService = with(serverContext) {
