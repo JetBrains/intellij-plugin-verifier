@@ -23,7 +23,6 @@ import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierServiceProtocol
-import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.DiskUsageDistributionSetting
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManagerImpl
@@ -33,6 +32,7 @@ import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.nio.file.Path
+import java.nio.file.Paths
 
 @Configuration
 class ServerContextConfiguration {
@@ -50,16 +50,18 @@ class ServerContextConfiguration {
       ideRepository: IdeRepository,
       pluginRepository: MarketplaceRepository,
       availableIdeProtocol: AvailableIdeProtocol,
-      featureServiceProtocol: FeatureServiceProtocol
+      featureServiceProtocol: FeatureServiceProtocol,
+      @Value("\${verifier.service.home.directory}") applicationHomeDir: String
   ): ServerContext {
     LOG.info("Server is ready to start")
 
     validateSystemProperties()
 
-    val applicationHomeDir = Settings.APP_HOME_DIRECTORY.getAsPath().createDir()
-    val loadedPluginsDir = applicationHomeDir.resolve("loaded-plugins").createDir()
-    val extractedPluginsDir = applicationHomeDir.resolve("extracted-plugins").createDir()
-    val ideFilesDir = applicationHomeDir.resolve("ides").createDir()
+    val applicationHomeDirPath = Paths.get(applicationHomeDir)
+    applicationHomeDirPath.createDir()
+    val loadedPluginsDir = applicationHomeDirPath.resolve("loaded-plugins").createDir()
+    val extractedPluginsDir = applicationHomeDirPath.resolve("extracted-plugins").createDir()
+    val ideFilesDir = applicationHomeDirPath.resolve("ides").createDir()
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
@@ -68,12 +70,10 @@ class ServerContextConfiguration {
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
     val taskManager = TaskManagerImpl(Settings.TASK_MANAGER_CONCURRENCY.getAsInt())
 
-    val authorizationData = AuthorizationData(Settings.SERVICE_ADMIN_PASSWORD.get())
-
     val jdkDescriptorsCache = JdkDescriptorsCache()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
-    val serviceDAO = openServiceDAO(applicationHomeDir)
+    val serviceDAO = openServiceDAO(applicationHomeDirPath)
 
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
@@ -86,7 +86,6 @@ class ServerContextConfiguration {
         ideFilesBank,
         pluginRepository,
         taskManager,
-        authorizationData,
         jdkDescriptorsCache,
         Settings.values().toList(),
         serviceDAO,

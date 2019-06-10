@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
-import org.jetbrains.plugins.verifier.service.setting.AuthorizationData
 import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,7 +27,6 @@ class ServerContext(
     val ideFilesBank: IdeFilesBank,
     val pluginRepository: MarketplaceRepository,
     val taskManager: TaskManager,
-    val authorizationData: AuthorizationData,
     val jdkDescriptorsCache: JdkDescriptorsCache,
     val startupSettings: List<Settings>,
     val serviceDAO: ServiceDAO,

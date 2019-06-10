@@ -3,18 +3,23 @@ package org.jetbrains.plugins.verifier.service.server.controllers
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.server.configuration.properties.AuthorizationProperties
 import org.jetbrains.plugins.verifier.service.server.exceptions.AuthenticationFailedException
 import org.jetbrains.plugins.verifier.service.server.views.IgnoredProblemsPage
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
-class IgnoredProblemsController {
+@EnableConfigurationProperties(AuthorizationProperties::class)
+class IgnoredProblemsController(
+    private val authorizationProperties: AuthorizationProperties
+) {
 
   private companion object {
     val logger: Logger = LoggerFactory.getLogger(IgnoredProblemsController::class.java)
@@ -31,7 +36,7 @@ class IgnoredProblemsController {
       @RequestParam("ignored.problems") ignoredProblems: String,
       @RequestParam("admin.password") adminPassword: String
   ): String {
-    if (adminPassword != serverContext.authorizationData.serviceAdminPassword) {
+    if (adminPassword != authorizationProperties.password) {
       throw AuthenticationFailedException("Incorrect password")
     }
     val ignoreConditions = try {

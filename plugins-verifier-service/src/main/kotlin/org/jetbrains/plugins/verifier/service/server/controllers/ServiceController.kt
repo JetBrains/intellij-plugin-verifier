@@ -1,17 +1,22 @@
 package org.jetbrains.plugins.verifier.service.server.controllers
 
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.server.configuration.properties.AuthorizationProperties
 import org.jetbrains.plugins.verifier.service.server.exceptions.AuthenticationFailedException
 import org.jetbrains.plugins.verifier.service.server.exceptions.InvalidStateChangeException
 import org.jetbrains.plugins.verifier.service.server.exceptions.NotFoundException
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 @Controller
-class ServiceController {
+@EnableConfigurationProperties(AuthorizationProperties::class)
+class ServiceController(
+    private val authorizationProperties: AuthorizationProperties
+) {
   @Autowired
   private lateinit var serverContext: ServerContext
 
@@ -21,7 +26,7 @@ class ServiceController {
       @RequestParam("service-name") serviceName: String,
       @RequestParam command: String
   ): String {
-    if (adminPassword != serverContext.authorizationData.serviceAdminPassword) {
+    if (adminPassword != authorizationProperties.password) {
       throw AuthenticationFailedException("Incorrect password")
     }
     val service = serverContext.allServices.find { it.serviceName == serviceName }

@@ -15,7 +15,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.BaseService
-import org.jetbrains.plugins.verifier.service.setting.Settings
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import java.nio.file.Path

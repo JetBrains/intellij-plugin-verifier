@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.concurrent.*
+import javax.annotation.PreDestroy
 
 /**
  * Main implementation of [TaskManager].
@@ -15,11 +16,6 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
   private companion object {
     private val LOG = LoggerFactory.getLogger(TaskManagerImpl::class.java)
   }
-
-  /**
-   * Whether this task manager is already closed.
-   */
-  private var isClosed = false
 
   /**
    * Unique ID of the next task to be run by this manager.
@@ -102,10 +98,6 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
       onError: (Throwable, TaskDescriptor) -> Unit,
       onCompletion: (TaskDescriptor) -> Unit
   ): TaskDescriptor {
-    if (isClosed) {
-      throw IllegalStateException("Task manager is already closed")
-    }
-
     val taskId = ++nextTaskId
 
     val taskProgress = ProgressIndicator()
@@ -229,21 +221,15 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
     _activeTasks.remove(taskDescriptor)
   }
 
-  override fun close() {
-    /**
-     * Do not synchronize [shutdownAndAwaitTermination] because it may
-     * lead to deadlock with threads that have completed execution
-     * and try to invoke [completeTask].
-     */
-    synchronized(this) {
-      if (isClosed) {
-        throw IllegalStateException("Task manager is already closed")
-      }
-      isClosed = true
-    }
+  private fun shutdownTasks() {
     LOG.info("Stopping task manager")
     taskExecutors.values.forEach { it.shutdownAndAwaitTermination(1, TimeUnit.MINUTES) }
     _activeTasks.clear()
+  }
+
+  @PreDestroy
+  override fun close() {
+    shutdownTasks()
   }
 
 }
