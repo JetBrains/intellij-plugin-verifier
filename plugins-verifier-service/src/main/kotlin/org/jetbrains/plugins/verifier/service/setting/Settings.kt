@@ -15,16 +15,6 @@ enum class Settings(
 
   CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" }),
 
-  /**
-   * Specifies how often should the verifier service poll the verification queue from the Plugin Repository.
-   */
-  VERIFIER_SERVICE_SCHEDULER_PERIOD_SECONDS("verifier.service.scheduler.period.seconds", { "10" }),
-
-  /**
-   * IDE build which classes are used to extract plugins' features.
-   */
-
-
   TASK_MANAGER_CONCURRENCY("verifier.service.task.manager.concurrency", { "8" });
 
   fun get(): String {

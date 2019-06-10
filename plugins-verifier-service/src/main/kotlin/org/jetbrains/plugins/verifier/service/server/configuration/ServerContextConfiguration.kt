@@ -101,7 +101,8 @@ class ServerContextConfiguration {
       serverContext: ServerContext,
       verifierServiceProtocol: VerifierServiceProtocol,
       @Value("\${verifier.service.jdk.8.dir}") jdkPath: Path,
-      @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean
+      @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
+      @Value("\${verifier.service.scheduler.period.seconds}") period: Long
   ): VerifierService {
     val verifierService = with(serverContext) {
       VerifierService(
@@ -113,7 +114,8 @@ class ServerContextConfiguration {
           jdkPath,
           verificationResultsFilter,
           pluginRepository,
-          serviceDAO
+          serviceDAO,
+          period
       )
     }
     if (enableService) {

@@ -17,3 +17,6 @@ verifier:
       extractor:
         ide:
           build: "IU-183.5912.21"
+    scheduler:
+      period:
+        seconds: 10
