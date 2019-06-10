@@ -23,3 +23,6 @@ verifier:
     task:
       manager:
         concurrency: 8
+    clear:
+      corrupted:
+        database: true

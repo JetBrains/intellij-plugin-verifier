@@ -53,7 +53,8 @@ class ServerContextConfiguration {
       pluginRepository: MarketplaceRepository,
       availableIdeProtocol: AvailableIdeProtocol,
       featureServiceProtocol: FeatureServiceProtocol,
-      @Value("\${verifier.service.home.directory}") applicationHomeDir: String
+      @Value("\${verifier.service.home.directory}") applicationHomeDir: String,
+      @Value("\${verifier.service.clear.corrupted.database}") clearDatabaseOnCorruption: Boolean
   ): ServerContext {
     LOG.info("Server is ready to start")
 
@@ -74,7 +75,7 @@ class ServerContextConfiguration {
     val jdkDescriptorsCache = JdkDescriptorsCache()
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
-    val serviceDAO = openServiceDAO(applicationHomeDirPath)
+    val serviceDAO = openServiceDAO(applicationHomeDirPath, clearDatabaseOnCorruption)
 
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
     val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
@@ -170,15 +171,15 @@ class ServerContextConfiguration {
     return availableIdeService
   }
 
-  private fun openServiceDAO(applicationHomeDir: Path): ServiceDAO {
+  private fun openServiceDAO(applicationHomeDir: Path, clearDatabaseOnCorruption: Boolean): ServiceDAO {
     val databasePath = applicationHomeDir.resolve("database")
     try {
       return createServiceDAO(databasePath)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.error("Unable to open/create database", e)
-      LOG.info("Flag to clear database on corruption is " + if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) "ON" else "OFF")
-      if (Settings.CLEAR_DATABASE_ON_CORRUPTION.getAsBoolean()) {
+      LOG.info("Flag to clear database on corruption is " + if (clearDatabaseOnCorruption) "ON" else "OFF")
+      if (clearDatabaseOnCorruption) {
         LOG.info("Trying to recreate database")
         databasePath.deleteLogged()
         try {

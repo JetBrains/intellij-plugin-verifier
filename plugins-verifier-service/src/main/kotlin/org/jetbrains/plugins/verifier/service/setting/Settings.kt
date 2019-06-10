@@ -11,9 +11,7 @@ enum class Settings(
     private val default: (() -> String?)? = null,
     val encrypted: Boolean = false
 ) {
-  MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() }),
-
-  CLEAR_DATABASE_ON_CORRUPTION("verifier.service.clear.database.on.corruption", { "true" });
+  MAX_DISK_SPACE_MB("verifier.service.max.disk.space.mb", { (50 * 1024).toString() });
 
   fun get(): String {
     val property = System.getProperty(key)
