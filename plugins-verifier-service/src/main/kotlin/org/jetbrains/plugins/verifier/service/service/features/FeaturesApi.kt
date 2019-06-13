@@ -43,8 +43,7 @@ private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeatur
   ExtractFeaturesTask.Result.ResultType.NOT_FOUND -> ApiFeaturesResult.ResultType.NOT_FOUND
   ExtractFeaturesTask.Result.ResultType.FAILED_TO_DOWNLOAD -> ApiFeaturesResult.ResultType.NOT_FOUND
   ExtractFeaturesTask.Result.ResultType.BAD_PLUGIN -> ApiFeaturesResult.ResultType.BAD_PLUGIN
-  ExtractFeaturesTask.Result.ResultType.EXTRACTED_ALL -> ApiFeaturesResult.ResultType.EXTRACTED_ALL
-  ExtractFeaturesTask.Result.ResultType.EXTRACTED_PARTIALLY -> ApiFeaturesResult.ResultType.EXTRACTED_PARTIALLY
+  ExtractFeaturesTask.Result.ResultType.EXTRACTED -> ApiFeaturesResult.ResultType.EXTRACTED
 }
 
 
@@ -61,8 +60,7 @@ private data class ApiFeaturesResult(
   enum class ResultType {
     NOT_FOUND,
     BAD_PLUGIN,
-    EXTRACTED_ALL,
-    EXTRACTED_PARTIALLY
+    EXTRACTED
   }
 }
 

@@ -46,14 +46,7 @@ class ExtractFeaturesTask(
       NOT_FOUND,
       FAILED_TO_DOWNLOAD,
       BAD_PLUGIN,
-
-      //TODO: remove when plugin site stops recognizing it.
-      @Deprecated("it might be wrong to assume that 'all' features have been extracted.")
-      EXTRACTED_ALL,
-
-      //TODO: remove when plugin site stops recognizing it.
-      @Deprecated("")
-      EXTRACTED_PARTIALLY
+      EXTRACTED
     }
 
     override fun toString() = when {
@@ -93,7 +86,7 @@ class ExtractFeaturesTask(
             is PluginDetailsCache.Result.Provided -> {
               Result(
                   updateInfo,
-                  Result.ResultType.EXTRACTED_PARTIALLY,
+                  Result.ResultType.EXTRACTED,
                   FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, pluginDetails.idePlugin)
               )
             }
