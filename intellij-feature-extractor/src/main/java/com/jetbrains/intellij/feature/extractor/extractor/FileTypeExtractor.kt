@@ -17,12 +17,13 @@ class FileTypeExtractor : Extractor {
     val extensionsElements = plugin.extensions[ExtensionPoint.FILE_TYPE.extensionPointName]
     val features = arrayListOf<ExtensionPointFeatures>()
     for (element in extensionsElements) {
-      val extensionsAndFileNames = arrayListOf<String>()
-      extensionsAndFileNames += FileTypeFactoryExtractor.parseExtensionsList(element.getAttributeValue("extensions"))
-      extensionsAndFileNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNames"))
-      extensionsAndFileNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNamesCaseInsensitive"))
-      if (extensionsAndFileNames.isNotEmpty()) {
-        features += ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, extensionsAndFileNames)
+      val featureNames = arrayListOf<String>()
+      featureNames += FileTypeFactoryExtractor.parseExtensionsList(element.getAttributeValue("extensions"))
+      featureNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNames"))
+      featureNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("fileNamesCaseInsensitive"))
+      featureNames += FileTypeFactoryExtractor.splitSemicolonDelimitedList(element.getAttributeValue("patterns"))
+      if (featureNames.isNotEmpty()) {
+        features += ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, featureNames)
       }
     }
     return features

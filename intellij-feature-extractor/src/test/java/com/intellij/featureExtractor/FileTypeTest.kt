@@ -47,4 +47,16 @@ class FileTypeTest : FeatureExtractorTestBase() {
     )
   }
 
+  @Test
+  fun `file patterns`() {
+    val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
+    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
+    element.setAttribute("patterns", "*.js.flow")
+    val features = FileTypeExtractor().extract(plugin, resolver)
+    assertEquals(
+        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf("*.js.flow"))),
+        features
+    )
+  }
+
 }
