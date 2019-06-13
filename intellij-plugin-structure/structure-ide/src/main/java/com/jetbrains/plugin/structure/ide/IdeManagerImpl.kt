@@ -52,7 +52,7 @@ class IdeManagerImpl : IdeManager() {
     val pathResolver = PluginXmlXIncludePathResolver(jarFiles)
     val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
 
-    val bundledPlugins = readBundledPlugins(idePath, pathResolver)
+    val bundledPlugins = readBundledPlugins(idePath, ideVersion, pathResolver)
     val platformPlugins = readPlatformPlugins(pathResolver, jarFiles, product, idePath)
 
     if (platformPlugins.none { it.pluginId == "com.intellij" }) {
@@ -87,7 +87,7 @@ class IdeManagerImpl : IdeManager() {
     return readBuildNumber(buildTxtFile)
   }
 
-  private class BundledPluginFromSourceXIncludePathResolver(private val moduleRoots: Array<File>) : XIncludePathResolver {
+  private class BundledPluginFromSourceXIncludePathResolver(private val moduleRoots: Array<out File>) : XIncludePathResolver {
 
     private val defaultResolver = DefaultXIncludePathResolver()
 
@@ -125,12 +125,12 @@ class IdeManagerImpl : IdeManager() {
 
   private fun readCompiledBundledPlugins(idePath: File): List<IdePlugin> {
     val compilationRoot = getCompiledClassesRoot(idePath)!!
-    val moduleRoots = compilationRoot.listFiles()
+    val moduleRoots = compilationRoot.listFiles().orEmpty()
     val pathResolver = BundledPluginFromSourceXIncludePathResolver(moduleRoots)
     return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver)
   }
 
-  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: Array<File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: Array<out File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
     for (moduleRoot in moduleRoots) {
       val pluginXmlFile = moduleRoot.resolve(IdePluginManager.META_INF).resolve(IdePluginManager.PLUGIN_XML)
@@ -162,11 +162,27 @@ class IdeManagerImpl : IdeManager() {
     return plugins
   }
 
-  private fun readBundledPlugins(idePath: File, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readBundledPlugins(idePath: File, ideVersion: IdeVersion, pathResolver: XIncludePathResolver): List<IdePlugin> {
     val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
         .filter { it.isDirectory }
-        .map { createPluginExceptionally(idePath, it, pathResolver, IdePluginManager.PLUGIN_XML) }
+        .mapNotNull { readBundledPlugin(idePath, ideVersion, it, pathResolver) }
+  }
+
+  private fun readBundledPlugin(idePath: File, ideVersion: IdeVersion, pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? {
+    try {
+      return createPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML)
+    } catch (e: InvalidIdeException) {
+      /*
+        Bundled plugin "duplicates", which resides in <ide>/plugins/duplicates, is incorrect in IDEs prior to 173.
+        It does not have "plugin.xml" but only "duplicates.xml" and thus it is not fully correct standalone IDE plugin.
+        This is not the case for recent IDEs.
+      */
+      if (pluginFile.isDirectory && pluginFile.relativeTo(idePath) == File("plugins/duplicates") && ideVersion.baselineVersion < 173) {
+        return null
+      }
+      throw e
+    }
   }
 
   private fun createPluginExceptionally(
@@ -182,7 +198,7 @@ class IdeManagerImpl : IdeManager() {
     is PluginCreationSuccess -> creationResult.plugin
     is PluginCreationFail -> throw InvalidIdeException(
         idePath,
-        "Bundled plugin '${pluginFile.relativeTo(idePath)}' is invalid: " +
+        "Plugin '${pluginFile.relativeTo(idePath)}' is invalid: " +
             creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
     )
   }
