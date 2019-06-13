@@ -1,9 +1,11 @@
 package org.jetbrains.plugins.verifier.service.tasks
 
+import java.io.Closeable
+
 /**
  * Allows to enqueue [tasks] [Task] and execute callbacks upon completion.
  */
-interface TaskManager {
+interface TaskManager : Closeable {
   /**
    * Tasks that are currently waiting or running.
    * They are grouped by [Task.taskType].

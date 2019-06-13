@@ -18,11 +18,6 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
   }
 
   /**
-   * Whether this task manager is already closed.
-   */
-  private var isClosed = false
-
-  /**
    * Unique ID of the next task to be run by this manager.
    */
   private var nextTaskId = 0L
@@ -103,10 +98,6 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
       onError: (Throwable, TaskDescriptor) -> Unit,
       onCompletion: (TaskDescriptor) -> Unit
   ): TaskDescriptor {
-    if (isClosed) {
-      throw IllegalStateException("Task manager is already closed")
-    }
-
     val taskId = ++nextTaskId
 
     val taskProgress = ProgressIndicator()
