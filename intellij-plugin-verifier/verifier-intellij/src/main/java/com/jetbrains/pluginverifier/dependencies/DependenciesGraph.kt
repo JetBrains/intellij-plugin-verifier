@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
@@ -51,4 +52,55 @@ data class DependenciesGraph(
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
+}
+
+/**
+ * Represents an edge in the [DependenciesGraph],
+ * which is a [dependency] of the plugin [from] on the plugin [to].
+ */
+data class DependencyEdge(
+    val from: DependencyNode,
+    val to: DependencyNode,
+    val dependency: PluginDependency
+) {
+  override fun toString() = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
+}
+
+/**
+ * Represents a node in the [DependenciesGraph].
+ *
+ * The node is a plugin [pluginId] and [version].
+ *
+ * The plugin could depend on modules and plugins that might not
+ * be resolved. Those modules and plugins are  [missingDependencies].
+ */
+data class DependencyNode(
+    val pluginId: String,
+    val version: String,
+    val missingDependencies: List<MissingDependency>
+) {
+  override fun toString() = "$pluginId:$version"
+}
+
+/**
+ * Represents a [dependency] of the [verified plugin] [DependenciesGraph.verifiedPlugin]
+ * that was not resolved due to [missingReason].
+ */
+data class MissingDependency(
+    val dependency: PluginDependency,
+    val missingReason: String
+) {
+  override fun toString() = "$dependency: $missingReason"
+}
+
+/**
+ * Contains a path of [DependencyNode]s in the [DependenciesGraph]
+ * starting at the [DependenciesGraph.verifiedPlugin] and ending in some
+ * [missing] [missingDependency] dependency.
+ */
+data class MissingDependencyPath(
+    val path: List<DependencyNode>,
+    val missingDependency: MissingDependency
+) {
+  override fun toString() = path.joinToString(" ---X--> ") + " ---X--> " + missingDependency
 }

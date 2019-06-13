@@ -4,8 +4,8 @@ import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dependencies.emptyDependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.structure.PluginStructureError
@@ -32,7 +32,7 @@ sealed class VerificationResult : Cloneable {
   val internalApiUsages: MutableSet<InternalApiUsage> = hashSetOf()
   val nonExtendableApiUsages: MutableSet<NonExtendableApiUsage> = hashSetOf()
   val overrideOnlyMethodUsages: MutableSet<OverrideOnlyMethodUsage> = hashSetOf()
-  var dependenciesGraph: DependenciesGraph = emptyDependenciesGraph
+  var dependenciesGraph: DependenciesGraph = DependenciesGraph(DependencyNode("", "", emptyList()), emptyList(), emptyList())
   var failedToDownloadReason: String? = null
   var failedToDownloadError: Throwable? = null
   var notFoundReason: String? = null
