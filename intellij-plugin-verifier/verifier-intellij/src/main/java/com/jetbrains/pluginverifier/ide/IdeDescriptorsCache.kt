@@ -70,7 +70,7 @@ class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank) : Closeabl
       } catch (e: Exception) {
         ideLock.closeLogged()
         e.rethrowIfInterrupted()
-        return ProvideResult.Failed("Unable to open IDE $key", e)
+        return ProvideResult.Failed("Unable to open IDE $key: ${e.message}", e)
       }
       return ProvideResult.Provided(ideDescriptor)
     }
