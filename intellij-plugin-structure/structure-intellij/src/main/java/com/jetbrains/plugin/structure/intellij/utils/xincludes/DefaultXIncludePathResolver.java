@@ -7,13 +7,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 final public class DefaultXIncludePathResolver implements XIncludePathResolver {
+
+  public static final DefaultXIncludePathResolver INSTANCE = new DefaultXIncludePathResolver();
+
+  private DefaultXIncludePathResolver() {
+  }
+
   @NotNull
   @Override
   public URL resolvePath(@NotNull String relativePath, @Nullable String base) {
     try {
-      return base == null ? new URL(relativePath) : new URL(new URL(base), relativePath);
-    } catch (MalformedURLException ex) {
-      throw new XIncludeException(ex);
+      if (base != null) {
+        if (relativePath.startsWith("/")) {
+          relativePath = ".." + relativePath;
+        }
+        return new URL(new URL(base), relativePath);
+      } else {
+        return new URL(relativePath);
+      }
+    } catch (MalformedURLException e) {
+      throw new XIncludeException(e);
     }
   }
 }

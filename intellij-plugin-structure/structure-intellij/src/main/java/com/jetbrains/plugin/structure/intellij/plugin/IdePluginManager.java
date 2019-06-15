@@ -55,12 +55,12 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   public static IdePluginManager createManager() {
-    return createManager(new DefaultXIncludePathResolver());
+    return createManager(DefaultXIncludePathResolver.INSTANCE);
   }
 
   @NotNull
   public static IdePluginManager createManager(@NotNull File extractDirectory) {
-    return createManager(new DefaultXIncludePathResolver(), extractDirectory);
+    return createManager(DefaultXIncludePathResolver.INSTANCE, extractDirectory);
   }
 
   @NotNull

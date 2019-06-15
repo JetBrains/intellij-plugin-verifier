@@ -5,15 +5,12 @@ import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URL
 
 class PluginXmlXIncludePathResolver(files: List<File>) : XIncludePathResolver {
-
-  private val defaultResolver = DefaultXIncludePathResolver()
 
   private val metaInfUrls = getMetaInfUrls(files)
 
@@ -27,17 +24,6 @@ class PluginXmlXIncludePathResolver(files: List<File>) : XIncludePathResolver {
               null
             }
           }.toList()
-
-  private fun defaultResolve(relativePath: String, base: String?) =
-      if (base != null && relativePath.startsWith("/${IdePluginManager.META_INF}/")) {
-        try {
-          URL(URL(base), "..$relativePath")
-        } catch (e: MalformedURLException) {
-          throw XIncludeException(e)
-        }
-      } else {
-        defaultResolver.resolvePath(relativePath, base)
-      }
 
   private fun getRelativeUrl(base: URL, path: String) =
       if (path.startsWith("/")) {
@@ -56,5 +42,5 @@ class PluginXmlXIncludePathResolver(files: List<File>) : XIncludePathResolver {
             }
           }
           .find { URLUtil.resourceExists(it) == ThreeState.YES }
-          ?: defaultResolve(relativePath, base)
+          ?: DefaultXIncludePathResolver.INSTANCE.resolvePath(relativePath, base)
 }

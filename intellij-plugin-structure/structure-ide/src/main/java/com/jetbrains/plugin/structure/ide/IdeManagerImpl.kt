@@ -89,11 +89,9 @@ class IdeManagerImpl : IdeManager() {
 
   private class BundledPluginFromSourceXIncludePathResolver(private val moduleRoots: Array<out File>) : XIncludePathResolver {
 
-    private val defaultResolver = DefaultXIncludePathResolver()
-
     override fun resolvePath(relativePath: String, base: String?): URL {
       try {
-        val url = defaultResolver.resolvePath(relativePath, base)
+        val url = DefaultXIncludePathResolver.INSTANCE.resolvePath(relativePath, base)
         if (URLUtil.resourceExists(url) == ThreeState.YES) {
           return url
         }
