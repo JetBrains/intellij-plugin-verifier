@@ -76,7 +76,6 @@ public class JDOMXIncluder {
     return element.getName().equals(INCLUDE) && (element.getNamespace().equals(HTTP_XINCLUDE_NAMESPACE) || element.getNamespace().equals(HTTPS_XINCLUDE_NAMESPACE));
   }
 
-  @Nullable
   private static List<Content> extractNeededChildren(final Element element, List<Content> remoteElements) {
     final String xpointer = element.getAttributeValue(XPOINTER);
     if (xpointer != null) {
@@ -285,7 +284,7 @@ public class JDOMXIncluder {
     try {
       bases.push(remote.toExternalForm());
 
-      Element root = JDOMUtil.loadResourceDocument(remote).getRootElement();
+      Element root = JDOMUtil.loadDocument(remote).getRootElement();
       List<Content> list = resolve(root, bases);
 
       bases.pop();

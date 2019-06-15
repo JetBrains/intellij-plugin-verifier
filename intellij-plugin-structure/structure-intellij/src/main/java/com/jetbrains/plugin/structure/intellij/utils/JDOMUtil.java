@@ -101,17 +101,11 @@ public class JDOMUtil {
     }
   }
 
-  @NotNull
-  public static Document loadResourceDocument(URL url) throws JDOMException, IOException {
-    try (InputStream stream = URLUtil.openResourceStream(url)) {
-      return loadDocument(stream);
-    }
-  }
-
   public static boolean isEmpty(@NotNull Element element) {
     return element.getAttributes().isEmpty() && element.getContent().isEmpty();
   }
 
+  @SuppressWarnings("RedundantThrows")
   @NotNull
   private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
     return new ByteArrayInputStream(ByteStreamsKt.readBytes(is));

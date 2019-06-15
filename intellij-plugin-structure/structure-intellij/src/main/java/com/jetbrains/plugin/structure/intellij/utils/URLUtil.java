@@ -17,7 +17,6 @@ package com.jetbrains.plugin.structure.intellij.utils;
 
 import kotlin.Pair;
 import kotlin.text.StringsKt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,31 +78,6 @@ public class URLUtil {
       }
     }
     return ThreeState.UNSURE;
-  }
-
-  @NotNull
-  public static InputStream openResourceStream(final URL url) throws IOException {
-    try {
-      return openStream(url);
-    } catch (FileNotFoundException ex) {
-      @NonNls final String protocol = url.getProtocol();
-      String file = null;
-      if (protocol.equals(FILE_PROTOCOL)) {
-        file = url.getFile();
-      } else if (protocol.equals(JAR_PROTOCOL)) {
-        int pos = url.getFile().indexOf("!");
-        if (pos >= 0) {
-          file = url.getFile().substring(pos + 1);
-        }
-      }
-      if (file != null && file.startsWith("/")) {
-        InputStream resourceStream = URLUtil.class.getResourceAsStream(file);
-        if (resourceStream != null) {
-          return resourceStream;
-        }
-      }
-      throw ex;
-    }
   }
 
   @NotNull
