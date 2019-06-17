@@ -66,54 +66,61 @@ class PluginsParsing(
 
   /**
    * Parses lines of [pluginsListFile] and adds specified plugins to the [pluginsSet].
-   *
-   * ```
-   * id:<plugin-id>     // all compatible version of <plugin-id>
-   * $id or id$         // only the last version of the plugin compatible with IDEs will be checked
-   * #<update-id>       // update #<update-id>
-   * path:<plugin-path> // plugin from <plugin-path>
-   * <other>            // treated as a path: or id:
-   * ```
    */
   fun addPluginsListedInFile(pluginsListFile: Path, ideVersions: List<IdeVersion>) {
-    val lines = pluginsListFile.readLines().map { it.trim() }.filterNot { it.isEmpty() }
+    val specs = pluginsListFile.readLines()
+        .map { it.trim() }
+        .filterNot { it.isEmpty() }
+        .filterNot { it.startsWith("//") }
+
+    for (spec in specs) {
+      addPluginBySpec(spec, pluginsListFile, ideVersions)
+    }
+  }
+
+  /**
+   * Adds all plugins that correspond to one of the following specs:
+   *
+   * ```
+   * - id:<plugin-id>     // all compatible version of <plugin-id>
+   * - $id or id$         // only the last version of the plugin compatible with IDEs will be checked
+   * - #<update-id>       // update #<update-id>
+   * - path:<plugin-path> // plugin from <plugin-path>, where <plugin-path> may be relative to base path.
+   * - <other>            // treated as a path: or id:
+   * ```
+   */
+  fun addPluginBySpec(spec: String, basePath: Path, ideVersions: List<IdeVersion>) {
     for (ideVersion in ideVersions) {
-      for (line in lines) {
-        if (line.startsWith("//")) {
-          continue
-        }
+      if (spec.startsWith('$') || spec.endsWith('$')) {
+        val pluginId = spec.trim('$').trim()
+        addLastCompatibleVersionOfPlugin(pluginId, ideVersion)
+        continue
+      }
 
-        if (line.startsWith('$') || line.endsWith('$')) {
-          val pluginId = line.trim('$').trim()
-          addLastCompatibleVersionOfPlugin(pluginId, ideVersion)
-          continue
-        }
+      if (spec.startsWith("#")) {
+        val updateId = spec.substringAfter("#").toIntOrNull() ?: continue
+        addUpdateById(updateId)
+        continue
+      }
 
-        if (line.startsWith("#")) {
-          val updateId = line.substringAfter("#").toIntOrNull() ?: continue
-          addUpdateById(updateId)
-          continue
-        }
+      if (spec.startsWith("id:")) {
+        val pluginId = spec.substringAfter("id:")
+        addAllCompatibleVersionsOfPlugin(pluginId, ideVersion)
+        continue
+      }
 
-        if (line.startsWith("id:")) {
-          val pluginId = line.substringAfter("id:")
-          addAllCompatibleVersionsOfPlugin(pluginId, ideVersion)
-          continue
-        }
+      val pluginFile = if (spec.startsWith("path:")) {
+        val linePath = spec.substringAfter("path:")
+        tryFindPluginByPath(basePath, linePath)
+            ?: throw IllegalArgumentException("Invalid path: $linePath")
+      } else {
+        tryFindPluginByPath(basePath, spec)
+      }
 
-        val pluginFile = if (line.startsWith("path:")) {
-          val linePath = line.substringAfter("path:")
-          tryFindPluginByPath(pluginsListFile, linePath)
-              ?: throw IllegalArgumentException("Invalid path: $linePath")
-        } else {
-          tryFindPluginByPath(pluginsListFile, line)
-        }
-
-        if (pluginFile != null) {
-          addPluginFile(pluginFile, true)
-        } else {
-          addAllCompatibleVersionsOfPlugin(line, ideVersion)
-        }
+      if (pluginFile != null) {
+        addPluginFile(pluginFile, true)
+      } else {
+        addAllCompatibleVersionsOfPlugin(spec, ideVersion)
       }
     }
   }

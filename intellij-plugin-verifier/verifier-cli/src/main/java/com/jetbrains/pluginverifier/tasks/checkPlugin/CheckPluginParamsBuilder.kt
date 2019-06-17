@@ -40,16 +40,12 @@ class CheckPluginParamsBuilder(
             ideVersions
         )
       }
-      pluginToTestArg.matches("#\\d+".toRegex()) -> {
-        val updateId = pluginToTestArg.drop(1).toInt()
-        pluginsParsing.addUpdateById(updateId)
-      }
       else -> {
-        pluginsParsing.addPluginFile(Paths.get(pluginToTestArg), true)
+        pluginsParsing.addPluginBySpec(pluginToTestArg, Paths.get(""), ideVersions)
       }
     }
 
-    pluginsSet.ignoredPlugins.forEach { plugin, reason ->
+    pluginsSet.ignoredPlugins.forEach { (plugin, reason) ->
       ideVersions.forEach { ideVersion ->
         reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
       }
