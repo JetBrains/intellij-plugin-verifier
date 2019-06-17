@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -102,7 +102,7 @@ public class CacheResolver extends Resolver {
 
   @NotNull
   @Override
-  public List<File> getClassPath() {
+  public List<Path> getClassPath() {
     return myDelegate.getClassPath();
   }
 

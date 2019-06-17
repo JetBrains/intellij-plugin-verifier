@@ -2,7 +2,8 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 
 class FixedClassesResolver private constructor(
@@ -24,13 +25,13 @@ class FixedClassesResolver private constructor(
 
   private val packageSet = PackageSet()
 
-  private val uniqueClassPath: File
+  private val uniqueClassPath: Path
 
   init {
     for (className in classes.keys) {
       packageSet.addPackagesOfClass(className)
     }
-    uniqueClassPath = File("fixed-classes-resolver-${uniqueClassPathSequenceNumber.getAndIncrement()}")
+    uniqueClassPath = Paths.get("fixed-classes-resolver-${uniqueClassPathSequenceNumber.getAndIncrement()}")
   }
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
@@ -51,7 +52,7 @@ class FixedClassesResolver private constructor(
   override val isEmpty
     get() = classes.isEmpty()
 
-  override val classPath
+  override val classPath: List<Path>
     get() = listOf(uniqueClassPath)
 
   override val finalResolvers

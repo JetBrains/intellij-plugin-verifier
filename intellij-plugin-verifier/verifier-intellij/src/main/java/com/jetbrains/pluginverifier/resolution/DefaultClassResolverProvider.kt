@@ -17,7 +17,6 @@ import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -30,6 +29,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.IdePluginClassResolver
 import org.jgrapht.DirectedGraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.Closeable
+import java.nio.file.Path
 
 /**
  * [ClassResolverProvider] that provides the [IdePluginClassResolver].
@@ -37,7 +37,7 @@ import java.io.Closeable
 class DefaultClassResolverProvider(
     private val dependencyFinder: DependencyFinder,
     private val jdkDescriptorsCache: JdkDescriptorsCache,
-    private val jdkPath: JdkPath,
+    private val jdkPath: Path,
     private val ideDescriptor: IdeDescriptor,
     private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
@@ -100,7 +100,7 @@ class DefaultClassResolverProvider(
 
     return when (val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)) {
       is ResourceCacheEntryResult.Found -> {
-        val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkClassesResolver
+        val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkResolver
         val closeableResources = listOf<Closeable>(jdkCacheEntry.resourceCacheEntry) + dependenciesResults
         IdePluginClassResolver(
             pluginResolver,

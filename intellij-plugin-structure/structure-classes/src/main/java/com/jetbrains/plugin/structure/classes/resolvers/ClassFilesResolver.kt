@@ -6,10 +6,13 @@ import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
-class ClassFilesResolver(private val root: File, override val readMode: ReadMode) : Resolver() {
+class ClassFilesResolver(private val root: Path, override val readMode: ReadMode) : Resolver() {
 
-  constructor(root: File) : this(root, ReadMode.FULL)
+  constructor(root: File) : this(root.toPath())
+
+  constructor(root: Path) : this(root, ReadMode.FULL)
 
   private val nameToClassFile = hashMapOf<String, File>()
 
@@ -18,7 +21,7 @@ class ClassFilesResolver(private val root: File, override val readMode: ReadMode
   private val classPaths = linkedSetOf<File>()
 
   init {
-    val classFiles = FileUtils.listFiles(root.canonicalFile, arrayOf("class"), true)
+    val classFiles = FileUtils.listFiles(root.toFile().canonicalFile, arrayOf("class"), true)
     for (classFile in classFiles) {
       val className = AsmUtil.readClassName(classFile)
       val classRoot = getClassRoot(classFile, className)
@@ -64,7 +67,7 @@ class ClassFilesResolver(private val root: File, override val readMode: ReadMode
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
-  override val classPath
+  override val classPath: List<Path>
     get() = listOf(root)
 
   override val finalResolvers
@@ -82,5 +85,5 @@ class ClassFilesResolver(private val root: File, override val readMode: ReadMode
     return true
   }
 
-  override fun toString() = root.canonicalPath!!
+  override fun toString() = root.toAbsolutePath().toString()
 }

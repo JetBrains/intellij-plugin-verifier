@@ -11,7 +11,7 @@ class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator
 
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
     if (pluginFile.isJar()) {
-      return JarFileResolver(pluginFile, readMode)
+      return JarFileResolver(pluginFile.toPath(), readMode)
     }
     return null
   }

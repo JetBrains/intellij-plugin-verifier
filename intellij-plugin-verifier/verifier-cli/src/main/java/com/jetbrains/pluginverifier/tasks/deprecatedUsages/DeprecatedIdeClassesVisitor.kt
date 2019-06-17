@@ -34,7 +34,7 @@ class DeprecatedIdeClassesVisitor {
       null
     }
 
-    val classPath = getClassLocation(className)?.classPath?.firstOrNull()?.toPath()
+    val classPath = getClassLocation(className)?.classPath?.firstOrNull()
 
     if (classNode != null && classPath != null) {
       val classFile = ClassFileAsm(classNode, IntelliJClassFileOrigin.IdeClass(classPath))

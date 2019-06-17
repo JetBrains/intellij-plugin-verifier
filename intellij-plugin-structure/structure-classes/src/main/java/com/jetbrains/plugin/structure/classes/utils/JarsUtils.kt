@@ -30,7 +30,7 @@ object JarsUtils {
     try {
       jars.mapTo(resolvers) {
         checkIfInterrupted()
-        JarFileResolver(it, readMode)
+        JarFileResolver(it.toPath(), readMode)
       }
     } catch (e: Throwable) {
       resolvers.forEach { it.closeLogged() }

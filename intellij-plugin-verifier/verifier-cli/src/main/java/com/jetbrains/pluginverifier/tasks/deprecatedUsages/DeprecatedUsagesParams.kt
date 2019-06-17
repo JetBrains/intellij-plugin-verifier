@@ -5,13 +5,13 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.tasks.TaskParameters
+import java.nio.file.Path
 
 
 class DeprecatedUsagesParams(
     val pluginsSet: PluginsSet,
-    val jdkPath: JdkPath,
+    val jdkPath: Path,
     val ideDescriptor: IdeDescriptor,
     val dependencyFinder: DependencyFinder,
     val ideVersionForCompatiblePlugins: IdeVersion

@@ -18,7 +18,9 @@ private val JDK_8_SPECIFIC_PACKAGES = listOf(
     "javax.activity",
     "javax.rmi",
     "org.omg",
-    "javax.transaction"
+    "javax.transaction",
+
+    "discouragingJdkClass"
 )
 
 fun ClassFile.isDiscouragingJdkClass(): Boolean {

@@ -17,6 +17,8 @@ import com.jetbrains.plugin.structure.ide.util.loadProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File
+import java.nio.file.Files
+import kotlin.streams.toList
 
 object IdeResolverCreator {
 
@@ -48,8 +50,8 @@ object IdeResolverCreator {
     resolvers += getJarsResolver(idePath.resolve("lib"), readMode)
     resolvers += getRepositoryLibrariesResolver(idePath, readMode)
 
-    val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
-    for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
+    val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!.toPath()
+    for (moduleRoot in Files.list(compiledClassesRoot).toList()) {
       resolvers += ClassFilesResolver(moduleRoot, readMode)
     }
 

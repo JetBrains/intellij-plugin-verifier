@@ -54,7 +54,7 @@ class PluginApiClassResolver(
       }
 
       if (classNode != null) {
-        val classPath = resolver.getClassLocation(className)?.classPath?.firstOrNull()?.toPath()
+        val classPath = resolver.getClassLocation(className)?.classPath?.firstOrNull()
         if (classPath != null) {
           val classFileOrigin = when (resolver) {
             cachedCheckedPluginResolver -> IntelliJClassFileOrigin.PluginClass(classPath)

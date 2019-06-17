@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
+import java.nio.file.Path
 
 /**
  * [Resolver] that unites several [resolvers] with the Java classpath search strategy.
@@ -32,7 +33,7 @@ class UnionResolver private constructor(
   override val isEmpty
     get() = packageToResolvers.isEmpty()
 
-  override val classPath
+  override val classPath: List<Path>
     get() = resolvers.flatMap { it.classPath }
 
   override val finalResolvers

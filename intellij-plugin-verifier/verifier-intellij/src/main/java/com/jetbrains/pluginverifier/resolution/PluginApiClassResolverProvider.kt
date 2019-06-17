@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.resolution
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.reporting.verification.Reporters
@@ -12,10 +11,11 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.PluginApiClassResolver
 import java.io.Closeable
+import java.nio.file.Path
 
 class PluginApiClassResolverProvider(
     private val jdkDescriptorCache: JdkDescriptorsCache,
-    private val jdkPath: JdkPath,
+    private val jdkPath: Path,
     private val basePluginResolver: Resolver,
     private val basePluginPackageFilter: PackageFilter
 ) : ClassResolverProvider {
@@ -29,7 +29,7 @@ class PluginApiClassResolverProvider(
     return with(jdkDescriptorCache.getJdkResolver(jdkPath)) {
       when (this) {
         is ResourceCacheEntryResult.Found -> {
-          val jdkClassesResolver = resourceCacheEntry.resource.jdkClassesResolver
+          val jdkClassesResolver = resourceCacheEntry.resource.jdkResolver
           val closeableResources = listOf<Closeable>(resourceCacheEntry)
           PluginApiClassResolver(pluginResolver, basePluginResolver, jdkClassesResolver, closeableResources, basePluginPackageFilter)
         }

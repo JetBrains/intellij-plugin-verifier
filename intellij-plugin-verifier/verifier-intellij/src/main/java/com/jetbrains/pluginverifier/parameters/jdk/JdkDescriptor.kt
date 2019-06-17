@@ -5,14 +5,10 @@ import java.io.Closeable
 import java.nio.file.Path
 
 /**
- * Holds class files  [resolver] [jdkClassesResolver] of the JDK
- * which is used to verify the plugins.
+ * Holder of class files of the JDK.
  */
-data class JdkDescriptor(
-    val jdkClassesResolver: Resolver,
-    val homeDir: Path
-) : Closeable {
-  override fun toString(): String = homeDir.toAbsolutePath().toString()
+data class JdkDescriptor(val jdkPath: Path, val jdkResolver: Resolver) : Closeable {
+  override fun toString(): String = jdkPath.toAbsolutePath().toString()
 
-  override fun close() = jdkClassesResolver.close()
+  override fun close() = jdkResolver.close()
 }

@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
+import java.nio.file.Path
 
 /**
- * Caches the [JdkDescriptor]s for [JdkPath]s.
+ * Caches created [JdkDescriptor]s.
  */
 class JdkDescriptorsCache : Closeable {
 
@@ -27,21 +27,20 @@ class JdkDescriptorsCache : Closeable {
    * that protects the [JdkDescriptor] from eviction
    * from the cache until the entry is closed.
    */
-  fun getJdkResolver(path: JdkPath): ResourceCacheEntryResult<JdkDescriptor, SizeWeight> =
+  fun getJdkResolver(path: Path): ResourceCacheEntryResult<JdkDescriptor, SizeWeight> =
       descriptorsCache.getResourceCacheEntry(path)
 
   override fun close() = descriptorsCache.close()
 
-  private inner class JdkClassesResourceProvider : ResourceProvider<JdkPath, JdkDescriptor> {
-    override fun provide(key: JdkPath): ProvideResult<JdkDescriptor> {
-      val jdkPath = key.jdkPath
-      val resolver = try {
-        JdkResolverCreator.createJdkResolver(jdkPath.toFile())
+  private inner class JdkClassesResourceProvider : ResourceProvider<Path, JdkDescriptor> {
+    override fun provide(key: Path): ProvideResult<JdkDescriptor> {
+      return try {
+        val jdkDescriptor = JdkDescriptorCreator.createJdkDescriptor(key)
+        ProvideResult.Provided(jdkDescriptor)
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
-        return ProvideResult.Failed("Failed to read JDK classes $key: $jdkPath", e)
+        return ProvideResult.Failed("Failed to read JDK classes $key: $key", e)
       }
-      return ProvideResult.Provided(JdkDescriptor(resolver, jdkPath))
     }
   }
 

@@ -229,7 +229,7 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertTrue(mainResolvers.any { it.containsPackage("packagename/subpackage") })
 
     val allClassPath = mainResolvers.flatMap { it.classPath }
-    assertTrue(allClassPath.all { it.canonicalPath.replace("\\", "/").endsWith(classPath) })
+    assertTrue(allClassPath.all { it.toAbsolutePath().toString().replace("\\", "/").endsWith(classPath) })
   }
 
   private fun testCompileServerJars(classesLocations: IdePluginClassesLocations) {

@@ -45,7 +45,7 @@ class CheckIdeParamsBuilder(
       val excludedFilter = ExcludedPluginFilter(excludedPlugins)
       pluginsSet.addPluginFilter(excludedFilter)
 
-      pluginsSet.ignoredPlugins.forEach { plugin, reason ->
+      pluginsSet.ignoredPlugins.forEach { (plugin, reason) ->
         reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideDescriptor.ideVersion), reason)
       }
 

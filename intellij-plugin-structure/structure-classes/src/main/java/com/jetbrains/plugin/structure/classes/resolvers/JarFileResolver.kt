@@ -1,16 +1,16 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.jar.JarFile
 
-class JarFileResolver(private val ioJarFile: File, override val readMode: ReadMode) : Resolver() {
+class JarFileResolver(private val ioJarFile: Path, override val readMode: ReadMode) : Resolver() {
 
-  constructor(jarFile: File) : this(jarFile, ReadMode.FULL)
+  constructor(jarFile: Path) : this(jarFile, ReadMode.FULL)
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
@@ -27,14 +27,14 @@ class JarFileResolver(private val ioJarFile: File, override val readMode: ReadMo
   private val serviceProviders: MutableSet<String> = hashSetOf()
 
   init {
-    if (!ioJarFile.exists()) {
+    if (!Files.exists(ioJarFile)) {
       throw IllegalArgumentException("Jar file $ioJarFile doesn't exist")
     }
-    if (!ioJarFile.isJar()) {
+    if (!ioJarFile.fileName.toString().endsWith(".jar")) {
       throw IllegalArgumentException("File $ioJarFile is not a jar archive")
     }
 
-    jarFile = JarFile(ioJarFile)
+    jarFile = JarFile(ioJarFile.toFile())
     try {
       readClassNamesAndServiceProviders()
     } catch (e: Throwable) {
@@ -74,7 +74,7 @@ class JarFileResolver(private val ioJarFile: File, override val readMode: ReadMo
   override val isEmpty
     get() = classes.isEmpty()
 
-  override val classPath
+  override val classPath: List<Path>
     get() = listOf(ioJarFile)
 
   override val finalResolvers
@@ -118,6 +118,6 @@ class JarFileResolver(private val ioJarFile: File, override val readMode: ReadMo
 
   override fun close() = jarFile.close()
 
-  override fun toString() = ioJarFile.canonicalPath!!
+  override fun toString() = ioJarFile.toAbsolutePath().toString()
 
 }

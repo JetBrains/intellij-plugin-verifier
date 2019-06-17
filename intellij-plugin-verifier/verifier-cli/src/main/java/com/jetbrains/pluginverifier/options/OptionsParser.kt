@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.*
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import org.slf4j.LoggerFactory
@@ -57,9 +56,17 @@ object OptionsParser {
     return IdeDescriptor.create(idePath, ideVersion, null)
   }
 
-  fun getJdkPath(opts: CmdOpts): JdkPath {
-    val path = opts.runtimeDir
-    return if (path == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(path)
+  fun getJdkPath(opts: CmdOpts): Path {
+    val runtimeDirectory = opts.runtimeDir
+    val jdkPath = if (runtimeDirectory != null) {
+      Paths.get(runtimeDirectory)
+    } else {
+      val javaHome = System.getenv("JAVA_HOME")
+      requireNotNull(javaHome) { "JAVA_HOME is not specified" }
+      Paths.get(javaHome)
+    }
+    require(jdkPath.isDirectory) { "Invalid JDK path: $jdkPath" }
+    return jdkPath
   }
 
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {

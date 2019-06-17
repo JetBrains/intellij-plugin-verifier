@@ -7,6 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
+import java.nio.file.Files
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 
@@ -42,9 +43,9 @@ class InvalidClassFileTest {
     expectedEx.expect(InvalidClassFileException::class.java)
     expectedEx.expectMessage("Unable to read class-file `invalid` using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException: 6.")
 
-    val jarFile = temporaryFolder.newFile("invalid.jar")
+    val jarFile = temporaryFolder.newFile("invalid.jar").toPath()
 
-    val jarOutputStream = JarOutputStream(jarFile.outputStream())
+    val jarOutputStream = JarOutputStream(Files.newOutputStream(jarFile))
     jarOutputStream.use {
       val jarEntry = JarEntry("invalid.class")
       jarOutputStream.putNextEntry(jarEntry)

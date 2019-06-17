@@ -73,17 +73,17 @@ fun Path.listFiles(): List<Path> = Files.list(this).collect(Collectors.toList())
 val Path.isDirectory
   get() = Files.isDirectory(this)
 
-val Path.nameWithoutExtension
-  get() = toFile().nameWithoutExtension
-
-val Path.simpleName
+val Path.simpleName: String
   get() = fileName.toString()
 
-val Path.extension
-  get() = toFile().extension
+val Path.nameWithoutExtension: String
+  get() = simpleName.substringBeforeLast(".")
 
-val Path.length
-  get() = toFile().length()
+val Path.extension: String
+  get() = simpleName.substringAfterLast(".", "")
+
+val Path.length: Long
+  get() = Files.size(this)
 
 /**
  * If the [directory] contains a single directory,

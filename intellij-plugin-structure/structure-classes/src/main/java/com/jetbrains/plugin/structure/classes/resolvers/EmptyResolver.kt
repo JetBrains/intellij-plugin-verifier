@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import org.objectweb.asm.tree.ClassNode
-import java.io.File
+import java.nio.file.Path
 
 object EmptyResolver : Resolver() {
   override val readMode
@@ -23,7 +23,7 @@ object EmptyResolver : Resolver() {
 
   override val isEmpty = true
 
-  override val classPath = emptyList<File>()
+  override val classPath: List<Path> = emptyList()
 
   override val finalResolvers = emptyList<Resolver>()
 

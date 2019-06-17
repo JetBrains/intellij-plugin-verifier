@@ -3,8 +3,8 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import org.objectweb.asm.tree.ClassNode
 
 import java.io.Closeable
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 
 /**
  *
@@ -60,7 +60,7 @@ abstract class Resolver : Closeable {
    *
    * @return roots of the classes
    */
-  abstract val classPath: List<File>
+  abstract val classPath: List<Path>
 
   /**
    * Returns the resolvers that actually constitute the given resolver

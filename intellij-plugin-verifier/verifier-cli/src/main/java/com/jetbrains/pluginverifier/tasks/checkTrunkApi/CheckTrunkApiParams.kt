@@ -5,17 +5,17 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.deleteLogged
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tasks.TaskParameters
+import java.nio.file.Path
 
 
 class CheckTrunkApiParams(
     val releasePluginsSet: PluginsSet,
     val trunkPluginsSet: PluginsSet,
-    val jdkPath: JdkPath,
+    val jdkPath: Path,
     val trunkIde: IdeDescriptor,
     val releaseIde: IdeDescriptor,
     val externalClassesPackageFilter: PackageFilter,
