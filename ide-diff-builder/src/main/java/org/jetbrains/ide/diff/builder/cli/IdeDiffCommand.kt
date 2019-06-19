@@ -1,12 +1,12 @@
 package org.jetbrains.ide.diff.builder.cli
 
 import com.jetbrains.pluginverifier.misc.simpleName
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.persistence.saveTo
 import org.slf4j.LoggerFactory
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -72,7 +72,15 @@ class IdeDiffCommand : Command {
 
     fun getPackages(): List<String> = packagesArray.toList()
 
-    fun getJdkPath(): JdkPath = if (jdkPathStr == null) JdkPath.createJavaHomeJdkPath() else JdkPath.createJdkPath(jdkPathStr!!)
+    fun getJdkPath(): Path {
+      return if (jdkPathStr == null) {
+        val javaHome = System.getenv("JAVA_HOME")
+        requireNotNull(javaHome) { "JAVA_HOME is not specified" }
+        Paths.get(javaHome)
+      } else {
+        Paths.get(jdkPathStr!!)
+      }
+    }
   }
 
 }
