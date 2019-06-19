@@ -44,7 +44,8 @@ class DocumentedProblemsParserTest {
         DocMethodRemoved("com/example/Baz", "<init>"),
         DocMethodParameterTypeChanged("com/example/Baf", "<init>"),
         DocMethodParameterTypeChanged("com/example/Bam", "<init>"),
-        DocMethodMarkedFinal("com/example/MethodHolder", "methodMarkedFinal")
+        DocMethodMarkedFinal("com/example/MethodHolder", "methodMarkedFinal"),
+        DocFinalMethodInherited("com/some/Class", "com/some/other/Class", "methodName")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)

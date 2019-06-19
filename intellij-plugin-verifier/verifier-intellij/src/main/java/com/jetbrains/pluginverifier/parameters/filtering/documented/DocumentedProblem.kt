@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
+import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
 
 /**
@@ -76,6 +77,18 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
 data class DocMethodMarkedFinal(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
       problem is OverridingFinalMethodProblem && problem.finalMethod.hostClass.className == hostClass && problem.finalMethod.methodName == methodName
+}
+
+/**
+ * <class name> class|interface now extends|implements <class name> and inherits its final method <method name>
+ */
+data class DocFinalMethodInherited(val changedClass: String, val newParent: String, val methodName: String) : DocumentedProblem {
+  override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
+      problem is OverridingFinalMethodProblem
+          && problem.finalMethod.methodName == methodName
+          && problem.finalMethod.hostClass.className == newParent
+          && problem.invalidClass.className == changedClass
+          && context.classResolver.isSubclassOf(changedClass, newParent)
 }
 
 /**

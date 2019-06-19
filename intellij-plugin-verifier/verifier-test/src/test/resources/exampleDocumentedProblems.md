@@ -89,3 +89,5 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 `com.example.Bam` class renamed to `com.example.NewBam` 
 : It is a comment why
+`com.some.Class` class now extends `com.some.other.Class` and inherits its final method `methodName(int, String)`
+: It is a comment why

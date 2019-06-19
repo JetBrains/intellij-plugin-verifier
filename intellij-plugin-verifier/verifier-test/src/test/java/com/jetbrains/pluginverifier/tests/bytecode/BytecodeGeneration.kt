@@ -4,11 +4,14 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
+import java.io.StringWriter
 
-fun ClassNode.printBytecode() {
-  val printWriter = PrintWriter(System.out)
+fun ClassNode.printBytecode(): String {
+  val stringWriter = StringWriter()
+  val printWriter = PrintWriter(stringWriter)
   val traceClassVisitor = TraceClassVisitor(printWriter)
   accept(traceClassVisitor)
+  return stringWriter.toString()
 }
 
 fun ByteArray.createClassNode(): ClassNode {

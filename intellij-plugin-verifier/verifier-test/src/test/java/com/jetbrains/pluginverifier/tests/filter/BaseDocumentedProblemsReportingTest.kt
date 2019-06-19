@@ -38,10 +38,7 @@ abstract class BaseDocumentedProblemsReportingTest {
     val problemsFilter = DocumentedProblemsFilter(documentedProblems)
 
     for (problem in problems) {
-      val shouldReportProblem = problemsFilter.shouldReportProblem(
-          problem,
-          context
-      )
+      val shouldReportProblem = problemsFilter.shouldReportProblem(problem, context)
       if (shouldReportProblem !is ProblemsFilter.Result.Ignore) {
         Assert.fail("Problem is not ignored:\n$problem")
       }
