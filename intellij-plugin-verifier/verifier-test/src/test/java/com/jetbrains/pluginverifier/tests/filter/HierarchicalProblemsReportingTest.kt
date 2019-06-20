@@ -42,6 +42,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
   private fun createProblemAndItsDocumentationTestMap(): List<Pair<CompatibilityProblem, DocumentedProblem>> {
     val classALocation = ClassLocation("org/test/A", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
     val classBLocation = ClassLocation("org/test/other/B", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
+    val classCLocation = ClassLocation("org/test/third/C", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
 
     val classBReference = ClassReference("org/test/other/B")
 
@@ -122,7 +123,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
             null,
             Modifiers.of(Modifiers.Modifier.PUBLIC, Modifiers.Modifier.FINAL)
         ),
-        classBLocation
+        classCLocation
     )
 
     return listOf(
@@ -196,8 +197,11 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
    *
    * package org.test.other;
    * public class B extends A {
-   *   @Override public void finalMethod() { } //invalid overriding
+   * }
    *
+   * package org.test.third;
+   * public class C extends B {
+   *   @Override public void finalMethod() { } //invalid overriding
    * }
    */
   private fun buildClassesForHierarchicalTest(): List<ClassNode> {
@@ -226,6 +230,11 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     val classBDescriptor = ByteBuddy()
         .subclass(classADescriptor.typeDescription)
         .name("org.test.other.B")
+        .make()
+
+    val classCDescriptor = ByteBuddy()
+        .subclass(classBDescriptor.typeDescription)
+        .name("org.test.third.C")
         .defineMethod("finalMethod", Void.TYPE, Visibility.PUBLIC)
         .intercept(ExceptionMethod.throwing(RuntimeException::class.java))
         .make()
@@ -233,6 +242,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     return listOf(
         classADescriptor,
         classBDescriptor,
+        classCDescriptor,
         interfaceIDescriptor,
         interfaceImplDescriptor,
         interfaceImplDerived

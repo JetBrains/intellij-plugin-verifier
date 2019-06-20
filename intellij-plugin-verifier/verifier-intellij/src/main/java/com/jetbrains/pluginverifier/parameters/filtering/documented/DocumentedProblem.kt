@@ -87,7 +87,7 @@ data class DocFinalMethodInherited(val changedClass: String, val newParent: Stri
       problem is OverridingFinalMethodProblem
           && problem.finalMethod.methodName == methodName
           && problem.finalMethod.hostClass.className == newParent
-          && problem.invalidClass.className == changedClass
+          && context.classResolver.isSubclassOrSelf(problem.invalidClass.className, changedClass)
           && context.classResolver.isSubclassOf(changedClass, newParent)
 }
 
