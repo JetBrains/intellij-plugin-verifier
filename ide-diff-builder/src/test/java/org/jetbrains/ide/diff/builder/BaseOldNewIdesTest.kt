@@ -1,11 +1,11 @@
 package org.jetbrains.ide.diff.builder
 
 import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Paths
 
 abstract class BaseOldNewIdesTest {
 
@@ -32,7 +32,10 @@ abstract class BaseOldNewIdesTest {
     val oldIde = IdeManager.createManager().createIde(oldIdeFile)
     val newIde = IdeManager.createManager().createIde(newIdeFile)
 
-    val jdkPath = JdkPath.createJavaHomeJdkPath()
+    val javaHome = System.getenv("JAVA_HOME")
+    requireNotNull(javaHome) { "JAVA_HOME is not specified" }
+    val jdkPath = Paths.get(javaHome)
+
     return IdeDiffBuilder(emptyList(), jdkPath).buildIdeDiff(oldIde, newIde)
   }
 

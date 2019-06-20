@@ -8,7 +8,10 @@ import java.nio.file.Path
 
 object JdkDescriptorCreator {
 
-  fun createJdkDescriptor(jdkPath: Path): JdkDescriptor {
+  fun createJdkDescriptor(jdkPath: Path): JdkDescriptor =
+      createJdkDescriptor(jdkPath, Resolver.ReadMode.FULL)
+
+  fun createJdkDescriptor(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
     val releasePath = jdkPath.resolve("release")
     require(releasePath.exists()) { "Invalid JDK: $releasePath does not exist" }
 
@@ -20,18 +23,18 @@ object JdkDescriptorCreator {
     checkNotNull(majorVersion) { "Invalid JAVA_VERSION: $javaVersion " }
 
     return if (majorVersion < 9) {
-      createPreJava9(jdkPath)
+      createPreJava9(jdkPath, readMode)
     } else {
-      createJava9Plus(jdkPath)
+      createJava9Plus(jdkPath, readMode)
     }
   }
 
-  private fun createJava9Plus(jdkPath: Path): JdkDescriptor {
-    val resolver = JdkJImageResolver(jdkPath)
+  private fun createJava9Plus(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
+    val resolver = JdkJImageResolver(jdkPath, readMode)
     return JdkDescriptor(jdkPath, resolver)
   }
 
-  private fun createPreJava9(jdkPath: Path): JdkDescriptor {
+  private fun createPreJava9(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
     val mandatoryJars = setOf("rt.jar")
     val optionalJars = setOf("tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar")
 
@@ -45,7 +48,7 @@ object JdkDescriptorCreator {
       "JDK by path does not have mandatory jars (${missingJars.joinToString()}): $jdkPath"
     }
 
-    val jarResolver = JarsUtils.makeResolver(Resolver.ReadMode.FULL, jars)
+    val jarResolver = JarsUtils.makeResolver(readMode, jars)
     return JdkDescriptor(jdkPath, jarResolver)
   }
 

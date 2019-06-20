@@ -2,7 +2,6 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.jdk.JdkResolverCreator
 import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
@@ -13,7 +12,8 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Builder of [ApiReport] by APIs difference of two IDEs.
  */
-class IdeDiffBuilder(private val interestingPackages: List<String>, private val jdkPath: JdkPath) {
+class IdeDiffBuilder(private val interestingPackages: List<String>, private val jdkPath: Path) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(IdeDiffBuilder::class.java)
@@ -68,7 +68,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport {
     val introducedData = hashSetOf<ApiSignature>()
     val removedData = hashSetOf<ApiSignature>()
-    return JdkResolverCreator.createJdkResolver(Resolver.ReadMode.SIGNATURES, jdkPath.jdkPath.toFile()).use { jdkResolver ->
+    return JdkDescriptorCreator.createJdkDescriptor(jdkPath, Resolver.ReadMode.SIGNATURES).use { jdkDescriptor ->
       IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, oldIde).use { oldPlatformResolver ->
         IdeResolverCreator.createIdeResolver(Resolver.ReadMode.SIGNATURES, newIde).use { newPlatformResolver ->
           val oldPluginClassLocations = readBundledPluginsClassesLocations(oldIde)
@@ -81,7 +81,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
               val oldIdeResolver = UnionResolver.create(listOf(oldPlatformResolver) + oldBundledPluginsResolvers)
               val newIdeResolver = UnionResolver.create(listOf(newPlatformResolver) + newBundledPluginsResolvers)
 
-              appendData(oldIdeResolver, newIdeResolver, jdkResolver, introducedData, removedData)
+              appendData(oldIdeResolver, newIdeResolver, jdkDescriptor, introducedData, removedData)
             }
           }
         }
@@ -104,12 +104,12 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
   private fun appendData(
       oldResolver: Resolver,
       newResolver: Resolver,
-      jdkResolver: Resolver,
+      jdkDescriptor: JdkDescriptor,
       introducedData: MutableSet<ApiSignature>,
       removedData: MutableSet<ApiSignature>
   ) {
-    val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkResolver)))
-    val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkResolver)))
+    val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkDescriptor.jdkResolver)))
+    val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkDescriptor.jdkResolver)))
 
     val allClasses: Set<String> = oldResolver.allClasses + newResolver.allClasses
     for (className in allClasses) {

@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.misc.*
-import com.jetbrains.pluginverifier.parameters.jdk.JdkPath
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -75,7 +74,7 @@ class BuildApiAnnotationsCommand : Command {
 
     fun getIdesDirectory(): Path =
         if (idesDirPath != null) {
-          Paths.get(idesDirPath)
+          Paths.get(idesDirPath!!)
         } else {
           Files.createTempDirectory("ides-dir").also {
             it.toFile().deleteOnExit()
@@ -106,8 +105,8 @@ class BuildApiAnnotationsCommand : Command {
 
     val ideFilesBank = createIdeFilesBank(idesDir)
 
-    val repositoryToIdes = allIdeRepositories.associate { ideRepository ->
-      ideRepository to ideRepository.fetchIndex()
+    val repositoryToIdes = allIdeRepositories.associateWith { ideRepository ->
+      ideRepository.fetchIndex()
           .map { it.version }
           .filter { it.productCode == "IU" && it >= MIN_BUILD_NUMBER }
           .sorted()
@@ -159,7 +158,7 @@ class BuildApiAnnotationsCommand : Command {
       resultsDirectory: Path,
       ideFilesBank: IdeFilesBank,
       packages: List<String>,
-      jdkPath: JdkPath
+      jdkPath: Path
   ): List<IdeDiff> {
     val ideDiffs = arrayListOf<IdeDiff>()
     for (index in 1 until idesToProcess.size) {
@@ -226,7 +225,7 @@ class BuildApiAnnotationsCommand : Command {
       newIdeVersion: IdeVersion,
       ideFilesBank: IdeFilesBank,
       packages: List<String>,
-      jdkPath: JdkPath
+      jdkPath: Path
   ): ApiReport {
     val oldIdeTask = ideFilesBank.downloadIdeAsync(oldIdeVersion)
     val newIdeTask = ideFilesBank.downloadIdeAsync(newIdeVersion)
