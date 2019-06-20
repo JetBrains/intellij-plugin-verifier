@@ -15,24 +15,46 @@ class DocumentedProblemsParser {
     private const val S = "[.|#]"
 
     private val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
-        Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(s[0].toInternalName()) },
-        Regex("($IDENTIFIER) class renamed.*") to { s -> DocClassRemoved(s[0].toInternalName()) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor removed") to { s -> DocMethodRemoved(s[0].toInternalName(), "<init>") },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method return type changed.*") to { s -> DocMethodReturnTypeChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(s[0].toInternalName(), "<init>") },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method marked final.*") to { s -> DocMethodMarkedFinal(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER).*(class|interface) now (extends|implements) ($IDENTIFIER) and inherits its final method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocFinalMethodInherited(s[0].toInternalName(), s[3].toInternalName(), s[4]) },
-        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor visibility changed.*") to { s -> DocMethodVisibilityChanged(s[0].toInternalName(), "<init>") },
-        Regex("($IDENTIFIER)$S($IDENTIFIER) field removed") to { s -> DocFieldRemoved(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(s[0].toInternalName()) },
-        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(s[0].toInternalName(), s[1]) },
-        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(s[0].toInternalName(), s[1].toInternalName()) }
+        Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(toInternalName(s[0])) },
+        Regex("($IDENTIFIER) class renamed.*") to { s -> DocClassRemoved(toInternalName(s[0])) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor removed") to { s -> DocMethodRemoved(toInternalName(s[0]), "<init>") },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method return type changed.*") to { s -> DocMethodReturnTypeChanged(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(toInternalName(s[0]), "<init>") },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method marked final.*") to { s -> DocMethodMarkedFinal(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER).*(class|interface) now (extends|implements) ($IDENTIFIER) and inherits its final method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocFinalMethodInherited(toInternalName(s[0]), toInternalName(s[3]), s[4]) },
+        Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), "<init>") },
+        Regex("($IDENTIFIER)$S($IDENTIFIER) field removed") to { s -> DocFieldRemoved(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(toInternalName(s[0])) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), s[1]) },
+        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) }
     )
+
+    /**
+     * Converts a presentable class name to the JVM internal name
+     * (with dots replaced with /-slashes and $-dollars for inner/nested classes)
+     * Examples:
+     * - org.some.Class -> org/some/Class
+     * - com.example.Inner.Class -> com/example/Inner$Class
+     * - com.somePackage.SomeClass -> com/somePackage/SomeClass
+     */
+    fun toInternalName(dotClassName: String): String {
+      val parts = dotClassName.split(".")
+      require(parts.all { it.isNotEmpty() }) { "Has empty parts: $dotClassName" }
+      val packageName = parts.takeWhile { it.first().isLowerCase() }.joinToString("/")
+      val className = parts.dropWhile { it.first().isLowerCase() }.joinToString("$")
+      if (packageName.isEmpty()) {
+        return className
+      }
+      if (className.isEmpty()) {
+        return packageName
+      }
+      return packageName + "/" + className
+    }
 
     /**
      * Gets rid of the markdown code quotes and links.
@@ -53,22 +75,6 @@ class DocumentedProblemsParser {
       }
 
       return result
-    }
-
-    /**
-     * Converts a presentable class name to the JVM internal name
-     * (with dots replaced with /-slashes and $-dollars for inner/nested classes)
-     * Examples:
-     * - org.some.Class -> org/some/Class
-     * - com.example.Inner.Class -> com/example/Inner$Class
-     */
-    private fun String.toInternalName(): String {
-      val idx = indexOfFirst { it.isUpperCase() }
-      return if (idx == -1) {
-        replace('.', '/')
-      } else {
-        take(idx).replace('.', '/') + drop(idx).replace('.', '$')
-      }
     }
   }
 

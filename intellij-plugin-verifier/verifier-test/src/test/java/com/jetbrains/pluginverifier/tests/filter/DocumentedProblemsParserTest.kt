@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
+import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser.Companion.toInternalName
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser.Companion.unwrapMarkdownTags
 import org.junit.Assert.*
 import org.junit.Test
@@ -16,6 +17,15 @@ class DocumentedProblemsParserTest {
     assertEquals("com.example.deletedPackage", unwrapMarkdownTags("`com.example.deletedPackage`"))
     assertEquals("com.example.deletedPackage", unwrapMarkdownTags("`com.example.deletedPackage`"))
     assertEquals("com.example.Foo\$InnerClass.changedReturnType(int, String) method return type changed from One to Another", unwrapMarkdownTags("`com.example.Foo\$InnerClass.changedReturnType(int, String)` method return type changed from `One` to `Another`"))
+  }
+
+  @Test
+  fun `parse dot class name`() {
+    assertEquals("org/some/Class", toInternalName("org.some.Class"))
+    assertEquals("com/example/Inner\$Class", toInternalName("com.example.Inner.Class"))
+    assertEquals("com/somePackage/SomeClass", toInternalName("com.somePackage.SomeClass"))
+    assertEquals("com/some/class", toInternalName("com.some.class"))
+    assertEquals("DefaultPackageClassName", toInternalName("DefaultPackageClassName"))
   }
 
   @Test
