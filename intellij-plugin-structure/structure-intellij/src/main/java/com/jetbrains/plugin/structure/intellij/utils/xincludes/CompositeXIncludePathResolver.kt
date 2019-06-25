@@ -9,5 +9,6 @@ class CompositeXIncludePathResolver(private val resolvers: List<XIncludePathReso
       resolvers
           .asSequence()
           .mapNotNull { it.resolvePath(relativePath, base) }
-          .first { URLUtil.resourceExists(it) == ThreeState.YES }
+          .firstOrNull { URLUtil.resourceExists(it) == ThreeState.YES }
+          ?: throw XIncludeException("Unresolved relative '$relativePath' against '$base'")
 }
