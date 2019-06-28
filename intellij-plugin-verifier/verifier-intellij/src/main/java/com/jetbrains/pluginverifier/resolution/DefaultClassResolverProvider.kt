@@ -42,6 +42,12 @@ class DefaultClassResolverProvider(
     private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
 
+  private companion object {
+    const val CORE_IDE_PLUGIN_ID = "com.intellij"
+    const val JAVA_MODULE_ID = "com.intellij.modules.java"
+    const val ALL_MODULES_ID = "com.intellij.modules.all"
+  }
+
   override fun provide(
       checkedPluginDetails: PluginDetails,
       verificationResult: VerificationResult,
@@ -123,7 +129,7 @@ class DefaultClassResolverProvider(
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     val depGraphBuilder = DepGraphBuilder(dependencyFinder)
     depGraphBuilder.addTransitiveDependencies(dependenciesGraph, start)
-    if (shouldAddImplicitDependenciesOnPlatformPlugins()) {
+    if (shouldAddImplicitDependenciesOnPlatformPlugins() && plugin.pluginId != CORE_IDE_PLUGIN_ID) {
       maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
       maybeAddBundledPluginsWithUseIdeaClassLoader(depGraphBuilder, dependenciesGraph)
     }
@@ -162,10 +168,23 @@ class DefaultClassResolverProvider(
       depGraphBuilder: DepGraphBuilder,
       dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
   ) {
-    if (plugin.dependencies.none { it.isModule }) {
-      val javaModuleDependency = PluginDependencyImpl("com.intellij.modules.java", true, true)
+    val isLegacyPlugin = plugin.dependencies.none { it.isModule }
+    val isBundledPlugin = ideDescriptor.ide.bundledPlugins.any { it.pluginId == plugin.pluginId }
+    val isCustomPlugin = !isBundledPlugin
+    val doesIdeContainAllModules = ideDescriptor.ide.getPluginByModule(ALL_MODULES_ID) != null
+    val shouldAddOptionalJavaPlugin = doesIdeContainAllModules && (isCustomPlugin || isLegacyPlugin)
+    if (shouldAddOptionalJavaPlugin) {
+      val javaModuleDependency = PluginDependencyImpl(JAVA_MODULE_ID, true, true)
       val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
-      val javaPluginVertex = DepVertex("com.intellij.java", dependencyResult)
+      val javaPluginId = when (dependencyResult) {
+        is DependencyFinder.Result.DetailsProvided -> {
+          val providedCacheEntry = dependencyResult.pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided
+          providedCacheEntry?.pluginDetails?.idePlugin?.pluginId
+        }
+        is DependencyFinder.Result.FoundPlugin -> dependencyResult.plugin.pluginId
+        is DependencyFinder.Result.NotFound -> null
+      } ?: return
+      val javaPluginVertex = DepVertex(javaPluginId, dependencyResult)
       depGraphBuilder.addTransitiveDependencies(dependenciesGraph, javaPluginVertex)
     }
   }
