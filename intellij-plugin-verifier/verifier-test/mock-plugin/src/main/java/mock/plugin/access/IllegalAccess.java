@@ -5,23 +5,11 @@ import access.other.BecamePackagePrivate;
 
 public class IllegalAccess extends AccessProblemBase {
   public void main(String[] args) {
-    //This is allowed.
-    foo();
-
-    /*expected(PROBLEM)
-    Illegal invocation of protected method access.AccessProblemBase.foo() : void
-
-    Method mock.plugin.access.IllegalAccess.main(String[]) : void contains an *invokevirtual* instruction referencing a protected method access.AccessProblemBase.foo() : void inaccessible to a class mock.plugin.access.IllegalAccess. This can lead to **IllegalAccessError** exception at runtime.
-     */
-
     AccessProblemBase problem = new AccessProblemBase();
+
+    //will be protected. and the inheritance of this class(IllegalAccess) from AccessProblemBase doesn't matter.
+    foo();
     problem.foo();
-
-    /*expected(PROBLEM)
-    Illegal access to a protected field access.AccessProblemBase.x : int
-
-    Method mock.plugin.access.IllegalAccess.main(String[]) : void contains a *getfield* instruction referencing a protected field access.AccessProblemBase.x : int inaccessible to a class mock.plugin.access.IllegalAccess. This can lead to **IllegalAccessError** exception at runtime.
-     */
     int x = problem.x;
   }
 
