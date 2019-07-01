@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePa
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
 import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -52,7 +53,7 @@ class IdeManagerImpl : IdeManager() {
     val pathResolver = PluginXmlXIncludePathResolver(jarFiles)
     val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
 
-    val bundledPlugins = readBundledPlugins(idePath, ideVersion, pathResolver)
+    val bundledPlugins = readBundledPlugins(idePath, pathResolver)
     val platformPlugins = readPlatformPlugins(pathResolver, jarFiles, product, idePath)
 
     if (platformPlugins.none { it.pluginId == "com.intellij" }) {
@@ -160,27 +161,18 @@ class IdeManagerImpl : IdeManager() {
     return plugins
   }
 
-  private fun readBundledPlugins(idePath: File, ideVersion: IdeVersion, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readBundledPlugins(idePath: File, pathResolver: XIncludePathResolver): List<IdePlugin> {
     val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
         .filter { it.isDirectory }
-        .mapNotNull { readBundledPlugin(idePath, ideVersion, it, pathResolver) }
+        .mapNotNull { readBundledPlugin(idePath, it, pathResolver) }
   }
 
-  private fun readBundledPlugin(idePath: File, ideVersion: IdeVersion, pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? {
-    try {
-      return createPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML)
-    } catch (e: InvalidIdeException) {
-      /*
-        Bundled plugin "duplicates", which resides in <ide>/plugins/duplicates, is incorrect in IDEs prior to 173.
-        It does not have "plugin.xml" but only "duplicates.xml" and thus it is not fully correct standalone IDE plugin.
-        This is not the case for recent IDEs.
-      */
-      if (pluginFile.isDirectory && pluginFile.relativeTo(idePath) == File("plugins/duplicates") && ideVersion.baselineVersion < 173) {
-        return null
-      }
-      throw e
-    }
+  private fun readBundledPlugin(idePath: File, pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? = try {
+    createPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML)
+  } catch (e: InvalidIdeException) {
+    LOG.warn("Failed to read bundled plugin ${pluginFile.relativeTo(idePath)}: ${e.reason}", e)
+    null
   }
 
   private fun createPluginExceptionally(
@@ -202,6 +194,8 @@ class IdeManagerImpl : IdeManager() {
   }
 
   companion object {
+
+    private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
 
     fun isCompiledUltimate(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
         ideaDir.resolve(".idea").isDirectory &&
