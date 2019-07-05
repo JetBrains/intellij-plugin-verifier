@@ -3,16 +3,16 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.JDOMXIncluder
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
+import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
 import org.jdom2.Document
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
@@ -43,7 +43,7 @@ internal class PluginCreator {
 
   val pluginFile: File
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = hashMapOf()
-  private val descriptorPath: String
+  val descriptorPath: String
   private val validateDescriptor: Boolean
   private val plugin: IdePluginImpl?
   private val problems = arrayListOf<PluginProblem>()
@@ -53,14 +53,14 @@ internal class PluginCreator {
       validateDescriptor: Boolean,
       document: Document,
       documentUrl: URL,
-      pathResolver: XIncludePathResolver,
+      pathResolver: ResourceResolver,
       pluginFile: File,
       icons: List<PluginIcon>
   ) {
     this.descriptorPath = descriptorPath
     this.pluginFile = pluginFile
     this.validateDescriptor = validateDescriptor
-    plugin = resolveDocumentAndValidateBean(document, documentUrl, pathResolver, icons)
+    plugin = resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, icons)
   }
 
   constructor(descriptorPath: String, singleProblem: PluginProblem, pluginFile: File) {
@@ -88,20 +88,17 @@ internal class PluginCreator {
       optionalDependencyCreator: PluginCreator
   ) {
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<*>) {
-      val optionalPlugin = (pluginCreationResult as PluginCreationSuccess<IdePlugin>).plugin
+    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
+      val optionalPlugin = pluginCreationResult.plugin
       plugin!!.optionalDescriptors[configurationFile] = optionalPlugin
       plugin.extensions.putAll(optionalPlugin.extensions)
     } else {
-      val errorsAndWarnings = (pluginCreationResult as PluginCreationFail<IdePlugin>)
+      val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
           .errorsAndWarnings
           .filter { e -> e.level === PluginProblem.Level.ERROR }
-      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errorsAndWarnings))
+      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
     }
   }
-
-  fun hasOnlyInvalidDescriptorErrors(): Boolean =
-      problems.all { it.level != PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
 
   fun setOriginalFile(originalFile: File) {
     if (plugin != null) {
@@ -277,10 +274,11 @@ internal class PluginCreator {
   private fun resolveDocumentAndValidateBean(
       originalDocument: Document,
       documentUrl: URL,
-      pathResolver: XIncludePathResolver,
+      documentPath: String,
+      pathResolver: ResourceResolver,
       icons: List<PluginIcon>
   ): IdePluginImpl? {
-    val document = resolveXIncludesOfDocument(originalDocument, documentUrl, pathResolver) ?: return null
+    val document = resolveXIncludesOfDocument(originalDocument, documentUrl, documentPath, pathResolver) ?: return null
     val bean = readDocumentIntoXmlBean(document) ?: return null
     validatePluginBean(bean)
     if (hasErrors()) return null
@@ -297,45 +295,52 @@ internal class PluginCreator {
     return if (hasErrors()) null else plugin
   }
 
-  private fun readPluginThemes(
-      plugin: IdePlugin,
-      documentUrl: URL,
-      pathResolver: XIncludePathResolver
-  ): List<IdeTheme>? {
-    val pluginThemePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION].mapNotNull { it.getAttribute("path")?.value }
+  private fun readPluginThemes(plugin: IdePlugin, documentUrl: URL, pathResolver: ResourceResolver): List<IdeTheme>? {
+    val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION].mapNotNull { it.getAttribute("path")?.value }
 
     val themes = arrayListOf<IdeTheme>()
 
-    for (themePath in pluginThemePaths) {
-      val theme = try {
-        val themeUrl = pathResolver.resolvePath(themePath, documentUrl.toExternalForm())
-        jsonMapper.readValue(themeUrl, IdeTheme::class.java)
-      } catch (e: Exception) {
-        LOG.info("Unable to resolve plugin theme path: $themePath declared in $descriptorPath", e)
-        registerProblem(UnableToReadTheme(descriptorPath, themePath))
-        return null
+    for (themePath in themePaths) {
+      val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
+      when (val resolvedTheme = pathResolver.resolveResource(absolutePath, documentUrl)) {
+        is ResourceResolver.Result.Found -> {
+          val theme = try {
+            jsonMapper.readValue(resolvedTheme.resourceStream, IdeTheme::class.java)
+          } catch (e: Exception) {
+            registerProblem(UnableToReadTheme(descriptorPath, themePath, e.localizedMessage))
+            return null
+          }
+          themes += theme
+        }
+        is ResourceResolver.Result.NotFound -> {
+          registerProblem(UnableToFindTheme(descriptorPath, themePath))
+        }
+        is ResourceResolver.Result.Failed -> {
+          registerProblem(UnableToReadTheme(descriptorPath, themePath, resolvedTheme.exception.localizedMessage))
+        }
       }
-      themes += theme
     }
     return themes
   }
 
-  private fun resolveXIncludesOfDocument(originalDocument: Document, documentUrl: URL, pathResolver: XIncludePathResolver): Document? {
-    return try {
-      JDOMXIncluder.resolve(originalDocument, documentUrl.toExternalForm(), false, pathResolver)
-    } catch (e: Exception) {
-      LOG.info("Unable to resolve x-include elements of descriptor $descriptorPath of $pluginFile", e)
-      registerProblem(UnresolvedXIncludeElements(descriptorPath))
-      null
-    }
-
+  private fun resolveXIncludesOfDocument(
+      document: Document,
+      documentUrl: URL,
+      documentPath: String,
+      pathResolver: ResourceResolver
+  ): Document? = try {
+    XIncluder.resolveXIncludes(document, documentUrl, documentPath, pathResolver)
+  } catch (e: XIncluderException) {
+    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFile'", e)
+    registerProblem(XIncludeResolutionErrors(descriptorPath, e.message))
+    null
   }
 
   private fun readDocumentIntoXmlBean(document: Document): PluginBean? {
     return try {
       PluginBeanExtractor.extractPluginBean(document)
     } catch (e: Exception) {
-      registerProblem(UnableToReadDescriptor(descriptorPath))
+      registerProblem(UnableToReadDescriptor(descriptorPath, e.localizedMessage))
       LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFile", e)
       null
     }

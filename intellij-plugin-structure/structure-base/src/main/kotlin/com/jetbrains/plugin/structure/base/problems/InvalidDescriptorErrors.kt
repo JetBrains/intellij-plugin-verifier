@@ -6,7 +6,7 @@ abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : P
   abstract val detailedMessage: String
 
   override val message
-    get() = "Invalid plugin descriptor" + (if (descriptorPath.isNullOrEmpty()) ": " else " $descriptorPath: ") + detailedMessage
+    get() = "Invalid plugin descriptor" + (if (descriptorPath.isNullOrEmpty()) ": " else " '$descriptorPath': ") + detailedMessage
 }
 
 class UnexpectedDescriptorElements(
@@ -15,7 +15,7 @@ class UnexpectedDescriptorElements(
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val level
-    get() = PluginProblem.Level.ERROR
+    get() = Level.ERROR
 
 }
 
@@ -38,6 +38,14 @@ class NotNumber(
 
   override val detailedMessage: String
     get() = "<$propertyName> must be integer"
+
+  override val level
+    get() = Level.ERROR
+}
+
+class UnableToReadDescriptor(descriptorPath: String, private val exceptionMessage: String?) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage: String
+    get() = "Unable to read plugin descriptor" + (exceptionMessage?.let { ": $exceptionMessage" } ?: "")
 
   override val level
     get() = Level.ERROR

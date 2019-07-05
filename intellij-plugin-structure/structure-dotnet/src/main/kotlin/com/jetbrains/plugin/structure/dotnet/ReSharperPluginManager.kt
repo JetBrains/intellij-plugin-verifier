@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.dotnet.beans.extractPluginBean
 import com.jetbrains.plugin.structure.dotnet.beans.toPlugin
-import com.jetbrains.plugin.structure.dotnet.problems.IncorrectDotNetPluginFile
+import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -24,7 +24,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     }
     return when (pluginFile.extension) {
       "nupkg" -> loadDescriptorFromZip(pluginFile)
-      else -> PluginCreationFail(IncorrectDotNetPluginFile(pluginFile.name))
+      else -> PluginCreationFail(createIncorrectDotNetPluginFileProblem(pluginFile.name))
     }
   }
 
@@ -43,7 +43,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
           continue
         }
         if (nugetDescriptor != null) {
-          return PluginCreationFail(MultiplePluginDescriptorsInDistribution(nugetDescriptor.name, entry.name))
+          return PluginCreationFail(MultiplePluginDescriptors(nugetDescriptor.name, "plugin.zip", entry.name, "plugin.zip"))
         }
         nugetDescriptor = entry
       }
@@ -70,7 +70,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor from $streamName", e)
-      return PluginCreationFail(UnableToReadDescriptor(streamName))
+      return PluginCreationFail(UnableToReadDescriptor(streamName, e.localizedMessage))
     }
   }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
 
 class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
   override val level
@@ -61,14 +62,22 @@ class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem
 class OptionalDependencyDescriptorResolutionProblem(
     private val dependencyId: String,
     private val configurationFile: String,
-    private val problems: List<PluginProblem>
+    private val errors: List<PluginProblem>
 ) : PluginProblem() {
 
   override val level
     get() = Level.WARNING
 
-  override val message
-    get() = "Configuration file '$configurationFile' for optional dependency '$dependencyId' can't be resolved: ${problems.joinToString { it.message }}"
+  override val message: String
+    get() {
+      val descriptorResolutionError = errors.filterIsInstance<PluginDescriptorResolutionError>().firstOrNull()
+      val prefix = "Configuration file '$configurationFile' for optional dependency '$dependencyId'"
+      return if (descriptorResolutionError != null) {
+        "$prefix failed to be resolved: ${descriptorResolutionError.message}"
+      } else {
+        prefix + " is invalid: ${errors.joinToString { it.message }}"
+      }
+    }
 }
 
 data class DuplicatedDependencyWarning(val dependencyId: String) : PluginProblem() {
@@ -92,5 +101,5 @@ class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId:
     get() = Level.WARNING
 
   override val message
-    get() = "optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
+    get() = "Optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
 }

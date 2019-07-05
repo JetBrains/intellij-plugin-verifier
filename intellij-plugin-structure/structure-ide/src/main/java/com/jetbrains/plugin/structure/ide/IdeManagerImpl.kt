@@ -6,12 +6,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlXIncludePathResolver
+import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.CompiledModulesResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.DefaultXIncludePathResolver
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludeException
-import com.jetbrains.plugin.structure.intellij.utils.xincludes.XIncludePathResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -51,24 +50,55 @@ class IdeManagerImpl : IdeManager() {
     val bundledPlugins = if (fromCompiled) {
       readCompiledBundledPlugins(idePath)
     } else {
-      readDistributionBundledPlugins(idePath, ideVersion)
+      readDistributionBundledPlugins(idePath, product)
     }
 
     return IdeImpl(idePath, ideVersion, bundledPlugins)
   }
 
-  private fun readDistributionBundledPlugins(idePath: File, ideVersion: IdeVersion): List<IdePlugin> {
-    val jarFiles = idePath.resolve("lib").listFiles().orEmpty().filter { it.isJar() || it.isZip() }
-    val pathResolver = PluginXmlXIncludePathResolver(jarFiles)
-    val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
-
-    val bundledPlugins = readBundledPlugins(idePath, pathResolver)
-    val platformPlugins = readPlatformPlugins(pathResolver, jarFiles, product, idePath)
-
-    if (platformPlugins.none { it.pluginId == "com.intellij" }) {
-      throw InvalidIdeException(idePath, "Platform plugins are not found")
-    }
+  private fun readDistributionBundledPlugins(idePath: File, product: IntelliJPlatformProduct): List<IdePlugin> {
+    val platformJarFiles = idePath.resolve("lib").listFiles().orEmpty().filter { it.isJar() }
+    val platformResourceResolver = PlatformResourceResolver(platformJarFiles)
+    val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver)
+    val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver)
     return bundledPlugins + platformPlugins
+  }
+
+  /**
+   * IDE uses platform class loader to resolve resources. That class loader includes jar files under `<ide>/lib` directory.
+   * By default, for `relativePath` is resolved against jar files' roots. For example, if there are
+   * `a.jar`, `b.jar`, `c.jar` files in `<ide>/lib` directory, `/META-INF/someInclude.xml`
+   * will be searched by the following URLs:
+   * - `jar:file:<path>/a.jar!/META-INF/someInclude.xml`
+   * - `jar:file:<path>/b.jar!/META-INF/someInclude.xml`
+   * - `jar:file:<path>/c.jar!/META-INF/someInclude.xml`
+   *
+   * But if the `relativePath` is not absolute it can still be relative to `META-INF`, not relative to jars' roots.
+   *
+   * Usually, `<xi:include href="<some-path>">` of bundled plugins specify either:
+   * - Absolute paths to xml files that reside either in the same .jar file or in a different .jar file of the platform.
+   * For example, `<xi:include href="/META-INF/include.xml">` declared in `plugin.xml` where `plugin.xml` resides in `one.jar`
+   * and `include.xml` resides in `two.jar`.
+   *
+   * - Non-absolute paths to xml files that reside in the same .jar file as the xml containg such `<xi:include>`.
+   * For example, `<xi:include href="nearby.xml">` declared in `plugin.xml` where `plugin.xml` and `nearby.xml`
+   * reside in the same jar file.
+   * But rarely `nearby.xml` may reside in another platform's jar file. Apparently, IDE handles such a case accidentally:
+   * an ugly fallback hack is used `com.intellij.util.io.URLUtil.openResourceStream(URL)`.
+   */
+  private class PlatformResourceResolver(platformJarFiles: List<File>) : ResourceResolver {
+    private val jarFilesResourceResolver = JarFilesResourceResolver(platformJarFiles)
+
+    override fun resolveResource(relativePath: String, base: URL): ResourceResolver.Result {
+      val resolveResult = jarFilesResourceResolver.resolveResource(relativePath, base)
+      if (resolveResult !is ResourceResolver.Result.NotFound) {
+        return resolveResult
+      }
+      if (!relativePath.startsWith("/")) {
+        return jarFilesResourceResolver.resolveResource("/META-INF/$relativePath", base)
+      }
+      return ResourceResolver.Result.NotFound
+    }
   }
 
   private fun readIdeVersionFromDistribution(idePath: File): IdeVersion {
@@ -111,35 +141,6 @@ class IdeManagerImpl : IdeManager() {
     return readBuildNumber(buildTxtFile)
   }
 
-  private class BundledPluginFromSourceXIncludePathResolver(private val moduleRoots: Array<out File>) : XIncludePathResolver {
-
-    override fun resolvePath(relativePath: String, base: String?): URL {
-      try {
-        val url = DefaultXIncludePathResolver.INSTANCE.resolvePath(relativePath, base)
-        if (URLUtil.resourceExists(url) == ThreeState.YES) {
-          return url
-        }
-      } catch (ignored: Exception) {
-      }
-
-      //Try to resolve path against module roots. [base] is ignored.
-
-      val adjustedPath = when {
-        relativePath.startsWith("./") -> "/META-INF/" + relativePath.substringAfter("./")
-        relativePath.startsWith("/") -> relativePath.substringAfter("/")
-        else -> relativePath
-      }
-
-      for (moduleRoot in moduleRoots) {
-        val file = moduleRoot.resolve(adjustedPath)
-        if (file.exists()) {
-          return URLUtil.fileToUrl(file)
-        }
-      }
-      throw XIncludeException("Unable to resolve $relativePath against $base in ${moduleRoots.size} module roots")
-    }
-  }
-
   private fun readBuildNumber(versionFile: File): IdeVersion {
     val buildNumberString = versionFile.readText().trim()
     return IdeVersion.createIdeVersion(buildNumberString)
@@ -147,12 +148,12 @@ class IdeManagerImpl : IdeManager() {
 
   private fun readCompiledBundledPlugins(idePath: File): List<IdePlugin> {
     val compilationRoot = getCompiledClassesRoot(idePath)!!
-    val moduleRoots = compilationRoot.listFiles().orEmpty()
-    val pathResolver = BundledPluginFromSourceXIncludePathResolver(moduleRoots)
+    val moduleRoots = compilationRoot.listFiles().orEmpty().toList()
+    val pathResolver = CompiledModulesResourceResolver(moduleRoots)
     return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver)
   }
 
-  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: Array<out File>, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: List<File>, pathResolver: ResourceResolver): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
     for (moduleRoot in moduleRoots) {
       val pluginXmlFile = moduleRoot.resolve(IdePluginManager.META_INF).resolve(IdePluginManager.PLUGIN_XML)
@@ -164,44 +165,48 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readPlatformPlugins(
-      pathResolver: XIncludePathResolver,
-      jarFiles: List<File>,
+      idePath: File,
       product: IntelliJPlatformProduct,
-      idePath: File
+      jarFiles: List<File>,
+      platformResourceResolver: ResourceResolver
   ): List<IdePlugin> {
-    val plugins = arrayListOf<IdePlugin>()
+    val platformPlugins = arrayListOf<IdePlugin>()
     val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
 
     for (jarFile in jarFiles) {
       for (descriptorPath in descriptorPaths) {
         val descriptorUrl = URLUtil.getJarEntryURL(jarFile, "${IdePluginManager.META_INF}/$descriptorPath")
         if (URLUtil.resourceExists(descriptorUrl) == ThreeState.YES) {
-          plugins += createPluginExceptionally(idePath, jarFile, pathResolver, descriptorPath)
+          platformPlugins += createPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath)
         }
       }
     }
 
-    return plugins
+    if (platformPlugins.none { it.pluginId == "com.intellij" }) {
+      throw InvalidIdeException(idePath, "Platform plugins are not found. They must be declared in one of ${descriptorPaths.joinToString()}")
+    }
+
+    return platformPlugins
   }
 
-  private fun readBundledPlugins(idePath: File, pathResolver: XIncludePathResolver): List<IdePlugin> {
+  private fun readBundledPlugins(idePath: File, platformResourceResolver: ResourceResolver): List<IdePlugin> {
     val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
         .filter { it.isDirectory }
-        .mapNotNull { readBundledPlugin(idePath, it, pathResolver) }
+        .mapNotNull { readBundledPlugin(idePath, it, platformResourceResolver) }
   }
 
-  private fun readBundledPlugin(idePath: File, pluginFile: File, pathResolver: XIncludePathResolver): IdePlugin? = try {
+  private fun readBundledPlugin(idePath: File, pluginFile: File, pathResolver: ResourceResolver): IdePlugin? = try {
     createPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML)
   } catch (e: InvalidIdeException) {
-    LOG.warn("Failed to read bundled plugin ${pluginFile.relativeTo(idePath)}: ${e.reason}", e)
+    LOG.warn("Failed to read bundled plugin '${pluginFile.relativeTo(idePath)}': ${e.reason}")
     null
   }
 
   private fun createPluginExceptionally(
       idePath: File,
       pluginFile: File,
-      pathResolver: XIncludePathResolver,
+      pathResolver: ResourceResolver,
       descriptorPath: String,
       validateDescriptor: Boolean = false
   ): IdePlugin = when (val creationResult = IdePluginManager

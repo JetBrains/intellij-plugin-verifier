@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
-import com.jetbrains.plugin.structure.teamcity.problems.IncorrectTeamCityPluginFile
+import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
 import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,7 +19,7 @@ import java.util.zip.ZipFile
 
 class TeamcityPluginManager private constructor(private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
   companion object {
-    private val DESCRIPTOR_NAME = "teamcity-plugin.xml"
+    private const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
     private val LOG: Logger = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
@@ -35,7 +35,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
       pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
-      else -> PluginCreationFail(IncorrectTeamCityPluginFile(pluginFile.name))
+      else -> PluginCreationFail(createIncorrectTeamCityPluginFile(pluginFile.name))
     }
   }
 
@@ -75,12 +75,12 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
       return PluginCreationSuccess(bean.toPlugin(), beanValidationResult)
     } catch (e: JDOMParseException) {
       val lineNumber = e.lineNumber
-      val message = if (lineNumber != -1) "unexpected element on line " + lineNumber else "unexpected elements"
+      val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor from $streamName", e)
-      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME))
+      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
     }
   }
 }
