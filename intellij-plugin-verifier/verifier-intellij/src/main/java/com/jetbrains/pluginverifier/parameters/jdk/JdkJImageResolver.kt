@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.parameters.jdk
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
-import com.jetbrains.pluginverifier.misc.exists
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.net.URI
@@ -54,6 +54,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
                 { one, _ -> one }
             )
         )
+
+    for (className in classNameToModuleName.keys) {
+      packageSet.addPackagesOfClass(className)
+    }
   }
 
   private fun getOrCreateJrtFileSystem(jdkPath: Path): FileSystem {
