@@ -1,0 +1,5 @@
+<top xmlns:xi="http://www.w3.org/2001/XInclude">
+    <children>
+        <xi:include href="part.xml" xpointer="xpointer(/top/UNKNOWN/*)"/>
+    </children>
+</top>

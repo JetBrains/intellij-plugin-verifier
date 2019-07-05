@@ -1,0 +1,1 @@
+Circular includes: part1.xml -> part2.xml -> part1.xml (at test.xml -> part1.xml)

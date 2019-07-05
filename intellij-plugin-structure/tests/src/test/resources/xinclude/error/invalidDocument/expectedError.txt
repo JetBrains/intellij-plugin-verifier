@@ -1,0 +1,1 @@
+Invalid document 'broken.xml' referenced in <xi:include href="broken.xml", xpointer="xpointer(/top/*)"/> (at test.xml)

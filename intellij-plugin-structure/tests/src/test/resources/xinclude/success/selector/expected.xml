@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<top xmlns:xi="http://www.w3.org/2001/XInclude">
+    <children>
+        <!--Start <xi:include href="part.xml", xpointer="xpointer(/top/children/*)"/>-->
+        <child>one</child>
+        <child>two</child>
+        <child>three</child>
+        <!--End <xi:include href="part.xml", xpointer="xpointer(/top/children/*)"/>-->
+    </children>
+</top>

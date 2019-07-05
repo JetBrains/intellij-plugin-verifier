@@ -1,0 +1,7 @@
+<top xmlns:xi="http://www.w3.org/2001/XInclude">
+    <before/>
+    <xi:include href="missing.xml" xpointer="xpointer(/top/*)">
+        <xi:fallback/>
+    </xi:include>
+    <after/>
+</top>

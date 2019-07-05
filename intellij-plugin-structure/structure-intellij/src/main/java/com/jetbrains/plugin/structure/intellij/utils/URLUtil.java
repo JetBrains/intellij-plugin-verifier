@@ -68,11 +68,12 @@ public class URLUtil {
       if (paths == null) {
         return ThreeState.NO;
       }
-      if (!new File(paths.getFirst()).isFile()) {
+      File file = new File(paths.getFirst());
+      if (!file.isFile()) {
         return ThreeState.NO;
       }
-      try (ZipFile file = new ZipFile(paths.getFirst())) {
-        return ThreeState.fromBoolean(file.getEntry(paths.getSecond()) != null);
+      try (ZipFile zipFile = new ZipFile(file)) {
+        return ThreeState.fromBoolean(zipFile.getEntry(paths.getSecond()) != null);
       } catch (IOException e) {
         return ThreeState.NO;
       }

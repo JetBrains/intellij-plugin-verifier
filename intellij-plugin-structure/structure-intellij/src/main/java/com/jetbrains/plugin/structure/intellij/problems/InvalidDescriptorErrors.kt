@@ -106,10 +106,9 @@ class ErroneousUntilBuild(
     get() = Level.ERROR
 }
 
-//todo: provide unresolved <x-include> names
-class UnresolvedXIncludeElements(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+class XIncludeResolutionErrors(descriptorPath: String, private val details: String) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
-    get() = "unresolved xinclude elements"
+    get() = "failed to resolve <xi:include>. ${details.capitalize()}"
 
   override val level
     get() = Level.ERROR
@@ -145,9 +144,17 @@ object ReleaseDateWrongFormat : PluginProblem() {
     get() = "Property <release-date> must be of YYYYMMDD format"
 }
 
-class UnableToReadTheme(descriptorPath: String, private val themePath: String) : InvalidDescriptorProblem(descriptorPath) {
+class UnableToFindTheme(descriptorPath: String, private val themePath: String) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
-    get() = "unable to read theme by path '$themePath'"
+    get() = "unable to find theme by path '$themePath'"
+
+  override val level
+    get() = Level.ERROR
+}
+
+class UnableToReadTheme(descriptorPath: String, private val themePath: String, private val details: String?) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage: String
+    get() = "unable to read theme by path '$themePath'" + (details?.let { ": $details" } ?: "")
 
   override val level
     get() = Level.ERROR

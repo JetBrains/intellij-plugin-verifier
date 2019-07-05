@@ -18,6 +18,7 @@ package com.jetbrains.plugin.structure.intellij.utils;
 import kotlin.io.ByteStreamsKt;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
+import org.jdom2.filter.Filter;
 import org.jdom2.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
@@ -29,9 +30,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-@SuppressWarnings("unchecked")
 public class JDOMUtil {
-  private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
+  private static final Filter<Content> CONTENT_FILTER = new EmptyTextFilter();
   private static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
   private JDOMUtil() {
@@ -42,12 +42,14 @@ public class JDOMUtil {
     //noinspection SimplifiableIfStatement
     if (e1 == null || e2 == null) return false;
 
+    List<Content> e1Content = e1.getContent(CONTENT_FILTER);
+    List<Content> e2Content = e2.getContent(CONTENT_FILTER);
     return Objects.equals(e1.getName(), e2.getName())
         && attListsEqual(e1.getAttributes(), e2.getAttributes())
-        && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER));
+        && contentListsEqual(e1Content, e2Content);
   }
 
-  private static boolean contentListsEqual(final List c1, final List c2) {
+  private static <T> boolean contentListsEqual(final List<T> c1, final List<T> c2) {
     if (c1 == null && c2 == null) return true;
     if (c1 == null || c2 == null) return false;
 
@@ -111,15 +113,18 @@ public class JDOMUtil {
     return new ByteArrayInputStream(ByteStreamsKt.readBytes(is));
   }
 
-  private static class EmptyTextFilter extends AbstractFilter {
+  private static class EmptyTextFilter extends AbstractFilter<Content> {
     @Override
-    public Object filter(Object obj) {
+    public Content filter(Object obj) {
       if (obj instanceof Text) {
         if (((Text) obj).getText().trim().isEmpty()) {
           return null;
         }
       }
-      return obj;
+      if (obj instanceof Content) {
+        return (Content) obj;
+      }
+      return null;
     }
   }
 }
