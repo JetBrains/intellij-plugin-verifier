@@ -25,7 +25,7 @@ enum class IntelliJPlatformProduct(
   DATA_GRIP("DB", "DataGrip", "DataGrip", "DG"),
   RIDER("RD", "Rider", "Rider"),
   GO_LAND("GO", "GoLand", "GoLand"),
-  MPS("MPS", "MPS", "MPS"),
+  MPS("MPS", "MPS", "Idea"),
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio");
 
   companion object {

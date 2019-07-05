@@ -32,11 +32,21 @@ class IdeManagerImpl : IdeManager() {
       throw InvalidIdeException(idePath, "IDE directory content is invalid")
     }
 
-    val ideVersion = version ?: if (fromCompiled) {
+    val readIdeVersion = version ?: if (fromCompiled) {
       readVersionFromIdeSources(idePath)
     } else {
       readIdeVersionFromDistribution(idePath)
     }
+
+    val ideVersion = if (readIdeVersion.productCode.isNotEmpty()) {
+      readIdeVersion
+    } else {
+      //MPS builds' "build.txt" file does not specify product code.
+      //MPS builds contain "build.number" file whose "build.number" key-value contains the product code.
+      readIdeVersionFromBuildNumberFile(idePath) ?: readIdeVersion
+    }
+
+    val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
 
     val bundledPlugins = if (fromCompiled) {
       readCompiledBundledPlugins(idePath)
@@ -76,6 +86,20 @@ class IdeManagerImpl : IdeManager() {
         )
     return readBuildNumber(buildTxtFile)
   }
+
+  private fun readIdeVersionFromBuildNumberFile(idePath: File): IdeVersion? {
+    val buildNumberFile = idePath.resolve("build.number")
+    if (buildNumberFile.exists()) {
+      val lines = buildNumberFile.readLines()
+      for (line in lines) {
+        if (line.startsWith("build.number=")) {
+          return IdeVersion.createIdeVersionIfValid(line.substringAfter("build.number="))
+        }
+      }
+    }
+    return null
+  }
+
 
   private fun readVersionFromIdeSources(idePath: File): IdeVersion {
     val locations = listOf(
