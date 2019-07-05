@@ -54,5 +54,6 @@ internal class IdePluginImpl : IdePlugin {
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)
 
-  override fun toString() = (pluginId ?: pluginName)!! + (pluginVersion?.let { ":$it" } ?: "")
+  override fun toString(): String =
+      (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
 }
