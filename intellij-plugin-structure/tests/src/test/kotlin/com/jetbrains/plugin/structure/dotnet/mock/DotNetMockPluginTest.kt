@@ -6,14 +6,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.dotnet.DotNetDependency
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
-import com.jetbrains.plugin.structure.mocks.BaseMockPluginTest
+import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
-class DotNetMockPluginTest : BaseMockPluginTest() {
-  override fun getMockPluginBuildDirectory(): File = File("dotnet-mock-plugin")
-
+class DotNetMockPluginTest {
   private fun testMockConfigs(plugin: ReSharperPlugin) {
     Assert.assertEquals("JetBrains.Mock", plugin.pluginId)
     Assert.assertEquals("Some title", plugin.pluginName)
@@ -40,12 +38,11 @@ class DotNetMockPluginTest : BaseMockPluginTest() {
 
   @Test
   fun `nupkg plugin`() {
-    testMockPluginStructureAndConfiguration("jetbrains.mock.10.2.55.nupkg")
+    val pluginFile = URLUtil.urlToFile(this::class.java.getResource("/dotnet/jetbrains.mock.10.2.55.nupkg"))
+    testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginPath: String) {
-    val pluginFile = getMockPluginFile(pluginPath)
-
+  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
     val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }

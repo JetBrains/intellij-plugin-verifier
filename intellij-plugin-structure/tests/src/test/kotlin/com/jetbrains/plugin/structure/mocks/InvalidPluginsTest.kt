@@ -55,7 +55,7 @@ class InvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectIntellijFile(incorrect.name)))
+    assertExpectedProblems(incorrect, listOf(createIncorrectIntellijFileProblem(incorrect.name)))
   }
 
   @Test
@@ -112,7 +112,7 @@ class InvalidPluginsTest {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     val successResult = getSuccessResult(pluginFolder)
     val plugin = successResult.plugin
-    assertThat(plugin.pluginId, `is`(plugin.pluginName))
+    assertEquals(plugin.pluginName, plugin.pluginId)
   }
 
   @Test
@@ -348,61 +348,43 @@ class InvalidPluginsTest {
   }
 
   private fun getTempPluginFolder(pluginXmlContent: String): File {
-    val pluginFolder = temporaryFolder.newFolder()
-    val metaInf = File(pluginFolder, "META-INF")
-    metaInf.mkdirs()
-    File(metaInf, "plugin.xml").writeText(pluginXmlContent)
-    return pluginFolder
+    return buildDirectory(temporaryFolder.newFolder()) {
+      dir("META-INF") {
+        file("plugin.xml", pluginXmlContent)
+      }
+    }
   }
 
   @Test
   fun `plugin has multiple plugin descriptors in lib directory where descriptor might miss mandatory elements`() {
     /*
-      plugin/
-      plugin/lib
-      plugin/lib/one.jar!/META-INF/plugin.xml
-      plugin/lib/two.jar!/META-INF/plugin.xml
+    plugin/
+      lib/
+        one.jar!/
+          META-INF/
+            plugin.xml  <--- duplicated
+        two.jar!/
+          META-INF/
+            plugin.xml  <--- duplicated
     */
-    val validPluginXmlOne = perfectXmlBuilder.modify {
-      id = """<id>one</id>"""
-      name = "<name>one</name>"
-      version = "<version>one</version>"
-    }
-    val invalidPluginXmlOne = perfectXmlBuilder.modify {
-      version = ""
-    }
 
-    val firstDescriptors = listOf(validPluginXmlOne, invalidPluginXmlOne)
+    val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("lib") {
+        zip("one.jar") {
+          dir("META-INF") {
+            file("plugin.xml", perfectXmlBuilder.modify { })
+          }
+        }
 
-    val validPluginXmlTwo = perfectXmlBuilder.modify {
-      id = """<id>two</id>"""
-      name = """<name>two</name>"""
-      version = """<version>two</version>"""
-    }
-    val invalidPluginXmlTwo = perfectXmlBuilder.modify {
-      version = ""
-    }
-    val secondDescriptors = listOf(validPluginXmlTwo, invalidPluginXmlTwo)
-
-    var testNumber = 0
-    for (firstDescriptor in firstDescriptors) {
-      for (secondDescriptor in secondDescriptors) {
-        testNumber++
-        val pluginFolder = temporaryFolder.newFolder(testNumber.toString())
-        val lib = File(pluginFolder, "lib")
-        lib.mkdirs()
-
-        val oneMetaInf = temporaryFolder.newFolder("one$testNumber", "META-INF")
-        File(oneMetaInf, "plugin.xml").writeText(firstDescriptor)
-        archiveDirectory(oneMetaInf, File(lib, "one.jar"))
-
-        val twoMetaInf = temporaryFolder.newFolder("two$testNumber", "META-INF")
-        File(twoMetaInf, "plugin.xml").writeText(secondDescriptor)
-        archiveDirectory(twoMetaInf, File(lib, "two.jar"))
-
-        assertExpectedProblems(pluginFolder, listOf(MultiplePluginDescriptorsInDistribution("one.jar", "two.jar")))
+        zip("two.jar") {
+          dir("META-INF") {
+            file("plugin.xml", perfectXmlBuilder.modify { })
+          }
+        }
       }
     }
+
+    assertExpectedProblems(pluginDirectory, listOf(MultiplePluginDescriptors("plugin.xml", "one.jar", "plugin.xml", "two.jar")))
   }
 
   @Test
@@ -417,9 +399,9 @@ class InvalidPluginsTest {
   fun `plugin specifies unresolved xinclude element`() {
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          ideaPluginTagOpen = """<idea-plugin xmlns:xi="https://www.w3.org/2001/XInclude">"""
+          ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
           additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
-        }, listOf(UnresolvedXIncludeElements("plugin.xml"))
+        }, listOf(XIncludeResolutionErrors("plugin.xml", "Not found document '/META-INF/missing.xml' referenced in <xi:include href=\"/META-INF/missing.xml\", xpointer=\"xpointer(/idea-plugin/*)\"/>. <xi:fallback> element is not provided. (at plugin.xml)"))
     )
   }
 
@@ -432,7 +414,7 @@ class InvalidPluginsTest {
     <themeProvider id="someId" path="/unresolved.theme.theme.json"/>
   </extensions>
           """.trimIndent()
-        }, listOf(UnableToReadTheme("plugin.xml", "/unresolved.theme.theme.json"))
+        }, listOf(UnableToFindTheme("plugin.xml", "/unresolved.theme.theme.json"))
     )
   }
 
@@ -478,15 +460,15 @@ class InvalidPluginsTest {
   @Test
   fun `too long properties specified`() {
 
-    val string_65 = "a".repeat(65)
-    val string_256 = "a".repeat(256)
-    val string_65536 = "a".repeat(65536)
+    val string65 = "a".repeat(65)
+    val string256 = "a".repeat(256)
+    val string65536 = "a".repeat(65536)
 
     val expectedProblems = listOf(
-        TooLongPropertyValue("plugin.xml", "version", 65, 64),
-        TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
         TooLongPropertyValue("plugin.xml", "id", 256, 255),
         TooLongPropertyValue("plugin.xml", "name", 256, 255),
+        TooLongPropertyValue("plugin.xml", "version", 65, 64),
+        TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
         TooLongPropertyValue("plugin.xml", "vendor", 256, 255),
         TooLongPropertyValue("plugin.xml", "vendor email", 256, 255),
         TooLongPropertyValue("plugin.xml", "vendor url", 256, 255),
@@ -496,13 +478,13 @@ class InvalidPluginsTest {
 
     `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          ideaPluginTagOpen = """<idea-plugin url="$string_256">"""
-          id = "<id>$string_256</id>"
-          name = "<name>$string_256</name>"
-          version = "<version>$string_65</version>"
-          vendor = """<vendor email="$string_256" url="$string_256">$string_256</vendor>"""
-          description = "<description>$string_65536</description>"
-          changeNotes = "<change-notes>$string_65536</change-notes>"
+          ideaPluginTagOpen = """<idea-plugin url="$string256">"""
+          id = "<id>$string256</id>"
+          name = "<name>$string256</name>"
+          version = "<version>$string65</version>"
+          vendor = """<vendor email="$string256" url="$string256">$string256</vendor>"""
+          description = "<description>$string65536</description>"
+          changeNotes = "<change-notes>$string65536</change-notes>"
         }, expectedProblems
     )
   }

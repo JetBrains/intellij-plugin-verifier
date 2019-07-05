@@ -7,8 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.collection.IsCollectionWithSize.hasSize
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,8 +27,9 @@ class IdeTest {
 
   @Test
   fun `version is not specified in distributed IDE`() {
-    val idePath = temporaryFolder.newFolder("idea")
-    idePath.resolve("lib").mkdirs()
+    val idePath = buildDirectory(temporaryFolder.newFolder("idea")) {
+      dir("lib") { }
+    }
 
     val separator = File.separator
     expectedEx.expect(InvalidIdeException::class.java)
@@ -41,47 +41,50 @@ class IdeTest {
     IdeManager.createManager().createIde(idePath)
   }
 
+  /**
+   * idea/
+   *  build.txt
+   *  plugins/
+   *    somePlugin/
+   *      META-INF/
+   *        plugin.xml
+   *  lib/
+   *    resources.jar!/
+   *      META-INF/
+   *        plugin.xml
+   */
   @Test
   fun `create idea from binaries`() {
-    val ideaFolder = temporaryFolder.newFolder("idea")
-    File(ideaFolder, "build.txt").writeText("IU-163.1.2.3")
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+      file("build.txt", "IU-163.1.2.3")
+      dir("plugins") {
+        dir("somePlugin") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify { }
+            }
+          }
+        }
+      }
 
-    /**
-     * Create /plugins/somePlugin/META-INF/plugin.xml
-     * of some bundled plugin.
-     */
-    val pluginsFolder = File(ideaFolder, "plugins")
-    val somePluginFolder = File(pluginsFolder, "somePlugin")
-
-    val bundledPluginXmlContent = perfectXmlBuilder.asString()
-    val bundledXml = File(somePluginFolder, "META-INF/plugin.xml")
-    bundledXml.parentFile.mkdirs()
-    bundledXml.writeText(bundledPluginXmlContent)
-
-    /**
-     * Create a /lib/resources.jar/META-INF/plugin.xml
-     * that contains the `IDEA-CORE` plugin.
-     */
-    val ideaPluginXml = temporaryFolder.newFolder().resolve("META-INF").resolve("plugin.xml")
-    ideaPluginXml.parentFile.mkdirs()
-    ideaPluginXml.writeText(perfectXmlBuilder.apply {
-      id = "<id>com.intellij</id>"
-      name = "<name>IDEA CORE</name>"
-      modules = listOf("some.idea.module")
-    }.asString())
-
-    val resourcesJar = ideaFolder.resolve("lib").resolve("resources.jar")
-    resourcesJar.parentFile.mkdirs()
-    JarFileUtils.createJarFile(
-        listOf(
-            JarFileEntry(ideaPluginXml, "META-INF/plugin.xml")
-        ),
-        resourcesJar
-    )
+      dir("lib") {
+        zip("resources.jar") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                id = "<id>com.intellij</id>"
+                name = "<name>IDEA CORE</name>"
+                modules = listOf("some.idea.module")
+              }
+            }
+          }
+        }
+      }
+    }
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
-    assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
-    assertThat(ide.bundledPlugins, hasSize(2))
+    assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)
+    assertEquals(2, ide.bundledPlugins.size)
     val bundledPlugin = ide.bundledPlugins[0]!!
     val ideaCorePlugin = ide.bundledPlugins[1]!!
     assertEquals("someId", bundledPlugin.pluginId)
@@ -107,38 +110,45 @@ class IdeTest {
    */
   @Test
   fun `create idea from ultimate compiled sources`() {
-    val ideaFolder = temporaryFolder.newFolder("idea")
-    ideaFolder.resolve("build.txt").writeText("IU-163.1.2.3")
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+      file("build.txt", "IU-163.1.2.3")
+      dir(".idea") { }
+      dir("community") {
+        dir(".idea") { }
+      }
 
-    ideaFolder.resolve(".idea").mkdirs()
-    ideaFolder.resolve("community/.idea").mkdirs()
+      dir("out") {
+        dir("classes") {
+          dir("production") {
+            dir("somePlugin") {
+              dir("META-INF") {
+                file("plugin.xml") {
+                  perfectXmlBuilder
+                      .modify {
+                        additionalContent = """
+                          <extensions defaultExtensionNs="com.intellij">
+                            <themeProvider id="someId" path="/someTheme.theme.json"/>
+                          </extensions>
+                        """.trimIndent()
+                      }
+                }
+              }
+            }
 
-    val modulesRoot = ideaFolder.resolve("out/classes/production")
-    modulesRoot.mkdirs()
-
-    val bundledPluginFolder = modulesRoot.resolve("somePlugin")
-    val bundledXml = bundledPluginFolder.resolve("META-INF").resolve("plugin.xml")
-    bundledXml.parentFile.mkdirs()
-
-    val bundledPluginXmlContent = perfectXmlBuilder
-        .modify {
-          additionalContent = """
-            <extensions defaultExtensionNs="com.intellij">
-              <themeProvider id="someId" path="/someTheme.theme.json"/>
-            </extensions>
-          """.trimIndent()
+            dir("themeHolder") {
+              file("someTheme.theme.json") {
+                """
+                {
+                  "name": "someTheme",
+                  "dark": true
+                }
+                """.trimIndent()
+              }
+            }
+          }
         }
-    bundledXml.writeText(bundledPluginXmlContent)
-
-    val themeJson = modulesRoot.resolve("themeHolder").resolve("someTheme.theme.json")
-    themeJson.parentFile.mkdirs()
-    themeJson.writeText(
-        """{
-            "name": "someTheme",
-            "dark": true
-           }
-    """.trimIndent()
-    )
+      }
+    }
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
     assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)
@@ -152,24 +162,31 @@ class IdeTest {
 
   @Test
   fun `plugins bundled to idea may not have versions in descriptors`() {
-    val ideaFolder = temporaryFolder.newFolder("idea")
-    ideaFolder.resolve(".idea").mkdirs()
-
-    val compilationRoot = ideaFolder.resolve("out").resolve("compilation").resolve("classes").resolve("production")
-    compilationRoot.mkdirs()
-    ideaFolder.resolve("build.txt").writeText("IU-163.1.2.3")
-
-    val incompleteDescriptor = PluginXmlBuilder().modify {
-      name = "<name>Bundled</name>"
-      id = "<id>Bundled</id>"
-      vendor = "<vendor>JetBrains</vendor>"
-      description = "<description>Short</description>"
-      changeNotes = "<change-notes>Short</change-notes>"
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+      file("build.txt", "IU-163.1.2.3")
+      dir(".idea") { }
+      dir("out") {
+        dir("compilation") {
+          dir("classes") {
+            dir("production") {
+              dir("Bundled") {
+                dir("META-INF") {
+                  file("plugin.xml") {
+                    PluginXmlBuilder().modify {
+                      name = "<name>Bundled</name>"
+                      id = "<id>Bundled</id>"
+                      vendor = "<vendor>JetBrains</vendor>"
+                      description = "<description>Short</description>"
+                      changeNotes = "<change-notes>Short</change-notes>"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
-    val bundledPluginFolder = compilationRoot.resolve("Bundled")
-    val bundledXml = bundledPluginFolder.resolve("META-INF/plugin.xml")
-    bundledXml.parentFile.mkdirs()
-    bundledXml.writeText(incompleteDescriptor)
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
     assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)

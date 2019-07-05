@@ -1,0 +1,69 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" version="2" url="https://kotlinlang.org"
+             allow-bundled-update="true" use-idea-classloader="true">
+    <id>org.jetbrains.kotlin2</id>
+
+    <name>Kotlin</name>
+    <description>Plugin description must be at least 40 characters long</description>
+    <version>1.0.0-beta-1038-IJ141-17</version>
+    <vendor email="vendor_email" url="https://www.jetbrains.com">JetBrains s.r.o.</vendor>
+
+    <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+
+    <product-descriptor code="PABC" release-date="20180118" release-version="20181"/>
+
+    <module value="one_module"/>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!--Specifies which jars should be additionally added to plugin's class-path (relative to /lib directory)-->
+        <compileServer.plugin classpath="compile/compile-library.jar"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <xi:include href="extensions/kotlin2jvm.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
+    </extensions>
+
+    <!--  Dependencies configuration files  -->
+
+    <depends optional="true" config-file="extension.xml">JUnit</depends>
+    <depends optional="true" config-file="optionals/optional.xml">optionalDependency</depends>
+    <depends optional="true" config-file="../optionalsDir/otherDirOptional.xml">otherDirOptionalDependency</depends>
+
+    <!-- Must not be resolved: configuration files by absolute paths are not allowed.  -->
+    <depends optional="true" config-file="/META-INF/referencedFromRoot.xml">referenceFromRoot</depends>
+
+    <!-- Must not be resolved: file "missingFile.xml" does not exist -->
+    <depends optional="true" config-file="missingFile.xml">missingDependency</depends>
+
+    <depends>mandatoryDependency</depends>
+    <depends>com.intellij.modules.mandatoryDependency</depends>
+
+    <depends>duplicatedDependencyId</depends>
+    <depends>duplicatedDependencyId</depends>
+
+
+    <!--  Resolve xi:include-s  -->
+
+    <xi:include href="extensions/ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <extensionPoints>
+        <xi:include href="extensions/common.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    </extensionPoints>
+
+    <!--xi-include with absolute path can be resolved only if the META-INF directory containing this xi:include is contained in .jar file.
+
+    If plugin's structure is as "<plugin-directory>/META-INF/plugin.xml" and the plugin.xml contains "<xi:include>" with
+    absolute path, like "/META-INF/some.xml" then such <xi:include> will not be resolved by IDEA and the plugin will be considered invalid.
+
+    This is because IDE tries to resolve as relative "/META-INF/some.xml" against base URL "file:/some/absolute/path/to/plugin-directory/"
+    and uses "new URL(base, relativePath)" invocation, which ends up with URL "/META-INF/some.xml" because it is considered absolute.
+
+    But if the base path is like "jar:file:/some/absolute/path/to/plugin.jar!/META-INF/plugin.xml" then resolving "/META-INF/some.xml"
+    against it results in "jar:file:/some/absolute/path/to/plugin.jar!/META-INF/some.xml" and x-inclusion ends successfully.
+
+    Tests will check that <change-notes> element contained in "change-notes.xml" is inserted if and only if the plugin is not directory-based.
+    -->
+    <xi:include href="/META-INF/change-notes.xml" xpointer="xpointer(/idea-plugin/*)">
+        <xi:fallback/>
+    </xi:include>
+
+</idea-plugin>

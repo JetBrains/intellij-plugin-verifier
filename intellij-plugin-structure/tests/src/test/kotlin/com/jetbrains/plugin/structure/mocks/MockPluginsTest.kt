@@ -1,26 +1,26 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.google.common.collect.HashMultiset
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
+import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
-import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
-import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
+import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.hamcrest.collection.IsIn.isIn
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -28,20 +28,234 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.time.LocalDate
 
-class MockPluginsTest : BaseMockPluginTest() {
-  override fun getMockPluginBuildDirectory(): File = File("mock-plugin").resolve("build").resolve("mocks")
+class MockPluginsTest {
 
-  @JvmField
   @Rule
-  var tempFolder: TemporaryFolder = TemporaryFolder()
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
+
+  private val mockPluginRoot = URLUtil.urlToFile(this::class.java.getResource("/mock-plugin"))
+  private val metaInfDir = mockPluginRoot.resolve("META-INF")
+
+  private val optionalsDir = mockPluginRoot.resolve("optionalsDir")
+  private val pluginClassesRoot = mockPluginRoot.resolve("classes")
+
+  private val compileLibraryDir = mockPluginRoot.resolve("compileLibrary")
+  private val compileLibraryClassesRoot = compileLibraryDir.resolve("classes")
+  private val compileLibraryServices = compileLibraryDir.resolve("services")
+
+  @Test
+  fun `single jar file`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF", metaInfDir)
+      dir("optionalsDir", optionalsDir)
+      dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+    }
+    checkPluginConfiguration(pluginFile, "", false, true)
+  }
+
+  @Test
+  fun `invalid jar file renamed to zip`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      zip("plugin.jar") {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+      }
+    }
+    checkPluginConfiguration(pluginFile, "", false, true)
+  }
+
+  @Test
+  fun `plugin jar packed in lib directory of zip archive`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("lib") {
+        dir("compile") {
+          zip("compile-library.jar") {
+            dir("META-INF") {
+              dir("services", compileLibraryServices)
+            }
+            dir("com", compileLibraryClassesRoot.resolve("com"))
+          }
+        }
+
+        zip("plugin.jar") {
+          dir("META-INF", metaInfDir)
+          dir("optionalsDir", optionalsDir)
+          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+        }
+      }
+    }
+
+    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+  }
+
+  @Test
+  fun `directory with lib subdirectory containing jar file`() {
+    val pluginFile = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("lib") {
+        dir("compile") {
+          zip("compile-library.jar") {
+            dir("META-INF") {
+              dir("services", compileLibraryServices)
+            }
+            dir("com", compileLibraryClassesRoot.resolve("com"))
+          }
+        }
+
+        zip("plugin.jar") {
+          dir("META-INF", metaInfDir)
+          dir("optionalsDir", optionalsDir)
+          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+        }
+      }
+    }
+    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+  }
+
+  @Test
+  fun `plugin directory with lib containing jar file - packed in zip archive`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("lib") {
+          dir("compile") {
+            zip("compile-library.jar") {
+              dir("META-INF") {
+                dir("services", compileLibraryServices)
+              }
+              dir("com", compileLibraryClassesRoot.resolve("com"))
+            }
+          }
+
+          zip("plugin.jar") {
+            dir("META-INF", metaInfDir)
+            dir("optionalsDir", optionalsDir)
+            dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+  }
+
+  @Test
+  fun `plugin as directory with classes`() {
+    val pluginFile = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("META-INF", metaInfDir)
+      dir("optionalsDir", optionalsDir)
+      dir("classes") {
+        dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+      }
+      dir("lib") {
+        dir("compile") {
+          zip("compile-library.jar") {
+            dir("META-INF") {
+              dir("services", compileLibraryServices)
+            }
+            dir("com", compileLibraryClassesRoot.resolve("com"))
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(pluginFile, "classes", true, false)
+  }
+
+  @Test
+  fun `plugin as zip with directory with classes`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("classes") {
+          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+        }
+        dir("lib") {
+          dir("compile") {
+            zip("compile-library.jar") {
+              dir("META-INF") {
+                dir("services", compileLibraryServices)
+              }
+              dir("com", compileLibraryClassesRoot.resolve("com"))
+            }
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(pluginFile, "classes", true, false)
+  }
+
+  @Test
+  fun `plugin has optional dependency where configuration file is ambiguous in two jar files`() {
+    /*
+      plugin/
+        lib/
+          plugin.jar!/
+            META-INF/
+              plugin.xml (references <depends optional="true" config-file="optionalDependency.xml">someId</depends>)
+          one.jar!/
+            META-INF/
+              optionalDependency.xml  <--- duplicated
+          two.jar!/
+            META-INF/
+              optionalDependency.xml  <--- duplicated
+    */
+    val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("lib") {
+        zip("plugin.jar") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                depends += """<depends optional="true" config-file="optionalDependency.xml">someDependencyId</depends>"""
+              }
+            }
+          }
+        }
+
+        zip("one.jar") {
+          dir("META-INF") {
+            file("optionalDependency.xml", "<idea-plugin></idea-plugin>")
+          }
+        }
+
+        zip("two.jar") {
+          dir("META-INF") {
+            file("optionalDependency.xml", "<idea-plugin></idea-plugin>")
+          }
+        }
+      }
+    }
+
+
+    val creationSuccess = InvalidPluginsTest.getSuccessResult(pluginDirectory)
+    assertEquals(
+        creationSuccess.warnings,
+        listOf(
+            OptionalDependencyDescriptorResolutionProblem(
+                "someDependencyId",
+                "optionalDependency.xml",
+                listOf(MultiplePluginDescriptors("optionalDependency.xml", "one.jar", "optionalDependency.xml", "two.jar"))
+            )
+        )
+    )
+  }
 
   @Test
   fun `invalid plugin with classes packed in a root of a zip`() {
-    val brokenZipFile = getMockPluginFile("invalid-mock-pluginJarAsZip.zip")
-    InvalidPluginsTest.assertExpectedProblems(brokenZipFile, listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "icons", "optionalsDir", "packagename"))))
+    //Plugin .jar that was renamed to .zip is not allowed.
+
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("META-INF", metaInfDir)
+      dir("optionalsDir", optionalsDir)
+      dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+    }
+
+    InvalidPluginsTest.assertExpectedProblems(
+        pluginFile,
+        listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "somePackage")))
+    )
   }
 
-  private fun testMockConfigs(plugin: IdePlugin) {
+  private fun checkPropertyValues(plugin: IdePlugin, resolveXIncludesWithAbsoluteHref: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.pluginVersion)
@@ -55,7 +269,22 @@ class MockPluginsTest : BaseMockPluginTest() {
     assertEquals(IdeVersion.createIdeVersion("141.1009.5"), plugin.sinceBuild)
     assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.untilBuild)
 
-    assertEquals("Change notes must be at least 40 characters long", plugin.changeNotes)
+    /*
+    <change-notes> element will be included only if the plugin is NOT directory-based.
+
+    It resides in "change-notes.xml" file, which is referenced in test data "plugin.xml" as
+      <xi:include href="/META-INF/change-notes.xml" xpointer="xpointer(/idea-plugin/)">
+    via absolute path "/META-INF/change-notes.xml".
+
+    For directory-based plugins, like "<plugin-directory>/META-INF/plugin.xml" absolute paths
+    are not resolved against <plugin-directory> but against "/" root of the file system so they can't be resolved
+    and the corresponding plugin must be considered invalid.
+     */
+    if (resolveXIncludesWithAbsoluteHref) {
+      assertEquals("Change notes must be at least 40 characters long", plugin.changeNotes)
+    } else {
+      assertNull(plugin.changeNotes)
+    }
     assertTrue(plugin.useIdeClassLoader)
 
     assertEquals("PABC", plugin.productDescriptor?.code)
@@ -64,187 +293,155 @@ class MockPluginsTest : BaseMockPluginTest() {
 
   }
 
-  private fun testMockWarnings(warnings: List<PluginProblem>) {
+  private fun checkWarnings(warnings: List<PluginProblem>) {
     val expectedWarnings = listOf(
         OptionalDependencyDescriptorResolutionProblem(
             "missingDependency",
-            "missingFile",
-            listOf(PluginDescriptorIsNotFound("missingFile"))
+            "missingFile.xml",
+            listOf(PluginDescriptorIsNotFound("missingFile.xml"))
+        ),
+        OptionalDependencyDescriptorResolutionProblem(
+            "referenceFromRoot",
+            "/META-INF/referencedFromRoot.xml",
+            listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
         ),
         DuplicatedDependencyWarning("duplicatedDependencyId")
     )
-    assertEquals(expectedWarnings.size, warnings.size)
-    assertContains(warnings, expectedWarnings)
+    assertEquals(expectedWarnings.toSet(), warnings.toSet())
   }
 
-  @Test
-  fun `jar file packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-jar-in-zip.zip", "", false)
-  }
-
-  @Test
-  fun `classes directory packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-classes-zip.zip", "classes", true)
-  }
-
-  @Test
-  fun `plugin as directory with classes`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-classes", "classes", true)
-  }
-
-  @Test
-  fun `plugin jar packed in lib directory of zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-lib.zip", "lib/mock-plugin-1.0.jar", true)
-  }
-
-  @Test
-  fun `directory with lib subdirectory containing jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-dir", "lib/mock-plugin-1.0.jar", true)
-  }
-
-  @Test
-  @Throws(Exception::class)
-  fun `single jar file`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-1.0.jar", "", false)
-  }
-
-  @Test
-  @Throws(Exception::class)
-  fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-directory-with-lib-in-zip.zip", "lib/mock-plugin-1.0.jar", true)
-  }
-
-  private fun testMockIdeCompatibility(plugin: IdePlugin) {
+  private fun checkIdeCompatibility(plugin: IdePlugin) {
     //  <idea-version since-build="141.1009.5" until-build="141.9999999"/>
-    checkCompatible(plugin, "141.1009.5", true)
-    checkCompatible(plugin, "141.99999", true)
-    checkCompatible(plugin, "142.0", false)
-    checkCompatible(plugin, "141.1009.4", false)
-    checkCompatible(plugin, "141", false)
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141.1009.5")))
+    assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141.99999")))
+    assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("142.0")))
+    assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141.1009.4")))
+    assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141")))
   }
 
-  private fun checkCompatible(plugin: IdePlugin, version: String, compatible: Boolean) {
-    assertEquals(compatible, plugin.isCompatibleWithIde(IdeVersion.createIdeVersion(version)))
-  }
-
-  private fun testMockPluginStructureAndConfiguration(pluginPath: String, classPath: String, hasLibDirectory: Boolean) {
-    val pluginFile = getMockPluginFile(pluginPath)
-
-    val extractDirectory = tempFolder.newFolder()
-    val pluginCreationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+  private fun checkPluginConfiguration(
+      pluginFile: File,
+      classPath: String,
+      hasLibDirectory: Boolean,
+      resolveXIncludesWithAbsoluteHref: Boolean
+  ) {
+    val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
     val plugin = pluginCreationSuccess.plugin
-
     assertEquals(pluginFile, plugin.originalFile)
-    testMockConfigs(plugin)
-    testMockWarnings(pluginCreationSuccess.warnings)
-    testMockExtensionPoints(plugin)
-    testMockDependenciesAndModules(plugin)
-    testMockOptDescriptors(plugin)
-    testMockUnderlyingDocument(plugin)
-    testMockIdeCompatibility(plugin)
-    testMockPluginClasses(plugin, classPath, hasLibDirectory)
+
+    checkWarnings(pluginCreationSuccess.warnings)
+    checkIdeCompatibility(plugin)
+    checkPropertyValues(plugin, resolveXIncludesWithAbsoluteHref)
+    checkOptionalDescriptors(plugin)
+    checkExtensionPoints(plugin)
+    checkDependenciesAndModules(plugin)
+    checkUnderlyingDocument(plugin)
+    checkPluginClasses(plugin, classPath, hasLibDirectory)
   }
 
-  private fun testMockPluginClasses(plugin: IdePlugin, classPath: String, hasLibDirectory: Boolean) {
+  private fun checkPluginClasses(plugin: IdePlugin, classPath: String, hasLibDirectory: Boolean) {
     assertNotNull(plugin.originalFile)
-
-    val extractDirectory = tempFolder.newFolder()
-    assertTrue(extractDirectory.listFiles().isEmpty())
-
-    IdePluginClassesFinder.findPluginClasses(plugin, extractDirectory, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { locationsContainer ->
-      testMockClasses(locationsContainer, hasLibDirectory, classPath)
+    IdePluginClassesFinder.findPluginClasses(
+        plugin,
+        Resolver.ReadMode.FULL,
+        listOf(CompileServerExtensionKey)
+    ).use { classesLocations ->
+      if (hasLibDirectory) {
+        checkCompileServerJars(classesLocations)
+      }
+      val mainResolver = UnionResolver.create(
+          IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { classesLocations.getResolver(it) }
+      )
+      assertEquals(
+          setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
+          mainResolver.allClasses
+      )
+      assertEquals(setOf("somePackage", "somePackage/subPackage"), mainResolver.allPackages)
+      assertTrue(mainResolver.containsPackage("somePackage"))
+      assertTrue(mainResolver.containsPackage("somePackage/subPackage"))
+      assertTrue(
+          mainResolver.classPath.joinToString(),
+          mainResolver.classPath.all { it.toAbsolutePath().toString().toSystemIndependentName().endsWith(classPath) }
+      )
     }
-
-    //Assert the extracted file was removed on Resolver close
-    assertTrue(extractDirectory.listFiles().isEmpty())
   }
 
-  private fun testMockUnderlyingDocument(plugin: IdePlugin) {
+  private fun checkUnderlyingDocument(plugin: IdePlugin) {
     val document = plugin.underlyingDocument
     val rootElement = document.rootElement
     assertNotNull(rootElement)
     assertEquals("idea-plugin", rootElement.name)
   }
 
-  private fun testMockOptDescriptors(plugin: IdePlugin) {
+  private fun checkOptionalDescriptors(plugin: IdePlugin) {
     val optionalDescriptors = plugin.optionalDescriptors
-    assertContains(optionalDescriptors.keys, listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "/META-INF/referencedFromRoot.xml"))
-    assertEquals(4, optionalDescriptors.size.toLong())
+    assertEquals(
+        setOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml"),
+        optionalDescriptors.keys
+    )
 
-    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["extension.xml"]!!), listOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')))
-    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["optionals/optional.xml"]!!), listOf("com.intellij.BeanClass".replace('.', '/')))
-    assertContains(getAllClassesReferencedFromXml(optionalDescriptors["../optionalsDir/otherDirOptional.xml"]!!), listOf("com.intellij.optional.BeanClass".replace('.', '/')))
+    assertEquals(
+        setOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')),
+        getAllClassesReferencedFromXml(optionalDescriptors.getValue("extension.xml"))
+    )
+
+    assertEquals(
+        setOf("com.intellij.BeanClass".replace('.', '/')),
+        getAllClassesReferencedFromXml(optionalDescriptors.getValue("optionals/optional.xml"))
+    )
+
+    assertEquals(
+        setOf("com.intellij.optional.BeanClass".replace('.', '/')),
+        getAllClassesReferencedFromXml(optionalDescriptors.getValue("../optionalsDir/otherDirOptional.xml"))
+    )
   }
 
-  private fun testMockDependenciesAndModules(plugin: IdePlugin) {
+  private fun checkDependenciesAndModules(plugin: IdePlugin) {
     assertEquals(9, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
-    val dependencies = listOf(
+    val expectedDependencies = listOf(
         PluginDependencyImpl("JUnit", true, false),
         PluginDependencyImpl("optionalDependency", true, false),
         PluginDependencyImpl("otherDirOptionalDependency", true, false),
-        PluginDependencyImpl("mandatoryDependency", false, false),
         PluginDependencyImpl("referenceFromRoot", true, false),
         PluginDependencyImpl("missingDependency", true, false),
+        PluginDependencyImpl("mandatoryDependency", false, false),
         PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true),
         PluginDependencyImpl("duplicatedDependencyId", false, false),
-        PluginDependencyImpl("duplicatedDependencyId", true, false)
+        PluginDependencyImpl("duplicatedDependencyId", false, false)
     )
-    assertContains(plugin.dependencies, dependencies)
+    assertEquals(expectedDependencies, plugin.dependencies)
 
-    assertEquals(hashSetOf("one_module", "two_module"), plugin.definedModules)
+    assertEquals(setOf("one_module"), plugin.definedModules)
   }
 
-  private fun testMockExtensionPoints(plugin: IdePlugin) {
+  private fun checkExtensionPoints(plugin: IdePlugin) {
     val extensions = plugin.extensions
-    val keys = extensions.keys()
-    assertThat("com.intellij.referenceImporter", isIn(keys))
-    assertThat("org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider", isIn(keys))
-  }
-
-  private fun testMockClasses(locationsContainer: IdePluginClassesLocations, hasLibDirectory: Boolean, classPath: String) {
-    if (hasLibDirectory) {
-      testCompileServerJars(locationsContainer)
-    }
-
-    val mainResolvers = listOf(ClassesDirectoryKey, LibDirectoryKey, JarPluginKey).mapNotNull { locationsContainer.getResolver(it) }
-    val allClasses = mainResolvers.flatMap { it.allClasses }.toSet()
-    assertSetsEqual(
-        setOf(
-            "packagename/ClassOne",
-            "packagename/InFileClassOne",
-            "packagename/ClassOne\$ClassOneInnerStatic",
-            "packagename/ClassOne\$ClassOneInner",
-            "packagename/InFileClassOne",
-            "packagename/subpackage/ClassTwo"
-        ), allClasses
+    val expectedExtensionPoints = HashMultiset.create(
+        listOf(
+            "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
+            "com.intellij.compileServer.plugin",
+            "org.jetbrains.kotlin.defaultErrorMessages",
+            "org.jetbrains.kotlin.diagnosticSuppressor"
+        )
     )
-    assertSetsEqual(setOf("packagename", "packagename/subpackage"), mainResolvers.flatMap { it.allPackages }.toSet())
-    assertTrue(mainResolvers.any { it.containsPackage("packagename") })
-    assertTrue(mainResolvers.any { it.containsPackage("packagename/subpackage") })
 
-    val allClassPath = mainResolvers.flatMap { it.classPath }
-    assertTrue(allClassPath.all { it.toAbsolutePath().toString().replace("\\", "/").endsWith(classPath) })
+    assertEquals(expectedExtensionPoints, extensions.keys())
   }
 
-  private fun testCompileServerJars(classesLocations: IdePluginClassesLocations) {
+  private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations) {
     val resolver = classesLocations.getResolver(CompileServerExtensionKey)!!
     val libDirectoryClasses = resolver.allClasses
-    assertSetsEqual(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
+    assertEquals(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
 
     val compileServerJars = resolver.finalResolvers
     assertEquals(1, compileServerJars.size)
     val compileServerJar = compileServerJars[0]
     assertTrue(compileServerJar is JarFileResolver)
     val jarFileResolver = compileServerJar as JarFileResolver
-    assertSetsEqual(setOf("com.example.service.Service"), jarFileResolver.implementedServiceProviders)
+    assertEquals(setOf("com.example.service.Service"), jarFileResolver.implementedServiceProviders)
     val implementationNames = jarFileResolver.readServiceImplementationNames("com.example.service.Service")
-    assertSetsEqual(
+    assertEquals(
         setOf(
             "com.some.compile.library.One",
             "com.some.compile.library.Two",
@@ -253,18 +450,4 @@ class MockPluginsTest : BaseMockPluginTest() {
     )
   }
 
-  private fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
-    val redundant = actual - expected
-    val missing = expected - actual
-    val message = "Missing: [" + redundant.joinToString() + "]\nRedundant: [" + missing.joinToString() + "]"
-    if (redundant.isNotEmpty() || missing.isNotEmpty()) {
-      fail(message)
-    }
-  }
-
-  private fun <T> assertContains(elements: Iterable<T>, shouldBe: List<T>) {
-    shouldBe.filterNot { elements.contains(it) }
-        .forEach { throw AssertionError("Collection must contain an element $it: [$elements]") }
-
-  }
 }

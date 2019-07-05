@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
 import org.junit.Assert.assertEquals
@@ -12,35 +9,63 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class MockThemePluginsTest : BaseMockPluginTest() {
-  override fun getMockPluginBuildDirectory(): File = File("mock-theme-plugin").resolve("build").resolve("libs")
-
-  @JvmField
+class MockThemePluginsTest  {
   @Rule
-  var tempFolder: TemporaryFolder = TemporaryFolder()
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
 
   @Test
   fun `jar file packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-theme-plugin-1.0.jar")
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            additionalContent = """
+              <extensions defaultExtensionNs="com.intellij">
+                  <!-- Add your extensions here -->
+                  <themeProvider id="id0" path="/theme.theme.json"/>
+                  <themeProvider id="id1" path="relativeTheme.theme.json"/>
+              </extensions>
+            """.trimIndent()
+          }
+        }
+      }
+
+      file("theme.theme.json", """
+        {
+          "name": "theme",
+          "dark": true,
+          "author": "",
+          "editorScheme": "/theme.xml",
+          "ui": {}
+        }
+      """.trimIndent())
+
+      file("relativeTheme.theme.json", """
+        {
+          "name": "relativeTheme",
+          "dark": false,
+          "author": "",
+          "editorScheme": "/relativeTheme.xml",
+          "ui": {
+          }
+        }
+      """.trimIndent())
+    }
+
+    testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginPath: String) {
-    val pluginFile = getMockPluginFile(pluginPath)
-
-    val extractDirectory = tempFolder.newFolder()
-    val pluginCreationResult = IdePluginManager.createManager(extractDirectory).createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
-    val plugin = pluginCreationSuccess.plugin
-
-    testPluginThemes(plugin)
+  @Suppress("SameParameterValue")
+  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
+    val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
+    testPluginThemes(pluginCreationSuccess.plugin)
   }
 
   private fun testPluginThemes(plugin: IdePlugin) {
-    assertThat(plugin.declaredThemes, Matchers.containsInAnyOrder(IdeTheme("theme", true)))
-    assertThat(plugin.declaredThemes, Matchers.hasSize(1))
+    assertEquals(
+        setOf(IdeTheme("theme", true), IdeTheme("relativeTheme", false)),
+        plugin.declaredThemes.toSet()
+    )
   }
 }

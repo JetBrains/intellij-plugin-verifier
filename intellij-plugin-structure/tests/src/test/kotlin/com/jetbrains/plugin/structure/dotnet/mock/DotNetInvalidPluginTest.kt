@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
-import com.jetbrains.plugin.structure.dotnet.problems.IncorrectDotNetPluginFile
+import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import org.junit.Assert
 import org.junit.Rule
@@ -34,7 +34,7 @@ class DotNetInvalidPluginTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectDotNetPluginFile(incorrect.name)))
+    assertExpectedProblems(incorrect, listOf(createIncorrectDotNetPluginFileProblem(incorrect.name)))
   }
 
   @Test()

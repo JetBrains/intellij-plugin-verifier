@@ -32,7 +32,7 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(IncorrectTeamCityPluginFile(incorrect.name)))
+    assertExpectedProblems(incorrect, listOf(createIncorrectTeamCityPluginFile(incorrect.name)))
   }
 
   @Test()

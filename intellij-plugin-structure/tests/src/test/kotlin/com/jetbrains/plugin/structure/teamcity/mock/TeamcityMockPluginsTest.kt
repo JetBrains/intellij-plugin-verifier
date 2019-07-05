@@ -3,16 +3,21 @@ package com.jetbrains.plugin.structure.teamcity.mock
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.mocks.BaseMockPluginTest
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class TeamcityMockPluginsTest : BaseMockPluginTest() {
-  override fun getMockPluginBuildDirectory(): File = File("teamcity-mock-plugin/build/mocks")
+class TeamcityMockPluginsTest  {
+
+  @Rule
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
 
   private fun testMockConfigs(plugin: TeamcityPlugin) {
     assertEquals(null, plugin.url)
@@ -41,19 +46,27 @@ class TeamcityMockPluginsTest : BaseMockPluginTest() {
     assertTrue(problems.isEmpty())
   }
 
+  private fun getMockPluginXmlContent(): String {
+    return this::class.java.getResource("/teamcity/teamcity-plugin.xml").readText()
+  }
+
   @Test
   fun `plugin packed in zip`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-zip.zip")
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file("teamcity-plugin.xml", getMockPluginXmlContent())
+    }
+    testMockPluginStructureAndConfiguration(pluginFile)
   }
 
   @Test
   fun `plugin directory`() {
-    testMockPluginStructureAndConfiguration("mock-plugin-dir")
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file("teamcity-plugin.xml", getMockPluginXmlContent())
+    }
+    testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginPath: String) {
-    val pluginFile = getMockPluginFile(pluginPath)
-
+  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
     val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
