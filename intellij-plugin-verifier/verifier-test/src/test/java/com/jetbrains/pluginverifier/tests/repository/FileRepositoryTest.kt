@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.tests.repository
 
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.files.*
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test

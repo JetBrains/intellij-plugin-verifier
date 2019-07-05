@@ -1,10 +1,9 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeResourceUtil
-import com.jetbrains.pluginverifier.misc.*
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -81,8 +80,8 @@ object OptionsParser {
   fun getExternalClassesPackageFilter(opts: CmdOpts): PackageFilter =
       opts.externalClassesPrefixes
           .map { it.replace('.', '/') }
-          .let {
-            PackageFilter(it.map { PackageFilter.Descriptor(true, it) })
+          .let { list ->
+            PackageFilter(list.map { PackageFilter.Descriptor(true, it) })
           }
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {

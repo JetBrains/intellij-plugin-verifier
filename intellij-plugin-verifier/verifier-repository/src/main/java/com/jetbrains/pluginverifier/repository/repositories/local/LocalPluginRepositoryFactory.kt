@@ -2,9 +2,9 @@ package com.jetbrains.pluginverifier.repository.repositories.local
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.pluginverifier.misc.extension
-import com.jetbrains.pluginverifier.misc.isDirectory
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory.createLocalPluginRepository
 import java.nio.file.Files

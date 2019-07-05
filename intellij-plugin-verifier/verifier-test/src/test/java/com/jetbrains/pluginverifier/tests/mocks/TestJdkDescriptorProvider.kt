@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.jetbrains.pluginverifier.misc.exists
+import com.jetbrains.plugin.structure.base.utils.exists
 import java.nio.file.Path
 import java.nio.file.Paths
 

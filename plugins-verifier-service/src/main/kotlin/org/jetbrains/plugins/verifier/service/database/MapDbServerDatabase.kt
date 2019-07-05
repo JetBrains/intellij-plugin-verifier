@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.database
 
-import com.jetbrains.pluginverifier.misc.createDir
+import com.jetbrains.plugin.structure.base.utils.createDir
 import org.mapdb.DBMaker
 import java.nio.file.Path
 

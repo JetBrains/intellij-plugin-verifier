@@ -1,6 +1,6 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.pluginverifier.misc.simpleName
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder

@@ -1,13 +1,7 @@
 package org.jetbrains.ide.diff.builder.persistence
 
-import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithName
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.extension
-import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.misc.readText
-import com.jetbrains.pluginverifier.misc.toSystemIndependentName
 import org.jetbrains.ide.diff.builder.api.ApiEvent
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature

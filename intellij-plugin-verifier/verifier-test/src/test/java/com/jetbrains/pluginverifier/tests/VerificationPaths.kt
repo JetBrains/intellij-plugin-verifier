@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.isDirectory
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.isDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 

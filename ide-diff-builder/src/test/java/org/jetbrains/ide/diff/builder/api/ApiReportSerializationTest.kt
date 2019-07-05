@@ -1,8 +1,8 @@
 package org.jetbrains.ide.diff.builder.api
 
-import com.jetbrains.pluginverifier.misc.extension
-import com.jetbrains.pluginverifier.misc.isDirectory
-import com.jetbrains.pluginverifier.misc.readText
+import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.readText
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest

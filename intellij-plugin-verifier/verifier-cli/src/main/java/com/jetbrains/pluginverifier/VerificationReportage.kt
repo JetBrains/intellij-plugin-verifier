@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.reporters.AllIgnoredProblemsReporter
 import com.jetbrains.pluginverifier.output.reporters.IgnoredPluginsReporter
@@ -115,7 +115,7 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
    *     ....
    * ```
    */
-  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path? {
+  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path {
     val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
     return when (pluginInfo) {
       is UpdateInfo -> {

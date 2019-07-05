@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.readLines
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing

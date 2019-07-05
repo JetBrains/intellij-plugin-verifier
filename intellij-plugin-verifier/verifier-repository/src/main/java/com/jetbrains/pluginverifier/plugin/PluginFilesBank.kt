@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.plugin
 
-import com.jetbrains.pluginverifier.misc.nameWithoutExtension
-import com.jetbrains.pluginverifier.misc.replaceInvalidFileNameCharacters
+import com.jetbrains.plugin.structure.base.utils.nameWithoutExtension
+import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.repository.Downloadable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository

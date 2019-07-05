@@ -1,10 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
-import com.jetbrains.plugin.structure.base.utils.extractTo
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.stripTopLevelDirectory
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader

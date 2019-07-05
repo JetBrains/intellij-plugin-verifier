@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.JarsUtils
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.readLines
 import java.nio.file.Path
 
 object JdkDescriptorCreator {

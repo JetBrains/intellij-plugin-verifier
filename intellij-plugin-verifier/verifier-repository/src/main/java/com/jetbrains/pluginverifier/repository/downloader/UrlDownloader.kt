@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.*
 import okhttp3.ResponseBody
 import org.apache.commons.io.FileUtils
@@ -112,8 +111,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   }
 
   private fun doDownload(key: K, downloadUrl: URL, tempDirectory: Path): DownloadResult {
-    val protocol = downloadUrl.protocol
-    return when (protocol) {
+    return when (val protocol = downloadUrl.protocol) {
       FILE_PROTOCOL -> copyFileOrDirectory(downloadUrl, tempDirectory)
       HTTP_PROTOCOL, HTTPS_PROTOCOL -> downloadFileOrDirectory(downloadUrl, tempDirectory, key)
       else -> throw IllegalArgumentException("Unknown protocol: $protocol of $downloadUrl")

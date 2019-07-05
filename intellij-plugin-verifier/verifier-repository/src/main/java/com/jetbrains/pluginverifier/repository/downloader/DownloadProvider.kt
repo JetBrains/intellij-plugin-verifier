@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
@@ -102,7 +101,7 @@ class DownloadProvider<in K>(
     if (nameWithoutExtension == DOWNLOADS_DIRECTORY) {
       throw IllegalStateException("File or directory named '$DOWNLOADS_DIRECTORY' is prohibited")
     }
-    val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else "." + extension
+    val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else ".$extension"
     return fullName.replaceInvalidFileNameCharacters()
   }
 

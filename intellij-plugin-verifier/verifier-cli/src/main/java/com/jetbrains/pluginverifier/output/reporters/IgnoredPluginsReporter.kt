@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.output.reporters
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.pluginverifier.misc.writeText
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.reporting.Reporter
 import com.jetbrains.pluginverifier.reporting.common.CollectingReporter

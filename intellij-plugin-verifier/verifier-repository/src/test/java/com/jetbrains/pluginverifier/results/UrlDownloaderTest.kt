@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results
 
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import org.junit.Assert

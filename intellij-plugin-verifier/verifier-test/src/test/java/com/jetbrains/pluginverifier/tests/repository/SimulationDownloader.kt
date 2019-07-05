@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.repository
 
-import com.jetbrains.pluginverifier.misc.writeText
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
 import java.nio.file.Path

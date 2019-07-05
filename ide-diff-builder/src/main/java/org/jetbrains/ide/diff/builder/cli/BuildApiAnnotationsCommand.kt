@@ -1,11 +1,11 @@
 package org.jetbrains.ide.diff.builder.cli
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
-import com.jetbrains.pluginverifier.misc.*
+import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.files.FileLock

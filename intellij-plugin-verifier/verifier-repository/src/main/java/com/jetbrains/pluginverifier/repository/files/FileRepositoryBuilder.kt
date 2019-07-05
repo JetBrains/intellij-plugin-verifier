@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import com.jetbrains.pluginverifier.misc.deleteLogged
-import com.jetbrains.pluginverifier.misc.exists
-import com.jetbrains.pluginverifier.misc.listFiles
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.provider.EmptyResourceProvider
