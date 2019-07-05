@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.clazz
 
-import com.jetbrains.pluginverifier.misc.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.pluginverifier.results.problems.ClassFileVersionIncompatibleWithIde
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile

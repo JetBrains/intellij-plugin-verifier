@@ -10,10 +10,9 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
-import com.jetbrains.plugin.structure.teamcity.problems.IncorrectTeamCityPluginFile
-import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.CoreMatchers.instanceOf
-import org.junit.Assert.assertThat
+import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -21,7 +20,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 class TeamcityInvalidPluginsTest {
-  val DESCRIPTOR_PATH = "teamcity-plugin.xml"
 
   @Rule
   @JvmField
@@ -54,23 +52,23 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `no meta-inf plugin xml found`() {
     val folder = temporaryFolder.newFolder()
-    assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound(DESCRIPTOR_PATH)))
+    assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound("teamcity-plugin.xml")))
   }
 
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
-    assertThat(creationFail.errorsAndWarnings, `is`(expectedProblems))
+    assertEquals(expectedProblems, creationFail.errorsAndWarnings)
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<TeamcityPlugin> {
     val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
-    assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
+    assertTrue(pluginCreationResult is PluginCreationSuccess)
     return pluginCreationResult as PluginCreationSuccess
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<TeamcityPlugin> {
     val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
-    assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
+    assertTrue(pluginCreationResult is PluginCreationFail)
     return pluginCreationResult as PluginCreationFail
   }
 
@@ -78,7 +76,7 @@ class TeamcityInvalidPluginsTest {
   private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     val successResult = getSuccessResult(pluginFolder)
-    assertThat(successResult.warnings, `is`(expectedWarnings))
+    assertEquals(expectedWarnings, successResult.warnings)
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {

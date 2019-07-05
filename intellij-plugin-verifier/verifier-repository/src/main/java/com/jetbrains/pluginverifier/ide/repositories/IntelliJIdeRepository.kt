@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Provides index of IDE builds available for downloading,
  * which is fetched from IntelliJ Artifacts Repositories.
- * - [release](https://www.jetbrains.com/intellij-repository/release)
+ * - [releases](https://www.jetbrains.com/intellij-repository/releases)
  * - [snapshots](https://www.jetbrains.com/intellij-repository/snapshots)
  * - [nightly](https://www.jetbrains.com/intellij-repository/nightly) - available only with JetBrains VPN.
  */

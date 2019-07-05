@@ -11,7 +11,6 @@ import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.IncorrectDotNetPluginFile
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
-import org.hamcrest.CoreMatchers
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -119,18 +118,18 @@ class DotNetInvalidPluginTest {
 
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
-    Assert.assertThat(creationFail.errorsAndWarnings, CoreMatchers.`is`(expectedProblems))
+    Assert.assertEquals(expectedProblems, creationFail.errorsAndWarnings)
   }
 
   private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<ReSharperPlugin> {
     val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
-    Assert.assertThat(pluginCreationResult, CoreMatchers.instanceOf(PluginCreationSuccess::class.java))
+    Assert.assertTrue(pluginCreationResult is PluginCreationSuccess)
     return pluginCreationResult as PluginCreationSuccess
   }
 
   private fun getFailedResult(pluginFile: File): PluginCreationFail<ReSharperPlugin> {
     val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
-    Assert.assertThat(pluginCreationResult, CoreMatchers.instanceOf(PluginCreationFail::class.java))
+    Assert.assertTrue(pluginCreationResult is PluginCreationFail)
     return pluginCreationResult as PluginCreationFail
   }
 

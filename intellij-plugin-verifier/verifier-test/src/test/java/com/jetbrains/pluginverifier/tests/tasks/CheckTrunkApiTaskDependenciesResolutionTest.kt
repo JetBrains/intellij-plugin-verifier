@@ -30,9 +30,8 @@ import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
-import org.hamcrest.Matchers.containsInAnyOrder
-import org.hamcrest.Matchers.instanceOf
-import org.junit.Assert.assertThat
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.Closeable
 import java.nio.file.Path
@@ -134,6 +133,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       val reportage = object : Reportage {
         override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
             Reporters()
+
         override fun logVerificationStage(stageMessage: String) = Unit
 
         override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
@@ -156,24 +156,26 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
       releaseVerificationResult: VerificationResult,
       trunkVerificationResult: VerificationResult
   ) {
-    assertThat(trunkVerificationResult, instanceOf(VerificationResult.OK::class.java))
-    assertThat(releaseVerificationResult, instanceOf(VerificationResult.OK::class.java))
+    assertTrue(trunkVerificationResult is VerificationResult.OK)
+    assertTrue(releaseVerificationResult is VerificationResult.OK)
 
     val trunkGraph = (trunkVerificationResult as VerificationResult.OK).dependenciesGraph
     val releaseGraph = (releaseVerificationResult as VerificationResult.OK).dependenciesGraph
 
-    assertThat(
-        trunkGraph.vertices.drop(1), containsInAnyOrder(
-        DependencyNode(someJetBrainsPluginId, "2.0", emptyList()),
-        DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
-    )
+    assertEquals(
+        listOf(
+            DependencyNode(someJetBrainsPluginId, "2.0", emptyList()),
+            DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
+        ),
+        trunkGraph.vertices.drop(1)
     )
 
-    assertThat(
-        releaseGraph.vertices.drop(1), containsInAnyOrder(
-        DependencyNode(someJetBrainsPluginId, "1.0", emptyList()),
-        DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
-    )
+    assertEquals(
+        listOf(
+            DependencyNode(someJetBrainsPluginId, "1.0", emptyList()),
+            DependencyNode(someJetBrainsPluginContainingModuleId, "1.0", emptyList())
+        ),
+        releaseGraph.vertices.drop(1)
     )
   }
 

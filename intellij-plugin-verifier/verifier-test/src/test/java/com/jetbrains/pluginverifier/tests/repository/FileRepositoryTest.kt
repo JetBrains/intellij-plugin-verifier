@@ -92,7 +92,7 @@ class FileRepositoryTest {
       executorService.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
     }
 
-    assertThat(downloader.errors, org.hamcrest.Matchers.empty())
+    assertTrue(downloader.errors.isEmpty())
   }
 
   private fun <K> FileRepository<K>.getFound(k: K) = getFile(k) as FileRepositoryResult.Found
@@ -203,9 +203,9 @@ class FileRepositoryTest {
     downloadThread.join()
     removeThread.join()
 
-    Assert.assertTrue(fileLock.get().file.exists())
+    assertTrue(fileLock.get().file.exists())
     fileLock.get().release()
-    Assert.assertFalse(fileLock.get().file.exists())
+    assertFalse(fileLock.get().file.exists())
   }
 
   @Test

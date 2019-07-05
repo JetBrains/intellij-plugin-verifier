@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.reporting.common
 
+import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.reporting.Reporter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

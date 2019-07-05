@@ -54,7 +54,7 @@ class CheckTrunkApiParamsBuilder(
 
     when {
       apiOpts.majorIdePath != null -> {
-        val majorPath = Paths.get(apiOpts.majorIdePath)
+        val majorPath = Paths.get(apiOpts.majorIdePath!!)
         if (!majorPath.isDirectory) {
           throw IllegalArgumentException("The specified major IDE doesn't exist: $majorPath")
         }

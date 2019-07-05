@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
-import com.jetbrains.pluginverifier.misc.create
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.io.File

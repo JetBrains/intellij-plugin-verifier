@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.collection.IsCollectionWithSize.hasSize
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -142,13 +141,13 @@ class IdeTest {
     )
 
     val ide = IdeManager.createManager().createIde(ideaFolder)
-    assertThat(ide.version, `is`(IdeVersion.createIdeVersion("IU-163.1.2.3")))
-    assertThat(ide.bundledPlugins, hasSize(1))
+    assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)
+    assertEquals(1, ide.bundledPlugins.size)
 
     val plugin = ide.bundledPlugins[0]!!
-    assertThat(plugin.pluginId, `is`("someId"))
-    assertThat(plugin.originalFile, `is`(bundledPluginFolder))
-    assertThat(plugin.declaredThemes, `is`(listOf(IdeTheme("someTheme", true))))
+    assertEquals(ideaFolder.resolve("out").resolve("classes").resolve("production").resolve("somePlugin"), plugin.originalFile)
+    assertEquals(listOf(IdeTheme("someTheme", true)), plugin.declaredThemes)
+    assertEquals("someId", plugin.pluginId)
   }
 
   @Test
@@ -176,6 +175,6 @@ class IdeTest {
     assertEquals(IdeVersion.createIdeVersion("IU-163.1.2.3"), ide.version)
     assertEquals(1, ide.bundledPlugins.size)
     val plugin = ide.bundledPlugins[0]!!
-    assertThat(plugin.pluginId, `is`("Bundled"))
+    assertEquals("Bundled", plugin.pluginId)
   }
 }

@@ -5,9 +5,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import org.hamcrest.Matchers
-import org.junit.Assert.assertThat
-import org.junit.Assert.fail
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder

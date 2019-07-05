@@ -4,13 +4,14 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.base.utils.archiveDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.hamcrest.Matchers.*
-import org.junit.Assert.assertThat
+import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
+import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -31,19 +32,22 @@ class InvalidPluginsTest {
     fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
       val creationFail = getFailedResult(pluginFile)
       val actualProblems = creationFail.errorsAndWarnings
-      assertThat(actualProblems, containsInAnyOrder(*expectedProblems.toTypedArray()))
-      assertThat(actualProblems, hasSize(expectedProblems.size))
+      assertEquals(expectedProblems.toSet(), actualProblems.toSet())
     }
 
-    private fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
+    fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
       val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-      assertThat(pluginCreationResult, instanceOf(PluginCreationFail::class.java))
+      if (pluginCreationResult is PluginCreationSuccess) {
+        Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
+      }
       return pluginCreationResult as PluginCreationFail
     }
 
-    private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
+    fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
       val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-      assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
+      if (pluginCreationResult is PluginCreationFail) {
+        Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString())
+      }
       return pluginCreationResult as PluginCreationSuccess<IdePlugin>
     }
   }
@@ -330,7 +334,7 @@ class InvalidPluginsTest {
   private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     val successResult = getSuccessResult(pluginFolder)
-    assertThat(successResult.warnings, `is`(expectedWarnings))
+    assertEquals(expectedWarnings, successResult.warnings)
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
