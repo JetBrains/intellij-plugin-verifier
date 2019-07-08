@@ -1,19 +1,13 @@
 package com.jetbrains.pluginverifier.resolution
 
-import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
@@ -26,8 +20,6 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.IdePluginClassResolver
-import org.jgrapht.DirectedGraph
-import org.jgrapht.graph.DefaultDirectedGraph
 import java.io.Closeable
 import java.nio.file.Path
 
@@ -42,12 +34,6 @@ class DefaultClassResolverProvider(
     private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
 
-  private companion object {
-    const val CORE_IDE_PLUGIN_ID = "com.intellij"
-    const val JAVA_MODULE_ID = "com.intellij.modules.java"
-    const val ALL_MODULES_ID = "com.intellij.modules.all"
-  }
-
   override fun provide(
       checkedPluginDetails: PluginDetails,
       verificationResult: VerificationResult,
@@ -56,16 +42,13 @@ class DefaultClassResolverProvider(
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     findMistakenlyBundledIdeClasses(pluginResolver, verificationResult)
 
-    val depGraph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
-    try {
-      val apiGraph = buildDependenciesGraph(checkedPluginDetails.idePlugin, depGraph)
-      verificationResult.dependenciesGraph = apiGraph
-      verificationResult.addDependenciesWarnings(apiGraph)
-      return createClassResolver(pluginResolver, depGraph)
-    } catch (e: Throwable) {
-      depGraph.vertexSet().forEach { it.dependencyResult.closeLogged() }
-      throw e
-    }
+    val (dependenciesGraph, dependenciesResults) =
+        DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
+
+    verificationResult.dependenciesGraph = dependenciesGraph
+    verificationResult.addDependenciesWarnings(dependenciesGraph)
+
+    return createClassResolver(pluginResolver, dependenciesResults)
   }
 
   private fun VerificationResult.addDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
@@ -99,136 +82,54 @@ class DefaultClassResolverProvider(
 
   private fun createClassResolver(
       pluginResolver: Resolver,
-      depGraph: DirectedGraph<DepVertex, DepEdge>
+      dependenciesResults: List<DependencyFinder.Result>
   ): ClassResolver {
-    val dependenciesResults = depGraph.vertexSet().map { it.dependencyResult }
-    val dependenciesResolver = createDependenciesResolver(depGraph)
+    //Do not close the pluginResolver. It will be closed along with checkedPluginDetails.
 
-    return when (val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)) {
-      is ResourceCacheEntryResult.Found -> {
-        val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkResolver
-        val closeableResources = listOf<Closeable>(jdkCacheEntry.resourceCacheEntry) + dependenciesResults
-        IdePluginClassResolver(
-            pluginResolver,
-            dependenciesResolver,
-            jdkClassesResolver,
-            ideDescriptor.ideResolver,
-            externalClassesPackageFilter,
-            closeableResources
-        )
-      }
-      is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", jdkCacheEntry.error)
-      is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: ${jdkCacheEntry.message}")
-    }
-  }
+    val closeableResources = arrayListOf<Closeable>()
+    closeableResources.closeOnException {
+      closeableResources += dependenciesResults
 
-  private fun buildDependenciesGraph(
-      plugin: IdePlugin,
-      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
-  ): DependenciesGraph {
-    val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
-    val depGraphBuilder = DepGraphBuilder(dependencyFinder)
-    depGraphBuilder.addTransitiveDependencies(dependenciesGraph, start)
-    if (shouldAddImplicitDependenciesOnPlatformPlugins() && plugin.pluginId != CORE_IDE_PLUGIN_ID) {
-      maybeAddOptionalJavaPluginDependency(plugin, depGraphBuilder, dependenciesGraph)
-      maybeAddBundledPluginsWithUseIdeaClassLoader(depGraphBuilder, dependenciesGraph)
-    }
-    return DepGraph2ApiGraphConverter(ideDescriptor.ideVersion).convert(dependenciesGraph, start)
-  }
+      val dependenciesResolver = createDependenciesResolver(dependenciesResults)
+      return when (val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)) {
+        is ResourceCacheEntryResult.Found -> {
+          closeableResources += jdkCacheEntry.resourceCacheEntry
 
-  /**
-   * This option tells the verifier to supply Java and other platform plugins to the classpath of the verification.
-   * It is necessary to avoid a lot of problems like "Access to unresolved class <some class from Java plugin>".
-   *
-   * Java plugin used to be part of the platform. But starting from 2019.2 EAP it is a separate bundled plugin.
-   * Many plugins historically do not declare dependency onto Java plugin but require its classes.
-   * The dependency may be declared either via module 'com.intellij.modules.java' or via plugin id 'com.intellij.java'.
-   * IDE still loads Java plugin as part of the platform, using platform classloader, so plugins will continue to work.
-   * But this behaviour may be changed in future. We are going to notify external developers that their plugins
-   * reference Java-plugin classes without explicit dependency.
-   *
-   * [maybeAddOptionalJavaPluginDependency]
-   * [maybeAddBundledPluginsWithUseIdeaClassLoader]
-   */
-  private fun shouldAddImplicitDependenciesOnPlatformPlugins() =
-      System.getProperty("intellij.plugin.verifier.add.implicit.dependencies.on.platform.plugins") == "true"
+          val jdkClassesResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkResolver
 
-  /**
-   * If a plugin does not include any module dependency tags in its plugin.xml,
-   * it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA
-   * https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
-   *
-   * But since we've recently extracted Java to a separate plugin, many plugins may stop working
-   * because they depend on Java plugin classes but do not explicitly declare a dependency onto 'com.intellij.modules.java'.
-   *
-   * So let's forcibly add Java as an optional dependency for such plugins.
-   */
-  private fun maybeAddOptionalJavaPluginDependency(
-      plugin: IdePlugin,
-      depGraphBuilder: DepGraphBuilder,
-      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
-  ) {
-    val isLegacyPlugin = plugin.dependencies.none { it.isModule }
-    val isBundledPlugin = ideDescriptor.ide.bundledPlugins.any { it.pluginId == plugin.pluginId }
-    val isCustomPlugin = !isBundledPlugin
-    val doesIdeContainAllModules = ideDescriptor.ide.getPluginByModule(ALL_MODULES_ID) != null
-    val shouldAddOptionalJavaPlugin = doesIdeContainAllModules && (isCustomPlugin || isLegacyPlugin)
-    if (shouldAddOptionalJavaPlugin) {
-      val javaModuleDependency = PluginDependencyImpl(JAVA_MODULE_ID, true, true)
-      val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
-      val javaPluginId = when (dependencyResult) {
-        is DependencyFinder.Result.DetailsProvided -> {
-          val providedCacheEntry = dependencyResult.pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided
-          providedCacheEntry?.pluginDetails?.idePlugin?.pluginId
+          IdePluginClassResolver(
+              pluginResolver,
+              dependenciesResolver,
+              jdkClassesResolver,
+              ideDescriptor.ideResolver,
+              externalClassesPackageFilter,
+              closeableResources
+          )
         }
-        is DependencyFinder.Result.FoundPlugin -> dependencyResult.plugin.pluginId
-        is DependencyFinder.Result.NotFound -> null
-      } ?: return
-      val javaPluginVertex = DepVertex(javaPluginId, dependencyResult)
-      depGraphBuilder.addTransitiveDependencies(dependenciesGraph, javaPluginVertex)
-    }
-  }
-
-  /**
-   * Bundled plugins that specify `<idea-plugin use-idea-classloader="true">` are automatically added to
-   * platform class loader and may be referenced by other plugins without explicit dependency on them.
-   *
-   * We would like to emulate this behaviour by forcibly adding such plugins to the verification classpath.
-   */
-  private fun maybeAddBundledPluginsWithUseIdeaClassLoader(
-      depGraphBuilder: DepGraphBuilder,
-      dependenciesGraph: DirectedGraph<DepVertex, DepEdge>
-  ) {
-    for (bundledPlugin in ideDescriptor.ide.bundledPlugins) {
-      if (bundledPlugin.useIdeClassLoader && bundledPlugin.pluginId != null) {
-        val dependencyId = bundledPlugin.pluginId!!
-        val pluginDependency = PluginDependencyImpl(dependencyId, true, false)
-        val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
-        val bundledVertex = DepVertex(dependencyId, dependencyResult)
-        depGraphBuilder.addTransitiveDependencies(dependenciesGraph, bundledVertex)
+        is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", jdkCacheEntry.error)
+        is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: ${jdkCacheEntry.message}")
       }
     }
   }
 
-  private fun createDependenciesResolver(graph: DirectedGraph<DepVertex, DepEdge>): Resolver {
-    val dependenciesResolvers = arrayListOf<Resolver>()
-    dependenciesResolvers.closeOnException {
-      for (depVertex in graph.vertexSet()) {
-        val result = depVertex.dependencyResult
+  private fun createDependenciesResolver(results: List<DependencyFinder.Result>): Resolver {
+    val resolvers = arrayListOf<Resolver>()
+    resolvers.closeOnException {
+      for (result in results) {
         if (result is DependencyFinder.Result.DetailsProvided) {
           val cacheResult = result.pluginDetailsCacheResult
           if (cacheResult is PluginDetailsCache.Result.Provided) {
-            val pluginResolver = try {
+            val resolver = try {
               cacheResult.pluginDetails.pluginClassesLocations.createPluginResolver()
             } catch (e: Exception) {
               e.rethrowIfInterrupted()
               continue
             }
-            dependenciesResolvers.add(pluginResolver)
+            resolvers.add(resolver)
           }
         }
       }
-      return UnionResolver.create(dependenciesResolvers)
     }
+    return UnionResolver.create(resolvers)
   }
 }

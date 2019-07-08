@@ -6,11 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dependencies.graph.DepEdge
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraph2ApiGraphConverter
-import com.jetbrains.pluginverifier.dependencies.graph.DepGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.graph.DepVertex
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -22,7 +18,6 @@ import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.createMockIdeaCorePlugin
-import org.jgrapht.graph.DefaultDirectedGraph
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -70,8 +65,9 @@ class IdeDependencyFinderTest {
         definedModules = setOf("someModule")
     )
 
+    val ideVersion = IdeVersion.createIdeVersion("IU-144")
     val ide = MockIde(
-        IdeVersion.createIdeVersion("IU-144"),
+        ideVersion,
         bundledPlugins = listOf(
             createMockIdeaCorePlugin(tempFolder.newFolder("idea.core")),
             testPlugin,
@@ -93,11 +89,8 @@ class IdeDependencyFinderTest {
 
     val ideDependencyFinder = configureTestIdeDependencyFinder(ide)
 
-    val start = DepVertex("myPlugin", DependencyFinder.Result.FoundPlugin(startPlugin))
-    val graph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
-    DepGraphBuilder(ideDependencyFinder).addTransitiveDependencies(graph, start)
+    val (dependenciesGraph, _) = DependenciesGraphBuilder(ideDependencyFinder).buildDependenciesGraph(startPlugin, ide)
 
-    val dependenciesGraph = DepGraph2ApiGraphConverter(IdeVersion.createIdeVersion("IU-181.1")).convert(graph, start)
     val deps = dependenciesGraph.vertices.map { it.pluginId }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij"), deps.toSet())
 
