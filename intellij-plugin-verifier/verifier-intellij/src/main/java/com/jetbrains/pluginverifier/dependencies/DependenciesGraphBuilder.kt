@@ -59,7 +59,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
            *   depends on module 'com.intellij.modules.lang'
            */
           if (vertex.pluginId != resolvedDependency.pluginId) {
-            graph.addEdge(vertex, resolvedDependency, DepEdge(pluginDependency))
+            graph.addEdge(vertex, resolvedDependency, DepEdge(pluginDependency, vertex, resolvedDependency))
           }
         }
       }
@@ -162,10 +162,14 @@ private data class DepVertex(val pluginId: String, val dependencyResult: Depende
   override fun hashCode() = pluginId.hashCode()
 }
 
-private data class DepEdge(val dependency: PluginDependency) : DefaultEdge() {
-  public override fun getTarget() = super.getTarget() as DepVertex
+private data class DepEdge(
+    val dependency: PluginDependency,
+    val sourceVertex: DepVertex,
+    val targetVertex: DepVertex
+) : DefaultEdge() {
+  public override fun getSource() = sourceVertex
 
-  public override fun getSource() = super.getSource() as DepVertex
+  public override fun getTarget() = targetVertex
 }
 
 private class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {

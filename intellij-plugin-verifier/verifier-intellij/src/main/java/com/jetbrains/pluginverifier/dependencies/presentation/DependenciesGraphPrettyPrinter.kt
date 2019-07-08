@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.dependencies.presentation
 
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 /**
@@ -53,7 +54,15 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val childrenLines = arrayListOf<List<String>>()
 
-    val directEdges = dependenciesGraph.getEdgesFrom(currentNode).sortedBy { it.dependency.id }
+    val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
+        .sortedWith(
+            compareBy<DependencyEdge> { if (it.dependency.isOptional) -1 else 1 }
+                .thenBy { if (it.dependency.isModule) -1 else 1 }
+                .thenBy { it.to.pluginId }
+                .thenBy { it.to.version }
+                .thenBy { it.dependency.id }
+        )
+
     for (edge in directEdges) {
       val childLines = recursivelyCalculateLines(edge.to)
       val headerLine = buildString {
