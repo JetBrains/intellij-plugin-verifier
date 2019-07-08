@@ -23,6 +23,12 @@ data class DependenciesGraph(
 ) {
 
   /**
+   * Returns all edges starting at the specified node.
+   */
+  fun getEdgesFrom(dependencyNode: DependencyNode): List<DependencyEdge> =
+      edges.filter { it.from == dependencyNode }
+
+  /**
    * Returns all cycles in this graph.
    * The dependencies cycles are harmful and should be fixed.
    */

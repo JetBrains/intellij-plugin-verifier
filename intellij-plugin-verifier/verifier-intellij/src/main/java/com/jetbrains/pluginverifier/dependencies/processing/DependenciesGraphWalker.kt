@@ -15,7 +15,7 @@ data class DependenciesGraphWalker(
     visited.add(current)
     try {
       onVisit(current)
-      graph.edges.filter { it.from == current }.map { it.to }.forEach { to ->
+      graph.getEdgesFrom(current).map { it.to }.forEach { to ->
         if (to !in visited) {
           walk(to)
         }
