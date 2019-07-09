@@ -114,12 +114,12 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    * So let's forcibly add Java as an optional dependency for such plugins.
    */
   private fun maybeAddOptionalJavaPluginDependency(plugin: IdePlugin, dependenciesGraph: DirectedGraph<DepVertex, DepEdge>, ide: Ide) {
+    if (ide.getPluginByModule(ALL_MODULES_ID) == null) {
+      return
+    }
     val isLegacyPlugin = plugin.dependencies.none { it.isModule }
-    val isBundledPlugin = ide.bundledPlugins.any { it.pluginId == plugin.pluginId }
-    val isCustomPlugin = !isBundledPlugin
-    val doesIdeContainAllModules = ide.getPluginByModule(ALL_MODULES_ID) != null
-    val shouldAddOptionalJavaPlugin = doesIdeContainAllModules && (isCustomPlugin || isLegacyPlugin)
-    if (shouldAddOptionalJavaPlugin) {
+    val isCustomPlugin = ide.bundledPlugins.none { it.pluginId == plugin.pluginId }
+    if (isCustomPlugin || isLegacyPlugin) {
       val javaModuleDependency = PluginDependencyImpl(JAVA_MODULE_ID, true, true)
       val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
       val javaPluginId = when (dependencyResult) {
