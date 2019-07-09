@@ -3,11 +3,12 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.resolution.EmptyDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -87,4 +88,12 @@ class VerificationRunner {
     }
   }
 
+}
+
+private object EmptyDependencyFinder : DependencyFinder {
+  override val presentableName
+    get() = "empty"
+
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
+      DependencyFinder.Result.NotFound("Plugin ${dependency.id} is not found")
 }
