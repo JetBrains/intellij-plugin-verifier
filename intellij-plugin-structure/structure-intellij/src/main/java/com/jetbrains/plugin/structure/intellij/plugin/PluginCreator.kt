@@ -100,10 +100,12 @@ internal class PluginCreator {
     }
   }
 
+  fun setPluginVersion(pluginVersion: String) {
+    plugin?.pluginVersion = pluginVersion
+  }
+
   fun setOriginalFile(originalFile: File) {
-    if (plugin != null) {
-      plugin.originalFile = originalFile
-    }
+    plugin?.originalFile = originalFile
   }
 
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean) {

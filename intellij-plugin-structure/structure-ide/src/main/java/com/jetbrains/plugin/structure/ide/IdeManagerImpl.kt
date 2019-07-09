@@ -48,19 +48,19 @@ class IdeManagerImpl : IdeManager() {
     val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
 
     val bundledPlugins = if (fromCompiled) {
-      readCompiledBundledPlugins(idePath)
+      readCompiledBundledPlugins(idePath, ideVersion)
     } else {
-      readDistributionBundledPlugins(idePath, product)
+      readDistributionBundledPlugins(idePath, product, ideVersion)
     }
 
     return IdeImpl(idePath, ideVersion, bundledPlugins)
   }
 
-  private fun readDistributionBundledPlugins(idePath: File, product: IntelliJPlatformProduct): List<IdePlugin> {
+  private fun readDistributionBundledPlugins(idePath: File, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
     val platformJarFiles = idePath.resolve("lib").listFiles().orEmpty().filter { it.isJar() }
     val platformResourceResolver = PlatformResourceResolver(platformJarFiles)
-    val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver)
-    val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver)
+    val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
+    val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver, ideVersion)
     return bundledPlugins + platformPlugins
   }
 
@@ -146,19 +146,24 @@ class IdeManagerImpl : IdeManager() {
     return IdeVersion.createIdeVersion(buildNumberString)
   }
 
-  private fun readCompiledBundledPlugins(idePath: File): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(idePath: File, ideVersion: IdeVersion): List<IdePlugin> {
     val compilationRoot = getCompiledClassesRoot(idePath)!!
     val moduleRoots = compilationRoot.listFiles().orEmpty().toList()
     val pathResolver = CompiledModulesResourceResolver(moduleRoots)
-    return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver)
+    return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver, ideVersion)
   }
 
-  private fun readCompiledBundledPlugins(idePath: File, moduleRoots: List<File>, pathResolver: ResourceResolver): List<IdePlugin> {
+  private fun readCompiledBundledPlugins(
+      idePath: File,
+      moduleRoots: List<File>,
+      pathResolver: ResourceResolver,
+      ideVersion: IdeVersion
+  ): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
     for (moduleRoot in moduleRoots) {
       val pluginXmlFile = moduleRoot.resolve(IdePluginManager.META_INF).resolve(IdePluginManager.PLUGIN_XML)
       if (pluginXmlFile.isFile) {
-        plugins += createPluginExceptionally(idePath, moduleRoot, pathResolver, IdePluginManager.PLUGIN_XML)
+        plugins += createBundledPluginExceptionally(idePath, moduleRoot, pathResolver, IdePluginManager.PLUGIN_XML, ideVersion)
       }
     }
     return plugins
@@ -168,7 +173,8 @@ class IdeManagerImpl : IdeManager() {
       idePath: File,
       product: IntelliJPlatformProduct,
       jarFiles: List<File>,
-      platformResourceResolver: ResourceResolver
+      platformResourceResolver: ResourceResolver,
+      ideVersion: IdeVersion
   ): List<IdePlugin> {
     val platformPlugins = arrayListOf<IdePlugin>()
     val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
@@ -177,7 +183,7 @@ class IdeManagerImpl : IdeManager() {
       for (descriptorPath in descriptorPaths) {
         val descriptorUrl = URLUtil.getJarEntryURL(jarFile, "${IdePluginManager.META_INF}/$descriptorPath")
         if (URLUtil.resourceExists(descriptorUrl) == ThreeState.YES) {
-          platformPlugins += createPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath)
+          platformPlugins += createBundledPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath, ideVersion)
         }
       }
     }
@@ -189,29 +195,38 @@ class IdeManagerImpl : IdeManager() {
     return platformPlugins
   }
 
-  private fun readBundledPlugins(idePath: File, platformResourceResolver: ResourceResolver): List<IdePlugin> {
+  private fun readBundledPlugins(
+      idePath: File,
+      platformResourceResolver: ResourceResolver,
+      ideVersion: IdeVersion
+  ): List<IdePlugin> {
     val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
         .filter { it.isDirectory }
-        .mapNotNull { readBundledPlugin(idePath, it, platformResourceResolver) }
+        .mapNotNull { readBundledPlugin(idePath, it, platformResourceResolver, ideVersion) }
   }
 
-  private fun readBundledPlugin(idePath: File, pluginFile: File, pathResolver: ResourceResolver): IdePlugin? = try {
-    createPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML)
+  private fun readBundledPlugin(
+      idePath: File,
+      pluginFile: File,
+      pathResolver: ResourceResolver,
+      ideVersion: IdeVersion
+  ): IdePlugin? = try {
+    createBundledPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML, ideVersion)
   } catch (e: InvalidIdeException) {
     LOG.warn("Failed to read bundled plugin '${pluginFile.relativeTo(idePath)}': ${e.reason}")
     null
   }
 
-  private fun createPluginExceptionally(
+  private fun createBundledPluginExceptionally(
       idePath: File,
       pluginFile: File,
       pathResolver: ResourceResolver,
       descriptorPath: String,
-      validateDescriptor: Boolean = false
+      ideVersion: IdeVersion
   ): IdePlugin = when (val creationResult = IdePluginManager
       .createManager(pathResolver)
-      .createPlugin(pluginFile, validateDescriptor, descriptorPath)
+      .createBundledPlugin(pluginFile, ideVersion, descriptorPath)
     ) {
     is PluginCreationSuccess -> creationResult.plugin
     is PluginCreationFail -> throw InvalidIdeException(

@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver;
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil;
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import kotlin.io.FilesKt;
 import kotlin.text.StringsKt;
 import org.apache.commons.io.FileUtils;
@@ -376,23 +377,23 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile, boolean validateDescriptor) {
-    return createPlugin(pluginFile, validateDescriptor, PLUGIN_XML);
+    return createPlugin(pluginFile, validateDescriptor, PLUGIN_XML, DEFAULT_OUTPUT_SIZE_LIMIT);
   }
-
-  @NotNull
-  public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
-                                                      boolean validateDescriptor,
-                                                      @NotNull String descriptorPath) {
-    return createPlugin(pluginFile, validateDescriptor, descriptorPath, DEFAULT_OUTPUT_SIZE_LIMIT);
-  }
-
 
   @NotNull
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
                                                       boolean validateDescriptor,
                                                       @NotNull String descriptorPath,
-                                                      @Nullable Long outputSizeLimit) {
+                                                      long outputSizeLimit) {
     PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, outputSizeLimit);
+    return pluginCreator.getPluginCreationResult();
+  }
+
+  public PluginCreationResult<IdePlugin> createBundledPlugin(@NotNull File pluginFile,
+                                                             @NotNull IdeVersion ideVersion,
+                                                             @NotNull String descriptorPath) {
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, DEFAULT_OUTPUT_SIZE_LIMIT);
+    pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode());
     return pluginCreator.getPluginCreationResult();
   }
 
