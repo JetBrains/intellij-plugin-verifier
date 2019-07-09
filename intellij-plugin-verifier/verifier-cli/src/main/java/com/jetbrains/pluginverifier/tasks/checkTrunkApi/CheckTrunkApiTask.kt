@@ -114,7 +114,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
         pluginDetailsCache
     )
 
-    return ChainDependencyFinder(
+    return CompositeDependencyFinder(
         listOf(
             bundledFinder,
             localRepositoryDependencyFinder,

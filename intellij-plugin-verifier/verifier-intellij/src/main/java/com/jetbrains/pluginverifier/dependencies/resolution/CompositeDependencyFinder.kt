@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
  * If the dependency is not resolved by any of the [dependencyFinders],
  * the [DependencyFinder.Result.NotFound] is returned.
  */
-class ChainDependencyFinder(private val dependencyFinders: List<DependencyFinder>) : DependencyFinder {
+class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFinder>) : DependencyFinder {
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     var lastNotFound: DependencyFinder.Result.NotFound? = null

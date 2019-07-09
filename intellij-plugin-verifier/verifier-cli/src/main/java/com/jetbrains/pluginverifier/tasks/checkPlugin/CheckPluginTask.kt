@@ -36,7 +36,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
   private fun createDependencyFinder(ideDescriptor: IdeDescriptor, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
     val localFinder = RepositoryDependencyFinder(parameters.pluginsSet.localRepository, LastVersionSelector(), pluginDetailsCache)
     val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-    return ChainDependencyFinder(listOf(localFinder, ideDependencyFinder))
+    return CompositeDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }
 
   override fun execute(
