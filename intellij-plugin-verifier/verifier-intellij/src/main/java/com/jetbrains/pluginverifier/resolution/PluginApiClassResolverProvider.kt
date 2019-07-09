@@ -5,7 +5,6 @@ import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
-import com.jetbrains.pluginverifier.reporting.verification.Reporters
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
@@ -22,8 +21,7 @@ class PluginApiClassResolverProvider(
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
-      verificationResult: VerificationResult,
-      pluginReporters: Reporters
+      verificationResult: VerificationResult
   ): ClassResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     return with(jdkDescriptorCache.getJdkResolver(jdkPath)) {

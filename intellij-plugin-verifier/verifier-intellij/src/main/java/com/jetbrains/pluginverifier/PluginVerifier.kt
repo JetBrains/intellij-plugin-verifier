@@ -203,7 +203,7 @@ class PluginVerifier(
       return
     }
 
-    classResolverProvider.provide(pluginDetails, verificationResult, pluginReporters).use { classResolver ->
+    classResolverProvider.provide(pluginDetails, verificationResult).use { classResolver ->
       val context = createVerificationContext(classResolver, verificationResult, ignoredProblems)
       runByteCodeVerifier(checkClasses, context)
     }

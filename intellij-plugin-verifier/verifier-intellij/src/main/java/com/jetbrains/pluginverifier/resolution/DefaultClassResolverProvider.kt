@@ -36,8 +36,7 @@ class DefaultClassResolverProvider(
 
   override fun provide(
       checkedPluginDetails: PluginDetails,
-      verificationResult: VerificationResult,
-      pluginReporters: Reporters
+      verificationResult: VerificationResult
   ): ClassResolver {
     val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
     findMistakenlyBundledIdeClasses(pluginResolver, verificationResult)

@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.DirectedGraph
@@ -34,7 +33,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       maybeAddBundledPluginsWithUseIdeaClassLoader(depGraph, ide)
     }
 
-    val dependenciesGraph = DepGraph2ApiGraphConverter(ide.version).convert(depGraph, start)
+    val dependenciesGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
     return dependenciesGraph to depGraph.vertexSet().map { it.dependencyResult }
   }
 
@@ -172,7 +171,7 @@ private data class DepEdge(
   public override fun getTarget() = targetVertex
 }
 
-private class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {
+private class DepGraph2ApiGraphConverter {
 
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
     val startNode = graph.toDependencyNode(startVertex)!!
@@ -228,7 +227,7 @@ private class DepGraph2ApiGraphConverter(private val ideVersion: IdeVersion) {
     val missingDependencies = outgoingEdgesOf(depVertex).mapNotNull { it.toMissingDependency() }
     val plugin = depVertex.dependencyResult.getPlugin()
     return plugin?.run {
-      DependencyNode(pluginId ?: depVertex.pluginId, pluginVersion ?: ideVersion.asString(), missingDependencies)
+      DependencyNode(pluginId ?: depVertex.pluginId, pluginVersion ?: "<empty version>", missingDependencies)
     }
   }
 
