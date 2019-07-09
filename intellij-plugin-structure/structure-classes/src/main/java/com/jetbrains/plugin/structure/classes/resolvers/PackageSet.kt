@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.classes.packages
+package com.jetbrains.plugin.structure.classes.resolvers
 
 /**
  * Set of packages and their super-packages.

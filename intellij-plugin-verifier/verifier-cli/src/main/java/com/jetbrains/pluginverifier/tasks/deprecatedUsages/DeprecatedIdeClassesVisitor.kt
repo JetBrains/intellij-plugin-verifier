@@ -1,12 +1,10 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.usages.deprecated.getDeprecationInfo
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
-import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinPool
 import java.util.stream.Collectors
@@ -27,32 +25,21 @@ class DeprecatedIdeClassesVisitor {
   private fun Resolver.findDeprecatedApiOfClass(className: String): Set<Location> {
     val deprecatedElements = hashSetOf<Location>()
 
-    val classNode = try {
-      findClass(className)
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      null
+    val classFile = resolveClassOrNull(className) ?: return emptySet()
+
+    if (classFile.getDeprecationInfo() != null) {
+      deprecatedElements += classFile.location
     }
 
-    val classPath = getClassLocation(className)?.classPath?.firstOrNull()
+    classFile.methods
+        .asSequence()
+        .filter { it.isDeprecated }
+        .mapTo(deprecatedElements) { it.location }
 
-    if (classNode != null && classPath != null) {
-      val classFile = ClassFileAsm(classNode, IntelliJClassFileOrigin.IdeClass(classPath))
-
-      if (classFile.getDeprecationInfo() != null) {
-        deprecatedElements.add(classFile.location)
-      }
-
-      classFile.methods
-          .asSequence()
-          .filter { it.isDeprecated }
-          .mapTo(deprecatedElements) { it.location }
-
-      classFile.fields
-          .asSequence()
-          .filter { it.isDeprecated }
-          .mapTo(deprecatedElements) { it.location }
-    }
+    classFile.fields
+        .asSequence()
+        .filter { it.isDeprecated }
+        .mapTo(deprecatedElements) { it.location }
 
     return deprecatedElements
   }

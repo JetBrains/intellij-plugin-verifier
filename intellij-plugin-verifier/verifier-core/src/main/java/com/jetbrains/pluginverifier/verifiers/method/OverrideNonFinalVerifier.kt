@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProble
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class OverrideNonFinalVerifier : MethodVerifier {
 

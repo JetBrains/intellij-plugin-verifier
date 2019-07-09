@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 import org.objectweb.asm.Type
 
 class MethodArgumentTypesVerifier : MethodVerifier {

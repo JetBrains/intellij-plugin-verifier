@@ -7,7 +7,8 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -76,7 +77,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
   }
 
   private fun parsePackageFilter(packages: Array<String>): PackageFilter =
-      PackageFilter(
+      DefaultPackageFilter(
           packages
               .map { it.trim() }
               .mapNotNull {
@@ -85,7 +86,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
                 if (binaryPackageName.isEmpty()) {
                   null
                 } else {
-                  PackageFilter.Descriptor(!exclude, binaryPackageName)
+                  DefaultPackageFilter.Descriptor(!exclude, binaryPackageName)
                 }
               }
       )

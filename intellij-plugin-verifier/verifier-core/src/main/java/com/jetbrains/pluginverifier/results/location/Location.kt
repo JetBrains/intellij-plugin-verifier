@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.results.location
 
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import java.util.*
 
 /**

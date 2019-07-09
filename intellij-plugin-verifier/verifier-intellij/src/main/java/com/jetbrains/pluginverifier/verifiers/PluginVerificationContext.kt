@@ -1,9 +1,14 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
+import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
+import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -22,17 +27,17 @@ import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiRegistr
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
-import com.jetbrains.pluginverifier.verifiers.resolution.IntelliJClassFileOrigin
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 
 data class PluginVerificationContext(
-    val plugin: PluginInfo,
+    val idePlugin: IdePlugin,
     val verificationTarget: VerificationTarget,
     val verificationResult: VerificationResult,
     val ignoredProblems: IgnoredProblemsHolder,
     val checkApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
-    override val classResolver: ClassResolver,
+    override val externalClassesPackageFilter: PackageFilter,
+    override val classResolver: Resolver,
     override val apiUsageProcessors: List<ApiUsageProcessor>
 ) : VerificationContext,
     ProblemRegistrar,
@@ -99,20 +104,17 @@ data class PluginVerificationContext(
     }
   }
 
-  /**
-   * Determines whether we should index usage of API.
-   *
-   * The following two conditions must be met:
-   * 1) The usage resides in plugin
-   * 2) API is either IDE API or plugin's dependency API,
-   * and it is not deprecated JDK API nor plugin's internal
-   * deprecated API.
-   */
   private fun shouldIndexDeprecatedClass(usageHostClass: ClassLocation, apiHostClass: ClassLocation): Boolean {
     val usageHostOrigin = usageHostClass.classFileOrigin
-    if (usageHostOrigin is IntelliJClassFileOrigin.PluginClass) {
+    if (idePlugin == usageHostOrigin.findOriginOfType<PluginClassFileOrigin>()?.idePlugin) {
       val apiHostOrigin = apiHostClass.classFileOrigin
-      return apiHostOrigin is IntelliJClassFileOrigin.IdeClass || apiHostOrigin is IntelliJClassFileOrigin.ClassOfPluginDependency
+      if (apiHostOrigin.isOriginOfType<IdeClassFileOrigin>()) {
+        return true
+      }
+      val pluginOrigin = apiHostOrigin.findOriginOfType<PluginClassFileOrigin>()
+      if (pluginOrigin != null && pluginOrigin.idePlugin != idePlugin) {
+        return true
+      }
     }
     return false
   }
@@ -123,6 +125,6 @@ data class PluginVerificationContext(
     is FieldLocation -> this.hostClass
   }
 
-  override fun toString() = "Verification context for $plugin against $verificationTarget"
+  override fun toString() = "Verification context for $idePlugin against $verificationTarget"
 
 }

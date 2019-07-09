@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 import java.nio.file.Path
 

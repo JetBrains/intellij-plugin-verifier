@@ -1,10 +1,13 @@
 package com.jetbrains.pluginverifier.parameters.jdk
 
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExtension
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.base.utils.readText
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.JdkClassFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.utils.JarsUtils
+import com.jetbrains.plugin.structure.classes.resolvers.buildJarFileResolvers
 import java.nio.file.Path
 
 object JdkDescriptorCreator {
@@ -64,17 +67,17 @@ object JdkDescriptorCreator {
     val mandatoryJars = setOf("rt.jar")
     val optionalJars = setOf("tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar")
 
-    val jars = JarsUtils.collectJars(jdkPath.toFile(), {
-      val name = it.name.toLowerCase()
-      name in mandatoryJars || name in optionalJars
-    }, true)
+    val jars = jdkPath.toFile().listRecursivelyAllFilesWithExtension("jar").filter { file ->
+      val fileName = file.name.toLowerCase()
+      fileName in mandatoryJars || fileName in optionalJars
+    }
 
     val missingJars = mandatoryJars - jars.map { it.name.toLowerCase() }
     require(missingJars.isEmpty()) {
-      "JDK by path does not have mandatory jars (${missingJars.joinToString()}): $jdkPath"
+      "JDK $jdkPath misses mandatory jars: ${missingJars.joinToString()}"
     }
 
-    val jarResolver = JarsUtils.makeResolver(readMode, jars)
+    val jarResolver = CompositeResolver.create(buildJarFileResolvers(jars, readMode, JdkClassFileOrigin(jdkPath)))
     return JdkDescriptor(jdkPath, jarResolver)
   }
 

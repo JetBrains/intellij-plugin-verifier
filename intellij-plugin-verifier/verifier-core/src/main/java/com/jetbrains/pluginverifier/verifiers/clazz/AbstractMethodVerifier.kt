@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class AbstractMethodVerifier : ClassVerifier {
   override fun verify(classFile: ClassFile, context: VerificationContext) {

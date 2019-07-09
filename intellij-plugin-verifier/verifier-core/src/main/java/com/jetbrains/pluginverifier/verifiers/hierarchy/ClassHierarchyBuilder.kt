@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.hierarchy
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class ClassHierarchyBuilder(private val context: VerificationContext) {
 

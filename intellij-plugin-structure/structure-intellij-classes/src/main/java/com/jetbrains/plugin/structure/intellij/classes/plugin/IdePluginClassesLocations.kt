@@ -12,7 +12,7 @@ import java.io.Closeable
  */
 data class IdePluginClassesLocations(val idePlugin: IdePlugin,
                                      private val allocatedResource: Closeable,
-                                     private val locations: Map<LocationKey, Resolver>) : Closeable {
+                                     private val locations: Map<LocationKey, List<Resolver>>) : Closeable {
 
   private var isClosed: Boolean = false
 
@@ -20,11 +20,13 @@ data class IdePluginClassesLocations(val idePlugin: IdePlugin,
   override fun close() {
     if (!isClosed) {
       isClosed = true
-      locations.values.forEach { it.closeLogged() }
+      for (resolvers in locations.values) {
+        resolvers.forEach { it.closeLogged() }
+      }
       allocatedResource.closeLogged()
     }
   }
 
-  fun getResolver(key: LocationKey): Resolver? = locations[key]
+  fun getResolvers(key: LocationKey): List<Resolver> = locations[key].orEmpty()
 
 }

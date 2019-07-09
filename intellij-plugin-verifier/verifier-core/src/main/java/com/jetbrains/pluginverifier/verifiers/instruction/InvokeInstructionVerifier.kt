@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 

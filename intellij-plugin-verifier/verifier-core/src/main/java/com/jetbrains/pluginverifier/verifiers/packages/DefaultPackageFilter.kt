@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.parameters.packages
+package com.jetbrains.pluginverifier.verifiers.packages
 
 /**
  * Determines if a class belongs to a set of packages
@@ -21,14 +21,9 @@ package com.jetbrains.pluginverifier.parameters.packages
  * * `org.jetbrains.kotlin.extension.strings.StringsKt` will be rejected
  * * `org.jetbrains.kotlin.extension.included.IOUtils` will be accepted
  */
-class PackageFilter(private val packages: List<Descriptor>) {
+class DefaultPackageFilter(private val packages: List<Descriptor>) : PackageFilter {
 
-  /**
-   * Returns `true` if a binary class [binaryClassName]
-   * is accepted by this filter by rules described
-   * in the [PackageFilter]'s docs.
-   */
-  fun accept(binaryClassName: String): Boolean {
+  override fun acceptPackageOfClass(binaryClassName: String): Boolean {
     val longestIncluding = packages.asSequence()
         .filter { it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
         .maxBy { it.binaryPackageName.length }
@@ -47,7 +42,7 @@ class PackageFilter(private val packages: List<Descriptor>) {
       binaryClassName.startsWith("$binaryPackageName/")
 
   /**
-   * Descriptor of a package, used by the [PackageFilter].
+   * Descriptor of a package, used by the [DefaultPackageFilter].
    *
    * The descriptor either includes or excludes all classes from a package [binaryPackageName].
    */

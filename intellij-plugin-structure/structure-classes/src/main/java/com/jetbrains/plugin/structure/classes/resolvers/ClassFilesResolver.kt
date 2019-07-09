@@ -1,24 +1,24 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.classes.packages.PackageSet
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
-import java.io.IOException
 import java.nio.file.Path
 
-class ClassFilesResolver(private val root: Path, override val readMode: ReadMode) : Resolver() {
-
+class ClassFilesResolver(
+    private val root: Path,
+    override val readMode: ReadMode,
+    private val classFileOrigin: ClassFileOrigin
+) : Resolver() {
   constructor(root: File) : this(root.toPath())
 
-  constructor(root: Path) : this(root, ReadMode.FULL)
+  constructor(root: Path) : this(root, ReadMode.FULL, UnknownClassFileOrigin)
 
   private val nameToClassFile = hashMapOf<String, File>()
 
   private val packageSet = PackageSet()
-
-  private val classPaths = linkedSetOf<File>()
 
   init {
     val classFiles = FileUtils.listFiles(root.toFile().canonicalFile, arrayOf("class"), true)
@@ -28,7 +28,6 @@ class ClassFilesResolver(private val root: Path, override val readMode: ReadMode
       if (classRoot != null) {
         nameToClassFile[className] = classFile
         packageSet.addPackagesOfClass(className)
-        classPaths.add(classRoot)
       }
     }
   }
@@ -42,16 +41,17 @@ class ClassFilesResolver(private val root: Path, override val readMode: ReadMode
     return root
   }
 
-  @Throws(IOException::class)
-  override fun findClass(className: String): ClassNode? {
-    val file = nameToClassFile[className] ?: return null
-    return AsmUtil.readClassFromFile(className, file, readMode == ReadMode.FULL)
-  }
-
-  override fun getClassLocation(className: String): Resolver? = if (containsClass(className)) {
-    this
-  } else {
-    null
+  override fun resolveClass(className: String): ResolutionResult {
+    val classFile = nameToClassFile[className] ?: return ResolutionResult.NotFound
+    val classNode = try {
+      AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
+    } catch (e: InvalidClassFileException) {
+      return ResolutionResult.InvalidClassFile(e.message)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+    }
+    return ResolutionResult.Found(classNode, classFileOrigin)
   }
 
   override val allPackages
@@ -66,12 +66,6 @@ class ClassFilesResolver(private val root: Path, override val readMode: ReadMode
   override fun containsClass(className: String) = className in nameToClassFile
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
-
-  override val classPath: List<Path>
-    get() = listOf(root)
-
-  override val finalResolvers
-    get() = listOf(this)
 
   override fun close() = Unit
 

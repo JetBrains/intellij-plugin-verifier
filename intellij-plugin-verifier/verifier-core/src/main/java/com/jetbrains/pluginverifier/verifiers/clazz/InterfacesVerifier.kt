@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.clazz
 import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 /**
  * Check that all explicitly defined interfaces exist and are indeed interfaces (not classes).

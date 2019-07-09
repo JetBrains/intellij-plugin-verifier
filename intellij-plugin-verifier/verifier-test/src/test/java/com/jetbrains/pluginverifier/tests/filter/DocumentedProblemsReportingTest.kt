@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.tests.filter
 
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocClassRemoved
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocMethodParameterTypeChanged
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocMethodReturnTypeChanged
@@ -16,7 +18,6 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
-import com.jetbrains.pluginverifier.tests.mocks.MockClassFileOrigin
 import org.junit.Test
 
 class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
@@ -106,7 +107,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
         fieldWithOwnerFromRemovedPackage to docPackageRemoved
     )
 
-    assertProblemsDocumented(problemToDocumentation, createSimpleVerificationContext())
+    assertProblemsDocumented(problemToDocumentation, createSimpleVerificationContext(EmptyResolver))
   }
 
   /**
@@ -119,8 +120,8 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val clientImplName = "client/Implementation"
     val methodName = "foo"
 
-    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), MockClassFileOrigin)
-    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), MockClassFileOrigin)
+    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), UnknownClassFileOrigin)
+    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), UnknownClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         MethodLocation(
@@ -139,7 +140,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
             methodNotImplementedProblem to DocMethodReturnTypeChanged(libInterfaceName, methodName),
             methodNotImplementedProblem to DocMethodParameterTypeChanged(libInterfaceName, methodName)
         ),
-        createSimpleVerificationContext()
+        createSimpleVerificationContext(EmptyResolver)
     )
   }
 }

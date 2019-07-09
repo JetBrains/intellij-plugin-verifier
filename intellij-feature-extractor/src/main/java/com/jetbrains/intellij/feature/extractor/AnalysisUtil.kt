@@ -1,5 +1,6 @@
 package com.jetbrains.intellij.feature.extractor
 
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.Opcodes
@@ -88,12 +89,12 @@ object AnalysisUtil {
         if (producer.owner == STRING_BUILDER && producer.name == "toString") {
           return evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
         } else {
-          val classNode = resolver.findClass(producer.owner) ?: return null
+          val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.classNode ?: return null
           val methodNode = classNode.findMethod { it.name == producer.name && it.desc == producer.desc } ?: return null
           return extractConstantFunctionValue(classNode, methodNode, resolver)
         }
       } else if (producer is FieldInsnNode) {
-        val classNode = resolver.findClass(producer.owner) ?: return null
+        val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.classNode ?: return null
         val fieldNode = classNode.findField { it.name == producer.name && it.desc == producer.desc } ?: return null
         return evaluateConstantFieldValue(classNode, fieldNode, resolver)
       }

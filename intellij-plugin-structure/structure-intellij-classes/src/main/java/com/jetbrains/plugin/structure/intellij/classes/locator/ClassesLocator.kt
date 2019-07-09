@@ -7,5 +7,5 @@ import java.io.File
 interface ClassesLocator {
   val locationKey: LocationKey
 
-  fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver?
+  fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver>
 }

@@ -2,11 +2,9 @@ package com.jetbrains.plugin.structure.ide.classes
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFilesResolver
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
-import com.jetbrains.plugin.structure.classes.utils.JarsUtils
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledCommunity
@@ -17,8 +15,6 @@ import com.jetbrains.plugin.structure.ide.util.loadProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.File
-import java.nio.file.Files
-import kotlin.streams.toList
 
 object IdeResolverCreator {
 
@@ -29,54 +25,59 @@ object IdeResolverCreator {
   fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val idePath = ide.idePath
     return when {
-      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode)
+      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeClassFileOrigin.IdeLibDirectory)
       isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode)
       else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
   }
 
-  private fun getJarsResolver(jarsDirectory: File, readMode: Resolver.ReadMode): Resolver {
-    if (!jarsDirectory.isDirectory) {
+  private fun getJarsResolver(
+      directory: File,
+      readMode: Resolver.ReadMode,
+      parentOrigin: ClassFileOrigin
+  ): Resolver {
+    if (!directory.isDirectory) {
       return EmptyResolver
     }
 
-    val jars = JarsUtils.collectJars(jarsDirectory, { true }, false)
-    return JarsUtils.makeResolver(readMode, jars)
+    val jars = directory.listFiles { file -> file.isJar() }.orEmpty().toList()
+    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, parentOrigin))
   }
 
   private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode): Resolver {
     val resolvers = arrayListOf<Resolver>()
+    resolvers.closeOnException {
+      resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeClassFileOrigin.SourceLibDirectory)
+      resolvers += getRepositoryLibrariesResolver(idePath, readMode)
 
-    resolvers += getJarsResolver(idePath.resolve("lib"), readMode)
-    resolvers += getRepositoryLibrariesResolver(idePath, readMode)
+      val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
+      for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
+        val classFileOrigin = IdeClassFileOrigin.CompiledModule(moduleRoot.name)
+        resolvers += ClassFilesResolver(moduleRoot.toPath(), readMode, classFileOrigin)
+      }
 
-    val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!.toPath()
-    for (moduleRoot in Files.list(compiledClassesRoot).toList()) {
-      resolvers += ClassFilesResolver(moduleRoot, readMode)
+      if (isCompiledUltimate(idePath)) {
+        resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode, IdeClassFileOrigin.SourceLibDirectory)
+      }
+      return CompositeResolver.create(resolvers)
     }
-
-    if (isCompiledUltimate(idePath)) {
-      resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode)
-    }
-
-    return UnionResolver.create(resolvers)
   }
 
   private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode): Resolver {
-    val jars = getRepositoryLibraries(idePath.absoluteFile)
-    return JarsUtils.makeResolver(readMode, jars)
+    val jars = getRepositoryLibraries(idePath)
+    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, IdeClassFileOrigin.RepositoryLibrary))
   }
 
   private fun getRepositoryLibraries(projectPath: File): List<File> {
     val pathVariables = createPathVariables()
-    val project = loadProject(projectPath, pathVariables)
+    val project = loadProject(projectPath.absoluteFile, pathVariables)
     return JpsJavaExtensionService.dependencies(project)
         .productionOnly()
         .runtimeOnly()
         .libraries
         .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
         .distinctBy { it.path }
-        .filter { it.isFile && it.name.endsWith(".jar") }
+        .filter { it.isJar() }
   }
 
   private fun createPathVariables(): Map<String, String> {

@@ -1,37 +1,30 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.classes.packages.PackageSet
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicInteger
 
 class FixedClassesResolver private constructor(
     private val classes: Map<String, ClassNode>,
-    override val readMode: ReadMode
+    override val readMode: ReadMode,
+    private val classFileOrigin: ClassFileOrigin
 ) : Resolver() {
 
   companion object {
-    fun create(vararg classes: ClassNode): Resolver = create(classes.toList())
 
-    fun create(classes: Iterable<ClassNode>): Resolver =
-        FixedClassesResolver(classes.reversed().associateBy { it.name }, ReadMode.FULL)
-
-    fun create(readMode: ReadMode, classes: Iterable<ClassNode>): Resolver =
-        FixedClassesResolver(classes.reversed().associateBy { it.name }, readMode)
-
-    private val uniqueClassPathSequenceNumber = AtomicInteger()
+    fun create(
+        classes: Iterable<ClassNode>,
+        readMode: ReadMode = ReadMode.FULL,
+        classFileOrigin: ClassFileOrigin = UnknownClassFileOrigin
+    ): Resolver = FixedClassesResolver(
+        classes.reversed().associateBy { it.name }, readMode, classFileOrigin
+    )
   }
 
   private val packageSet = PackageSet()
-
-  private val uniqueClassPath: Path
 
   init {
     for (className in classes.keys) {
       packageSet.addPackagesOfClass(className)
     }
-    uniqueClassPath = Paths.get("fixed-classes-resolver-${uniqueClassPathSequenceNumber.getAndIncrement()}")
   }
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
@@ -39,9 +32,10 @@ class FixedClassesResolver private constructor(
           .asSequence()
           .all(processor)
 
-  override fun findClass(className: String): ClassNode? = classes[className]
-
-  override fun getClassLocation(className: String): Resolver? = this
+  override fun resolveClass(className: String): ResolutionResult {
+    val classNode = classes[className] ?: return ResolutionResult.NotFound
+    return ResolutionResult.Found(classNode, classFileOrigin)
+  }
 
   override val allClasses
     get() = classes.keys
@@ -51,12 +45,6 @@ class FixedClassesResolver private constructor(
 
   override val isEmpty
     get() = classes.isEmpty()
-
-  override val classPath: List<Path>
-    get() = listOf(uniqueClassPath)
-
-  override val finalResolvers
-    get() = listOf(this)
 
   override fun containsClass(className: String) = className in classes
 

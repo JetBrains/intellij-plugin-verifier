@@ -9,15 +9,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
  */
 interface ClassesSelector {
 
-  /**
-   * Of [classesLocations] build a [Resolver] that will be
-   * used to resolve the classes during the verification.
-   */
-  fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver
+  fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver>
 
-  /**
-   * Selects classes that will be verified. Typically those are a subset
-   * of all classes of the [getClassLoader].
-   */
   fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String>
 }

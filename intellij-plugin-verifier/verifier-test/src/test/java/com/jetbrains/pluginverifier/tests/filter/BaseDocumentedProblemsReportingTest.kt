@@ -1,17 +1,16 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
-import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.tests.mocks.EmptyClassResolver
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import org.junit.Assert
 
 /**
@@ -30,7 +29,7 @@ abstract class BaseDocumentedProblemsReportingTest {
 
   fun assertProblemsDocumented(
       problemAndItsDocumentation: List<Pair<CompatibilityProblem, DocumentedProblem>>,
-      context: PluginVerificationContext
+      context: VerificationContext
   ) {
     val problems = problemAndItsDocumentation.map { it.first }
     val documentedProblems = problemAndItsDocumentation.map { it.second }
@@ -45,15 +44,25 @@ abstract class BaseDocumentedProblemsReportingTest {
     }
   }
 
-  fun createSimpleVerificationContext() = PluginVerificationContext(
-      PluginIdAndVersion("pluginId", "1.0"),
-      VerificationTarget.Ide(IdeVersion.createIdeVersion("IU-145.1")),
-      VerificationResult.OK(),
-      IgnoredProblemsHolder(),
-      false,
-      emptyList(),
-      EmptyClassResolver,
-      emptyList()
-  )
+  fun createSimpleVerificationContext(resolver: Resolver): VerificationContext =
+      object : VerificationContext {
+        override val externalClassesPackageFilter: PackageFilter
+          get() = DefaultPackageFilter(emptyList())
 
+        override val classResolver: Resolver
+          get() = resolver
+
+        override val problemRegistrar: ProblemRegistrar
+          get() = object : ProblemRegistrar {
+            override val allProblems: Set<CompatibilityProblem>
+              get() = emptySet()
+
+            override fun registerProblem(problem: CompatibilityProblem) = Unit
+
+            override fun unregisterProblem(problem: CompatibilityProblem) = Unit
+          }
+
+        override val apiUsageProcessors: List<ApiUsageProcessor>
+          get() = emptyList()
+      }
 }

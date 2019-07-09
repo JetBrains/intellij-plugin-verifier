@@ -1,15 +1,17 @@
 package com.intellij.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.AnalysisUtil
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import org.junit.Assert
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
 
 class AnalysisUtilTest : FeatureExtractorTestBase() {
+
   @Test
   fun constantFunction() {
-    val classNode = readClassNode("featureExtractor.common.ConstantHolder")
+    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).classNode
     val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "myFunction", methods, ".constantValue")
@@ -20,7 +22,7 @@ class AnalysisUtilTest : FeatureExtractorTestBase() {
 
   @Test
   fun concatenation() {
-    val classNode = readClassNode("featureExtractor.common.ConstantHolder")
+    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).classNode
     val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "concat", methods, ".constantValueConcat")

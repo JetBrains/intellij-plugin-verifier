@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.instruction.*
 import com.jetbrains.pluginverifier.verifiers.method.*
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 
 class BytecodeVerifier(
     private val verificationFilters: List<ClassFilter> = emptyList(),

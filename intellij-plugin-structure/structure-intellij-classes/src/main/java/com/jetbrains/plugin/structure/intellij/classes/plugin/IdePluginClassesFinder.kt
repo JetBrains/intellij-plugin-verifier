@@ -51,18 +51,18 @@ class IdePluginClassesFinder private constructor(
     }
   }
 
-  private fun findLocations(pluginFile: File): Map<LocationKey, Resolver> {
-    val locations = hashMapOf<LocationKey, Resolver>()
+  private fun findLocations(pluginFile: File): Map<LocationKey, List<Resolver>> {
+    val locations = hashMapOf<LocationKey, List<Resolver>>()
     try {
       for (locatorKey in locatorKeys) {
         checkIfInterrupted()
-        val resolver = locatorKey.getLocator(readMode).findClasses(idePlugin, pluginFile)
-        if (resolver != null) {
-          locations[locatorKey] = resolver
-        }
+        val resolvers = locatorKey.getLocator(readMode).findClasses(idePlugin, pluginFile)
+        locations[locatorKey] = resolvers
       }
     } catch (e: Throwable) {
-      locations.values.forEach { it.closeLogged() }
+      for (resolvers in locations.values) {
+        resolvers.forEach { it.closeLogged() }
+      }
       throw e
     }
     return locations

@@ -2,6 +2,7 @@ package com.jetbrains.intellij.feature.extractor.extractor
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.tree.ClassNode
@@ -19,7 +20,7 @@ private val LOG = LoggerFactory.getLogger("FeaturesExtractor.ClassResolver")
 
 fun Resolver.findClassLogged(className: String): ClassNode? {
   try {
-    return findClass(className.replace('.', '/')) ?: return null
+    return (resolveClass(className.replace('.', '/')) as? ResolutionResult.Found)?.classNode ?: return null
   } catch (e: Exception) {
     e.rethrowIfInterrupted()
     LOG.warn("Unable to get find class file '$className'", e)

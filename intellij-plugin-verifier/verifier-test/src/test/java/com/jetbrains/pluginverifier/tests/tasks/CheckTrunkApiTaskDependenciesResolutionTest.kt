@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -233,7 +233,7 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         TestJdkDescriptorProvider.getJdkPathForTests(),
         IdeDescriptor(trunkIde, EmptyResolver, null, emptySet()),
         IdeDescriptor(releaseIde, EmptyResolver, null, emptySet()),
-        PackageFilter(emptyList()),
+        DefaultPackageFilter(emptyList()),
         emptyList(),
         false,
         IdleFileLock(Paths.get("unnecessary")),

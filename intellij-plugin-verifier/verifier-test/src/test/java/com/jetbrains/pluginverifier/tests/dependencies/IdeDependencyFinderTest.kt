@@ -18,7 +18,6 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
-import com.jetbrains.pluginverifier.tests.mocks.createMockIdeaCorePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -70,7 +69,21 @@ class IdeDependencyFinderTest {
     val ide = MockIde(
         ideVersion,
         bundledPlugins = listOf(
-            createMockIdeaCorePlugin(tempFolder.newFolder("idea.core")),
+            MockIdePlugin(
+                pluginId = "com.intellij",
+                pluginName = "IDEA CORE",
+                originalFile = tempFolder.newFolder("idea.core"),
+                definedModules = setOf(
+                    "com.intellij.modules.platform",
+                    "com.intellij.modules.lang",
+                    "com.intellij.modules.vcs",
+                    "com.intellij.modules.xml",
+                    "com.intellij.modules.xdebugger",
+                    "com.intellij.modules.java",
+                    "com.intellij.modules.ultimate",
+                    "com.intellij.modules.all"
+                )
+            ),
             testPlugin,
             somePlugin,
             moduleContainer

@@ -1,6 +1,7 @@
 package com.jetbrains.intellij.feature.extractor.extractor
 
 import com.jetbrains.intellij.feature.extractor.*
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.Opcodes
@@ -35,7 +36,7 @@ class ModuleTypeExtractor : Extractor {
               && it.desc == "()V"
         }
         if (isDefaultParentInvocation) {
-          val superNode = resolver.findClass(classNode.superName) ?: continue
+          val superNode = (resolver.resolveClass(classNode.superName) as? ResolutionResult.Found)?.classNode ?: continue
           return convertResult(extractFromClassNode(superNode, resolver))
         }
       }

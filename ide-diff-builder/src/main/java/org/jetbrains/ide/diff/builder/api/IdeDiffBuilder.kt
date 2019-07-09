@@ -2,9 +2,7 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
@@ -16,10 +14,7 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
-import com.jetbrains.pluginverifier.verifiers.resolution.Field
-import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
@@ -75,11 +70,11 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
           Closeable { oldPluginClassLocations.closeAll() }.use {
             val newPluginClassLocations = readBundledPluginsClassesLocations(newIde)
             Closeable { newPluginClassLocations.closeAll() }.use {
-              val oldBundledPluginsResolvers = oldPluginClassLocations.map { it.getPluginClassesResolver() }
-              val newBundledPluginsResolvers = newPluginClassLocations.map { it.getPluginClassesResolver() }
+              val oldBundledPluginsResolvers = oldPluginClassLocations.flatMap { it.getPluginClassesResolver() }
+              val newBundledPluginsResolvers = newPluginClassLocations.flatMap { it.getPluginClassesResolver() }
 
-              val oldIdeResolver = UnionResolver.create(listOf(oldPlatformResolver) + oldBundledPluginsResolvers)
-              val newIdeResolver = UnionResolver.create(listOf(newPlatformResolver) + newBundledPluginsResolvers)
+              val oldIdeResolver = CompositeResolver.create(listOf(oldPlatformResolver) + oldBundledPluginsResolvers)
+              val newIdeResolver = CompositeResolver.create(listOf(newPlatformResolver) + newBundledPluginsResolvers)
 
               appendData(oldIdeResolver, newIdeResolver, jdkDescriptor, introducedData, removedData)
             }
@@ -108,8 +103,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
       introducedData: MutableSet<ApiSignature>,
       removedData: MutableSet<ApiSignature>
   ) {
-    val completeOldResolver = CacheResolver(UnionResolver.create(listOf(oldResolver, jdkDescriptor.jdkResolver)))
-    val completeNewResolver = CacheResolver(UnionResolver.create(listOf(newResolver, jdkDescriptor.jdkResolver)))
+    val completeOldResolver = CacheResolver(CompositeResolver.create(listOf(oldResolver, jdkDescriptor.jdkResolver)))
+    val completeNewResolver = CacheResolver(CompositeResolver.create(listOf(newResolver, jdkDescriptor.jdkResolver)))
 
     val allClasses: Set<String> = oldResolver.allClasses + newResolver.allClasses
     for (className in allClasses) {
@@ -237,14 +232,7 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return null
   }
 
-  private fun Resolver.safeFindClass(className: String): ClassFile? {
-    return try {
-      findClass(className)?.let { ClassFileAsm(it, FakeClassFileOrigin) }
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      return null
-    }
-  }
+  private fun Resolver.safeFindClass(className: String): ClassFile? = resolveClassOrNull(className)
 
   private fun isMethodOverriding(methodNode: Method, classNode: ClassFile, resolver: Resolver): Boolean {
     if (methodNode.isConstructor
@@ -299,8 +287,8 @@ class IdeDiffBuilder(private val interestingPackages: List<String>, private val 
     return IdePluginClassesFinder.findPluginClasses(idePlugin, Resolver.ReadMode.SIGNATURES, pluginClassesLocationsKeys)
   }
 
-  private fun IdePluginClassesLocations.getPluginClassesResolver(): Resolver =
-      pluginClassesLocationsKeys.mapNotNull { getResolver(it) }.let { UnionResolver.create(it) }
+  private fun IdePluginClassesLocations.getPluginClassesResolver(): List<Resolver> =
+      pluginClassesLocationsKeys.flatMap { getResolvers(it) }
 
   private fun String.isSyntheticLikeName() = contains("$$") || substringAfterLast('$', "").toIntOrNull() != null
 

@@ -1,9 +1,8 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
+import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
 import com.jetbrains.pluginverifier.parameters.filtering.documented.*
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -16,10 +15,8 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.bytecode.printBytecode
 import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
-import com.jetbrains.pluginverifier.tests.mocks.MockClassFileOrigin
 import com.jetbrains.pluginverifier.tests.mocks.PUBLIC_MODIFIERS
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.IdePluginClassResolver
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.MethodManifestation
 import net.bytebuddy.description.modifier.Visibility
@@ -40,9 +37,9 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
   }
 
   private fun createProblemAndItsDocumentationTestMap(): List<Pair<CompatibilityProblem, DocumentedProblem>> {
-    val classALocation = ClassLocation("org/test/A", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
-    val classBLocation = ClassLocation("org/test/other/B", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
-    val classCLocation = ClassLocation("org/test/third/C", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
+    val classALocation = ClassLocation("org/test/A", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
+    val classBLocation = ClassLocation("org/test/other/B", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
+    val classCLocation = ClassLocation("org/test/third/C", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
 
     val classBReference = ClassReference("org/test/other/B")
 
@@ -95,14 +92,14 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     )
 
     val abstractMethodLocation = MethodLocation(
-        ClassLocation("org/test/I", null, PUBLIC_MODIFIERS, MockClassFileOrigin),
+        ClassLocation("org/test/I", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin),
         "abstractMethod",
         "()V",
         emptyList(),
         null,
         PUBLIC_MODIFIERS
     )
-    val incompleteClass = ClassLocation("org/test/IImplDerived", null, PUBLIC_MODIFIERS, MockClassFileOrigin)
+    val incompleteClass = ClassLocation("org/test/IImplDerived", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         abstractMethodLocation,
@@ -155,23 +152,14 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     )
   }
 
-  private fun createVerificationContextForHierarchicalTest(): PluginVerificationContext {
+  private fun createVerificationContextForHierarchicalTest(): VerificationContext {
     val classes = buildClassesForHierarchicalTest()
     for (classNode in classes) {
       val byteCode = classNode.printBytecode()
       println(classNode.name)
       println(byteCode)
     }
-    return createSimpleVerificationContext().copy(
-        classResolver = IdePluginClassResolver(
-            FixedClassesResolver.create(classes),
-            EmptyResolver,
-            EmptyResolver,
-            EmptyResolver,
-            PackageFilter(emptyList()),
-            emptyList()
-        )
-    )
+    return createSimpleVerificationContext(FixedClassesResolver.create(classes))
   }
 
   /**

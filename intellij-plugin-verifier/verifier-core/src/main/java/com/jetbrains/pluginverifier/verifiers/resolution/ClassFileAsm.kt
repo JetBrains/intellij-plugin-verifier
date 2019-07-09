@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType

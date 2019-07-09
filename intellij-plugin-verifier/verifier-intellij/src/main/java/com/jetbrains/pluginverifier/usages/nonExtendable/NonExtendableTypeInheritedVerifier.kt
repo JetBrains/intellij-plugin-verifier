@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.usages.nonExtendable
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class NonExtendableTypeInheritedVerifier : ClassVerifier {
   override fun verify(classFile: ClassFile, context: VerificationContext) {

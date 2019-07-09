@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.parameters.classes
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -30,11 +29,8 @@ class MainClassesSelector : ClassesSelector {
   /**
    * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
    */
-  override fun getClassLoader(classesLocations: IdePluginClassesLocations): Resolver =
-      UnionResolver.create(
-          IdePluginClassesFinder.MAIN_CLASSES_KEYS
-              .mapNotNull { classesLocations.getResolver(it) }
-      )
+  override fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver> =
+      IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
 
   /**
    * Determines plugin's classes that must be verified.
@@ -47,16 +43,21 @@ class MainClassesSelector : ClassesSelector {
    * we predict the .jar-files that correspond to the plugin itself (not the secondary bundled libraries).
    */
   override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
-    val mainResolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS
-        .mapNotNull { classesLocations.getResolver(it) }
-        .flatMap { it.finalResolvers }
+    val resolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
 
-    val mainUnitedResolver = UnionResolver.create(mainResolvers)
-    val referencedResolvers = getAllClassesReferencedFromXml(classesLocations.idePlugin)
-        .mapNotNullTo(hashSetOf()) { mainUnitedResolver.getClassLocation(it) }
-        .let { if (it.isEmpty()) mainResolvers else it }
+    val allClassesReferencedFromXml = getAllClassesReferencedFromXml(classesLocations.idePlugin)
 
-    return UnionResolver.create(referencedResolvers).allClasses
+    val referencedResolvers = resolvers.filter { resolver ->
+      allClassesReferencedFromXml.any { className -> resolver.containsClass(className) }
+    }
+
+    val checkResolvers = if (referencedResolvers.isEmpty()) {
+      resolvers
+    } else {
+      referencedResolvers
+    }
+
+    return checkResolvers.flatMapTo(hashSetOf()) { it.allClasses }
   }
 
   private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> {

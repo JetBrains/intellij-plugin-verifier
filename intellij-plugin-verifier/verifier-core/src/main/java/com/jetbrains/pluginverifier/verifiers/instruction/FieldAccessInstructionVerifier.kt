@@ -7,10 +7,7 @@ import com.jetbrains.pluginverifier.results.problems.StaticAccessOfInstanceField
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.Field
-import com.jetbrains.pluginverifier.verifiers.resolution.FieldResolver
-import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FieldInsnNode
 

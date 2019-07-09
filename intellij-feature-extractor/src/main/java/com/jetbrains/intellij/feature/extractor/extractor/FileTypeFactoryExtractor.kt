@@ -1,6 +1,7 @@
 package com.jetbrains.intellij.feature.extractor.extractor
 
 import com.jetbrains.intellij.feature.extractor.*
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.objectweb.asm.MethodVisitor
@@ -312,10 +313,11 @@ class FileTypeFactoryExtractor : Extractor {
       return null
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
-    val clazz = resolver.findClass(first.desc) ?: return null
-    val method = clazz.findMethod { it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty() }
-        ?: return null
-    return AnalysisUtil.extractConstantFunctionValue(clazz, method, resolver)
+    val classNode = (resolver.resolveClass(first.desc) as? ResolutionResult.Found)?.classNode ?: return null
+    val method = classNode.findMethod {
+      it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty()
+    } ?: return null
+    return AnalysisUtil.extractConstantFunctionValue(classNode, method, resolver)
   }
 
 

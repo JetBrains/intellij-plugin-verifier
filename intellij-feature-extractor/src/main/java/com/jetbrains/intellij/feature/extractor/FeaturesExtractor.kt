@@ -4,7 +4,7 @@ import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeature
 import com.jetbrains.intellij.feature.extractor.extractor.*
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -36,13 +36,13 @@ object FeaturesExtractor {
       IdePluginClassesFinder.findPluginClasses(plugin).use { pluginClassesLocations ->
         val pluginResolver = pluginClassesLocations.constructMainPluginResolver()
         //don't close this resolver, because ideResolver will be closed by the caller.
-        val resolver = UnionResolver.create(listOf(pluginResolver, ideResolver) + bundledResolvers)
+        val resolver = CompositeResolver.create(listOf(pluginResolver, ideResolver) + bundledResolvers)
         return ALL_EXTRACTORS.flatMap { it.extract(plugin, resolver) }
       }
     }
   }
 
   private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver =
-      UnionResolver.create(IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { getResolver(it) })
+      CompositeResolver.create(IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { getResolvers(it) })
 
 }

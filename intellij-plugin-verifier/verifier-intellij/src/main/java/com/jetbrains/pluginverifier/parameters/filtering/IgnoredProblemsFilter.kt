@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
  * [ProblemsFilter] that ignores problems specified in [ignoreConditions].
@@ -10,10 +11,13 @@ class IgnoredProblemsFilter(val ignoreConditions: List<IgnoreCondition>) : Probl
 
   override fun shouldReportProblem(
       problem: CompatibilityProblem,
-      context: PluginVerificationContext
+      context: VerificationContext
   ): ProblemsFilter.Result {
-    val currentId = context.plugin.pluginId
-    val currentVersion = context.plugin.version
+    if (context !is PluginVerificationContext) {
+      return ProblemsFilter.Result.Report
+    }
+    val currentId = context.idePlugin.pluginId
+    val currentVersion = context.idePlugin.pluginVersion
 
     for ((pluginId, version, pattern) in ignoreConditions) {
       if (pluginId == null || pluginId == currentId) {

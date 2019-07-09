@@ -2,16 +2,14 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.Path
 
 /**
- * [Resolver] that unites several [resolvers] with the Java classpath search strategy.
+ * [Resolver] that combines several [resolvers] with the Java classpath search strategy.
  */
-class UnionResolver private constructor(
+class CompositeResolver private constructor(
     private val resolvers: List<Resolver>,
     override val readMode: ReadMode
 ) : Resolver() {
-
   private val packageToResolvers: Map<String, List<Resolver>> = buildPackageToResolvers()
 
   private fun buildPackageToResolvers(): Map<String, List<Resolver>> {
@@ -33,12 +31,6 @@ class UnionResolver private constructor(
   override val isEmpty
     get() = packageToResolvers.isEmpty()
 
-  override val classPath: List<Path>
-    get() = resolvers.flatMap { it.classPath }
-
-  override val finalResolvers
-    get() = resolvers.flatMap { it.finalResolvers }
-
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
       resolvers.asSequence().all { it.processAllClasses(processor) }
 
@@ -52,34 +44,19 @@ class UnionResolver private constructor(
 
   override fun containsPackage(packageName: String) = packageName in packageToResolvers
 
-  override fun findClass(className: String): ClassNode? {
+  override fun resolveClass(className: String): ResolutionResult {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName]
     if (resolvers == null || resolvers.isEmpty()) {
-      return null
+      return ResolutionResult.NotFound
     }
     for (resolver in resolvers) {
-      val classNode = resolver.findClass(className)
-      if (classNode != null) {
-        return classNode
+      val resolutionResult = resolver.resolveClass(className)
+      if (resolutionResult !is ResolutionResult.NotFound) {
+        return resolutionResult
       }
     }
-    return null
-  }
-
-  override fun getClassLocation(className: String): Resolver? {
-    val packageName = getPackageName(className)
-    val resolvers = packageToResolvers[packageName]
-    if (resolvers == null || resolvers.isEmpty()) {
-      return null
-    }
-    for (resolver in resolvers) {
-      val classLocation = resolver.getClassLocation(className)
-      if (classLocation != null) {
-        return classLocation
-      }
-    }
-    return null
+    return ResolutionResult.NotFound
   }
 
   override fun close() {
@@ -100,21 +77,13 @@ class UnionResolver private constructor(
         nonEmpty.isEmpty() -> EmptyResolver
         nonEmpty.size == 1 -> nonEmpty[0]
         else -> {
-          /**
-           * Remove duplicate Resolvers built
-           * from the same class paths.
-           */
-          val uniqueResolvers = nonEmpty
-              .flatMap { it.finalResolvers }
-              .distinctBy { it.classPath }
-
-          val readMode = if (uniqueResolvers.all { it.readMode == ReadMode.FULL }) {
+          val readMode = if (nonEmpty.all { it.readMode == ReadMode.FULL }) {
             ReadMode.FULL
           } else {
             ReadMode.SIGNATURES
           }
 
-          UnionResolver(uniqueResolvers, readMode)
+          CompositeResolver(nonEmpty, readMode)
         }
       }
     }

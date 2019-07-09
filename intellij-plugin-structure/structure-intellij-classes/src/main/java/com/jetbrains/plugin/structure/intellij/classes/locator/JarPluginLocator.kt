@@ -9,11 +9,11 @@ import java.io.File
 class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = JarPluginKey
 
-  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
     if (pluginFile.isJar()) {
-      return JarFileResolver(pluginFile.toPath(), readMode)
+      return listOf(JarFileResolver(pluginFile.toPath(), readMode, PluginClassFileOrigin.SingleJar(idePlugin)))
     }
-    return null
+    return emptyList()
   }
 }
 

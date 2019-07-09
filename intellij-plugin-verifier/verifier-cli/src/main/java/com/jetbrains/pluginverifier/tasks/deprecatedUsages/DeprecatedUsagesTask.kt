@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
 import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -35,7 +35,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
               jdkDescriptorCache,
               parameters.jdkPath,
               ideDescriptor,
-              PackageFilter(emptyList())
+              DefaultPackageFilter(emptyList())
           ),
           VerificationTarget.Ide(ideDescriptor.ideVersion),
           ideDescriptor.brokenPlugins,

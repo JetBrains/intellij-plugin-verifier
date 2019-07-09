@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.usages.discouraging
 
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
+import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption
@@ -19,7 +22,7 @@ import java.util.*
 class DiscouragingJdkClassUsage(
     override val apiElement: ClassLocation,
     override val usageLocation: Location,
-    val isClassProvidedByIde: Boolean
+    private val classFileOrigin: ClassFileOrigin
 ) : DeprecatedApiUsage(DeprecationInfo(false, "JDK 8")) {
 
   override val shortDescription: String
@@ -30,6 +33,7 @@ class DiscouragingJdkClassUsage(
     get() = buildString {
       append("JDK 8 specific " + apiElement.elementType.presentableName + " " + apiElement.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS))
       append(" is referenced in " + usageLocation.formatUsageLocation() + ". ")
+      val isClassProvidedByIde: Boolean = classFileOrigin.isOriginOfType<IdeClassFileOrigin>()
       if (isClassProvidedByIde) {
         append(
             "This " + apiElement.elementType.presentableName + " will be temporarily available in IDE distribution for " +
@@ -46,8 +50,8 @@ class DiscouragingJdkClassUsage(
   override fun equals(other: Any?): Boolean = other is DiscouragingJdkClassUsage
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
-      && isClassProvidedByIde == other.isClassProvidedByIde
+      && classFileOrigin == other.classFileOrigin
 
-  override fun hashCode() = Objects.hash(apiElement, usageLocation, isClassProvidedByIde)
+  override fun hashCode() = Objects.hash(apiElement, usageLocation, classFileOrigin)
 
 }

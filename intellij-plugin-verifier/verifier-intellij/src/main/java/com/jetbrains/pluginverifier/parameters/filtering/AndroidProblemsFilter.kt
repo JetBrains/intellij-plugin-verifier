@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.pluginverifier.results.problems.*
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
  * [ProblemsFilter] that yields only Android related problems.
@@ -10,7 +10,7 @@ class AndroidProblemsFilter : ProblemsFilter {
 
   override fun shouldReportProblem(
       problem: CompatibilityProblem,
-      context: PluginVerificationContext
+      context: VerificationContext
   ): ProblemsFilter.Result {
     return if (problem.relatesToAndroid()) {
       ProblemsFilter.Result.Report

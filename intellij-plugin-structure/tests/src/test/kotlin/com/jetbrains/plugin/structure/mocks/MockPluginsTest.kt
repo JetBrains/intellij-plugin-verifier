@@ -4,11 +4,9 @@ import com.google.common.collect.HashMultiset
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -51,7 +49,7 @@ class MockPluginsTest {
       dir("optionalsDir", optionalsDir)
       dir("somePackage", pluginClassesRoot.resolve("somePackage"))
     }
-    checkPluginConfiguration(pluginFile, "", false, true)
+    checkPluginConfiguration(pluginFile, true) { plugin -> PluginClassFileOrigin.SingleJar(plugin) }
   }
 
   @Test
@@ -63,7 +61,7 @@ class MockPluginsTest {
         dir("somePackage", pluginClassesRoot.resolve("somePackage"))
       }
     }
-    checkPluginConfiguration(pluginFile, "", false, true)
+    checkPluginConfiguration(pluginFile, true) { plugin -> PluginClassFileOrigin.SingleJar(plugin) }
   }
 
   @Test
@@ -87,7 +85,7 @@ class MockPluginsTest {
       }
     }
 
-    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -110,7 +108,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -135,7 +133,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, "lib/plugin.jar", true, true)
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -157,7 +155,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, "classes", true, false)
+    checkPluginConfiguration(pluginFile, false) { plugin -> PluginClassFileOrigin.ClassesDirectory(plugin) }
   }
 
   @Test
@@ -181,7 +179,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, "classes", true, false)
+    checkPluginConfiguration(pluginFile, false) { plugin -> PluginClassFileOrigin.ClassesDirectory(plugin) }
   }
 
   @Test
@@ -321,9 +319,8 @@ class MockPluginsTest {
 
   private fun checkPluginConfiguration(
       pluginFile: File,
-      classPath: String,
-      hasLibDirectory: Boolean,
-      resolveXIncludesWithAbsoluteHref: Boolean
+      resolveXIncludesWithAbsoluteHref: Boolean,
+      classFileOriginProvider: (IdePlugin) -> ClassFileOrigin
   ) {
     val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
     val plugin = pluginCreationSuccess.plugin
@@ -336,21 +333,22 @@ class MockPluginsTest {
     checkExtensionPoints(plugin)
     checkDependenciesAndModules(plugin)
     checkUnderlyingDocument(plugin)
-    checkPluginClasses(plugin, classPath, hasLibDirectory)
+
+    val classFileOrigin = classFileOriginProvider(plugin)
+    checkPluginClasses(plugin, classFileOrigin)
   }
 
-  private fun checkPluginClasses(plugin: IdePlugin, classPath: String, hasLibDirectory: Boolean) {
+  private fun checkPluginClasses(plugin: IdePlugin, expectedClassFileOrigin: ClassFileOrigin) {
     assertNotNull(plugin.originalFile)
     IdePluginClassesFinder.findPluginClasses(
         plugin,
         Resolver.ReadMode.FULL,
         listOf(CompileServerExtensionKey)
     ).use { classesLocations ->
-      if (hasLibDirectory) {
-        checkCompileServerJars(classesLocations)
-      }
-      val mainResolver = UnionResolver.create(
-          IdePluginClassesFinder.MAIN_CLASSES_KEYS.mapNotNull { classesLocations.getResolver(it) }
+      checkCompileServerJars(classesLocations, plugin)
+
+      val mainResolver = CompositeResolver.create(
+          IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
       )
       assertEquals(
           setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
@@ -359,10 +357,9 @@ class MockPluginsTest {
       assertEquals(setOf("somePackage", "somePackage/subPackage"), mainResolver.allPackages)
       assertTrue(mainResolver.containsPackage("somePackage"))
       assertTrue(mainResolver.containsPackage("somePackage/subPackage"))
-      assertTrue(
-          mainResolver.classPath.joinToString(),
-          mainResolver.classPath.all { it.toAbsolutePath().toString().toSystemIndependentName().endsWith(classPath) }
-      )
+
+      val classFileOrigin = (mainResolver.resolveClass("somePackage/ClassOne") as ResolutionResult.Found).classFileOrigin
+      assertEquals(expectedClassFileOrigin, classFileOrigin)
     }
   }
 
@@ -429,18 +426,23 @@ class MockPluginsTest {
     assertEquals(expectedExtensionPoints, extensions.keys())
   }
 
-  private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations) {
-    val resolver = classesLocations.getResolver(CompileServerExtensionKey)!!
-    val libDirectoryClasses = resolver.allClasses
-    assertEquals(setOf("com/some/compile/library/CompileLibraryClass"), libDirectoryClasses)
+  private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations, plugin: IdePlugin) {
+    val resolvers = classesLocations.getResolvers(CompileServerExtensionKey)
+    if (resolvers.isEmpty()) {
+      return
+    }
+    val singleResolver = resolvers.single() as JarFileResolver
 
-    val compileServerJars = resolver.finalResolvers
-    assertEquals(1, compileServerJars.size)
-    val compileServerJar = compileServerJars[0]
-    assertTrue(compileServerJar is JarFileResolver)
-    val jarFileResolver = compileServerJar as JarFileResolver
-    assertEquals(setOf("com.example.service.Service"), jarFileResolver.implementedServiceProviders)
-    val implementationNames = jarFileResolver.readServiceImplementationNames("com.example.service.Service")
+    val libDirectoryClasses = singleResolver.allClasses
+
+    val compileLibraryClass = "com/some/compile/library/CompileLibraryClass"
+    assertEquals(setOf(compileLibraryClass), libDirectoryClasses)
+
+    val classFileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).classFileOrigin
+    assertEquals(JarClassFileOrigin("compile-library.jar", PluginClassFileOrigin.CompileServer(plugin)), classFileOrigin)
+
+    assertEquals(setOf("com.example.service.Service"), singleResolver.implementedServiceProviders)
+    val implementationNames = singleResolver.readServiceImplementationNames("com.example.service.Service")
     assertEquals(
         setOf(
             "com.some.compile.library.One",

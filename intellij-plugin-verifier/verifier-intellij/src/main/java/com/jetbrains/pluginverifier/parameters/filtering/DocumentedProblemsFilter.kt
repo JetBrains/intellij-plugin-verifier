@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedPr
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
  * Implementation of the [ProblemsFilter] that drops
@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
  */
 class DocumentedProblemsFilter(private val documentedProblems: List<DocumentedProblem>) : ProblemsFilter {
 
-  override fun shouldReportProblem(problem: CompatibilityProblem, context: PluginVerificationContext): ProblemsFilter.Result {
+  override fun shouldReportProblem(problem: CompatibilityProblem, context: VerificationContext): ProblemsFilter.Result {
     val documentedProblem = documentedProblems.find { it.isDocumenting(problem, context) }
     if (documentedProblem != null) {
       return ProblemsFilter.Result.Ignore("the problem is already documented in the API Breakages page (https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html)")

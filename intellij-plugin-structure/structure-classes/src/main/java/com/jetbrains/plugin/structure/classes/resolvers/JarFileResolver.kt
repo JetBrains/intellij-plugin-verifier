@@ -1,16 +1,21 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.classes.packages.PackageSet
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.jar.JarFile
 
-class JarFileResolver(private val ioJarFile: Path, override val readMode: ReadMode) : Resolver() {
-
-  constructor(jarFile: Path) : this(jarFile, ReadMode.FULL)
+class JarFileResolver(
+    private val ioJarFile: Path,
+    override val readMode: ReadMode,
+    private val classFileOrigin: ClassFileOrigin
+) : Resolver() {
+  constructor(jarFile: Path) : this(jarFile, ReadMode.FULL, UnknownClassFileOrigin)
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
@@ -74,12 +79,6 @@ class JarFileResolver(private val ioJarFile: Path, override val readMode: ReadMo
   override val isEmpty
     get() = classes.isEmpty()
 
-  override val classPath: List<Path>
-    get() = listOf(ioJarFile)
-
-  override val finalResolvers
-    get() = listOf(this)
-
   override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
     for (jarEntry in jarFile.entries().iterator()) {
       val entryName = jarEntry.name
@@ -100,12 +99,20 @@ class JarFileResolver(private val ioJarFile: Path, override val readMode: ReadMo
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
-  override fun findClass(className: String) =
-      if (className in classes) {
-        evaluateNode(className)
-      } else {
-        null
-      }
+  override fun resolveClass(className: String): ResolutionResult {
+    if (className !in classes) {
+      return ResolutionResult.NotFound
+    }
+    val classNode = try {
+      evaluateNode(className)
+    } catch (e: InvalidClassFileException) {
+      return ResolutionResult.InvalidClassFile(e.message)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+    } ?: return ResolutionResult.NotFound
+    return ResolutionResult.Found(classNode, classFileOrigin)
+  }
 
   private fun evaluateNode(className: String): ClassNode? {
     val entry = jarFile.getEntry(className + CLASS_SUFFIX) ?: return null
@@ -114,10 +121,23 @@ class JarFileResolver(private val ioJarFile: Path, override val readMode: ReadMo
     }
   }
 
-  override fun getClassLocation(className: String) = if (containsClass(className)) this else null
-
   override fun close() = jarFile.close()
 
   override fun toString() = ioJarFile.toAbsolutePath().toString()
 
+}
+
+fun buildJarFileResolvers(
+    jars: Iterable<File>,
+    readMode: Resolver.ReadMode,
+    parentOrigin: ClassFileOrigin
+): List<Resolver> {
+  val resolvers = arrayListOf<Resolver>()
+  resolvers.closeOnException {
+    jars.mapTo(resolvers) { jarFile ->
+      val jarClassFileOrigin = JarClassFileOrigin(jarFile.name, parentOrigin)
+      JarFileResolver(jarFile.toPath(), readMode, jarClassFileOrigin)
+    }
+  }
+  return resolvers
 }

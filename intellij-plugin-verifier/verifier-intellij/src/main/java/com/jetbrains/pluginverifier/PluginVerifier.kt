@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector
@@ -34,10 +34,9 @@ import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheri
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
-import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingVerifier
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import java.util.concurrent.Callable
 
 /**
@@ -203,40 +202,33 @@ class PluginVerifier(
       return
     }
 
-    classResolverProvider.provide(pluginDetails, verificationResult).use { classResolver ->
-      val context = createVerificationContext(classResolver, verificationResult, ignoredProblems)
+    classResolverProvider.provide(pluginDetails, verificationResult).use { (classResolver) ->
+      val externalClassesPackageFilter = classResolverProvider.provideExternalClassesPackageFilter()
+      val context = PluginVerificationContext(
+          pluginDetails.idePlugin,
+          verificationTarget,
+          verificationResult,
+          ignoredProblems,
+          checkApiUsages,
+          problemFilters,
+          externalClassesPackageFilter,
+          classResolver,
+          listOf(
+              DeprecatedApiUsageProcessor(),
+              ExperimentalApiUsageProcessor(),
+              DiscouragingClassUsageProcessor(),
+              InternalApiUsageProcessor(),
+              OverrideOnlyMethodUsageProcessor()
+          )
+      )
       runByteCodeVerifier(checkClasses, context)
     }
   }
 
-  private fun createVerificationContext(
-      classResolver: ClassResolver,
-      verificationResult: VerificationResult,
-      ignoredProblems: IgnoredProblemsHolder
-  ) = PluginVerificationContext(
-      plugin,
-      verificationTarget,
-      verificationResult,
-      ignoredProblems,
-      checkApiUsages,
-      problemFilters,
-      classResolver,
-      listOf(
-          DeprecatedApiUsageProcessor(),
-          ExperimentalApiUsageProcessor(),
-          DiscouragingClassUsageProcessor(),
-          InternalApiUsageProcessor(),
-          OverrideOnlyMethodUsageProcessor()
-      )
-  )
-
-  private fun runByteCodeVerifier(checkClasses: Set<String>, context: PluginVerificationContext) {
+  private fun runByteCodeVerifier(checkClasses: Set<String>, context: VerificationContext) {
     BytecodeVerifier(
         classFilters,
-        listOf(
-            PluginClassFileVersionVerifier(),
-            NonExtendableTypeInheritedVerifier()
-        ),
+        listOf(NonExtendableTypeInheritedVerifier()),
         listOf(
             MethodOverridingVerifier(
                 listOf(
@@ -269,4 +261,4 @@ class PluginVerifier(
 private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
 
 fun IdePluginClassesLocations.createPluginResolver() =
-    UnionResolver.create(classesSelectors.map { it.getClassLoader(this) })
+    CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) })

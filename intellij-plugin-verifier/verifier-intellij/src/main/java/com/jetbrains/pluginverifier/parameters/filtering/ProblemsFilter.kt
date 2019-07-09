@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.parameters.filtering
 
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter.Result
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
  * Implementations of this interface can be used
@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
  */
 interface ProblemsFilter {
 
-  fun shouldReportProblem(problem: CompatibilityProblem, context: PluginVerificationContext): Result
+  fun shouldReportProblem(problem: CompatibilityProblem, context: VerificationContext): Result
 
   sealed class Result {
     object Report : Result()

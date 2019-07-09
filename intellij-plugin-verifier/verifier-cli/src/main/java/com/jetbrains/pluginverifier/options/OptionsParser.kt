@@ -8,7 +8,8 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.parameters.filtering.*
-import com.jetbrains.pluginverifier.parameters.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -81,7 +82,7 @@ object OptionsParser {
       opts.externalClassesPrefixes
           .map { it.replace('.', '/') }
           .let { list ->
-            PackageFilter(list.map { PackageFilter.Descriptor(true, it) })
+            DefaultPackageFilter(list.map { DefaultPackageFilter.Descriptor(true, it) })
           }
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {

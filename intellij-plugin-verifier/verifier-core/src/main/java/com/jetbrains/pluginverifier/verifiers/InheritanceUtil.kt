@@ -1,27 +1,28 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import java.util.*
 
-private fun ClassResolver.resolveAllDirectParents(classFile: ClassFile): List<ClassFile> {
+private fun Resolver.resolveAllDirectParents(classFile: ClassFile): List<ClassFile> {
   val parents = listOfNotNull(classFile.superName) + classFile.interfaces
   return parents.mapNotNull { resolveClassOrNull(it) }
 }
 
-fun ClassResolver.isSubclassOrSelf(childClassName: String, possibleParentName: String): Boolean {
+fun Resolver.isSubclassOrSelf(childClassName: String, possibleParentName: String): Boolean {
   if (childClassName == possibleParentName) {
     return true
   }
   return isSubclassOf(childClassName, possibleParentName)
 }
 
-fun ClassResolver.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
+fun Resolver.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
   val childClass = resolveClassOrNull(childClassName) ?: return false
   return isSubclassOf(childClass, possibleParentName)
 }
 
-fun ClassResolver.isSubclassOf(child: ClassFile, parentName: String): Boolean {
+fun Resolver.isSubclassOf(child: ClassFile, parentName: String): Boolean {
   if (parentName == "java/lang/Object") {
     return true
   }

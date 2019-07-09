@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.field
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class FieldTypeVerifier : FieldVerifier {
   override fun verify(field: Field, context: VerificationContext) {

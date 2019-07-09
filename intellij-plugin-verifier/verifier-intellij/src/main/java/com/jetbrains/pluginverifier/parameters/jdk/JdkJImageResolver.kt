@@ -3,8 +3,9 @@ package com.jetbrains.pluginverifier.parameters.jdk
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.classes.packages.PackageSet
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
@@ -17,12 +18,12 @@ import java.util.stream.Collectors
  * [Resolver] that reads class files from JImage corresponding to `<JDK>/lib/modules` file of JDK 9 and later.
  */
 class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolver() {
-
   private companion object {
+
     val JRT_SCHEME_URI: URI = URI.create("jrt:/")
   }
 
-  constructor(jdkPath: Path) : this(jdkPath, ReadMode.FULL)
+  private val classFileOrigin: ClassFileOrigin = JdkClassFileOrigin(jdkPath)
 
   private val classNameToModuleName: Map<String, String>
 
@@ -100,28 +101,27 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override val isEmpty: Boolean
     get() = classNameToModuleName.isEmpty()
 
-  override val classPath: List<Path>
-    get() = listOf(modulesPath)
-
-  override val finalResolvers: List<Resolver>
-    get() = listOf(this)
-
-  override fun findClass(className: String): ClassNode? {
+  override fun resolveClass(className: String): ResolutionResult {
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
       val classPath = modulesPath.resolve(moduleName).resolve(className.replace("/", nameSeparator) + ".class")
-      return readClassNode(className, classPath)
+      val classNode = try {
+        readClassNode(className, classPath)
+      } catch (e: InvalidClassFileException) {
+        return ResolutionResult.InvalidClassFile(e.message)
+      } catch (e: Exception) {
+        e.rethrowIfInterrupted()
+        return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+      }
+      return ResolutionResult.Found(classNode, classFileOrigin)
     }
-    return null
+    return ResolutionResult.NotFound
   }
 
   private fun readClassNode(className: String, classFilePath: Path): ClassNode =
       Files.newInputStream(classFilePath, StandardOpenOption.READ).use { inputStream ->
         AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
       }
-
-  override fun getClassLocation(className: String): Resolver? =
-      if (containsClass(className)) this else null
 
   override fun containsClass(className: String) = className in classNameToModuleName
 

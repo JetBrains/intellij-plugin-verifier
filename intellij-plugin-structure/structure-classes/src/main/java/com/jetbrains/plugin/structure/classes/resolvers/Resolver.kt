@@ -1,10 +1,8 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import org.objectweb.asm.tree.ClassNode
-
 import java.io.Closeable
 import java.io.IOException
-import java.nio.file.Path
 
 /**
  *
@@ -33,8 +31,6 @@ abstract class Resolver : Closeable {
 
   /**
    * Returns the *binary* names of all the contained classes.
-   *
-   * @return all the classes names in the *binary* form.
    */
   abstract val allClasses: Set<String>
 
@@ -43,61 +39,22 @@ abstract class Resolver : Closeable {
    *
    * For example, if this Resolver contains classes of a package `com/example/utils`
    * then [allPackages] contains `com`, `com/example` and `com/example/utils`.
-   *
-   * @return names of all packages in *binary* (separated with /) form.
    */
   abstract val allPackages: Set<String>
 
   /**
    * Checks whether this resolver contains any class. Classes can be obtained through [.getAllClasses].
-   *
-   * @return true if this resolver is not empty, false otherwise
    */
   abstract val isEmpty: Boolean
 
   /**
-   * Returns the roots from which this resolver loads the classes
-   *
-   * @return roots of the classes
+   * Resolves class with specified binary name.
    */
-  abstract val classPath: List<Path>
-
-  /**
-   * Returns the resolvers that actually constitute the given resolver
-   *
-   * @return final resolvers
-   */
-  abstract val finalResolvers: List<Resolver>
-
-  /**
-   * Returns a class-file node with the specified name. If `this` resolver contains multiple
-   * instances of classes with the same name the first one in the *class-path* order will be returned.
-   *
-   * @param className class name in *binary* form (see JVM specification)
-   * @return a class-node for accessing the bytecode
-   * @throws InvalidClassFileException if the class file is not valid from the point of view of the ASM bytecode engineering library
-   * @throws IOException if IO error occurs, e.g. file .class-file was deleted
-   * @throws InterruptedException if the current thread has been interrupted while searching for the class.
-   */
-  @Throws(InvalidClassFileException::class, IOException::class, InterruptedException::class)
-  abstract fun findClass(className: String): ClassNode?
-
-  /**
-   * Returns the resolver which contains the given class: invocation of [.findClass] on the
-   * resulting `Resolver` returns the same instance of the class-node as an invocation of [.findClass]
-   * on `this` instance.
-   *
-   * @param className class name for which resolver should be found (in *binary* form)
-   * @return actual class resolver or `null` if `this` resolver doesn't contain a specified class
-   */
-  abstract fun getClassLocation(className: String): Resolver?
+  abstract fun resolveClass(className: String): ResolutionResult
 
   /**
    * Returns true if `this` Resolver contains the given class. It may be faster
    * than checking [.findClass] is not null.
-   *
-   * @param className class name in *binary* form (see JVM specification)
-   * @return `true` if class is in Resolver, `false` otherwise
    */
   abstract fun containsClass(className: String): Boolean
 
@@ -105,17 +62,12 @@ abstract class Resolver : Closeable {
    * Returns true if `this` Resolver contains the given package,
    * specified with binary name ('/'-separated). It may be faster
    * than fetching [allPackages] and checking for presence in it.
-   *
-   * @return `true` if this package exists in Resolver, `false` otherwise
    */
   abstract fun containsPackage(packageName: String): Boolean
 
   /**
-   * Runs the given [processor] on [every] [allClasses] class contained in _this_ [Resolver].
+   * Runs the given [processor] on every class contained in _this_ [Resolver].
    * The [processor] returns `true` to continue processing and `false` to stop.
-   *
-   * @return `true` if all the classes are processed, and `false` if processing has been stopped.
-   * @throws IOException if the processing has failed due to an IO error
    */
   @Throws(IOException::class)
   abstract fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean

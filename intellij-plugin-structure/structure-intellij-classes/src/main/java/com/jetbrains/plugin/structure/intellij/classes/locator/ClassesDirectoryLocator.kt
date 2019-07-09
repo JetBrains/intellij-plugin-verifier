@@ -9,12 +9,13 @@ import java.nio.file.Files
 class ClassesDirectoryLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = ClassesDirectoryKey
 
-  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): Resolver? {
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
     val classesDir = pluginFile.toPath().resolve("classes")
     if (Files.isDirectory(classesDir)) {
-      return ClassFilesResolver(classesDir, readMode)
+      val classFileOrigin = PluginClassFileOrigin.ClassesDirectory(idePlugin)
+      return listOf(ClassFilesResolver(classesDir, readMode, classFileOrigin))
     }
-    return null
+    return emptyList()
   }
 }
 

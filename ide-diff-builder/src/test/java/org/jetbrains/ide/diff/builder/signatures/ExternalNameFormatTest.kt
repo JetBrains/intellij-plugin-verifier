@@ -4,10 +4,9 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
-import org.jetbrains.ide.diff.builder.api.FakeClassFileOrigin
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -92,8 +91,7 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
     checkFields(aClass.fields)
   }
 
-  private fun findClassFile(className: String): ClassFile =
-      ClassFileAsm(ideResolver.findClass(className)!!, FakeClassFileOrigin)
+  private fun findClassFile(className: String): ClassFile = ideResolver.resolveClassOrNull(className)!!
 
   /**
    * Checks that external name of empty constructor of an inner class

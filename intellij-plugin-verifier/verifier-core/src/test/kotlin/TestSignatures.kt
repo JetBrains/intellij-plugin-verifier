@@ -1,11 +1,10 @@
+import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileOrigin
 import org.junit.Assert
 import org.junit.Test
-import java.nio.file.Paths
 
 class TestSignatures {
   @Test
@@ -59,10 +58,7 @@ class TestSignatures {
   }
 
   private fun genSomeClassLocation(className: String, signature: String?) =
-      ClassLocation(className, signature, Modifiers(0), object : ClassFileOrigin {
-        override val classPath
-          get() = Paths.get("unused")
-      })
+      ClassLocation(className, signature, Modifiers(0), UnknownClassFileOrigin)
 
   @Test
   fun assertCollectionsMin() {

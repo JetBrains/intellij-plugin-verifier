@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.resolvers
 
-import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnionResolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import org.junit.Assert.*
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
@@ -12,7 +9,7 @@ class ResolverTest {
   @Test
   fun `empty cache doesnt contain classes`() {
     val cacheResolver = CacheResolver(EmptyResolver)
-    assertNull(cacheResolver.findClass("a"))
+    assertEquals(ResolutionResult.NotFound, cacheResolver.resolveClass("a"))
     assertTrue(cacheResolver.allClasses.isEmpty())
     assertEquals(emptySet<String>(), cacheResolver.allPackages)
   }
@@ -26,13 +23,13 @@ class ResolverTest {
         FixedClassesResolver.create(listOf(classNode))
     )
     assertEquals(1, cacheResolver.allClasses.size)
-    assertEquals(classNode, cacheResolver.findClass(className))
+    assertEquals(classNode, (cacheResolver.resolveClass(className) as ResolutionResult.Found).classNode)
     assertEquals(setOf(""), cacheResolver.allPackages)
     assertTrue(cacheResolver.containsPackage(""))
   }
 
   @Test
-  fun `union resolver search order is equal to class-path`() {
+  fun `composite resolver search order is equal to class-path`() {
     val commonPackage = "some/package"
 
     val sameClass = "$commonPackage/Same"
@@ -45,17 +42,23 @@ class ResolverTest {
     val class2 = "$commonPackage/Some2"
     val class2Node = ClassNode().apply { name = class2 }
 
-    val resolver1 = FixedClassesResolver.create(class1Node, sameClassNode1)
-    val resolver2 = FixedClassesResolver.create(class2Node, sameClassNode2)
+    val origin1 = object : ClassFileOrigin {
+      override val parent: ClassFileOrigin? = null
+    }
+    val origin2 = object : ClassFileOrigin {
+      override val parent: ClassFileOrigin? = null
+    }
 
-    val resolver = UnionResolver.create(resolver1, resolver2)
+    val resolver1 = FixedClassesResolver.create(listOf(class1Node, sameClassNode1), classFileOrigin = origin1)
+    val resolver2 = FixedClassesResolver.create(listOf(class2Node, sameClassNode2), classFileOrigin = origin2)
+
+    val resolver = CompositeResolver.create(resolver1, resolver2)
 
     assertEquals(setOf("some", "some/package"), resolver.allPackages)
     assertEquals(setOf(sameClass, class1, class2), resolver.allClasses)
 
-    assertSame(class1Node, resolver.findClass(class1))
-    assertSame(class2Node, resolver.findClass(class2))
-    assertSame(sameClassNode1, resolver.findClass(sameClass))
-    assertSame(resolver1, resolver.getClassLocation(sameClass))
+    assertSame(origin1, (resolver.resolveClass(class1) as ResolutionResult.Found).classFileOrigin)
+    assertSame(origin2, (resolver.resolveClass(class2) as ResolutionResult.Found).classFileOrigin)
+    assertSame(origin1, (resolver.resolveClass(sameClass) as ResolutionResult.Found).classFileOrigin)
   }
 }

@@ -1,19 +1,19 @@
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 
 /**
- * Returns the top-most package of the given [className] that is not available in this [ClassResolver].
+ * Returns the top-most package of the given [className] that is not available in this [Resolver].
  *
  * If all packages of the specified class exist, `null` is returned.
  * If the class has default (empty) package, and that default package
  * is not available, then "" is returned.
  */
-private fun ClassResolver.getTopMostMissingPackage(className: String): String? {
+private fun Resolver.getTopMostMissingPackage(className: String): String? {
   if ('/' !in className) {
-    return if (packageExists("")) {
+    return if (containsPackage("")) {
       null
     } else {
       ""
@@ -26,7 +26,7 @@ private fun ClassResolver.getTopMostMissingPackage(className: String): String? {
       superPackage += '/'
     }
     superPackage += packagePart
-    if (!packageExists(superPackage)) {
+    if (!containsPackage(superPackage)) {
       return superPackage
     }
   }

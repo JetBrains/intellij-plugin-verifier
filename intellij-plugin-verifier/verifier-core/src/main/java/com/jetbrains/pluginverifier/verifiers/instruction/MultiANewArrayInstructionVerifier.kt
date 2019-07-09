@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.instruction
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MultiANewArrayInsnNode
 

@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.jdom2.Element
 import org.junit.After
 import org.junit.Before
-import org.objectweb.asm.tree.ClassNode
 import java.io.File
 
 abstract class FeatureExtractorTestBase {
@@ -24,9 +23,6 @@ abstract class FeatureExtractorTestBase {
   fun tearDown() {
     resolver.close()
   }
-
-  fun readClassNode(className: String): ClassNode =
-      resolver.findClass(className.replace('.', '/'))!!
 
   fun resetPluginExtensionPoint(extensionPoint: ExtensionPoint, implementorName: String) {
     plugin.extensions.clear()
