@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.verifiers.overriding
+package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.Method

@@ -36,7 +36,7 @@ import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.clazz.PluginClassFileVersionVerifier
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
-import com.jetbrains.pluginverifier.verifiers.overriding.MethodOverridingVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingVerifier
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassResolver
 import java.util.concurrent.Callable
 

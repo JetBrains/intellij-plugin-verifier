@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.overriding.MethodOverridingProcessor
+import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingProcessor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class DeprecatedMethodOverridingProcessor : MethodOverridingProcessor {
