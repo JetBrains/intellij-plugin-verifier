@@ -7,7 +7,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
@@ -98,7 +99,7 @@ class IdeDependencyFinderTest {
     assertTrue(dependenciesGraph.getMissingDependencyPaths().size == 1)
   }
 
-  private fun configureTestIdeDependencyFinder(ide: Ide): IdeDependencyFinder {
+  private fun configureTestIdeDependencyFinder(ide: Ide): DependencyFinder {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
       override fun getIdOfPluginDeclaringModule(moduleId: String) =
           if (moduleId == "externalModule") "externalPlugin" else null
@@ -137,7 +138,7 @@ class IdeDependencyFinderTest {
     }
 
     val pluginDetailsCache = PluginDetailsCache(10, pluginFileProvider, pluginDetailsProvider)
-    return IdeDependencyFinder(ide, pluginRepository, pluginDetailsCache)
+    return createIdeBundledOrPluginRepositoryDependencyFinder(ide, pluginRepository, pluginDetailsCache)
   }
 
 }

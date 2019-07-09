@@ -7,11 +7,14 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import java.io.Closeable
 
 /**
- * [Finds] [findPluginDependency] the [plugin dependencies] [PluginDependency]
- * in places specified by the implementations and creates
- * the corresponding [plugin details] [com.jetbrains.pluginverifier.plugin.PluginDetails].
+ * Searches for the plugin dependencies in places specified by the implementations and creates corresponding plugin details.
  */
 interface DependencyFinder {
+
+  /**
+   * Presentable name of this finder, like "bundled plugins of IDE IU-192.345".
+   */
+  val presentableName: String
 
   /**
    * Finds a plugin or a module that corresponds to the [dependency].

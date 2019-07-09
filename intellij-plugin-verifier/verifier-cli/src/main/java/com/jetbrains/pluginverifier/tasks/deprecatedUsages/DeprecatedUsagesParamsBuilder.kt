@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
@@ -46,7 +46,7 @@ class DeprecatedUsagesParamsBuilder(
       reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
     }
 
-    val dependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+    val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return DeprecatedUsagesParams(
         pluginsSet,
         OptionsParser.getJdkPath(opts),

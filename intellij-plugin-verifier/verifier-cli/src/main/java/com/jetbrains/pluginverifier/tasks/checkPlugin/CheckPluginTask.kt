@@ -25,17 +25,15 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckPluginTask(private val parameters: CheckPluginParams, private val pluginRepository: PluginRepository) : Task {
 
   /**
-   * Creates the [DependencyFinder] that:
-   * 1) Resolves the dependency among the verified plugins.
-   * The 'check-plugin' task searches dependencies among the verified plugins:
-   * suppose plugins A and B are verified simultaneously and A depends on B.
-   * Then B must be resolved to the local plugin when the plugin A is verified.
+   * Creates the [DependencyFinder] that firstly tries to resolve the dependency among the verified plugins.
    *
-   * 2) If not found, resolves the dependency using the [IdeDependencyFinder].
+   * The 'check-plugin' task searches for dependencies among the verified plugins:
+   * suppose plugins A and B are verified simultaneously and A depends on B.
+   * Then B must be resolved to the local plugin when the A is verified.
    */
   private fun createDependencyFinder(ideDescriptor: IdeDescriptor, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
     val localFinder = RepositoryDependencyFinder(parameters.pluginsSet.localRepository, LastVersionSelector(), pluginDetailsCache)
-    val ideDependencyFinder = IdeDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+    val ideDependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return CompositeDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }
 

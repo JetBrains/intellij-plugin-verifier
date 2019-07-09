@@ -15,6 +15,9 @@ class RepositoryDependencyFinder(
     private val pluginDetailsCache: PluginDetailsCache
 ) : DependencyFinder {
 
+  override val presentableName
+    get() = pluginRepository.toString()
+
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     if (dependency.isModule) {
       return resolveModuleDependency(dependency.id)
@@ -29,8 +32,7 @@ class RepositoryDependencyFinder(
   }
 
   private fun selectPluginVersion(pluginId: String): DependencyFinder.Result {
-    val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)
-    return when (selectResult) {
+    return when (val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)) {
       is PluginVersionSelector.Result.Selected -> {
         val cacheEntryResult = pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo)
         DependencyFinder.Result.DetailsProvided(cacheEntryResult)

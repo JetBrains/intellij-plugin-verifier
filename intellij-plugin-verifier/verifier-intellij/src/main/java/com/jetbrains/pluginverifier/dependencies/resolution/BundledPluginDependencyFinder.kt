@@ -9,8 +9,10 @@ import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPlugi
  * [DependencyFinder] that searches for plugins among bundled plugins of the [ide].
  */
 class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache: PluginDetailsCache) : DependencyFinder {
-
   private val bundledPluginsRepository = BundledPluginsRepository(ide)
+
+  override val presentableName
+    get() = "Bundled plugins of ${ide.version.asString()}"
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     val dependencyId = dependency.id

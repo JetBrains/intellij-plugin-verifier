@@ -10,6 +10,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
  * the [DependencyFinder.Result.NotFound] is returned.
  */
 class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFinder>) : DependencyFinder {
+  override val presentableName
+    get() = dependencyFinders.joinToString { it.presentableName }
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
     var lastNotFound: DependencyFinder.Result.NotFound? = null
@@ -20,7 +22,7 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
       }
       lastNotFound = findResult
     }
-    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency $dependency is not resolved")
+    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency $dependency is not resolved. It was searched in the following locations: $presentableName")
   }
 
 }

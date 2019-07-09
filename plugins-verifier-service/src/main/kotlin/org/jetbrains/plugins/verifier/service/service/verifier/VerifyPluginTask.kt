@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.resolution.IdeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
@@ -54,7 +54,7 @@ class VerifyPluginTask(
   }
 
   private fun checkPluginWithIde(ideDescriptor: IdeDescriptor, reportage: Reportage): VerificationResult {
-    val dependencyFinder = IdeDependencyFinder(
+    val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(
         ideDescriptor.ide,
         pluginRepository,
         pluginDetailsCache
