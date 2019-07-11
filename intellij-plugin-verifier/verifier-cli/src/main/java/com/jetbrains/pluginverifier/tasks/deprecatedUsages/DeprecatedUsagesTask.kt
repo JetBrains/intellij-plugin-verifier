@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
-import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val pluginRepository: PluginRepository) : Task {
@@ -40,7 +39,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
           ),
           VerificationTarget.Ide(ideDescriptor.ideVersion),
           ideDescriptor.brokenPlugins,
-          listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
+          listOf(DynamicallyLoadedFilter())
       )
     }
     reportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsSet.pluginsToCheck.size) + " is about to start")

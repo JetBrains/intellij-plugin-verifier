@@ -12,7 +12,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
-import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 /**
@@ -50,7 +49,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
 
       val tasks = arrayListOf<PluginVerifier>()
 
-      val classFilters = listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
+      val classFilters = listOf(DynamicallyLoadedFilter())
       for (pluginInfo in releasePluginsSet.pluginsToCheck) {
         tasks += PluginVerifier(
             pluginInfo,

@@ -25,7 +25,6 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
-import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import java.net.URL
 import java.nio.file.Files
@@ -74,7 +73,7 @@ class VerificationRunner {
                   ),
                   VerificationTarget.Ide(ideDescriptor.ideVersion),
                   ideDescriptor.brokenPlugins,
-                  listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
+                  listOf(DynamicallyLoadedFilter())
               )
           )
 

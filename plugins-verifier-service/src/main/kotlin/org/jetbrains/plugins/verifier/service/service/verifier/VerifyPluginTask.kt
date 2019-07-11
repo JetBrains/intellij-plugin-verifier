@@ -14,7 +14,6 @@ import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.verifiers.filter.BundledIdeClassesFilter
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
@@ -77,7 +76,7 @@ class VerifyPluginTask(
             ),
             VerificationTarget.Ide(ideDescriptor.ideVersion),
             ideDescriptor.brokenPlugins,
-            listOf(DynamicallyLoadedFilter(), BundledIdeClassesFilter)
+            listOf(DynamicallyLoadedFilter())
         )
     )
     return verifierExecutor
