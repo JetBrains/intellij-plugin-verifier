@@ -15,6 +15,7 @@ allprojects {
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
     maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
+    maven { url "https://dl.bintray.com/sergey-patrikeev/patrikeev-archiver"  }
   }
 }
 
