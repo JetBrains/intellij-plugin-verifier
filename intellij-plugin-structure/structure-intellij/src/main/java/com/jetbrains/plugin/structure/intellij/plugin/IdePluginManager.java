@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil;
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil;
 import kotlin.io.FilesKt;
 import kotlin.text.StringsKt;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -43,6 +44,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String META_INF = "META-INF";
+  public static final Long DEFAULT_OUTPUT_SIZE_LIMIT = FileUtils.ONE_GB;
 
   @NotNull
   private final ResourceResolver myResourceResolver;
@@ -348,10 +350,11 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private PluginCreator extractZipAndCreatePlugin(@NotNull File zipPlugin,
                                                   boolean validateDescriptor,
-                                                  @NotNull ResourceResolver resourceResolver) {
+                                                  @NotNull ResourceResolver resourceResolver,
+                                                  @Nullable Long outputSizeLimit) {
     ExtractorResult extractorResult;
     try {
-      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
+      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory, outputSizeLimit);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(), zipPlugin);
@@ -380,20 +383,30 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
                                                       boolean validateDescriptor,
                                                       @NotNull String descriptorPath) {
-    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath);
+    return createPlugin(pluginFile, validateDescriptor, descriptorPath, DEFAULT_OUTPUT_SIZE_LIMIT);
+  }
+
+
+  @NotNull
+  public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
+                                                      boolean validateDescriptor,
+                                                      @NotNull String descriptorPath,
+                                                      @Nullable Long outputSizeLimit) {
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, outputSizeLimit);
     return pluginCreator.getPluginCreationResult();
   }
 
   @NotNull
   private PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile,
                                                    boolean validateDescriptor,
-                                                   @NotNull String descriptorPath) {
+                                                   @NotNull String descriptorPath,
+                                                   @Nullable Long outputSizeLimit) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
     if (FileUtilKt.isZip(pluginFile)) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor, myResourceResolver);
+      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor, myResourceResolver, outputSizeLimit);
     } else {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
     }

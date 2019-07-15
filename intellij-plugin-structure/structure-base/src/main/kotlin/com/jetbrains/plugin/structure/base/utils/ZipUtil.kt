@@ -62,7 +62,7 @@ private fun createArchiver(extension: String) =
       else -> throw IllegalArgumentException("Unknown file extension: $extension")
     }
 
-fun File.extractTo(destination: File): File {
+fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
   if (!isFile) {
     throw IllegalArgumentException("The file $this is not an archive")
   }
@@ -70,7 +70,7 @@ fun File.extractTo(destination: File): File {
     throw IllegalArgumentException("Unsupported archive type: $this")
   }
   FileUtils.forceMkdir(destination)
-  val unArchiver = createUnArchiver(this)
+  val unArchiver = createUnArchiver(this, outputSizeLimit)
   unArchiver.enableLogging(ConsoleLogger(Logger.LEVEL_WARN, ""))
   unArchiver.destDirectory = destination
   checkIfInterrupted()
@@ -83,12 +83,14 @@ fun File.extractTo(destination: File): File {
   return destination
 }
 
-private fun createUnArchiver(archive: File): AbstractUnArchiver {
+private fun createUnArchiver(archive: File, outputSizeLimit: Long?): AbstractUnArchiver {
   val name = archive.name.toLowerCase()
   return when {
     name.endsWith(".tar.gz") -> TarGZipUnArchiver(archive)
     name.endsWith(".tar.bz2") -> TarBZip2UnArchiver(archive)
-    name.endsWith(".zip") -> ZipUnArchiver(archive)
+    name.endsWith(".zip") -> ZipUnArchiver(archive).apply {
+      setMaxOutputSize(outputSizeLimit)
+    }
     else -> throw RuntimeException("Unable to extract - unknown file extension: $name")
   }
 }

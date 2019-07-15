@@ -12,7 +12,7 @@ import java.nio.file.Files
 
 object PluginExtractor {
 
-  fun extractPlugin(pluginZip: File, extractDirectory: File): ExtractorResult {
+  fun extractPlugin(pluginZip: File, extractDirectory: File, outputSizeLimit: Long? = null): ExtractorResult {
     if (!pluginZip.isZip()) {
       throw IllegalArgumentException("Must be a zip archive: $pluginZip")
     }
@@ -21,7 +21,7 @@ object PluginExtractor {
     val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_${pluginZip.nameWithoutExtension}_").toFile()
 
     try {
-      pluginZip.extractTo(extractedPlugin)
+      pluginZip.extractTo(extractedPlugin, outputSizeLimit)
     } catch (e: Throwable) {
       FileUtils.deleteQuietly(extractedPlugin)
       throw e
