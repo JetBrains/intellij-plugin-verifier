@@ -130,7 +130,7 @@ class TeamCityResultPrinter(
     is VerificationResult.CompatibilityProblems -> compatibilityProblems
     is VerificationResult.MissingDependencies -> compatibilityProblems
     is VerificationResult.OK,
-    is VerificationResult.StructureWarnings,
+    is VerificationResult.CompatibilityWarnings,
     is VerificationResult.InvalidPlugin,
     is VerificationResult.NotFound,
     is VerificationResult.FailedToDownload -> emptySet()
@@ -219,7 +219,7 @@ class TeamCityResultPrinter(
         is VerificationResult.MissingDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingDependencies)
         is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
         is VerificationResult.OK,
-        is VerificationResult.StructureWarnings,
+        is VerificationResult.CompatibilityWarnings,
         is VerificationResult.NotFound,
         is VerificationResult.FailedToDownload -> {
         }

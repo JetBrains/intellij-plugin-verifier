@@ -22,8 +22,8 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureError
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.results.PluginStructureError
+import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -93,7 +93,7 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
         createResultsReporters(pluginVerificationDirectory),
         createMessageReporters(pluginVerificationDirectory),
         emptyList(),
-        createPluginStructureWarningsReporters(pluginVerificationDirectory),
+        createWarningsReporters(pluginVerificationDirectory),
         createPluginStructureErrorsReporters(pluginVerificationDirectory),
         createProblemReporters(pluginVerificationDirectory),
         createDependencyGraphReporters(pluginVerificationDirectory),
@@ -126,9 +126,9 @@ class VerificationReportage(private val outputOptions: OutputOptions) : Reportag
     }
   }
 
-  private fun createPluginStructureWarningsReporters(pluginVerificationDirectory: Path) =
-      buildList<Reporter<PluginStructureWarning>> {
-        add(FileReporter(pluginVerificationDirectory.resolve("plugin-warnings.txt")))
+  private fun createWarningsReporters(pluginVerificationDirectory: Path) =
+      buildList<Reporter<CompatibilityWarning>> {
+        add(FileReporter(pluginVerificationDirectory.resolve("warnings.txt")))
       }
 
   private fun createPluginStructureErrorsReporters(pluginVerificationDirectory: Path) =

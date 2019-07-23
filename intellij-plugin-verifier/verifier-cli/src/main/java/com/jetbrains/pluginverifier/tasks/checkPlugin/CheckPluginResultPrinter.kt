@@ -54,7 +54,7 @@ class CheckPluginResultPrinter(
         is VerificationResult.MissingDependencies -> it.compatibilityProblems  //some problems might have been caused by missing dependencies
         is VerificationResult.InvalidPlugin -> setOf(Any())
         is VerificationResult.OK,
-        is VerificationResult.StructureWarnings,
+        is VerificationResult.CompatibilityWarnings,
         is VerificationResult.NotFound,
         is VerificationResult.FailedToDownload -> emptySet()
       }

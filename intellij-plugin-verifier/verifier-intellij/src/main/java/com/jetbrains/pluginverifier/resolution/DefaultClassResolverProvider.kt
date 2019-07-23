@@ -2,8 +2,8 @@ package com.jetbrains.pluginverifier.resolution
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -14,8 +14,9 @@ import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
+import com.jetbrains.pluginverifier.results.DependenciesCycleWarning
+import com.jetbrains.pluginverifier.results.MistakenlyBundledIdePackagesWarning
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.caching
 import java.io.Closeable
@@ -66,29 +67,14 @@ class DefaultClassResolverProvider(
   private fun VerificationResult.addDependenciesWarnings(dependenciesGraph: DependenciesGraph) {
     val cycles = dependenciesGraph.getAllCycles()
     for (cycle in cycles) {
-      pluginStructureWarnings += PluginStructureWarning(
-          "The plugin is on a dependencies cycle: " + cycle.joinToString(separator = " -> ") + " -> " + cycle[0]
-      )
+      compatibilityWarnings += DependenciesCycleWarning(cycle)
     }
   }
 
   private fun findMistakenlyBundledIdeClasses(pluginResolver: Resolver, resultHolder: VerificationResult) {
     val idePackages = pluginResolver.allPackages.filter { KnownIdePackages.isKnownPackage(it) }
-    val message = buildString {
-      append("The plugin distribution contains IDE packages: ")
-      if (idePackages.size < 5) {
-        append(idePackages.joinToString())
-      } else {
-        append(idePackages.take(3).joinToString())
-        append(" and ${idePackages.size - 3} other")
-      }
-      append(". ")
-      append("Bundling IDE classes is considered bad practice and may lead to sophisticated compatibility problems. ")
-      append("Consider excluding IDE classes from the plugin distribution and reusing the IDE's classes. ")
-      append("If your plugin depends on classes of an IDE bundled plugin, explicitly specify dependency on that plugin instead of bundling it. ")
-    }
     if (idePackages.isNotEmpty()) {
-      resultHolder.pluginStructureWarnings += PluginStructureWarning(message)
+      resultHolder.compatibilityWarnings += MistakenlyBundledIdePackagesWarning(idePackages)
     }
   }
 

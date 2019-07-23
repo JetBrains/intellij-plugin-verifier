@@ -8,8 +8,6 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureError
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -24,8 +22,8 @@ sealed class VerificationResult : Cloneable {
   lateinit var plugin: PluginInfo
   lateinit var verificationTarget: VerificationTarget
 
-  val pluginStructureWarnings: MutableSet<PluginStructureWarning> = hashSetOf()
   val pluginStructureErrors: MutableSet<PluginStructureError> = hashSetOf()
+  val compatibilityWarnings: MutableSet<CompatibilityWarning> = hashSetOf()
   val compatibilityProblems: MutableSet<CompatibilityProblem> = hashSetOf()
   val deprecatedUsages: MutableSet<DeprecatedApiUsage> = hashSetOf()
   val experimentalApiUsages: MutableSet<ExperimentalApiUsage> = hashSetOf()
@@ -46,9 +44,9 @@ sealed class VerificationResult : Cloneable {
       get() = "OK"
   }
 
-  class StructureWarnings : VerificationResult() {
+  class CompatibilityWarnings : VerificationResult() {
     override val verificationVerdict
-      get() = "Found " + "warning".pluralizeWithNumber(pluginStructureWarnings.size)
+      get() = "Found " + "warning".pluralizeWithNumber(compatibilityWarnings.size)
   }
 
   class MissingDependencies : VerificationResult() {
@@ -104,8 +102,8 @@ sealed class VerificationResult : Cloneable {
     override val verificationVerdict
       get() = buildString {
         append("Found ").append(compatibilityProblems.size).append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
-        if (pluginStructureWarnings.isNotEmpty()) {
-          append(" and ").append(pluginStructureWarnings.size).append(" ").append("warning".pluralize(pluginStructureWarnings.size))
+        if (compatibilityWarnings.isNotEmpty()) {
+          append(" and ").append(compatibilityWarnings.size).append(" ").append("warning".pluralize(compatibilityWarnings.size))
         }
       }
   }

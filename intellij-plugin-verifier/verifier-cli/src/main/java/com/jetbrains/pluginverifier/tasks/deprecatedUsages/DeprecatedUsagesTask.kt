@@ -58,7 +58,7 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
 
   private fun VerificationResult.toDeprecatedUsages(): Set<DeprecatedApiUsage> = when (this) {
     is VerificationResult.OK -> deprecatedUsages
-    is VerificationResult.StructureWarnings -> deprecatedUsages
+    is VerificationResult.CompatibilityWarnings -> deprecatedUsages
     is VerificationResult.MissingDependencies -> deprecatedUsages
     is VerificationResult.CompatibilityProblems -> deprecatedUsages
     is VerificationResult.NotFound -> emptySet()

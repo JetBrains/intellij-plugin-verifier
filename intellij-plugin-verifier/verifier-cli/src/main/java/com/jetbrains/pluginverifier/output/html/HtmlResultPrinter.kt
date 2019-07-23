@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -76,7 +76,7 @@ class HtmlResultPrinter(
     if (results.any { it is VerificationResult.InvalidPlugin }) {
       return "badPlugin"
     }
-    if (results.any { it is VerificationResult.StructureWarnings }) {
+    if (results.any { it is VerificationResult.CompatibilityWarnings }) {
       return "warnings"
     }
     return "pluginOk"
@@ -85,7 +85,7 @@ class HtmlResultPrinter(
   private fun HtmlBuilder.printPluginResult(result: VerificationResult) {
     val resultStyle = when (result) {
       is VerificationResult.OK -> "updateOk"
-      is VerificationResult.StructureWarnings -> "warnings"
+      is VerificationResult.CompatibilityWarnings -> "warnings"
       is VerificationResult.MissingDependencies -> "missingDeps"
       is VerificationResult.CompatibilityProblems -> "updateHasProblems"
       is VerificationResult.InvalidPlugin -> "badPlugin"
@@ -111,7 +111,7 @@ class HtmlResultPrinter(
       +with(result) {
         when (this) {
           is VerificationResult.OK -> "OK"
-          is VerificationResult.StructureWarnings -> "${pluginStructureWarnings.size} " + "warning".pluralize(pluginStructureWarnings.size) + " found"
+          is VerificationResult.CompatibilityWarnings -> "${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " found"
           is VerificationResult.CompatibilityProblems -> "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size) + " found"
           is VerificationResult.MissingDependencies -> "Plugin has " +
               "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
@@ -128,7 +128,7 @@ class HtmlResultPrinter(
     with(result) {
       when (this) {
         is VerificationResult.OK -> +"No problems."
-        is VerificationResult.StructureWarnings -> printWarnings(pluginStructureWarnings)
+        is VerificationResult.CompatibilityWarnings -> printWarnings(compatibilityWarnings)
         is VerificationResult.CompatibilityProblems -> printProblems(compatibilityProblems)
         is VerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErrors.joinToString(), result.plugin.pluginId)
         is VerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", notFoundReason!!)
@@ -146,9 +146,9 @@ class HtmlResultPrinter(
     }
   }
 
-  private fun HtmlBuilder.printWarnings(warnings: Set<PluginStructureWarning>) {
+  private fun HtmlBuilder.printWarnings(warnings: Set<CompatibilityWarning>) {
     p {
-      warnings.forEach {
+      warnings.sortedBy { it.message }.forEach {
         +it.toString()
         br()
       }

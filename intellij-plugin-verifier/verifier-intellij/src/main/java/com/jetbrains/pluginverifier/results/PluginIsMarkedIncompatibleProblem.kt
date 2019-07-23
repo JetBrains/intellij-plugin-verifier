@@ -1,7 +1,8 @@
-package com.jetbrains.pluginverifier.results.problems
+package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import java.util.*
 
 /**

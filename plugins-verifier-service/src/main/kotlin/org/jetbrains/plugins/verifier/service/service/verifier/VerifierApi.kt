@@ -13,8 +13,8 @@ import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.location.*
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureError
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.results.PluginStructureError
+import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
@@ -25,7 +25,7 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
  */
 fun VerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): VerificationResults.VerificationResult {
   val problems = getCompatibilityProblems()
-  val pluginStructureWarnings = getPluginStructureWarnings().map { it.convertPluginStructureWarning() }
+  val warnings = getCompatibilityWarnings().map { it.convertCompatibilityWarning() }
   val pluginStructureErrors = (this as? VerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
   val deprecatedUsages = getDeprecatedUsages().map { it.convertDeprecatedApiUsage() }
   val experimentalApiUsages = getExperimentalApiUsages().map { it.convertExperimentalApiUsage() }
@@ -39,7 +39,7 @@ fun VerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): Veri
       .setIdeVersion((verificationTarget as VerificationTarget.Ide).ideVersion.asString())
       .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
       .setResultType(resultType)
-      .addAllPluginStructureWarnings(pluginStructureWarnings)
+      .addAllPluginStructureWarnings(warnings)
       .addAllPluginStructureErrors(pluginStructureErrors)
       .addAllDeprecatedUsages(deprecatedUsages)
       .addAllExperimentalApiUsages(experimentalApiUsages)
@@ -79,12 +79,12 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsOptional(dependency.isOptional)
         .build()
 
-private fun VerificationResult.getPluginStructureWarnings(): Set<PluginStructureWarning> = with(this) {
+private fun VerificationResult.getCompatibilityWarnings(): Set<CompatibilityWarning> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
-    is VerificationResult.StructureWarnings -> pluginStructureWarnings
-    is VerificationResult.MissingDependencies -> pluginStructureWarnings
-    is VerificationResult.CompatibilityProblems -> pluginStructureWarnings
+    is VerificationResult.CompatibilityWarnings -> compatibilityWarnings
+    is VerificationResult.MissingDependencies -> compatibilityWarnings
+    is VerificationResult.CompatibilityProblems -> compatibilityWarnings
     is VerificationResult.InvalidPlugin -> emptySet()
     is VerificationResult.NotFound -> emptySet()
     is VerificationResult.FailedToDownload -> emptySet()
@@ -94,7 +94,7 @@ private fun VerificationResult.getPluginStructureWarnings(): Set<PluginStructure
 private fun VerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> = with(this) {
   when (this) {
     is VerificationResult.OK -> deprecatedUsages
-    is VerificationResult.StructureWarnings -> deprecatedUsages
+    is VerificationResult.CompatibilityWarnings -> deprecatedUsages
     is VerificationResult.MissingDependencies -> deprecatedUsages
     is VerificationResult.CompatibilityProblems -> deprecatedUsages
     is VerificationResult.InvalidPlugin -> emptySet()
@@ -106,7 +106,7 @@ private fun VerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> = 
 private fun VerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUsage> = with(this) {
   when (this) {
     is VerificationResult.OK -> experimentalApiUsages
-    is VerificationResult.StructureWarnings -> experimentalApiUsages
+    is VerificationResult.CompatibilityWarnings -> experimentalApiUsages
     is VerificationResult.MissingDependencies -> experimentalApiUsages
     is VerificationResult.CompatibilityProblems -> experimentalApiUsages
     is VerificationResult.InvalidPlugin -> emptySet()
@@ -118,7 +118,7 @@ private fun VerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUs
 private fun VerificationResult.getCompatibilityProblems(): Set<CompatibilityProblem> = with(this) {
   when (this) {
     is VerificationResult.OK -> emptySet()
-    is VerificationResult.StructureWarnings -> emptySet()
+    is VerificationResult.CompatibilityWarnings -> emptySet()
     is VerificationResult.MissingDependencies -> compatibilityProblems
     is VerificationResult.CompatibilityProblems -> compatibilityProblems
     is VerificationResult.InvalidPlugin -> emptySet()
@@ -130,7 +130,7 @@ private fun VerificationResult.getCompatibilityProblems(): Set<CompatibilityProb
 private fun VerificationResult.getDependenciesGraph() = with(this) {
   when (this) {
     is VerificationResult.OK -> dependenciesGraph
-    is VerificationResult.StructureWarnings -> dependenciesGraph
+    is VerificationResult.CompatibilityWarnings -> dependenciesGraph
     is VerificationResult.MissingDependencies -> dependenciesGraph
     is VerificationResult.CompatibilityProblems -> dependenciesGraph
     is VerificationResult.InvalidPlugin -> null
@@ -215,7 +215,7 @@ private fun Location.presentableUsageLocation(): String = when (this) {
   )
 }
 
-private fun PluginStructureWarning.convertPluginStructureWarning() =
+private fun CompatibilityWarning.convertCompatibilityWarning() =
     VerificationResults.PluginStructureWarning.newBuilder()
         .setMessage(message)
         .build()
@@ -227,7 +227,7 @@ private fun PluginStructureError.convertPluginStructureError() =
 
 private fun VerificationResult.convertResultType() = when (this) {
   is VerificationResult.OK -> VerificationResults.VerificationResult.ResultType.OK
-  is VerificationResult.StructureWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
+  is VerificationResult.CompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
   is VerificationResult.CompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
   is VerificationResult.MissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
   is VerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN

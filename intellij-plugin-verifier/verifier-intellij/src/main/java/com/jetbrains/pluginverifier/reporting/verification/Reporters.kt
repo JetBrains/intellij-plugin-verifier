@@ -7,8 +7,8 @@ import com.jetbrains.pluginverifier.reporting.common.MessageAndException
 import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureError
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.results.PluginStructureError
+import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import java.io.Closeable
@@ -30,9 +30,9 @@ data class Reporters(
      */
     val progressReporters: List<Reporter<Double>> = emptyList(),
     /**
-     * Reporters of plugins' warnings [PluginStructureWarning]
+     * Reporters of plugins' warnings [CompatibilityWarning]
      */
-    val pluginStructureWarningsReporters: List<Reporter<PluginStructureWarning>> = emptyList(),
+    val warningsReporters: List<Reporter<CompatibilityWarning>> = emptyList(),
     /**
      * Reporters of plugins' errors [PluginStructureError]
      */
@@ -75,8 +75,8 @@ data class Reporters(
     problemsReporters.forEach { it.report(problem) }
   }
 
-  fun reportNewPluginStructureWarning(pluginStructureWarning: PluginStructureWarning) {
-    pluginStructureWarningsReporters.forEach { it.report(pluginStructureWarning) }
+  fun reportNewWarningDetected(warning: CompatibilityWarning) {
+    warningsReporters.forEach { it.report(warning) }
   }
 
   fun reportNewPluginStructureError(pluginStructureError: PluginStructureError) {
@@ -115,7 +115,7 @@ data class Reporters(
     messageReporters.forEach { it.closeLogged() }
     progressReporters.forEach { it.closeLogged() }
     problemsReporters.forEach { it.closeLogged() }
-    pluginStructureWarningsReporters.forEach { it.closeLogged() }
+    warningsReporters.forEach { it.closeLogged() }
     pluginStructureErrorsReporters.forEach { it.closeLogged() }
     dependenciesGraphReporters.forEach { it.closeLogged() }
     ignoredProblemReporters.forEach { it.closeLogged() }

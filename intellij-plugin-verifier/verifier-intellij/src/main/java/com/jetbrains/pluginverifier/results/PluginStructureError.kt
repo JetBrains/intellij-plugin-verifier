@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.results.structure
+package com.jetbrains.pluginverifier.results
 
 /**
  * Represents a fatal plugin's structure error,
