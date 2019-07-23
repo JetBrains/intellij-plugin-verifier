@@ -19,9 +19,9 @@ import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.resolution.ClassResolverProvider
 import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.problems.PluginIsMarkedIncompatibleProblem
-import com.jetbrains.pluginverifier.results.structure.PluginStructureError
-import com.jetbrains.pluginverifier.results.structure.PluginStructureWarning
+import com.jetbrains.pluginverifier.results.PluginIsMarkedIncompatibleProblem
+import com.jetbrains.pluginverifier.results.PluginStructureError
+import com.jetbrains.pluginverifier.results.PluginStructureWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingClassUsageProcessor
@@ -29,6 +29,7 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProc
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheritedVerifier
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
@@ -115,8 +116,8 @@ class PluginVerifier(
       r.compatibilityProblems.isNotEmpty() -> {
         VerificationResult.CompatibilityProblems()
       }
-      r.pluginStructureWarnings.isNotEmpty() -> {
-        VerificationResult.StructureWarnings()
+      r.compatibilityWarnings.isNotEmpty() -> {
+        VerificationResult.CompatibilityWarnings()
       }
       else -> {
         VerificationResult.OK()
@@ -124,7 +125,7 @@ class PluginVerifier(
     }.apply {
       plugin = r.plugin
       verificationTarget = r.verificationTarget
-      pluginStructureWarnings.addAll(r.pluginStructureWarnings)
+      compatibilityWarnings.addAll(r.compatibilityWarnings)
       pluginStructureErrors.addAll(r.pluginStructureErrors)
       compatibilityProblems.addAll(r.compatibilityProblems)
       deprecatedUsages.addAll(r.deprecatedUsages)
@@ -142,7 +143,7 @@ class PluginVerifier(
   private fun Reporters.reportResults(result: VerificationResult, ignoredProblems: IgnoredProblemsHolder) {
     reportVerificationResult(result)
     result.pluginStructureErrors.forEach { reportNewPluginStructureError(it) }
-    result.pluginStructureWarnings.forEach { reportNewPluginStructureWarning(it) }
+    result.compatibilityWarnings.forEach { reportNewWarningDetected(it) }
     result.compatibilityProblems.forEach { reportNewProblemDetected(it) }
     result.deprecatedUsages.forEach { reportDeprecatedUsage(it) }
     result.experimentalApiUsages.forEach { reportExperimentalApi(it) }
@@ -180,7 +181,7 @@ class PluginVerifier(
 
   private fun VerificationResult.addPluginErrorOrWarning(pluginProblem: PluginProblem) {
     if (pluginProblem.level == PluginProblem.Level.WARNING) {
-      pluginStructureWarnings += PluginStructureWarning(pluginProblem.message)
+      compatibilityWarnings += PluginStructureWarning(pluginProblem)
     } else {
       pluginStructureErrors += PluginStructureError(pluginProblem.message)
     }
@@ -218,7 +219,8 @@ class PluginVerifier(
               ExperimentalApiUsageProcessor(),
               DiscouragingClassUsageProcessor(),
               InternalApiUsageProcessor(),
-              OverrideOnlyMethodUsageProcessor()
+              OverrideOnlyMethodUsageProcessor(),
+              JavaPluginApiUsageProcessor()
           )
       )
       runByteCodeVerifier(checkClasses, context)

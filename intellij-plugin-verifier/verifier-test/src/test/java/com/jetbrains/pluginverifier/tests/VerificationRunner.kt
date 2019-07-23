@@ -1,14 +1,10 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.deleteLogged
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -29,71 +25,53 @@ import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import java.net.URL
 import java.nio.file.Files
-import java.nio.file.Path
 
 class VerificationRunner {
 
-  fun runPluginVerification(ideaFile: Path, pluginFile: Path): VerificationResult {
+  fun runPluginVerification(ide: Ide, idePlugin: IdePlugin): VerificationResult {
     val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
-    val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
-    val pluginInfo = LocalPluginInfo(idePlugin)
     val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()
     val tempFolder = Files.createTempDirectory("")
-    try {
-      val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-      val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-      return IdeDescriptor.create(ideaFile, IdeVersion.createIdeVersion("IU-145.500"), null).use { ideDescriptor ->
-        val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
-        val reportage = object : Reportage {
-          override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
-              Reporters()
+    tempFolder.toFile().deleteOnExit()
 
-          override fun logVerificationStage(stageMessage: String) = Unit
+    val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
+    val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
+    return IdeDescriptor.create(ide.idePath.toPath(), null, null).use { ideDescriptor ->
+      val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
+      val reportage = object : Reportage {
+        override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
+            Reporters()
 
-          override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
+        override fun logVerificationStage(stageMessage: String) = Unit
 
-          override fun close() = Unit
-        }
+        override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
 
-        JdkDescriptorsCache().use { jdkDescriptorCache ->
-          val tasks = listOf(
-              PluginVerifier(
-                  pluginInfo,
-                  reportage,
-                  emptyList(),
-                  true,
-                  pluginDetailsCache,
-                  DefaultClassResolverProvider(
-                      EmptyDependencyFinder,
-                      jdkDescriptorCache,
-                      jdkPath,
-                      ideDescriptor,
-                      externalClassesPackageFilter
-                  ),
-                  VerificationTarget.Ide(ideDescriptor.ideVersion),
-                  ideDescriptor.brokenPlugins,
-                  listOf(DynamicallyLoadedFilter())
-              )
-          )
-
-          VerifierExecutor(4, reportage).use { verifierExecutor ->
-            verifierExecutor.verify(tasks).single()
-          }
-        }
+        override fun close() = Unit
       }
-    } finally {
-      tempFolder.deleteLogged()
+
+      JdkDescriptorsCache().use { jdkDescriptorCache ->
+        val pluginVerifier = PluginVerifier(
+            LocalPluginInfo(idePlugin),
+            reportage,
+            emptyList(),
+            true,
+            pluginDetailsCache,
+            DefaultClassResolverProvider(
+                BundledPluginDependencyFinder(ide, pluginDetailsCache),
+                jdkDescriptorCache,
+                jdkPath,
+                ideDescriptor,
+                externalClassesPackageFilter
+            ),
+            VerificationTarget.Ide(ideDescriptor.ideVersion),
+            ideDescriptor.brokenPlugins,
+            listOf(DynamicallyLoadedFilter())
+        )
+        pluginVerifier.call()
+      }
     }
   }
 
-}
-
-private object EmptyDependencyFinder : DependencyFinder {
-  override val presentableName
-    get() = "empty"
-
-  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
-      DependencyFinder.Result.NotFound("Plugin ${dependency.id} is not found")
 }

@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.VerificationTarget
 import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
 import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.results.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
@@ -23,6 +24,8 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiRegistrar
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiRegistrar
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageRegistrar
+import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiRegistrar
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
@@ -45,7 +48,8 @@ data class PluginVerificationContext(
     ExperimentalApiRegistrar,
     OverrideOnlyRegistrar,
     InternalApiRegistrar,
-    NonExtendableApiRegistrar {
+    NonExtendableApiRegistrar,
+    JavaPluginApiUsageRegistrar {
   override val problemRegistrar
     get() = this
 
@@ -101,6 +105,12 @@ data class PluginVerificationContext(
   override fun registerOverrideOnlyMethodUsage(overrideOnlyMethodUsage: OverrideOnlyMethodUsage) {
     if (checkApiUsages) {
       verificationResult.overrideOnlyMethodUsages += overrideOnlyMethodUsage
+    }
+  }
+
+  override fun registerJavaPluginClassUsage(classUsage: JavaPluginClassUsage) {
+    if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
+      verificationResult.compatibilityWarnings += NoExplicitDependencyOnJavaPluginWarning(classUsage)
     }
   }
 
