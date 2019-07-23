@@ -17,8 +17,8 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescri
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test

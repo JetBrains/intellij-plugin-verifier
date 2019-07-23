@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.testUtils.contentBuilder
+package com.jetbrains.plugin.structure.base.contentBuilder
 
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName

@@ -4,8 +4,8 @@ import com.jetbrains.plugin.structure.classes.resolvers.ClassFilesResolver
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Rule

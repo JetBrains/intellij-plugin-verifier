@@ -7,7 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

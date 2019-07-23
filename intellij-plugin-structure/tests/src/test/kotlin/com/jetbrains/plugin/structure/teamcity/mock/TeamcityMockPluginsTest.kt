@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test

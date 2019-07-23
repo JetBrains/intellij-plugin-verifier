@@ -8,10 +8,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException

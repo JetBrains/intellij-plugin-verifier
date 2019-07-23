@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.testUtils.contentBuilder
+package com.jetbrains.plugin.structure.base.contentBuilder
 
 import java.io.File
 import java.lang.IllegalArgumentException

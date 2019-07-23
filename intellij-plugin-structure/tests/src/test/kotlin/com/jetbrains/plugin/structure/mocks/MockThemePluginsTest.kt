@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import com.jetbrains.plugin.structure.testUtils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,8 @@ class MockThemePluginsTest  {
         }
       }
 
-      file("theme.theme.json", """
+      file(
+          "theme.theme.json", """
         {
           "name": "theme",
           "dark": true,
@@ -39,9 +40,11 @@ class MockThemePluginsTest  {
           "editorScheme": "/theme.xml",
           "ui": {}
         }
-      """.trimIndent())
+      """.trimIndent()
+      )
 
-      file("relativeTheme.theme.json", """
+      file(
+          "relativeTheme.theme.json", """
         {
           "name": "relativeTheme",
           "dark": false,
@@ -50,7 +53,8 @@ class MockThemePluginsTest  {
           "ui": {
           }
         }
-      """.trimIndent())
+      """.trimIndent()
+      )
     }
 
     testMockPluginStructureAndConfiguration(pluginFile)
