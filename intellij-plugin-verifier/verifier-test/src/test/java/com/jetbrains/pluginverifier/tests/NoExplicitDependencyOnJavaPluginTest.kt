@@ -132,7 +132,6 @@ class NoExplicitDependencyOnJavaPluginTest {
     assertEquals(setOf("com.intellij.modules.java"), javaPlugin.definedModules)
 
     // Run verification
-    System.setProperty("intellij.plugin.verifier.add.implicit.dependencies.on.platform.plugins", "true")
     val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin)
 
     assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)

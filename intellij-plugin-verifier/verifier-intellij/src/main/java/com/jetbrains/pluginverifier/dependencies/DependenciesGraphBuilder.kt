@@ -28,7 +28,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     addTransitiveDependencies(depGraph, start)
-    if (shouldAddImplicitDependenciesOnPlatformPlugins() && plugin.pluginId != CORE_IDE_PLUGIN_ID) {
+    if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
       maybeAddOptionalJavaPluginDependency(plugin, depGraph,ide)
       maybeAddBundledPluginsWithUseIdeaClassLoader(depGraph, ide)
     }
@@ -84,23 +84,6 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
     return DepVertex(pluginDependency.id, dependencyResult)
   }
-
-  /**
-   * This option tells the verifier to supply Java and other platform plugins to the classpath of the verification.
-   * It is necessary to avoid a lot of problems like "Access to unresolved class <some class from Java plugin>".
-   *
-   * Java plugin used to be part of the platform. But starting from 2019.2 EAP it is a separate bundled plugin.
-   * Many plugins historically do not declare dependency onto Java plugin but require its classes.
-   * The dependency may be declared either via module 'com.intellij.modules.java' or via plugin id 'com.intellij.java'.
-   * IDE still loads Java plugin as part of the platform, using platform classloader, so plugins will continue to work.
-   * But this behaviour may be changed in future. We are going to notify external developers that their plugins
-   * reference Java-plugin classes without explicit dependency.
-   *
-   * [maybeAddOptionalJavaPluginDependency]
-   * [maybeAddBundledPluginsWithUseIdeaClassLoader]
-   */
-  private fun shouldAddImplicitDependenciesOnPlatformPlugins() =
-      System.getProperty("intellij.plugin.verifier.add.implicit.dependencies.on.platform.plugins") == "true"
 
   /**
    * If a plugin does not include any module dependency tags in its plugin.xml,
