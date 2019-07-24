@@ -7,8 +7,11 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
+import org.objectweb.asm.Handle
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 class MemberAccessVerifier : InstructionVerifier {
@@ -22,7 +25,37 @@ class MemberAccessVerifier : InstructionVerifier {
       val instruction = Instruction.fromOpcode(instructionNode.opcode) ?: return
       verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instruction, context)
     }
+
+    if (instructionNode is InvokeDynamicInsnNode) {
+      processInvokeDynamic(method, instructionNode, context)
+    }
   }
+
+  private fun processInvokeDynamic(
+      callerMethod: Method,
+      instructionNode: InvokeDynamicInsnNode,
+      context: VerificationContext
+  ) {
+    for (bsmArg in instructionNode.bsmArgs) {
+      if (bsmArg is Handle) {
+        val instruction = when (bsmArg.tag) {
+          Opcodes.H_INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
+          Opcodes.H_INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
+          Opcodes.H_INVOKEINTERFACE -> Instruction.INVOKE_INTERFACE
+          Opcodes.H_INVOKESTATIC -> Instruction.INVOKE_STATIC
+
+          Opcodes.H_PUTFIELD -> Instruction.PUT_FIELD
+          Opcodes.H_GETFIELD -> Instruction.GET_FIELD
+          Opcodes.H_PUTSTATIC -> Instruction.PUT_STATIC
+          Opcodes.H_GETSTATIC -> Instruction.GET_STATIC
+          else -> null
+        } ?: continue
+
+        verifyMemberAccess(callerMethod, bsmArg.owner, bsmArg.name, bsmArg.desc, instruction, context)
+      }
+    }
+  }
+
 
   private fun verifyMemberAccess(
       callerMethod: Method,
