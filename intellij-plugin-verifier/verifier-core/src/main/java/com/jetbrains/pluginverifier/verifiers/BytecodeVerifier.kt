@@ -37,11 +37,10 @@ class BytecodeVerifier(
   ) + additionalMethodVerifiers
 
   private val instructionVerifiers = listOf(
-      InvokeInstructionVerifier(),
+      MemberAccessVerifier(),
       TypeInstructionVerifier(),
       LdcInstructionVerifier(),
-      MultiANewArrayInstructionVerifier(),
-      FieldAccessInstructionVerifier()
+      MultiANewArrayInstructionVerifier()
   ) + additionalInstructionVerifiers
 
   @Throws(InterruptedException::class)

@@ -4,44 +4,18 @@ import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
 
-class InvokeInstructionVerifier : InstructionVerifier {
-  override fun verify(method: Method, instructionNode: AbstractInsnNode, context: VerificationContext) {
-    if (instructionNode !is MethodInsnNode) return
-    val instruction = Instruction.fromOpcode(instructionNode.opcode) ?: throw IllegalArgumentException()
-
-    val methodOwner = instructionNode.owner
-    if (methodOwner.startsWith("[")) {
-      val arrayType = methodOwner.extractClassNameFromDescriptor()
-      if (arrayType != null) {
-        context.classResolver.resolveClassChecked(arrayType, method, context)
-      }
-      return
-    }
-
-    val ownerClass = context.classResolver.resolveClassChecked(methodOwner, method, context)
-    if (ownerClass != null) {
-      val methodReference = MethodReference(methodOwner, instructionNode.name, instructionNode.desc)
-      InvokeInstructionVerifierImpl(method, ownerClass, methodReference, context, instruction).verify()
-    }
-  }
-
-}
-
-private class InvokeInstructionVerifierImpl(
-    val callerMethod: Method,
-    val ownerClass: ClassFile,
-    val methodReference: MethodReference,
-    val context: VerificationContext,
-    val instruction: Instruction
+class MethodInvokeInstructionVerifier(
+    private val callerMethod: Method,
+    private val methodOwnerClass: ClassFile,
+    private val methodReference: MethodReference,
+    private val context: VerificationContext,
+    private val instruction: Instruction
 ) {
 
   fun verify() {
@@ -78,7 +52,7 @@ private class InvokeInstructionVerifierImpl(
     is not the class symbolically referenced by the instruction, a NoSuchMethodError is thrown.
      */
     if (method.name == "<init>" && method.containingClassFile.name != methodReference.hostClass.className) {
-      registerMethodNotFoundProblem(ownerClass)
+      registerMethodNotFoundProblem(methodOwnerClass)
     }
 
     /*
@@ -111,7 +85,7 @@ private class InvokeInstructionVerifierImpl(
 
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
-    val classRef: ClassFile = if (method.name != "<init>" && (!ownerClass.isInterface && methodReference.hostClass.className == callerMethod.containingClassFile.superName) && callerMethod.containingClassFile.isSuperFlag) {
+    val classRef: ClassFile = if (method.name != "<init>" && (!methodOwnerClass.isInterface && methodReference.hostClass.className == callerMethod.containingClassFile.superName) && callerMethod.containingClassFile.isSuperFlag) {
       context.classResolver.resolveClassChecked(callerMethod.containingClassFile.superName!!, callerMethod, context)
           ?: return
     } else {
@@ -187,15 +161,6 @@ private class InvokeInstructionVerifierImpl(
     }
   }
 
-  private fun resolveMethod(): Method? {
-    val method = MethodResolver().resolveMethod(ownerClass, methodReference, instruction, callerMethod, context)
-    if (method != null) {
-      val usageLocation = callerMethod.location
-      context.apiUsageProcessors.forEach { it.processApiUsage(method, usageLocation, context) }
-    }
-    return method
-  }
-
   private fun registerMethodNotFoundProblem(ownerClass: ClassFile) {
     val methodOwnerHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(ownerClass)
     context.problemRegistrar.registerProblem(
@@ -206,6 +171,15 @@ private class InvokeInstructionVerifierImpl(
             methodOwnerHierarchy
         )
     )
+  }
+
+  private fun resolveMethod(): Method? {
+    val method = MethodResolver().resolveMethod(methodOwnerClass, methodReference, instruction, callerMethod, context)
+    if (method != null) {
+      val usageLocation = callerMethod.location
+      context.apiUsageProcessors.forEach { it.processApiUsage(method, usageLocation, context) }
+    }
+    return method
   }
 
 }

@@ -6,45 +6,17 @@ import com.jetbrains.pluginverifier.results.problems.InstanceAccessOfStaticField
 import com.jetbrains.pluginverifier.results.problems.StaticAccessOfInstanceFieldProblem
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
-import com.jetbrains.pluginverifier.verifiers.resolution.*
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.FieldResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
-/**
- * Verifies `getstatic`, `putstatic`, `getfield`, `putfield` instructions.
- */
-class FieldAccessInstructionVerifier : InstructionVerifier {
-
-  override fun verify(method: Method, instructionNode: AbstractInsnNode, context: VerificationContext) {
-    if (instructionNode !is FieldInsnNode) return
-    val instruction = Instruction.fromOpcode(instructionNode.opcode) ?: throw IllegalArgumentException()
-
-    val fieldOwner = instructionNode.owner
-    if (fieldOwner.startsWith("[")) {
-      val arrayType = fieldOwner.extractClassNameFromDescriptor()
-      if (arrayType != null) {
-        context.classResolver.resolveClassChecked(arrayType, method, context)
-      }
-      return
-    }
-
-    val ownerFile = context.classResolver.resolveClassChecked(fieldOwner, method, context)
-    if (ownerFile != null) {
-      val fieldReference = FieldReference(fieldOwner, instructionNode.name, instructionNode.desc)
-      FieldAccessInstructionVerifierImpl(method.containingClassFile, ownerFile, fieldReference, context, instruction, method).verify()
-    }
-  }
-
-}
-
-private class FieldAccessInstructionVerifierImpl(
-    val verifiedClass: ClassFile,
-    val fieldOwnerClass: ClassFile,
-    val fieldReference: FieldReference,
-    val context: VerificationContext,
-    val instruction: Instruction,
-    val callerMethod: Method
+class FieldAccessInstructionVerifier(
+    private val callerMethod: Method,
+    private val fieldOwnerClass: ClassFile,
+    private val fieldReference: FieldReference,
+    private val context: VerificationContext,
+    private val instruction: Instruction
 ) {
 
   fun verify() {
@@ -73,7 +45,7 @@ private class FieldAccessInstructionVerifierImpl(
     */
 
     if (field.isFinal) {
-      if (field.containingClassFile.name != verifiedClass.name) {
+      if (field.containingClassFile.name != callerMethod.containingClassFile.name) {
         context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_FIELD))
       }
     }
@@ -101,7 +73,7 @@ private class FieldAccessInstructionVerifierImpl(
     must occur in the <clinit> method of the current class. Otherwise, an IllegalAccessError is thrown.
     */
     if (field.isFinal) {
-      if (field.containingClassFile.name != verifiedClass.name) {
+      if (field.containingClassFile.name != callerMethod.containingClassFile.name) {
         context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_STATIC))
       }
     }
