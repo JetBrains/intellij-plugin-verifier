@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.usages.nonExtendable
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.location.ElementType
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.NO_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.WITH_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
@@ -13,12 +14,20 @@ class NonExtendableTypeInherited(
     override val usageLocation: ClassLocation
 ) : NonExtendableApiUsage() {
 
+  private val inheritanceVerb: String
+    get() = when {
+      apiElement.elementType == ElementType.INTERFACE && usageLocation.elementType == ElementType.INTERFACE -> "extended"
+      apiElement.elementType == ElementType.CLASS && usageLocation.elementType == ElementType.CLASS -> "extended"
+      apiElement.elementType == ElementType.INTERFACE && usageLocation.elementType == ElementType.CLASS -> "implemented"
+      else -> "inherited"
+    }
+
   override val shortDescription
-    get() = "Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)}' is inherited"
+    get() = "Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)}' is $inheritanceVerb"
 
   override val fullDescription: String
     get() = buildString {
-      append("Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}' is inherited by ")
+      append("Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}' is $inheritanceVerb by ")
       append("'" + usageLocation.formatUsageLocation() + "'. ")
       append("This " + apiElement.elementType.presentableName)
       append(" is marked with '@org.jetbrains.annotations.ApiStatus.NonExtendable', which indicates that the ")
