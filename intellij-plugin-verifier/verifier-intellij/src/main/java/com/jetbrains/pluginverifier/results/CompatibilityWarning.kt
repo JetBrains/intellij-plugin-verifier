@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.results
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 abstract class CompatibilityWarning {
@@ -25,16 +26,13 @@ data class DependenciesCycleWarning(val cycle: List<DependencyNode>) : Compatibi
 
 data class MistakenlyBundledIdePackagesWarning(private val idePackages: List<String>) : CompatibilityWarning() {
   override val message = buildString {
-    append("The plugin distribution contains IDE packages: ")
-    if (idePackages.size < 5) {
-      append(idePackages.joinToString())
-    } else {
-      append(idePackages.take(3).joinToString())
-      append(" and ${idePackages.size - 3} other")
-    }
+    append("The plugin distribution bundles IDE ")
+    append("package".pluralize(idePackages.size))
+    append(" ")
+    append(idePackages.joinToString { "'$it'" })
     append(". ")
-    append("Bundling IDE classes is considered bad practice and may lead to sophisticated compatibility problems. ")
-    append("Consider excluding IDE classes from the plugin distribution and reusing the IDE's classes. ")
+    append("Bundling IDE packages is considered bad practice and may lead to sophisticated compatibility problems. ")
+    append("Consider excluding these IDE packages from the plugin distribution. ")
     append("If your plugin depends on classes of an IDE bundled plugin, explicitly specify dependency on that plugin instead of bundling it. ")
   }
 }
