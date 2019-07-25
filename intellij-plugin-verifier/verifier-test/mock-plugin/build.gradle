@@ -1,5 +1,8 @@
 version = '1.0'
 
 dependencies {
-  implementation project(':verifier-test:before-idea') //compile with 'before-idea' and run tests with the 'after-idea'
+  //compile against 'before-idea' and verify against 'after-idea'
+
+  compileOnly project(':verifier-test:before-idea')
+  runtimeOnly project((':verifier-test:after-idea'))
 }
