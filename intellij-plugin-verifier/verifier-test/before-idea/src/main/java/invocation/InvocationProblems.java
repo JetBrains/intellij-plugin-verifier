@@ -8,4 +8,8 @@ public class InvocationProblems {
   public void deleted() {
 
   }
+
+  public void becamePrivate() {
+
+  }
 }
