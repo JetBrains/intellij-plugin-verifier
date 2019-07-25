@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class InternalMethodOverridingProcessor : MethodOverridingProcessor {
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
-    if (context is InternalApiRegistrar && overriddenMethod.isInternalApi()) {
+    if (context is InternalApiRegistrar && overriddenMethod.isInternalApi(context)) {
       context.registerInternalApiUsage(
           InternalMethodOverridden(
               overriddenMethod.location,

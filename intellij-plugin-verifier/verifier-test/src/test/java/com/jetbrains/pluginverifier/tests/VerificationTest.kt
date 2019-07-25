@@ -45,7 +45,7 @@ class VerificationTest {
   fun `check that all problems are found`() {
     val expectedProblems = parseExpectedProblems().toSet()
     val actualProblems = verificationResult.compatibilityProblems.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.PROBLEM)
     }
     assertSetsEqual(expectedProblems, actualProblems)
   }
@@ -54,7 +54,7 @@ class VerificationTest {
   fun `check that all deprecated API usages are found`() {
     val expectedDeprecated = parseExpectedDeprecated().toSet()
     val actualDeprecated = verificationResult.deprecatedUsages.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.DEPRECATED)
     }
     assertSetsEqual(expectedDeprecated, actualDeprecated)
   }
@@ -63,7 +63,7 @@ class VerificationTest {
   fun `check that all experimental API usages are found`() {
     val expectedExperimental = parseExpectedExperimental().toSet()
     val actualExperimental = verificationResult.experimentalApiUsages.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.EXPERIMENTAL)
     }
     assertSetsEqual(expectedExperimental, actualExperimental)
   }
@@ -72,7 +72,7 @@ class VerificationTest {
   fun `check that all override only violating method invocations are found`() {
     val expectedOverrideOnlyUsages = parseOverrideOnlyUsages().toSet()
     val actualOverrideOnly = verificationResult.overrideOnlyMethodUsages.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.OVERRIDE_ONLY)
     }
     assertSetsEqual(expectedOverrideOnlyUsages, actualOverrideOnly)
   }
@@ -81,7 +81,7 @@ class VerificationTest {
   fun `check that all internal API violating usages are found`() {
     val expectedInternalApiUsages = parseInternalApiUsages().toSet()
     val actualInternalUsages = verificationResult.internalApiUsages.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.INTERNAL)
     }
     assertSetsEqual(expectedInternalApiUsages, actualInternalUsages)
   }
@@ -90,7 +90,7 @@ class VerificationTest {
   fun `check that all non-extendable API violating usages are found`() {
     val expectedNonExtendableUsages = parseNonExtendable().toSet()
     val actualNonExtendableUsages = verificationResult.nonExtendableApiUsages.mapTo(hashSetOf()) {
-      DescriptionHolder(it.shortDescription, it.fullDescription)
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.NON_EXTENDABLE)
     }
     assertSetsEqual(expectedNonExtendableUsages, actualNonExtendableUsages)
   }

@@ -10,7 +10,10 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class ExperimentalApiUsageProcessor : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (context is ExperimentalApiRegistrar && classFileMember.isExperimentalApi()) {
+    if (context is ExperimentalApiRegistrar
+        && classFileMember.isExperimentalApi(context)
+        && classFileMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
+    ) {
       when (classFileMember) {
         is ClassFile -> {
           context.registerExperimentalApiUsage(

@@ -3,42 +3,54 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExtension
 import org.junit.Assert
 
-data class DescriptionHolder(val shortDescription: String, val fullDescription: String) {
+data class DescriptionHolder(val shortDescription: String, val fullDescription: String, val type: DescriptionType) {
   override fun toString() = buildString {
+    appendln("/*expected(${type.name})")
     appendln(shortDescription)
+    appendln()
     appendln(fullDescription)
+    appendln("*/")
   }
 }
 
+enum class DescriptionType {
+  PROBLEM,
+  DEPRECATED,
+  EXPERIMENTAL,
+  INTERNAL,
+  OVERRIDE_ONLY,
+  NON_EXTENDABLE;
+}
+
 fun parseExpectedProblems(): Sequence<DescriptionHolder> =
-    parseDescriptions("PROBLEM")
+    parseDescriptions(DescriptionType.PROBLEM)
 
 fun parseExpectedDeprecated(): Sequence<DescriptionHolder> =
-    parseDescriptions("DEPRECATED")
+    parseDescriptions(DescriptionType.DEPRECATED)
 
 fun parseExpectedExperimental(): Sequence<DescriptionHolder> =
-    parseDescriptions("EXPERIMENTAL")
+    parseDescriptions(DescriptionType.EXPERIMENTAL)
 
 fun parseInternalApiUsages(): Sequence<DescriptionHolder> =
-    parseDescriptions("INTERNAL")
+    parseDescriptions(DescriptionType.INTERNAL)
 
 fun parseOverrideOnlyUsages(): Sequence<DescriptionHolder> =
-    parseDescriptions("OVERRIDE_ONLY")
+    parseDescriptions(DescriptionType.OVERRIDE_ONLY)
 
 fun parseNonExtendable(): Sequence<DescriptionHolder> =
-    parseDescriptions("NON_EXTENDABLE")
+    parseDescriptions(DescriptionType.NON_EXTENDABLE)
 
 private val descriptionRegex = Regex("(.*?)\n\n(.*)", RegexOption.DOT_MATCHES_ALL)
 
-private fun parseDescriptions(type: String): Sequence<DescriptionHolder> =
+private fun parseDescriptions(type: DescriptionType): Sequence<DescriptionHolder> =
     sourceFiles()
         .flatMap { expectedBlocks(it, type) }
-        .map { block -> parseDescription(block) }
+        .map { block -> parseDescription(block, type) }
 
-private fun parseDescription(block: String): DescriptionHolder {
+private fun parseDescription(block: String, type: DescriptionType): DescriptionHolder {
   val matchResult = descriptionRegex.matchEntire(block)
   Assert.assertNotNull("Cannot be parsed:\n------\n$block\n------", matchResult)
-  return DescriptionHolder(matchResult!!.groupValues[1], matchResult.groupValues[2])
+  return DescriptionHolder(matchResult!!.groupValues[1], matchResult.groupValues[2], type)
 }
 
 private fun sourceFiles(): Sequence<String> =
@@ -47,7 +59,7 @@ private fun sourceFiles(): Sequence<String> =
         .asSequence()
         .map { it.readText() }
 
-private fun expectedBlocks(sourceCode: String, expectedType: String): Sequence<String> {
-  val regex = Regex("/\\*expected\\($expectedType\\)(.*?)\\*/", RegexOption.DOT_MATCHES_ALL)
+private fun expectedBlocks(sourceCode: String, expectedType: DescriptionType): Sequence<String> {
+  val regex = Regex("/\\*expected\\(${expectedType.name}\\)(.*?)\\*/", RegexOption.DOT_MATCHES_ALL)
   return regex.findAll(sourceCode).map { it.groupValues[1].trimIndent() }
 }

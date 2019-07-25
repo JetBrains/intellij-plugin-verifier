@@ -5,15 +5,12 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
 import java.util.*
 
-/**
- * Location of a programming element in the Java bytecode
- * such as [class][ClassLocation], [method][MethodLocation]
- * or [field][FieldLocation].
- */
 sealed class Location {
   abstract val presentableLocation: String
 
   abstract val elementType: ElementType
+
+  abstract val containingClass: ClassLocation
 
   final override fun toString() = presentableLocation
 }
@@ -44,6 +41,9 @@ data class ClassLocation(
         else -> ElementType.CLASS
       }
     }
+
+  override val containingClass
+    get() = this
 }
 
 data class FieldLocation(
@@ -66,6 +66,9 @@ data class FieldLocation(
 
   override val elementType: ElementType
     get() = ElementType.FIELD
+
+  override val containingClass
+    get() = hostClass
 }
 
 data class MethodLocation(
@@ -93,4 +96,7 @@ data class MethodLocation(
     } else {
       ElementType.METHOD
     }
+
+  override val containingClass
+    get() = hostClass
 }

@@ -18,6 +18,8 @@ interface ClassFile : ClassFileMember {
   val superName: String?
   val signature: String?
   val javaVersion: Int
+  val enclosingClassName: String?
+
   override val runtimeInvisibleAnnotations: List<AnnotationNode>
 
   val isAbstract: Boolean

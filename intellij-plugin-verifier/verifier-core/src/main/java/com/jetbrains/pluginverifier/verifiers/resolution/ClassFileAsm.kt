@@ -53,6 +53,15 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
       asmNode.version - 44
     }
 
+  override val enclosingClassName: String?
+    get() {
+      val outerClass = asmNode.outerClass
+      if (outerClass != null) {
+        return outerClass
+      }
+      return asmNode.innerClasses.find { it.name == name }?.outerName
+    }
+
   override val runtimeInvisibleAnnotations
     get() = asmNode.invisibleAnnotations.orEmpty()
 
