@@ -17,12 +17,24 @@ import org.objectweb.asm.tree.MethodInsnNode
 class MemberAccessVerifier : InstructionVerifier {
   override fun verify(method: Method, instructionNode: AbstractInsnNode, context: VerificationContext) {
     if (instructionNode is MethodInsnNode) {
-      val instruction = Instruction.fromOpcode(instructionNode.opcode) ?: return
+      val instruction = when (instructionNode.opcode) {
+        Opcodes.INVOKEVIRTUAL -> Instruction.INVOKE_VIRTUAL
+        Opcodes.INVOKESPECIAL -> Instruction.INVOKE_SPECIAL
+        Opcodes.INVOKEINTERFACE -> Instruction.INVOKE_INTERFACE
+        Opcodes.INVOKESTATIC -> Instruction.INVOKE_STATIC
+        else -> return
+      }
       verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instruction, context)
     }
 
     if (instructionNode is FieldInsnNode) {
-      val instruction = Instruction.fromOpcode(instructionNode.opcode) ?: return
+      val instruction = when (instructionNode.opcode) {
+        Opcodes.PUTFIELD -> Instruction.PUT_FIELD
+        Opcodes.GETFIELD -> Instruction.GET_FIELD
+        Opcodes.PUTSTATIC -> Instruction.PUT_STATIC
+        Opcodes.GETSTATIC -> Instruction.GET_STATIC
+        else -> return
+      }
       verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instruction, context)
     }
 
