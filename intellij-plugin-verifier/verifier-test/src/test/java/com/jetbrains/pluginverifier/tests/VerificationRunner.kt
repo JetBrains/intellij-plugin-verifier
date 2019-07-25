@@ -56,7 +56,6 @@ class VerificationRunner {
             LocalPluginInfo(idePlugin),
             reportage,
             emptyList(),
-            true,
             pluginDetailsCache,
             DefaultClassResolverProvider(
                 BundledPluginDependencyFinder(ide, pluginDetailsCache),

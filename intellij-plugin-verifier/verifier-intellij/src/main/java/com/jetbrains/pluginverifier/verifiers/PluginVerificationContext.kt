@@ -37,7 +37,6 @@ data class PluginVerificationContext(
     val verificationTarget: VerificationTarget,
     val verificationResult: VerificationResult,
     val ignoredProblems: IgnoredProblemsHolder,
-    val checkApiUsages: Boolean,
     val problemFilters: List<ProblemsFilter>,
     override val externalClassesPackageFilter: PackageFilter,
     override val classResolver: Resolver,
@@ -71,41 +70,31 @@ data class PluginVerificationContext(
   }
 
   override fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    if (checkApiUsages) {
-      val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
-      val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
-      if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
-        verificationResult.deprecatedUsages += deprecatedApiUsage
-      }
+    val deprecatedElementHost = deprecatedApiUsage.apiElement.getHostClass()
+    val usageHostClass = deprecatedApiUsage.usageLocation.getHostClass()
+    if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
+      verificationResult.deprecatedUsages += deprecatedApiUsage
     }
   }
 
   override fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
-    if (checkApiUsages) {
-      val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
-      val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
-      if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
-        verificationResult.experimentalApiUsages += experimentalApiUsage
-      }
+    val elementHostClass = experimentalApiUsage.apiElement.getHostClass()
+    val usageHostClass = experimentalApiUsage.usageLocation.getHostClass()
+    if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
+      verificationResult.experimentalApiUsages += experimentalApiUsage
     }
   }
 
   override fun registerInternalApiUsage(internalApiUsage: InternalApiUsage) {
-    if (checkApiUsages) {
-      verificationResult.internalApiUsages += internalApiUsage
-    }
+    verificationResult.internalApiUsages += internalApiUsage
   }
 
   override fun registerNonExtendableApiUsage(nonExtendableApiUsage: NonExtendableApiUsage) {
-    if (checkApiUsages) {
-      verificationResult.nonExtendableApiUsages += nonExtendableApiUsage
-    }
+    verificationResult.nonExtendableApiUsages += nonExtendableApiUsage
   }
 
   override fun registerOverrideOnlyMethodUsage(overrideOnlyMethodUsage: OverrideOnlyMethodUsage) {
-    if (checkApiUsages) {
-      verificationResult.overrideOnlyMethodUsages += overrideOnlyMethodUsage
-    }
+    verificationResult.overrideOnlyMethodUsages += overrideOnlyMethodUsage
   }
 
   override fun registerJavaPluginClassUsage(classUsage: JavaPluginClassUsage) {

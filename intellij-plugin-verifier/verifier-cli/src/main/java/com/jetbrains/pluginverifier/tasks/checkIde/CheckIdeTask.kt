@@ -25,7 +25,6 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
                 it,
                 reportage,
                 problemsFilters,
-                false,
                 pluginDetailsCache,
                 DefaultClassResolverProvider(
                     dependencyFinder,

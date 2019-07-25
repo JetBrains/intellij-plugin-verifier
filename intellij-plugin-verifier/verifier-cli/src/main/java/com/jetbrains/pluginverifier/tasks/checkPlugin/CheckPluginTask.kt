@@ -51,7 +51,6 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
               it,
               reportage,
               problemsFilters,
-              true,
               pluginDetailsCache,
               DefaultClassResolverProvider(
                   dependencyFinder,

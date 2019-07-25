@@ -28,7 +28,6 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
           it,
           reportage,
           emptyList(),
-          true,
           pluginDetailsCache,
           DefaultClassResolverProvider(
               dependencyFinder,

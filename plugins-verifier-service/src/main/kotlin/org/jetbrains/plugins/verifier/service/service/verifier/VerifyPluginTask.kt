@@ -65,7 +65,6 @@ class VerifyPluginTask(
             scheduledVerification.updateInfo,
             reportage,
             problemsFilters,
-            true,
             pluginDetailsCache,
             DefaultClassResolverProvider(
                 dependencyFinder,
