@@ -36,7 +36,7 @@ class FieldAccessInstructionVerifier(
     Otherwise, if the resolved field is a static field, putfield throws an IncompatibleClassChangeError.
      */
     if (field.isStatic) {
-      context.problemRegistrar.registerProblem(InstanceAccessOfStaticFieldProblem(field.location, callerMethod.location, Instruction.PUT_FIELD))
+      context.problemRegistrar.registerProblem(InstanceAccessOfStaticFieldProblem(field.location, callerMethod.location, instruction))
     }
 
     /*
@@ -46,7 +46,7 @@ class FieldAccessInstructionVerifier(
 
     if (field.isFinal) {
       if (field.containingClassFile.name != callerMethod.containingClassFile.name) {
-        context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_FIELD))
+        context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, instruction))
       }
     }
   }
@@ -56,7 +56,7 @@ class FieldAccessInstructionVerifier(
 
     //Otherwise, if the resolved field is a static field, getfield throws an IncompatibleClassChangeError.
     if (field.isStatic) {
-      context.problemRegistrar.registerProblem(InstanceAccessOfStaticFieldProblem(field.location, callerMethod.location, Instruction.GET_FIELD))
+      context.problemRegistrar.registerProblem(InstanceAccessOfStaticFieldProblem(field.location, callerMethod.location, instruction))
     }
   }
 
@@ -65,7 +65,7 @@ class FieldAccessInstructionVerifier(
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, putstatic throws an IncompatibleClassChangeError.
     if (!field.isStatic) {
-      context.problemRegistrar.registerProblem(StaticAccessOfInstanceFieldProblem(field.location, callerMethod.location, Instruction.PUT_STATIC))
+      context.problemRegistrar.registerProblem(StaticAccessOfInstanceFieldProblem(field.location, callerMethod.location, instruction))
     }
 
     /*
@@ -74,7 +74,7 @@ class FieldAccessInstructionVerifier(
     */
     if (field.isFinal) {
       if (field.containingClassFile.name != callerMethod.containingClassFile.name) {
-        context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, Instruction.PUT_STATIC))
+        context.problemRegistrar.registerProblem(ChangeFinalFieldProblem(field.location, callerMethod.location, instruction))
       }
     }
 
@@ -85,7 +85,7 @@ class FieldAccessInstructionVerifier(
 
     //Otherwise, if the resolved field is not a static (class) field or an interface field, getstatic throws an IncompatibleClassChangeError.
     if (!field.isStatic) {
-      context.problemRegistrar.registerProblem(StaticAccessOfInstanceFieldProblem(field.location, callerMethod.location, Instruction.GET_STATIC))
+      context.problemRegistrar.registerProblem(StaticAccessOfInstanceFieldProblem(field.location, callerMethod.location, instruction))
     }
   }
 
