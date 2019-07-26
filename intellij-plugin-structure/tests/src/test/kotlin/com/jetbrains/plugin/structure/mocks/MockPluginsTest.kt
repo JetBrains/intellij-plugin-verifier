@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.google.common.collect.HashMultiset
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -17,8 +19,6 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescri
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -441,14 +441,15 @@ class MockPluginsTest {
     val classFileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).classFileOrigin
     assertEquals(JarClassFileOrigin("compile-library.jar", PluginClassFileOrigin.CompileServer(plugin)), classFileOrigin)
 
-    assertEquals(setOf("com.example.service.Service"), singleResolver.implementedServiceProviders)
-    val implementationNames = singleResolver.readServiceImplementationNames("com.example.service.Service")
     assertEquals(
-        setOf(
-            "com.some.compile.library.One",
-            "com.some.compile.library.Two",
-            "com.some.compile.library.Three"
-        ), implementationNames
+        mapOf(
+            "com.example.service.Service" to setOf(
+                "com.some.compile.library.One",
+                "com.some.compile.library.Two",
+                "com.some.compile.library.Three"
+            )
+        ),
+        singleResolver.implementedServiceProviders
     )
   }
 

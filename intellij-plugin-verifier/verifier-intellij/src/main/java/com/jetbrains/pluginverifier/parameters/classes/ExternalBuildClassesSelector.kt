@@ -20,8 +20,8 @@ class ExternalBuildClassesSelector : ClassesSelector {
     val allServiceImplementations = hashSetOf<String>()
     for (jarFileResolver in jarFileResolvers) {
       jarFileResolver.implementedServiceProviders
-          .filter { isJetbrainsServiceProvider(it) }
-          .flatMapTo(allServiceImplementations) { jarFileResolver.readServiceImplementationNames(it) }
+          .filterKeys { isJetbrainsServiceProvider(it) }
+          .flatMapTo(allServiceImplementations) { it.value }
     }
 
     return compileServerResolvers

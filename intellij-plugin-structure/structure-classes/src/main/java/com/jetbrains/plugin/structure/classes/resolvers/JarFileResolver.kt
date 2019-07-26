@@ -29,7 +29,7 @@ class JarFileResolver(
 
   private val packageSet = PackageSet()
 
-  private val serviceProviders: MutableSet<String> = hashSetOf()
+  private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
 
   init {
     if (!Files.exists(ioJarFile)) {
@@ -56,19 +56,20 @@ class JarFileResolver(
         classes.add(className)
         packageSet.addPackagesOfClass(className)
       } else if (!entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2) {
-        serviceProviders.add(entryName.substringAfter(SERVICE_PROVIDERS_PREFIX))
+        val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
+        serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider)
       }
     }
   }
 
-  fun readServiceImplementationNames(serviceProvider: String): Set<String> {
+  private fun readServiceImplementationNames(serviceProvider: String): Set<String> {
     val entry = SERVICE_PROVIDERS_PREFIX + serviceProvider
     val jarEntry = jarFile.getJarEntry(entry) ?: return emptySet()
     val lines = jarFile.getInputStream(jarEntry).reader().readLines()
     return lines.map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
   }
 
-  val implementedServiceProviders: Set<String> = serviceProviders
+  val implementedServiceProviders: Map<String, Set<String>> = serviceProviders
 
   override val allPackages: Set<String>
     get() = packageSet.getAllPackages()
