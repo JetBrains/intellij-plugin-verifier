@@ -47,6 +47,8 @@ internal class IdePluginImpl : IdePlugin {
 
   override val extensions: Multimap<String, Element> = ArrayListMultimap.create()
 
+  val applicationListeners: MutableList<Element> = arrayListOf()
+
   override val icons: MutableList<PluginIcon> = arrayListOf()
 
   override val optionalDescriptors: MutableMap<String, IdePlugin> = hashMapOf()

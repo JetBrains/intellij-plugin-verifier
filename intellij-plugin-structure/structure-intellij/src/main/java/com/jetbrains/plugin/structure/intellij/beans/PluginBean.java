@@ -35,5 +35,6 @@ public class PluginBean {
   public List<String> modules = new ArrayList<>();
 
   @XmlTransient public Multimap<String, Element> extensions;
+  @XmlTransient public List<Element> applicationListeners;
 
 }

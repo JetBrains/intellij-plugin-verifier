@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
   override val level
@@ -103,4 +104,28 @@ class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId:
 
   override val message
     get() = "Optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
+}
+
+class ApplicationListenersAreAvailableOnlySince192(
+    private val sinceBuild: IdeVersion,
+    private val untilBuild: IdeVersion?
+) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "Element <applicationListeners> is available only since 2019.2 but the plugin can be installed in " +
+        if (untilBuild != null) {
+          sinceBuild.asStringWithoutProductCode() + "—" + untilBuild.asStringWithoutProductCode()
+        } else {
+          sinceBuild.asStringWithoutProductCode() + "+"
+        }
+}
+
+class ApplicationListenerMissingAttribute(private val attributeName: String) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "ApplicationListener must specify attribute $attributeName"
 }

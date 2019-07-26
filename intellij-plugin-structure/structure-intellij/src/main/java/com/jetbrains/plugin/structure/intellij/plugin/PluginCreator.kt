@@ -115,6 +115,7 @@ internal class PluginCreator {
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
     definedModules.addAll(bean.modules)
     extensions.putAll(bean.extensions)
+    applicationListeners.addAll(bean.applicationListeners)
     useIdeClassLoader = bean.useIdeaClassLoader == true
 
     val ideaVersionBean = bean.ideaVersion
@@ -253,7 +254,7 @@ internal class PluginCreator {
     }
   }
 
-  private fun validatePlugin(plugin: IdePlugin) {
+  private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
     dependencies.map { it.id }
         .groupingBy { it }
@@ -270,6 +271,22 @@ internal class PluginCreator {
     val untilBuild = plugin.untilBuild
     if (sinceBuild != null && untilBuild != null && sinceBuild > untilBuild) {
       registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
+    }
+
+    if (plugin.applicationListeners.isNotEmpty()) {
+      if (sinceBuild != null && sinceBuild.baselineVersion < 192) {
+        registerProblem(ApplicationListenersAreAvailableOnlySince192(sinceBuild, untilBuild))
+      } else {
+        val mandatoryAttributes = listOf("class", "topic")
+        for (applicationListener in plugin.applicationListeners) {
+          for (mandatoryAttribute in mandatoryAttributes) {
+            val hasAttribute = applicationListener.getAttributeValue(mandatoryAttribute) != null
+            if (!hasAttribute) {
+              registerProblem(ApplicationListenerMissingAttribute(mandatoryAttribute))
+            }
+          }
+        }
+      }
     }
   }
 

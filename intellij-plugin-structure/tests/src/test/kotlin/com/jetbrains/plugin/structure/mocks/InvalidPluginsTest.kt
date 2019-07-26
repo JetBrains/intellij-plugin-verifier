@@ -63,7 +63,7 @@ class InvalidPluginsTest {
     assertExpectedProblems(incorrect, listOf(UnableToReadJarFile()))
   }
 
-  @Test()
+  @Test
   fun `plugin file does not exist`() {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
@@ -485,6 +485,39 @@ class InvalidPluginsTest {
           description = "<description>$string65536</description>"
           changeNotes = "<change-notes>$string65536</change-notes>"
         }, expectedProblems
+    )
+  }
+
+  @Test
+  fun `application listeners are available only since 192`() {
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
+          additionalContent = """
+            <applicationListeners>
+              <listener class="SomeClass" topic="SomeTopic"/>            
+            </applicationListeners>
+          """.trimIndent()
+        },
+        listOf(ApplicationListenersAreAvailableOnlySince192(IdeVersion.createIdeVersion("181.1"), IdeVersion.createIdeVersion("193.1")))
+    )
+  }
+
+  @Test
+  fun `application listener missing attributes`() {
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="192.1"/>"""
+          additionalContent = """
+            <applicationListeners>
+              <listener irrelevantAttribute="42"/>            
+            </applicationListeners>
+          """.trimIndent()
+        },
+        listOf(
+            ApplicationListenerMissingAttribute("class"),
+            ApplicationListenerMissingAttribute("topic")
+        )
     )
   }
 }
