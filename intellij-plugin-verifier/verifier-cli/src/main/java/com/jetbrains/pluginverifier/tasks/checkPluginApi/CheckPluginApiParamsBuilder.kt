@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tasks.checkPluginApi
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
@@ -22,10 +22,10 @@ import java.nio.file.Paths
 class CheckPluginApiParamsBuilder(
     private val pluginRepository: PluginRepository,
     private val pluginDetailsProvider: PluginDetailsProvider,
-    private val reportage: Reportage
+    private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
-  companion object {
-    private const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
+  private companion object {
+    const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
 Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip kotlin-depends.txt"""
   }
 

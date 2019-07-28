@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
 import java.nio.file.Path
@@ -18,15 +17,11 @@ import java.nio.file.Path
  * - [ideResolver] - accessor of IDE class files
  * - [ideFileLock] - a lock to protect the IDE file from deletion.
  * It will be closed along with `this` descriptor.
- * - [brokenPlugins] - set of "broken" plugins marked to be
- * so in the `<IDE>/lib/resources.jar/brokenPlugins.txt` to prevent
- * startup errors.
  */
 data class IdeDescriptor(
     val ide: Ide,
     val ideResolver: Resolver,
-    val ideFileLock: FileLock?,
-    val brokenPlugins: Set<PluginIdAndVersion>
+    val ideFileLock: FileLock?
 ) : Closeable {
 
   /**
@@ -49,9 +44,8 @@ data class IdeDescriptor(
      */
     fun create(idePath: Path, ideVersion: IdeVersion?, ideFileLock: FileLock?): IdeDescriptor {
       val ide = IdeManager.createManager().createIde(idePath.toFile(), ideVersion)
-      val brokenPlugins = IdeResourceUtil.getBrokenPlugins(ide)
       val ideResolver = IdeResolverCreator.createIdeResolver(ide)
-      return IdeDescriptor(ide, ideResolver, ideFileLock, brokenPlugins)
+      return IdeDescriptor(ide, ideResolver, ideFileLock)
     }
 
   }

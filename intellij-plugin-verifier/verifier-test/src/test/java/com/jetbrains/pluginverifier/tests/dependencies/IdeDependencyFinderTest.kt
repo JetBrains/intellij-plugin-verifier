@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
+import com.jetbrains.pluginverifier.tests.mocks.createMockPluginInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule

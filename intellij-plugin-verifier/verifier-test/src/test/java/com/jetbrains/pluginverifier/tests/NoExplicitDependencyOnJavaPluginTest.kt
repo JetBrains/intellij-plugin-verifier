@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.Visibility
@@ -132,7 +133,7 @@ class NoExplicitDependencyOnJavaPluginTest {
     assertEquals(setOf("com.intellij.modules.java"), javaPlugin.definedModules)
 
     // Run verification
-    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin)
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
 
     assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
 

@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.File
@@ -16,4 +17,6 @@ data class MockIde(
   override fun getVersion() = ideVersion
 
   override fun getBundledPlugins() = bundledPlugins
+
+  override fun getIncompatiblePlugins(): Set<PluginIdAndVersion> = emptySet()
 }

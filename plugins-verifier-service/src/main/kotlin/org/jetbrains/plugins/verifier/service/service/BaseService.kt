@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
+import com.jetbrains.plugin.structure.base.utils.shutdownAndAwaitTermination
 import org.jetbrains.plugins.verifier.service.service.BaseService.State
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.slf4j.Logger
@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
  *
  * Service has a state which is one of [State] constants.
  * Initially, the service is in [State.NOT_STARTED] state and can be started
- * by [start] invocation. The service can be [_paused_] [pause] and [_resumed_] [resume] several times,
- * but it can be [_started_] [start] and [_stopped_] [stop] only once.
+ * by [start] invocation. The service can be pauses and resumed several times,
+ * but it can be started and stopped only once.
  *
  * Service implementations may want to de-allocate resources when the service is stopped. This can be done
  * by overriding the [onStop].

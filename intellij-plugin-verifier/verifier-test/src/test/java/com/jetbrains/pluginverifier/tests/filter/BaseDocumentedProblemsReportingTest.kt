@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.parameters.filtering.DocumentedProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblem
+import com.jetbrains.pluginverifier.filtering.DocumentedProblemsFilter
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -54,12 +54,9 @@ abstract class BaseDocumentedProblemsReportingTest {
 
         override val problemRegistrar: ProblemRegistrar
           get() = object : ProblemRegistrar {
-            override val allProblems: Set<CompatibilityProblem>
-              get() = emptySet()
 
             override fun registerProblem(problem: CompatibilityProblem) = Unit
 
-            override fun unregisterProblem(problem: CompatibilityProblem) = Unit
           }
 
         override val apiUsageProcessors: List<ApiUsageProcessor>

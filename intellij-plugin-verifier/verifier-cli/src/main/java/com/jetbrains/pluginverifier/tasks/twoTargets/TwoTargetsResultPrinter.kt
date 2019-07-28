@@ -6,7 +6,7 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
@@ -56,8 +56,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     val baseTarget = twoTargetsVerificationResults.baseTarget
     val newTarget = twoTargetsVerificationResults.newTarget
 
-    val newPluginIdToVerifications = ArrayListMultimap.create<String, VerificationResult>()
-    if (newTarget is VerificationTarget.Ide) {
+    val newPluginIdToVerifications = ArrayListMultimap.create<String, PluginVerificationResult>()
+    if (newTarget is PluginVerificationTarget.IDE) {
       for (result in twoTargetsVerificationResults.newResults) {
         newPluginIdToVerifications.put(result.plugin.pluginId, result)
       }
@@ -78,7 +78,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
             val testDetails = StringBuilder()
             for ((plugin, problems) in plugin2Problems.asMap()) {
-              val latestPluginVerification = if (newTarget is VerificationTarget.Ide) {
+              val latestPluginVerification = if (newTarget is PluginVerificationTarget.IDE) {
                 newPluginIdToVerifications.get(plugin.pluginId).find {
                   it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
                 }
@@ -110,8 +110,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
 
               val compatibilityNote = buildString {
-                if (baseTarget is VerificationTarget.Ide
-                    && newTarget is VerificationTarget.Ide
+                if (baseTarget is PluginVerificationTarget.IDE
+                    && newTarget is PluginVerificationTarget.IDE
                     && !plugin.isCompatibleWith(newTarget.ideVersion)
                 ) {
                   appendln(
@@ -184,10 +184,10 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency) =
       edges.find { it.dependency == dependency }?.to
 
-  private fun VerificationResult.getResolvedDependency(dependency: PluginDependency) =
-      dependenciesGraph.getResolvedDependency(dependency)
+  private fun PluginVerificationResult.getResolvedDependency(dependency: PluginDependency) =
+      (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
 
-  private fun getMissingDependenciesNote(baseResult: VerificationResult, newResult: VerificationResult): String {
+  private fun getMissingDependenciesNote(baseResult: PluginVerificationResult, newResult: PluginVerificationResult): String {
     val baseMissingDependencies = baseResult.getDirectMissingDependencies()
     val newMissingDependencies = newResult.getDirectMissingDependencies()
     if (newMissingDependencies.isEmpty()) {
@@ -218,10 +218,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
   }
 
-  private fun VerificationResult.getDirectMissingDependencies() = when (this) {
-    is VerificationResult.MissingDependencies -> directMissingDependencies
-    else -> emptyList()
-  }
+  private fun PluginVerificationResult.getDirectMissingDependencies() =
+      (this as? PluginVerificationResult.Verified)?.directMissingDependencies ?: emptyList()
 }
 
 private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInfo, TwoResults> {
@@ -233,15 +231,16 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
   for ((plugin, baseResult) in basePlugin2Result) {
     val newResult = newPlugin2Result[plugin]
     if (newResult == null
-        || baseResult is VerificationResult.NotFound
-        || baseResult is VerificationResult.FailedToDownload
-        || newResult is VerificationResult.NotFound
-        || newResult is VerificationResult.FailedToDownload
+        || baseResult is PluginVerificationResult.NotFound
+        || baseResult is PluginVerificationResult.FailedToDownload
+        || newResult is PluginVerificationResult.NotFound
+        || newResult is PluginVerificationResult.FailedToDownload
     ) {
       continue
     }
 
-    val newProblems = newResult.compatibilityProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
+    val allNewProblems = (newResult as? PluginVerificationResult.Verified)?.compatibilityProblems ?: emptySet()
+    val newProblems = allNewProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
     resultsComparisons[plugin] = TwoResults(plugin, baseResult, newResult, newProblems)
   }
   return resultsComparisons
@@ -249,16 +248,16 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
 
 private data class TwoResults(
     val plugin: PluginInfo,
-    val oldResult: VerificationResult,
-    val newResult: VerificationResult,
+    val oldResult: PluginVerificationResult,
+    val newResult: PluginVerificationResult,
     val newProblems: Set<CompatibilityProblem>
 )
 
 /**
  * Determines whether the [problem] is known to this verification result.
  */
-private fun VerificationResult.isKnownProblem(problem: CompatibilityProblem): Boolean {
-  val knownProblems = compatibilityProblems
+private fun PluginVerificationResult.isKnownProblem(problem: CompatibilityProblem): Boolean {
+  val knownProblems = (this as? PluginVerificationResult.Verified)?.compatibilityProblems ?: return false
   if (problem in knownProblems) {
     return true
   }

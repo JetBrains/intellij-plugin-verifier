@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService

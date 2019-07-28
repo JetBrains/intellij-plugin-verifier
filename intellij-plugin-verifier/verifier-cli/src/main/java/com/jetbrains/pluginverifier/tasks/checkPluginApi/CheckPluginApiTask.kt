@@ -1,12 +1,9 @@
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
-import com.jetbrains.pluginverifier.PluginVerifier
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
-import com.jetbrains.pluginverifier.createPluginResolver
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.*
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.resolution.PluginApiClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
@@ -15,20 +12,16 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
 
   override fun execute(
-      reportage: Reportage,
-      verifierExecutor: VerifierExecutor,
+      reportage: PluginVerificationReportage,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
   ): TwoTargetsVerificationResults {
     with(parameters) {
-      val baseTarget = VerificationTarget.Plugin(basePluginDetails.pluginInfo)
-      val newTarget = VerificationTarget.Plugin(newPluginDetails.pluginInfo)
+      val baseTarget = PluginVerificationTarget.Plugin(basePluginDetails.pluginInfo)
+      val newTarget = PluginVerificationTarget.Plugin(newPluginDetails.pluginInfo)
 
-      val basePluginResolver = basePluginDetails.pluginClassesLocations.createPluginResolver()
-      val newPluginResolver = newPluginDetails.pluginClassesLocations.createPluginResolver()
-
-      val baseClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, basePluginResolver, basePluginPackageFilter)
-      val newClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, newPluginResolver, basePluginPackageFilter)
+      val baseClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, basePluginDetails, basePluginPackageFilter)
+      val newClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptorCache, jdkPath, newPluginDetails, basePluginPackageFilter)
 
       val pluginsToCheck = pluginsSet.pluginsToCheck
 
@@ -37,12 +30,10 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
         verifiers.add(
             PluginVerifier(
                 pluginInfo,
-                reportage,
+                baseTarget,
                 problemsFilters,
                 pluginDetailsCache,
                 baseClassResolverProvider,
-                baseTarget,
-                emptySet(),
                 listOf(DynamicallyLoadedFilter())
             )
         )
@@ -50,18 +41,16 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
         verifiers.add(
             PluginVerifier(
                 pluginInfo,
-                reportage,
+                newTarget,
                 problemsFilters,
                 pluginDetailsCache,
                 newClassResolverProvider,
-                newTarget,
-                emptySet(),
                 listOf(DynamicallyLoadedFilter())
             )
         )
       }
 
-      val results = verifierExecutor.verify(verifiers)
+      val results = runSeveralVerifiers(reportage, verifiers)
       return TwoTargetsVerificationResults(
           baseTarget,
           results.filter { it.verificationTarget == baseTarget },

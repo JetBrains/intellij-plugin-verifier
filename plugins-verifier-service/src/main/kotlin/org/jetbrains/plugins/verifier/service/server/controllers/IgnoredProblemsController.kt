@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.server.controllers
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import com.jetbrains.pluginverifier.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.server.configuration.properties.AuthorizationProperties
 import org.jetbrains.plugins.verifier.service.server.exceptions.AuthenticationFailedException

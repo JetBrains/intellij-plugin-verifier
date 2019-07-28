@@ -9,14 +9,15 @@ import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
+import com.jetbrains.pluginverifier.reporting.DirectoryBasePluginVerificationReportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
-import com.jetbrains.pluginverifier.repository.cleanup.bytesToSpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
@@ -26,8 +27,6 @@ import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.deprecatedUsages.DeprecatedUsagesRunner
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -72,8 +71,6 @@ object PluginVerifierMain {
 
   private val ideDownloadDir: Path = verifierHomeDir.resolve("ides").createDir()
 
-  private val LOG: Logger = LoggerFactory.getLogger(PluginVerifierMain::class.java)
-
   @JvmStatic
   fun main(args: Array<String>) {
     val opts = CmdOpts()
@@ -108,7 +105,7 @@ object PluginVerifierMain {
     val ideFilesDiskSetting = getDiskSpaceSetting("plugin.verifier.cache.ide.dir.max.space", 10 * 1024)
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
 
-    VerificationReportage(outputOptions).use { reportage ->
+    DirectoryBasePluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
 
@@ -120,13 +117,10 @@ object PluginVerifierMain {
         ).build(opts, freeArgs).use { parameters ->
           reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-          val concurrentWorkers = getConcurrencyLevel()
           JdkDescriptorsCache().use { jdkDescriptorCache ->
-            VerifierExecutor(concurrentWorkers, reportage).use { verifierExecutor ->
-              runner
-                  .createTask(parameters, pluginRepository)
-                  .execute(reportage, verifierExecutor, jdkDescriptorCache, pluginDetailsCache)
-            }
+            runner
+                .createTask(parameters, pluginRepository)
+                .execute(reportage, jdkDescriptorCache, pluginDetailsCache)
           }
         }
       }
@@ -137,7 +131,7 @@ object PluginVerifierMain {
     }
   }
 
-  private fun VerificationReportage.reportDownloadStatistics(outputOptions: OutputOptions, pluginFilesBank: PluginFilesBank) {
+  private fun PluginVerificationReportage.reportDownloadStatistics(outputOptions: OutputOptions, pluginFilesBank: PluginFilesBank) {
     val downloadStatistics = pluginFilesBank.downloadStatistics
     val totalSpaceUsed = pluginFilesBank.getAvailablePluginFiles().fold(SpaceAmount.ZERO_SPACE) { acc, availableFile ->
       acc + availableFile.resourceInfo.weight.spaceAmount
@@ -154,24 +148,6 @@ object PluginVerifierMain {
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloadedAmount.to(SpaceUnit.BYTE).toLong())
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.total.space.used", totalSpaceUsed.to(SpaceUnit.BYTE).toLong())
     }
-  }
-
-  private fun getConcurrencyLevel(): Int {
-    val fromProperty = System.getProperty("intellij.plugin.verifier.concurrency.level")?.toIntOrNull()
-    if (fromProperty != null) {
-      check(0 < fromProperty && fromProperty <= 64) { "Concurrency level must be between 1 and 64, but was $fromProperty" }
-      return fromProperty
-    }
-
-    val availableMemory = Runtime.getRuntime().maxMemory().bytesToSpaceAmount()
-    val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
-    /**
-     * We assume that about 200 Mb is needed for an average verification
-     */
-    val maxByMemory = availableMemory.to(SpaceUnit.MEGA_BYTE).toLong() / 200
-    val concurrencyLevel = maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
-    LOG.info("Available memory: $availableMemory; Available CPU = $availableCpu; Concurrency level = $concurrencyLevel")
-    return concurrencyLevel
   }
 
   private fun getDiskSpaceSetting(propertyName: String, defaultAmount: Long): DiskSpaceSetting {

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server.views
 
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import com.jetbrains.pluginverifier.filtering.IgnoreCondition
 import org.springframework.web.servlet.View
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse

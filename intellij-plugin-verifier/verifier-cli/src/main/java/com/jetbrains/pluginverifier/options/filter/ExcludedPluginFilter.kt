@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.options.filter
 
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 
 /**

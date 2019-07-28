@@ -6,32 +6,30 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFileProvider
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
-import com.jetbrains.pluginverifier.reporting.verification.Reporters
+import com.jetbrains.pluginverifier.reporting.PluginReporters
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
-import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiParams
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiTask
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.Closeable
 import java.nio.file.Path
@@ -130,19 +128,24 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
 
     PluginDetailsCache(10, pluginFileProvider, createPluginDetailsProviderForTest()).use { pluginDetailsCache ->
       val checkTrunkApiTask = CheckTrunkApiTask(checkTrunkApiParams, EmptyPluginRepository)
-      val reportage = object : Reportage {
-        override fun createPluginReporters(pluginInfo: PluginInfo, verificationTarget: VerificationTarget) =
-            Reporters()
+      val reportage = object : PluginVerificationReportage {
+        override fun logPluginVerificationIgnored(
+            pluginInfo: PluginInfo,
+            verificationTarget: PluginVerificationTarget,
+            reason: String
+        ) = Unit
+
+        override fun createPluginReporters(
+            pluginInfo: PluginInfo,
+            verificationTarget: PluginVerificationTarget
+        ) = PluginReporters()
 
         override fun logVerificationStage(stageMessage: String) = Unit
 
-        override fun logPluginVerificationIgnored(pluginInfo: PluginInfo, verificationTarget: VerificationTarget, reason: String) = Unit
-
         override fun close() = Unit
       }
-      val verifierExecutor = VerifierExecutor(4, reportage)
 
-      val checkTrunkApiResult = checkTrunkApiTask.execute(reportage, verifierExecutor, JdkDescriptorsCache(), pluginDetailsCache)
+      val checkTrunkApiResult = checkTrunkApiTask.execute(reportage, JdkDescriptorsCache(), pluginDetailsCache)
 
       val releaseResults = checkTrunkApiResult.baseResults
       val trunkResults = checkTrunkApiResult.newResults
@@ -153,14 +156,11 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
   }
 
   private fun assertPluginsAreProperlyResolved(
-      releaseVerificationResult: VerificationResult,
-      trunkVerificationResult: VerificationResult
+      releaseVerificationResult: PluginVerificationResult,
+      trunkVerificationResult: PluginVerificationResult
   ) {
-    assertTrue(trunkVerificationResult is VerificationResult.OK)
-    assertTrue(releaseVerificationResult is VerificationResult.OK)
-
-    val trunkGraph = (trunkVerificationResult as VerificationResult.OK).dependenciesGraph
-    val releaseGraph = (releaseVerificationResult as VerificationResult.OK).dependenciesGraph
+    val trunkGraph = (trunkVerificationResult as PluginVerificationResult.Verified).dependenciesGraph
+    val releaseGraph = (releaseVerificationResult as PluginVerificationResult.Verified).dependenciesGraph
 
     assertEquals(
         listOf(
@@ -231,8 +231,8 @@ class CheckTrunkApiTaskDependenciesResolutionTest {
         pluginsSet,
         pluginsSet,
         TestJdkDescriptorProvider.getJdkPathForTests(),
-        IdeDescriptor(trunkIde, EmptyResolver, null, emptySet()),
-        IdeDescriptor(releaseIde, EmptyResolver, null, emptySet()),
+        IdeDescriptor(trunkIde, EmptyResolver, null),
+        IdeDescriptor(releaseIde, EmptyResolver, null),
         DefaultPackageFilter(emptyList()),
         emptyList(),
         false,

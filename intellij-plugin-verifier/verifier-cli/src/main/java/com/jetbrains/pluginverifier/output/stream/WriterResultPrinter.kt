@@ -1,28 +1,29 @@
 package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.*
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import java.io.PrintWriter
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
-  override fun printResults(results: List<VerificationResult>) {
-    results.forEach {
-      with(it) {
+  override fun printResults(results: List<PluginVerificationResult>) {
+    results.forEach { result ->
+      with(result) {
         return@forEach when (this) {
-          is VerificationResult.OK -> out.println("Against $verificationTarget the plugin $plugin is OK")
-          is VerificationResult.CompatibilityWarnings -> out.println("Against $verificationTarget the plugin $plugin has ${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " : ${compatibilityWarnings.sortedBy { it.message }.joinToString(separator = "\n")}")
-          is VerificationResult.CompatibilityProblems -> printProblemsResult(verificationTarget, plugin, this)
-          is VerificationResult.MissingDependencies -> printMissingDependencies(this, verificationTarget, plugin)
-          is VerificationResult.InvalidPlugin -> out.println("The plugin $plugin is broken: ${pluginStructureErrors.joinToString()}")
-          is VerificationResult.NotFound -> out.println("The plugin $plugin is not found: $notFoundReason")
-          is VerificationResult.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: $failedToDownloadReason")
+          is PluginVerificationResult.Verified -> when {
+            hasCompatibilityWarnings -> out.println("Against $verificationTarget the plugin $plugin has ${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " : ${compatibilityWarnings.sortedBy { it.message }.joinToString(separator = "\n")}")
+            hasCompatibilityProblems -> printProblemsResult(verificationTarget, plugin, this)
+            hasDirectMissingDependencies -> printMissingDependencies(this, verificationTarget, plugin)
+            else -> out.println("Against $verificationTarget the plugin $plugin is OK")
+          }
+          is PluginVerificationResult.InvalidPlugin -> out.println("The plugin $plugin is broken: ${pluginStructureErrors.joinToString()}")
+          is PluginVerificationResult.NotFound -> out.println("The plugin $plugin is not found: $notFoundReason")
+          is PluginVerificationResult.FailedToDownload -> out.println("The plugin $plugin is not downloaded from the Repository: $failedToDownloadReason")
         }
       }
     }
@@ -41,8 +42,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   }
 
   private fun printMissingDependencies(
-      verificationResult: VerificationResult.MissingDependencies,
-      verificationTarget: VerificationTarget,
+      verificationResult: PluginVerificationResult.Verified,
+      verificationTarget: PluginVerificationTarget,
       plugin: PluginInfo
   ) {
     if (verificationResult.directMissingDependencies.isNotEmpty()) {
@@ -56,15 +57,15 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   }
 
   private fun printProblemsResult(
-      verificationTarget: VerificationTarget,
+      verificationTarget: PluginVerificationTarget,
       plugin: PluginInfo,
-      verificationResult: VerificationResult.CompatibilityProblems
+      verificationResult: PluginVerificationResult.Verified
   ) {
     printProblems(verificationTarget, plugin, verificationResult.compatibilityProblems)
     printWarnings(verificationTarget, plugin, verificationResult.compatibilityWarnings)
   }
 
-  private fun printWarnings(verificationTarget: VerificationTarget, plugin: PluginInfo, warnings: Set<CompatibilityWarning>) {
+  private fun printWarnings(verificationTarget: PluginVerificationTarget, plugin: PluginInfo, warnings: Set<CompatibilityWarning>) {
     val warningsSize = warnings.size
     out.println("Against $verificationTarget the plugin $plugin has $warningsSize " + "warning".pluralize(warningsSize))
     warnings.sortedBy { it.message }.forEach {
@@ -72,7 +73,7 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
   }
 
-  private fun printProblems(verificationTarget: VerificationTarget, plugin: PluginInfo, problems: Set<CompatibilityProblem>) {
+  private fun printProblems(verificationTarget: PluginVerificationTarget, plugin: PluginInfo, problems: Set<CompatibilityProblem>) {
     val problemsCnt = problems.size
     out.println("Against $verificationTarget the plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
     problems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach {

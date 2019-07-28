@@ -5,7 +5,7 @@ import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
@@ -118,12 +118,13 @@ class StatusPage(
                         val limitTimes = minOf(5, attempts.size)
                         appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
                         for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {
-                          appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
-                          val reason = if (attempt.verificationResult is VerificationResult.FailedToDownload) {
-                            attempt.verificationResult.failedToDownloadReason
-                          } else {
-                            attempt.verificationResult.notFoundReason
-                          }
+                          val verificationResult = attempt.verificationResult
+                          appendln("    ${verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
+                          val reason = when (verificationResult) {
+                            is PluginVerificationResult.FailedToDownload -> verificationResult.failedToDownloadReason
+                            is PluginVerificationResult.NotFound -> verificationResult.notFoundReason
+                            else -> null
+                          } ?: continue
                           appendln("        $reason")
                         }
                       }
@@ -178,7 +179,7 @@ class StatusPage(
             td { +DATE_FORMAT.format(startTime) }
             td { +state.toString() }
             td { +progress.text }
-            td { +kotlin.String.format("%.2f", progress.fraction) }
+            td { +String.format("%.2f", progress.fraction) }
             td { +elapsedTime.toMillis().toString() }
           }
         }

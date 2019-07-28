@@ -1,18 +1,18 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 
 class CheckPluginParamsBuilder(
     val pluginRepository: PluginRepository,
-    val reportage: Reportage
+    val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
@@ -46,8 +46,8 @@ class CheckPluginParamsBuilder(
     }
 
     pluginsSet.ignoredPlugins.forEach { (plugin, reason) ->
-      ideVersions.forEach { ideVersion ->
-        reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
+      ideDescriptors.forEach { ideDescriptor ->
+        reportage.logPluginVerificationIgnored(plugin, PluginVerificationTarget.IDE(ideDescriptor.ide), reason)
       }
     }
 

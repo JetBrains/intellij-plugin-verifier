@@ -1,18 +1,13 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsFilter
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
-import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.VerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
@@ -41,32 +36,12 @@ class VerifierService(
     private val verificationResultsFilter: VerificationResultFilter,
     private val pluginRepository: PluginRepository,
     private val serviceDAO: ServiceDAO,
-    concurrency: Int,
     period: Long
 ) : BaseService("VerifierService", 0, period, TimeUnit.SECONDS, taskManager) {
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
 
   private val lastVerifiedDate = hashMapOf<ScheduledVerification, Instant>()
-
-  private val reportage = object : Reportage {
-    override fun createPluginReporters(
-        pluginInfo: PluginInfo,
-        verificationTarget: VerificationTarget
-    ) = Reporters()
-
-    override fun logVerificationStage(stageMessage: String) = Unit
-
-    override fun logPluginVerificationIgnored(
-        pluginInfo: PluginInfo,
-        verificationTarget: VerificationTarget,
-        reason: String
-    ) = Unit
-
-    override fun close() = Unit
-  }
-
-  private val verifierExecutor = VerifierExecutor(concurrency, reportage)
 
   override fun doServe() {
     val allScheduledVerifications = try {
@@ -104,14 +79,12 @@ class VerifierService(
 
     val task = VerifyPluginTask(
         scheduledVerification,
-        verifierExecutor,
         jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
         jdkDescriptorsCache,
         pluginRepository,
-        ignoreProblemsFilters,
-        reportage
+        ignoreProblemsFilters
     )
 
     val taskDescriptor = taskManager.enqueue(
@@ -150,8 +123,8 @@ class VerifierService(
   }
 
   //Do not synchronize: results sending is performed from background threads.
-  private fun VerificationResult.onSuccess(taskDescriptor: TaskDescriptor, scheduledVerification: ScheduledVerification) {
-    logVerificationResult(scheduledVerification)
+  private fun PluginVerificationResult.onSuccess(taskDescriptor: TaskDescriptor, scheduledVerification: ScheduledVerification) {
+    logger.info("Finished verification $scheduledVerification: $verificationVerdict")
     if (verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)) {
       try {
         verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
@@ -171,16 +144,5 @@ class VerifierService(
     }
   }
 
-  private fun VerificationResult.logVerificationResult(scheduledVerification: ScheduledVerification) {
-    val message = "Finished verification $scheduledVerification: $verificationVerdict"
-    if (this is VerificationResult.FailedToDownload) {
-      logger.info(message, failedToDownloadError!!)
-    } else {
-      logger.info(message)
-    }
-  }
-
-  override fun onStop() {
-    verifierExecutor.close()
-  }
+  override fun onStop() = Unit
 }

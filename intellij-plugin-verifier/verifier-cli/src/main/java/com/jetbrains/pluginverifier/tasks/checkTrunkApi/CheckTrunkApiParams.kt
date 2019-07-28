@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock

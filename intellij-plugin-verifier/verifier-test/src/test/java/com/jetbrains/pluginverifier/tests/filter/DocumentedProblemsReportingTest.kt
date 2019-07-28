@@ -2,10 +2,10 @@ package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocClassRemoved
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocMethodParameterTypeChanged
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocMethodReturnTypeChanged
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocPackageRemoved
+import com.jetbrains.pluginverifier.filtering.documented.DocClassRemoved
+import com.jetbrains.pluginverifier.filtering.documented.DocMethodParameterTypeChanged
+import com.jetbrains.pluginverifier.filtering.documented.DocMethodReturnTypeChanged
+import com.jetbrains.pluginverifier.filtering.documented.DocPackageRemoved
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation

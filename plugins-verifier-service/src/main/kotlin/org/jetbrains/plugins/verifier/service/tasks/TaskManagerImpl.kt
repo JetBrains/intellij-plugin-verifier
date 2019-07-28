@@ -3,7 +3,7 @@ package org.jetbrains.plugins.verifier.service.tasks
 import com.google.common.collect.EvictingQueue
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
+import com.jetbrains.plugin.structure.base.utils.shutdownAndAwaitTermination
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.concurrent.*
@@ -30,6 +30,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
   /**
    * Last 128 finished tasks.
    */
+  @Suppress("UnstableApiUsage")
   private val _finishedTasks = EvictingQueue.create<TaskDescriptor>(128)
 
   /**

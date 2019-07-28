@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -63,13 +63,13 @@ class VerificationResultFilter {
 
   @Synchronized
   fun shouldSendVerificationResult(
-      verificationResult: VerificationResult,
+      verificationResult: PluginVerificationResult,
       verificationEndTime: Instant,
       scheduledVerification: ScheduledVerification
   ): Boolean {
     doCleanup()
     val updateInfo = scheduledVerification.updateInfo
-    if (verificationResult !is VerificationResult.NotFound && verificationResult !is VerificationResult.FailedToDownload) {
+    if (verificationResult !is PluginVerificationResult.NotFound && verificationResult !is PluginVerificationResult.FailedToDownload) {
       //Clear failed attempts for plugins that were successfully downloaded and verified.
       _failedFetchAttempts.remove(updateInfo)
       return true
@@ -92,7 +92,7 @@ class VerificationResultFilter {
   }
 
   data class VerificationAttempt(
-      val verificationResult: VerificationResult,
+      val verificationResult: PluginVerificationResult,
       val scheduledVerification: ScheduledVerification,
       val verificationEndTime: Instant
   )

@@ -2,7 +2,7 @@ package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
 import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
-import com.jetbrains.pluginverifier.parameters.filtering.documented.*
+import com.jetbrains.pluginverifier.filtering.documented.*
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation

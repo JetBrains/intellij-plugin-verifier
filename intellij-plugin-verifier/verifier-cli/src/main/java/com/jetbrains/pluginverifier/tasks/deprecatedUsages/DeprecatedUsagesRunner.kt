@@ -3,14 +3,14 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
 /**
- * [Runner] [TaskRunner] of the ['deprecated-usages'] [DeprecatedUsagesTask] command.
+ * Runner of the ['deprecated-usages'] [DeprecatedUsagesTask] command.
  */
 class DeprecatedUsagesRunner : CommandRunner() {
   override val commandName: String = "deprecated-usages"
@@ -19,7 +19,7 @@ class DeprecatedUsagesRunner : CommandRunner() {
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
       pluginDetailsCache: PluginDetailsCache,
-      reportage: Reportage
+      reportage: PluginVerificationReportage
   ) = DeprecatedUsagesParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
 
   override fun createTask(

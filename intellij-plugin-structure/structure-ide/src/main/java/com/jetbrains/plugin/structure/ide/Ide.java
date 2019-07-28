@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
@@ -69,5 +70,11 @@ public abstract class Ide {
    */
   @NotNull
   public abstract File getIdePath();
+
+  /**
+   * Plugins versions marked as incompatible with this IDE.
+   */
+  @NotNull
+  public abstract Set<PluginIdAndVersion> getIncompatiblePlugins();
 
 }

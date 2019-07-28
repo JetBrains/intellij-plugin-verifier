@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -7,7 +8,6 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import org.junit.Assert
 import org.junit.Test
 

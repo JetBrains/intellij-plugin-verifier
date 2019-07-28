@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.pluginverifier.PluginVerifier
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
+import com.jetbrains.pluginverifier.*
 import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
@@ -38,18 +36,17 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
   }
 
   override fun execute(
-      reportage: Reportage,
-      verifierExecutor: VerifierExecutor,
+      reportage: PluginVerificationReportage,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
   ): CheckPluginResult {
     with(parameters) {
-      val tasks = ideDescriptors.flatMap { ideDescriptor ->
+      val verifiers = ideDescriptors.flatMap { ideDescriptor ->
         val dependencyFinder = createDependencyFinder(ideDescriptor, pluginDetailsCache)
         pluginsSet.pluginsToCheck.map {
           PluginVerifier(
               it,
-              reportage,
+              PluginVerificationTarget.IDE(ideDescriptor.ide),
               problemsFilters,
               pluginDetailsCache,
               DefaultClassResolverProvider(
@@ -59,13 +56,11 @@ class CheckPluginTask(private val parameters: CheckPluginParams, private val plu
                   ideDescriptor,
                   externalClassesPackageFilter
               ),
-              VerificationTarget.Ide(ideDescriptor.ideVersion),
-              ideDescriptor.brokenPlugins,
               listOf(DynamicallyLoadedFilter())
           )
         }
       }
-      val results = verifierExecutor.verify(tasks)
+      val results = runSeveralVerifiers(reportage, verifiers)
       return CheckPluginResult(
           pluginsSet.invalidPluginFiles,
           results

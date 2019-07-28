@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
@@ -24,7 +24,7 @@ class CheckPluginResultPrinter(
         printOnStdout(this)
       }
 
-      results.groupBy { it.verificationTarget }.forEach { verificationTarget, resultsOfIde ->
+      results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
         HtmlResultPrinter(
             verificationTarget,
             outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
@@ -50,13 +50,9 @@ class CheckPluginResultPrinter(
   private fun CheckPluginResult.setTeamCityBuildStatus(tcLog: TeamCityLog) {
     val totalProblemsNumber = results.flatMap {
       when (it) {
-        is VerificationResult.CompatibilityProblems -> it.compatibilityProblems
-        is VerificationResult.MissingDependencies -> it.compatibilityProblems  //some problems might have been caused by missing dependencies
-        is VerificationResult.InvalidPlugin -> setOf(Any())
-        is VerificationResult.OK,
-        is VerificationResult.CompatibilityWarnings,
-        is VerificationResult.NotFound,
-        is VerificationResult.FailedToDownload -> emptySet()
+        is PluginVerificationResult.InvalidPlugin -> setOf(Any())
+        is PluginVerificationResult.Verified -> it.compatibilityProblems
+        else -> emptySet()
       }
     }.distinct().size
     if (totalProblemsNumber > 0) {

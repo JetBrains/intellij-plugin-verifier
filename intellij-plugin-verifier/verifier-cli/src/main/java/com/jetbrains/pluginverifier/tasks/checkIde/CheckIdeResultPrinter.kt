@@ -1,8 +1,9 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.ide.IdeResourceUtil
+import com.jetbrains.pluginverifier.*
+import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -10,7 +11,6 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
@@ -28,16 +28,21 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       }
 
       HtmlResultPrinter(
-          VerificationTarget.Ide(ideVersion),
-          outputOptions.getTargetReportDirectory(VerificationTarget.Ide(ideVersion)).resolve("report.html")
+          PluginVerificationTarget.IDE(ide),
+          outputOptions.getTargetReportDirectory(PluginVerificationTarget.IDE(ide)).resolve("report.html")
       ).printResults(results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
-            .filter { it !is VerificationResult.OK && it !is VerificationResult.CompatibilityWarnings }
+            .filterNot { it is PluginVerificationResult.Verified && (it.isOk || it.hasCompatibilityWarnings) }
             .map { it.plugin }
             .distinct()
-        IdeResourceUtil.dumbBrokenPluginsList(File(outputOptions.dumpBrokenPluginsFile), brokenPlugins)
+
+        File(outputOptions.dumpBrokenPluginsFile).writeText(
+            IdeIncompatiblePluginsUtil
+                .dumpIncompatiblePluginsLines(brokenPlugins.map { PluginIdAndVersion(it.pluginId, it.version) })
+                .joinToString(separator = "\n")
+        )
       }
     }
   }
@@ -50,27 +55,16 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       val problems = hashSetOf<CompatibilityProblem>()
       val brokenPlugins = hashSetOf<PluginInfo>()
       for (result in results) {
-        when (result) {
-          is VerificationResult.CompatibilityProblems -> {
-            problems += result.compatibilityProblems
-            brokenPlugins += result.plugin
-          }
-          is VerificationResult.MissingDependencies -> {
-            problems += result.compatibilityProblems
-            brokenPlugins += result.plugin
-          }
-          is VerificationResult.OK,
-          is VerificationResult.CompatibilityWarnings,
-          is VerificationResult.InvalidPlugin,
-          is VerificationResult.NotFound,
-          is VerificationResult.FailedToDownload -> Unit
+        if (result is PluginVerificationResult.Verified && (result.hasCompatibilityProblems || result.hasDirectMissingDependencies)) {
+          problems += result.compatibilityProblems
+          brokenPlugins += result.plugin
         }
       }
       val problemsNumber = problems.distinctBy { it.shortDescription }.size
       if (problemsNumber > 0) {
-        tcLog.buildStatusFailure("IDE $ideVersion has " + "problem".pluralizeWithNumber(problemsNumber) + " affecting " + "plugin".pluralizeWithNumber(brokenPlugins.size))
+        tcLog.buildStatusFailure("IDE $ide has " + "problem".pluralizeWithNumber(problemsNumber) + " affecting " + "plugin".pluralizeWithNumber(brokenPlugins.size))
       } else {
-        tcLog.buildStatusSuccess("IDE $ideVersion doesn't have broken API problems")
+        tcLog.buildStatusSuccess("IDE $ide doesn't have broken API problems")
       }
     }
   }

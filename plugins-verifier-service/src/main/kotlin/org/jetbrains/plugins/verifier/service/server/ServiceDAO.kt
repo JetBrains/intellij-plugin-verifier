@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server
 
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import com.jetbrains.pluginverifier.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.database.ServerDatabase
 import org.jetbrains.plugins.verifier.service.database.ValueType
 import java.io.Closeable

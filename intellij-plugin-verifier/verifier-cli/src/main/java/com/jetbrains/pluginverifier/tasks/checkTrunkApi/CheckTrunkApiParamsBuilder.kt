@@ -5,17 +5,16 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -31,15 +30,13 @@ import java.nio.file.Paths
 class CheckTrunkApiParamsBuilder(
     private val pluginRepository: PluginRepository,
     private val ideFilesBank: IdeFilesBank,
-    private val reportage: Reportage
+    private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
     val apiOpts = CheckTrunkApiOpts()
     val args = Args.parse(apiOpts, freeArgs.toTypedArray(), false)
-    if (args.isEmpty()) {
-      throw IllegalArgumentException("The IDE to be checked is not specified")
-    }
+    require(args.isNotEmpty()) { "The IDE to be checked is not specified" }
 
     reportage.logVerificationStage("Reading classes of the trunk IDE ${args[0]}")
     val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
@@ -113,7 +110,7 @@ class CheckTrunkApiParamsBuilder(
       getLastCompatiblePlugins(releaseVersion)
     }
 
-    val releaseExcludedPluginsFilter = ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(releaseIdeDescriptor.ide))
+    val releaseExcludedPluginsFilter = ExcludedPluginFilter(releaseIdeDescriptor.ide.incompatiblePlugins)
     val releaseIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(releaseLocalRepository)
     val releaseBundledFilter = IgnoreBundledPluginsFilter(releaseIdeDescriptor.ide)
 
@@ -124,10 +121,10 @@ class CheckTrunkApiParamsBuilder(
 
     releasePluginsSet.schedulePlugins(releaseCompatibleVersions)
     for ((pluginInfo, ignoreReason) in releasePluginsSet.ignoredPlugins) {
-      reportage.logPluginVerificationIgnored(pluginInfo, VerificationTarget.Ide(releaseVersion), ignoreReason)
+      reportage.logPluginVerificationIgnored(pluginInfo, PluginVerificationTarget.IDE(releaseIdeDescriptor.ide), ignoreReason)
     }
 
-    val trunkExcludedPluginsFilter = ExcludedPluginFilter(IdeResourceUtil.getBrokenPlugins(trunkIdeDescriptor.ide))
+    val trunkExcludedPluginsFilter = ExcludedPluginFilter(trunkIdeDescriptor.ide.incompatiblePlugins)
     val trunkIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(trunkLocalRepository)
     val trunkBundledFilter = IgnoreBundledPluginsFilter(trunkIdeDescriptor.ide)
 
@@ -153,7 +150,7 @@ class CheckTrunkApiParamsBuilder(
     trunkPluginsSet.schedulePlugins(latestCompatibleVersions)
 
     for ((pluginInfo, ignoreReason) in trunkPluginsSet.ignoredPlugins) {
-      reportage.logPluginVerificationIgnored(pluginInfo, VerificationTarget.Ide(trunkVersion), ignoreReason)
+      reportage.logPluginVerificationIgnored(pluginInfo, PluginVerificationTarget.IDE(trunkIdeDescriptor.ide), ignoreReason)
     }
 
     val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }

@@ -2,14 +2,14 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
@@ -19,7 +19,7 @@ import java.nio.file.Paths
 class DeprecatedUsagesParamsBuilder(
     private val pluginRepository: PluginRepository,
     private val pluginDetailsCache: PluginDetailsCache,
-    private val reportage: Reportage
+    private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): DeprecatedUsagesParams {
     val deprecatedOpts = DeprecatedUsagesOpts()
@@ -43,7 +43,7 @@ class DeprecatedUsagesParamsBuilder(
     PluginsParsing(pluginRepository, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideVersion)
 
     pluginsSet.ignoredPlugins.forEach { plugin, reason ->
-      reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideVersion), reason)
+      reportage.logPluginVerificationIgnored(plugin, PluginVerificationTarget.IDE(ideDescriptor.ide), reason)
     }
 
     val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)

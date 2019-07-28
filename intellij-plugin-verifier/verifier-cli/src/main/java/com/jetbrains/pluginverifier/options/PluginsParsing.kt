@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
 import com.jetbrains.pluginverifier.misc.retry
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -21,7 +21,7 @@ import java.nio.file.Paths
  */
 class PluginsParsing(
     private val pluginRepository: PluginRepository,
-    private val reportage: Reportage,
+    private val reportage: PluginVerificationReportage,
     private val pluginsSet: PluginsSet
 ) {
 

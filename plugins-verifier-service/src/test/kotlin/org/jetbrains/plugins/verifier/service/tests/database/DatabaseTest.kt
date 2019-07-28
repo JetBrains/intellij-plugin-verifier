@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.tests.database
 
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoreCondition
+import com.jetbrains.pluginverifier.filtering.IgnoreCondition
 import org.jetbrains.plugins.verifier.service.database.MapDbServerDatabase
 import org.jetbrains.plugins.verifier.service.database.ValueType
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO

@@ -1,13 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.pluginverifier.PluginVerifier
-import com.jetbrains.pluginverifier.VerificationTarget
-import com.jetbrains.pluginverifier.VerifierExecutor
+import com.jetbrains.pluginverifier.*
 import com.jetbrains.pluginverifier.dependencies.resolution.*
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.Task
@@ -20,8 +18,7 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val pluginRepository: PluginRepository) : Task {
 
   override fun execute(
-      reportage: Reportage,
-      verifierExecutor: VerifierExecutor,
+      reportage: PluginVerificationReportage,
       jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
   ): TwoTargetsVerificationResults {
@@ -29,8 +26,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
       val releaseFinder = createDependencyFinder(parameters.releaseIde.ide, parameters.releaseLocalPluginsRepository, pluginDetailsCache)
       val trunkFinder = createDependencyFinder(parameters.trunkIde.ide, parameters.trunkLocalPluginsRepository, pluginDetailsCache)
 
-      val releaseTarget = VerificationTarget.Ide(releaseIde.ideVersion)
-      val trunkTarget = VerificationTarget.Ide(trunkIde.ideVersion)
+      val releaseTarget = PluginVerificationTarget.IDE(releaseIde.ide)
+      val trunkTarget = PluginVerificationTarget.IDE(trunkIde.ide)
 
       val releaseResolverProvider = DefaultClassResolverProvider(
           releaseFinder,
@@ -47,36 +44,37 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
           parameters.externalClassesPackageFilter
       )
 
-      val tasks = arrayListOf<PluginVerifier>()
+      val verifiers = arrayListOf<PluginVerifier>()
 
       val classFilters = listOf(DynamicallyLoadedFilter())
       for (pluginInfo in releasePluginsSet.pluginsToCheck) {
-        tasks += PluginVerifier(
+        verifiers += PluginVerifier(
             pluginInfo,
-            reportage,
+            releaseTarget,
             parameters.problemsFilters,
             pluginDetailsCache,
             releaseResolverProvider,
-            releaseTarget,
-            releaseIde.brokenPlugins,
             classFilters
         )
       }
 
       for (pluginInfo in trunkPluginsSet.pluginsToCheck) {
-        tasks += PluginVerifier(
+        verifiers += PluginVerifier(
             pluginInfo,
-            reportage,
+            trunkTarget,
             parameters.problemsFilters,
             pluginDetailsCache,
             trunkResolverProvider,
-            trunkTarget,
-            trunkIde.brokenPlugins,
             classFilters
         )
       }
 
-      val results = verifierExecutor.verify(tasks)
+      /*
+       * Sort verification tasks to increase chances that two verifications of the same plugin
+       * would be executed shortly, and therefore caches, such as plugin details cache, would be warmed-up.
+       */
+      val sortedVerifiers = verifiers.sortedBy { it.plugin.pluginId }
+      val results = runSeveralVerifiers(reportage, sortedVerifiers)
 
       return TwoTargetsVerificationResults(
           releaseTarget,

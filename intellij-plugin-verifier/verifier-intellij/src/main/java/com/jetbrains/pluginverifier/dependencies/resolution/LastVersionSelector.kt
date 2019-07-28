@@ -1,13 +1,12 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
-import com.jetbrains.pluginverifier.misc.VersionComparatorUtil
+import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
- * [PluginVersionSelector] that selects the _last_ version
- * of the plugin from the [repository] [PluginRepository].
+ * [PluginVersionSelector] that selects the _last_ version of the plugin from the repository.
  */
 class LastVersionSelector : PluginVersionSelector {
   override fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {

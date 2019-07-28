@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
-class JavaPluginApiUsageProcessor : ApiUsageProcessor {
+class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaPluginApiUsageRegistrar) : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (context is JavaPluginApiUsageRegistrar && classFileMember.isJavaPluginApi()) {
-      context.registerJavaPluginClassUsage(
+    if (classFileMember.isJavaPluginApi()) {
+      javaPluginApiUsageRegistrar.registerJavaPluginClassUsage(
           JavaPluginClassUsage(classFileMember.containingClassFile.location, usageLocation)
       )
     }

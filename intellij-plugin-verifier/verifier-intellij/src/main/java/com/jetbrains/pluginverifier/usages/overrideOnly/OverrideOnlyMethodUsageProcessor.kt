@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
-class OverrideOnlyMethodUsageProcessor : ApiUsageProcessor {
+class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (context is OverrideOnlyRegistrar && classFileMember is Method && classFileMember.isOverrideOnlyMethod()) {
-      context.registerOverrideOnlyMethodUsage(OverrideOnlyMethodUsage(classFileMember.location, usageLocation))
+    if (classFileMember is Method && classFileMember.isOverrideOnlyMethod()) {
+      overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(OverrideOnlyMethodUsage(classFileMember.location, usageLocation))
     }
   }
 

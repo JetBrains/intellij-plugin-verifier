@@ -4,10 +4,10 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingProcessor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
-class InternalMethodOverridingProcessor : MethodOverridingProcessor {
+class InternalMethodOverridingProcessor(private val internalApiUsageRegistrar: InternalApiUsageRegistrar) : MethodOverridingProcessor {
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
-    if (context is InternalApiRegistrar && overriddenMethod.isInternalApi(context)) {
-      context.registerInternalApiUsage(
+    if (overriddenMethod.isInternalApi(context)) {
+      internalApiUsageRegistrar.registerInternalApiUsage(
           InternalMethodOverridden(
               overriddenMethod.location,
               method.location

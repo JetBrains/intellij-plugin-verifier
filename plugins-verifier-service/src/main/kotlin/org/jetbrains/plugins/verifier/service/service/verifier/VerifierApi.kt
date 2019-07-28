@@ -3,40 +3,38 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.verification.DependenciesGraphs
 import com.jetbrains.plugin.verification.VerificationResults
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.*
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
 import com.jetbrains.pluginverifier.results.location.*
 import com.jetbrains.pluginverifier.results.presentation.*
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.PluginStructureError
-import com.jetbrains.pluginverifier.results.CompatibilityWarning
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.PluginStructureError
 
 /**
- * Converts the internal verifier [result] [VerificationResult]
- * to the protocol API version of [result] [VerificationResults.VerificationResult].
+ * Converts the internal verifier results to the protocol API results.
  */
-fun VerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): VerificationResults.VerificationResult {
+fun PluginVerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): VerificationResults.VerificationResult {
   val problems = getCompatibilityProblems()
   val warnings = getCompatibilityWarnings().map { it.convertCompatibilityWarning() }
-  val pluginStructureErrors = (this as? VerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
+  val pluginStructureErrors = (this as? PluginVerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
   val deprecatedUsages = getDeprecatedUsages().map { it.convertDeprecatedApiUsage() }
   val experimentalApiUsages = getExperimentalApiUsages().map { it.convertExperimentalApiUsage() }
   val dependenciesGraph = getDependenciesGraph()?.let { convertDependencyGraph(it) }
   val resultType = convertResultType()
   val compatibilityProblems = problems.map { it.convertCompatibilityProblem() }
-  val nonDownloadableReason = (this as? VerificationResult.FailedToDownload)?.failedToDownloadReason
-      ?: (this as? VerificationResult.NotFound)?.notFoundReason
+  val nonDownloadableReason = (this as? PluginVerificationResult.FailedToDownload)?.failedToDownloadReason
+      ?: (this as? PluginVerificationResult.NotFound)?.notFoundReason
   return VerificationResults.VerificationResult.newBuilder()
       .setUpdateId(updateInfo.updateId)
-      .setIdeVersion((verificationTarget as VerificationTarget.Ide).ideVersion.asString())
+      .setIdeVersion((verificationTarget as PluginVerificationTarget.IDE).ideVersion.asString())
       .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
       .setResultType(resultType)
       .addAllPluginStructureWarnings(warnings)
@@ -79,65 +77,20 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsOptional(dependency.isOptional)
         .build()
 
-private fun VerificationResult.getCompatibilityWarnings(): Set<CompatibilityWarning> = with(this) {
-  when (this) {
-    is VerificationResult.OK -> emptySet()
-    is VerificationResult.CompatibilityWarnings -> compatibilityWarnings
-    is VerificationResult.MissingDependencies -> compatibilityWarnings
-    is VerificationResult.CompatibilityProblems -> compatibilityWarnings
-    is VerificationResult.InvalidPlugin -> emptySet()
-    is VerificationResult.NotFound -> emptySet()
-    is VerificationResult.FailedToDownload -> emptySet()
-  }
-}
+private fun PluginVerificationResult.getCompatibilityWarnings(): Set<CompatibilityWarning> =
+    (this as? PluginVerificationResult.Verified)?.compatibilityWarnings ?: emptySet()
 
-private fun VerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> = with(this) {
-  when (this) {
-    is VerificationResult.OK -> deprecatedUsages
-    is VerificationResult.CompatibilityWarnings -> deprecatedUsages
-    is VerificationResult.MissingDependencies -> deprecatedUsages
-    is VerificationResult.CompatibilityProblems -> deprecatedUsages
-    is VerificationResult.InvalidPlugin -> emptySet()
-    is VerificationResult.NotFound -> emptySet()
-    is VerificationResult.FailedToDownload -> emptySet()
-  }
-}
+private fun PluginVerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> =
+    (this as? PluginVerificationResult.Verified)?.deprecatedUsages ?: emptySet()
 
-private fun VerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUsage> = with(this) {
-  when (this) {
-    is VerificationResult.OK -> experimentalApiUsages
-    is VerificationResult.CompatibilityWarnings -> experimentalApiUsages
-    is VerificationResult.MissingDependencies -> experimentalApiUsages
-    is VerificationResult.CompatibilityProblems -> experimentalApiUsages
-    is VerificationResult.InvalidPlugin -> emptySet()
-    is VerificationResult.NotFound -> emptySet()
-    is VerificationResult.FailedToDownload -> emptySet()
-  }
-}
+private fun PluginVerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUsage> =
+    (this as? PluginVerificationResult.Verified)?.experimentalApiUsages ?: emptySet()
 
-private fun VerificationResult.getCompatibilityProblems(): Set<CompatibilityProblem> = with(this) {
-  when (this) {
-    is VerificationResult.OK -> emptySet()
-    is VerificationResult.CompatibilityWarnings -> emptySet()
-    is VerificationResult.MissingDependencies -> compatibilityProblems
-    is VerificationResult.CompatibilityProblems -> compatibilityProblems
-    is VerificationResult.InvalidPlugin -> emptySet()
-    is VerificationResult.NotFound -> emptySet()
-    is VerificationResult.FailedToDownload -> emptySet()
-  }
-}
+private fun PluginVerificationResult.getCompatibilityProblems(): Set<CompatibilityProblem> =
+    (this as? PluginVerificationResult.Verified)?.compatibilityProblems ?: emptySet()
 
-private fun VerificationResult.getDependenciesGraph() = with(this) {
-  when (this) {
-    is VerificationResult.OK -> dependenciesGraph
-    is VerificationResult.CompatibilityWarnings -> dependenciesGraph
-    is VerificationResult.MissingDependencies -> dependenciesGraph
-    is VerificationResult.CompatibilityProblems -> dependenciesGraph
-    is VerificationResult.InvalidPlugin -> null
-    is VerificationResult.NotFound -> null
-    is VerificationResult.FailedToDownload -> null
-  }
-}
+private fun PluginVerificationResult.getDependenciesGraph() =
+    (this as? PluginVerificationResult.Verified)?.dependenciesGraph
 
 private fun CompatibilityProblem.convertCompatibilityProblem() =
     VerificationResults.CompatibilityProblem.newBuilder()
@@ -225,12 +178,14 @@ private fun PluginStructureError.convertPluginStructureError() =
         .setMessage(message)
         .build()
 
-private fun VerificationResult.convertResultType() = when (this) {
-  is VerificationResult.OK -> VerificationResults.VerificationResult.ResultType.OK
-  is VerificationResult.CompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
-  is VerificationResult.CompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
-  is VerificationResult.MissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
-  is VerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
-  is VerificationResult.NotFound -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
-  is VerificationResult.FailedToDownload -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
+private fun PluginVerificationResult.convertResultType() = when (this) {
+  is PluginVerificationResult.Verified -> when {
+    hasCompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
+    hasCompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
+    hasDirectMissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
+    else -> VerificationResults.VerificationResult.ResultType.OK
+  }
+  is PluginVerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
+  is PluginVerificationResult.NotFound -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
+  is PluginVerificationResult.FailedToDownload -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
 }

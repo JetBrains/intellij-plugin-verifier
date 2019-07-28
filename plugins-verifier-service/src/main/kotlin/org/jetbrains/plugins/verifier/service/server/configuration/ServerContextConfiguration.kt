@@ -7,7 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorsCache
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -115,7 +115,6 @@ class ServerContextConfiguration(
           verificationResultsFilter,
           pluginRepository,
           serviceDAO,
-          taskManagerProperties.concurrency!!,
           period
       )
     }

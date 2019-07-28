@@ -11,12 +11,12 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.isDiscouragingJdkClass
 
-class DiscouragingClassUsageProcessor : ApiUsageProcessor {
+class DiscouragingClassUsageProcessor (private val deprecatedApiRegistrar: DeprecatedApiRegistrar): ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (context is DeprecatedApiRegistrar && classFileMember is ClassFile && classFileMember.isDiscouragingJdkClass()) {
+    if (classFileMember is ClassFile && classFileMember.isDiscouragingJdkClass()) {
       val classFileOrigin = classFileMember.classFileOrigin
       if (classFileOrigin.isOriginOfType<IdeClassFileOrigin>() || classFileOrigin.isOriginOfType<JdkClassFileOrigin>()) {
-        context.registerDeprecatedUsage(
+        deprecatedApiRegistrar.registerDeprecatedUsage(
             DiscouragingJdkClassUsage(classFileMember.location, usageLocation, classFileOrigin)
         )
       }

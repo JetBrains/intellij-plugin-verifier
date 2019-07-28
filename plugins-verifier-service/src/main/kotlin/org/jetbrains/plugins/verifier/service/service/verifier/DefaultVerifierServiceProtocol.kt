@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.network.octetStreamMediaType
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -51,7 +51,7 @@ class DefaultVerifierServiceProtocol(
             }
           }
 
-  override fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo) {
+  override fun sendVerificationResult(verificationResult: PluginVerificationResult, updateInfo: UpdateInfo) {
     val verificationResponse = verificationResult.prepareVerificationResponse(updateInfo)
     retrofitConnector.uploadVerificationResultContent(
         authorizationToken,

@@ -1,16 +1,16 @@
 package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil.parseIncompatiblePluginsByLines
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.filtering.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.ide.IdeResourceUtil
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
-import com.jetbrains.pluginverifier.parameters.filtering.*
-import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
@@ -88,9 +88,7 @@ object OptionsParser {
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
       val file = File(opts.ignoreProblemsFile!!)
-      if (!file.exists()) {
-        throw IllegalArgumentException("Ignored problems file doesn't exist $file")
-      }
+      require(file.exists()) { "Ignored problems file doesn't exist $file" }
       return getIgnoreFilter(file)
     }
     return null
@@ -157,7 +155,7 @@ object OptionsParser {
    */
   fun parseExcludedPlugins(opts: CmdOpts): Set<PluginIdAndVersion> {
     val epf = opts.excludedPluginsFile ?: return emptySet()
-    return IdeResourceUtil.readBrokenPluginsFromFile(File(epf))
+    return parseIncompatiblePluginsByLines(File(epf).readLines())
   }
 
 }

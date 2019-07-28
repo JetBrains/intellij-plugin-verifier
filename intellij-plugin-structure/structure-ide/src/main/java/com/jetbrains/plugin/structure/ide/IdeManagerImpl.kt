@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.util.jar.JarFile
 
 class IdeManagerImpl : IdeManager() {
 
@@ -53,7 +54,20 @@ class IdeManagerImpl : IdeManager() {
       readDistributionBundledPlugins(idePath, product, ideVersion)
     }
 
-    return IdeImpl(idePath, ideVersion, bundledPlugins)
+    val incompatiblePlugins = IdeIncompatiblePluginsUtil.parseIncompatiblePluginsByLines(readBrokenPluginsTxt(idePath))
+    return IdeImpl(idePath, ideVersion, bundledPlugins, incompatiblePlugins)
+  }
+
+  private fun readBrokenPluginsTxt(idePath: File): List<String> {
+    val jarFile = idePath.resolve("lib").resolve("resources.jar")
+    if (jarFile.exists()) {
+      JarFile(jarFile).use {
+        val jarEntry = it.getJarEntry("brokenPlugins.txt") ?: return emptyList()
+        return it.getInputStream(jarEntry).bufferedReader().readLines()
+      }
+    } else {
+      return emptyList()
+    }
   }
 
   private fun readDistributionBundledPlugins(idePath: File, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {

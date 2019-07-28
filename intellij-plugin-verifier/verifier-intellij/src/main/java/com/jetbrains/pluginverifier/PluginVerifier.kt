@@ -1,246 +1,170 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
+import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
-import com.jetbrains.pluginverifier.parameters.classes.ExternalBuildClassesSelector
-import com.jetbrains.pluginverifier.parameters.classes.MainClassesSelector
-import com.jetbrains.pluginverifier.parameters.filtering.IgnoredProblemsHolder
-import com.jetbrains.pluginverifier.parameters.filtering.ProblemsFilter
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector
+import com.jetbrains.pluginverifier.filtering.MainClassesSelector
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
-import com.jetbrains.pluginverifier.reporting.verification.Reporters
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.resolution.ClassResolverProvider
-import com.jetbrains.pluginverifier.results.VerificationResult
-import com.jetbrains.pluginverifier.results.PluginIsMarkedIncompatibleProblem
-import com.jetbrains.pluginverifier.results.PluginStructureError
-import com.jetbrains.pluginverifier.results.PluginStructureWarning
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsageProcessor
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
-import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingClassUsageProcessor
-import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
-import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodOverridingProcessor
-import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableMethodOverridingProcessor
-import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheritedVerifier
-import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheritedProcessor
 import com.jetbrains.pluginverifier.verifiers.BytecodeVerifier
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingVerifier
-import java.util.concurrent.Callable
+import com.jetbrains.pluginverifier.warnings.*
 
 /**
- * Callable that performs verification
- * of [plugin] against [verificationTarget]
- * and returns [VerificationResult].
+ * Performs verification of [plugin] against [verificationTarget] and returns [PluginVerificationResult].
  */
 class PluginVerifier(
     val plugin: PluginInfo,
-    reportage: Reportage,
+    val verificationTarget: PluginVerificationTarget,
+
     private val problemFilters: List<ProblemsFilter>,
     private val pluginDetailsCache: PluginDetailsCache,
     private val classResolverProvider: ClassResolverProvider,
-    private val verificationTarget: VerificationTarget,
-    private val incompatiblePlugins: Set<PluginIdAndVersion>,
     private val classFilters: List<ClassFilter>
-) : Callable<VerificationResult> {
+) {
 
-  private val pluginReporters = reportage.createPluginReporters(plugin, verificationTarget)
-
-  override fun call(): VerificationResult {
-    checkIfInterrupted()
-    val startTime = System.currentTimeMillis()
-    try {
-      pluginReporters.reportMessage("Start verification of $verificationTarget against $plugin")
-
-      val ignoredProblems = IgnoredProblemsHolder()
-      val verificationResult = VerificationResult.OK()
-      verificationResult.plugin = plugin
-      verificationResult.verificationTarget = verificationTarget
-
-      /**
-       * Register a special "marked incompatible" problem, if necessary.
-       */
-      if (verificationTarget is VerificationTarget.Ide && PluginIdAndVersion(plugin.pluginId, plugin.version) in incompatiblePlugins) {
-        verificationResult.compatibilityProblems += PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion)
-      }
-
-      try {
-        loadPluginAndVerify(verificationResult, ignoredProblems)
-      } catch (e: Exception) {
-        e.rethrowIfInterrupted()
-        //[PluginVerifier] must not throw any exceptions other than [InterruptedException]
-        pluginReporters.reportMessage("Failed with exception: ${e.message}")
-        throw RuntimeException("Failed to verify $plugin against $verificationTarget", e)
-      }
-
-      pluginReporters.reportResults(verificationResult, ignoredProblems)
-
-      val elapsedTime = System.currentTimeMillis() - startTime
-      pluginReporters.reportMessage(
-          "Finished verification of $verificationTarget against $plugin " +
-              "in ${"%.2f".format(elapsedTime / 1000.0)} seconds: " + verificationResult.toString()
-      )
-      return buildFinalResult(verificationResult)
-    } finally {
-      pluginReporters.closeLogged()
-    }
-  }
-
-  private fun buildFinalResult(r: VerificationResult): VerificationResult {
-    return when {
-      r.pluginStructureErrors.isNotEmpty() -> {
-        VerificationResult.InvalidPlugin()
-      }
-      r.notFoundReason != null -> {
-        VerificationResult.NotFound()
-      }
-      r.failedToDownloadReason != null -> {
-        VerificationResult.FailedToDownload()
-      }
-      r.dependenciesGraph.verifiedPlugin.missingDependencies.isNotEmpty() -> {
-        VerificationResult.MissingDependencies()
-      }
-      r.compatibilityProblems.isNotEmpty() -> {
-        VerificationResult.CompatibilityProblems()
-      }
-      r.compatibilityWarnings.isNotEmpty() -> {
-        VerificationResult.CompatibilityWarnings()
-      }
-      else -> {
-        VerificationResult.OK()
-      }
-    }.apply {
-      plugin = r.plugin
-      verificationTarget = r.verificationTarget
-      compatibilityWarnings.addAll(r.compatibilityWarnings)
-      pluginStructureErrors.addAll(r.pluginStructureErrors)
-      compatibilityProblems.addAll(r.compatibilityProblems)
-      deprecatedUsages.addAll(r.deprecatedUsages)
-      experimentalApiUsages.addAll(r.experimentalApiUsages)
-      internalApiUsages.addAll(r.internalApiUsages)
-      nonExtendableApiUsages.addAll(r.nonExtendableApiUsages)
-      overrideOnlyMethodUsages.addAll(r.overrideOnlyMethodUsages)
-      dependenciesGraph = r.dependenciesGraph
-      failedToDownloadReason = r.failedToDownloadReason
-      failedToDownloadError = r.failedToDownloadError
-      notFoundReason = r.notFoundReason
-    }
-  }
-
-  private fun Reporters.reportResults(result: VerificationResult, ignoredProblems: IgnoredProblemsHolder) {
-    reportVerificationResult(result)
-    result.pluginStructureErrors.forEach { reportNewPluginStructureError(it) }
-    result.compatibilityWarnings.forEach { reportNewWarningDetected(it) }
-    result.compatibilityProblems.forEach { reportNewProblemDetected(it) }
-    result.deprecatedUsages.forEach { reportDeprecatedUsage(it) }
-    result.experimentalApiUsages.forEach { reportExperimentalApi(it) }
-    for ((problem, ignoredEvents) in ignoredProblems.ignoredProblems) {
-      for (ignoreEvent in ignoredEvents) {
-        reportProblemIgnored(
-            ProblemIgnoredEvent(result.plugin, result.verificationTarget, problem, ignoreEvent.reason)
-        )
-      }
-    }
-    reportDependencyGraph(result.dependenciesGraph)
-  }
-
-  private fun loadPluginAndVerify(verificationResult: VerificationResult, ignoredProblems: IgnoredProblemsHolder) {
+  fun loadPluginAndVerify(): PluginVerificationResult {
     pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
-      when (cacheEntry) {
-        is PluginDetailsCache.Result.Provided -> {
-          val pluginDetails = cacheEntry.pluginDetails
-          pluginDetails.pluginWarnings.forEach { verificationResult.addPluginErrorOrWarning(it) }
-          verifyClasses(pluginDetails, verificationResult, ignoredProblems)
-        }
+      return when (cacheEntry) {
         is PluginDetailsCache.Result.InvalidPlugin -> {
-          cacheEntry.pluginErrors.forEach { verificationResult.addPluginErrorOrWarning(it) }
+          PluginVerificationResult.InvalidPlugin(
+              plugin,
+              verificationTarget,
+              cacheEntry.pluginErrors
+                  .filter { it.level == PluginProblem.Level.ERROR }
+                  .mapTo(hashSetOf()) { PluginStructureError(it) }
+          )
         }
         is PluginDetailsCache.Result.FileNotFound -> {
-          verificationResult.notFoundReason = cacheEntry.reason
+          PluginVerificationResult.NotFound(plugin, verificationTarget, cacheEntry.reason)
         }
         is PluginDetailsCache.Result.Failed -> {
-          verificationResult.failedToDownloadReason = cacheEntry.reason
-          verificationResult.failedToDownloadError = cacheEntry.error
+          PluginVerificationResult.FailedToDownload(plugin, verificationTarget, cacheEntry.reason, cacheEntry.error)
+        }
+        is PluginDetailsCache.Result.Provided -> {
+          verify(cacheEntry.pluginDetails)
         }
       }
     }
   }
 
-  private fun VerificationResult.addPluginErrorOrWarning(pluginProblem: PluginProblem) {
-    if (pluginProblem.level == PluginProblem.Level.WARNING) {
-      compatibilityWarnings += PluginStructureWarning(pluginProblem)
-    } else {
-      pluginStructureErrors += PluginStructureError(pluginProblem.message)
-    }
-  }
 
-  private fun verifyClasses(
-      pluginDetails: PluginDetails,
-      verificationResult: VerificationResult,
-      ignoredProblems: IgnoredProblemsHolder
-  ) {
-    val checkClasses = try {
-      selectClassesForCheck(pluginDetails)
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      pluginReporters.reportException("Failed to select classes for check for $plugin", e)
-      verificationResult.pluginStructureErrors += PluginStructureError(
-          "Unable to read plugin class files" + (e.localizedMessage?.let { ": $it" } ?: "")
-      )
-      return
-    }
-
-    classResolverProvider.provide(pluginDetails, verificationResult).use { (classResolver) ->
+  private fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
+    classResolverProvider.provide(pluginDetails).use { (pluginResolver, classResolver, dependenciesGraph) ->
       val externalClassesPackageFilter = classResolverProvider.provideExternalClassesPackageFilter()
+
       val context = PluginVerificationContext(
           pluginDetails.idePlugin,
           verificationTarget,
-          verificationResult,
-          ignoredProblems,
-          problemFilters,
-          externalClassesPackageFilter,
           classResolver,
-          listOf(
-              DeprecatedApiUsageProcessor(),
-              ExperimentalApiUsageProcessor(),
-              DiscouragingClassUsageProcessor(),
-              InternalApiUsageProcessor(),
-              OverrideOnlyMethodUsageProcessor(),
-              JavaPluginApiUsageProcessor()
-          )
+          externalClassesPackageFilter
       )
-      runByteCodeVerifier(checkClasses, context)
+
+      pluginDetails.pluginWarnings.forEach { context.registerCompatibilityWarning(PluginStructureWarning(it)) }
+      context.checkIfPluginIsMarkedIncompatibleWithThisIde(verificationTarget)
+      context.findMistakenlyBundledIdeClasses(pluginResolver)
+      context.findDependenciesCycles(dependenciesGraph)
+
+      val classesToCheck = selectClassesForCheck(pluginDetails)
+
+      BytecodeVerifier(
+          classFilters,
+          listOf(NonExtendableTypeInheritedProcessor(context)),
+          listOf(
+              MethodOverridingVerifier(
+                  listOf(
+                      ExperimentalMethodOverridingProcessor(context),
+                      DeprecatedMethodOverridingProcessor(context),
+                      NonExtendableMethodOverridingProcessor(context),
+                      InternalMethodOverridingProcessor(context)
+                  )
+              )
+          )
+      ).verify(classesToCheck, context) {}
+
+      context.postProcessResults()
+
+      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
+
+      return with(context) {
+        PluginVerificationResult.Verified(
+            plugin,
+            verificationTarget,
+            dependenciesGraph,
+            reportProblems,
+            ignoredProblems,
+            compatibilityWarnings,
+            deprecatedUsages,
+            experimentalApiUsages,
+            internalApiUsages,
+            nonExtendableApiUsages,
+            overrideOnlyMethodUsages
+        )
+      }
     }
   }
 
-  private fun runByteCodeVerifier(checkClasses: Set<String>, context: VerificationContext) {
-    BytecodeVerifier(
-        classFilters,
-        listOf(NonExtendableTypeInheritedVerifier()),
-        listOf(
-            MethodOverridingVerifier(
-                listOf(
-                    ExperimentalMethodOverridingProcessor(),
-                    DeprecatedMethodOverridingProcessor(),
-                    NonExtendableMethodOverridingProcessor(),
-                    InternalMethodOverridingProcessor()
-                )
-            )
-        )
-    ).verify(checkClasses, context) {
-      pluginReporters.reportProgress(it)
+  private fun partitionReportAndIgnoredProblems(
+      allProblems: Set<CompatibilityProblem>,
+      verificationContext: VerificationContext
+  ): Pair<Set<CompatibilityProblem>, Map<CompatibilityProblem, String>> {
+
+    val reportProblems = hashSetOf<CompatibilityProblem>()
+    val ignoredProblems = hashMapOf<CompatibilityProblem, String>()
+
+    for (problem in allProblems) {
+      val ignoreDecision = problemFilters.asSequence()
+          .map { it.shouldReportProblem(problem, verificationContext) }
+          .filterIsInstance<ProblemsFilter.Result.Ignore>()
+          .firstOrNull()
+
+      if (ignoreDecision != null) {
+        ignoredProblems[problem] = ignoreDecision.reason
+      } else {
+        reportProblems += problem
+      }
+    }
+
+    return reportProblems to ignoredProblems
+  }
+
+
+  private fun PluginVerificationContext.checkIfPluginIsMarkedIncompatibleWithThisIde(verificationTarget: PluginVerificationTarget) {
+    if (verificationTarget is PluginVerificationTarget.IDE) {
+      if (PluginIdAndVersion(plugin.pluginId, plugin.version) in verificationTarget.incompatiblePlugins) {
+        registerProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
+      }
+    }
+  }
+
+  private fun PluginVerificationContext.findDependenciesCycles(dependenciesGraph: DependenciesGraph) {
+    val cycles = dependenciesGraph.getAllCycles()
+    for (cycle in cycles) {
+      registerCompatibilityWarning(DependenciesCycleWarning(cycle))
+    }
+  }
+
+  private fun PluginVerificationContext.findMistakenlyBundledIdeClasses(pluginResolver: Resolver) {
+    val idePackages = pluginResolver.allPackages.filter { KnownIdePackages.isKnownPackage(it) }
+    if (idePackages.isNotEmpty()) {
+      registerCompatibilityWarning(MistakenlyBundledIdePackagesWarning(idePackages))
     }
   }
 

@@ -56,8 +56,6 @@ class BytecodeVerifier(
         progressIndicator((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
       }
     }
-
-    groupMissingClassesToMissingPackages(context)
   }
 
   private fun verifyClass(className: String, context: VerificationContext) {

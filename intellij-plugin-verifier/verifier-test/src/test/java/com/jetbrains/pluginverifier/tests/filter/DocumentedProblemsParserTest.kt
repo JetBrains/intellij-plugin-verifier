@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.pluginverifier.parameters.filtering.documented.*
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser.Companion.toInternalName
-import com.jetbrains.pluginverifier.parameters.filtering.documented.DocumentedProblemsParser.Companion.unwrapMarkdownTags
+import com.jetbrains.pluginverifier.filtering.documented.*
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.toInternalName
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.unwrapMarkdownTags
 import org.junit.Assert.*
 import org.junit.Test
 

@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import java.nio.file.Path
@@ -13,11 +13,11 @@ data class OutputOptions(
     val dumpBrokenPluginsFile: String?
 ) {
 
-  fun getTargetReportDirectory(verificationTarget: VerificationTarget): Path = when (verificationTarget) {
-    is VerificationTarget.Ide -> verificationReportsDirectory
+  fun getTargetReportDirectory(verificationTarget: PluginVerificationTarget): Path = when (verificationTarget) {
+    is PluginVerificationTarget.IDE -> verificationReportsDirectory
         .resolve(verificationTarget.ideVersion.asString().replaceInvalidFileNameCharacters())
 
-    is VerificationTarget.Plugin -> verificationReportsDirectory
+    is PluginVerificationTarget.Plugin -> verificationReportsDirectory
         .resolve("${verificationTarget.plugin.pluginId} ${verificationTarget.plugin.version}".replaceInvalidFileNameCharacters())
   }
 

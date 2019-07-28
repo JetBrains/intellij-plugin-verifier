@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.tests.repository
 
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.pluginverifier.misc.shutdownAndAwaitTermination
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
@@ -18,6 +17,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.abs
 
 
 class FileRepositoryTest {
@@ -84,7 +84,7 @@ class FileRepositoryTest {
       executorService.invokeAll((1..numberOfThreads).map {
         Callable {
           //Add random delay before taking the 0-th element
-          Thread.sleep(Math.abs(Random().nextLong()) % 1000)
+          Thread.sleep(abs(Random().nextLong()) % 1000)
           fileRepository.getFile(0)
         }
       })
@@ -172,6 +172,7 @@ class FileRepositoryTest {
       downloadStarted.set(true)
 
       //simulating the downloading until the 'remove' method is called
+      @Suppress("ControlFlowWithEmptyBody")
       while (!removeCalled.get()) {
       }
     }
@@ -188,6 +189,7 @@ class FileRepositoryTest {
 
     val removeThread = Thread {
       //waiting until the downloading is started
+      @Suppress("ControlFlowWithEmptyBody")
       while (!downloadStarted.get()) {
       }
 

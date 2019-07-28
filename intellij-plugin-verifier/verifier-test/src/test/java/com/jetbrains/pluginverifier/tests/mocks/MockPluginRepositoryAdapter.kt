@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.PluginIdAndVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
@@ -21,7 +20,7 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   open fun defaultAction(): Nothing = throw AssertionError("Not required in tests")
 
-  fun createMockPluginInfo(pluginId: String, version: String) = PluginIdAndVersion(pluginId, version)
-
 }
 
+fun createMockPluginInfo(pluginId: String, version: String): PluginInfo =
+    object : PluginInfo(pluginId, pluginId, version, null, null, null) {}

@@ -4,6 +4,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 
 private val logger: Logger = LoggerFactory.getLogger("LanguageUtils")
 
@@ -103,3 +107,31 @@ fun List<Closeable>.closeAll() {
 fun <T> Iterator<T>.toList() = asSequence().toList()
 
 fun <T> Iterator<T>.toSet() = asSequence().toSet()
+
+fun Throwable.getStackTraceAsString(): String {
+  val sw = StringWriter()
+  val pw = PrintWriter(sw, true)
+  printStackTrace(pw)
+  return sw.buffer.toString()
+}
+
+fun ExecutorService.shutdownAndAwaitTermination(timeout: Long, timeUnit: TimeUnit) {
+  // Disable new tasks from being submitted
+  shutdown()
+  try {
+    // Wait a while for existing tasks to terminate
+    if (!awaitTermination(timeout, timeUnit)) {
+      // Cancel currently executing tasks
+      shutdownNow()
+      // Wait a while for tasks to respond to being cancelled
+      if (!awaitTermination(timeout, timeUnit)) {
+        throw RuntimeException("Executor didn't terminate")
+      }
+    }
+  } catch (ie: InterruptedException) {
+    // (Re-) Cancel if current thread also interrupted
+    shutdownNow()
+    // Preserve interrupt status
+    Thread.currentThread().interrupt()
+  }
+}

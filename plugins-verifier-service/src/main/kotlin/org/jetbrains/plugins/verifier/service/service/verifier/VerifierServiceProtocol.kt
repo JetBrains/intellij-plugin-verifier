@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 
 /**
  * Protocol used to communicate with the Marketplace:
@@ -12,6 +12,6 @@ interface VerifierServiceProtocol {
 
   fun requestScheduledVerifications(): List<ScheduledVerification>
 
-  fun sendVerificationResult(verificationResult: VerificationResult, updateInfo: UpdateInfo)
+  fun sendVerificationResult(verificationResult: PluginVerificationResult, updateInfo: UpdateInfo)
 
 }

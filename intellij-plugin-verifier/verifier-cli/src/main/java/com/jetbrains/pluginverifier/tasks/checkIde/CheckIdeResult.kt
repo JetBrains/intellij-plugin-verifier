@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
 class CheckIdeResult(
-    val ideVersion: IdeVersion,
-    val results: List<VerificationResult>,
+    val ide: Ide,
+    val results: List<PluginVerificationResult>,
     val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>
 ) : TaskResult()

@@ -4,7 +4,7 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.output.ResultPrinter
@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -96,7 +96,7 @@ class TeamCityResultPrinter(
   }
 
 
-  override fun printResults(results: List<VerificationResult>) {
+  override fun printResults(results: List<PluginVerificationResult>) {
     when (groupBy) {
       GroupBy.NOT_GROUPED -> notGrouped(results)
       GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
@@ -104,7 +104,7 @@ class TeamCityResultPrinter(
     }
   }
 
-  private fun notGrouped(results: List<VerificationResult>) {
+  private fun notGrouped(results: List<PluginVerificationResult>) {
     //problem1 (in a:1.0, a:1.2, b:1.0)
     //problem2 (in a:1.0, c:1.3)
     //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
@@ -114,39 +114,36 @@ class TeamCityResultPrinter(
     printMissingDependenciesAndRequiredPluginsAsBuildProblem(results)
   }
 
-  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<VerificationResult>) {
+  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<PluginVerificationResult>) {
     val shortDescription2Plugins: Multimap<String, PluginInfo> = HashMultimap.create()
     for (result in results) {
       for (problem in result.getProblems()) {
         shortDescription2Plugins.put(problem.shortDescription, result.plugin)
       }
     }
-    shortDescription2Plugins.asMap().forEach { description, allPluginsWithThisProblem ->
+    shortDescription2Plugins.asMap().forEach { (description, allPluginsWithThisProblem) ->
       tcLog.buildProblem("$description (in ${allPluginsWithThisProblem.joinToString()})")
     }
   }
 
-  private fun VerificationResult.getProblems(): Set<CompatibilityProblem> = when (this) {
-    is VerificationResult.CompatibilityProblems -> compatibilityProblems
-    is VerificationResult.MissingDependencies -> compatibilityProblems
-    is VerificationResult.OK,
-    is VerificationResult.CompatibilityWarnings,
-    is VerificationResult.InvalidPlugin,
-    is VerificationResult.NotFound,
-    is VerificationResult.FailedToDownload -> emptySet()
-  }
+  private fun PluginVerificationResult.getProblems(): Set<CompatibilityProblem> =
+      if (this is PluginVerificationResult.Verified) {
+        compatibilityProblems
+      } else {
+        emptySet()
+      }
 
-  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<VerificationResult>) {
+  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<PluginVerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
     missingToRequired.asMap().entries.forEach {
       tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
     }
   }
 
-  private fun collectMissingDependenciesForRequiringPlugins(results: List<VerificationResult>): Multimap<MissingDependency, PluginInfo> {
+  private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Multimap<MissingDependency, PluginInfo> {
     val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
-    results.filter { it is VerificationResult.MissingDependencies }.forEach {
-      (it as VerificationResult.MissingDependencies).directMissingDependencies.forEach { missingDependency ->
+    results.filterIsInstance<PluginVerificationResult.Verified>().forEach {
+      it.directMissingDependencies.forEach { missingDependency ->
         missingToRequiring.put(missingDependency, it.plugin)
       }
     }
@@ -154,7 +151,7 @@ class TeamCityResultPrinter(
   }
 
 
-  private fun groupByPlugin(results: List<VerificationResult>) {
+  private fun groupByPlugin(results: List<PluginVerificationResult>) {
     //pluginOne
     //....(1.0)
     //........#invoking unknown method
@@ -195,8 +192,8 @@ class TeamCityResultPrinter(
    */
   private fun printResultsForSpecificPluginId(
       pluginId: String,
-      pluginResults: List<VerificationResult>,
-      targetToLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>
+      pluginResults: List<PluginVerificationResult>,
+      targetToLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
   ) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
@@ -210,19 +207,18 @@ class TeamCityResultPrinter(
 
   private fun printResultOfSpecificVersion(
       plugin: PluginInfo,
-      verificationResult: VerificationResult,
+      verificationResult: PluginVerificationResult,
       testName: String
   ) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
-        is VerificationResult.CompatibilityProblems -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, emptyList())
-        is VerificationResult.MissingDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingDependencies)
-        is VerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
-        is VerificationResult.OK,
-        is VerificationResult.CompatibilityWarnings,
-        is VerificationResult.NotFound,
-        is VerificationResult.FailedToDownload -> {
+        is PluginVerificationResult.Verified -> when {
+          verificationResult.hasCompatibilityProblems -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, emptyList())
+          verificationResult.hasDirectMissingDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingDependencies)
+          else -> Unit
         }
+        is PluginVerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
+        else -> Unit
       }
     }
   }
@@ -268,7 +264,7 @@ class TeamCityResultPrinter(
     return "Plugin URL: $url"
   }
 
-  private fun printBadPluginResult(verificationResult: VerificationResult.InvalidPlugin, versionTestName: String) {
+  private fun printBadPluginResult(verificationResult: PluginVerificationResult.InvalidPlugin, versionTestName: String) {
     val message = "Plugin is invalid: ${verificationResult.pluginStructureErrors.joinToString()}"
     tcLog.testStdErr(versionTestName, message)
     tcLog.testFailed(versionTestName, message, "")
@@ -303,15 +299,15 @@ class TeamCityResultPrinter(
    * For each IDE returns the last versions f the plugin available in the [repository]
    * and compatible with this IDE.
    */
-  private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<VerificationTarget>): Map<VerificationTarget, List<PluginInfo>> =
-      verificationTargets.associate {
+  private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<PluginVerificationTarget>): Map<PluginVerificationTarget, List<PluginInfo>> =
+      verificationTargets.associate { target ->
         try {
-          when (it) {
-            is VerificationTarget.Ide -> it to repository.getLastCompatiblePlugins(it.ideVersion)
+          when (target) {
+            is PluginVerificationTarget.IDE -> target to repository.getLastCompatiblePlugins(target.ideVersion)
                 .sortedWith(LastVersionSelector.versionComparator.reversed())
                 .distinctBy { it.pluginId }
-            is VerificationTarget.Plugin -> {
-              it to repository.getAllPlugins()
+            is PluginVerificationTarget.Plugin -> {
+              target to repository.getAllPlugins()
                   .groupBy { it.pluginId }
                   .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
                   .values.toList()
@@ -319,8 +315,8 @@ class TeamCityResultPrinter(
           }
         } catch (e: Exception) {
           e.rethrowIfInterrupted()
-          LOG.info("Unable to determine the last compatible updates of IDE $it", e)
-          it to emptyList<PluginInfo>()
+          LOG.info("Unable to determine the last compatible updates of IDE $target", e)
+          target to emptyList<PluginInfo>()
         }
       }
 
@@ -341,8 +337,8 @@ class TeamCityResultPrinter(
    */
   private fun getPluginVersionAsTestName(
       pluginInfo: PluginInfo,
-      verificationTarget: VerificationTarget,
-      ideLastPluginVersions: Map<VerificationTarget, List<PluginInfo>>
+      verificationTarget: PluginVerificationTarget,
+      ideLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
   ): String {
     val lastVersions = ideLastPluginVersions.getOrDefault(verificationTarget, emptyList())
     return if (pluginInfo in lastVersions) {
@@ -352,7 +348,7 @@ class TeamCityResultPrinter(
     }
   }
 
-  private fun groupByProblemType(results: List<VerificationResult>) {
+  private fun groupByProblemType(results: List<PluginVerificationResult>) {
     //accessing to unknown class SomeClass
     //....(pluginOne:1.2.0)
     //....(pluginTwo:2.0.0)
@@ -388,7 +384,7 @@ class TeamCityResultPrinter(
     printMissingDependenciesAsTests(results)
   }
 
-  private fun printMissingDependenciesAsTests(results: List<VerificationResult>) {
+  private fun printMissingDependenciesAsTests(results: List<PluginVerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
     if (!missingToRequired.isEmpty) {
       tcLog.testSuiteStarted("(missing dependencies)").use {

@@ -4,7 +4,8 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.VerificationTarget
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -13,7 +14,6 @@ import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.reporting.verification.Reportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -23,7 +23,7 @@ import java.nio.file.Paths
 class CheckIdeParamsBuilder(
     val pluginRepository: PluginRepository,
     val pluginDetailsCache: PluginDetailsCache,
-    val reportage: Reportage
+    val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     if (freeArgs.isEmpty()) {
@@ -46,7 +46,7 @@ class CheckIdeParamsBuilder(
       pluginsSet.addPluginFilter(excludedFilter)
 
       pluginsSet.ignoredPlugins.forEach { (plugin, reason) ->
-        reportage.logPluginVerificationIgnored(plugin, VerificationTarget.Ide(ideDescriptor.ideVersion), reason)
+        reportage.logPluginVerificationIgnored(plugin, PluginVerificationTarget.IDE(ideDescriptor.ide), reason)
       }
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)

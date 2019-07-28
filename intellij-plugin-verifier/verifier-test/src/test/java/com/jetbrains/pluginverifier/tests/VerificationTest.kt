@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.results.VerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -13,7 +13,7 @@ import org.junit.Test
 class VerificationTest {
 
   companion object {
-    lateinit var verificationResult: VerificationResult
+    lateinit var verificationResult: PluginVerificationResult.Verified
 
     @BeforeClass
     @JvmStatic
@@ -24,7 +24,7 @@ class VerificationTest {
 
       val ide = IdeManager.createManager().createIde(idePath.toFile())
       val plugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
-      verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
+      verificationResult = VerificationRunner().runPluginVerification(ide, plugin) as PluginVerificationResult.Verified
     }
 
     private fun prepareTestSystemProperties() {
@@ -34,7 +34,7 @@ class VerificationTest {
 
   @Test
   fun `check that missing dependency is detected`() {
-    val missingDependencies = (verificationResult as VerificationResult.MissingDependencies).directMissingDependencies
+    val missingDependencies = verificationResult.directMissingDependencies
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
     val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500"))
