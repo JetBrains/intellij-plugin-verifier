@@ -1,8 +1,9 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
@@ -10,11 +11,14 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.parameters.jdk.JdkDescriptorCreator
+import com.jetbrains.pluginverifier.jdk.JdkDescriptor
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
-import com.jetbrains.pluginverifier.verifiers.resolution.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.jetbrains.ide.diff.builder.signatures.ApiSignature
 import org.jetbrains.ide.diff.builder.signatures.getJavaPackageName
 import org.jetbrains.ide.diff.builder.signatures.toSignature
