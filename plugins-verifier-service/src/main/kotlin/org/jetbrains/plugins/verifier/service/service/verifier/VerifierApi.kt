@@ -16,6 +16,9 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 
@@ -45,6 +48,9 @@ fun PluginVerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo)
       val compatibilityWarnings = compatibilityWarnings.map { it.convertCompatibilityWarning() }
       val deprecatedUsages = deprecatedUsages.map { it.convertDeprecatedApiUsage() }
       val experimentalApiUsages = experimentalApiUsages.map { it.convertExperimentalApiUsage() }
+      val internalApiUsages = internalApiUsages.map { it.convertInternalApiUsage() }
+      val overrideOnlyMethodUsages = overrideOnlyMethodUsages.map { it.convertOverrideOnlyApiUsage() }
+      val nonExtendableApiUsages = nonExtendableApiUsages.map { it.convertNonExtendableApiUsage() }
       val dependenciesGraph = dependenciesGraph.convertDependenciesGraph()
       val resultType = when {
         hasCompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
@@ -58,6 +64,9 @@ fun PluginVerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo)
           .addAllPluginStructureWarnings(compatibilityWarnings)
           .addAllDeprecatedUsages(deprecatedUsages)
           .addAllExperimentalApiUsages(experimentalApiUsages)
+          .addAllInternalApiUsages(internalApiUsages)
+          .addAllOverrideOnlyApiUsages(overrideOnlyMethodUsages)
+          .addAllNonExtendableApiUsages(nonExtendableApiUsages)
           .addAllCompatibilityProblems(compatibilityProblems)
           .build()
     }
@@ -123,6 +132,33 @@ private fun DeprecationInfo.convertDeprecationInfo() =
 
 private fun ExperimentalApiUsage.convertExperimentalApiUsage() =
     VerificationResults.ExperimentalApiUsage.newBuilder()
+        .setShortDescription(shortDescription)
+        .setFullDescription(fullDescription)
+        .setApiElement(apiElement.fullyQualifiedLocation())
+        .setUsageLocation(usageLocation.presentableUsageLocation())
+        .setApiElementType(apiElement.elementType.convertElementType())
+        .build()
+
+private fun InternalApiUsage.convertInternalApiUsage() =
+    VerificationResults.InternalApiUsage.newBuilder()
+        .setShortDescription(shortDescription)
+        .setFullDescription(fullDescription)
+        .setApiElement(apiElement.fullyQualifiedLocation())
+        .setUsageLocation(usageLocation.presentableUsageLocation())
+        .setApiElementType(apiElement.elementType.convertElementType())
+        .build()
+
+private fun OverrideOnlyMethodUsage.convertOverrideOnlyApiUsage() =
+    VerificationResults.OverrideOnlyApiUsage.newBuilder()
+        .setShortDescription(shortDescription)
+        .setFullDescription(fullDescription)
+        .setApiElement(apiElement.fullyQualifiedLocation())
+        .setUsageLocation(usageLocation.presentableUsageLocation())
+        .setApiElementType(apiElement.elementType.convertElementType())
+        .build()
+
+private fun NonExtendableApiUsage.convertNonExtendableApiUsage() =
+    VerificationResults.NonExtendableApiUsage.newBuilder()
         .setShortDescription(shortDescription)
         .setFullDescription(fullDescription)
         .setApiElement(apiElement.fullyQualifiedLocation())

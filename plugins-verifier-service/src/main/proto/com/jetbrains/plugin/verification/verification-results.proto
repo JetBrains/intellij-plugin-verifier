@@ -58,9 +58,54 @@ message DeprecatedApiUsage {
 }
 
 /*
- Usages of experimental API in bytecode.
+ Usages of '@org.jetbrains.annotations.ApiStatus.Experimental' API.
 */
 message ExperimentalApiUsage {
+    string shortDescription = 1;
+
+    string fullDescription = 2;
+
+    string apiElement = 3;
+
+    string usageLocation = 4;
+
+    ElementType apiElementType = 5;
+}
+
+/*
+ Usages of `@org.jetbrains.annotations.ApiStatus.Internal` API.
+*/
+message InternalApiUsage {
+    string shortDescription = 1;
+
+    string fullDescription = 2;
+
+    string apiElement = 3;
+
+    string usageLocation = 4;
+
+    ElementType apiElementType = 5;
+}
+
+/*
+ Violating usages of `@org.jetbrains.annotations.ApiStatus.OverrideOnly` API.
+*/
+message OverrideOnlyApiUsage {
+    string shortDescription = 1;
+
+    string fullDescription = 2;
+
+    string apiElement = 3;
+
+    string usageLocation = 4;
+
+    ElementType apiElementType = 5;
+}
+
+/*
+ Violating usages of `@org.jetbrains.annotations.ApiStatus.NonExtendable` API.
+*/
+message NonExtendableApiUsage {
     string shortDescription = 1;
 
     string fullDescription = 2;
@@ -117,6 +162,12 @@ message VerificationResult {
   repeated DeprecatedApiUsage deprecated_usages = 9;
 
   repeated ExperimentalApiUsage experimental_api_usages = 10;
+
+  repeated InternalApiUsage internal_api_usages = 11;
+
+  repeated OverrideOnlyApiUsage override_only_api_usages = 12;
+
+  repeated NonExtendableApiUsage non_extendable_api_usages = 13;
 
   enum ResultType {
     OK = 0;
