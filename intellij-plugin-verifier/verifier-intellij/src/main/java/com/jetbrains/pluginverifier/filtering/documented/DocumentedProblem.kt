@@ -147,14 +147,14 @@ data class DocFieldVisibilityChanged(val hostClass: String, val fieldName: Strin
  */
 data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
 
-  private fun String?.isClassInPackage() =
-      this?.startsWith(packageName + "/") ?: false
+  private fun String.belongsToPackage() = startsWith("$packageName/")
 
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) =
       when (problem) {
-        is ClassNotFoundProblem -> problem.unresolved.className.isClassInPackage()
-        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.isClassInPackage() }
-        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.isClassInPackage() }
+        is PackageNotFoundProblem -> problem.packageName == packageName || problem.packageName.belongsToPackage()
+        is ClassNotFoundProblem -> problem.unresolved.className.belongsToPackage()
+        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.belongsToPackage() }
+        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.belongsToPackage() }
         else -> false
       }
 }
@@ -200,15 +200,15 @@ private fun FieldReference.doesFieldDependOnClass(className: String) =
  * Checks if the method's signature of _this_ [MethodReference] contains
  * a class that matches the passed predicate.
  */
-private fun MethodReference.doesMethodDependOnClass(classFinder: (String) -> Boolean): Boolean {
-  if (classFinder(hostClass.className)) {
+private fun MethodReference.doesMethodDependOnClass(classPredicate: (String) -> Boolean): Boolean {
+  if (classPredicate(hostClass.className)) {
     return true
   }
   val (rawParamTypes, rawReturnType) = JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
   val paramClasses = rawParamTypes.mapNotNull { it.extractClassNameFromDescriptor() }
   val returnType = rawReturnType.extractClassNameFromDescriptor()
 
-  return paramClasses.any(classFinder) || (returnType != null && classFinder(returnType))
+  return paramClasses.any(classPredicate) || (returnType != null && classPredicate(returnType))
 }
 
 /**
