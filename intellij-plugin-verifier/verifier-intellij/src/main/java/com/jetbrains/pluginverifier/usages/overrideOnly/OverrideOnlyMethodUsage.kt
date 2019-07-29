@@ -20,7 +20,7 @@ class OverrideOnlyMethodUsage(
 ) : ApiUsage() {
 
   override val shortDescription
-    get() = "Method '" + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES) + "' can be only overridden"
+    get() = "Invocation of override-only method '" + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES) + "'"
 
   override val fullDescription
     get() = buildString {
