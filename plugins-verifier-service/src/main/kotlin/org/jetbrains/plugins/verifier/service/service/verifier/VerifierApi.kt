@@ -3,7 +3,8 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.verification.DependenciesGraphs
 import com.jetbrains.plugin.verification.VerificationResults
-import com.jetbrains.pluginverifier.*
+import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -22,53 +23,73 @@ import com.jetbrains.pluginverifier.warnings.PluginStructureError
  * Converts the internal verifier results to the protocol API results.
  */
 fun PluginVerificationResult.prepareVerificationResponse(updateInfo: UpdateInfo): VerificationResults.VerificationResult {
-  val problems = getCompatibilityProblems()
-  val warnings = getCompatibilityWarnings().map { it.convertCompatibilityWarning() }
-  val pluginStructureErrors = (this as? PluginVerificationResult.InvalidPlugin)?.pluginStructureErrors.orEmpty().map { it.convertPluginStructureError() }
-  val deprecatedUsages = getDeprecatedUsages().map { it.convertDeprecatedApiUsage() }
-  val experimentalApiUsages = getExperimentalApiUsages().map { it.convertExperimentalApiUsage() }
-  val dependenciesGraph = getDependenciesGraph()?.let { convertDependencyGraph(it) }
-  val resultType = convertResultType()
-  val compatibilityProblems = problems.map { it.convertCompatibilityProblem() }
-  val nonDownloadableReason = (this as? PluginVerificationResult.FailedToDownload)?.failedToDownloadReason
-      ?: (this as? PluginVerificationResult.NotFound)?.notFoundReason
-  return VerificationResults.VerificationResult.newBuilder()
+  val ideVersion = (verificationTarget as PluginVerificationTarget.IDE).ideVersion
+  val resultBuilder = VerificationResults.VerificationResult.newBuilder()
       .setUpdateId(updateInfo.updateId)
-      .setIdeVersion((verificationTarget as PluginVerificationTarget.IDE).ideVersion.asString())
-      .apply { if (dependenciesGraph != null) setDependenciesGraph(dependenciesGraph) }
-      .setResultType(resultType)
-      .addAllPluginStructureWarnings(warnings)
-      .addAllPluginStructureErrors(pluginStructureErrors)
-      .addAllDeprecatedUsages(deprecatedUsages)
-      .addAllExperimentalApiUsages(experimentalApiUsages)
-      .addAllCompatibilityProblems(compatibilityProblems)
-      .apply { if (nonDownloadableReason != null) setNonDownloadableReason(nonDownloadableReason) }
-      .build()
+      .setIdeVersion(ideVersion.asString())
+  return when (this) {
+    is PluginVerificationResult.FailedToDownload -> resultBuilder
+        .setResultType(VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE)
+        .setNonDownloadableReason(failedToDownloadReason)
+        .build()
+    is PluginVerificationResult.InvalidPlugin -> resultBuilder
+        .setResultType(VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN)
+        .addAllPluginStructureErrors(pluginStructureErrors.map { it.convertPluginStructureError() })
+        .build()
+    is PluginVerificationResult.NotFound -> resultBuilder
+        .setResultType(VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE)
+        .setNonDownloadableReason(notFoundReason)
+        .build()
+    is PluginVerificationResult.Verified -> {
+      val compatibilityProblems = compatibilityProblems.map { it.convertCompatibilityProblem() }
+      val compatibilityWarnings = compatibilityWarnings.map { it.convertCompatibilityWarning() }
+      val deprecatedUsages = deprecatedUsages.map { it.convertDeprecatedApiUsage() }
+      val experimentalApiUsages = experimentalApiUsages.map { it.convertExperimentalApiUsage() }
+      val dependenciesGraph = dependenciesGraph.convertDependenciesGraph()
+      val resultType = when {
+        hasCompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
+        hasCompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
+        hasDirectMissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
+        else -> VerificationResults.VerificationResult.ResultType.OK
+      }
+      resultBuilder
+          .setResultType(resultType)
+          .setDependenciesGraph(dependenciesGraph)
+          .addAllPluginStructureWarnings(compatibilityWarnings)
+          .addAllDeprecatedUsages(deprecatedUsages)
+          .addAllExperimentalApiUsages(experimentalApiUsages)
+          .addAllCompatibilityProblems(compatibilityProblems)
+          .build()
+    }
+  }
 }
 
-private fun convertDependencyGraph(dependenciesGraph: DependenciesGraph) = DependenciesGraphs.DependenciesGraph.newBuilder()
-    .setVerifiedPlugin(convertNode(dependenciesGraph.verifiedPlugin))
-    .addAllVertices(dependenciesGraph.vertices.map { convertNode(it) })
-    .addAllEdges(dependenciesGraph.edges.map { convertEdge(it) })
-    .build()
+private fun DependenciesGraph.convertDependenciesGraph() =
+    DependenciesGraphs.DependenciesGraph.newBuilder()
+        .setVerifiedPlugin(convertNode(verifiedPlugin))
+        .addAllVertices(vertices.map { convertNode(it) })
+        .addAllEdges(edges.map { convertEdge(it) })
+        .build()
 
-private fun convertEdge(dependencyEdge: DependencyEdge): DependenciesGraphs.DependenciesGraph.Edge =
+private fun convertEdge(dependencyEdge: DependencyEdge) =
     DependenciesGraphs.DependenciesGraph.Edge.newBuilder()
         .setFrom(convertNode(dependencyEdge.from))
         .setTo(convertNode(dependencyEdge.to))
         .setDependency(convertPluginDependency(dependencyEdge.dependency))
         .build()
 
-private fun convertNode(internalNode: DependencyNode): DependenciesGraphs.DependenciesGraph.Node = DependenciesGraphs.DependenciesGraph.Node.newBuilder()
-    .setPluginId(internalNode.pluginId)
-    .setVersion(internalNode.version)
-    .addAllMissingDependencies(internalNode.missingDependencies.map { convertMissingDependency(it) })
-    .build()
+private fun convertNode(internalNode: DependencyNode) =
+    DependenciesGraphs.DependenciesGraph.Node.newBuilder()
+        .setPluginId(internalNode.pluginId)
+        .setVersion(internalNode.version)
+        .addAllMissingDependencies(internalNode.missingDependencies.map { convertMissingDependency(it) })
+        .build()
 
-private fun convertMissingDependency(missingDependency: MissingDependency) = DependenciesGraphs.DependenciesGraph.MissingDependency.newBuilder()
-    .setDependency(convertPluginDependency(missingDependency.dependency))
-    .setMissingReason(missingDependency.missingReason)
-    .build()
+private fun convertMissingDependency(missingDependency: MissingDependency) =
+    DependenciesGraphs.DependenciesGraph.MissingDependency.newBuilder()
+        .setDependency(convertPluginDependency(missingDependency.dependency))
+        .setMissingReason(missingDependency.missingReason)
+        .build()
 
 private fun convertPluginDependency(dependency: PluginDependency) =
     DependenciesGraphs.DependenciesGraph.Dependency.newBuilder()
@@ -76,21 +97,6 @@ private fun convertPluginDependency(dependency: PluginDependency) =
         .setIsModule(dependency.isModule)
         .setIsOptional(dependency.isOptional)
         .build()
-
-private fun PluginVerificationResult.getCompatibilityWarnings(): Set<CompatibilityWarning> =
-    (this as? PluginVerificationResult.Verified)?.compatibilityWarnings ?: emptySet()
-
-private fun PluginVerificationResult.getDeprecatedUsages(): Set<DeprecatedApiUsage> =
-    (this as? PluginVerificationResult.Verified)?.deprecatedUsages ?: emptySet()
-
-private fun PluginVerificationResult.getExperimentalApiUsages(): Set<ExperimentalApiUsage> =
-    (this as? PluginVerificationResult.Verified)?.experimentalApiUsages ?: emptySet()
-
-private fun PluginVerificationResult.getCompatibilityProblems(): Set<CompatibilityProblem> =
-    (this as? PluginVerificationResult.Verified)?.compatibilityProblems ?: emptySet()
-
-private fun PluginVerificationResult.getDependenciesGraph() =
-    (this as? PluginVerificationResult.Verified)?.dependenciesGraph
 
 private fun CompatibilityProblem.convertCompatibilityProblem() =
     VerificationResults.CompatibilityProblem.newBuilder()
@@ -177,15 +183,3 @@ private fun PluginStructureError.convertPluginStructureError() =
     VerificationResults.PluginStructureError.newBuilder()
         .setMessage(message)
         .build()
-
-private fun PluginVerificationResult.convertResultType() = when (this) {
-  is PluginVerificationResult.Verified -> when {
-    hasCompatibilityWarnings -> VerificationResults.VerificationResult.ResultType.STRUCTURE_WARNINGS
-    hasCompatibilityProblems -> VerificationResults.VerificationResult.ResultType.COMPATIBILITY_PROBLEMS
-    hasDirectMissingDependencies -> VerificationResults.VerificationResult.ResultType.MISSING_DEPENDENCIES
-    else -> VerificationResults.VerificationResult.ResultType.OK
-  }
-  is PluginVerificationResult.InvalidPlugin -> VerificationResults.VerificationResult.ResultType.INVALID_PLUGIN
-  is PluginVerificationResult.NotFound -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
-  is PluginVerificationResult.FailedToDownload -> VerificationResults.VerificationResult.ResultType.NON_DOWNLOADABLE
-}
