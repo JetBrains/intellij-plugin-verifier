@@ -158,6 +158,16 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             val testMessage = buildString {
               appendln(shortDescription)
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
+              appendln("If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.")
+              appendln("If the problem is documented, it will be ignored by Plugin Verifier on the next verification. Note that TeamCity investigation may not disappear immediately.")
+              appendln()
+              appendln("To document the change do the following:")
+              appendln("1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html")
+              appendln("2) Open a page corresponding to the current year, for example 'Changes in 2019.*'")
+              appendln("3) Click 'Edit Page' at the right upper corner to navigate to GitHub.")
+              appendln("4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> ")
+              appendln("5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct. See supported patterns at the top.")
+              appendln("6) Provide the commit message and open a pull request.")
             }
 
             tcLog.testFailed(testName, testMessage, testDetails.toString())
