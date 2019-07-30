@@ -4,11 +4,15 @@ import com.jetbrains.pluginverifier.filtering.documented.*
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.toInternalName
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.unwrapMarkdownTags
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 class DocumentedProblemsParserTest {
 
-  private val parser: DocumentedProblemsParser = DocumentedProblemsParser()
+  @Rule
+  @JvmField
+  val expectedEx: ExpectedException = ExpectedException.none()
 
   @Test
   fun `unwrap markdown tags test`() {
@@ -31,8 +35,8 @@ class DocumentedProblemsParserTest {
   @Test
   fun parseTest() {
     val clazz = DocumentedProblemsParserTest::class.java
-    val text = clazz.getResourceAsStream("/exampleDocumentedProblems.md").bufferedReader().use { it.readText() }
-    val documentedProblems: List<DocumentedProblem> = parser.parse(text)
+    val pageBody = clazz.getResourceAsStream("/exampleDocumentedProblems.md").bufferedReader().use { it.readText() }
+    val documentedProblems: List<DocumentedProblem> = DocumentedProblemsParser(false).parse(pageBody)
     val expectedProblems = listOf(
         DocPackageRemoved("com/example/deletedPackage"),
         DocAbstractMethodAdded("com/example/Faz", "newAbstractMethod"),
@@ -55,7 +59,10 @@ class DocumentedProblemsParserTest {
         DocMethodParameterTypeChanged("com/example/Baf", "<init>"),
         DocMethodParameterTypeChanged("com/example/Bam", "<init>"),
         DocMethodMarkedFinal("com/example/MethodHolder", "methodMarkedFinal"),
-        DocFinalMethodInherited("com/some/Class", "com/some/other/Class", "methodName")
+        DocFinalMethodInherited("com/some/Class", "com/some/other/Class", "methodName"),
+        DocMethodParameterMarkedWithAnnotation("com/some/Class", "someMarkedMethod", "com/some/Parameter", "com/some/Annotation"),
+        DocClassTypeParameterAdded("com/some/Class"),
+        DocSuperclassChanged("com/some/Class", "com/some/old/Super", "com/some/new/Super")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)
@@ -65,4 +72,28 @@ class DocumentedProblemsParserTest {
       fail("Redundant:\n" + redundant.joinToString("\n"))
     }
   }
+
+  @Test
+  fun `failed to parse`() {
+    expectedEx.expect(DocumentedProblemsParseException::class.java)
+    val page = """
+  non-parsed description 
+  : Use classes from `org.apache.commons.imaging` instead
+""".trimIndent()
+    DocumentedProblemsParser(false).parse(page)
+  }
+
+  @Test
+  fun `ignore non parsed`() {
+    val page = """
+      non-parsed description 
+      : Use classes from `org.apache.commons.imaging` instead
+      
+      `com.some.Class` class removed
+      : reason
+    """.trimIndent()
+    val documentedProblems = DocumentedProblemsParser(true).parse(page)
+    assertEquals(listOf(DocClassRemoved("com/some/Class")), documentedProblems)
+  }
+
 }

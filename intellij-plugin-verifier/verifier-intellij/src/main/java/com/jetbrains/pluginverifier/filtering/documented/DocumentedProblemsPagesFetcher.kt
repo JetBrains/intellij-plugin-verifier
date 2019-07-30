@@ -2,32 +2,39 @@ package com.jetbrains.pluginverifier.filtering.documented
 
 import org.jsoup.Connection
 import org.jsoup.Jsoup
+import java.net.URL
 import java.util.concurrent.TimeUnit
 
 class DocumentedProblemsPagesFetcher {
 
-  companion object {
-    private val subPageRegex = Regex("api_changes/api_changes_list_20..\\.md")
+  private companion object {
+    private val subPagePathRegex = Regex("(api_changes/api_changes_list_20..)\\.md")
+    const val MAIN_SOURCE_PAGE_URL = "https://raw.githubusercontent.com/JetBrains/intellij-sdk-docs/master/reference_guide/api_changes_list.md"
+    const val MAIN_WEB_PAGE_URL = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
+    const val MAIN_EDIT_PAGE_URL = "https://github.com/JetBrains/intellij-sdk-docs/edit/master/reference_guide/api_changes_list.md"
   }
 
-  fun fetchPages(documentedPageUrl: String): List<String> {
-    val mainPage = fetchPage(documentedPageUrl)
-    val subPagesLinks = extractSubPagesLinks(mainPage, documentedPageUrl)
-    return subPagesLinks
-        .map { fetchPage(it) }
-        .toList<String>()
+  fun fetchPages(): List<DocumentedProblemsPage> {
+    val mainPageBody = fetchPageBody(MAIN_SOURCE_PAGE_URL)
+    val subPagesPaths = subPagePathRegex.findAll(mainPageBody).map { it.groups[1]!!.value }.toList()
+    return subPagesPaths.map { path ->
+      val sourcePageUrl = MAIN_SOURCE_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
+      val webPageUrl = MAIN_WEB_PAGE_URL.substringBeforeLast("/") + "/" + path + ".html"
+      val editPageUrl = MAIN_EDIT_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
+      val pageBody = fetchPageBody(sourcePageUrl)
+      DocumentedProblemsPage(URL(webPageUrl), URL(sourcePageUrl), URL(editPageUrl), pageBody)
+    }
   }
 
-  private fun fetchPage(documentedPageUrl: String) =
-      Jsoup
-          .connect(documentedPageUrl)
-          .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
-          .method(Connection.Method.GET)
-          .execute()
-          .body()
+  private fun fetchPageBody(pageUrl: String) = try {
+    Jsoup
+        .connect(pageUrl)
+        .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
+        .method(Connection.Method.GET)
+        .execute()
+        .body()
+  } catch (e: Exception) {
+    throw RuntimeException("Unable to fetch body of page $pageUrl", e)
+  }
 
-  private fun extractSubPagesLinks(mainPage: String, mainPageUrl: String) =
-      subPageRegex.findAll(mainPage).map {
-        mainPageUrl.substringBeforeLast("/") + "/" + it.value
-      }
 }

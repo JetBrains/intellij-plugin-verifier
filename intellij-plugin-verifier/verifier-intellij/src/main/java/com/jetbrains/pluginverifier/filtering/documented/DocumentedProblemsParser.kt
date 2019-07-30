@@ -3,10 +3,9 @@ package com.jetbrains.pluginverifier.filtering.documented
 /**
  * Parser of the markdown-formatted [Breaking API Changes page](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
  */
-class DocumentedProblemsParser {
+class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
 
   companion object {
-    private const val COLUMNS_DELIMITER = '|'
 
     private const val METHOD_PARAMS = "\\([^\\)]*\\)"
 
@@ -31,7 +30,10 @@ class DocumentedProblemsParser {
         Regex("($IDENTIFIER)$S($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(toInternalName(s[0])) },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), s[1]) },
-        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) }
+        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) },
+        Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
+        Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
+        Regex("($IDENTIFIER) superclass changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) }
     )
 
     /**
@@ -53,7 +55,7 @@ class DocumentedProblemsParser {
       if (className.isEmpty()) {
         return packageName
       }
-      return packageName + "/" + className
+      return "$packageName/$className"
     }
 
     /**
@@ -79,23 +81,92 @@ class DocumentedProblemsParser {
   }
 
   fun parse(pageBody: String): List<DocumentedProblem> {
+    val lines = parseLines(pageBody)
     val documentedProblems = arrayListOf<DocumentedProblem>()
-    val lines = pageBody.lines()
     for (index in lines.indices) {
       if (lines[index].startsWith(": ") && index > 0) {
-        val documentedProblem = parseDescription(lines[index - 1].trim())
-        if (documentedProblem != null) {
-          documentedProblems += documentedProblem
-        }
+        val description = lines[index - 1].trim()
+        val unwrappedDescription = unwrapMarkdownTags(description)
+        val documentedProblem = parseUnwrappedDescription(unwrappedDescription)
+            ?: if (ignoreNonParsed) {
+              continue
+            } else {
+              throw createParseException(description, unwrappedDescription)
+            }
+        documentedProblems += documentedProblem
       }
     }
     return documentedProblems
   }
 
-  private fun parseDescription(text: String): DocumentedProblem? {
-    val unwrappedMarkdown = unwrapMarkdownTags(text)
+  private fun createParseException(description: String, unwrappedDescription: String) =
+      DocumentedProblemsParseException(
+          buildString {
+            appendln("Unable to parse documented problem description")
+            appendln("Description: \"$description\"")
+            appendln("Description (no Markdown): \"$unwrappedDescription\"")
+            appendln("Only the following patterns are supported: ")
+            appendln("Where <method-params>='$METHOD_PARAMS' and <identifier>='$IDENTIFIER':")
+            for (regex in pattern2Parser.keys) {
+              appendln(
+                  regex.pattern
+                      .replace(METHOD_PARAMS, "<method-params>")
+                      .replace(IDENTIFIER, "<identifier>")
+                      .replace(S, ".")
+              )
+            }
+          }
+      )
+
+  /**
+   * ---
+   * title: SomeTitle
+   * ---
+   *
+   * <!--
+   * comment
+   * -->
+   *
+   * # Header
+   * ## Another header
+   *
+   * `com.something.Changed` class removed
+   * : Class `com.something.Changed` class removed
+   */
+  private fun parseLines(pageBody: String): List<String> {
+    val lines = arrayListOf<String>()
+    var insideTitle = false
+    var insideComment = false
+    for (line in pageBody.lineSequence()) {
+      if (line.startsWith("#")) {
+        continue
+      }
+      if (line.startsWith("---")) {
+        insideTitle = !insideTitle
+        continue
+      }
+      if (insideTitle) {
+        continue
+      }
+      if (line.startsWith("<!--")) {
+        insideComment = true
+        continue
+      }
+      if (line.startsWith("-->")) {
+        insideComment = false
+        continue
+      }
+      if (insideComment) {
+        continue
+      }
+      lines += line
+    }
+    return lines
+  }
+
+  private fun parseUnwrappedDescription(unwrappedDescription: String): DocumentedProblem? {
     for ((pattern, parser) in pattern2Parser) {
-      val matchResult = pattern.matchEntire(unwrappedMarkdown)
+      val matchResult = pattern.matchEntire(unwrappedDescription)
       if (matchResult != null) {
         val values = matchResult.groupValues.drop(1)
         return parser(values)

@@ -12,13 +12,6 @@ open class CmdOpts(
     @set:Argument("ide-version", alias = "iv", description = "The actual version of the IDE that will be verified. This value will overwrite the one found in the IDE itself")
     var actualIdeVersion: String? = null,
 
-    @set:Argument(
-        "documented-problems-url", alias = "dpu", description = "The URL of the page containing documented problems that must not be reported. " +
-        "By default it is $DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL that contains the sources of the page of " +
-        "SDK Documentation: https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
-    )
-    var documentedProblemsPageUrl: String = DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL,
-
     @set:Argument("runtime-dir", alias = "r", description = "The path to directory containing Java runtime jars (e.g. /usr/lib/jvm/java-8-oracle). If not specified, the JDK from 'JAVA_HOME' will be chosen.")
     var runtimeDir: String? = null,
 
@@ -59,8 +52,4 @@ open class CmdOpts(
     )
     var subsystemsToCheck: String = "all"
 
-) {
-  companion object {
-    const val DEFAULT_DOCUMENTED_PROBLEMS_PAGE_URL = "https://raw.githubusercontent.com/JetBrains/intellij-sdk-docs/master/reference_guide/api_changes_list.md"
-  }
-}
+)

@@ -5,6 +5,9 @@ import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil.parseIncomp
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.filtering.*
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsPagesFetcher
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -110,22 +113,18 @@ object OptionsParser {
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
-    val documentedProblemsFilter = safeCreateDocumentedProblemsFilter(opts)
+    val documentedProblemsFilter = createDocumentedProblemsFilter()
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
     return listOfNotNull(ignoredProblemsFilter) +
         listOfNotNull(documentedProblemsFilter) +
         listOfNotNull(codeProblemsFilter)
   }
 
-  private fun safeCreateDocumentedProblemsFilter(opts: CmdOpts) = try {
-    DocumentedProblemsFilter.createFilter(opts.documentedProblemsPageUrl)
-  } catch (e: Exception) {
-    e.rethrowIfInterrupted()
-    LOG.error(
-        "Failed to fetch documented problems page ${opts.documentedProblemsPageUrl}. " +
-            "The problems described on the page will not be ignored.", e
-    )
-    null
+  private fun createDocumentedProblemsFilter(): DocumentedProblemsFilter {
+    val documentedPages = DocumentedProblemsPagesFetcher().fetchPages()
+    val documentedProblemsParser = DocumentedProblemsParser(true)
+    val documentedProblems = documentedPages.flatMap { documentedProblemsParser.parse(it.pageBody) }
+    return DocumentedProblemsFilter(documentedProblems)
   }
 
   private fun getIgnoreFilter(ignoreProblemsFile: File): IgnoredProblemsFilter {

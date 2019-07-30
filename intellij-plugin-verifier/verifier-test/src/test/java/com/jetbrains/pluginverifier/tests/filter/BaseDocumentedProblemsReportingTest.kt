@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.filtering.DocumentedProblemsFilter
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblem
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy

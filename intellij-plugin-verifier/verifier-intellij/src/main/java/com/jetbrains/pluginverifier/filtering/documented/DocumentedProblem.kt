@@ -183,6 +183,35 @@ data class DocClassMovedToPackage(val oldClassName: String, val newPackageName: 
 }
 
 /**
+ * Inheritors of this class are present in Plugin Verifier only to verify
+ * that documented problems page does not contain non-recognizable problems descriptions.
+ * Plugin Verifier does not use them to exclude any problems (yet).
+ */
+abstract class NoOpValidatingDocumentedProblem : DocumentedProblem {
+  override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean = false
+}
+
+/**
+ * <class name>.<method name> method <class name> parameter marked <class name>
+ */
+data class DocMethodParameterMarkedWithAnnotation(
+    val hostClass: String,
+    val methodName: String,
+    val parameterClassName: String,
+    val annotationName: String
+) : NoOpValidatingDocumentedProblem()
+
+/**
+ * <class name> class type parameter <name> added
+ */
+data class DocClassTypeParameterAdded(val className: String) : NoOpValidatingDocumentedProblem()
+
+/**
+ * <class name> superclass change from <class name> to <class name>
+ */
+data class DocSuperclassChanged(val className: String, val oldSuperClassName: String, val newSuperClassName: String) : NoOpValidatingDocumentedProblem()
+
+/**
  * Checks if the method's signature of _this_ [MethodReference] contains
  * the class [className].
  */
