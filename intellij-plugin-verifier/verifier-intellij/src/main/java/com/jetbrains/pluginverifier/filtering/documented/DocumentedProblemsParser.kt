@@ -14,8 +14,8 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
     private const val S = "[.|#]"
 
     private val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
-        Regex("($IDENTIFIER) class removed") to { s -> DocClassRemoved(toInternalName(s[0])) },
-        Regex("($IDENTIFIER) class renamed.*") to { s -> DocClassRemoved(toInternalName(s[0])) },
+        Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) removed") to { s -> DocClassRemoved(toInternalName(s[0])) },
+        Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) renamed.*") to { s -> DocClassRemoved(toInternalName(s[0])) },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor removed") to { s -> DocMethodRemoved(toInternalName(s[0]), "<init>") },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method return type changed.*") to { s -> DocMethodReturnTypeChanged(toInternalName(s[0]), s[1]) },
@@ -23,17 +23,17 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor parameter.*(type changed|removed).*") to { s -> DocMethodParameterTypeChanged(toInternalName(s[0]), "<init>") },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method marked final.*") to { s -> DocMethodMarkedFinal(toInternalName(s[0]), s[1]) },
-        Regex("($IDENTIFIER).*(class|interface) now (extends|implements) ($IDENTIFIER) and inherits its final method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocFinalMethodInherited(toInternalName(s[0]), toInternalName(s[3]), s[4]) },
+        Regex("($IDENTIFIER).*(?:class|interface) now (?:extends|implements) ($IDENTIFIER) and inherits its final method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocFinalMethodInherited(toInternalName(s[0]), toInternalName(s[1]), s[2]) },
         Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), "<init>") },
         Regex("($IDENTIFIER)$S($IDENTIFIER) field removed") to { s -> DocFieldRemoved(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER)$S($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(toInternalName(s[0]), s[1]) },
         Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(toInternalName(s[0])) },
         Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), s[1]) },
-        Regex("($IDENTIFIER) class moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) },
+        Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) },
         Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
         Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
-        Regex("($IDENTIFIER) superclass changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) }
+        Regex("($IDENTIFIER).*(?:superclass|superinterface) changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) }
     )
 
     /**

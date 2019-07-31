@@ -62,9 +62,21 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 
 `com.example.Foo` class removed 
 : Use [`com.intellij.util.net.HttpConfigurable.getPlainProxyPassword()`](upsource:///platform/platform-api/src/com/intellij/util/net/HttpConfigurable.java) instead
+`com.example.SomeInterface` interface removed 
+: reason
+`com.example.SomeAnnotation` annotation removed 
+: reason
+`com.example.SomeEnum` enum removed 
+: reason
 `com.example.Bar.removedMethod` method removed 
 : Use classes from `org.jetbrains.org.objectweb.asm` package instead
 `com.example.Baf` class moved to package `com.another` 
+: Use the moved classes
+`com.example.MI` interface moved to package `com.another` 
+: Use the moved classes
+`com.example.MA` annotation moved to package `com.another` 
+: Use the moved classes
+`com.example.ME` enum moved to package `com.another` 
 : Use the moved classes
 
 ##Even more changes
@@ -89,6 +101,12 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 `com.example.Bam` class renamed to `com.example.NewBam` 
 : It is a comment why
+`com.example.Iface` interface renamed to `com.example.NewIface` 
+: It is a comment why
+`com.example.Annotation` annotation renamed to `com.example.NewAnnotation` 
+: It is a comment why
+`com.example.Enum` enum renamed to `com.example.NewEnum` 
+: It is a comment why
 `com.some.Class` class now extends `com.some.other.Class` and inherits its final method `methodName(int, String)`
 : It is a comment why
 `com.some.Class.someMarkedMethod` method `com.some.Parameter` parameter marked @`com.some.Annotation`
@@ -96,4 +114,6 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 `com.some.Class` class type parameter T added
 : It is a comment why
 `com.some.Class` superclass changed from `com.some.old.Super` to `com.some.new.Super`
+: It is a comment why
+`com.some.Interface` superinterface changed from `com.some.old.SuperIface` to `com.some.new.NewSuperIface`
 : It is a comment why

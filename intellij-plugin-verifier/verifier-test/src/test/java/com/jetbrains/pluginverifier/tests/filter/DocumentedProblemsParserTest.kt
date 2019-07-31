@@ -44,9 +44,15 @@ class DocumentedProblemsParserTest {
         DocAbstractMethodAdded("com/example/MethodHolder", "abstractMethodSeparatedWithDash"),
         DocFieldRemoved("com/example/Baz", "REMOVED_FIELD"),
         DocClassRemoved("com/example/Foo"),
+        DocClassRemoved("com/example/SomeInterface"),
+        DocClassRemoved("com/example/SomeAnnotation"),
+        DocClassRemoved("com/example/SomeEnum"),
         DocMethodRemoved("com/example/Bar", "removedMethod"),
         DocMethodRemoved("com/example/RemovedConstructorWithParams", "<init>"),
         DocClassMovedToPackage("com/example/Baf", "com/another"),
+        DocClassMovedToPackage("com/example/MI", "com/another"),
+        DocClassMovedToPackage("com/example/MA", "com/another"),
+        DocClassMovedToPackage("com/example/ME", "com/another"),
         DocMethodReturnTypeChanged("com/example/Foo\$InnerClass", "changedReturnType"),
         DocMethodParameterTypeChanged("com/example/Bar", "changedParameterType"),
         DocMethodVisibilityChanged("com/example/Bar", "methodVisibilityChanged"),
@@ -54,6 +60,9 @@ class DocumentedProblemsParserTest {
         DocFieldVisibilityChanged("com/example/Foo", "fieldVisibilityChanged"),
         DocClassRemoved("com/example/Inner\$Class"),
         DocClassRemoved("com/example/Bam"),
+        DocClassRemoved("com/example/Iface"),
+        DocClassRemoved("com/example/Annotation"),
+        DocClassRemoved("com/example/Enum"),
         DocMethodParameterTypeChanged("com/example/Foo", "foo"),
         DocMethodRemoved("com/example/Baz", "<init>"),
         DocMethodParameterTypeChanged("com/example/Baf", "<init>"),
@@ -62,7 +71,8 @@ class DocumentedProblemsParserTest {
         DocFinalMethodInherited("com/some/Class", "com/some/other/Class", "methodName"),
         DocMethodParameterMarkedWithAnnotation("com/some/Class", "someMarkedMethod", "com/some/Parameter", "com/some/Annotation"),
         DocClassTypeParameterAdded("com/some/Class"),
-        DocSuperclassChanged("com/some/Class", "com/some/old/Super", "com/some/new/Super")
+        DocSuperclassChanged("com/some/Class", "com/some/old/Super", "com/some/new/Super"),
+        DocSuperclassChanged("com/some/Interface", "com/some/old/SuperIface", "com/some/new/NewSuperIface")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)
