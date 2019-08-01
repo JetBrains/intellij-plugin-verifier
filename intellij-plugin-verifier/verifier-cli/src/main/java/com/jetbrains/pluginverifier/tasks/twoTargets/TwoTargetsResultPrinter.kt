@@ -126,11 +126,11 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                     val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
                     if (latestVersionSameProblemsCount > 0) {
                       appendln(
-                          "The newest version has $latestPluginVerification/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
-                              "and thus it has also been affected by the change."
+                          "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
+                              "and thus it has also been affected by this breaking change."
                       )
                     } else {
-                      appendln("The newest version has none of the problems of the old version and thus it may be considered unaffected by this change.")
+                      appendln("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
                     }
                   } else {
                     appendln("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
