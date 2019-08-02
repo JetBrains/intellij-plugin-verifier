@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
-class NoModuleDependencies(val descriptorPath: String) : PluginProblem() {
+class NoModuleDependencies(private val descriptorPath: String) : PluginProblem() {
   override val level
     get() = Level.WARNING
 
@@ -106,26 +106,31 @@ class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId:
     get() = "Optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
 }
 
-class ApplicationListenersAreAvailableOnlySince192(
-    private val sinceBuild: IdeVersion,
-    private val untilBuild: IdeVersion?
+class ElementAvailableOnlySinceNewerVersion(
+    private val elementName: String,
+    private val availableSinceBuild: IdeVersion,
+    private val pluginSinceBuild: IdeVersion,
+    private val pluginUntilBuild: IdeVersion?
 ) : PluginProblem() {
   override val level
     get() = Level.WARNING
 
   override val message
-    get() = "Element <applicationListeners> is available only since 2019.2 but the plugin can be installed in " +
-        if (untilBuild != null) {
-          sinceBuild.asStringWithoutProductCode() + "—" + untilBuild.asStringWithoutProductCode()
+    get() = "Element <$elementName> is available only since ${availableSinceBuild.asStringWithoutProductCode()} but the plugin can be installed in " +
+        if (pluginUntilBuild != null) {
+          pluginSinceBuild.asStringWithoutProductCode() + "—" + pluginUntilBuild.asStringWithoutProductCode()
         } else {
-          sinceBuild.asStringWithoutProductCode() + "+"
+          pluginSinceBuild.asStringWithoutProductCode() + "+"
         }
 }
 
-class ApplicationListenerMissingAttribute(private val attributeName: String) : PluginProblem() {
+class ElementMissingAttribute(
+    private val elementName: String,
+    private val attributeName: String
+) : PluginProblem() {
   override val level
     get() = Level.WARNING
 
   override val message
-    get() = "ApplicationListener must specify attribute $attributeName"
+    get() = "Element <$elementName> must specify attribute $attributeName"
 }

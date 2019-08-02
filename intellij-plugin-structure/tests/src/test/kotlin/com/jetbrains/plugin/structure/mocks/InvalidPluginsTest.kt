@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.mocks
 
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
@@ -8,7 +9,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -489,7 +489,7 @@ class InvalidPluginsTest {
   }
 
   @Test
-  fun `application listeners are available only since 192`() {
+  fun `application listeners are available only since 193`() {
     `test plugin xml warnings`(
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
@@ -499,7 +499,36 @@ class InvalidPluginsTest {
             </applicationListeners>
           """.trimIndent()
         },
-        listOf(ApplicationListenersAreAvailableOnlySince192(IdeVersion.createIdeVersion("181.1"), IdeVersion.createIdeVersion("193.1")))
+        listOf(
+            ElementAvailableOnlySinceNewerVersion(
+                "applicationListeners",
+                IdeVersion.createIdeVersion("193"),
+                IdeVersion.createIdeVersion("181.1"),
+                IdeVersion.createIdeVersion("193.1")
+            )
+        )
+    )
+  }
+
+  @Test
+  fun `project listeners are available only since 193`() {
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
+          additionalContent = """
+            <projectListeners>
+              <listener class="SomeClass" topic="SomeTopic"/>            
+            </projectListeners>
+          """.trimIndent()
+        },
+        listOf(
+            ElementAvailableOnlySinceNewerVersion(
+                "projectListeners",
+                IdeVersion.createIdeVersion("193"),
+                IdeVersion.createIdeVersion("181.1"),
+                IdeVersion.createIdeVersion("193.1")
+            )
+        )
     )
   }
 
@@ -507,7 +536,7 @@ class InvalidPluginsTest {
   fun `application listener missing attributes`() {
     `test plugin xml warnings`(
         perfectXmlBuilder.modify {
-          ideaVersion = """<idea-version since-build="192.1"/>"""
+          ideaVersion = """<idea-version since-build="193.1"/>"""
           additionalContent = """
             <applicationListeners>
               <listener irrelevantAttribute="42"/>            
@@ -515,9 +544,28 @@ class InvalidPluginsTest {
           """.trimIndent()
         },
         listOf(
-            ApplicationListenerMissingAttribute("class"),
-            ApplicationListenerMissingAttribute("topic")
+            ElementMissingAttribute("listener", "class"),
+            ElementMissingAttribute("listener", "topic")
         )
     )
   }
+
+  @Test
+  fun `project listener missing attributes`() {
+    `test plugin xml warnings`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="193.1"/>"""
+          additionalContent = """
+            <projectListeners>
+              <listener irrelevantAttribute="42"/>            
+            </projectListeners>
+          """.trimIndent()
+        },
+        listOf(
+            ElementMissingAttribute("listener", "class"),
+            ElementMissingAttribute("listener", "topic")
+        )
+    )
+  }
+
 }

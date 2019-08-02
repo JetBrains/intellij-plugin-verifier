@@ -9,11 +9,12 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
 import org.jdom2.Document
+import org.jdom2.Element
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -116,6 +117,7 @@ internal class PluginCreator {
     definedModules.addAll(bean.modules)
     extensions.putAll(bean.extensions)
     applicationListeners.addAll(bean.applicationListeners)
+    projectListeners.addAll(bean.projectListeners)
     useIdeClassLoader = bean.useIdeaClassLoader == true
 
     val ideaVersionBean = bean.ideaVersion
@@ -273,18 +275,27 @@ internal class PluginCreator {
       registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
     }
 
-    if (plugin.applicationListeners.isNotEmpty()) {
-      if (sinceBuild != null && sinceBuild.baselineVersion < 192) {
-        registerProblem(ApplicationListenersAreAvailableOnlySince192(sinceBuild, untilBuild))
-      } else {
-        val mandatoryAttributes = listOf("class", "topic")
-        for (applicationListener in plugin.applicationListeners) {
-          for (mandatoryAttribute in mandatoryAttributes) {
-            val hasAttribute = applicationListener.getAttributeValue(mandatoryAttribute) != null
-            if (!hasAttribute) {
-              registerProblem(ApplicationListenerMissingAttribute(mandatoryAttribute))
-            }
-          }
+    val listenersAvailableSinceBuild = IdeVersion.createIdeVersion("193")
+    if (sinceBuild != null && sinceBuild < listenersAvailableSinceBuild) {
+      if (plugin.applicationListeners.isNotEmpty()) {
+        registerProblem(ElementAvailableOnlySinceNewerVersion("applicationListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
+      }
+      if (plugin.projectListeners.isNotEmpty()) {
+        registerProblem(ElementAvailableOnlySinceNewerVersion("projectListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
+      }
+    }
+
+    validateListeners(plugin.applicationListeners)
+    validateListeners(plugin.projectListeners)
+  }
+
+  private fun validateListeners(listenersElements: List<Element>) {
+    val mandatoryAttributes = listOf("class", "topic")
+    for (listener in listenersElements) {
+      for (mandatoryAttribute in mandatoryAttributes) {
+        val hasAttribute = listener.getAttributeValue(mandatoryAttribute) != null
+        if (!hasAttribute) {
+          registerProblem(ElementMissingAttribute("listener", mandatoryAttribute))
         }
       }
     }

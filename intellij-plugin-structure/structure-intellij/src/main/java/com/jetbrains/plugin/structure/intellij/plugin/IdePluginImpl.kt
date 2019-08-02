@@ -49,6 +49,8 @@ internal class IdePluginImpl : IdePlugin {
 
   val applicationListeners: MutableList<Element> = arrayListOf()
 
+  val projectListeners: MutableList<Element> = arrayListOf()
+
   override val icons: MutableList<PluginIcon> = arrayListOf()
 
   override val optionalDescriptors: MutableMap<String, IdePlugin> = hashMapOf()

@@ -32,16 +32,17 @@ object PluginBeanExtractor {
     val rootElement = document.rootElement
     val bean = unmarshaller.unmarshal(JDOMSource(document)) as PluginBean
     bean.extensions = extractExtensions(rootElement)
-    bean.applicationListeners = extractApplicationListeners(rootElement)
+    bean.applicationListeners = extractApplicationListeners(rootElement, "applicationListeners")
+    bean.projectListeners = extractApplicationListeners(rootElement, "projectListeners")
     return bean
   }
 
-  private fun extractApplicationListeners(rootElement: Element): List<Element> {
-    val applicationListeners = arrayListOf<Element>()
-    for (applicationListenersRoot in rootElement.getChildren("applicationListeners")) {
-      applicationListeners += applicationListenersRoot.children
+  private fun extractApplicationListeners(rootElement: Element, listenersName: String): List<Element> {
+    val listeners = arrayListOf<Element>()
+    for (listenersRoot in rootElement.getChildren(listenersName)) {
+      listeners += listenersRoot.children
     }
-    return applicationListeners
+    return listeners
   }
 
   private fun extractExtensions(rootElement: Element): Multimap<String, Element> {
