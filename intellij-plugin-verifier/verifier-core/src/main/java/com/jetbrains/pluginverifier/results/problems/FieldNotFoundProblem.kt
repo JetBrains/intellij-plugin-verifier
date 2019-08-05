@@ -43,7 +43,11 @@ class FieldNotFoundProblem(
       append(descriptionMainPart)
       //Instance fields can only be declared in super classes.
       val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
-      append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface))
+      val hint = HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface)
+      if (hint.isNotEmpty()) {
+        appendln()
+        append(hint)
+      }
     }
 
   override fun equals(other: Any?) = other is FieldNotFoundProblem

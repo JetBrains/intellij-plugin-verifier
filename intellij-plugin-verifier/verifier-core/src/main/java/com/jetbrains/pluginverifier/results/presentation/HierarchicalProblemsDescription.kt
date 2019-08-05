@@ -35,21 +35,26 @@ object HierarchicalProblemsDescription {
     return if (superClasses.isEmpty() && superInterfaces.isEmpty()) {
       ""
     } else buildString {
-      append(" The $elementType might have been declared ")
+      append("The $elementType might have been declared ")
       if (superClasses.isNotEmpty()) {
         append("in the super " + "class".pluralize(superClasses.size))
-        append(" (")
-        append(superClasses.sorted().joinToString(transform = toFullJavaClassName))
-        append(")")
       }
       if (superInterfaces.isNotEmpty()) {
         if (superClasses.isNotEmpty()) {
           append(" or ")
         }
         append("in the super " + "interface".pluralize(superInterfaces.size))
-        append(" (")
-        append(superInterfaces.sorted().joinToString(transform = toFullJavaClassName))
-        append(")")
+      }
+      append(":")
+      val superTypes = superClasses.map(toFullJavaClassName).sorted() + superInterfaces.map(toFullJavaClassName).sorted()
+      if (superTypes.size <= 2) {
+        append(" ")
+        append(superTypes.joinToString())
+      } else {
+        for (superType in superTypes) {
+          appendln()
+          append("  $superType")
+        }
       }
     }
   }

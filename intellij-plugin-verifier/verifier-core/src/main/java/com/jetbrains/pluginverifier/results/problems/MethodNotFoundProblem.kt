@@ -50,7 +50,11 @@ class MethodNotFoundProblem(
     get() = buildString {
       append(descriptionMainPart)
       if (instruction != Instruction.INVOKE_SPECIAL) {
-        append(HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("method", methodOwnerHierarchy, true, true))
+        val hint = HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("method", methodOwnerHierarchy, true, true)
+        if (hint.isNotEmpty()) {
+          appendln()
+          append(hint)
+        }
       }
     }
 
