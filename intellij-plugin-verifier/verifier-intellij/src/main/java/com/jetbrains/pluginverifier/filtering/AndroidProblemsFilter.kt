@@ -20,7 +20,7 @@ class AndroidProblemsFilter : ProblemsFilter {
   }
 }
 
-private val androidPackages = listOf("com.android", "org.jetbrains.android").map { it.replace('.', '/') }
+private val androidPackages = listOf("android", "com.android", "org.jetbrains.android").map { it.replace('.', '/') }
 
 private fun CompatibilityProblem.relatesToAndroid(): Boolean {
   val classOrPackage = when (this) {
