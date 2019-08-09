@@ -33,7 +33,8 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
         Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) },
         Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
         Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
-        Regex("($IDENTIFIER).*(?:superclass|superinterface) changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) }
+        Regex("($IDENTIFIER).*(?:superclass|superinterface) changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) },
+        Regex("Constructor injection referring to extension points not supported") to { s -> DocConstructorInjectionNotSupported }
     )
 
     /**
