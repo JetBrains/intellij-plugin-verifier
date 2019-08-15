@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.ide.repositories.Product
 import com.jetbrains.pluginverifier.ide.repositories.Release
 import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import java.net.URL
+import java.time.LocalDate
 
 internal class DataServicesIndexParser {
   internal fun parseAvailableIdes(products: List<Product>): List<AvailableIde> {
@@ -23,7 +24,8 @@ internal class DataServicesIndexParser {
                   ?.setProductCodeIfAbsent(intelliJPlatformProduct.productCode)
               if (ideVersion != null) {
                 val releaseVersion = getReleaseVersion(release)
-                val availableIde = AvailableIde(ideVersion, releaseVersion, downloadUrl)
+                val uploadDate = LocalDate.parse(release.date)
+                val availableIde = AvailableIde(ideVersion, releaseVersion, downloadUrl, uploadDate)
                 availableIdes.add(availableIde)
               }
             }

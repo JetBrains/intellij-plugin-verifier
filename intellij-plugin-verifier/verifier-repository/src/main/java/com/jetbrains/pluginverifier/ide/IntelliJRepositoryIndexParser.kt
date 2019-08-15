@@ -5,6 +5,9 @@ import com.jetbrains.pluginverifier.ide.repositories.ArtifactJson
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import java.net.URL
+import java.time.Instant
+import java.time.ZoneOffset
+
 
 /**
  * Utility class used to parse index of available IDEs from [IntelliJIdeRepository].
@@ -39,7 +42,8 @@ internal class IntelliJRepositoryIndexParser {
 
         val isRelease = channel == IntelliJIdeRepository.Channel.RELEASE && isReleaseLikeVersion(artifactInfo.version)
         val releasedVersion = version.takeIf { isRelease }
-        val availableIde = AvailableIde(ideVersion, releasedVersion, downloadUrl)
+        val uploadDate = Instant.ofEpochMilli(artifactInfo.lastModifiedUnixTimeMs).atZone(ZoneOffset.UTC).toLocalDate()
+        val availableIde = AvailableIde(ideVersion, releasedVersion, downloadUrl, uploadDate)
         allAvailableIdes.add(availableIde)
       }
     }

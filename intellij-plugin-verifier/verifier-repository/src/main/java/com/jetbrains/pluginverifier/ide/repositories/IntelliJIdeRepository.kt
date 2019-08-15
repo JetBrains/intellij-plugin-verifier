@@ -107,7 +107,10 @@ internal data class ArtifactJson(
     val packaging: String,
 
     @SerializedName("content")
-    val content: String?
+    val content: String?,
+
+    @SerializedName("lastModifiedUnixTimeMs")
+    val lastModifiedUnixTimeMs: Long
 )
 
 private interface RepositoryIndexConnector {

@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.safeEquals
 import com.jetbrains.pluginverifier.misc.safeHashCode
 import java.net.URL
+import java.time.LocalDate
 import java.util.*
 
 /**
@@ -24,10 +25,14 @@ data class AvailableIde(
     /**
      * URL to download this IDE build.
      */
-    val downloadUrl: URL
+    val downloadUrl: URL,
+    /**
+     * Date when this IDE was uploaded to repository.
+     */
+    val uploadDate: LocalDate
 ) {
 
-  override fun toString() = version.toString() + if (isRelease) " ($releaseVersion)" else ""
+  override fun toString() = version.toString() + (if (isRelease) " ($releaseVersion)" else "") + " $uploadDate"
 
   val isRelease: Boolean
     get() = releaseVersion != null
@@ -35,7 +40,8 @@ data class AvailableIde(
   override fun equals(other: Any?) = other is AvailableIde
       && version == other.version
       && releaseVersion == other.releaseVersion
+      && uploadDate == other.uploadDate
       && downloadUrl.safeEquals(other.downloadUrl)
 
-  override fun hashCode() = Objects.hash(version, releaseVersion, downloadUrl.safeHashCode())
+  override fun hashCode() = Objects.hash(version, releaseVersion, uploadDate, downloadUrl.safeHashCode())
 }

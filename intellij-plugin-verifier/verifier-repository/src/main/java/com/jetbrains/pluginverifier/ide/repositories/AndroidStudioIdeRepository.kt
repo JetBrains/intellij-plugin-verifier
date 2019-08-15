@@ -15,6 +15,7 @@ import retrofit2.http.GET
 import retrofit2.http.Streaming
 import retrofit2.http.Url
 import java.net.URL
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 class AndroidStudioIdeRepository : IdeRepository {
@@ -41,12 +42,27 @@ class AndroidStudioIdeRepository : IdeRepository {
     return feed.entries
         .filter { it.packageInfo.type == "zip" }
         .map {
+          val ideVersion = IdeVersion.createIdeVersion(it.build).setProductCodeIfAbsent("AI")
+          val uploadDate = getApproximateUploadDate(ideVersion)
           AvailableIde(
-              IdeVersion.createIdeVersion(it.build).setProductCodeIfAbsent("AI"),
+              ideVersion,
               it.version,
-              it.packageInfo.url
+              it.packageInfo.url,
+              uploadDate
           )
         }
+  }
+
+  /**
+   * Android Studio feed does not provide info on when IDE builds were uploaded.
+   * Let's approximate it based on build number.
+   */
+  private fun getApproximateUploadDate(ideVersion: IdeVersion): LocalDate {
+    //191 (2019.1), 192, 193, 201, 202, 203, 211, 212, 213 ...
+    val branch = ideVersion.baselineVersion
+    val year = 2000 + branch / 10
+    val month = (12 / 3) * (branch % 10) - 1
+    return LocalDate.of(year, month, 1)
   }
 }
 

@@ -9,6 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import java.net.URL
+import java.time.LocalDate
 
 class IntelliJArtifactsRepositoryParserTest {
 
@@ -28,41 +29,48 @@ class IntelliJArtifactsRepositoryParserTest {
 
     val artifacts = IntelliJRepositoryIndexParser().parseArtifacts(artifactsJson.artifacts, IntelliJIdeRepository.Channel.RELEASE)
 
+    val uploadDate = LocalDate.now()
     val expectedArtifacts = listOf(
         AvailableIde(
             IdeVersion.createIdeVersion("IU-181.3870.7"),
             null,
-            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/181.3870.7/ideaIU-181.3870.7.zip")
+            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/181.3870.7/ideaIU-181.3870.7.zip"),
+            LocalDate.of(2018, 2, 20)
         ),
 
         AvailableIde(
             IdeVersion.createIdeVersion("IC-181.3870.7"),
             null,
-            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/181.3870.7/ideaIC-181.3870.7.zip")
+            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/181.3870.7/ideaIC-181.3870.7.zip"),
+            LocalDate.of(2018, 2, 20)
         ),
 
         AvailableIde(
             IdeVersion.createIdeVersion("IU-173.4548.28"),
             "2017.3.4",
-            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/2017.3.4/ideaIU-2017.3.4.zip")
+            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/2017.3.4/ideaIU-2017.3.4.zip"),
+            LocalDate.of(2018, 1, 30)
         ),
 
         AvailableIde(
             IdeVersion.createIdeVersion("IC-173.4548.28"),
             "2017.3.4",
-            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/2017.3.4/ideaIC-2017.3.4.zip")
+            URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/2017.3.4/ideaIC-2017.3.4.zip"),
+            LocalDate.of(2018, 1, 30)
         ),
 
         AvailableIde(
             IdeVersion.createIdeVersion("RD-173.3994.2442"),
             null,
-            URL("$REPO_URL/com/jetbrains/intellij/rider/riderRD/173.3994.2442/riderRD-173.3994.2442.zip")
+            URL("$REPO_URL/com/jetbrains/intellij/rider/riderRD/173.3994.2442/riderRD-173.3994.2442.zip"),
+            LocalDate.of(2018, 2, 6)
         ),
 
         AvailableIde(
             IdeVersion.createIdeVersion("MPS-181.1168"),
             "2018.1",
-            URL("$REPO_URL/com/jetbrains/mps/mps/2018.1/mps-2018.1.zip")
+            URL("$REPO_URL/com/jetbrains/mps/mps/2018.1/mps-2018.1.zip"),
+            LocalDate.of(2018, 4, 6)
         )
     )
 
@@ -70,8 +78,9 @@ class IntelliJArtifactsRepositoryParserTest {
     for (expectedArtifact in expectedArtifacts) {
       val sameArtifact = artifacts.find { it.version == expectedArtifact.version }
       assertNotNull("$expectedArtifact is not found", sameArtifact)
-      assertEquals(expectedArtifact.downloadUrl, sameArtifact!!.downloadUrl)
-      assertEquals(expectedArtifact.releaseVersion, sameArtifact.releaseVersion)
+      assertEquals("$expectedArtifact", expectedArtifact.downloadUrl, sameArtifact!!.downloadUrl)
+      assertEquals("$expectedArtifact", expectedArtifact.releaseVersion, sameArtifact.releaseVersion)
+      assertEquals("$expectedArtifact", expectedArtifact.uploadDate, sameArtifact.uploadDate)
     }
   }
 
