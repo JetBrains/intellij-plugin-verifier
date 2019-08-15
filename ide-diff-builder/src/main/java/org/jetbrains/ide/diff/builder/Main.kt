@@ -5,6 +5,7 @@ import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.cli.BuildApiAnnotationsCommand
 import org.jetbrains.ide.diff.builder.cli.IdeDiffCommand
 import org.jetbrains.ide.diff.builder.cli.IdeRepositoryIndexCommand
+import kotlin.system.exitProcess
 
 private fun usage(): Nothing {
   System.err.println("""
@@ -13,8 +14,7 @@ private fun usage(): Nothing {
     <args> depend on command. See -h (help) for details on each command.
   """.trimIndent()
   )
-  System.exit(1)
-  throw RuntimeException()
+  exitProcess(1)
 }
 
 private val AVAILABLE_COMMANDS = listOf(
