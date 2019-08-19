@@ -1,10 +1,7 @@
 package com.jetbrains.plugin.structure.hub
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginManager
+import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
@@ -70,6 +67,9 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
       val descriptor = jacksonObjectMapper()
           .readValue(inputStream, HubPlugin::class.java)
       val beanValidationResult = validateHubPluginBean(descriptor)
+      if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
+        return PluginCreationFail(beanValidationResult)
+      }
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
         manifest = IOUtils.toString(inputStream, Charsets.UTF_8)
