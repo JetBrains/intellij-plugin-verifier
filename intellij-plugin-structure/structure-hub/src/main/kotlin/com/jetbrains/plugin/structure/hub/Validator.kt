@@ -24,8 +24,8 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
   }
 
   if (bean.vendor == null) {
-    // Missing author email in manifest.json. Getting vendor from email field.
-    problems.add(PropertyNotSpecified("email"))
+    // Missing author email in manifest.json. Getting vendor from author field.
+    problems.add(PropertyNotSpecified("author"))
   }
 
   val version = bean.pluginVersion
