@@ -50,24 +50,27 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
     pluginFile.use {
       val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
           ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-      return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
+      val manifest = IOUtils.toString(pluginFile.getInputStream(descriptorEntry), Charsets.UTF_8)
+      return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry), manifest)
     }
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
     if (descriptorFile.exists()) {
-      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it) }
+      val manifest = IOUtils.toString(descriptorFile.inputStream(), Charsets.UTF_8)
+      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it, manifest) }
     }
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream): PluginCreationResult<HubPlugin> {
+  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream, manifest: String): PluginCreationResult<HubPlugin> {
     try {
       val descriptor = jacksonObjectMapper()
           .readValue(inputStream, HubPlugin::class.java)
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
+        this.manifest = manifest
         vendor = vendorInfo.vendor
         vendorEmail = vendorInfo.vendorEmail
         vendorUrl = vendorInfo.vendorUrl
@@ -76,7 +79,6 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      descriptor.manifest = IOUtils.toString(inputStream, Charsets.UTF_8)
       return PluginCreationSuccess(descriptor, beanValidationResult)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
