@@ -66,17 +66,17 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
     try {
       val descriptor = jacksonObjectMapper()
           .readValue(inputStream, HubPlugin::class.java)
-      val beanValidationResult = validateHubPluginBean(descriptor)
-      if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
-        return PluginCreationFail(beanValidationResult)
-      }
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
-        manifest = IOUtils.toString(inputStream, Charsets.UTF_8)
         vendor = vendorInfo.vendor
         vendorEmail = vendorInfo.vendorEmail
         vendorUrl = vendorInfo.vendorUrl
       }
+      val beanValidationResult = validateHubPluginBean(descriptor)
+      if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
+        return PluginCreationFail(beanValidationResult)
+      }
+      descriptor.manifest = IOUtils.toString(inputStream, Charsets.UTF_8)
       return PluginCreationSuccess(descriptor, beanValidationResult)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()

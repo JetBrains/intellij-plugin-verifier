@@ -23,6 +23,11 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
     problems.add(PropertyNotSpecified("name"))
   }
 
+  if (bean.vendor == null) {
+    // Missing author email in manifest.json. Getting vendor from email field.
+    problems.add(PropertyNotSpecified("email"))
+  }
+
   val version = bean.pluginVersion
   if (version == null || version.isBlank()) {
     problems.add(PropertyNotSpecified("version"))
@@ -40,10 +45,9 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
 
 
 fun parseHubVendorInfo(author: String): VendorInfo {
-  val authorMatch = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex().find(author)
-  val vendorObject = authorMatch?.groups
-  val vendor = vendorObject?.get(1)?.value?.trim()
-      ?: throw IllegalArgumentException("Missing author email in manifest.json")
+  val authorMatch = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex().find(author) ?: return VendorInfo()
+  val vendorObject = authorMatch.groups
+  val vendor = vendorObject[1]?.value?.trim()
   var vendorEmail = authorMatch.groups[2]?.value
   vendorEmail = vendorEmail?.substring(1, vendorEmail.length - 1) ?: ""
   var vendorUrl = authorMatch.groups[3]?.value

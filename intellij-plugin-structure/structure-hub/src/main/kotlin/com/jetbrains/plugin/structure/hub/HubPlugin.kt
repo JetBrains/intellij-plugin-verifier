@@ -36,4 +36,4 @@ data class HubPlugin(
   override val changeNotes: String? = null
 }
 
-data class VendorInfo(val vendor: String, val vendorEmail: String, val vendorUrl: String)
+data class VendorInfo(val vendor: String? = null, val vendorEmail: String = "", val vendorUrl: String = "")
