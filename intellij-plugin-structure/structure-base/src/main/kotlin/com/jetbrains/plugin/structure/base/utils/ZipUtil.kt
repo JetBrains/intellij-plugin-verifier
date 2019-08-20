@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.base.utils
 
 import org.apache.commons.io.FileUtils
 import org.codehaus.plexus.archiver.AbstractUnArchiver
+import org.codehaus.plexus.archiver.ArchiverException
 import org.codehaus.plexus.archiver.jar.JarArchiver
 import org.codehaus.plexus.archiver.tar.TarArchiver
 import org.codehaus.plexus.archiver.tar.TarBZip2UnArchiver
@@ -62,12 +63,12 @@ private fun createArchiver(extension: String) =
       else -> throw IllegalArgumentException("Unknown file extension: $extension")
     }
 
+class ArchiveSizeLimitExceededException(val sizeLimit: Long): RuntimeException()
+
 fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
-  if (!isFile) {
-    throw IllegalArgumentException("The file $this is not an archive")
-  }
-  if (!name.endsWith(".zip") && !name.endsWith(".tar.gz") && !name.endsWith(".tar.bz2")) {
-    throw IllegalArgumentException("Unsupported archive type: $this")
+  require(isFile) { "The file $this is not an archive" }
+  require(name.endsWith(".zip") || name.endsWith(".tar.gz") || name.endsWith(".tar.bz2")) {
+    "Unsupported archive type: $this"
   }
   FileUtils.forceMkdir(destination)
   val unArchiver = createUnArchiver(this, outputSizeLimit)
@@ -77,6 +78,9 @@ fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
   try {
     unArchiver.extract()
   } catch (e: Exception) {
+    if (outputSizeLimit != null && e is ArchiverException && e.message?.let { it.contains("size", true) && it.contains("limit", true) } == true) {
+      throw ArchiveSizeLimitExceededException(outputSizeLimit)
+    }
     e.rethrowIfInterrupted()
     throw e
   }
@@ -89,7 +93,9 @@ private fun createUnArchiver(archive: File, outputSizeLimit: Long?): AbstractUnA
     name.endsWith(".tar.gz") -> TarGZipUnArchiver(archive)
     name.endsWith(".tar.bz2") -> TarBZip2UnArchiver(archive)
     name.endsWith(".zip") -> ZipUnArchiver(archive).apply {
-      setMaxOutputSize(outputSizeLimit)
+      if (outputSizeLimit != null) {
+        setMaxOutputSize(outputSizeLimit)
+      }
     }
     else -> throw RuntimeException("Unable to extract - unknown file extension: $name")
   }
