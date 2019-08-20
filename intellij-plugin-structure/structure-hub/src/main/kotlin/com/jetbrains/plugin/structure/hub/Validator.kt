@@ -3,9 +3,7 @@ package com.jetbrains.plugin.structure.hub
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileHasLargeFilesError
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
+import com.jetbrains.plugin.structure.hub.problems.*
 import java.util.zip.ZipFile
 
 private const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024
@@ -37,9 +35,14 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
 
   if (bean.dependencies == null) {
     problems.add(PropertyNotSpecified("dependencies"))
+  } else if (bean.dependencies.isEmpty()) {
+    problems.add(HubDependenciesNotSpecified())
   }
+
   if (bean.products == null) {
     problems.add(PropertyNotSpecified("products"))
+  } else if (bean.products.isEmpty()) {
+    problems.add(HubProductsNotSpecified())
   }
 
   return problems

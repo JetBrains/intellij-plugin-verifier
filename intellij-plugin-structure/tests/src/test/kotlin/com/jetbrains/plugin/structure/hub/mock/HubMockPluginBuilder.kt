@@ -1,16 +1,16 @@
 package com.jetbrains.plugin.structure.hub.mock
 
 data class HubPluginJsonBuilder(
-    var key: String = "key",
-    var name: String = "name",
-    var version: String = "version",
-    var description: String = "description",
-    var author: String = "A B a@gmail.com",
-    var homeUrl: String = "www.google.com",
-    var iconUrl: String = "images/icon.png",
-    var dependencies: Map<String, String> = mapOf("a" to "1.0"),
-    var products: Map<String, String> = mapOf("a" to "1.0"),
-    var view: Map<String, String> = emptyMap()
+    var key: String? = "key",
+    var name: String? = "name",
+    var version: String? = "version",
+    var description: String? = "description",
+    var author: String? = "A B a@gmail.com",
+    var homeUrl: String? = "www.google.com",
+    var iconUrl: String? = "images/icon.png",
+    var dependencies: Map<String, String>? = mapOf("a" to "1.0"),
+    var products: Map<String, String>? = mapOf("a" to "1.0"),
+    var view: Map<String, String>? = emptyMap()
 ) {
 
   private fun Map<*, *>.asJson(indent: String = ""): String =
@@ -34,13 +34,7 @@ data class HubPluginJsonBuilder(
         "dependencies" to dependencies,
         "products" to products,
         "view" to view
-    ).filterValues { value ->
-      when (value) {
-        is String -> value.isNotEmpty()
-        is Map<*, *> -> value.isNotEmpty()
-        else -> false
-      }
-    }
+    ).filterValues { value -> value != null }
     return nonEmptyKeyValues.asJson()
   }
 }

@@ -7,9 +7,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
+import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
+import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
 import org.junit.Assert
@@ -22,9 +24,13 @@ class HubInvalidPluginsTest {
 
   companion object {
     fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-      val creationFail = getFailedResult(pluginFile)
-      val actualProblems = creationFail.errorsAndWarnings
-      Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
+      try {
+        val creationFail = getFailedResult(pluginFile)
+        val actualProblems = creationFail.errorsAndWarnings
+        Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
+      } finally {
+        pluginFile.deleteLogged()
+      }
     }
 
     private fun getFailedResult(pluginFile: File): PluginCreationFail<HubPlugin> {
@@ -60,57 +66,63 @@ class HubInvalidPluginsTest {
 
   @Test
   fun `manifest json not found in zip`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFolder("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
     }
     assertExpectedProblems(pluginFile, listOf(PluginDescriptorIsNotFound("manifest.json")))
   }
 
-  private fun checkPropertyNotSpecified(propertyName: String, destructor: HubPluginJsonBuilder.() -> Unit) {
-    val pluginFile = buildZipFile(temporaryFolder.newFolder("plugin.zip")) {
+  private fun checkInvalidPlugin(problem: PluginProblem, destructor: HubPluginJsonBuilder.() -> Unit) {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file("manifest.json") {
         val builder = perfectHubPluginBuilder
         builder.destructor()
         builder.asString()
       }
     }
-    assertExpectedProblems(pluginFile, listOf(PropertyNotSpecified(propertyName)))
+    assertExpectedProblems(pluginFile, listOf(problem))
   }
 
   @Test
   fun `id is not specified`() {
-    checkPropertyNotSpecified("key") { key = "" }
+    checkInvalidPlugin(PropertyNotSpecified("key")) { key = null }
+    checkInvalidPlugin(PropertyNotSpecified("key")) { key = "" }
   }
 
   @Test
   fun `name is not specified`() {
-    checkPropertyNotSpecified("name") { name = "" }
+    checkInvalidPlugin(PropertyNotSpecified("name")) { name = null }
+    checkInvalidPlugin(PropertyNotSpecified("name")) { name = "" }
   }
 
   @Test
   fun `version is not specified`() {
-    checkPropertyNotSpecified("version") { version = "" }
+    checkInvalidPlugin(PropertyNotSpecified("version")) { version = null }
+    checkInvalidPlugin(PropertyNotSpecified("version")) { version = "" }
   }
 
   @Test
   fun `author is not specified`() {
-    checkPropertyNotSpecified("author") { author = "" }
+    checkInvalidPlugin(PropertyNotSpecified("author")) { author = null }
+    checkInvalidPlugin(PropertyNotSpecified("author")) { author = "" }
   }
 
   @Test
   fun `dependencies are not specified`() {
-    checkPropertyNotSpecified("dependencies") { dependencies = emptyMap() }
+    checkInvalidPlugin(PropertyNotSpecified("dependencies")) { dependencies = null }
+    checkInvalidPlugin(HubDependenciesNotSpecified()) { dependencies = emptyMap() }
   }
 
   @Test
   fun `products are not specified`() {
-    checkPropertyNotSpecified("products") { products = emptyMap() }
+    checkInvalidPlugin(PropertyNotSpecified("products")) { products = null }
+    checkInvalidPlugin(HubProductsNotSpecified()) { products = emptyMap() }
   }
 
   @Test
   fun `too many files in hub plugin`() {
     val tooManyNumber = 1001
 
-    val pluginFile = buildZipFile(temporaryFolder.newFolder("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file("manifest.json") {
         perfectHubPluginBuilder.modify {  }
       }
