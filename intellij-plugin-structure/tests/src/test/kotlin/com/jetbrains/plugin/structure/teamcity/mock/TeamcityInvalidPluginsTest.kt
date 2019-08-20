@@ -35,7 +35,7 @@ class TeamcityInvalidPluginsTest {
     assertExpectedProblems(incorrect, listOf(createIncorrectTeamCityPluginFile(incorrect.name)))
   }
 
-  @Test()
+  @Test
   fun `plugin file does not exist`() {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
@@ -73,20 +73,9 @@ class TeamcityInvalidPluginsTest {
   }
 
 
-  private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
-    val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    val successResult = getSuccessResult(pluginFolder)
-    assertEquals(expectedWarnings, successResult.warnings)
-  }
-
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     assertExpectedProblems(pluginFolder, expectedProblems)
-  }
-
-  private fun `test valid plugin xml`(pluginXmlContent: String) {
-    val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    getSuccessResult(pluginFolder)
   }
 
   private fun getTempPluginFolder(pluginXmlContent: String): File {
