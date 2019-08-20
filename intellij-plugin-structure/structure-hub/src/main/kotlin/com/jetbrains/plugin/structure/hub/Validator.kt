@@ -18,7 +18,7 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
 
   if (bean.pluginId.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("id"))
+    problems.add(PropertyNotSpecified("key"))
   }
 
   if (bean.pluginName.isNullOrBlank()) {
