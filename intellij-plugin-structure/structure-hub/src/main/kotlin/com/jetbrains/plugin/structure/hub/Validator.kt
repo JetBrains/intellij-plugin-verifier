@@ -12,6 +12,17 @@ const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024L
 const val MAX_HUB_FILE_SIZE = 30 * 1024 * 1024L
 const val MAX_HUB_FILE_NUM = 1000
 
+/**
+ * Trustworthy regexp copied from https://github.com/jonschlinkert/parse-author
+ * It may be used to parse the following author formats:
+ * ```
+ * Name
+ * Name <email>
+ * Name <email> (url)
+ * <email> (url)
+ * ... and similar ...
+ * ```
+ */
 private val AUTHOR_REGEX = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex()
 
 internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
