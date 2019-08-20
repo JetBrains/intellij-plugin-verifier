@@ -49,18 +49,18 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
     val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
         ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-    return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
+    return loadDescriptorFromStream(pluginFile.getInputStream(descriptorEntry))
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
     if (descriptorFile.exists()) {
-      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it) }
+      return descriptorFile.inputStream().use { loadDescriptorFromStream(it) }
     }
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream): PluginCreationResult<HubPlugin> {
+  private fun loadDescriptorFromStream(inputStream: InputStream): PluginCreationResult<HubPlugin> {
     try {
       val descriptor = jacksonObjectMapper()
           .readValue(inputStream, HubPlugin::class.java)
@@ -77,8 +77,8 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
       return PluginCreationSuccess(descriptor, beanValidationResult)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      LOG.info("Unable to read plugin descriptor from $streamName", e)
-      return PluginCreationFail(UnableToReadDescriptor(streamName, e.localizedMessage))
+      LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
+      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
     }
   }
 }
