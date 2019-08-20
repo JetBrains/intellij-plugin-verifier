@@ -32,13 +32,14 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   }
 
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> {
-    if (FileUtils.sizeOf(pluginFile) > MAX_HUB_ZIP_SIZE) {
+    val sizeLimit = Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()
+    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
       return PluginCreationFail(HubZipFileTooLargeError())
     }
 
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
     return try {
-      pluginFile.extractTo(tempDirectory, MAX_HUB_FILE_SIZE)
+      pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
       return PluginCreationFail(HubZipFileTooLargeError())

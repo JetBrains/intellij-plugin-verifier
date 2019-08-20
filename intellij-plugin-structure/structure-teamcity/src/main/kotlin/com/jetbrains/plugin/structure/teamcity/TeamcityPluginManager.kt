@@ -20,8 +20,6 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
   companion object {
     private const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
-    private const val TEAM_CITY_PLUGIN_SIZE_LIMIT = FileUtils.ONE_GB
-
     private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
     fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
@@ -39,12 +37,13 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
   }
 
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
-    if (FileUtils.sizeOf(pluginFile) > TEAM_CITY_PLUGIN_SIZE_LIMIT) {
+    val sizeLimit = Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT.getAsLong()
+    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
       return PluginCreationFail(TeamCityPluginTooLargeError())
     }
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
     return try {
-      pluginFile.extractTo(tempDirectory, TEAM_CITY_PLUGIN_SIZE_LIMIT)
+      pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
       return PluginCreationFail(TeamCityPluginTooLargeError())

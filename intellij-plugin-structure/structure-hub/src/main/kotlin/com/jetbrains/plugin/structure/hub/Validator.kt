@@ -2,15 +2,15 @@ package com.jetbrains.plugin.structure.hub
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.*
+import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
+import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
+import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
+import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
 import java.io.File
-
-const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024L
-const val MAX_HUB_FILE_SIZE = 30 * 1024 * 1024L
-const val MAX_HUB_FILE_NUM = 1000
 
 /**
  * Trustworthy regexp copied from https://github.com/jonschlinkert/parse-author
@@ -74,11 +74,12 @@ fun parseHubVendorInfo(author: String): VendorInfo {
 
 
 fun validateHubPluginDirectory(pluginDirectory: File): PluginCreationFail<HubPlugin>? {
-  if (FileUtils.sizeOfDirectory(pluginDirectory) > MAX_HUB_FILE_SIZE) {
+  if (FileUtils.sizeOfDirectory(pluginDirectory) > Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()) {
     return PluginCreationFail(HubZipFileTooLargeError())
   }
   val filesIterator = FileUtils.iterateFilesAndDirs(pluginDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)
-  if (filesIterator.asSequence().take(MAX_HUB_FILE_NUM + 1).count() > MAX_HUB_FILE_NUM) {
+  val maxHubFileNum = Settings.HUB_PLUGIN_MAX_FILES_NUMBER.getAsInt()
+  if (filesIterator.asSequence().take(maxHubFileNum + 1).count() > maxHubFileNum) {
     return PluginCreationFail(HubZipFileTooManyFilesError())
   }
   return null

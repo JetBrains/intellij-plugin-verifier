@@ -45,7 +45,6 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String META_INF = "META-INF";
-  private static final Long PLUGIN_OUTPUT_SIZE_LIMIT = FileUtils.ONE_GB;
 
   @NotNull
   private final ResourceResolver myResourceResolver;
@@ -354,7 +353,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
                                                   @NotNull ResourceResolver resourceResolver) {
     ExtractorResult extractorResult;
     try {
-      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory, PLUGIN_OUTPUT_SIZE_LIMIT);
+      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(), zipPlugin);

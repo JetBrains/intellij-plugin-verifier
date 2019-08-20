@@ -18,8 +18,6 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
 
   private val LOG = LoggerFactory.getLogger(ReSharperPluginManager::class.java)
 
-  private const val RE_SHARPER_PLUGIN_SIZE_LIMIT = FileUtils.ONE_GB
-
   override fun createPlugin(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when (pluginFile.extension) {
@@ -29,14 +27,15 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
   }
 
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
-    if (FileUtils.sizeOf(pluginFile) > RE_SHARPER_PLUGIN_SIZE_LIMIT) {
+    val sizeLimit = Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT.getAsLong()
+    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
       return PluginCreationFail(ReSharperPluginTooLargeError())
     }
 
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
     return try {
       val withZipExtension = pluginFile.copyTo(tempDirectory.resolve("plugin.zip"))
-      withZipExtension.extractTo(tempDirectory, RE_SHARPER_PLUGIN_SIZE_LIMIT)
+      withZipExtension.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
       return PluginCreationFail(ReSharperPluginTooLargeError())
