@@ -29,7 +29,6 @@ class IntelliJArtifactsRepositoryParserTest {
 
     val artifacts = IntelliJRepositoryIndexParser().parseArtifacts(artifactsJson.artifacts, IntelliJIdeRepository.Channel.RELEASE)
 
-    val uploadDate = LocalDate.now()
     val expectedArtifacts = listOf(
         AvailableIde(
             IdeVersion.createIdeVersion("IU-181.3870.7"),
