@@ -12,6 +12,8 @@ private const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024
 private const val MAX_HUB_FILE_SIZE = 30 * 1024 * 1024
 private const val MAX_HUB_FILE_NUM = 1000
 
+private val AUTHOR_REGEX = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex()
+
 internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
 
@@ -43,9 +45,8 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
   return problems
 }
 
-
 fun parseHubVendorInfo(author: String): VendorInfo {
-  val authorMatch = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex().find(author) ?: return VendorInfo()
+  val authorMatch = AUTHOR_REGEX.find(author) ?: return VendorInfo()
   val vendorObject = authorMatch.groups
   val vendor = vendorObject[1]?.value?.trim()
   var vendorEmail = authorMatch.groups[2]?.value
