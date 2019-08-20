@@ -11,7 +11,6 @@ import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 
 class HubPluginManager private constructor() : PluginManager<HubPlugin> {
@@ -55,14 +54,16 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
     if (descriptorFile.exists()) {
-      return descriptorFile.inputStream().use { loadDescriptorFromStream(it) }
+      return loadDescriptorFromStream(descriptorFile)
     }
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptorFromStream(inputStream: InputStream): PluginCreationResult<HubPlugin> {
+  private fun loadDescriptorFromStream(descriptorFile: File): PluginCreationResult<HubPlugin> {
     try {
-      val descriptor = jacksonObjectMapper().readValue(inputStream, HubPlugin::class.java)
+      val manifestContent = descriptorFile.readText()
+      val descriptor = jacksonObjectMapper().readValue(manifestContent, HubPlugin::class.java)
+      descriptor.manifestContent = manifestContent
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
         vendor = vendorInfo.vendor

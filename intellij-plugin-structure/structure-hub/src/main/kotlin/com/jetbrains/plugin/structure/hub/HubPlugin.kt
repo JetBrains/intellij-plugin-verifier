@@ -28,6 +28,7 @@ data class HubPlugin(
     val products: Map<String, String>? = null
 
 ) : Plugin {
+  var manifestContent: String = ""
   override val icons: List<PluginIcon> = emptyList()
   override var vendorUrl: String? = null
   override var vendor: String? = null
