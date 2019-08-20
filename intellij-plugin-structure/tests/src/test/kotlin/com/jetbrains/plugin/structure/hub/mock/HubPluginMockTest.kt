@@ -23,7 +23,7 @@ class HubPluginMockTest {
     key = "cat-widget"
     name = "Pets"
     version = "1.1.1"
-    author = "Mariya Davydova <mrs.mariya.davydova@gmail.com>"
+    author = "Michael Jackson <mj@gmail.com>"
     homeUrl = "https://github.com/mariyadavydova/youtrack-cats-widget"
     description = "Funny cats and dogs for your Dashboard!"
     iconUrl = "images/cat_purr.png"
@@ -61,10 +61,10 @@ class HubPluginMockTest {
     assertEquals("cat-widget", plugin.pluginId)
     assertEquals("Pets", plugin.pluginName)
     assertEquals("1.1.1", plugin.pluginVersion)
-    assertEquals("Mariya Davydova <mrs.mariya.davydova@gmail.com>", plugin.author)
+    assertEquals("Michael Jackson <mj@gmail.com>", plugin.author)
     assertEquals("https://github.com/mariyadavydova/youtrack-cats-widget", plugin.url)
-    assertEquals("Mariya Davydova", plugin.vendor)
-    assertEquals("mrs.mariya.davydova@gmail.com", plugin.vendorEmail)
+    assertEquals("Michael Jackson", plugin.vendor)
+    assertEquals("mj@gmail.com", plugin.vendorEmail)
     assertEquals("Funny cats and dogs for your Dashboard!", plugin.description)
     assertEquals("images/cat_purr.png", plugin.iconUrl)
     assertEquals(mapOf("Hub" to ">=2018.2"), plugin.dependencies)
