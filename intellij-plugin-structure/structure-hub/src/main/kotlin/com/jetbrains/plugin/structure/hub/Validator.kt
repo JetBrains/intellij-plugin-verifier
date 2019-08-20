@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.hub
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileHsLargeFilesError
+import com.jetbrains.plugin.structure.hub.problems.HubZipFileHasLargeFilesError
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import java.util.zip.ZipFile
@@ -60,7 +60,7 @@ fun validateHubZipFile(zipFile: ZipFile): PluginCreationFail<HubPlugin>? {
   if (zipFile.size() > MAX_HUB_ZIP_SIZE)
     return PluginCreationFail(HubZipFileTooLargeError())
   if (zipFile.entries().toList().any { entry -> entry.size > MAX_HUB_FILE_SIZE })
-    return PluginCreationFail(HubZipFileHsLargeFilesError())
+    return PluginCreationFail(HubZipFileHasLargeFilesError())
   if (zipFile.entries().toList().size > MAX_HUB_FILE_NUM)
     return PluginCreationFail(HubZipFileTooManyFilesError())
   return null
