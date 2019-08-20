@@ -25,8 +25,7 @@ data class HubPlugin(
     @JsonProperty("dependencies")
     val dependencies: Map<String, String>? = null,
     @JsonProperty("products")
-    val products: Map<String, String>? = null,
-    var manifest: String? = null
+    val products: Map<String, String>? = null
 
 ) : Plugin {
   override val icons: List<PluginIcon> = emptyList()

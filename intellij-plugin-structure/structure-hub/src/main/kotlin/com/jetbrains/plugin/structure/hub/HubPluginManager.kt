@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
-import org.apache.commons.io.IOUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -51,26 +50,23 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
     val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
         ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-    val manifest = IOUtils.toString(pluginFile.getInputStream(descriptorEntry), Charsets.UTF_8)
-    return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry), manifest)
+    return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
     if (descriptorFile.exists()) {
-      val manifest = IOUtils.toString(descriptorFile.inputStream(), Charsets.UTF_8)
-      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it, manifest) }
+      return descriptorFile.inputStream().use { loadDescriptorFromStream(descriptorFile.path, it) }
     }
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream, manifest: String): PluginCreationResult<HubPlugin> {
+  private fun loadDescriptorFromStream(streamName: String, inputStream: InputStream): PluginCreationResult<HubPlugin> {
     try {
       val descriptor = jacksonObjectMapper()
           .readValue(inputStream, HubPlugin::class.java)
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
-        this.manifest = manifest
         vendor = vendorInfo.vendor
         vendorEmail = vendorInfo.vendorEmail
         vendorUrl = vendorInfo.vendorUrl
