@@ -21,8 +21,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
 
     private val LOG: Logger = LoggerFactory.getLogger(HubPluginManager::class.java)
 
-    fun createManager(): HubPluginManager =
-        HubPluginManager()
+    fun createManager(): HubPluginManager = HubPluginManager()
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<HubPlugin> {
