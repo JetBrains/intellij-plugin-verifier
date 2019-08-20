@@ -62,8 +62,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
 
   private fun loadDescriptorFromStream(inputStream: InputStream): PluginCreationResult<HubPlugin> {
     try {
-      val descriptor = jacksonObjectMapper()
-          .readValue(inputStream, HubPlugin::class.java)
+      val descriptor = jacksonObjectMapper().readValue(inputStream, HubPlugin::class.java)
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
         vendor = vendorInfo.vendor
