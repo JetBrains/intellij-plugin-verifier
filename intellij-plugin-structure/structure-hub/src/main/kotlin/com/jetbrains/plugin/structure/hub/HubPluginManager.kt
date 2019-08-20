@@ -27,9 +27,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<HubPlugin> {
-    if (!pluginFile.exists()) {
-      throw IllegalArgumentException("Plugin file $pluginFile does not exist")
-    }
+    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
       pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
