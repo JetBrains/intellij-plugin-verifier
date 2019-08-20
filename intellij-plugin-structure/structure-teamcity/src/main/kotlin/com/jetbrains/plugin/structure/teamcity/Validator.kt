@@ -16,8 +16,8 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   if (beanDisplayName == null || beanDisplayName.isBlank()) {
     problems.add(PropertyNotSpecified("display-name"))
   } else {
-    val words = beanDisplayName.toLowerCase().split(' ')
-    if (words.any { it in ForbiddenWordInPluginName.forbiddenWords }) {
+    val hasForbiddenWords = ForbiddenWordInPluginName.forbiddenWords.any { beanDisplayName.contains(it) }
+    if (hasForbiddenWords) {
       problems.add(ForbiddenWordInPluginName)
     }
   }
