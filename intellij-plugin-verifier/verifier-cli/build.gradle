@@ -1,8 +1,3 @@
-plugins {
-  id 'java'
-  id 'com.github.johnrengelman.shadow' version '4.0.1'
-}
-
 dependencies {
   api project(':verifier-intellij')
 
@@ -10,26 +5,3 @@ dependencies {
   implementation 'com.github.spullara.cli-parser:cli-parser:1.1.2'
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
 }
-
-shadowJar {
-  manifest {
-    attributes 'Main-Class': 'com.jetbrains.pluginverifier.PluginVerifierMain'
-  }
-
-  archiveClassifier = 'all'
-  
-  //Exclude resources/dlls and other stuff coming from the dependencies.
-  exclude([
-      '/win32/**',
-      '/tips/**',
-      '/search/**',
-      '/linux/**',
-      '/intentionDescriptions/**',
-      '/inspectionDescriptions/**',
-      '/fileTemplates/**',
-      '/darwin/**',
-      '**.dll'
-  ])
-}
-
-jar.finalizedBy(shadowJar)
