@@ -1,19 +1,40 @@
 package com.jetbrains.plugin.structure.hub.mock
 
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import org.junit.Assert
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.File
 
 class HubPluginMockTest {
+
+  @Rule
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
+
   @Test
   fun `hub plugin`() {
-    val pluginFile = URLUtil.urlToFile(this::class.java.getResource("/hub/mock-cat-widget.zip"))
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file("manifest.json") {
+        perfectHubPluginBuilder.modify {
+          key = "cat-widget"
+          name = "Pets"
+          version = "1.1.1"
+          author = "Mariya Davydova <mrs.mariya.davydova@gmail.com>"
+          homeUrl = "https://github.com/mariyadavydova/youtrack-cats-widget"
+          description = "Funny cats and dogs for your Dashboard!"
+          iconUrl = "images/cat_purr.png"
+          dependencies = mapOf("Hub" to ">=2018.2")
+          products = mapOf("Hub" to "^2018.2", "YouTrack" to "^2018.2")
+        }
+      }
+    }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
