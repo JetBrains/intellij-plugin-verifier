@@ -7,11 +7,6 @@ class HubZipFileTooManyFilesError : PluginDescriptorResolutionError() {
     get() = "There are too many files in widget archive"
 }
 
-class HubZipFileHasLargeFilesError : PluginDescriptorResolutionError() {
-  override val message
-    get() = "Some of widget files are too large"
-}
-
 class HubZipFileTooLargeError : PluginDescriptorResolutionError() {
   override val message
     get() = "Widget archive size is larger than allowed"

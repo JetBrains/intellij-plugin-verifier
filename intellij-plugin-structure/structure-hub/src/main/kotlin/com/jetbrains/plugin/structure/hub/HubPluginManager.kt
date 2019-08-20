@@ -3,17 +3,16 @@ package com.jetbrains.plugin.structure.hub
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
+import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
-import java.util.zip.ZipFile
+import java.nio.file.Files
 
 class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   companion object {
@@ -33,26 +32,27 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> = try {
-    ZipFile(pluginFile).use {
-      loadDescriptorFromZip(it)
+  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> {
+    if (FileUtils.sizeOf(pluginFile) > MAX_HUB_ZIP_SIZE) {
+      return PluginCreationFail(HubZipFileTooLargeError())
     }
-  } catch (e: IOException) {
-    LOG.info("Unable to extract plugin zip: $pluginFile", e)
-    PluginCreationFail(UnableToExtractZip())
-  }
 
-  private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<HubPlugin> {
-    val errors = validateHubZipFile(pluginFile)
-    if (errors != null) {
-      return errors
+    val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
+    return try {
+      pluginFile.extractTo(tempDirectory, MAX_HUB_FILE_SIZE)
+      loadDescriptorFromDirectory(tempDirectory)
+    } catch (e: ArchiveSizeLimitExceededException) {
+      return PluginCreationFail(HubZipFileTooLargeError())
+    } finally {
+      tempDirectory.deleteLogged()
     }
-    val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
-        ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-    return loadDescriptorFromStream(pluginFile.getInputStream(descriptorEntry))
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
+    val errors = validateHubPluginDirectory(pluginDirectory)
+    if (errors != null) {
+      return errors
+    }
     val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
     if (descriptorFile.exists()) {
       return descriptorFile.inputStream().use { loadDescriptorFromStream(it) }

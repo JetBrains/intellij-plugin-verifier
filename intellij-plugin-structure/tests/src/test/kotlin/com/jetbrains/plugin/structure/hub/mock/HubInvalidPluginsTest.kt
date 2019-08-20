@@ -10,10 +10,7 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
-import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
-import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
+import com.jetbrains.plugin.structure.hub.problems.*
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -131,6 +128,21 @@ class HubInvalidPluginsTest {
       }
     }
     assertExpectedProblems(pluginFile, listOf(HubZipFileTooManyFilesError()))
+  }
+
+  @Test
+  fun `too big hub zip file`() {
+    val tooBigSize = 31 * 1024 * 1024
+
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file("manifest.json") {
+        perfectHubPluginBuilder.modify {  }
+      }
+
+      file("bigFile.bin", ByteArray(tooBigSize))
+    }
+
+    assertExpectedProblems(pluginFile, listOf(HubZipFileTooLargeError()))
   }
 
 }

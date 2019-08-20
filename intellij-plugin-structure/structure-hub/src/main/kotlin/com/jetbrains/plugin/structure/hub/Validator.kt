@@ -4,11 +4,13 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.*
-import java.util.zip.ZipFile
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+import java.io.File
 
-private const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024
-private const val MAX_HUB_FILE_SIZE = 30 * 1024 * 1024
-private const val MAX_HUB_FILE_NUM = 1000
+const val MAX_HUB_ZIP_SIZE = 10 * 1024 * 1024L
+const val MAX_HUB_FILE_SIZE = 30 * 1024 * 1024L
+const val MAX_HUB_FILE_NUM = 1000
 
 private val AUTHOR_REGEX = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex()
 
@@ -60,14 +62,12 @@ fun parseHubVendorInfo(author: String): VendorInfo {
 }
 
 
-fun validateHubZipFile(zipFile: ZipFile): PluginCreationFail<HubPlugin>? {
-  if (zipFile.size() > MAX_HUB_ZIP_SIZE) {
+fun validateHubPluginDirectory(pluginDirectory: File): PluginCreationFail<HubPlugin>? {
+  if (FileUtils.sizeOfDirectory(pluginDirectory) > MAX_HUB_FILE_SIZE) {
     return PluginCreationFail(HubZipFileTooLargeError())
   }
-  if (zipFile.entries().toList().any { entry -> entry.size > MAX_HUB_FILE_SIZE }) {
-    return PluginCreationFail(HubZipFileHasLargeFilesError())
-  }
-  if (zipFile.entries().toList().size > MAX_HUB_FILE_NUM) {
+  val filesIterator = FileUtils.iterateFilesAndDirs(pluginDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)
+  if (filesIterator.asSequence().take(MAX_HUB_FILE_NUM + 1).count() > MAX_HUB_FILE_NUM) {
     return PluginCreationFail(HubZipFileTooManyFilesError())
   }
   return null
