@@ -16,14 +16,14 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
 
-class HubPluginManager private constructor(private val validateBean: Boolean) : PluginManager<HubPlugin> {
+class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   companion object {
     private const val DESCRIPTOR_NAME = "manifest.json"
 
     private val LOG: Logger = LoggerFactory.getLogger(HubPluginManager::class.java)
 
-    fun createManager(validateBean: Boolean = true): HubPluginManager =
-        HubPluginManager(validateBean)
+    fun createManager(): HubPluginManager =
+        HubPluginManager()
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<HubPlugin> {
