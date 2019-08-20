@@ -8,10 +8,10 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
+import org.apache.commons.io.IOUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import org.apache.commons.io.IOUtils
 import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipFile
@@ -38,7 +38,9 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
   }
 
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> = try {
-    loadDescriptorFromZip(ZipFile(pluginFile))
+    ZipFile(pluginFile).use {
+      loadDescriptorFromZip(it)
+    }
   } catch (e: IOException) {
     LOG.info("Unable to extract plugin zip: $pluginFile", e)
     PluginCreationFail(UnableToExtractZip())
@@ -49,12 +51,10 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
     if (errors != null) {
       return errors
     }
-    pluginFile.use {
-      val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
-          ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-      val manifest = IOUtils.toString(pluginFile.getInputStream(descriptorEntry), Charsets.UTF_8)
-      return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry), manifest)
-    }
+    val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
+        ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+    val manifest = IOUtils.toString(pluginFile.getInputStream(descriptorEntry), Charsets.UTF_8)
+    return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry), manifest)
   }
 
   private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
