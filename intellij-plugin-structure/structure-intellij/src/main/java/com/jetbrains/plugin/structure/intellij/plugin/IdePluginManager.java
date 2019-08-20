@@ -45,7 +45,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   public static final String PLUGIN_XML = "plugin.xml";
   public static final String META_INF = "META-INF";
-  public static final Long DEFAULT_OUTPUT_SIZE_LIMIT = FileUtils.ONE_GB;
+  private static final Long PLUGIN_OUTPUT_SIZE_LIMIT = FileUtils.ONE_GB;
 
   @NotNull
   private final ResourceResolver myResourceResolver;
@@ -351,11 +351,10 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private PluginCreator extractZipAndCreatePlugin(@NotNull File zipPlugin,
                                                   boolean validateDescriptor,
-                                                  @NotNull ResourceResolver resourceResolver,
-                                                  @Nullable Long outputSizeLimit) {
+                                                  @NotNull ResourceResolver resourceResolver) {
     ExtractorResult extractorResult;
     try {
-      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory, outputSizeLimit);
+      extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory, PLUGIN_OUTPUT_SIZE_LIMIT);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
       return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(), zipPlugin);
@@ -377,22 +376,21 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile, boolean validateDescriptor) {
-    return createPlugin(pluginFile, validateDescriptor, PLUGIN_XML, DEFAULT_OUTPUT_SIZE_LIMIT);
+    return createPlugin(pluginFile, validateDescriptor, PLUGIN_XML);
   }
 
   @NotNull
   public PluginCreationResult<IdePlugin> createPlugin(@NotNull File pluginFile,
                                                       boolean validateDescriptor,
-                                                      @NotNull String descriptorPath,
-                                                      long outputSizeLimit) {
-    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, outputSizeLimit);
+                                                      @NotNull String descriptorPath) {
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath);
     return pluginCreator.getPluginCreationResult();
   }
 
   public PluginCreationResult<IdePlugin> createBundledPlugin(@NotNull File pluginFile,
                                                              @NotNull IdeVersion ideVersion,
                                                              @NotNull String descriptorPath) {
-    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, DEFAULT_OUTPUT_SIZE_LIMIT);
+    PluginCreator pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath);
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode());
     return pluginCreator.getPluginCreationResult();
   }
@@ -400,14 +398,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   @NotNull
   private PluginCreator getPluginCreatorWithResult(@NotNull File pluginFile,
                                                    boolean validateDescriptor,
-                                                   @NotNull String descriptorPath,
-                                                   @Nullable Long outputSizeLimit) {
+                                                   @NotNull String descriptorPath) {
     if (!pluginFile.exists()) {
       throw new IllegalArgumentException("Plugin file " + pluginFile + " does not exist");
     }
     PluginCreator pluginCreator;
     if (FileUtilKt.isZip(pluginFile)) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor, myResourceResolver, outputSizeLimit);
+      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor, myResourceResolver);
     } else {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
     }

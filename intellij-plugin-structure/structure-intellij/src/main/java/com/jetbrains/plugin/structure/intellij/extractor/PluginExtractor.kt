@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginExtractedSizeIsTooBig
+import com.jetbrains.plugin.structure.base.utils.ArchiveSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.utils.extractTo
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
@@ -13,15 +15,15 @@ import java.nio.file.Files
 object PluginExtractor {
 
   fun extractPlugin(pluginZip: File, extractDirectory: File, outputSizeLimit: Long? = null): ExtractorResult {
-    if (!pluginZip.isZip()) {
-      throw IllegalArgumentException("Must be a zip archive: $pluginZip")
-    }
+    require(pluginZip.isZip()) { "Must be a zip archive: $pluginZip" }
 
     Files.createDirectories(extractDirectory.toPath())
     val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_${pluginZip.nameWithoutExtension}_").toFile()
 
     try {
       pluginZip.extractTo(extractedPlugin, outputSizeLimit)
+    } catch (e: ArchiveSizeLimitExceededException) {
+      return fail(PluginExtractedSizeIsTooBig(e.sizeLimit), extractedPlugin)
     } catch (e: Throwable) {
       FileUtils.deleteQuietly(extractedPlugin)
       throw e
