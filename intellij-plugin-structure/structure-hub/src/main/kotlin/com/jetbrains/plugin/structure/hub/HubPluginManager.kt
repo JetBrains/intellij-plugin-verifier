@@ -46,7 +46,9 @@ class HubPluginManager private constructor(private val validateBean: Boolean) : 
 
   private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<HubPlugin> {
     val errors = validateHubZipFile(pluginFile)
-    if (errors != null) return errors
+    if (errors != null) {
+      return errors
+    }
     pluginFile.use {
       val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
           ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))

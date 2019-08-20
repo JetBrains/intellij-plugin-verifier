@@ -57,11 +57,14 @@ fun parseHubVendorInfo(author: String): VendorInfo {
 
 
 fun validateHubZipFile(zipFile: ZipFile): PluginCreationFail<HubPlugin>? {
-  if (zipFile.size() > MAX_HUB_ZIP_SIZE)
+  if (zipFile.size() > MAX_HUB_ZIP_SIZE) {
     return PluginCreationFail(HubZipFileTooLargeError())
-  if (zipFile.entries().toList().any { entry -> entry.size > MAX_HUB_FILE_SIZE })
+  }
+  if (zipFile.entries().toList().any { entry -> entry.size > MAX_HUB_FILE_SIZE }) {
     return PluginCreationFail(HubZipFileHasLargeFilesError())
-  if (zipFile.entries().toList().size > MAX_HUB_FILE_NUM)
+  }
+  if (zipFile.entries().toList().size > MAX_HUB_FILE_NUM) {
     return PluginCreationFail(HubZipFileTooManyFilesError())
+  }
   return null
 }
