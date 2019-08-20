@@ -5,23 +5,24 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
+import com.jetbrains.plugin.structure.teamcity.problems.TeamCityPluginTooLargeError
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
+import org.apache.commons.io.FileUtils
 import org.jdom2.input.JDOMParseException
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 import java.io.InputStream
-import java.util.zip.ZipFile
+import java.nio.file.Files
 
 class TeamcityPluginManager private constructor(private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
   companion object {
     private const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
-    private val LOG: Logger = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
+    private const val TEAM_CITY_PLUGIN_SIZE_LIMIT = FileUtils.ONE_GB
+
+    private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
     fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
         TeamcityPluginManager(validateBean)
@@ -29,9 +30,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
   }
 
   override fun createPlugin(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
-    if (!pluginFile.exists()) {
-      throw IllegalArgumentException("Plugin file $pluginFile does not exist")
-    }
+    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
       pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
@@ -39,18 +38,20 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> = try {
-    loadDescriptorFromZip(ZipFile(pluginFile))
-  } catch (e: IOException) {
-    LOG.info("Unable to extract plugin zip: $pluginFile", e)
-    PluginCreationFail(UnableToExtractZip())
-  }
-
-  private fun loadDescriptorFromZip(pluginFile: ZipFile): PluginCreationResult<TeamcityPlugin> {
-    pluginFile.use {
-      val descriptorEntry = pluginFile.getEntry(DESCRIPTOR_NAME)
-          ?: return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-      return loadDescriptorFromStream(pluginFile.name, pluginFile.getInputStream(descriptorEntry))
+  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
+    if (FileUtils.sizeOf(pluginFile) > TEAM_CITY_PLUGIN_SIZE_LIMIT) {
+      return PluginCreationFail(TeamCityPluginTooLargeError())
+    }
+    val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
+    return try {
+      pluginFile.extractTo(tempDirectory, TEAM_CITY_PLUGIN_SIZE_LIMIT)
+      loadDescriptorFromDirectory(tempDirectory)
+    } catch (e: ArchiveSizeLimitExceededException) {
+      return PluginCreationFail(TeamCityPluginTooLargeError())
+    } catch (e: Exception) {
+      return PluginCreationFail(UnableToExtractZip())
+    } finally {
+      tempDirectory.deleteLogged()
     }
   }
 

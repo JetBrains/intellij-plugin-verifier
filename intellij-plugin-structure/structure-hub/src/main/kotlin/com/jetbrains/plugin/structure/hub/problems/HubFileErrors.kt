@@ -1,13 +1,13 @@
 package com.jetbrains.plugin.structure.hub.problems
 
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
+import com.jetbrains.plugin.structure.base.problems.PluginFileError
 
-class HubZipFileTooManyFilesError : PluginDescriptorResolutionError() {
+class HubZipFileTooManyFilesError : PluginFileError() {
   override val message
     get() = "There are too many files in widget archive"
 }
 
-class HubZipFileTooLargeError : PluginDescriptorResolutionError() {
+class HubZipFileTooLargeError : PluginFileError() {
   override val message
     get() = "Widget archive size is larger than allowed"
 }

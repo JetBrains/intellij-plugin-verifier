@@ -5,3 +5,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileError
 
 fun createIncorrectTeamCityPluginFile(fileName: String): PluginFileError =
     IncorrectPluginFile(fileName, ".zip archive.")
+
+class TeamCityPluginTooLargeError : PluginFileError() {
+  override val message
+    get() = "TeamCity plugin is larger than allowed"
+}
