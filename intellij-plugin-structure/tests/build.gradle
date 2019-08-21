@@ -5,6 +5,7 @@ dependencies {
   testImplementation project(":structure-intellij")
   testImplementation project(":structure-intellij-classes")
   testImplementation project(":structure-teamcity")
+  testImplementation project(":structure-hub")
   testImplementation project(":structure-dotnet")
   testImplementation 'junit:junit:4.11'
   testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
