@@ -40,6 +40,10 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
     problems.add(PropertyNotSpecified("author"))
   }
 
+  if (bean.description == null) {
+    problems.add(PropertyNotSpecified("description"))
+  }
+
   val version = bean.pluginVersion
   if (version == null || version.isBlank()) {
     problems.add(PropertyNotSpecified("version"))
