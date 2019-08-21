@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import org.apache.commons.io.FileUtils
 
 abstract class PluginFileError : PluginProblem() {
   override val level
@@ -18,4 +19,9 @@ class IncorrectPluginFile(
 class UnableToExtractZip : PluginFileError() {
   override val message
     get() = "Unable to extract plugin zip file"
+}
+
+class PluginFileSizeIsTooLarge(private val sizeLimit: Long): PluginFileError() {
+  override val message
+    get() = "Plugin file size is too large. Maximum allowed size is " + FileUtils.byteCountToDisplaySize(sizeLimit)
 }
