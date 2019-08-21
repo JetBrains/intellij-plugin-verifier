@@ -40,7 +40,7 @@ internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
     problems.add(PropertyNotSpecified("author"))
   }
 
-  if (bean.description == null) {
+  if (bean.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
   }
 
