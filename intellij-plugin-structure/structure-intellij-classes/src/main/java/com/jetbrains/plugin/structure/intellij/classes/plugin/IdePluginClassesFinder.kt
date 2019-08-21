@@ -83,7 +83,7 @@ class IdePluginClassesFinder private constructor(
         readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
         additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
-      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile()
+      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().createDir()
       return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 

@@ -31,7 +31,8 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
-    val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
+    val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
     return try {
       val extractedDirectory = tempDirectory.resolve("content")
       val withZipExtension = pluginFile.copyTo(tempDirectory.resolve("plugin.zip"))

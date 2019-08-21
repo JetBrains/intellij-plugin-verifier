@@ -36,7 +36,8 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
-    val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
+    val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
     return try {
       pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
