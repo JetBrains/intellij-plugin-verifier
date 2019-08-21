@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.hub
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
@@ -42,8 +43,8 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     return try {
       pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
-    } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
+    } catch (e: DecompressorSizeLimitExceededException) {
+      return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
     } finally {
       tempDirectory.deleteLogged()
     }

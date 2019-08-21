@@ -58,6 +58,10 @@ fun File.createDir(): File {
   return this
 }
 
+fun File.createParentDirs() {
+  parentFile?.createDir()
+}
+
 fun File.create(): File {
   if (this.parentFile != null) {
     FileUtils.forceMkdir(this.parentFile)

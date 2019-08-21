@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.intellij.extractor
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.utils.ArchiveSizeLimitExceededException
+import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.utils.extractTo
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
@@ -23,7 +23,7 @@ object PluginExtractor {
 
     try {
       pluginZip.extractTo(extractedPlugin, Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
-    } catch (e: ArchiveSizeLimitExceededException) {
+    } catch (e: DecompressorSizeLimitExceededException) {
       return fail(PluginFileSizeIsTooLarge(e.sizeLimit), extractedPlugin)
     } catch (e: Throwable) {
       FileUtils.deleteQuietly(extractedPlugin)

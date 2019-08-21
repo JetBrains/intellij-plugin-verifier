@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
-import com.jetbrains.plugin.structure.zipBombs.ArchiveLimitTest.Companion.generateZipFileOfSizeAtLeast
+import com.jetbrains.plugin.structure.zipBombs.DecompressorSizeLimitTest.Companion.generateZipFileOfSizeAtLeast
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

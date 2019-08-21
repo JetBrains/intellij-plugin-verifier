@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.dotnet
 
+import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
@@ -38,8 +39,8 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       val withZipExtension = pluginFile.copyTo(tempDirectory.resolve("plugin.zip"))
       withZipExtension.extractTo(extractedDirectory, sizeLimit)
       loadDescriptorFromDirectory(extractedDirectory)
-    } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
+    } catch (e: DecompressorSizeLimitExceededException) {
+      return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
     } catch (e: Exception) {
       return PluginCreationFail(UnableToExtractZip())
     } finally {

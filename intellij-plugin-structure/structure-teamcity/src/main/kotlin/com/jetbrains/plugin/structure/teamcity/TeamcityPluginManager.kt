@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity
 
+import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
@@ -41,8 +42,8 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     return try {
       pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
-    } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
+    } catch (e: DecompressorSizeLimitExceededException) {
+      return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
     } catch (e: Exception) {
       return PluginCreationFail(UnableToExtractZip())
     } finally {

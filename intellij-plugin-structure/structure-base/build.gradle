@@ -4,9 +4,8 @@ dependencies {
 
   api 'commons-io:commons-io:2.6'
 
-  implementation("patrikeev.archiver:archiver:1.0.0") {
-    exclude group: "junit"
-  }
+  implementation 'org.codehaus.plexus:plexus-archiver:4.1.0'
+
   implementation("org.codehaus.plexus:plexus-container-default:2.0.0") {
     exclude group: "com.google.collections"
   }
