@@ -18,4 +18,8 @@ enum class Settings(private val key: String, private val defaultValue: () -> Str
   fun getAsLong(): Long = get().toLong()
 
   fun getAsInt(): Int = get().toInt()
+
+  fun set(value: String) {
+    System.setProperty(key, value)
+  }
 }
