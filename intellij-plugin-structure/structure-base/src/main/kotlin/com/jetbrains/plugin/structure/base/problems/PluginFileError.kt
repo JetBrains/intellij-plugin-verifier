@@ -21,7 +21,7 @@ class UnableToExtractZip : PluginFileError() {
     get() = "Unable to extract plugin zip file"
 }
 
-class PluginExtractedSizeIsTooBig(private val sizeLimit: Long): PluginFileError() {
+class PluginFileSizeIsTooLarge(private val sizeLimit: Long): PluginFileError() {
   override val message
-    get() = "Plugin's extracted size is too big. Maximum allowed size is " + FileUtils.byteCountToDisplaySize(sizeLimit)
+    get() = "Plugin file size is too large. Maximum allowed size is " + FileUtils.byteCountToDisplaySize(sizeLimit)
 }

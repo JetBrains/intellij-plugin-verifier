@@ -3,9 +3,9 @@ package com.jetbrains.plugin.structure.hub
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
@@ -34,7 +34,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> {
     val sizeLimit = Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()
     if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
-      return PluginCreationFail(HubZipFileTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
@@ -42,7 +42,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
       pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(HubZipFileTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     } finally {
       tempDirectory.deleteLogged()
     }

@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.hub.HubPlugin
@@ -142,7 +143,7 @@ class HubInvalidPluginsTest {
       file("bigFile.bin", ByteArray(tooBigSize))
     }
 
-    assertExpectedProblems(pluginFile, listOf(HubZipFileTooLargeError()))
+    assertExpectedProblems(pluginFile, listOf(PluginFileSizeIsTooLarge(30 * 1024 * 1024)))
   }
 
 }

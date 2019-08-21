@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.dotnet.beans.extractPluginBean
 import com.jetbrains.plugin.structure.dotnet.beans.toPlugin
-import com.jetbrains.plugin.structure.dotnet.problems.ReSharperPluginTooLargeError
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import org.apache.commons.io.FileUtils
 import org.jdom2.input.JDOMParseException
@@ -29,7 +28,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
     val sizeLimit = Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT.getAsLong()
     if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
-      return PluginCreationFail(ReSharperPluginTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
@@ -39,7 +38,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       withZipExtension.extractTo(extractedDirectory, sizeLimit)
       loadDescriptorFromDirectory(extractedDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(ReSharperPluginTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     } catch (e: Exception) {
       return PluginCreationFail(UnableToExtractZip())
     } finally {

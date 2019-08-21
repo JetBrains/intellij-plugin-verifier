@@ -3,10 +3,10 @@ package com.jetbrains.plugin.structure.hub
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
+import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooLargeError
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.TrueFileFilter
@@ -74,8 +74,9 @@ fun parseHubVendorInfo(author: String): VendorInfo {
 
 
 fun validateHubPluginDirectory(pluginDirectory: File): PluginCreationFail<HubPlugin>? {
-  if (FileUtils.sizeOfDirectory(pluginDirectory) > Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()) {
-    return PluginCreationFail(HubZipFileTooLargeError())
+  val sizeLimit = Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()
+  if (FileUtils.sizeOfDirectory(pluginDirectory) > sizeLimit) {
+    return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
   }
   val filesIterator = FileUtils.iterateFilesAndDirs(pluginDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)
   val maxHubFileNum = Settings.HUB_PLUGIN_MAX_FILES_NUMBER.getAsInt()

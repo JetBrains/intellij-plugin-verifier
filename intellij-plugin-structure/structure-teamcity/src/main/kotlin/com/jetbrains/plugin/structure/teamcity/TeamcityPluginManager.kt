@@ -1,13 +1,9 @@
 package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
-import com.jetbrains.plugin.structure.teamcity.problems.TeamCityPluginTooLargeError
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
 import org.apache.commons.io.FileUtils
 import org.jdom2.input.JDOMParseException
@@ -39,14 +35,14 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
   private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
     val sizeLimit = Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT.getAsLong()
     if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
-      return PluginCreationFail(TeamCityPluginTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
     val tempDirectory = Files.createTempDirectory(Settings.EXTRACT_DIRECTORY.getAsFile().toPath(), pluginFile.nameWithoutExtension).toFile()
     return try {
       pluginFile.extractTo(tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: ArchiveSizeLimitExceededException) {
-      return PluginCreationFail(TeamCityPluginTooLargeError())
+      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     } catch (e: Exception) {
       return PluginCreationFail(UnableToExtractZip())
     } finally {
