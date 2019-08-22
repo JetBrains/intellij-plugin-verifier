@@ -14,6 +14,10 @@ import java.util.zip.ZipFile
 
 internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
+  companion object {
+    const val FILE_NAME_LENGTH_LIMIT = 255
+  }
+
   fun extract(outputDir: File) {
     openStream()
     try {
@@ -64,11 +68,15 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 }
 
 private fun getEntryFile(outputDir: File, entry: Decompressor.Entry): File {
-  val entryName = entry.name
-  if (entryName.contains("..") && entryName.replace("\\", "/").split("/").any { it.contains("..") }) {
-    throw IOException("Invalid entry name: $entryName")
+  val independentEntryName = entry.name.replace("\\", "/")
+  val parts = independentEntryName.split("/")
+  if (parts.any { it.contains("..") }) {
+    throw IOException("Invalid relative entry name: ${entry.name}")
   }
-  return outputDir.resolve(entryName)
+  if (parts.any { it.length > Decompressor.FILE_NAME_LENGTH_LIMIT }) {
+    throw IOException("Entry name is too long: ${entry.name}")
+  }
+  return outputDir.resolve(independentEntryName)
 }
 
 internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Decompressor(sizeLimit) {
