@@ -85,22 +85,17 @@ internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Dec
   }
 
   override fun nextEntry(): Entry? {
-    entry = if (entries.hasMoreElements()) {
-      entries.nextElement()
-    } else {
-      null
+    val nextEntry = when {
+      entries.hasMoreElements() -> entries.nextElement()
+      else -> null
     }
-
-    return if (entry == null) {
-      null
-    } else {
-      val type = if (entry!!.isDirectory) {
-        Type.DIR
-      } else {
-        Type.FILE
-      }
-      Entry(entry!!.name, type)
+    entry = nextEntry
+    nextEntry ?: return null
+    val type = when {
+      nextEntry.isDirectory -> Type.DIR
+      else -> Type.FILE
     }
+    return Entry(nextEntry.name, type)
   }
 
   override fun nextEntryStream(): InputStream? =
