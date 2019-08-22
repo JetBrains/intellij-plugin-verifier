@@ -37,12 +37,12 @@ class DotNetInvalidPluginTest {
     assertExpectedProblems(incorrect, listOf(createIncorrectDotNetPluginFileProblem(incorrect.name)))
   }
 
-  @Test()
+  @Test
   fun `plugin file does not exist`() {
     val nonExistentFile = File("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    TeamcityPluginManager.createManager().createPlugin(nonExistentFile)
+    ReSharperPluginManager.createPlugin(nonExistentFile)
   }
 
   @Test
@@ -111,10 +111,6 @@ class DotNetInvalidPluginTest {
     assertExpectedProblems(pluginFolder, expectedProblems)
   }
 
-  private fun `test valid plugin xml`(pluginXmlContent: String) {
-    val pluginFolder = getTempPluginArchive(pluginXmlContent)
-    getSuccessResult(pluginFolder)
-  }
 
   private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
     val creationFail = getFailedResult(pluginFile)
