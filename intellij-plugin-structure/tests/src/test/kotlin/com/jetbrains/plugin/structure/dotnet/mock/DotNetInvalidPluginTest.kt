@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
-import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -18,6 +17,7 @@ import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -43,6 +43,13 @@ class DotNetInvalidPluginTest {
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
     ReSharperPluginManager.createPlugin(nonExistentFile)
+  }
+
+  @Test
+  fun `plugin file has long name`() {
+    expectedEx.expect(IOException::class.java)
+    expectedEx.expectMessage("File name too long")
+    temporaryFolder.newFile("cat".repeat(100) + ".zip")
   }
 
   @Test
