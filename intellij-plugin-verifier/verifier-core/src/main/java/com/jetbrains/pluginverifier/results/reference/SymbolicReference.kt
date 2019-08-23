@@ -5,6 +5,14 @@ import java.util.*
 
 sealed class SymbolicReference
 
+data class ClassReference(val className: String) : SymbolicReference() {
+  override fun equals(other: Any?) = other is ClassReference && className == other.className
+
+  override fun hashCode() = className.hashCode()
+
+  override fun toString() = formatClassReference(ClassOption.FULL_NAME)
+}
+
 data class MethodReference(
     val hostClass: ClassReference,
     val methodName: String,
@@ -25,7 +33,6 @@ data class MethodReference(
 
 }
 
-
 data class FieldReference(
     val hostClass: ClassReference,
     val fieldName: String,
@@ -43,12 +50,4 @@ data class FieldReference(
 
   override fun toString() = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_TYPE)
 
-}
-
-data class ClassReference(val className: String) : SymbolicReference() {
-  override fun equals(other: Any?) = other is ClassReference && className == other.className
-
-  override fun hashCode() = className.hashCode()
-
-  override fun toString() = formatClassReference(ClassOption.FULL_NAME)
 }
