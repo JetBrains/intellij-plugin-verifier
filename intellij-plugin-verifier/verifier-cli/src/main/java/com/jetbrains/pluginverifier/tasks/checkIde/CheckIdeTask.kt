@@ -16,11 +16,12 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
       pluginDetailsCache: PluginDetailsCache
   ): CheckIdeResult {
     with(parameters) {
+      val ideTarget = PluginVerificationTarget.IDE(ideDescriptor.ide)
       val verifiers = pluginsSet.pluginsToCheck
           .map {
             PluginVerifier(
                 it,
-                PluginVerificationTarget.IDE(ideDescriptor.ide),
+                ideTarget,
                 problemsFilters,
                 pluginDetailsCache,
                 DefaultClassResolverProvider(
@@ -37,7 +38,7 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
       val results = runSeveralVerifiers(reportage, verifiers)
 
       return CheckIdeResult(
-          ideDescriptor.ide,
+          ideTarget,
           results,
           missingCompatibleVersionsProblems
       )

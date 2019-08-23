@@ -25,10 +25,7 @@ class CheckPluginResultPrinter(
       }
 
       results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
-        HtmlResultPrinter(
-            verificationTarget,
-            outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
-        ).printResults(resultsOfIde)
+        HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
       }
     }
   }

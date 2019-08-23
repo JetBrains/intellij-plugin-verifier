@@ -30,15 +30,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
 
-      HtmlResultPrinter(
-          baseTarget,
-          outputOptions.getTargetReportDirectory(baseTarget).resolve("report.html")
-      ).printResults(baseResults)
-
-      HtmlResultPrinter(
-          newTarget,
-          outputOptions.getTargetReportDirectory(newTarget).resolve("report.html")
-      ).printResults(newResults)
+      HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
+      HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
     }
   }
 

@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.*
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
@@ -14,11 +15,12 @@ import java.nio.file.Path
 
 class HtmlResultPrinter(
     private val verificationTarget: PluginVerificationTarget,
-    private val htmlFile: Path
+    private val outputOptions: OutputOptions
 ) : ResultPrinter {
 
   override fun printResults(results: List<PluginVerificationResult>) {
-    PrintWriter(Files.newBufferedWriter(htmlFile.create())).use {
+    val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
+    PrintWriter(Files.newBufferedWriter(reportHtmlFile.create())).use {
       val htmlBuilder = HtmlBuilder(it)
       htmlBuilder.doPrintResults(results)
     }

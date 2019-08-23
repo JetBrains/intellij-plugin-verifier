@@ -27,10 +27,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
         printOnStdOut(this)
       }
 
-      HtmlResultPrinter(
-          PluginVerificationTarget.IDE(ide),
-          outputOptions.getTargetReportDirectory(PluginVerificationTarget.IDE(ide)).resolve("report.html")
-      ).printResults(results)
+      HtmlResultPrinter(ide, outputOptions).printResults(results)
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
@@ -62,9 +59,9 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       }
       val problemsNumber = problems.distinctBy { it.shortDescription }.size
       if (problemsNumber > 0) {
-        tcLog.buildStatusFailure("IDE $ide has " + "problem".pluralizeWithNumber(problemsNumber) + " affecting " + "plugin".pluralizeWithNumber(brokenPlugins.size))
+        tcLog.buildStatusFailure("IDE ${ide.ideVersion} has " + "problem".pluralizeWithNumber(problemsNumber) + " affecting " + "plugin".pluralizeWithNumber(brokenPlugins.size))
       } else {
-        tcLog.buildStatusSuccess("IDE $ide doesn't have broken API problems")
+        tcLog.buildStatusSuccess("IDE ${ide.ideVersion} doesn't have broken API problems")
       }
     }
   }
