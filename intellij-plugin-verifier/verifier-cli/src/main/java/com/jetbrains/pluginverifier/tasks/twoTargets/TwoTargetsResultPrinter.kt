@@ -190,9 +190,9 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   private fun PluginVerificationResult.getResolvedDependency(dependency: PluginDependency) =
       (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
 
-  private fun getMissingDependenciesNote(baseResult: PluginVerificationResult, newResult: PluginVerificationResult): String {
-    val baseMissingDependencies = baseResult.getDirectMissingDependencies()
-    val newMissingDependencies = newResult.getDirectMissingDependencies()
+  private fun getMissingDependenciesNote(baseResult: PluginVerificationResult.Verified, newResult: PluginVerificationResult.Verified): String {
+    val baseMissingDependencies = baseResult.directMissingDependencies
+    val newMissingDependencies = newResult.directMissingDependencies
     if (newMissingDependencies.isEmpty()) {
       return ""
     }
@@ -221,8 +221,6 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
   }
 
-  private fun PluginVerificationResult.getDirectMissingDependencies() =
-      (this as? PluginVerificationResult.Verified)?.directMissingDependencies ?: emptyList()
 }
 
 private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInfo, TwoResults> {
@@ -233,26 +231,18 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
 
   for ((plugin, baseResult) in basePlugin2Result) {
     val newResult = newPlugin2Result[plugin]
-    if (newResult == null
-        || baseResult is PluginVerificationResult.NotFound
-        || baseResult is PluginVerificationResult.FailedToDownload
-        || newResult is PluginVerificationResult.NotFound
-        || newResult is PluginVerificationResult.FailedToDownload
-    ) {
-      continue
+    if (baseResult is PluginVerificationResult.Verified && newResult is PluginVerificationResult.Verified) {
+      val newProblems = newResult.compatibilityProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
+      resultsComparisons[plugin] = TwoResults(plugin, baseResult, newResult, newProblems)
     }
-
-    val allNewProblems = (newResult as? PluginVerificationResult.Verified)?.compatibilityProblems ?: emptySet()
-    val newProblems = allNewProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
-    resultsComparisons[plugin] = TwoResults(plugin, baseResult, newResult, newProblems)
   }
   return resultsComparisons
 }
 
 private data class TwoResults(
     val plugin: PluginInfo,
-    val oldResult: PluginVerificationResult,
-    val newResult: PluginVerificationResult,
+    val oldResult: PluginVerificationResult.Verified,
+    val newResult: PluginVerificationResult.Verified,
     val newProblems: Set<CompatibilityProblem>
 )
 
