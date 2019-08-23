@@ -3,14 +3,19 @@ package com.jetbrains.pluginverifier.results.reference
 import com.jetbrains.pluginverifier.results.presentation.*
 import java.util.*
 
-sealed class SymbolicReference
+sealed class SymbolicReference {
+  abstract val presentableLocation: String
+
+  final override fun toString() = presentableLocation
+}
 
 data class ClassReference(val className: String) : SymbolicReference() {
   override fun equals(other: Any?) = other is ClassReference && className == other.className
 
   override fun hashCode() = className.hashCode()
 
-  override fun toString() = formatClassReference(ClassOption.FULL_NAME)
+  override val presentableLocation
+    get() = formatClassReference(ClassOption.FULL_NAME)
 }
 
 data class MethodReference(
@@ -29,7 +34,8 @@ data class MethodReference(
 
   override fun hashCode() = Objects.hash(hostClass, methodName, methodDescriptor)
 
-  override fun toString() = formatMethodReference(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME)
+  override val presentableLocation
+    get() = formatMethodReference(HostClassOption.FULL_HOST_NAME, MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME, MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME)
 
 }
 
@@ -48,6 +54,7 @@ data class FieldReference(
 
   override fun hashCode() = Objects.hash(hostClass, fieldName, fieldDescriptor)
 
-  override fun toString() = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_TYPE)
+  override val presentableLocation
+    get() = formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.SIMPLE_TYPE)
 
 }

@@ -16,9 +16,12 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
 
 class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
 
@@ -70,6 +73,11 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       }
     }
 
+    val oldDeprecatedApis: Map<SymbolicReference, DeprecationInfo> = twoTargetsVerificationResults.baseResults.asSequence()
+        .filterIsInstance<PluginVerificationResult.Verified>()
+        .flatMap { it.deprecatedUsages.asSequence() }
+        .associate { it.apiElement.toReference() to it.deprecationInfo }
+
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
       tcLog.testSuiteStarted("($problemTypeSuite)").use {
@@ -84,8 +92,12 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
+            var apiDeprecationInfo: Pair<SymbolicReference, DeprecationInfo>? = null
+
             val testDetails = buildString {
               for ((plugin, problems) in plugin2Problems.asMap()) {
+                val (oldResult, newResult) = pluginToTwoResults[plugin] ?: continue
+
                 if (isNotEmpty()) {
                   appendln()
                   appendln()
@@ -103,9 +115,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                 val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
                 appendln(compatibilityNote)
 
-                val twoResults = pluginToTwoResults[plugin]
-                if (twoResults != null && twoResults.newResult.hasDirectMissingDependencies) {
-                  val missingDependenciesNote = getMissingDependenciesNote(twoResults.oldResult, twoResults.newResult)
+                if (newResult.hasDirectMissingDependencies) {
+                  val missingDependenciesNote = getMissingDependenciesNote(oldResult, newResult)
                   appendln()
                   appendln(missingDependenciesNote)
                   appendln()
@@ -113,6 +124,11 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
                 val compatibilityProblems = buildString {
                   for ((index, problem) in problems.withIndex()) {
+                    val symbolicReference = getProblemSymbolicReference(problem)
+                    if (symbolicReference != null && oldDeprecatedApis.containsKey(symbolicReference)) {
+                      apiDeprecationInfo = symbolicReference to oldDeprecatedApis.getValue(symbolicReference)
+                    }
+
                     if (problems.size > 1) {
                       append("${index + 1}) ")
                     }
@@ -133,7 +149,19 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             val testMessage = buildString {
               appendln(shortDescription)
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
-              appendln(documentationNote)
+              val deprecationInfo = apiDeprecationInfo
+              if (deprecationInfo != null) {
+                append("${deprecationInfo.first.presentableLocation} was deprecated")
+                if (deprecationInfo.second.forRemoval) {
+                  append(" and scheduled for removal")
+                  if (deprecationInfo.second.untilVersion != null) {
+                    append(" in ${deprecationInfo.second.untilVersion}")
+                  }
+                }
+                appendln()
+              } else {
+                appendln(documentationNote)
+              }
             }
 
             tcLog.testFailed(testName, testMessage, testDetails)
@@ -150,6 +178,14 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       tcLog.buildStatusSuccess("No new compatibility problems found in $newTarget compared to $baseTarget")
     }
   }
+
+  private fun getProblemSymbolicReference(problem: CompatibilityProblem): SymbolicReference? =
+      when (problem) {
+        is ClassNotFoundProblem -> problem.unresolved
+        is MethodNotFoundProblem -> problem.unresolvedMethod
+        is FieldNotFoundProblem -> problem.unresolvedField
+        else -> null
+      }
 
   private val documentationNote: String
     get() = """
@@ -251,18 +287,21 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
     val newResult = newPlugin2Result[plugin]
     if (baseResult is PluginVerificationResult.Verified && newResult is PluginVerificationResult.Verified) {
       val newProblems = newResult.compatibilityProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
-      resultsComparisons[plugin] = TwoResults(plugin, baseResult, newResult, newProblems)
+      resultsComparisons[plugin] = TwoResults(baseResult, newResult, newProblems)
     }
   }
   return resultsComparisons
 }
 
 private data class TwoResults(
-    val plugin: PluginInfo,
     val oldResult: PluginVerificationResult.Verified,
     val newResult: PluginVerificationResult.Verified,
     val newProblems: Set<CompatibilityProblem>
-)
+) {
+  init {
+    check(oldResult.plugin == newResult.plugin)
+  }
+}
 
 /**
  * Determines whether the [problem] is known to this verification result.
