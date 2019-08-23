@@ -15,7 +15,6 @@ class JarFileResolver(
     override val readMode: ReadMode,
     private val classFileOrigin: ClassFileOrigin
 ) : Resolver() {
-  constructor(jarFile: Path) : this(jarFile, ReadMode.FULL, UnknownClassFileOrigin)
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"

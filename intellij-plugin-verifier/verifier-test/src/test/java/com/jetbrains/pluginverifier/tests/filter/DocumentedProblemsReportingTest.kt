@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests.filter
 
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
 import com.jetbrains.pluginverifier.filtering.documented.DocClassRemoved
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodParameterTypeChanged
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodReturnTypeChanged
@@ -17,10 +17,13 @@ import com.jetbrains.pluginverifier.results.problems.MethodNotImplementedProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
 import org.junit.Test
 
 class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
+
+  private object SomeClassFileOrigin : ClassFileOrigin {
+    override val parent: ClassFileOrigin? = null
+  }
 
   /**
    * Asserts that
@@ -42,10 +45,19 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
   fun `documented deletion of a class excludes unresolved methods and fields problems`() {
     val deletedClassRef = ClassReference("org/some/deleted/Class")
 
+    val mockMethodLocation = MethodLocation(
+        ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeClassFileOrigin),
+        "someMethod",
+        "()V",
+        emptyList(),
+        null,
+        Modifiers.of(PUBLIC)
+    )
+
     //method with deleted owner
     val methodWithRemovedOwnerProblem = MethodNotFoundProblem(
         MethodReference(deletedClassRef, "foo", "()V"),
-        MOCK_METHOD_LOCATION,
+        mockMethodLocation,
         Instruction.INVOKE_VIRTUAL,
         JAVA_LANG_OBJECT_HIERARCHY
     )
@@ -53,7 +65,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     //field with deleted owner
     val fieldWithRemovedOwnerProblem = FieldNotFoundProblem(
         FieldReference(deletedClassRef, "x", "I"),
-        MOCK_METHOD_LOCATION,
+        mockMethodLocation,
         JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
@@ -63,7 +75,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     //method with deleted param type
     val methodWithRemovedClassInSignature = MethodNotFoundProblem(
         MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
-        MOCK_METHOD_LOCATION,
+        mockMethodLocation,
         Instruction.INVOKE_VIRTUAL,
         JAVA_LANG_OBJECT_HIERARCHY
     )
@@ -71,7 +83,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     //field with deleted param type
     val fieldWithRemovedClassInType = FieldNotFoundProblem(
         FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
-        MOCK_METHOD_LOCATION,
+        mockMethodLocation,
         JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
@@ -120,8 +132,8 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val clientImplName = "client/Implementation"
     val methodName = "foo"
 
-    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), UnknownClassFileOrigin)
-    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), UnknownClassFileOrigin)
+    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), SomeClassFileOrigin)
+    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), SomeClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         MethodLocation(

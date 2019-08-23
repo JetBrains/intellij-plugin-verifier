@@ -9,12 +9,9 @@ import java.nio.file.Path
 
 class ClassFilesResolver(
     private val root: Path,
-    override val readMode: ReadMode,
-    private val classFileOrigin: ClassFileOrigin
+    private val classFileOrigin: ClassFileOrigin,
+    override val readMode: ReadMode = ReadMode.FULL
 ) : Resolver() {
-  constructor(root: File) : this(root.toPath())
-
-  constructor(root: Path) : this(root, ReadMode.FULL, UnknownClassFileOrigin)
 
   private val nameToClassFile = hashMapOf<String, File>()
 

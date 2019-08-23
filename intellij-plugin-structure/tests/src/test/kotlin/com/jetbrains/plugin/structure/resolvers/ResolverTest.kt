@@ -19,11 +19,16 @@ class ResolverTest {
     val className = "a"
     val classNode = ClassNode()
     classNode.name = className
+    val classFileOrigin = object : ClassFileOrigin {
+      override val parent: ClassFileOrigin? = null
+    }
     val cacheResolver = CacheResolver(
-        FixedClassesResolver.create(listOf(classNode))
+        FixedClassesResolver.create(listOf(classNode), classFileOrigin, Resolver.ReadMode.FULL)
     )
     assertEquals(1, cacheResolver.allClasses.size)
-    assertEquals(classNode, (cacheResolver.resolveClass(className) as ResolutionResult.Found).classNode)
+    val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
+    assertEquals(classNode, found.classNode)
+    assertEquals(classFileOrigin, found.classFileOrigin)
     assertEquals(setOf(""), cacheResolver.allPackages)
     assertTrue(cacheResolver.containsPackage(""))
   }

@@ -13,10 +13,6 @@ inline fun <reified T : ClassFileOrigin> ClassFileOrigin.isOriginOfType(): Boole
 
 data class JarClassFileOrigin(val jarName: String, override val parent: ClassFileOrigin) : ClassFileOrigin
 
-object UnknownClassFileOrigin : ClassFileOrigin {
-  override val parent: ClassFileOrigin? = null
-}
-
 data class JdkClassFileOrigin(val jdkPath: Path) : ClassFileOrigin {
   override val parent: ClassFileOrigin? = null
 }

@@ -1,3 +1,5 @@
+package com.jetbrains.pluginverifier.tests.signatures
+
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference

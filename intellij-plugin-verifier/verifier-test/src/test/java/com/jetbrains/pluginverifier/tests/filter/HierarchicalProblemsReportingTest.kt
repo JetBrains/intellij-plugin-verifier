@@ -1,7 +1,8 @@
 package com.jetbrains.pluginverifier.tests.filter
 
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
-import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.filtering.documented.*
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -14,8 +15,6 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
 import com.jetbrains.pluginverifier.tests.bytecode.printBytecode
-import com.jetbrains.pluginverifier.tests.mocks.MOCK_METHOD_LOCATION
-import com.jetbrains.pluginverifier.tests.mocks.PUBLIC_MODIFIERS
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.modifier.MethodManifestation
@@ -25,6 +24,10 @@ import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
 
 class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
+
+  private object SomeClassFileOrigin : ClassFileOrigin {
+    override val parent: ClassFileOrigin? = null
+  }
 
   /**
    * Check that the problem reported for the subtype B is ignored
@@ -37,15 +40,24 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
   }
 
   private fun createProblemAndItsDocumentationTestMap(): List<Pair<CompatibilityProblem, DocumentedProblem>> {
-    val classALocation = ClassLocation("org/test/A", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
-    val classBLocation = ClassLocation("org/test/other/B", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
-    val classCLocation = ClassLocation("org/test/third/C", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
+    val classALocation = ClassLocation("org/test/A", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin)
+    val classBLocation = ClassLocation("org/test/other/B", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin)
+    val classCLocation = ClassLocation("org/test/third/C", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin)
 
     val classBReference = ClassReference("org/test/other/B")
 
+    val methodLocation = MethodLocation(
+        ClassLocation("SomeClass", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin),
+        "someMethod",
+        "()V",
+        emptyList(),
+        null,
+        Modifiers.of(Modifiers.Modifier.PUBLIC)
+    )
+
     val methodFooIsNotFoundProblem = MethodNotFoundProblem(
         MethodReference(classBReference, "foo", "()V"),
-        MOCK_METHOD_LOCATION,
+        methodLocation,
         Instruction.INVOKE_VIRTUAL,
         JAVA_LANG_OBJECT_HIERARCHY
     )
@@ -67,10 +79,10 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
             "()V",
             emptyList(),
             null,
-            PUBLIC_MODIFIERS
+            Modifiers.of(Modifiers.Modifier.PUBLIC)
         ),
         AccessType.PRIVATE,
-        MOCK_METHOD_LOCATION,
+        methodLocation,
         Instruction.INVOKE_SPECIAL
     )
 
@@ -86,20 +98,20 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
 
     val fieldXNotFoundProblem = FieldNotFoundProblem(
         FieldReference(classBReference, "x", "I"),
-        MOCK_METHOD_LOCATION,
+        methodLocation,
         JAVA_LANG_OBJECT_HIERARCHY,
         Instruction.GET_FIELD
     )
 
     val abstractMethodLocation = MethodLocation(
-        ClassLocation("org/test/I", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin),
+        ClassLocation("org/test/I", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin),
         "abstractMethod",
         "()V",
         emptyList(),
         null,
-        PUBLIC_MODIFIERS
+        Modifiers.of(Modifiers.Modifier.PUBLIC)
     )
-    val incompleteClass = ClassLocation("org/test/IImplDerived", null, PUBLIC_MODIFIERS, UnknownClassFileOrigin)
+    val incompleteClass = ClassLocation("org/test/IImplDerived", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeClassFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         abstractMethodLocation,
@@ -108,7 +120,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
 
     val classNotFoundProblem = ClassNotFoundProblem(
         ClassReference("org/test/some/Inner\$Class"),
-        MOCK_METHOD_LOCATION
+        methodLocation
     )
 
     val overridingFinalMethodProblem = OverridingFinalMethodProblem(
@@ -159,7 +171,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
       println(classNode.name)
       println(byteCode)
     }
-    return createSimpleVerificationContext(FixedClassesResolver.create(classes))
+    return createSimpleVerificationContext(FixedClassesResolver.create(classes, SomeClassFileOrigin, Resolver.ReadMode.FULL))
   }
 
   /**

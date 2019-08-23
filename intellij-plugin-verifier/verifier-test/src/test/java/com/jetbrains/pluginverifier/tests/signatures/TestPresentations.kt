@@ -1,3 +1,5 @@
+package com.jetbrains.pluginverifier.tests.signatures
+
 import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import org.junit.Assert.assertEquals
 import org.junit.Test

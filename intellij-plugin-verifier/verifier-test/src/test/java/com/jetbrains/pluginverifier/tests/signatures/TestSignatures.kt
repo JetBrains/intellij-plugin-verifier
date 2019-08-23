@@ -1,4 +1,6 @@
-import com.jetbrains.plugin.structure.classes.resolvers.UnknownClassFileOrigin
+package com.jetbrains.pluginverifier.tests.signatures
+
+import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -54,11 +56,13 @@ class TestSignatures {
 
   private fun assertClass(className: String, signature: String?, expectedResult: String) {
     val fromClass = genSomeClassLocation(className, signature)
-    Assert.assertEquals(expectedResult, fromClass.toString())
+    Assert.assertEquals(expectedResult, fromClass.presentableLocation)
   }
 
   private fun genSomeClassLocation(className: String, signature: String?) =
-      ClassLocation(className, signature, Modifiers(0), UnknownClassFileOrigin)
+      ClassLocation(className, signature, Modifiers(0), object : ClassFileOrigin {
+        override val parent: ClassFileOrigin? = null
+      })
 
   @Test
   fun assertCollectionsMin() {
@@ -109,7 +113,7 @@ class TestSignatures {
       expected: String
   ) {
     val methodLocation = MethodLocation(genSomeClassLocation(className, classSignature), methodName, methodDescriptor, parameterNames, signature, Modifiers(0))
-    Assert.assertEquals(expected, methodLocation.toString())
+    Assert.assertEquals(expected, methodLocation.presentableLocation)
   }
 
   @Test
@@ -123,6 +127,6 @@ class TestSignatures {
         "TT;",
         Modifiers(0)
     )
-    Assert.assertEquals("some.Class.field : T", fieldLocation.toString())
+    Assert.assertEquals("some.Class.field : T", fieldLocation.presentableLocation)
   }
 }

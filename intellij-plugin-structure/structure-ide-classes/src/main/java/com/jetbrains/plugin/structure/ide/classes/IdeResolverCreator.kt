@@ -53,7 +53,7 @@ object IdeResolverCreator {
       val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
       for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
         val classFileOrigin = IdeClassFileOrigin.CompiledModule(moduleRoot.name)
-        resolvers += ClassFilesResolver(moduleRoot.toPath(), readMode, classFileOrigin)
+        resolvers += ClassFilesResolver(moduleRoot.toPath(), classFileOrigin, readMode)
       }
 
       if (isCompiledUltimate(idePath)) {

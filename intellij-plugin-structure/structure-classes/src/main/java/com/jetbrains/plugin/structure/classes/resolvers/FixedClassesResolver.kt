@@ -12,8 +12,8 @@ class FixedClassesResolver private constructor(
 
     fun create(
         classes: Iterable<ClassNode>,
-        readMode: ReadMode = ReadMode.FULL,
-        classFileOrigin: ClassFileOrigin = UnknownClassFileOrigin
+        classFileOrigin: ClassFileOrigin,
+        readMode: ReadMode = ReadMode.FULL
     ): Resolver = FixedClassesResolver(
         classes.reversed().associateBy { it.name }, readMode, classFileOrigin
     )

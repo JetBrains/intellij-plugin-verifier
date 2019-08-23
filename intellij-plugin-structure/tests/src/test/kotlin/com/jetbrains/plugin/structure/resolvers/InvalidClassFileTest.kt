@@ -1,11 +1,8 @@
 package com.jetbrains.plugin.structure.resolvers
 
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFilesResolver
-import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -20,13 +17,17 @@ class InvalidClassFileTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
+  private object InvalidClassFileOrigin : ClassFileOrigin {
+    override val parent: ClassFileOrigin? = null
+  }
+
   @Test
   fun `read invalid class file from local class file fails in constructor`() {
     val classFilesRoot = buildDirectory(temporaryFolder.newFolder()) {
       file("invalid.class", "bad")
     }
     try {
-      ClassFilesResolver(classFilesRoot).use { }
+      ClassFilesResolver(classFilesRoot.toPath(), InvalidClassFileOrigin).use { }
     } catch (e: InvalidClassFileException) {
       assertTrue(e.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
       return
@@ -40,7 +41,7 @@ class InvalidClassFileTest {
       file("invalid.class", "bad")
     }
 
-    JarFileResolver(jarFile.toPath()).use { jarResolver ->
+    JarFileResolver(jarFile.toPath(), Resolver.ReadMode.FULL, InvalidClassFileOrigin).use { jarResolver ->
       val invalidResult = jarResolver.resolveClass("invalid") as ResolutionResult.InvalidClassFile
       assertTrue(invalidResult.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
     }
