@@ -6,6 +6,7 @@ import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.output.OutputOptions
@@ -15,7 +16,6 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
@@ -102,34 +102,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                 }
               }
 
-              val compatibilityNote = buildString {
-                if (baseTarget is PluginVerificationTarget.IDE
-                    && newTarget is PluginVerificationTarget.IDE
-                    && !plugin.isCompatibleWith(newTarget.ideVersion)
-                ) {
-                  appendln(
-                      "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
-                          "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
-                  )
-                  if (latestPluginVerification != null) {
-                    appendln(
-                        "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
-                            "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
-                    )
-                    val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
-                    if (latestVersionSameProblemsCount > 0) {
-                      appendln(
-                          "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
-                              "and thus it has also been affected by this breaking change."
-                      )
-                    } else {
-                      appendln("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
-                    }
-                  } else {
-                    appendln("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
-                  }
-                }
-              }
+              val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
 
               with(testDetails) {
                 if (isNotEmpty()) {
@@ -151,16 +124,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             val testMessage = buildString {
               appendln(shortDescription)
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
-              appendln("If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.")
-              appendln("If the problem is documented, it will be ignored by Plugin Verifier on the next verification. Note that TeamCity investigation may not disappear immediately.")
-              appendln()
-              appendln("To document the change do the following:")
-              appendln("1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html")
-              appendln("2) Open a page corresponding to the current year, for example 'Changes in 2019.*'")
-              appendln("3) Click 'Edit Page' at the right upper corner to navigate to GitHub.")
-              appendln("4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> ")
-              appendln("5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct. See supported patterns at the top.")
-              appendln("6) Provide the commit message and open a pull request.")
+              appendln(documentationNote)
             }
 
             tcLog.testFailed(testName, testMessage, testDetails.toString())
@@ -175,6 +139,55 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $newTarget compared to $baseTarget (affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt) + ")")
     } else {
       tcLog.buildStatusSuccess("No new compatibility problems found in $newTarget compared to $baseTarget")
+    }
+  }
+
+  private val documentationNote: String
+    get() = """
+      If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.
+      If the problem is documented, it will be ignored by Plugin Verifier on the next verification. Note that TeamCity investigation may not disappear immediately.
+      
+      To document the change do the following:
+      1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html
+      2) Open a page corresponding to the current year, for example 'Changes in 2019.*'
+      3) Click 'Edit Page' at the right upper corner to navigate to GitHub.
+      4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
+      5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct. See supported patterns at the top.
+      6) Provide the commit message and open a pull request.
+    """.trimIndent()
+
+  private fun createCompatibilityNote(
+      plugin: PluginInfo,
+      baseTarget: PluginVerificationTarget,
+      newTarget: PluginVerificationTarget,
+      latestPluginVerification: PluginVerificationResult?,
+      problems: Collection<CompatibilityProblem>
+  ): String = buildString {
+    if (baseTarget is PluginVerificationTarget.IDE
+        && newTarget is PluginVerificationTarget.IDE
+        && !plugin.isCompatibleWith(newTarget.ideVersion)
+    ) {
+      appendln(
+          "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
+              "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
+      )
+      if (latestPluginVerification != null) {
+        appendln(
+            "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
+                "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
+        )
+        val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
+        if (latestVersionSameProblemsCount > 0) {
+          appendln(
+              "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
+                  "and thus it has also been affected by this breaking change."
+          )
+        } else {
+          appendln("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
+        }
+      } else {
+        appendln("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
+      }
     }
   }
 
