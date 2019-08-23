@@ -35,6 +35,20 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
   }
 
+  /**
+   * (Problem type)
+   *   (Short description)
+   *     (Affected plugin #1)
+   *       <Plugin coordinates>
+   *       <Full description>
+   *     (Affected plugin #2)
+   *       <Plugin coordinates>
+   *       <Full description>
+   *   (Short description)
+   *     ...
+   * (Problem type)
+   *   ...
+   */
   private fun printResultsOnTeamCity(twoTargetsVerificationResults: TwoTargetsVerificationResults, tcLog: TeamCityLog) {
     val baseTarget = twoTargetsVerificationResults.baseTarget
     val newTarget = twoTargetsVerificationResults.newTarget
