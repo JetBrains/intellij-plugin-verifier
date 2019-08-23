@@ -23,8 +23,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
       pluginDetailsCache: PluginDetailsCache
   ): TwoTargetsVerificationResults {
     with(parameters) {
-      val releaseFinder = createDependencyFinder(parameters.releaseIde.ide, parameters.releaseLocalPluginsRepository, pluginDetailsCache)
-      val trunkFinder = createDependencyFinder(parameters.trunkIde.ide, parameters.trunkLocalPluginsRepository, pluginDetailsCache)
+      val releaseFinder = createDependencyFinder(releaseIde.ide, releaseLocalPluginsRepository, pluginDetailsCache)
+      val trunkFinder = createDependencyFinder(trunkIde.ide, trunkLocalPluginsRepository, pluginDetailsCache)
 
       val releaseTarget = PluginVerificationTarget.IDE(releaseIde.ide)
       val trunkTarget = PluginVerificationTarget.IDE(trunkIde.ide)
@@ -32,16 +32,16 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
       val releaseResolverProvider = DefaultClassResolverProvider(
           releaseFinder,
           jdkDescriptorCache,
-          parameters.jdkPath,
+          jdkPath,
           releaseIde,
-          parameters.externalClassesPackageFilter
+          externalClassesPackageFilter
       )
       val trunkResolverProvider = DefaultClassResolverProvider(
           trunkFinder,
           jdkDescriptorCache,
-          parameters.jdkPath,
+          jdkPath,
           trunkIde,
-          parameters.externalClassesPackageFilter
+          externalClassesPackageFilter
       )
 
       val verifiers = arrayListOf<PluginVerifier>()
@@ -51,7 +51,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
         verifiers += PluginVerifier(
             pluginInfo,
             releaseTarget,
-            parameters.problemsFilters,
+            problemsFilters,
             pluginDetailsCache,
             releaseResolverProvider,
             classFilters
@@ -62,7 +62,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams, private val
         verifiers += PluginVerifier(
             pluginInfo,
             trunkTarget,
-            parameters.problemsFilters,
+            problemsFilters,
             pluginDetailsCache,
             trunkResolverProvider,
             classFilters
