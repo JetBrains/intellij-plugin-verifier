@@ -36,6 +36,9 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   }
 
   private fun printResultsOnTeamCity(twoTargetsVerificationResults: TwoTargetsVerificationResults, tcLog: TeamCityLog) {
+    val baseTarget = twoTargetsVerificationResults.baseTarget
+    val newTarget = twoTargetsVerificationResults.newTarget
+
     val allPlugin2Problems = HashMultimap.create<PluginInfo, CompatibilityProblem>()
 
     val pluginToTwoResults = twoTargetsVerificationResults.getPluginToTwoResults()
@@ -45,9 +48,6 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
     val allProblem2Plugins = Multimaps.invertFrom(allPlugin2Problems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
     val allProblems = allProblem2Plugins.keySet()
-
-    val baseTarget = twoTargetsVerificationResults.baseTarget
-    val newTarget = twoTargetsVerificationResults.newTarget
 
     val newPluginIdToVerifications = ArrayListMultimap.create<String, PluginVerificationResult>()
     if (newTarget is PluginVerificationTarget.IDE) {
@@ -62,6 +62,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
         for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.shortDescription }) {
           val testName = "($shortDescription)"
           tcLog.testStarted(testName).use {
+
             val plugin2Problems = ArrayListMultimap.create<PluginInfo, CompatibilityProblem>()
             for (problem in problemsWithShortDescription) {
               for (plugin in allProblem2Plugins.get(problem)) {
@@ -69,53 +70,47 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
-            val testDetails = StringBuilder()
-            for ((plugin, problems) in plugin2Problems.asMap()) {
-              val latestPluginVerification = if (newTarget is PluginVerificationTarget.IDE) {
-                newPluginIdToVerifications.get(plugin.pluginId).find {
-                  it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
-                }
-              } else {
-                null
-              }
-
-              val twoResults = pluginToTwoResults[plugin]
-              val missingDependenciesNote = if (twoResults != null) {
-                getMissingDependenciesNote(twoResults.oldResult, twoResults.newResult)
-              } else {
-                ""
-              }
-
-              val compatibilityProblems = buildString {
-                for ((index, problem) in problems.withIndex()) {
-                  if (problems.size > 1) {
-                    append("${index + 1}) ")
-                  }
-                  appendln(problem.fullDescription)
-                  if (latestPluginVerification != null) {
-                    if (latestPluginVerification.isKnownProblem(problem)) {
-                      appendln("This problem also takes place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
-                    } else {
-                      appendln("This problem does not take place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
-                    }
-                  }
-                }
-              }
-
-              val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
-
-              with(testDetails) {
+            val testDetails = buildString {
+              for ((plugin, problems) in plugin2Problems.asMap()) {
                 if (isNotEmpty()) {
                   appendln()
                   appendln()
                 }
-
                 appendln(plugin.getFullPluginCoordinates())
+
+                val latestPluginVerification = if (newTarget is PluginVerificationTarget.IDE) {
+                  newPluginIdToVerifications.get(plugin.pluginId).find {
+                    it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
+                  }
+                } else {
+                  null
+                }
+
+                val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
                 appendln(compatibilityNote)
-                if (missingDependenciesNote.isNotEmpty()) {
+
+                val twoResults = pluginToTwoResults[plugin]
+                if (twoResults != null && twoResults.newResult.hasDirectMissingDependencies) {
+                  val missingDependenciesNote = getMissingDependenciesNote(twoResults.oldResult, twoResults.newResult)
                   appendln()
                   appendln(missingDependenciesNote)
                   appendln()
+                }
+
+                val compatibilityProblems = buildString {
+                  for ((index, problem) in problems.withIndex()) {
+                    if (problems.size > 1) {
+                      append("${index + 1}) ")
+                    }
+                    appendln(problem.fullDescription)
+                    if (latestPluginVerification != null) {
+                      if (latestPluginVerification.isKnownProblem(problem)) {
+                        appendln("This problem also takes place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
+                      } else {
+                        appendln("This problem does not take place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
+                      }
+                    }
+                  }
                 }
                 appendln(compatibilityProblems)
               }
@@ -127,7 +122,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               appendln(documentationNote)
             }
 
-            tcLog.testFailed(testName, testMessage, testDetails.toString())
+            tcLog.testFailed(testName, testMessage, testDetails)
           }
         }
       }
@@ -203,35 +198,31 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   private fun PluginVerificationResult.getResolvedDependency(dependency: PluginDependency) =
       (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
 
-  private fun getMissingDependenciesNote(baseResult: PluginVerificationResult.Verified, newResult: PluginVerificationResult.Verified): String {
-    val baseMissingDependencies = baseResult.directMissingDependencies
-    val newMissingDependencies = newResult.directMissingDependencies
-    if (newMissingDependencies.isEmpty()) {
-      return ""
-    }
-    return buildString {
-      appendln("Note: some problems might have been caused by missing dependencies: [")
-      for ((dependency, missingReason) in newMissingDependencies) {
-        append("    $dependency: $missingReason")
+  private fun getMissingDependenciesNote(
+      baseResult: PluginVerificationResult.Verified,
+      newResult: PluginVerificationResult.Verified
+  ): String = buildString {
+    appendln("Note: some problems might have been caused by missing dependencies: [")
+    for ((dependency, missingReason) in newResult.directMissingDependencies) {
+      append("    $dependency: $missingReason")
 
-        val baseResolvedDependency = baseResult.getResolvedDependency(dependency)
-        if (baseResolvedDependency != null) {
-          append(" (when ${baseResult.verificationTarget} was checked, $baseResolvedDependency was used)")
-        } else {
-          val baseMissingDep = baseMissingDependencies.find { it.dependency == dependency }
-          if (baseMissingDep != null) {
-            append(" (it was also missing when we checked ${baseResult.verificationTarget} ")
-            if (missingReason == baseMissingDep.missingReason) {
-              append("by the same reason)")
-            } else {
-              append("by the following reason: ${baseMissingDep.missingReason})")
-            }
+      val baseResolvedDependency = baseResult.getResolvedDependency(dependency)
+      if (baseResolvedDependency != null) {
+        append(" (when ${baseResult.verificationTarget} was checked, $baseResolvedDependency was used)")
+      } else {
+        val baseMissingDep = baseResult.directMissingDependencies.find { it.dependency == dependency }
+        if (baseMissingDep != null) {
+          append(" (it was also missing when we checked ${baseResult.verificationTarget} ")
+          if (missingReason == baseMissingDep.missingReason) {
+            append("by the same reason)")
+          } else {
+            append("by the following reason: ${baseMissingDep.missingReason})")
           }
         }
-        appendln()
       }
-      appendln("]")
+      appendln()
     }
+    appendln("]")
   }
 
 }
