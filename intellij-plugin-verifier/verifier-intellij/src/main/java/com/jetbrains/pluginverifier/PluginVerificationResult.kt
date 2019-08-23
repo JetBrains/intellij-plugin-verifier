@@ -14,19 +14,18 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 
-sealed class PluginVerificationResult {
-
-  abstract val plugin: PluginInfo
-
-  abstract val verificationTarget: PluginVerificationTarget
+sealed class PluginVerificationResult(
+    val plugin: PluginInfo,
+    val verificationTarget: PluginVerificationTarget
+) {
 
   abstract val verificationVerdict: String
 
   final override fun toString() = verificationVerdict
 
-  data class Verified(
-      override val plugin: PluginInfo,
-      override val verificationTarget: PluginVerificationTarget,
+  class Verified(
+      plugin: PluginInfo,
+      verificationTarget: PluginVerificationTarget,
       val dependenciesGraph: DependenciesGraph,
       val compatibilityProblems: Set<CompatibilityProblem> = emptySet(),
       val ignoredProblems: Map<CompatibilityProblem, String>,
@@ -36,7 +35,7 @@ sealed class PluginVerificationResult {
       val internalApiUsages: Set<InternalApiUsage> = emptySet(),
       val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
       val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet()
-  ) : PluginVerificationResult() {
+  ) : PluginVerificationResult(plugin, verificationTarget) {
 
     val hasDirectMissingDependencies: Boolean
       get() = directMissingDependencies.isNotEmpty()
@@ -106,30 +105,30 @@ sealed class PluginVerificationResult {
       }
   }
 
-  data class InvalidPlugin(
-      override val plugin: PluginInfo,
-      override val verificationTarget: PluginVerificationTarget,
+  class InvalidPlugin(
+      plugin: PluginInfo,
+      verificationTarget: PluginVerificationTarget,
       val pluginStructureErrors: Set<PluginStructureError>
-  ) : PluginVerificationResult() {
+  ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Plugin is invalid"
   }
 
-  data class NotFound(
-      override val plugin: PluginInfo,
-      override val verificationTarget: PluginVerificationTarget,
+  class NotFound(
+      plugin: PluginInfo,
+      verificationTarget: PluginVerificationTarget,
       val notFoundReason: String
-  ) : PluginVerificationResult() {
+  ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Plugin is not found: $notFoundReason"
   }
 
-  data class FailedToDownload(
-      override val plugin: PluginInfo,
-      override val verificationTarget: PluginVerificationTarget,
+  class FailedToDownload(
+      plugin: PluginInfo,
+      verificationTarget: PluginVerificationTarget,
       val failedToDownloadReason: String,
       val failedToDownloadError: Throwable
-  ) : PluginVerificationResult() {
+  ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Failed to download plugin: $failedToDownloadReason"
   }
