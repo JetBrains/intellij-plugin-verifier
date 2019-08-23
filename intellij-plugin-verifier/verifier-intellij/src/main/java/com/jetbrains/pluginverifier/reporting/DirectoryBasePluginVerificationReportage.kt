@@ -160,7 +160,7 @@ class DirectoryBasePluginVerificationReportage(private val targetDirectoryProvid
 
   private fun createResultsReporters(pluginVerificationDirectory: Path) =
       buildList<Reporter<PluginVerificationResult>> {
-        add(FileReporter(pluginVerificationDirectory.resolve("verification-verdict.txt")) { it.toString() })
+        add(FileReporter(pluginVerificationDirectory.resolve("verification-verdict.txt")) { it.verificationVerdict })
       }
 
   private fun createIgnoredProblemReporters(
