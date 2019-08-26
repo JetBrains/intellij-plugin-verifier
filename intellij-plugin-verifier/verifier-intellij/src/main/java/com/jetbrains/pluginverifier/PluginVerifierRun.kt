@@ -1,20 +1,17 @@
 package com.jetbrains.pluginverifier
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import com.jetbrains.plugin.structure.base.utils.shutdownAndAwaitTermination
-import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.pluginverifier.reporting.PluginReporters
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
-import java.io.Closeable
-import java.util.concurrent.*
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
+import java.util.concurrent.Callable
 
 fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<PluginVerifier>): List<PluginVerificationResult> {
   if (verifiers.isEmpty()) {
     return emptyList()
   }
 
-  val executor = ExecutorWithProgress<PluginVerificationResult>(getConcurrencyLevel()) { progressData ->
+  val executor = ExecutorWithProgress<PluginVerificationResult>("verifier", getConcurrencyLevel()) { progressData ->
     val result = progressData.result
     reportage.logVerificationStage(
         "Finished ${progressData.finishedNumber} of ${progressData.totalNumber} verifications: " +
@@ -69,80 +66,4 @@ private fun PluginReporters.reportResults(result: PluginVerificationResult) {
       )
     }
   }
-}
-
-private class ExecutorWithProgress<T>(
-    concurrentWorkers: Int,
-    private val progress: (ProgressData<T>) -> Unit
-) : Closeable {
-
-  data class ProgressData<T>(val finishedNumber: Int, val totalNumber: Int, val result: T)
-
-  private val executor = Executors.newFixedThreadPool(
-      concurrentWorkers,
-      ThreadFactoryBuilder()
-          .setDaemon(true)
-          .setNameFormat("executor-%d")
-          .build()
-  )
-
-  override fun close() {
-    executor.shutdownAndAwaitTermination(1, TimeUnit.MINUTES)
-  }
-
-  @Throws(InterruptedException::class)
-  fun executeTasks(tasks: List<Callable<T>>): List<T> {
-    val completionService = ExecutorCompletionService<T>(executor)
-    val workers = arrayListOf<Future<T>>()
-    try {
-      for (task in tasks) {
-        val worker = try {
-          completionService.submit(task)
-        } catch (e: RejectedExecutionException) {
-          if (executor.isShutdown) {
-            throw InterruptedException()
-          }
-          throw RuntimeException("Failed to schedule task", e)
-        }
-        workers.add(worker)
-      }
-      return waitAllWorkersWithInterruptionChecks(completionService, workers)
-    } catch (e: Throwable) {
-      for (worker in workers) {
-        worker.cancel(true)
-      }
-      throw e
-    }
-  }
-
-  private fun waitAllWorkersWithInterruptionChecks(
-      completionService: ExecutorCompletionService<T>,
-      workers: List<Future<T>>
-  ): List<T> {
-    val results = arrayListOf<T>()
-    for (finished in 1..workers.size) {
-      while (true) {
-        checkIfInterrupted()
-        val future = completionService.poll(500, TimeUnit.MILLISECONDS) //throws InterruptedException
-        if (future != null) {
-          val result = try {
-            future.get() //propagate InterruptedException
-          } catch (e: CancellationException) {
-            throw InterruptedException("Worker has been cancelled")
-          } catch (e: ExecutionException) {
-            if (e.cause is InterruptedException) {
-              throw InterruptedException("Worker has been interrupted")
-            }
-            //Fatal error because no worker can throw exceptions other than InterruptedException
-            throw RuntimeException("Fatal: worker finished abruptly", e.cause)
-          }
-          progress(ProgressData(finished, workers.size, result))
-          results.add(result)
-          break
-        }
-      }
-    }
-    return results
-  }
-
 }
