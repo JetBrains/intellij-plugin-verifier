@@ -165,6 +165,13 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
     }
   }
 
+  /**
+   * Explicitly remove the resource from this cache and invoke the associated disposer.
+   */
+  fun remove(key: K) {
+    resourceRepository.remove(key)
+  }
+
 }
 
 fun <K, R> createSizeLimitedResourceCache(
