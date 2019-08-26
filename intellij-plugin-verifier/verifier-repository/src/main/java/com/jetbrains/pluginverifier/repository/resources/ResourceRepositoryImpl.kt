@@ -81,12 +81,12 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
   @Synchronized
   override fun remove(key: K): Boolean = when {
     isLockedOrBeingProvided(key) -> {
-      logger.debug("remove($key): the resource is locked or is being provided, enqueue for removing later.")
+      logger.debugMaybe { "remove($key): the resource is locked or is being provided, enqueue for removing later." }
       removeQueue.add(key)
       false
     }
     resourcesRegistrar.has(key) -> {
-      logger.debug("remove($key): the resource is not locked, deleting now")
+      logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
       doRemove(key)
       cleanup()
       true
@@ -122,7 +122,7 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
     val now = updateUsageStatistics(key)
     val lockId = nextLockId++
     val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
-    logger.debug("get($key): lock is registered $lock ")
+    logger.debugMaybe { "get($key): lock is registered $lock " }
     key2Locks.getOrPut(key) { hashSetOf() }.add(lock)
     return lock
   }
@@ -132,23 +132,23 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
     val key = lock.key
     val resourceLocks = key2Locks[key]
     if (resourceLocks != null) {
-      logger.debug("releasing lock $lock")
+      logger.debugMaybe { "releasing lock $lock" }
       resourceLocks.remove(lock)
       if (resourceLocks.isEmpty()) {
         key2Locks.remove(key)
 
         if (key in removeQueue) {
           if (isBeingProvided(key)) {
-            logger.debug("hand over removing of the $key to another thread waiting for this key")
+            logger.debugMaybe { "hand over removing of the $key to another thread waiting for this key" }
           } else {
-            logger.debug("removing the $key as it is enqueued for removing and it has been just released")
+            logger.debugMaybe { "removing the $key as it is enqueued for removing and it has been just released" }
             removeQueue.remove(key)
             doRemove(key)
           }
         }
       }
     } else {
-      logger.debug("attempt to release an unregistered lock $lock")
+      logger.debugMaybe { "attempt to release an unregistered lock $lock" }
     }
   }
 
@@ -165,17 +165,17 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
     val (fetchTask, runInCurrentThread) = synchronized(this) {
       if (resourcesRegistrar.has(key)) {
         val lock = registerLock(key)
-        logger.debug("get($key): the resource is available and a lock is registered $lock")
+        logger.debugMaybe { "get($key): the resource is available and a lock is registered $lock" }
         return ResourceRepositoryResult.Found(lock)
       }
 
       val oldTask = additionTasks[key]
       additionWaitingThreads.compute(key) { _, v -> (v ?: 0) + 1 }
       if (oldTask != null) {
-        logger.debug("get($key): waiting for another thread to finish fetching the resource")
+        logger.debugMaybe { "get($key): waiting for another thread to finish fetching the resource" }
         oldTask to false
       } else {
-        logger.debug("get($key): fetching the resource in the current thread")
+        logger.debugMaybe { "get($key): fetching the resource in the current thread" }
         val newTask = FutureTask {
           fetchAndAddResource(key)
         }
@@ -244,12 +244,12 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
-        logger.debug(
-            "It's time to evict unused resources. " +
-                "Total weight: ${resourcesRegistrar.totalWeight}. " +
-                "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
-                " will be evicted with total weight $disposedTotalWeight"
-        )
+        logger.debugMaybe {
+          "It's time to evict unused resources. " +
+              "Total weight: ${resourcesRegistrar.totalWeight}. " +
+              "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
+              " will be evicted with total weight $disposedTotalWeight"
+        }
         for (resource in resourcesForEviction) {
           remove(resource.key)
         }
