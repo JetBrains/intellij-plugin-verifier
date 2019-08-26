@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.repository.cleanup
 
-import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
+import com.jetbrains.pluginverifier.repository.files.SpaceWeight
 import com.jetbrains.pluginverifier.repository.files.AvailableFile
 import com.jetbrains.pluginverifier.repository.resources.EvictionInfo
 import java.nio.file.Path

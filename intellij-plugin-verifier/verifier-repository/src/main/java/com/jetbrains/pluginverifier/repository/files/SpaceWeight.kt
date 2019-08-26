@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.repository.downloader
+package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.resources.ResourceWeight

@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepository
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
