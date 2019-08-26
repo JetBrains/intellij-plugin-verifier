@@ -6,7 +6,11 @@ import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
-import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
+import org.jetbrains.ide.diff.builder.api.BaseOldNewIdesTest.Companion.getOldIdeFile
+import org.jetbrains.ide.diff.builder.api.ClassSignature
+import org.jetbrains.ide.diff.builder.api.FieldSignature
+import org.jetbrains.ide.diff.builder.ide.toSignature
+import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -19,7 +23,7 @@ import org.junit.Test
  * by the external annotations system,
  * which is `com.intellij.psi.util.PsiFormatUtil.getExternalName`.
  */
-class ExternalNameFormatTest : BaseOldNewIdesTest() {
+class ExternalNameFormatTest {
 
   companion object {
 
@@ -121,7 +125,7 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
       assertNotNull(className, classFile)
       assertNotNull(classFile!!.name, expectedName)
 
-      val actualName = classFile.location.toSignature().externalPresentation
+      val actualName = classFile.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }
@@ -131,7 +135,7 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
       val expectedName = methodName2externalName[methodNode.name]
       assertNotNull(methodNode.name, expectedName)
 
-      val actualName = methodNode.location.toSignature().externalPresentation
+      val actualName = methodNode.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }
@@ -141,7 +145,7 @@ class ExternalNameFormatTest : BaseOldNewIdesTest() {
       val expectedName = fieldName2externalName[fieldNode.name]
       assertNotNull(fieldNode.name, expectedName)
 
-      val actualName = fieldNode.location.toSignature().externalPresentation
+      val actualName = fieldNode.toSignature().externalPresentation
       assertEquals(expectedName, actualName)
     }
   }

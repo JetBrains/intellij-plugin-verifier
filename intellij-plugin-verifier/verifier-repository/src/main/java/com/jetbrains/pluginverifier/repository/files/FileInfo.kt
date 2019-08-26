@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.resources.ResourceInfo
 import java.nio.file.Path
 

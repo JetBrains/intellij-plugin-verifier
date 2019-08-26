@@ -3,11 +3,14 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
-import org.jetbrains.ide.diff.builder.persistence.saveTo
+import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
+import org.jetbrains.ide.diff.builder.filter.ClassFilter
+import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
+import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.ExternalAnnotationsApiReportWriter
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.system.exitProcess
 
 /**
  * Builds API diff between two IDE builds and saves the result as external annotations root.
@@ -40,23 +43,20 @@ class IdeDiffCommand : Command {
     val cliOptions = CliOptions()
     val args = Args.parse(cliOptions, freeArgs.toTypedArray(), false)
     if (args.size < 3) {
-      exit("Paths to <old IDE> <new IDE> <result> must be specified.")
+      System.err.println("Paths to <old IDE> <new IDE> <result> must be specified.")
+      exitProcess(1)
     }
 
     val oldIdePath = Paths.get(args[0])
     val newIdePath = Paths.get(args[1])
     val resultRoot = Paths.get(args[2])
-    val packages = cliOptions.getPackages()
+    val classFilter = cliOptions.classFilter()
     val jdkPath = cliOptions.getJdkPath()
     LOG.info("JDK path will be used: $jdkPath")
-    LOG.info(if (packages.any { it.isEmpty() }) {
-      "All packages will be processed"
-    } else {
-      "The following packages will be processed: " + packages.joinToString()
-    })
+    LOG.info(classFilter.toString())
 
-    val apiReport = IdeDiffBuilder(packages, jdkPath).buildIdeDiff(oldIdePath, newIdePath)
-    apiReport.saveTo(resultRoot)
+    val apiReport = IdeDiffBuilder(classFilter, jdkPath).buildIdeDiff(oldIdePath, newIdePath)
+    ExternalAnnotationsApiReportWriter().saveReport(apiReport, resultRoot)
 
     LOG.info("API diff between ${newIdePath.simpleName} and ${oldIdePath.simpleName} is saved to ${resultRoot.simpleName}")
   }
@@ -70,7 +70,7 @@ class IdeDiffCommand : Command {
         "If an empty package is specified using \"\", all packages will be processed.")
     var packagesArray: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
 
-    fun getPackages(): List<String> = packagesArray.toList()
+    fun classFilter(): ClassFilter = PackagesClassFilter(packagesArray.toList())
 
     fun getJdkPath(): Path {
       return if (jdkPathStr == null) {
@@ -84,3 +84,4 @@ class IdeDiffCommand : Command {
   }
 
 }
+

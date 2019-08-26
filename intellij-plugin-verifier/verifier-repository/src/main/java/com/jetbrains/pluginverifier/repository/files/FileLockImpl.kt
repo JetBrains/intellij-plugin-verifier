@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.repository.files
 
-import com.jetbrains.pluginverifier.repository.downloader.SpaceWeight
 import com.jetbrains.pluginverifier.repository.resources.ResourceLock
 import java.nio.file.Path
 

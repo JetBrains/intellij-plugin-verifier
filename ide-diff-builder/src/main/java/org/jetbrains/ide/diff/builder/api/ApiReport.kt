@@ -1,12 +1,20 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.ide.diff.builder.signatures.ApiSignature
+import kotlinx.serialization.Serializable
+import org.jetbrains.ide.diff.builder.persistence.json.IdeVersionSerializer
 
 /**
  * Container of APIs and associated events built for IDE of version [ideBuildNumber].
  */
-data class ApiReport(val ideBuildNumber: IdeVersion, val apiSignatureToEvents: Map<ApiSignature, Set<ApiEvent>>) {
+@Serializable
+data class ApiReport(
+    @Serializable(with = IdeVersionSerializer::class) val ideBuildNumber: IdeVersion,
+    val apiSignatureToEvents: Map<
+        @Serializable(with = ApiSignatureSerializer::class) ApiSignature,
+        Set<@Serializable(with = ApiEventSerializer::class) ApiEvent>
+        >
+) {
   /**
    * Returns this report as a sequence of signatures and corresponding events.
    */
@@ -17,9 +25,9 @@ data class ApiReport(val ideBuildNumber: IdeVersion, val apiSignatureToEvents: M
 
 
   /**
-   * Returns all API events associated with the signature in this report sorted by IDE version.
+   * Returns all API events associated with the signature.
    */
-  operator fun get(apiSignature: ApiSignature): List<ApiEvent> =
-      apiSignatureToEvents.getOrDefault(apiSignature, emptySet()).sortedBy { it.ideVersion }
+  operator fun get(apiSignature: ApiSignature): Set<ApiEvent> =
+      apiSignatureToEvents.getOrDefault(apiSignature, emptySet())
 
 }

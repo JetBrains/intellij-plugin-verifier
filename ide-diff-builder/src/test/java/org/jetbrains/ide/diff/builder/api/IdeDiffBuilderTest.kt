@@ -1,7 +1,7 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jetbrains.ide.diff.builder.BaseOldNewIdesTest
+import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
 import org.junit.Test
 
 class IdeDiffBuilderTest : BaseOldNewIdesTest() {

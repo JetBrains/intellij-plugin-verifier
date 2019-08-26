@@ -1,8 +1,8 @@
-package org.jetbrains.ide.diff.builder
+package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.ide.IdeManager
-import org.jetbrains.ide.diff.builder.api.ApiReport
-import org.jetbrains.ide.diff.builder.api.IdeDiffBuilder
+import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
+import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
@@ -36,7 +36,7 @@ abstract class BaseOldNewIdesTest {
     requireNotNull(javaHome) { "JAVA_HOME is not specified" }
     val jdkPath = Paths.get(javaHome)
 
-    return IdeDiffBuilder(emptyList(), jdkPath).buildIdeDiff(oldIde, newIde)
+    return IdeDiffBuilder(PackagesClassFilter(emptyList()), jdkPath).buildIdeDiff(oldIde, newIde)
   }
 
   fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {

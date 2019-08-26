@@ -1,7 +1,6 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.CompositeIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
@@ -93,20 +92,10 @@ val releasesIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.
 val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
 val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
-val allIdeRepositories: List<IdeRepository> = listOf(
-    releasesIdeRepository,
-    snapshotsIdeRepository,
-    nightlyIdeRepository
+val allIdeRepository = CompositeIdeRepository(
+    listOf(
+        releasesIdeRepository,
+        snapshotsIdeRepository,
+        nightlyIdeRepository
+    )
 )
-
-val allIdeRepository = CompositeIdeRepository(allIdeRepositories)
-
-class CompositeIdeRepository(val ideRepositories: List<IdeRepository>) : IdeRepository {
-
-  override fun fetchIndex() =
-      ideRepositories.flatMap { it.fetchIndex() }.distinctBy { it.version }.sortedBy { it.version }
-
-  override fun fetchAvailableIde(ideVersion: IdeVersion) =
-      ideRepositories.asSequence().mapNotNull { it.fetchAvailableIde(ideVersion) }.firstOrNull()
-
-}
