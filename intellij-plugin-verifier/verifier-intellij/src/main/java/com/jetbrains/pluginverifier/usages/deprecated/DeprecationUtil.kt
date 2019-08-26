@@ -12,23 +12,24 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
  * 3) @Deprecated (Java 9) and `forRemoval = true | false`
  * 4) @ScheduledForRemoval, `inVersion` is specified or not
  */
-fun ClassFileMember.getDeprecationInfo(): DeprecationInfo? {
-  val annotations = runtimeInvisibleAnnotations
-  val scheduledForRemoval = annotations.findAnnotation("org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval")
-  if (scheduledForRemoval != null) {
-    val inVersion = scheduledForRemoval.getAnnotationValue("inVersion") as? String
-    return DeprecationInfo(true, inVersion)
-  }
+val ClassFileMember.deprecationInfo: DeprecationInfo?
+  get() {
+    val annotations = runtimeInvisibleAnnotations
+    val scheduledForRemoval = annotations.findAnnotation("org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval")
+    if (scheduledForRemoval != null) {
+      val inVersion = scheduledForRemoval.getAnnotationValue("inVersion") as? String
+      return DeprecationInfo(true, inVersion)
+    }
 
-  val deprecated = annotations.findAnnotation("java/lang/Deprecated")
-  if (deprecated != null) {
-    val forRemoval = deprecated.getAnnotationValue("forRemoval") as? Boolean ?: false
-    return DeprecationInfo(forRemoval, null)
-  }
+    val deprecated = annotations.findAnnotation("java/lang/Deprecated")
+    if (deprecated != null) {
+      val forRemoval = deprecated.getAnnotationValue("forRemoval") as? Boolean ?: false
+      return DeprecationInfo(forRemoval, null)
+    }
 
-  return if (isDeprecated) {
-    DeprecationInfo(false, null)
-  } else {
-    null
+    return if (isDeprecated) {
+      DeprecationInfo(false, null)
+    } else {
+      null
+    }
   }
-}

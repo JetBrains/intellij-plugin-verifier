@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.usages.internal
 
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.util.isMemberEffectivelyAnnotatedWith
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 /**
@@ -10,5 +10,5 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
  */
 abstract class InternalApiUsage : ApiUsage()
 
-fun ClassFileMember.isInternalApi(context: VerificationContext): Boolean =
-    isMemberEffectivelyAnnotatedWith("org/jetbrains/annotations/ApiStatus\$Internal", context.classResolver)
+fun ClassFileMember.isInternalApi(resolver: Resolver): Boolean =
+    isMemberEffectivelyAnnotatedWith("org/jetbrains/annotations/ApiStatus\$Internal", resolver)

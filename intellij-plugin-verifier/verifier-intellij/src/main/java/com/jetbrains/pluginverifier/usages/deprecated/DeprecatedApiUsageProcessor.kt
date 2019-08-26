@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    val deprecationInfo = classFileMember.getDeprecationInfo() ?: return
+    val deprecationInfo = classFileMember.deprecationInfo ?: return
     when (classFileMember) {
       is ClassFile -> {
         deprecatedApiRegistrar.registerDeprecatedUsage(

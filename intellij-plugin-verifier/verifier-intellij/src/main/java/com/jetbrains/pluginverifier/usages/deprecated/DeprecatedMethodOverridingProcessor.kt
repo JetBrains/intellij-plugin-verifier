@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class DeprecatedMethodOverridingProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : MethodOverridingProcessor {
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
-    val methodDeprecated = overriddenMethod.getDeprecationInfo()
+    val methodDeprecated = overriddenMethod.deprecationInfo
     if (methodDeprecated != null) {
       deprecatedApiRegistrar.registerDeprecatedUsage(
           DeprecatedMethodOverridden(

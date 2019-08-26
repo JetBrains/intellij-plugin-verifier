@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.usages.deprecated.getDeprecationInfo
+import com.jetbrains.pluginverifier.usages.deprecated.deprecationInfo
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinPool
@@ -27,7 +27,7 @@ class DeprecatedIdeClassesVisitor {
 
     val classFile = resolveClassOrNull(className) ?: return emptySet()
 
-    if (classFile.getDeprecationInfo() != null) {
+    if (classFile.deprecationInfo != null) {
       deprecatedElements += classFile.location
     }
 

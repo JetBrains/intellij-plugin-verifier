@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsageRegistrar) : ApiUsageProcessor {
   override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (classFileMember.isInternalApi(context)
+    if (classFileMember.isInternalApi(context.classResolver)
         && classFileMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
     ) {
       when (classFileMember) {
