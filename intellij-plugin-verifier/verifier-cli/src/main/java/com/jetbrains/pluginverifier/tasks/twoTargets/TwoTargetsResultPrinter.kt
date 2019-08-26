@@ -151,14 +151,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
               val deprecationInfo = apiDeprecationInfo
               if (deprecationInfo != null) {
-                append("${deprecationInfo.first.presentableLocation} was deprecated")
-                if (deprecationInfo.second.forRemoval) {
-                  append(" and scheduled for removal")
-                  if (deprecationInfo.second.untilVersion != null) {
-                    append(" in ${deprecationInfo.second.untilVersion}")
-                  }
-                }
-                appendln()
+                getDeprecatedApiRemovalNote(deprecationInfo.first, deprecationInfo.second)
               } else {
                 appendln(documentationNote)
               }
@@ -177,6 +170,23 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     } else {
       tcLog.buildStatusSuccess("No new compatibility problems found in $newTarget compared to $baseTarget")
     }
+  }
+
+  private fun getDeprecatedApiRemovalNote(
+      symbolicReference: SymbolicReference,
+      deprecationInfo: DeprecationInfo
+  ) = buildString {
+    append("${symbolicReference.presentableLocation} was deprecated")
+    if (deprecationInfo.forRemoval) {
+      append(" and scheduled for removal")
+      if (deprecationInfo.untilVersion != null) {
+        append(" in ${deprecationInfo.untilVersion}")
+      }
+    }
+    appendln()
+    appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
+    appendln("If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
+                 "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. ")
   }
 
   private fun getProblemSymbolicReference(problem: CompatibilityProblem): SymbolicReference? =
