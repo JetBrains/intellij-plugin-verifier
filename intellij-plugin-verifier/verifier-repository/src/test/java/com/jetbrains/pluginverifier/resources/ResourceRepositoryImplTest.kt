@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests.repository
+package com.jetbrains.pluginverifier.resources
 
 import com.jetbrains.pluginverifier.repository.cleanup.SizeEvictionPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight

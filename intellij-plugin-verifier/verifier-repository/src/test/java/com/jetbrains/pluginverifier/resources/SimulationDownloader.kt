@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests.repository
+package com.jetbrains.pluginverifier.resources
 
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult

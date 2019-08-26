@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests.files
+package com.jetbrains.pluginverifier.files
 
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.junit.Assert
@@ -6,7 +6,7 @@ import org.junit.Test
 
 class SpaceAmountTest {
   @Test
-  fun `presentations`() {
+  fun presentations() {
     Assert.assertEquals("0 B", SpaceAmount.ofBytes(0).presentableAmount())
 
     Assert.assertEquals("1 B", SpaceAmount.ofBytes(1).presentableAmount())

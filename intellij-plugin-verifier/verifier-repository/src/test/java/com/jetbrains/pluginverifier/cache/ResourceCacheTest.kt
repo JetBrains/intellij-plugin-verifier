@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.tests.cache
+package com.jetbrains.pluginverifier.cache
 
 import com.jetbrains.pluginverifier.repository.cache.ResourceCache
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
