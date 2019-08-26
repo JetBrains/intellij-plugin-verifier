@@ -32,7 +32,7 @@ data class AvailableIde(
     val uploadDate: LocalDate
 ) {
 
-  override fun toString() = version.toString() + (if (isRelease) " ($releaseVersion)" else "") + " $uploadDate"
+  override fun toString() = version.toString() + (if (isRelease) " ($releaseVersion)" else "")
 
   val isRelease: Boolean
     get() = releaseVersion != null
