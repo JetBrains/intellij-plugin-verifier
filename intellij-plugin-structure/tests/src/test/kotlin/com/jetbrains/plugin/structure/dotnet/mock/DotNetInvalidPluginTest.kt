@@ -55,7 +55,7 @@ class DotNetInvalidPluginTest {
   fun `no meta-inf plugin xml found`() {
     val file = temporaryFolder.newFile("withoutDescriptor.nupkg")
     ZipOutputStream(FileOutputStream(file)).use { it.putNextEntry(ZipEntry("randomEntry.txt")) }
-    assertExpectedProblems(file, listOf(PluginDescriptorIsNotFound("")))
+    assertExpectedProblems(file, listOf(PluginDescriptorIsNotFound("*.nuspec")))
   }
 
   @Test

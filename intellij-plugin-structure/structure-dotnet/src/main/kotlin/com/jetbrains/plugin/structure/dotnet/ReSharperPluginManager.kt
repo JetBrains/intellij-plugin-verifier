@@ -21,12 +21,12 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
   override fun createPlugin(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when (pluginFile.extension) {
-      "nupkg" -> loadDescriptorFromZip(pluginFile)
+      "nupkg" -> loadDescriptorFromNuPkg(pluginFile)
       else -> PluginCreationFail(createIncorrectDotNetPluginFileProblem(pluginFile.name))
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
+  private fun loadDescriptorFromNuPkg(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
     val sizeLimit = Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT.getAsLong()
     if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
@@ -52,9 +52,6 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     val candidateDescriptors = pluginDirectory.listRecursivelyAllFilesWithExtension("nuspec")
     var descriptorFile: File? = null
     for (entry in candidateDescriptors) {
-      if (!entry.name.endsWith(".nuspec")) {
-        continue
-      }
       if (descriptorFile != null) {
         return PluginCreationFail(MultiplePluginDescriptors(descriptorFile.name, "plugin.nupkg", entry.name, "plugin.nupkg"))
       }
@@ -62,7 +59,7 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     }
 
     if (descriptorFile == null) {
-      return PluginCreationFail(PluginDescriptorIsNotFound(""))
+      return PluginCreationFail(PluginDescriptorIsNotFound("*.nuspec"))
     }
     return loadDescriptor(descriptorFile)
   }
