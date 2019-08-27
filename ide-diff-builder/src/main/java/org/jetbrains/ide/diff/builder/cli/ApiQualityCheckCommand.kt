@@ -102,7 +102,6 @@ class ApiQualityCheckCommand : Command {
             tc.testStarted(testName).use {
               val message = """
               ${signature.fullPresentation} is experimental since $sinceVersion, while the current branch is ${report.apiQualityOptions.currentBranch}.
-              Consider making this API public.
             """.trimIndent()
               tc.testFailed(testName, message, "")
             }
