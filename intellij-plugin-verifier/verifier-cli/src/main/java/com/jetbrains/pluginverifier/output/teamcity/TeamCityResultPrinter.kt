@@ -307,7 +307,7 @@ class TeamCityResultPrinter(
         } catch (e: Exception) {
           e.rethrowIfInterrupted()
           LOG.info("Unable to determine the last compatible updates of IDE $target", e)
-          emptyList()
+          emptyList<PluginInfo>() //Kotlin fails to determine type.
         }
       }
 
