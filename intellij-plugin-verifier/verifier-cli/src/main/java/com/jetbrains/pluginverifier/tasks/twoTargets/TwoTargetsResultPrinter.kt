@@ -21,7 +21,10 @@ import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
-import com.jetbrains.pluginverifier.usages.deprecated.DeprecationInfo
+import com.jetbrains.pluginverifier.usages.ApiUsage
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 
 class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
 
@@ -73,10 +76,12 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       }
     }
 
-    val oldDeprecatedApis: Map<SymbolicReference, DeprecationInfo> = twoTargetsVerificationResults.baseResults.asSequence()
+    val oldSpecialApiUsage: Map<SymbolicReference, ApiUsage> = twoTargetsVerificationResults.baseResults.asSequence()
         .filterIsInstance<PluginVerificationResult.Verified>()
-        .flatMap { it.deprecatedUsages.asSequence() }
-        .associate { it.apiElement.toReference() to it.deprecationInfo }
+        .flatMap {
+          it.deprecatedUsages.asSequence() + it.experimentalApiUsages.asSequence() + it.internalApiUsages.asSequence()
+        }
+        .associateBy { it.apiElement.toReference() }
 
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
@@ -92,7 +97,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
-            var apiDeprecationInfo: Pair<SymbolicReference, DeprecationInfo>? = null
+            val specialApiUsages = arrayListOf<ApiUsage>()
 
             val testDetails = buildString {
               for ((plugin, problems) in plugin2Problems.asMap()) {
@@ -125,8 +130,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                 val compatibilityProblems = buildString {
                   for ((index, problem) in problems.withIndex()) {
                     val symbolicReference = getProblemSymbolicReference(problem)
-                    if (symbolicReference != null && oldDeprecatedApis.containsKey(symbolicReference)) {
-                      apiDeprecationInfo = symbolicReference to oldDeprecatedApis.getValue(symbolicReference)
+                    if (symbolicReference != null && oldSpecialApiUsage.containsKey(symbolicReference)) {
+                      specialApiUsages += oldSpecialApiUsage.getValue(symbolicReference)
                     }
 
                     if (problems.size > 1) {
@@ -149,9 +154,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             val testMessage = buildString {
               appendln(shortDescription)
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
-              val deprecationInfo = apiDeprecationInfo
-              if (deprecationInfo != null) {
-                getDeprecatedApiRemovalNote(deprecationInfo.first, deprecationInfo.second)
+              if (specialApiUsages.isNotEmpty()) {
+                appendln(getSpecialApiUsagesNote(specialApiUsages))
               } else {
                 appendln(documentationNote)
               }
@@ -172,11 +176,34 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
   }
 
-  private fun getDeprecatedApiRemovalNote(
-      symbolicReference: SymbolicReference,
-      deprecationInfo: DeprecationInfo
-  ) = buildString {
-    append("${symbolicReference.presentableLocation} was deprecated")
+  private fun getSpecialApiUsagesNote(specialApiUsages: List<ApiUsage>): String {
+    if (specialApiUsages.isEmpty()) {
+      return ""
+    }
+    val apiElement = specialApiUsages.first().apiElement
+    val presentableLocation = apiElement.presentableLocation
+    val experimentalApiUsage = specialApiUsages.filterIsInstance<ExperimentalApiUsage>().firstOrNull()
+    val deprecatedApiUsage = specialApiUsages.filterIsInstance<DeprecatedApiUsage>().firstOrNull()
+    val internalApiUsage = specialApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
+    return buildString {
+      if (experimentalApiUsage != null) {
+        appendln(
+            "'$presentableLocation' was marked experimental so changes must be expected by external plugins. " +
+                "We would like to keep track of all experimental API changes. You can mute this test on TeamCity."
+        )
+      }
+      if (internalApiUsage != null) {
+        appendln("'$presentableLocation' was marked for internal use only. You can mute this test.")
+      }
+      if (deprecatedApiUsage != null) {
+        appendln(getDeprecatedApiRemovalNote(deprecatedApiUsage))
+      }
+    }
+  }
+
+  private fun getDeprecatedApiRemovalNote(deprecatedApiUsage: DeprecatedApiUsage) = buildString {
+    append("${deprecatedApiUsage.apiElement.presentableLocation} was deprecated")
+    val deprecationInfo = deprecatedApiUsage.deprecationInfo
     if (deprecationInfo.forRemoval) {
       append(" and scheduled for removal")
       if (deprecationInfo.untilVersion != null) {
@@ -185,8 +212,10 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
     appendln()
     appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
-    appendln("If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
-                 "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. ")
+    appendln(
+        "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
+            "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
+    )
   }
 
   private fun getProblemSymbolicReference(problem: CompatibilityProblem): SymbolicReference? =
