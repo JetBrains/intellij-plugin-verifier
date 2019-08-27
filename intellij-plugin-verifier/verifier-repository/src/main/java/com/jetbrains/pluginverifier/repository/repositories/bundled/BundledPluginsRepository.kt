@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 class BundledPluginsRepository(
     val ide: Ide
 ) : PluginRepository {
-  override fun getAllPlugins() = ide.bundledPlugins.map {
+  private fun getAllPlugins() = ide.bundledPlugins.map {
     BundledPluginInfo(ide.version, it)
   }
 

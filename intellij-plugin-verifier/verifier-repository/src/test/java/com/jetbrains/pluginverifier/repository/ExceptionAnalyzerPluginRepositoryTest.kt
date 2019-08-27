@@ -26,7 +26,7 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
 
   @Test
   fun `verify plugin info`() {
-    val allPlugins = repository.getAllPlugins()
+    val allPlugins = repository.getAllVersionsOfPlugin("com.intellij.sisyphus")
     assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins[0]
     assertEquals("com.intellij.sisyphus", pluginInfo.pluginId)
@@ -41,7 +41,7 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
 
   @Test
   fun `download some plugin`() {
-    val allPlugins = repository.getAllPlugins()
+    val allPlugins = repository.getAllVersionsOfPlugin("com.intellij.sisyphus")
     assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins.first()
     checkDownloadPlugin(pluginInfo)

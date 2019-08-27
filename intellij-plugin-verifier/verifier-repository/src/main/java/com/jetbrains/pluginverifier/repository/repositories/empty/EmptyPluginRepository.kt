@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 object EmptyPluginRepository : PluginRepository {
-  override fun getAllPlugins(): List<PluginInfo> = emptyList()
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = emptyList()
 

@@ -28,7 +28,7 @@ class TeamCityIdeaPluginRepositoryTest : BaseRepositoryTest<TeamCityIdeaPluginRe
 
   @Test
   fun `verify plugin info`() {
-    val allPlugins = repository.getAllPlugins()
+    val allPlugins = repository.getAllVersionsOfPlugin("Jetbrains TeamCity Plugin")
     assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins[0]
     assertEquals("Jetbrains TeamCity Plugin", pluginInfo.pluginId)
@@ -43,7 +43,7 @@ class TeamCityIdeaPluginRepositoryTest : BaseRepositoryTest<TeamCityIdeaPluginRe
 
   @Test
   fun `download some plugin`() {
-    val allPlugins = repository.getAllPlugins()
+    val allPlugins = repository.getAllVersionsOfPlugin("Jetbrains TeamCity Plugin")
     assertFalse(allPlugins.isEmpty())
     val pluginInfo = allPlugins.first()
     checkDownloadPlugin(pluginInfo)

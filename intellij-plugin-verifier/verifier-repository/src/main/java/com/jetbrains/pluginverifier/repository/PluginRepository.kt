@@ -8,11 +8,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 interface PluginRepository {
 
   /**
-   * Returns all plugins available in the repository.
-   */
-  fun getAllPlugins(): List<PluginInfo>
-
-  /**
    * Returns the latest plugins' versions compatible with [ideVersion].
    */
   fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo>

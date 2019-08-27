@@ -16,8 +16,6 @@ class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = 
     return localPluginInfo
   }
 
-  override fun getAllPlugins() = plugins
-
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
       plugins.filter { it.isCompatibleWith(ideVersion) }
           .groupBy { it.pluginId }

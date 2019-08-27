@@ -61,8 +61,7 @@ class PluginFilesBank(
       }
       val pluginId = name.substringBefore("-")
       val version = name.substringAfter("-")
-      return repository.getAllPlugins()
-          .find { it.pluginId == pluginId && it.version == version }
+      return repository.getAllVersionsOfPlugin(pluginId).find { it.version == version }
     }
 
   }

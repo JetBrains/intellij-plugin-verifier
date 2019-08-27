@@ -4,15 +4,13 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -300,23 +298,16 @@ class TeamCityResultPrinter(
    * and compatible with this IDE.
    */
   private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<PluginVerificationTarget>): Map<PluginVerificationTarget, List<PluginInfo>> =
-      verificationTargets.associate { target ->
+      verificationTargets.associateWith { target ->
         try {
           when (target) {
-            is PluginVerificationTarget.IDE -> target to repository.getLastCompatiblePlugins(target.ideVersion)
-                .sortedWith(LastVersionSelector.versionComparator.reversed())
-                .distinctBy { it.pluginId }
-            is PluginVerificationTarget.Plugin -> {
-              target to repository.getAllPlugins()
-                  .groupBy { it.pluginId }
-                  .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
-                  .values.toList()
-            }
+            is PluginVerificationTarget.IDE -> repository.getLastCompatiblePlugins(target.ideVersion)
+            is PluginVerificationTarget.Plugin -> emptyList()
           }
         } catch (e: Exception) {
           e.rethrowIfInterrupted()
           LOG.info("Unable to determine the last compatible updates of IDE $target", e)
-          target to emptyList<PluginInfo>()
+          emptyList()
         }
       }
 

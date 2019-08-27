@@ -16,9 +16,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.net.MalformedURLException
 import java.net.URL
 import java.net.URLEncoder
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -59,8 +56,6 @@ class MarketplaceRepository(
       .build()
       .create(MarketplaceConnector::class.java)
 
-  private val allUpdateIdsRequester = AllUpdateIdsRequester()
-
   private val updateInfosRequester = UpdateInfosRequester()
 
   private fun getBrowserUrl(pluginId: String) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/index?xmlId=" + URLEncoder.encode(pluginId, "UTF-8"))
@@ -88,10 +83,6 @@ class MarketplaceRepository(
         e.rethrowIfInterrupted()
         emptyList()
       }
-
-  override fun getAllPlugins(): List<UpdateInfo> =
-      allUpdateIdsRequester.getAllUpdateIds()
-          .mapNotNull { getPluginInfoById(it) }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
       repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
@@ -232,68 +223,6 @@ class MarketplaceRepository(
         getBrowserUrl(pluginId),
         tags.orEmpty()
     )
-
-  }
-
-  /**
-   * This class is responsible for requesting all available
-   * plugins versions information as a set of IDs in database.
-   *
-   * Current implementation uses [allUpdatesSince](https://plugins.jetbrains.com/manager/allUpdatesSince?build=IU-139&updateId=40000)
-   * endpoint to request all available plugins.
-   * In order to reduce the load on the repository,
-   * the class remembers the last requested update id.
-   *
-   * It is necessary to occasionally update the cashes
-   * of this class because the plugins data may be changed
-   * in the repository database: the "since-until" compatibility
-   * ranges may be changed, or new plugins get approved.
-   * We update the caches every hour.
-   */
-  private inner class AllUpdateIdsRequester {
-
-    private val duration = Duration.of(1, ChronoUnit.HOURS)
-
-    private var lastUpdateId = 0
-
-    private val allUpdateIds = hashSetOf<Int>()
-
-    private var fullUpdateTime: Instant? = null
-
-    private fun updateState() {
-      if (needFullUpdate()) {
-        fullUpdateTime = Instant.now()
-        val fullUpdateIds = requestUpdateIdsForAllProducts(1)
-        allUpdateIds.clear()
-        allUpdateIds.addAll(fullUpdateIds)
-      } else {
-        val newUpdateIds = requestUpdateIdsForAllProducts(lastUpdateId + 1)
-        allUpdateIds.addAll(newUpdateIds)
-      }
-      updateLastId(allUpdateIds)
-    }
-
-    private fun updateLastId(updateIds: Set<Int>) {
-      lastUpdateId = maxOf(lastUpdateId, updateIds.max() ?: 0)
-    }
-
-    private fun needFullUpdate() =
-        fullUpdateTime == null || fullUpdateTime!! <= Instant.now().minus(duration)
-
-    private fun requestUpdateIdsForAllProducts(startUpdateId: Int): Set<Int> =
-        products.flatMapTo(hashSetOf()) { requestUpdateIds(startUpdateId, it) }
-
-    private fun requestUpdateIds(startUpdateId: Int, product: IntelliJPlatformProduct) =
-        repositoryConnector
-            .getAllUpdateSinceAndUntil("${product.productCode}-1.0", startUpdateId).executeSuccessfully()
-            .body()
-            .map { it.updateId }
-
-    @Synchronized
-    fun getAllUpdateIds(): Set<Int> {
-      updateState()
-      return allUpdateIds
-    }
 
   }
 

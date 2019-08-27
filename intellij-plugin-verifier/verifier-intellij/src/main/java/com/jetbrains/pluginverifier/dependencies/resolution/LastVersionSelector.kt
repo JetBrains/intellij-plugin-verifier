@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
@@ -11,22 +11,15 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
 class LastVersionSelector : PluginVersionSelector {
   override fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
     val allVersionsOfPlugin = pluginRepository.getAllVersionsOfPlugin(pluginId)
-    val lastVersion = allVersionsOfPlugin.maxWith(versionComparator)
+    val lastVersion = if (pluginRepository is MarketplaceRepository) {
+      allVersionsOfPlugin.maxBy { (it as UpdateInfo).updateId }
+    } else {
+      allVersionsOfPlugin.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+    }
     return if (lastVersion == null) {
       PluginVersionSelector.Result.NotFound("Plugin $pluginId is not found in $pluginRepository")
     } else {
       PluginVersionSelector.Result.Selected(lastVersion)
     }
   }
-
-  companion object {
-    val versionComparator = Comparator<PluginInfo> { p1, p2 ->
-      if (p1 is UpdateInfo && p2 is UpdateInfo) {
-        Integer.compare(p1.updateId, p2.updateId)
-      } else {
-        VersionComparatorUtil.COMPARATOR.compare(p1.version, p2.version)
-      }
-    }
-  }
-
 }

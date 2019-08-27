@@ -22,13 +22,6 @@ internal interface MarketplaceConnector {
   @GET("/manager/getUpdateInfosForIdsBetween")
   fun getUpdateInfosForIdsBetween(@Query("startId") startId: Int, @Query("endId") endId: Int): Call<List<JsonUpdateInfo>>
 
-  /**
-   * Returns all plugins with "until build" >= [build].
-   * The [startUpdateId] is used to limit the response size,
-   * and reduce the load on the Plugin Repository.
-   */
-  @GET("/manager/allUpdatesSince")
-  fun getAllUpdateSinceAndUntil(@Query("build") build: String, @Query("updateId") startUpdateId: Int): Call<List<JsonUpdateIdHolder>>
 }
 
 internal data class JsonUpdateInfo(
