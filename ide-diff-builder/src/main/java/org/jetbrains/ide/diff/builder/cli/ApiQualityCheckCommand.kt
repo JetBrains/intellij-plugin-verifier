@@ -144,7 +144,7 @@ class ApiQualityCheckCommand : Command {
       tc.buildStatusSuccess("API of ${report.ideVersion} is OK")
     } else {
       val buildMessage = buildString {
-        append("Found ")
+        append("In ${report.ideVersion} found ")
         if (report.tooLongExperimental.isNotEmpty()) {
           append("${report.tooLongExperimental.size} stale experimental APIs")
         }
