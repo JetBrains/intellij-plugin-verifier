@@ -3,6 +3,7 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
@@ -136,6 +137,17 @@ class ApiQualityCheckCommand : Command {
       }
     }
 
+    if (report.stabilizedExperimentalApis.isNotEmpty()) {
+      val stabilizedMessage = buildString {
+        appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
+        appendln()
+        for ((signature, inVersion) in report.stabilizedExperimentalApis) {
+          appendln("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
+        }
+      }
+      Paths.get("").resolve("stabilized-experimental-apis.txt").writeText(stabilizedMessage)
+    }
+
     if (report.tooLongExperimental.isEmpty() && report.mustAlreadyBeRemoved.isEmpty()) {
       tc.buildStatusSuccess("API of ${report.ideVersion} is OK")
     } else {
@@ -184,11 +196,17 @@ class ApiQualityCheckCommand : Command {
       qualityReport: ApiQualityReport
   ) {
     val signature = classFileMember.toSignature()
+    val apiEvents = apiMetadata[signature]
 
     if (classFileMember.isExperimentalApi(ideResolver)) {
-      val since = apiMetadata[signature].filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
+      val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
       if (since != null && since.baselineVersion + qualityOptions.maxExperimentalBranches < qualityOptions.currentBranch) {
         qualityReport.tooLongExperimental += TooLongExperimental(signature, since)
+      }
+    } else {
+      val unmarkedExperimentalIn = apiEvents.filterIsInstance<UnmarkedExperimentalIn>().map { it.ideVersion }.max()
+      if (unmarkedExperimentalIn != null && unmarkedExperimentalIn.baselineVersion >= qualityOptions.currentBranch) {
+        qualityReport.stabilizedExperimentalApis += StabilizedExperimentalApi(signature, unmarkedExperimentalIn)
       }
     }
 
@@ -201,7 +219,6 @@ class ApiQualityCheckCommand : Command {
       if (VersionComparatorUtil.compare(untilVersion, qualityOptions.currentBranch.toString()) < 0
           || VersionComparatorUtil.compare(untilVersion, branchToReleaseVersion(qualityOptions.currentBranch)) < 0) {
 
-        val apiEvents = apiMetadata[signature]
         val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
         val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
 
@@ -249,7 +266,8 @@ private data class ApiQualityReport(
     val ideVersion: IdeVersion,
     val apiQualityOptions: ApiQualityOptions,
     val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
-    val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf()
+    val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
+    val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf()
 )
 
 private data class MustAlreadyBeRemoved(
@@ -262,4 +280,9 @@ private data class MustAlreadyBeRemoved(
 private data class TooLongExperimental(
     val apiSignature: ApiSignature,
     val sinceVersion: IdeVersion
+)
+
+private data class StabilizedExperimentalApi(
+    val apiSignature: ApiSignature,
+    val unmarkedExperimentalIn: IdeVersion
 )
