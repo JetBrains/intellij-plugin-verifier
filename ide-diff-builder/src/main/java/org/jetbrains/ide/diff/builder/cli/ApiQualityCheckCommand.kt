@@ -118,19 +118,16 @@ class ApiQualityCheckCommand : Command {
             tc.testStarted(testName).use {
               val message = buildString {
                 appendln("${signature.fullPresentation} must have been removed in $removalVersion.")
+                append("It was deprecated")
                 if (deprecatedInVersion != null) {
-                  append("It was deprecated")
-                  when {
-                    deprecatedInVersion == scheduledForRemovalInVersion -> {
-                      append(" and scheduled for removal in $deprecatedInVersion.")
-                    }
-                    scheduledForRemovalInVersion != null -> {
-                      append(" in $deprecatedInVersion and scheduled for removal in $scheduledForRemovalInVersion")
-                    }
-                    else -> append(" in $deprecatedInVersion")
-                  }
-                  appendln()
+                  append(" in $deprecatedInVersion")
+                } else {
+                  append(" before ${BuildIdeApiAnnotationsCommand.MIN_BUILD_NUMBER.baselineVersion}")
                 }
+                if (scheduledForRemovalInVersion != null) {
+                  append(" and scheduled for removal in $scheduledForRemovalInVersion.")
+                }
+                appendln()
               }
               tc.testFailed(testName, message, "")
             }
@@ -204,9 +201,21 @@ class ApiQualityCheckCommand : Command {
       if (VersionComparatorUtil.compare(untilVersion, qualityOptions.currentBranch.toString()) < 0
           || VersionComparatorUtil.compare(untilVersion, branchToReleaseVersion(qualityOptions.currentBranch)) < 0) {
 
-        val markedDeprecated = apiMetadata[signature].filterIsInstance<MarkedDeprecatedIn>()
-        val deprecatedInVersion = markedDeprecated.minBy { it.ideVersion }?.ideVersion
+        val apiEvents = apiMetadata[signature]
+        val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
+        val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
+
+        val firstDeprecated = markedDeprecated.map { it.ideVersion }.min()
+        val firstUnDeprecated = unmarkedDeprecated.map { it.ideVersion }.min()
+
         val scheduledForRemovalInVersion = markedDeprecated.filter { it.forRemoval }.minBy { it.ideVersion }?.ideVersion
+
+        val wasDeprecatedBeforeFirstKnownIde = firstDeprecated != null && firstUnDeprecated != null && firstUnDeprecated <= firstDeprecated
+        val deprecatedInVersion = if (wasDeprecatedBeforeFirstKnownIde) {
+          null
+        } else {
+          markedDeprecated.minBy { it.ideVersion }?.ideVersion
+        }
 
         qualityReport.mustAlreadyBeRemoved += MustAlreadyBeRemoved(
             signature,
