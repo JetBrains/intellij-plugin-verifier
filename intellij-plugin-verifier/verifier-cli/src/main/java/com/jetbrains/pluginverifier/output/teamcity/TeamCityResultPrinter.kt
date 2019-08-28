@@ -4,6 +4,8 @@ import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
@@ -11,6 +13,8 @@ import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
@@ -301,7 +305,9 @@ class TeamCityResultPrinter(
       verificationTargets.associateWith { target ->
         try {
           when (target) {
-            is PluginVerificationTarget.IDE -> repository.getLastCompatiblePlugins(target.ideVersion)
+            is PluginVerificationTarget.IDE -> {
+              requestLastVersionsOfEachCompatiblePlugins(target.ideVersion)
+            }
             is PluginVerificationTarget.Plugin -> emptyList()
           }
         } catch (e: Exception) {
@@ -310,6 +316,17 @@ class TeamCityResultPrinter(
           emptyList<PluginInfo>() //Kotlin fails to determine type.
         }
       }
+
+  private fun requestLastVersionsOfEachCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> {
+    val plugins = repository.getLastCompatiblePlugins(ideVersion)
+    return plugins.groupBy { it.pluginId }.mapValues { (_, sameIdPlugins) ->
+      if (repository is MarketplaceRepository) {
+        sameIdPlugins.maxBy { (it as UpdateInfo).updateId }
+      } else {
+        sameIdPlugins.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+      }
+    }.values.filterNotNull()
+  }
 
   /**
    * Generates a TC test name in which the verification report will be printed.
