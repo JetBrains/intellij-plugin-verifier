@@ -112,10 +112,16 @@ class ExternalAnnotationsApiReportWriter : ApiReportWriter {
 
     val allPackages = hashSetOf<String>()
 
+    //Ensures that .xml file does not contain two equivalent signatures associated with one annotation type.
+    // Duplicate entries in .xml files lead to exceptions in ExternalAnnotationsManager (IDEA).
+    val processedSignatures = hashSetOf<Pair<String, Class<ApiEvent>>>()
+
     for ((apiSignature, apiEvent) in apiReport.asSequence()) {
       val packageName = apiSignature.javaPackageName
       allPackages += packageName
-      getXmlWriter(packageName).appendSignature(apiSignature, apiEvent)
+      if (processedSignatures.add(apiSignature.externalPresentation to apiEvent.javaClass)) {
+        getXmlWriter(packageName).appendSignature(apiSignature, apiEvent)
+      }
     }
 
     try {
