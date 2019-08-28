@@ -140,6 +140,7 @@ class ApiQualityCheckCommand : Command {
     if (report.stabilizedExperimentalApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
         appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
+        appendln("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2019.html")
         appendln()
         for ((signature, inVersion) in report.stabilizedExperimentalApis) {
           appendln("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
