@@ -29,7 +29,7 @@ class BuildIdeApiAnnotationsCommand : Command {
   companion object {
     private val LOG = LoggerFactory.getLogger("build-api-annotations")
 
-    val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("171.1")
+    val MIN_BUILD_NUMBER = IdeVersion.createIdeVersion("161.1")
   }
 
   override val commandName: String
