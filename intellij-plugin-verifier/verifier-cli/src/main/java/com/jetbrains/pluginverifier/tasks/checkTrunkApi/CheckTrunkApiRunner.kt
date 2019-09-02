@@ -16,13 +16,14 @@ class CheckTrunkApiRunner : CommandRunner() {
   override fun getParametersBuilder(
       pluginRepository: PluginRepository,
       ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache, reportage: PluginVerificationReportage
-  ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank, reportage)
+      pluginDetailsCache: PluginDetailsCache,
+      reportage: PluginVerificationReportage
+  ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank, reportage, pluginDetailsCache)
 
   override fun createTask(
       parameters: TaskParameters,
       pluginRepository: PluginRepository
-  ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams, pluginRepository)
+  ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
       TwoTargetsResultPrinter(outputOptions)

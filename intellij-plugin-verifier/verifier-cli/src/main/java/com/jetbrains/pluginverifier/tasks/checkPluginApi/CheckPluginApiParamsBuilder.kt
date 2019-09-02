@@ -3,16 +3,20 @@ package com.jetbrains.pluginverifier.tasks.checkPluginApi
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
-import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
+import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
-import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.resolution.PluginApiClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
+import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import java.nio.file.InvalidPathException
@@ -39,23 +43,17 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
     }
 
     val basePluginFile = Paths.get(args[0])
-    if (!basePluginFile.exists()) {
-      throw IllegalArgumentException("Base plugin file $basePluginFile doesn't exist")
-    }
+    require(basePluginFile.exists()) { "Base plugin file $basePluginFile doesn't exist" }
 
     val newPluginFile = Paths.get(args[1])
-    if (!newPluginFile.exists()) {
-      throw IllegalArgumentException("New plugin file $newPluginFile doesn't exist")
-    }
+    require(newPluginFile.exists()) { "New plugin file $newPluginFile doesn't exist" }
 
     val pluginsToCheckFile = Paths.get(args[2])
-    if (!pluginsToCheckFile.exists()) {
-      throw IllegalArgumentException("File with list of plugins' IDs to check doesn't exist: $pluginsToCheckFile")
-    }
+    require(pluginsToCheckFile.exists()) { "File with list of plugins' IDs to check doesn't exist: $pluginsToCheckFile" }
 
     val pluginsSet = parsePluginsToCheck(pluginsToCheckFile)
 
-    val basePluginPackageFilter = parsePackageFilter(apiOpts.pluginPackages)
+    val pluginPackageFilter = parsePackageFilter(apiOpts.pluginPackages)
 
     val jdkPath = OptionsParser.getJdkPath(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
@@ -64,14 +62,33 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
     basePluginDetails.closeOnException {
       val newPluginDetails = providePluginDetails(newPluginFile)
       newPluginDetails.closeOnException {
-        return CheckPluginApiParams(
-            pluginsSet,
-            basePluginDetails,
-            newPluginDetails,
-            jdkPath,
-            problemsFilters,
-            basePluginPackageFilter
-        )
+
+        val jdkDescriptor = JdkDescriptorCreator.createJdkDescriptor(jdkPath)
+        jdkDescriptor.closeOnException {
+          val baseClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptor, basePluginDetails, pluginPackageFilter)
+          val baseVerificationDescriptors = pluginsSet.pluginsToCheck.map {
+            PluginVerificationDescriptor.Plugin(it, basePluginDetails.pluginInfo, baseClassResolverProvider, jdkDescriptor.jdkVersion)
+          }
+
+          val newClassResolverProvider = PluginApiClassResolverProvider(jdkDescriptor, newPluginDetails, pluginPackageFilter)
+          val newVerificationDescriptors = pluginsSet.pluginsToCheck.map {
+            PluginVerificationDescriptor.Plugin(it, newPluginDetails.pluginInfo, newClassResolverProvider, jdkDescriptor.jdkVersion)
+          }
+
+          val baseVerificationTarget = PluginVerificationTarget.Plugin(basePluginDetails.pluginInfo, jdkDescriptor.jdkVersion)
+          val newVerificationTarget = PluginVerificationTarget.Plugin(newPluginDetails.pluginInfo, jdkDescriptor.jdkVersion)
+
+          return CheckPluginApiParams(
+              basePluginDetails,
+              newPluginDetails,
+              jdkDescriptor,
+              problemsFilters,
+              baseVerificationDescriptors,
+              newVerificationDescriptors,
+              baseVerificationTarget,
+              newVerificationTarget
+          )
+        }
       }
     }
   }

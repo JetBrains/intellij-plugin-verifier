@@ -2,16 +2,16 @@ package com.jetbrains.pluginverifier.output.html
 
 import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.pluginverifier.*
-import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
+import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import java.io.PrintWriter
 import java.nio.file.Files
-import java.nio.file.Path
 
 class HtmlResultPrinter(
     private val verificationTarget: PluginVerificationTarget,

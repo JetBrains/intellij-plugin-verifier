@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
 import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
@@ -37,7 +38,7 @@ import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 
 data class PluginVerificationContext(
     val idePlugin: IdePlugin,
-    val verificationTarget: PluginVerificationTarget,
+    val verificationDescriptor: PluginVerificationDescriptor,
     override val classResolver: Resolver,
     override val externalClassesPackageFilter: PackageFilter
 ) : VerificationContext,

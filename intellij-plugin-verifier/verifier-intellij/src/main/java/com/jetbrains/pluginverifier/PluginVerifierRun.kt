@@ -21,7 +21,7 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
 
   val tasks = verifiers.map { verifier ->
     Callable {
-      reportage.createPluginReporters(verifier.plugin, verifier.verificationTarget).use { reporters ->
+      reportage.createPluginReporters(verifier.verificationDescriptor.checkedPlugin, verifier.verificationDescriptor.toTarget()).use { reporters ->
         val verificationResult = verifier.loadPluginAndVerify()
         reporters.reportResults(verificationResult)
         verificationResult

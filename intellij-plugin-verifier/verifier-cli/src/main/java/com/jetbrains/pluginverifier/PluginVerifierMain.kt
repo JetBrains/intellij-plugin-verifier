@@ -9,7 +9,6 @@ import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -108,7 +107,6 @@ object PluginVerifierMain {
     DirectoryBasePluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
-
         runner.getParametersBuilder(
             pluginRepository,
             ideFilesBank,
@@ -117,11 +115,9 @@ object PluginVerifierMain {
         ).build(opts, freeArgs).use { parameters ->
           reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-          JdkDescriptorsCache().use { jdkDescriptorCache ->
-            runner
-                .createTask(parameters, pluginRepository)
-                .execute(reportage, jdkDescriptorCache, pluginDetailsCache)
-          }
+          runner
+              .createTask(parameters, pluginRepository)
+              .execute(reportage, pluginDetailsCache)
         }
       }
 

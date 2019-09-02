@@ -2,14 +2,13 @@ package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -35,26 +34,23 @@ class VerificationRunner {
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
     val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-    return IdeDescriptor.create(ide.idePath.toPath(), null, null).use { ideDescriptor ->
+    return IdeDescriptor.create(ide.idePath.toPath(), jdkPath, null, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
-      JdkDescriptorsCache().use { jdkDescriptorCache ->
-        val pluginVerifier = PluginVerifier(
-            LocalPluginInfo(idePlugin),
-            PluginVerificationTarget.IDE(ideDescriptor.ide),
-            emptyList(),
-            pluginDetailsCache,
-            DefaultClassResolverProvider(
-                BundledPluginDependencyFinder(ide, pluginDetailsCache),
-                jdkDescriptorCache,
-                jdkPath,
-                ideDescriptor,
-                externalClassesPackageFilter
-            ),
-            listOf(DynamicallyLoadedFilter())
-        )
-        pluginVerifier.loadPluginAndVerify()
-      }
+      val classResolverProvider = DefaultClassResolverProvider(
+          BundledPluginDependencyFinder(ide, pluginDetailsCache),
+          ideDescriptor,
+          externalClassesPackageFilter
+      )
+      val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
+
+      val pluginVerifier = PluginVerifier(
+          verificationDescriptor,
+          emptyList(),
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter())
+      )
+      pluginVerifier.loadPluginAndVerify()
     }
   }
 

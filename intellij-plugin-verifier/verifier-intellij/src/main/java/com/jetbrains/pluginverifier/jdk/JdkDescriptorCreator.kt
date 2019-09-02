@@ -8,36 +8,40 @@ import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.JdkClassFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarFileResolvers
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
 
 object JdkDescriptorCreator {
 
-  fun createJdkDescriptor(jdkPath: Path): JdkDescriptor =
-      createJdkDescriptor(jdkPath, Resolver.ReadMode.FULL)
+  fun createBundledJdkDescriptor(ide: Ide, readMode: Resolver.ReadMode = Resolver.ReadMode.FULL): JdkDescriptor? {
+    val bundledJdkPath = listOf(
+        ide.idePath.resolve("jbr"),
+        ide.idePath.resolve("jre64")
+    ).find { it.isDirectory } ?: return null
+    return createJdkDescriptor(bundledJdkPath.toPath(), readMode, ide.version)
+  }
 
-  fun createJdkDescriptor(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
-    val javaVersion = readJavaVersion(jdkPath)
-    return if (javaVersion < 9) {
-      createPreJava9(jdkPath, readMode)
+  fun createJdkDescriptor(
+      jdkPath: Path,
+      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL
+  ): JdkDescriptor = createJdkDescriptor(jdkPath, readMode, null)
+
+  private fun createJdkDescriptor(
+      jdkPath: Path,
+      readMode: Resolver.ReadMode,
+      bundledTo: IdeVersion?
+  ): JdkDescriptor {
+    val fullJavaVersion = readFullVersion(jdkPath)
+    val jdkVersion = JdkVersion(fullJavaVersion, bundledTo)
+    return if (jdkVersion.majorVersion < 9) {
+      createPreJava9(jdkPath, readMode, jdkVersion)
     } else {
-      createJava9Plus(jdkPath, readMode)
+      createJava9Plus(jdkPath, readMode, jdkVersion)
     }
   }
 
-  private fun readJavaVersion(jdkPath: Path): Int {
-    val fullVersion = findFullVersion(jdkPath)
-    return parseJavaVersion(fullVersion)
-  }
-
-  private fun parseJavaVersion(fullVersion: String): Int {
-    return if (fullVersion.startsWith("1.")) {
-      fullVersion.substringAfter("1.").substringBefore(".").toIntOrNull()
-    } else {
-      fullVersion.substringBefore(".").toIntOrNull()
-    } ?: throw IllegalArgumentException("Invalid version: '$fullVersion'")
-  }
-
-  private fun findFullVersion(jdkPath: Path): String {
+  private fun readFullVersion(jdkPath: Path): String {
     val releasePath = jdkPath.resolve("release")
     if (releasePath.exists()) {
       val properties = releasePath.readLines().associate {
@@ -58,12 +62,12 @@ object JdkDescriptorCreator {
     throw IllegalArgumentException("JDK version is not known: neither $releasePath nor $versionPath are available")
   }
 
-  private fun createJava9Plus(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
+  private fun createJava9Plus(jdkPath: Path, readMode: Resolver.ReadMode, jdkVersion: JdkVersion): JdkDescriptor {
     val resolver = JdkJImageResolver(jdkPath, readMode)
-    return JdkDescriptor(jdkPath, resolver)
+    return JdkDescriptor(jdkPath, resolver, jdkVersion)
   }
 
-  private fun createPreJava9(jdkPath: Path, readMode: Resolver.ReadMode): JdkDescriptor {
+  private fun createPreJava9(jdkPath: Path, readMode: Resolver.ReadMode, jdkVersion: JdkVersion): JdkDescriptor {
     val mandatoryJars = setOf("rt.jar")
     val optionalJars = setOf("tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar")
 
@@ -78,7 +82,7 @@ object JdkDescriptorCreator {
     }
 
     val jarResolver = CompositeResolver.create(buildJarFileResolvers(jars, readMode, JdkClassFileOrigin(jdkPath)))
-    return JdkDescriptor(jdkPath, jarResolver)
+    return JdkDescriptor(jdkPath, jarResolver, jdkVersion)
   }
 
 }

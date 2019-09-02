@@ -1,26 +1,22 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.options.PluginsSet
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskParameters
-import java.nio.file.Path
 
 class CheckPluginParams(
-    val pluginsSet: PluginsSet,
-    val jdkPath: Path,
-    val ideDescriptors: List<IdeDescriptor>,
-    val externalClassesPackageFilter: PackageFilter,
-    val problemsFilters: List<ProblemsFilter>
+    private val ideDescriptors: List<IdeDescriptor>,
+    val problemsFilters: List<ProblemsFilter>,
+    val verificationDescriptors: List<PluginVerificationDescriptor>,
+    val invalidPluginFiles: List<InvalidPluginFile>
 ) : TaskParameters {
 
   override val presentableText
     get() = """
-      |JDK              : $jdkPath
-      |IDEs             : [${ideDescriptors.joinToString()}]
-      |$pluginsSet
+      |${verificationDescriptors.joinToString()}
     """.trimMargin()
 
   override fun close() {

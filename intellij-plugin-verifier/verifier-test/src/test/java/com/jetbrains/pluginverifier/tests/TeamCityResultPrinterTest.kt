@@ -3,10 +3,10 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.createMockPluginInfo
 import org.junit.Assert
@@ -73,12 +73,12 @@ class TeamCityResultPrinterTest {
           TeamCityResultPrinter.GroupBy.BY_PLUGIN,
           pluginRepository
       )
-      val mockIde = MockIde(IdeVersion.createIdeVersion("IU-145"))
+      val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("IU-145"), JdkVersion("1.8", null))
       tcPrinter.printResults(
           pluginInfos.map {
             PluginVerificationResult.NotFound(
                 it,
-                PluginVerificationTarget.IDE(mockIde),
+                verificationTarget,
                 "Repository is off"
             )
           }

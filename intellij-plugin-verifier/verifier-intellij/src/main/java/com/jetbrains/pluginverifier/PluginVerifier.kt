@@ -12,8 +12,6 @@ import com.jetbrains.pluginverifier.filtering.MainClassesSelector
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.resolution.ClassResolverProvider
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
@@ -28,35 +26,32 @@ import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingVerifier
 import com.jetbrains.pluginverifier.warnings.*
 
 /**
- * Performs verification of [plugin] against [verificationTarget] and returns [PluginVerificationResult].
+ * Performs verification specified by [verificationDescriptor] and returns [PluginVerificationResult].
  */
 class PluginVerifier(
-    val plugin: PluginInfo,
-    val verificationTarget: PluginVerificationTarget,
-
+    val verificationDescriptor: PluginVerificationDescriptor,
     private val problemFilters: List<ProblemsFilter>,
     private val pluginDetailsCache: PluginDetailsCache,
-    private val classResolverProvider: ClassResolverProvider,
     private val classFilters: List<ClassFilter>
 ) {
 
   fun loadPluginAndVerify(): PluginVerificationResult {
-    pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheEntry ->
+    pluginDetailsCache.getPluginDetailsCacheEntry(verificationDescriptor.checkedPlugin).use { cacheEntry ->
       return when (cacheEntry) {
         is PluginDetailsCache.Result.InvalidPlugin -> {
           PluginVerificationResult.InvalidPlugin(
-              plugin,
-              verificationTarget,
+              verificationDescriptor.checkedPlugin,
+              verificationDescriptor.toTarget(),
               cacheEntry.pluginErrors
                   .filter { it.level == PluginProblem.Level.ERROR }
                   .mapTo(hashSetOf()) { PluginStructureError(it) }
           )
         }
         is PluginDetailsCache.Result.FileNotFound -> {
-          PluginVerificationResult.NotFound(plugin, verificationTarget, cacheEntry.reason)
+          PluginVerificationResult.NotFound(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason)
         }
         is PluginDetailsCache.Result.Failed -> {
-          PluginVerificationResult.FailedToDownload(plugin, verificationTarget, cacheEntry.reason, cacheEntry.error)
+          PluginVerificationResult.FailedToDownload(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason, cacheEntry.error)
         }
         is PluginDetailsCache.Result.Provided -> {
           verify(cacheEntry.pluginDetails)
@@ -67,18 +62,18 @@ class PluginVerifier(
 
 
   private fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
-    classResolverProvider.provide(pluginDetails).use { (pluginResolver, classResolver, dependenciesGraph) ->
-      val externalClassesPackageFilter = classResolverProvider.provideExternalClassesPackageFilter()
+    verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, classResolver, dependenciesGraph) ->
+      val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 
       val context = PluginVerificationContext(
           pluginDetails.idePlugin,
-          verificationTarget,
+          verificationDescriptor,
           classResolver,
           externalClassesPackageFilter
       )
 
       pluginDetails.pluginWarnings.forEach { context.registerCompatibilityWarning(PluginStructureWarning(it)) }
-      context.checkIfPluginIsMarkedIncompatibleWithThisIde(verificationTarget)
+      context.checkIfPluginIsMarkedIncompatibleWithThisIde()
       context.findMistakenlyBundledIdeClasses(pluginResolver)
       context.findDependenciesCycles(dependenciesGraph)
 
@@ -105,8 +100,8 @@ class PluginVerifier(
 
       return with(context) {
         PluginVerificationResult.Verified(
-            plugin,
-            verificationTarget,
+            verificationDescriptor.checkedPlugin,
+            verificationDescriptor.toTarget(),
             dependenciesGraph,
             reportProblems,
             ignoredProblems,
@@ -146,10 +141,10 @@ class PluginVerifier(
   }
 
 
-  private fun PluginVerificationContext.checkIfPluginIsMarkedIncompatibleWithThisIde(verificationTarget: PluginVerificationTarget) {
-    if (verificationTarget is PluginVerificationTarget.IDE) {
-      if (PluginIdAndVersion(plugin.pluginId, plugin.version) in verificationTarget.incompatiblePlugins) {
-        registerProblem(PluginIsMarkedIncompatibleProblem(plugin, verificationTarget.ideVersion))
+  private fun PluginVerificationContext.checkIfPluginIsMarkedIncompatibleWithThisIde() {
+    if (verificationDescriptor is PluginVerificationDescriptor.IDE) {
+      if (PluginIdAndVersion(verificationDescriptor.checkedPlugin.pluginId, verificationDescriptor.checkedPlugin.version) in verificationDescriptor.incompatiblePlugins) {
+        registerProblem(PluginIsMarkedIncompatibleProblem(verificationDescriptor.checkedPlugin, verificationDescriptor.ideVersion))
       }
     }
   }

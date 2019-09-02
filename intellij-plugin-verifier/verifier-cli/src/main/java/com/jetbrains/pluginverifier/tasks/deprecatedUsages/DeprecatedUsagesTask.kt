@@ -1,13 +1,12 @@
 package com.jetbrains.pluginverifier.tasks.deprecatedUsages
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.pluginverifier.*
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
-import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
+import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.runSeveralVerifiers
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
@@ -16,26 +15,17 @@ class DeprecatedUsagesTask(private val parameters: DeprecatedUsagesParams, val p
 
   override fun execute(
       reportage: PluginVerificationReportage,
-      jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
   ) = with(parameters) {
-    val verifiers = pluginsSet.pluginsToCheck.map {
+    val verifiers = verificationDescriptors.map {
       PluginVerifier(
           it,
-          PluginVerificationTarget.IDE(ideDescriptor.ide),
           emptyList(),
           pluginDetailsCache,
-          DefaultClassResolverProvider(
-              dependencyFinder,
-              jdkDescriptorCache,
-              parameters.jdkPath,
-              ideDescriptor,
-              DefaultPackageFilter(emptyList())
-          ),
           listOf(DynamicallyLoadedFilter())
       )
     }
-    reportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(pluginsSet.pluginsToCheck.size) + " is about to start")
+    reportage.logVerificationStage("Search of the deprecated API of ${ideDescriptor.ideVersion} in " + "plugin".pluralizeWithNumber(verificationDescriptors.size) + " is about to start")
     val results = runSeveralVerifiers(reportage, verifiers)
     val pluginToDeprecatedUsages = results.associateBy({ it.plugin }, { it.toDeprecatedUsages() })
     reportage.logVerificationStage("Scan of all the deprecated API elements of ${ideDescriptor.ideVersion} is about to start")

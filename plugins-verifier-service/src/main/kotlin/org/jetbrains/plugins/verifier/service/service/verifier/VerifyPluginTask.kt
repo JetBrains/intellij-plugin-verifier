@@ -1,13 +1,12 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
-import com.jetbrains.pluginverifier.filtering.ProblemsFilter
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
@@ -15,17 +14,14 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import org.jetbrains.plugins.verifier.service.tasks.ProgressIndicator
 import org.jetbrains.plugins.verifier.service.tasks.Task
-import java.nio.file.Path
 
 /**
  * Task that performs [scheduledVerification].
  */
 class VerifyPluginTask(
     private val scheduledVerification: ScheduledVerification,
-    private val jdkPath: Path,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val pluginRepository: PluginRepository,
     private val problemsFilters: List<ProblemsFilter>
 ) : Task<PluginVerificationResult>("Check ${scheduledVerification.ideVersion} against ${scheduledVerification.updateInfo}", "VerifyPlugin"),
@@ -56,18 +52,16 @@ class VerifyPluginTask(
         pluginDetailsCache
     )
 
+    val classResolverProvider = DefaultClassResolverProvider(
+        dependencyFinder,
+        ideDescriptor,
+        DefaultPackageFilter(emptyList())
+    )
+    val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, scheduledVerification.updateInfo)
     return PluginVerifier(
-        scheduledVerification.updateInfo,
-        PluginVerificationTarget.IDE(ideDescriptor.ide),
+        verificationDescriptor,
         problemsFilters,
         pluginDetailsCache,
-        DefaultClassResolverProvider(
-            dependencyFinder,
-            jdkDescriptorsCache,
-            jdkPath,
-            ideDescriptor,
-            DefaultPackageFilter(emptyList())
-        ),
         listOf(DynamicallyLoadedFilter())
     ).loadPluginAndVerify()
   }

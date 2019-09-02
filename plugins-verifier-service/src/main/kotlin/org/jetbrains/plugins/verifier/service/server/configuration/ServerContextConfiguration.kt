@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -54,6 +53,7 @@ class ServerContextConfiguration(
       pluginRepository: MarketplaceRepository,
       availableIdeProtocol: AvailableIdeProtocol,
       featureServiceProtocol: FeatureServiceProtocol,
+      @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
       @Value("\${verifier.service.home.directory}") applicationHomeDir: String,
       @Value("\${verifier.service.clear.corrupted.database}") clearDatabaseOnCorruption: Boolean
   ): ServerContext {
@@ -71,13 +71,11 @@ class ServerContextConfiguration(
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
-    val jdkDescriptorsCache = JdkDescriptorsCache()
-
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serviceDAO = openServiceDAO(applicationHomeDirPath, clearDatabaseOnCorruption)
 
     val ideFilesBank = IdeFilesBank(ideFilesDir, ideRepository, ideDownloadDirDiskSpaceSetting)
-    val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank)
+    val ideDescriptorsCache = IdeDescriptorsCache(IDE_DESCRIPTORS_CACHE_SIZE, ideFilesBank, defaultJdkPath)
 
     val verificationResultsFilter = VerificationResultFilter()
 
@@ -86,7 +84,6 @@ class ServerContextConfiguration(
         ideRepository,
         ideFilesBank,
         pluginRepository,
-        jdkDescriptorsCache,
         serviceDAO,
         ideDescriptorsCache,
         pluginDetailsCache,
@@ -100,18 +97,16 @@ class ServerContextConfiguration(
       verifierServiceProtocol: VerifierServiceProtocol,
       taskManager: TaskManager,
       taskManagerProperties: TaskManagerProperties,
-      @Value("\${verifier.service.jdk.8.dir}") jdkPath: Path,
+      @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
       @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
       @Value("\${verifier.service.scheduler.period.seconds}") period: Long
   ): VerifierService {
     val verifierService = with(serverContext) {
       VerifierService(
           taskManager,
-          jdkDescriptorsCache,
           verifierServiceProtocol,
           pluginDetailsCache,
           ideDescriptorsCache,
-          jdkPath,
           verificationResultsFilter,
           pluginRepository,
           serviceDAO,

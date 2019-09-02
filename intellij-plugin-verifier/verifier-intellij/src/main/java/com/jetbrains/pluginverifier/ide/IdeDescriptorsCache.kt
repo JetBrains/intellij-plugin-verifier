@@ -10,17 +10,18 @@ import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import java.io.Closeable
+import java.nio.file.Path
 
 /**
  * Cache of [IdeDescriptor] associated by [IdeVersion].
  *
  * This must be [closed] [close] on the application shutdown to deallocate all [IdeDescriptor]s.
  */
-class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank) : Closeable {
+class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdkPath: Path) : Closeable {
 
   private val descriptorsCache = createSizeLimitedResourceCache(
       cacheSize,
-      IdeDescriptorResourceProvider(ideFilesBank),
+      IdeDescriptorResourceProvider(ideFilesBank, defaultJdkPath),
       { it.close() },
       "IdeDescriptorsCache"
   )
@@ -59,14 +60,17 @@ class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank) : Closeabl
     }
   }
 
-  private class IdeDescriptorResourceProvider(private val ideFilesBank: IdeFilesBank) : ResourceProvider<IdeVersion, IdeDescriptor> {
+  private class IdeDescriptorResourceProvider(
+      private val ideFilesBank: IdeFilesBank,
+      private val defaultJdkPath: Path
+  ) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
       val result = ideFilesBank.getIdeFile(key)
       val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
           ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
       val ideDescriptor = try {
-        IdeDescriptor.create(ideLock.file, key, ideLock)
+        IdeDescriptor.create(ideLock.file, defaultJdkPath, key, ideLock)
       } catch (e: Exception) {
         ideLock.closeLogged()
         e.rethrowIfInterrupted()

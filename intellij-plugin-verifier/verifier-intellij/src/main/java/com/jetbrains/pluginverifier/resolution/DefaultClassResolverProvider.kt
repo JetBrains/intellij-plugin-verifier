@@ -8,19 +8,14 @@ import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.caching
 import java.io.Closeable
-import java.nio.file.Path
 
 class DefaultClassResolverProvider(
     private val dependencyFinder: DependencyFinder,
-    private val jdkDescriptorsCache: JdkDescriptorsCache,
-    private val jdkPath: Path,
     private val ideDescriptor: IdeDescriptor,
     private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
@@ -35,21 +30,15 @@ class DefaultClassResolverProvider(
 
       closeableResources += dependenciesResults
 
-      val ideClassResolver = ideDescriptor.ideResolver
       val dependenciesClassResolver = createDependenciesResolver(dependenciesResults)
-      return when (val jdkCacheEntry = jdkDescriptorsCache.getJdkResolver(jdkPath)) {
-        is ResourceCacheEntryResult.Found -> {
-          closeableResources += jdkCacheEntry.resourceCacheEntry
 
-          val jdkClassResolver = jdkCacheEntry.resourceCacheEntry.resource.jdkResolver
-
-          val resolver = CompositeResolver.create(pluginResolver, jdkClassResolver, ideClassResolver, dependenciesClassResolver).caching()
-
-          ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
-        }
-        is ResourceCacheEntryResult.Failed -> throw IllegalStateException("Unable to resolve JDK descriptor", jdkCacheEntry.error)
-        is ResourceCacheEntryResult.NotFound -> throw IllegalStateException("Unable to find JDK $jdkPath: ${jdkCacheEntry.message}")
-      }
+      val resolver = CompositeResolver.create(
+          pluginResolver,
+          ideDescriptor.jdkDescriptor.jdkResolver,
+          ideDescriptor.ideResolver,
+          dependenciesClassResolver
+      ).caching()
+      return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }
   }
 

@@ -1,8 +1,7 @@
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 
 /**
  * Interface of all the verifier tasks.
@@ -13,7 +12,6 @@ interface Task {
    */
   fun execute(
       reportage: PluginVerificationReportage,
-      jdkDescriptorCache: JdkDescriptorsCache,
       pluginDetailsCache: PluginDetailsCache
   ): TaskResult
 }

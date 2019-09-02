@@ -5,14 +5,12 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
 import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
-import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -28,11 +26,9 @@ import java.util.concurrent.TimeUnit
  */
 class VerifierService(
     taskManager: TaskManager,
-    private val jdkDescriptorsCache: JdkDescriptorsCache,
     private val verifierServiceProtocol: VerifierServiceProtocol,
     private val pluginDetailsCache: PluginDetailsCache,
     private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val jdkPath: Path,
     private val verificationResultsFilter: VerificationResultFilter,
     private val pluginRepository: PluginRepository,
     private val serviceDAO: ServiceDAO,
@@ -79,10 +75,8 @@ class VerifierService(
 
     val task = VerifyPluginTask(
         scheduledVerification,
-        jdkPath,
         pluginDetailsCache,
         ideDescriptorsCache,
-        jdkDescriptorsCache,
         pluginRepository,
         ignoreProblemsFilters
     )

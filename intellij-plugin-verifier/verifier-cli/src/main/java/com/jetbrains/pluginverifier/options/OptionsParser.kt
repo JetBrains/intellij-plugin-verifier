@@ -56,7 +56,8 @@ object OptionsParser {
 
   fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
-    return IdeDescriptor.create(idePath, ideVersion, null)
+    val defaultJdkPath = getJdkPath(opts)
+    return IdeDescriptor.create(idePath, defaultJdkPath, ideVersion, null)
   }
 
   fun getJdkPath(opts: CmdOpts): Path {

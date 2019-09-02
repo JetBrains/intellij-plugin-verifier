@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
@@ -24,7 +23,6 @@ class ServerContext(
     val ideRepository: IdeRepository,
     val ideFilesBank: IdeFilesBank,
     val pluginRepository: MarketplaceRepository,
-    val jdkDescriptorsCache: JdkDescriptorsCache,
     val serviceDAO: ServiceDAO,
     val ideDescriptorsCache: IdeDescriptorsCache,
     val pluginDetailsCache: PluginDetailsCache,
@@ -42,7 +40,6 @@ class ServerContext(
     serviceDAO.closeLogged()
     ideDescriptorsCache.closeLogged()
     pluginDetailsCache.closeLogged()
-    jdkDescriptorsCache.closeLogged()
   }
 
 }
