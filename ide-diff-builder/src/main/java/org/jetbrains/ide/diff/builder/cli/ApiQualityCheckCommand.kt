@@ -12,7 +12,8 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.results.presentation.toSimpleJavaClassName
 import com.jetbrains.pluginverifier.usages.deprecated.deprecationInfo
-import com.jetbrains.pluginverifier.usages.experimental.isExperimentalApi
+import com.jetbrains.pluginverifier.usages.experimental.findEffectiveExperimentalAnnotation
+import com.jetbrains.pluginverifier.usages.util.MemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import com.sampullara.cli.Args
@@ -98,12 +99,21 @@ class ApiQualityCheckCommand : Command {
     if (report.tooLongExperimental.isNotEmpty()) {
       for ((sinceVersion, tooLongExperimentalApis) in report.tooLongExperimental.groupBy { it.sinceVersion }) {
         tc.testSuiteStarted("(API marked experimental since $sinceVersion)").use {
-          for ((signature, _) in tooLongExperimentalApis) {
+          for ((signature, _, experimentalMemberAnnotation) in tooLongExperimentalApis) {
             val testName = "(${signature.shortPresentation})"
             tc.testStarted(testName).use {
-              val message = """
-              ${signature.fullPresentation} is experimental since $sinceVersion, while the current branch is ${report.apiQualityOptions.currentBranch}.
-            """.trimIndent()
+              val message = buildString {
+                append(signature.fullPresentation)
+                append(" is marked @ApiStatus.Experimental")
+                append(
+                    when (experimentalMemberAnnotation) {
+                      is MemberAnnotation.AnnotatedDirectly -> ""
+                      is MemberAnnotation.AnnotatedViaContainingClass -> " via containing class ${experimentalMemberAnnotation.containingClass.toSignature().fullPresentation}"
+                      is MemberAnnotation.AnnotatedViaPackage -> " via containing package ${experimentalMemberAnnotation.packageName.replace('/', '.')}"
+                    }
+                )
+                append(", while the current branch is ${report.apiQualityOptions.currentBranch}")
+              }
               tc.testFailed(testName, message, "")
             }
           }
@@ -199,10 +209,11 @@ class ApiQualityCheckCommand : Command {
     val signature = classFileMember.toSignature()
     val apiEvents = apiMetadata[signature]
 
-    if (classFileMember.isExperimentalApi(ideResolver)) {
+    val experimentalMemberAnnotation = classFileMember.findEffectiveExperimentalAnnotation(ideResolver)
+    if (experimentalMemberAnnotation != null) {
       val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
       if (since != null && since.baselineVersion + qualityOptions.maxExperimentalBranches < qualityOptions.currentBranch) {
-        qualityReport.tooLongExperimental += TooLongExperimental(signature, since)
+        qualityReport.tooLongExperimental += TooLongExperimental(signature, since, experimentalMemberAnnotation)
       }
     } else {
       val unmarkedExperimentalIn = apiEvents.filterIsInstance<UnmarkedExperimentalIn>().map { it.ideVersion }.max()
@@ -280,7 +291,8 @@ private data class MustAlreadyBeRemoved(
 
 private data class TooLongExperimental(
     val apiSignature: ApiSignature,
-    val sinceVersion: IdeVersion
+    val sinceVersion: IdeVersion,
+    val experimentalMemberAnnotation: MemberAnnotation
 )
 
 private data class StabilizedExperimentalApi(
