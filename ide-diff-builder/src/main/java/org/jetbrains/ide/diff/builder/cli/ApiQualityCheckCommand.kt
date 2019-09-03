@@ -112,7 +112,7 @@ class ApiQualityCheckCommand : Command {
                       is MemberAnnotation.AnnotatedViaPackage -> " via containing package ${experimentalMemberAnnotation.packageName.replace('/', '.')}"
                     }
                 )
-                append(", while the current branch is ${report.apiQualityOptions.currentBranch}")
+                append(" since $sinceVersion, while the current branch is ${report.apiQualityOptions.currentBranch}")
               }
               tc.testFailed(testName, message, "")
             }
