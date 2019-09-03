@@ -16,15 +16,20 @@ class ExperimentalProcessor : ApiDiffProcessor {
       oldResolver: Resolver,
       newResolver: Resolver
   ) {
-    if (oldMember != null && oldMember.isAccessible && newMember != null && newMember.isAccessible) {
-      val oldExperimental = oldMember.isExperimentalApi(oldResolver)
-      val newExperimental = newMember.isExperimentalApi(newResolver)
-      if (!oldExperimental && newExperimental) {
-        markedExperimental += newMember
-      }
-      if (oldExperimental && !newExperimental) {
-        unmarkedExperimental += oldMember
-      }
+    if ((oldMember == null || !oldMember.isAccessible || !oldMember.isExperimentalApi(oldResolver))
+        && newMember != null
+        && newMember.isAccessible
+        && newMember.isExperimentalApi(newResolver)
+    ) {
+      markedExperimental += newMember
+    }
+
+    if (oldMember != null
+        && oldMember.isAccessible
+        && oldMember.isExperimentalApi(oldResolver)
+        && (newMember == null || !newMember.isAccessible || !newMember.isExperimentalApi(newResolver))
+    ) {
+      unmarkedExperimental += oldMember
     }
   }
 
