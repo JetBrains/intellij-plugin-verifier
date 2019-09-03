@@ -18,20 +18,20 @@ class DeprecatedProcessor : ApiDiffProcessor {
       oldResolver: Resolver,
       newResolver: Resolver
   ) {
-    if (oldMember != null && oldMember.isAccessible && newMember != null && newMember.isAccessible) {
-      val oldDeprecation = oldMember.deprecationInfo
-      val newDeprecation = newMember.deprecationInfo
-      when {
-        oldDeprecation != null && newDeprecation != null && oldDeprecation != newDeprecation -> {
-          unmarkedDeprecated += oldMember
-          markedDeprecated += MarkedDeprecated(newMember, newDeprecation.forRemoval, newDeprecation.untilVersion)
-        }
-        oldDeprecation == null && newDeprecation != null -> {
-          markedDeprecated  += MarkedDeprecated(newMember, newDeprecation.forRemoval, newDeprecation.untilVersion)
-        }
-        oldDeprecation != null && newDeprecation == null -> {
-          unmarkedDeprecated += oldMember
-        }
+    val oldDeprecation = oldMember?.deprecationInfo
+    val newDeprecation = newMember?.deprecationInfo
+
+    when {
+      oldDeprecation != null && newDeprecation != null && oldDeprecation != newDeprecation && oldMember.isAccessible -> {
+        //API deprecation status has been updated (either 'forRemoval' or 'version' has been updated).
+        unmarkedDeprecated += oldMember
+        markedDeprecated += MarkedDeprecated(newMember, newDeprecation.forRemoval, newDeprecation.untilVersion)
+      }
+      oldDeprecation == null && newDeprecation != null && newMember.isAccessible -> {
+        markedDeprecated += MarkedDeprecated(newMember, newDeprecation.forRemoval, newDeprecation.untilVersion)
+      }
+      oldDeprecation != null && newDeprecation == null && oldMember.isAccessible -> {
+        unmarkedDeprecated += oldMember
       }
     }
   }
