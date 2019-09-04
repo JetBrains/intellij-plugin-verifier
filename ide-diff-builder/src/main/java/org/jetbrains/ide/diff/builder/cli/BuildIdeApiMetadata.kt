@@ -176,7 +176,7 @@ class BuildIdeApiMetadata {
         ioExecutor.submit<FileLock> { downloadIde(ide) }
 
     private fun IdeFilesBank.downloadIde(ide: AvailableIde): FileLock =
-        retry("________Downloading $ide") {
+        retry("Download $ide") {
           when (val ideFile = getIdeFile(ide.version)) {
             is IdeFilesBank.Result.Found -> ideFile.ideFileLock
             is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ide is not found: ${ideFile.reason}")
