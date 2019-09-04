@@ -27,7 +27,7 @@ fun createOkHttpClient(
         Dispatcher(
             Executors.newCachedThreadPool(
                 ThreadFactoryBuilder()
-                    .setNameFormat("Dispatcher")
+                    .setNameFormat("ok-http-thread-%d")
                     .setDaemon(true)
                     .build()
             )
