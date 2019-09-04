@@ -102,8 +102,17 @@ class BuildIdeApiMetadata {
       val currentIde = idesToProcess[index]
       BuildIdeDiffTask(diffsPath, ideFilesBank, previousIde, currentIde, ideDiffBuilder)
     }
-    val executor = ExecutorWithProgress<IdeDiff>("ide-diff-builder", 8) { progressData ->
-      LOG.info("Finished ${progressData.finishedNumber} of ${progressData.totalNumber} tasks")
+    val executor = ExecutorWithProgress<IdeDiff>("ide-diff-builder", 8, false) { progressData ->
+      val message = buildString {
+        append("Finished ${progressData.finishedNumber} of ${progressData.totalNumber} tasks: ")
+        val result = progressData.result
+        if (result != null) {
+          append("${result.oldIde} against ${result.newIde}")
+        } else {
+          append("${progressData.exception!!.message}")
+        }
+      }
+      LOG.info(message)
     }
     return executor.executeTasks(tasks).sortedBy { it.oldIde.version }
   }

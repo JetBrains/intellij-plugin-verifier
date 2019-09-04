@@ -5,12 +5,18 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class ExecutorWithProgress<T>(
-    executorName: String,
-    concurrentWorkers: Int,
-    private val progress: (ProgressData<T>) -> Unit
+  executorName: String,
+  concurrentWorkers: Int,
+  private val failFastOnException: Boolean,
+  private val progress: (ProgressData<T>) -> Unit
 ) : Closeable {
 
-  data class ProgressData<T>(val finishedNumber: Int, val totalNumber: Int, val result: T)
+  data class ProgressData<T>(
+    val finishedNumber: Int,
+    val totalNumber: Int,
+    val result: T?,
+    val exception: Throwable?
+  )
 
   private val nameCounter = AtomicInteger()
 
@@ -51,31 +57,47 @@ class ExecutorWithProgress<T>(
   }
 
   private fun waitAllWorkersWithInterruptionChecks(
-      completionService: ExecutorCompletionService<T>,
-      workers: List<Future<T>>
+    completionService: ExecutorCompletionService<T>,
+    workers: List<Future<T>>
   ): List<T> {
     val results = arrayListOf<T>()
+    val exceptions = arrayListOf<Throwable>()
     for (finished in 1..workers.size) {
       while (true) {
         checkIfInterrupted()
-        val future = completionService.poll(500, TimeUnit.MILLISECONDS) //throws InterruptedException
+        val future = completionService.poll(100, TimeUnit.MILLISECONDS)
         if (future != null) {
           val result = try {
-            future.get() //propagate InterruptedException
+            future.get()
+          } catch (e: InterruptedException) {
+            throw e
           } catch (e: CancellationException) {
             throw InterruptedException("Worker has been cancelled")
           } catch (e: ExecutionException) {
-            if (e.cause is InterruptedException) {
+            val workerException = e.cause!!
+            if (workerException is InterruptedException) {
               throw InterruptedException("Worker has been interrupted")
             }
-            //Fatal error because no worker can throw exceptions other than InterruptedException
-            throw RuntimeException("Fatal: worker finished abruptly", e.cause)
+
+            if (failFastOnException) {
+              throw RuntimeException("Worker finished with error", workerException)
+            } else {
+              exceptions += workerException
+              progress(ProgressData(finished, workers.size, null, workerException))
+              continue
+            }
           }
-          progress(ProgressData(finished, workers.size, result))
+          progress(ProgressData(finished, workers.size, result, null))
           results.add(result)
           break
         }
       }
+    }
+    check(exceptions.isEmpty() || !failFastOnException)
+    if (exceptions.isNotEmpty()) {
+      val error = RuntimeException("Some workers finished with error")
+      exceptions.forEach { error.addSuppressed(it) }
+      throw error
     }
     return results
   }
