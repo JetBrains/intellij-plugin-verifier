@@ -19,6 +19,7 @@ import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
 fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVerification): FullVerificationResultDto {
   val updateId = scheduledVerification.updateInfo.updateId
@@ -57,15 +58,16 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         null,
         nonDownloadableReason = notFoundReason
       )
-    is PluginVerificationResult.Verified -> {
-      return FullVerificationResultDto(
+    is PluginVerificationResult.Verified ->
+      FullVerificationResultDto(
         updateId,
         ideVersion,
         javaVersion,
         convertResultType(),
         verificationVerdict,
         dependenciesGraph.convert(),
-        compatibilityWarnings.map { it.convert() },
+        pluginStructureWarnings = pluginStructureWarnings.map { it.convert() },
+        compatibilityWarnings = compatibilityWarnings.map { it.convert() },
         compatibilityProblems = compatibilityProblems.map { it.convert() },
         deprecatedApiUsages = deprecatedUsages.map { it.convert() },
         experimentalApiUsages = experimentalApiUsages.map { it.convert() },
@@ -73,7 +75,6 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         overrideOnlyApiUsages = overrideOnlyMethodUsages.map { it.convert() },
         nonExtendableApiUsages = nonExtendableApiUsages.map { it.convert() }
       )
-    }
   }
 }
 
@@ -128,6 +129,9 @@ private fun CompatibilityProblem.convert() =
     fullDescription,
     problemType
   )
+
+private fun CompatibilityWarning.convert() =
+  CompatibilityWarningDto(message)
 
 private fun DeprecatedApiUsage.convert() =
   DeprecatedApiUsageDto(
@@ -222,7 +226,7 @@ private fun Location.presentableUsageLocation() = when (this) {
   )
 }
 
-private fun CompatibilityWarning.convert() =
+private fun PluginStructureWarning.convert() =
   PluginStructureWarningDto(message)
 
 private fun PluginStructureError.convert() =

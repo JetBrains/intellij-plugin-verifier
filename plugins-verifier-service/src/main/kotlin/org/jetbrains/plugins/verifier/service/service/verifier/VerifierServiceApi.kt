@@ -2,14 +2,6 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 // This file must be synced with VerificationDto in the Marketplace repository.
 
-data class ShortVerificationResultDto(
-  val resultId: Int,
-  val ideVersion: AvailableIdeDto,
-  val verificationDate: Long,
-  val verdict: String,
-  val resultType: VerificationResultTypeDto
-)
-
 enum class VerificationResultTypeDto {
   OK,
   STRUCTURE_WARNINGS,
@@ -28,6 +20,7 @@ data class FullVerificationResultDto(
   val dependenciesGraph: DependenciesGraphDto?,
   val pluginStructureWarnings: List<PluginStructureWarningDto> = emptyList(),
   val pluginStructureErrors: List<PluginStructureErrorDto> = emptyList(),
+  val compatibilityWarnings: List<CompatibilityWarningDto> = emptyList(),
   val compatibilityProblems: List<CompatibilityProblemDto> = emptyList(),
   val deprecatedApiUsages: List<DeprecatedApiUsageDto> = emptyList(),
   val experimentalApiUsages: List<ExperimentalApiUsageDto> = emptyList(),
@@ -59,6 +52,10 @@ enum class ApiElementTypeDto {
 }
 
 data class PluginStructureWarningDto(
+  val message: String
+)
+
+data class CompatibilityWarningDto(
   val message: String
 )
 
