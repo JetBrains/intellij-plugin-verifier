@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
-import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.results.location.ClassLocation
@@ -35,6 +34,7 @@ import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
 data class PluginVerificationContext(
     val idePlugin: IdePlugin,
@@ -71,6 +71,7 @@ data class PluginVerificationContext(
   val internalApiUsages = hashSetOf<InternalApiUsage>()
   val nonExtendableApiUsages = hashSetOf<NonExtendableApiUsage>()
   val overrideOnlyMethodUsages = hashSetOf<OverrideOnlyMethodUsage>()
+  val pluginStructureWarnings = hashSetOf<PluginStructureWarning>()
 
   override val problemRegistrar
     get() = this
@@ -109,12 +110,18 @@ data class PluginVerificationContext(
 
   override fun registerJavaPluginClassUsage(javaPluginClassUsage: JavaPluginClassUsage) {
     if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
-      registerCompatibilityWarning(NoExplicitDependencyOnJavaPluginWarning(javaPluginClassUsage))
+      val noJavaDependencyWarning = compatibilityWarnings.filterIsInstance<NoExplicitDependencyOnJavaPluginWarning>().firstOrNull()
+        ?: NoExplicitDependencyOnJavaPluginWarning().also { compatibilityWarnings += it }
+      noJavaDependencyWarning.javaPluginClassUsages += javaPluginClassUsage
     }
   }
 
   fun registerCompatibilityWarning(warning: CompatibilityWarning) {
     compatibilityWarnings += warning
+  }
+
+  fun registerPluginStructureWarning(warning: PluginStructureWarning) {
+    pluginStructureWarnings += warning
   }
 
   private fun shouldIndexDeprecatedClass(usageHostClass: ClassLocation, apiHostClass: ClassLocation): Boolean {

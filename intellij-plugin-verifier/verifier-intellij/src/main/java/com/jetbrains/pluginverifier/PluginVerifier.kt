@@ -72,7 +72,7 @@ class PluginVerifier(
           externalClassesPackageFilter
       )
 
-      pluginDetails.pluginWarnings.forEach { context.registerCompatibilityWarning(PluginStructureWarning(it)) }
+      pluginDetails.pluginWarnings.forEach { context.registerPluginStructureWarning(PluginStructureWarning(it)) }
       context.checkIfPluginIsMarkedIncompatibleWithThisIde()
       context.findMistakenlyBundledIdeClasses(pluginResolver)
       context.findDependenciesCycles(dependenciesGraph)
@@ -110,7 +110,8 @@ class PluginVerifier(
             experimentalApiUsages,
             internalApiUsages,
             nonExtendableApiUsages,
-            overrideOnlyMethodUsages
+            overrideOnlyMethodUsages,
+            pluginStructureWarnings
         )
       }
     }

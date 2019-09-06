@@ -140,10 +140,14 @@ class NoExplicitDependencyOnJavaPluginTest {
     // Verify expected warning is emitted
 
     assertEquals(setOf(
-        "Plugin uses class 'javaPlugin.JavaPluginException' at 'usage.Usage.method() : void' but does not declare explicit " +
-            "dependency on Java plugin using <depends>com.intellij.modules.java</depends>. " +
-            "Java functionality was extracted from IntelliJ Platform to a separate plugin in IDEA 2019.2. " +
-            "For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin"
+      """
+        Plugin uses classes of Java plugin, for example
+        'javaPlugin.JavaPluginException' is used at 'usage.Usage.method() : void'
+        but the plugin does not declare explicit dependency on the Java plugin, via <depends>com.intellij.modules.java</depends>. 
+        Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. 
+        For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
+        
+      """.trimIndent()
     ), verificationResult.compatibilityWarnings.map { it.message }.toSet())
   }
 }

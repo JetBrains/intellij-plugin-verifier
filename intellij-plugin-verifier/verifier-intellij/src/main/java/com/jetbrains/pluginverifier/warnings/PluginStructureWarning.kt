@@ -2,11 +2,11 @@ package com.jetbrains.pluginverifier.warnings
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 
-data class PluginStructureWarning(val pluginProblem: PluginProblem) : CompatibilityWarning() {
+data class PluginStructureWarning(private val pluginProblem: PluginProblem) {
 
   init {
     check(pluginProblem.level == PluginProblem.Level.WARNING)
   }
 
-  override val message = pluginProblem.message
+  val message: String get() = pluginProblem.message
 }

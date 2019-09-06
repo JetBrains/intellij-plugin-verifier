@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -12,6 +13,7 @@ import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
 sealed class PluginVerificationResult(
   val plugin: PluginInfo,
@@ -33,7 +35,8 @@ sealed class PluginVerificationResult(
     val experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet(),
     val internalApiUsages: Set<InternalApiUsage> = emptySet(),
     val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
-    val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet()
+    val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet(),
+    val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet()
   ) : PluginVerificationResult(plugin, verificationTarget) {
 
     val hasDirectMissingMandatoryDependencies: Boolean
@@ -67,7 +70,11 @@ sealed class PluginVerificationResult(
           append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
         }
         if (directMissingMandatoryDependencies.isEmpty() && compatibilityProblems.isEmpty()) {
-          append("Compatible")
+          if (compatibilityWarnings.isEmpty()) {
+            append("Compatible")
+          } else {
+            append("Compatible with " + "warning".pluralizeWithNumber(compatibilityWarnings.size))
+          }
         }
         if (deprecatedUsages.isNotEmpty()) {
           if (isNotEmpty()) append(". ")
@@ -89,9 +96,9 @@ sealed class PluginVerificationResult(
           if (isNotEmpty()) append(". ")
           append("${overrideOnlyMethodUsages.size} override-only API usage ").append("violation".pluralize(overrideOnlyMethodUsages.size))
         }
-        if (compatibilityWarnings.isNotEmpty()) {
+        if (pluginStructureWarnings.isNotEmpty()) {
           if (this.isNotEmpty()) append(". ")
-          append("${compatibilityWarnings.size} configuration ").append("defect".pluralize(compatibilityWarnings.size))
+          append("${pluginStructureWarnings.size} plugin configuration ").append("defect".pluralize(pluginStructureWarnings.size))
         }
       }
   }

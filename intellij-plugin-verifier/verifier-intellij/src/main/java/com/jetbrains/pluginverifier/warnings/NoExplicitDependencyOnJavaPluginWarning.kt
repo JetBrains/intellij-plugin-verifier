@@ -6,15 +6,21 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
 
-data class NoExplicitDependencyOnJavaPluginWarning(val javaPluginClassUsage: JavaPluginClassUsage) : CompatibilityWarning() {
-  override val message: String
+data class NoExplicitDependencyOnJavaPluginWarning(
+  val javaPluginClassUsages: MutableSet<JavaPluginClassUsage> = hashSetOf()
+) : CompatibilityWarning() {
+  override val message
     get() = buildString {
-      append("Plugin uses class ")
-      append("'" + javaPluginClassUsage.usedClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS) + "'")
-      append(" at ")
-      append("'" + javaPluginClassUsage.usageLocation.formatUsageLocation() + "'")
-      append(" but does not declare explicit dependency on Java plugin using <depends>com.intellij.modules.java</depends>. ")
-      append("Java functionality was extracted from IntelliJ Platform to a separate plugin in IDEA 2019.2. ")
-      append("For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin")
+      appendln("Plugin uses classes of Java plugin, for example")
+      val deterministicUsages = javaPluginClassUsages.sortedWith(compareBy<JavaPluginClassUsage> { it.usedClass.className }.thenBy { it.usageLocation.presentableLocation })
+      deterministicUsages.take(3).forEach { usage ->
+        append("'${usage.usedClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS)}'")
+        append(" is used at ")
+        append("'${usage.usageLocation.formatUsageLocation()}'")
+        appendln()
+      }
+      appendln("but the plugin does not declare explicit dependency on the Java plugin, via <depends>com.intellij.modules.java</depends>. ")
+      appendln("Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. ")
+      appendln("For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin")
     }
 }
