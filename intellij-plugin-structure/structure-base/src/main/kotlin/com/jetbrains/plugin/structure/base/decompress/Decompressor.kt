@@ -3,6 +3,9 @@ package com.jetbrains.plugin.structure.base.decompress
 
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
+import org.apache.commons.compress.compressors.CompressorException
+import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.input.BoundedInputStream
 import org.apache.commons.io.input.CountingInputStream
 import java.io.File
@@ -31,9 +34,9 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
             outputFile.createDir()
           }
           Type.FILE -> {
-            val inputStream = nextEntryStream() ?: continue@loop
-            inputStream.use {
-              val boundedStream = BoundedInputStream(inputStream, remainingSize + 1)
+            val entryStream = nextEntryStream() ?: continue@loop
+            try {
+              val boundedStream = BoundedInputStream(entryStream, remainingSize + 1)
               val countingStream = CountingInputStream(boundedStream)
 
               outputFile.createParentDirs()
@@ -43,6 +46,8 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
               if (remainingSize < 0) {
                 throw DecompressorSizeLimitExceededException(actualSizeLimit)
               }
+            } finally {
+              closeNextEntryStream(entryStream)
             }
           }
           Type.SYMLINK -> throw IOException("Symlinks are not allowed")
@@ -63,6 +68,8 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
   abstract fun nextEntryStream(): InputStream?
 
+  abstract fun closeNextEntryStream(entryStream: InputStream)
+
   abstract fun closeStream()
 
 }
@@ -80,7 +87,6 @@ private fun getEntryFile(outputDir: File, entry: Decompressor.Entry): File {
 }
 
 internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Decompressor(sizeLimit) {
-
   private lateinit var zipFile: ZipFile
 
   private lateinit var entries: Enumeration<out ZipEntry>
@@ -106,10 +112,54 @@ internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Dec
     return Entry(nextEntry.name, type)
   }
 
+  override fun closeNextEntryStream(entryStream: InputStream) {
+    entryStream.close()
+  }
+
   override fun nextEntryStream(): InputStream? =
       zipFile.getInputStream(this.entry)
 
   override fun closeStream() {
     zipFile.close()
+  }
+}
+
+internal class TarDecompressor(private val source: File, sizeLimit: Long?) : Decompressor(sizeLimit) {
+  private var stream: TarArchiveInputStream? = null
+
+  override fun openStream() {
+    stream = try {
+      val inputStream = source.inputStream().buffered()
+      val compressorStream = CompressorStreamFactory().createCompressorInputStream(inputStream)
+      TarArchiveInputStream(compressorStream)
+    } catch (e: CompressorException) {
+      val cause = e.cause
+      if (cause is IOException) {
+        throw cause
+      }
+      throw e
+    }
+  }
+
+  override fun nextEntry(): Entry? {
+    while (true) {
+      val nextTarEntry = stream!!.nextTarEntry ?: return null
+      val type = when {
+        nextTarEntry.isFile -> Type.FILE
+        nextTarEntry.isDirectory -> Type.DIR
+        nextTarEntry.isSymbolicLink -> Type.SYMLINK
+        else -> null
+      } ?: continue
+      return Entry(nextTarEntry.name, type)
+    }
+  }
+
+  override fun nextEntryStream(): InputStream? = stream
+
+  override fun closeNextEntryStream(entryStream: InputStream) = Unit //Do not close Tar entry stream.
+
+  override fun closeStream() {
+    stream?.close()
+    stream = null
   }
 }

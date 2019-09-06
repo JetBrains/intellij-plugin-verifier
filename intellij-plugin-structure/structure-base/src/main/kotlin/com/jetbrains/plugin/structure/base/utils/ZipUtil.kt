@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.decompress.TarDecompressor
 import com.jetbrains.plugin.structure.base.decompress.ZipDecompressor
 import org.apache.commons.io.FileUtils
 import org.codehaus.plexus.archiver.jar.JarArchiver
@@ -59,9 +60,10 @@ fun archiveDirectory(
 fun InputStream.xzInputStream(): InputStream = XZUnArchiver.getXZInputStream(this)
 
 fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
-  val decompressor = when (extension) {
-    "zip" -> ZipDecompressor(this, outputSizeLimit)
-    else -> throw IllegalArgumentException("Unsupported archive type: $name")
+  val decompressor = when {
+    name.endsWith(".zip") -> ZipDecompressor(this, outputSizeLimit)
+    name.endsWith(".tar.gz") -> TarDecompressor(this, outputSizeLimit)
+    else -> throw IllegalArgumentException("Unknown type archive type: ${destination.name}")
   }
 
   destination.createDir()
