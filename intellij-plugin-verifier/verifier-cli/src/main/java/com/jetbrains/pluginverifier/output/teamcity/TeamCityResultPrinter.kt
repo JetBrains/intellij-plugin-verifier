@@ -145,7 +145,7 @@ class TeamCityResultPrinter(
   private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Multimap<MissingDependency, PluginInfo> {
     val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
     results.filterIsInstance<PluginVerificationResult.Verified>().forEach {
-      it.directMissingDependencies.forEach { missingDependency ->
+      it.directMissingMandatoryDependencies.forEach { missingDependency ->
         missingToRequiring.put(missingDependency, it.plugin)
       }
     }
@@ -216,7 +216,7 @@ class TeamCityResultPrinter(
       return@use when (verificationResult) {
         is PluginVerificationResult.Verified -> when {
           verificationResult.hasCompatibilityProblems -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, emptyList())
-          verificationResult.hasDirectMissingDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingDependencies)
+          verificationResult.hasDirectMissingMandatoryDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingMandatoryDependencies)
           else -> Unit
         }
         is PluginVerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)

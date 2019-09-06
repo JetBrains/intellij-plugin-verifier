@@ -3,13 +3,13 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
-import com.jetbrains.pluginverifier.network.octetStreamMediaType
+import com.jetbrains.pluginverifier.network.jsonMediaType
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
-import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import okhttp3.HttpUrl
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -19,10 +19,10 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
-
 class DefaultVerifierServiceProtocol(
     token: String,
-    private val pluginRepository: MarketplaceRepository
+    private val pluginRepository: MarketplaceRepository,
+    private val ideRepository: IdeRepository
 ) : VerifierServiceProtocol {
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
@@ -36,36 +36,36 @@ class DefaultVerifierServiceProtocol(
 
   private val authorizationToken = "Bearer $token"
 
-  override fun requestScheduledVerifications(): List<ScheduledVerification> =
-      retrofitConnector
-          .getScheduledVerifications(authorizationToken)
-          .executeSuccessfully().body()
-          .mapNotNull {
-            val updateInfo = pluginRepository.getPluginInfoById(it.updateId)
-            val ideVersion = IdeVersion.createIdeVersionIfValid(it.ideVersion)
-            val manually = it.manually
-            if (updateInfo != null && ideVersion != null) {
-              ScheduledVerification(updateInfo, ideVersion, manually)
-            } else {
-              null
-            }
-          }
+  private val json = Gson()
 
-  override fun sendVerificationResult(verificationResult: PluginVerificationResult, updateInfo: UpdateInfo) {
-    val verificationResponse = verificationResult.prepareVerificationResponse(updateInfo)
+  override fun requestScheduledVerifications(): List<ScheduledVerification> =
+    retrofitConnector
+      .getScheduledVerifications(authorizationToken)
+      .executeSuccessfully().body()
+      .mapNotNull { buildScheduledVerification(it) }
+
+  private fun buildScheduledVerification(json: ScheduledVerificationJson): ScheduledVerification? {
+    val ideVersion = IdeVersion.createIdeVersionIfValid(json.availableIde.buildNumber) ?: return null
+    val availableIde = ideRepository.fetchAvailableIde(ideVersion) ?: return null
+    val updateInfo = pluginRepository.getPluginInfoById(json.updateId) ?: return null
+    return ScheduledVerification(updateInfo, availableIde, json.manually)
+  }
+
+  override fun sendVerificationResult(scheduledVerification: ScheduledVerification, verificationResult: PluginVerificationResult) {
+    val verificationResultData = verificationResult.prepareResponse(scheduledVerification)
     retrofitConnector.uploadVerificationResultContent(
-        authorizationToken,
-        updateInfo.updateId,
-        verificationResponse.ideVersion,
-        RequestBody.create(octetStreamMediaType, verificationResponse.toByteArray())
+      authorizationToken,
+      scheduledVerification.updateInfo.updateId,
+      verificationResultData.ideVersion.ideVersion,
+      RequestBody.create(jsonMediaType, json.toJson(verificationResultData))
     ).executeSuccessfully()
 
     retrofitConnector.sendVerificationResult(
-        authorizationToken,
-        updateInfo.updateId,
-        RequestBody.create(stringMediaType, verificationResponse.ideVersion),
-        RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
-        RequestBody.create(stringMediaType, verificationResponse.resultType.name)
+      authorizationToken,
+      scheduledVerification.updateInfo.updateId,
+      RequestBody.create(stringMediaType, scheduledVerification.availableIde.version.asString()),
+      RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
+      RequestBody.create(stringMediaType, verificationResultData.resultType.name)
     ).executeSuccessfully()
   }
 
@@ -87,17 +87,22 @@ private interface VerifierRetrofitConnector {
   @POST("/verification/receiveVerificationResult")
   @Multipart
   fun sendVerificationResult(
-      @Header("Authorization") authorization: String,
-      @Part("updateId") updateId: Int,
-      @Part("ideVersion") ideVersion: RequestBody,
-      @Part("verdict") verdict: RequestBody,
-      @Part("resultType") resultType: RequestBody
+    @Header("Authorization") authorization: String,
+    @Part("updateId") updateId: Int,
+    @Part("ideVersion") ideVersion: RequestBody,
+    @Part("verificationVerdict") verificationVerdict: RequestBody,
+    @Part("resultType") resultType: RequestBody
   ): Call<ResponseBody>
 
 }
 
 private data class ScheduledVerificationJson(
-    @SerializedName("updateId") val updateId: Int,
-    @SerializedName("ideVersion") val ideVersion: String,
-    @SerializedName("manually") val manually: Boolean
+  @SerializedName("updateId") val updateId: Int,
+  @SerializedName("availableIde") val availableIde: AvailableIdeJson,
+  @SerializedName("manually") val manually: Boolean
+)
+
+private data class AvailableIdeJson(
+  @SerializedName("buildNumber") val buildNumber: String,
+  @SerializedName("releaseVersion") val releaseVersion: String?
 )

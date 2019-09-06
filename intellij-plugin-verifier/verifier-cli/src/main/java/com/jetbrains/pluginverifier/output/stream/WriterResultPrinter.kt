@@ -18,7 +18,7 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
           is PluginVerificationResult.Verified -> when {
             hasCompatibilityWarnings -> out.println("Against $verificationTarget the plugin $plugin has ${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " : ${compatibilityWarnings.sortedBy { it.message }.joinToString(separator = "\n")}")
             hasCompatibilityProblems -> printProblemsResult(verificationTarget, plugin, this)
-            hasDirectMissingDependencies -> printMissingDependencies(this, verificationTarget, plugin)
+            hasDirectMissingMandatoryDependencies -> printMissingDependencies(this, verificationTarget, plugin)
             else -> out.println("Against $verificationTarget the plugin $plugin is OK")
           }
           is PluginVerificationResult.InvalidPlugin -> out.println("The plugin $plugin is broken: ${pluginStructureErrors.joinToString()}")
@@ -46,9 +46,9 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
       verificationTarget: PluginVerificationTarget,
       plugin: PluginInfo
   ) {
-    if (verificationResult.directMissingDependencies.isNotEmpty()) {
+    if (verificationResult.directMissingMandatoryDependencies.isNotEmpty()) {
       out.println("    Some problems might have been caused by missing dependencies:")
-      for (missingDependency in verificationResult.directMissingDependencies) {
+      for (missingDependency in verificationResult.directMissingMandatoryDependencies) {
         out.println("        ${missingDependency.dependency}: ${missingDependency.missingReason}")
       }
     }

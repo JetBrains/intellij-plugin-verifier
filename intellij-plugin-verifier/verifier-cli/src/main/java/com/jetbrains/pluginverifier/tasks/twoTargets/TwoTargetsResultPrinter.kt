@@ -133,7 +133,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                 val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
                 appendln(compatibilityNote)
 
-                if (newResult.hasDirectMissingDependencies) {
+                if (newResult.hasDirectMissingMandatoryDependencies) {
                   val missingDependenciesNote = getMissingDependenciesNote(oldResult, newResult)
                   appendln()
                   appendln(missingDependenciesNote)
@@ -319,14 +319,14 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       newResult: PluginVerificationResult.Verified
   ): String = buildString {
     appendln("Note: some problems might have been caused by missing dependencies: [")
-    for ((dependency, missingReason) in newResult.directMissingDependencies) {
+    for ((dependency, missingReason) in newResult.directMissingMandatoryDependencies) {
       append("    $dependency: $missingReason")
 
       val baseResolvedDependency = baseResult.getResolvedDependency(dependency)
       if (baseResolvedDependency != null) {
         append(" (when ${baseResult.verificationTarget} was checked, $baseResolvedDependency was used)")
       } else {
-        val baseMissingDep = baseResult.directMissingDependencies.find { it.dependency == dependency }
+        val baseMissingDep = baseResult.directMissingMandatoryDependencies.find { it.dependency == dependency }
         if (baseMissingDep != null) {
           append(" (it was also missing when we checked ${baseResult.verificationTarget} ")
           if (missingReason == baseMissingDep.missingReason) {

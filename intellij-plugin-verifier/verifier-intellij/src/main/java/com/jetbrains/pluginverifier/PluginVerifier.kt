@@ -51,7 +51,7 @@ class PluginVerifier(
           PluginVerificationResult.NotFound(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason)
         }
         is PluginDetailsCache.Result.Failed -> {
-          PluginVerificationResult.FailedToDownload(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason, cacheEntry.error)
+          PluginVerificationResult.FailedToDownload(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason)
         }
         is PluginDetailsCache.Result.Provided -> {
           verify(cacheEntry.pluginDetails)

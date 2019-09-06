@@ -52,7 +52,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       val problems = hashSetOf<CompatibilityProblem>()
       val brokenPlugins = hashSetOf<PluginInfo>()
       for (result in results) {
-        if (result is PluginVerificationResult.Verified && (result.hasCompatibilityProblems || result.hasDirectMissingDependencies)) {
+        if (result is PluginVerificationResult.Verified && (result.hasCompatibilityProblems || result.hasDirectMissingMandatoryDependencies)) {
           problems += result.compatibilityProblems
           brokenPlugins += result.plugin
         }

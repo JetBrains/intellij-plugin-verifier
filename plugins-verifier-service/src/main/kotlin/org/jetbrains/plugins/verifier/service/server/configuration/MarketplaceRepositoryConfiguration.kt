@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.server.configuration
 
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.server.configuration.properties.PluginRepositoryProperties
 import org.jetbrains.plugins.verifier.service.service.features.DefaultFeatureServiceProtocol
@@ -28,6 +29,6 @@ class MarketplaceRepositoryConfiguration(private val pluginRepositoryProperties:
       DefaultFeatureServiceProtocol(pluginRepositoryProperties.token, pluginRepository)
 
   @Bean
-  fun verifierServiceProtocol(pluginRepository: MarketplaceRepository): VerifierServiceProtocol =
-      DefaultVerifierServiceProtocol(pluginRepositoryProperties.token, pluginRepository)
+  fun verifierServiceProtocol(pluginRepository: MarketplaceRepository, ideRepository: IdeRepository): VerifierServiceProtocol =
+      DefaultVerifierServiceProtocol(pluginRepositoryProperties.token, pluginRepository, ideRepository)
 }

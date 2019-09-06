@@ -1,22 +1,21 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
-import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.PluginStructureError
 
 sealed class PluginVerificationResult(
-    val plugin: PluginInfo,
-    val verificationTarget: PluginVerificationTarget
+  val plugin: PluginInfo,
+  val verificationTarget: PluginVerificationTarget
 ) {
 
   abstract val verificationVerdict: String
@@ -24,110 +23,101 @@ sealed class PluginVerificationResult(
   final override fun toString() = verificationVerdict
 
   class Verified(
-      plugin: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      val dependenciesGraph: DependenciesGraph,
-      val compatibilityProblems: Set<CompatibilityProblem> = emptySet(),
-      val ignoredProblems: Map<CompatibilityProblem, String>,
-      val compatibilityWarnings: Set<CompatibilityWarning> = emptySet(),
-      val deprecatedUsages: Set<DeprecatedApiUsage> = emptySet(),
-      val experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet(),
-      val internalApiUsages: Set<InternalApiUsage> = emptySet(),
-      val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
-      val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet()
+    plugin: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    val dependenciesGraph: DependenciesGraph,
+    val compatibilityProblems: Set<CompatibilityProblem> = emptySet(),
+    val ignoredProblems: Map<CompatibilityProblem, String> = emptyMap(),
+    val compatibilityWarnings: Set<CompatibilityWarning> = emptySet(),
+    val deprecatedUsages: Set<DeprecatedApiUsage> = emptySet(),
+    val experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet(),
+    val internalApiUsages: Set<InternalApiUsage> = emptySet(),
+    val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
+    val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet()
   ) : PluginVerificationResult(plugin, verificationTarget) {
 
-    val hasDirectMissingDependencies: Boolean
-      get() = directMissingDependencies.isNotEmpty()
+    val hasDirectMissingMandatoryDependencies: Boolean
+      get() = directMissingMandatoryDependencies.isNotEmpty()
 
     val hasCompatibilityProblems: Boolean
-      get() = !hasDirectMissingDependencies && compatibilityProblems.isNotEmpty()
+      get() = !hasDirectMissingMandatoryDependencies && compatibilityProblems.isNotEmpty()
 
     val hasCompatibilityWarnings: Boolean
-      get() = !hasDirectMissingDependencies && !hasCompatibilityProblems && compatibilityWarnings.isNotEmpty()
+      get() = !hasDirectMissingMandatoryDependencies && !hasCompatibilityProblems && compatibilityWarnings.isNotEmpty()
 
     val isOk: Boolean
-      get() = !hasDirectMissingDependencies && !hasCompatibilityProblems && !hasCompatibilityWarnings
+      get() = !hasDirectMissingMandatoryDependencies && !hasCompatibilityProblems && !hasCompatibilityWarnings
 
-    val directMissingDependencies: List<MissingDependency>
-      get() = dependenciesGraph.verifiedPlugin.missingDependencies
+    val directMissingMandatoryDependencies: List<MissingDependency>
+      get() = dependenciesGraph.verifiedPlugin.missingDependencies.filterNot { it.dependency.isOptional }
 
     override val verificationVerdict
-      get() = when {
-        hasCompatibilityWarnings -> "Found " + "warning".pluralizeWithNumber(compatibilityWarnings.size)
-        hasCompatibilityProblems -> buildString {
-          append("Found ").append(compatibilityProblems.size).append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
-          if (compatibilityWarnings.isNotEmpty()) {
-            append(" and ").append(compatibilityWarnings.size).append(" ").append("warning".pluralize(compatibilityWarnings.size))
-          }
+      get() = buildString {
+        if (directMissingMandatoryDependencies.isNotEmpty()) {
+          append("${directMissingMandatoryDependencies.size} mandatory ")
+          append("dependency".pluralize(directMissingMandatoryDependencies.size))
+          append(" missing")
         }
-        hasDirectMissingDependencies -> buildString {
-          val (modules, plugins) = directMissingDependencies.partition { it.dependency.isModule }
-          append("Missing ")
-          if (modules.isNotEmpty()) {
-            val (optional, nonOptional) = modules.partition { it.dependency.isOptional }
-            if (nonOptional.isNotEmpty()) {
-              append(nonOptional.size)
-              append(" mandatory " + "module".pluralize(nonOptional.size))
-            }
-            if (optional.isNotEmpty()) {
-              if (nonOptional.isNotEmpty()) {
-                append(" and ")
-              }
-              append(optional.size)
-              append(" optional " + "module".pluralize(optional.size))
-            }
+        if (compatibilityProblems.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append(compatibilityProblems.size)
+          if (directMissingMandatoryDependencies.isNotEmpty()) {
+            append(" possible")
           }
-          if (plugins.isNotEmpty()) {
-            if (modules.isNotEmpty()) {
-              append(" and ")
-            }
-            val (optional, nonOptional) = plugins.partition { it.dependency.isOptional }
-            if (nonOptional.isNotEmpty()) {
-              append(nonOptional.size)
-              append(" mandatory " + "plugin".pluralize(nonOptional.size))
-            }
-            if (optional.isNotEmpty()) {
-              if (nonOptional.isNotEmpty()) {
-                append(" and ")
-              }
-              append(optional.size)
-              append(" optional " + "plugin".pluralize(optional.size))
-            }
-          }
-          append(" ")
-          append("dependency".pluralize(modules.size + plugins.size))
-          if (compatibilityProblems.isNotEmpty()) {
-            append(" and found ${compatibilityProblems.size} compatibility " + "problem".pluralize(compatibilityProblems.size))
-          }
+          append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
         }
-        else -> "OK"
+        if (directMissingMandatoryDependencies.isEmpty() && compatibilityProblems.isEmpty()) {
+          append("Compatible")
+        }
+        if (deprecatedUsages.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append("${deprecatedUsages.size} ").append("usage".pluralize(deprecatedUsages.size)).append(" of deprecated API")
+        }
+        if (experimentalApiUsages.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append("${experimentalApiUsages.size} ").append("usage".pluralize(experimentalApiUsages.size)).append(" of experimental API")
+        }
+        if (internalApiUsages.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append("${internalApiUsages.size} ").append("usage".pluralize(internalApiUsages.size)).append(" of internal API")
+        }
+        if (nonExtendableApiUsages.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append("${nonExtendableApiUsages.size} non-extendable API usage ").append("violation".pluralize(nonExtendableApiUsages.size))
+        }
+        if (overrideOnlyMethodUsages.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append("${overrideOnlyMethodUsages.size} override-only API usage ").append("violation".pluralize(overrideOnlyMethodUsages.size))
+        }
+        if (compatibilityWarnings.isNotEmpty()) {
+          if (this.isNotEmpty()) append(". ")
+          append("${compatibilityWarnings.size} configuration ").append("defect".pluralize(compatibilityWarnings.size))
+        }
       }
   }
 
   class InvalidPlugin(
-      plugin: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      val pluginStructureErrors: Set<PluginStructureError>
+    plugin: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    val pluginStructureErrors: Set<PluginStructureError>
   ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Plugin is invalid"
   }
 
   class NotFound(
-      plugin: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      val notFoundReason: String
+    plugin: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    val notFoundReason: String
   ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Plugin is not found: $notFoundReason"
   }
 
   class FailedToDownload(
-      plugin: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      val failedToDownloadReason: String,
-      val failedToDownloadError: Throwable
+    plugin: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    val failedToDownloadReason: String
   ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
       get() = "Failed to download plugin: $failedToDownloadReason"

@@ -75,7 +75,7 @@ class HtmlResultPrinter(
     if (verifiedResults.any { it.hasCompatibilityProblems }) {
       return "pluginHasProblems"
     }
-    if (verifiedResults.any { it.hasDirectMissingDependencies }) {
+    if (verifiedResults.any { it.hasDirectMissingMandatoryDependencies }) {
       return "missingDeps"
     }
     if (verifiedResults.any { it.hasCompatibilityWarnings }) {
@@ -88,7 +88,7 @@ class HtmlResultPrinter(
     val resultStyle = when (result) {
       is PluginVerificationResult.Verified -> when {
         result.hasCompatibilityWarnings -> "warnings"
-        result.hasDirectMissingDependencies -> "missingDeps"
+        result.hasDirectMissingMandatoryDependencies -> "missingDeps"
         result.hasCompatibilityProblems -> "updateHasProblems"
         else -> "updateOk"
       }
@@ -117,8 +117,8 @@ class HtmlResultPrinter(
           is PluginVerificationResult.Verified -> when {
             hasCompatibilityWarnings -> "${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " found"
             hasCompatibilityProblems -> "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size) + " found"
-            hasDirectMissingDependencies -> "Plugin has " +
-                "${directMissingDependencies.size} missing direct " + "dependency".pluralize(directMissingDependencies.size) + " and " +
+            hasDirectMissingMandatoryDependencies -> "Plugin has " +
+                "${directMissingMandatoryDependencies.size} missing direct " + "dependency".pluralize(directMissingMandatoryDependencies.size) + " and " +
                 "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size)
             else -> "OK"
           }
@@ -139,7 +139,7 @@ class HtmlResultPrinter(
         is PluginVerificationResult.Verified -> when {
           hasCompatibilityWarnings -> printWarnings(compatibilityWarnings)
           hasCompatibilityProblems -> printProblems(compatibilityProblems)
-          hasDirectMissingDependencies -> printMissingDependenciesResult(this)
+          hasDirectMissingMandatoryDependencies -> printMissingDependenciesResult(this)
           else -> +"No problems."
         }
       }
@@ -148,7 +148,7 @@ class HtmlResultPrinter(
 
   private fun HtmlBuilder.printMissingDependenciesResult(verificationResult: PluginVerificationResult.Verified) {
     printProblems(verificationResult.compatibilityProblems)
-    val missingDependencies = verificationResult.directMissingDependencies
+    val missingDependencies = verificationResult.directMissingMandatoryDependencies
     for (missingDependency in missingDependencies) {
       printShortAndFullDescription("missing dependency: $missingDependency", missingDependency.missingReason)
     }
