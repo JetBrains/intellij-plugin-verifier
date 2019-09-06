@@ -15,7 +15,7 @@ import java.nio.file.Path
 /**
  * Cache of [IdeDescriptor] associated by [IdeVersion].
  *
- * This must be [closed] [close] on the application shutdown to deallocate all [IdeDescriptor]s.
+ * This must be [close] on the application shutdown to deallocate all [IdeDescriptor]s.
  */
 class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdkPath: Path) : Closeable {
 
@@ -66,17 +66,21 @@ class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdk
   ) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {
-      val result = ideFilesBank.getIdeFile(key)
-      val ideLock = (result as? IdeFilesBank.Result.Found)?.ideFileLock
-          ?: return ProvideResult.NotFound("IDE $key is not found in the $ideFilesBank")
-      val ideDescriptor = try {
-        IdeDescriptor.create(ideLock.file, defaultJdkPath, key, ideLock)
-      } catch (e: Exception) {
-        ideLock.closeLogged()
-        e.rethrowIfInterrupted()
-        return ProvideResult.Failed("Unable to open IDE $key: ${e.message}", e)
+      return when (val result = ideFilesBank.getIdeFile(key)) {
+        is IdeFilesBank.Result.Found -> {
+          val ideLock = result.ideFileLock
+          val ideDescriptor = try {
+            IdeDescriptor.create(ideLock.file, defaultJdkPath, key, ideLock)
+          } catch (e: Exception) {
+            ideLock.closeLogged()
+            e.rethrowIfInterrupted()
+            return ProvideResult.Failed("Unable to open IDE $key: ${e.message}", e)
+          }
+          ProvideResult.Provided(ideDescriptor)
+        }
+        is IdeFilesBank.Result.NotFound -> ProvideResult.NotFound("IDE $key is not found: ${result.reason}")
+        is IdeFilesBank.Result.Failed -> ProvideResult.Failed("IDE $key can't be downloaded: ${result.reason}", result.exception)
       }
-      return ProvideResult.Provided(ideDescriptor)
     }
   }
 
