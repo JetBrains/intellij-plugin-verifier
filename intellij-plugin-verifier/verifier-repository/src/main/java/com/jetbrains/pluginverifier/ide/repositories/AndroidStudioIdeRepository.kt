@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide.repositories
 
+import com.google.common.base.Suppliers
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.utils.xzInputStream
@@ -33,25 +34,30 @@ class AndroidStudioIdeRepository : IdeRepository {
         .create(FeedConnector::class.java)
   }
 
-  override fun fetchIndex(): List<AvailableIde> {
+  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
+
+  private fun updateIndex(): List<AvailableIde> {
     val responseBody = feedConnector.getFeed(feedUrl.toExternalForm()).executeSuccessfully().body()
     val feed = responseBody.use {
       val signedContent = CMSSignedData(responseBody.byteStream()).signedContent.content as ByteArray
       jsonParser.fromJson(signedContent.inputStream().xzInputStream().reader(), Feed::class.java)
     }
     return feed.entries
-        .filter { it.packageInfo.type == "zip" }
-        .map {
-          val ideVersion = IdeVersion.createIdeVersion(it.build).setProductCodeIfAbsent("AI")
-          val uploadDate = getApproximateUploadDate(ideVersion)
-          AvailableIde(
-              ideVersion,
-              it.version,
-              it.packageInfo.url,
-              uploadDate
-          )
-        }
+      .filter { it.packageInfo.type == "zip" }
+      .map {
+        val ideVersion = IdeVersion.createIdeVersion(it.build).setProductCodeIfAbsent("AI")
+        val uploadDate = getApproximateUploadDate(ideVersion)
+        AvailableIde(
+          ideVersion,
+          it.version,
+          it.packageInfo.url,
+          uploadDate
+        )
+      }
   }
+
+  @Throws(InterruptedException::class)
+  override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
   /**
    * Android Studio feed does not provide info on when IDE builds were uploaded.
