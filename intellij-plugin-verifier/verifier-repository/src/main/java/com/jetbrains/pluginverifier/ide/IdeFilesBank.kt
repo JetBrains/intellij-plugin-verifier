@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.ide.IdeFilesBank.Result.Found
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -48,12 +47,6 @@ class IdeFilesBank(
 
   fun getAvailableIdeFiles(): List<AvailableFile<IdeVersion>> =
       ideFilesRepository.getAvailableFiles()
-
-  fun isAvailable(ideVersion: IdeVersion): Boolean =
-      ideFilesRepository.has(ideVersion)
-
-  fun deleteIde(ideVersion: IdeVersion): Boolean =
-      ideFilesRepository.remove(ideVersion)
 
   @Throws(InterruptedException::class)
   fun getIdeFile(ideVersion: IdeVersion): Result =
