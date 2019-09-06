@@ -24,11 +24,11 @@ class VerifyPluginTask(
     private val ideDescriptorsCache: IdeDescriptorsCache,
     private val pluginRepository: PluginRepository,
     private val problemsFilters: List<ProblemsFilter>
-) : Task<PluginVerificationResult>("Check ${scheduledVerification.ideVersion} against ${scheduledVerification.updateInfo}", "VerifyPlugin"),
+) : Task<PluginVerificationResult>("Check ${scheduledVerification.availableIde} against ${scheduledVerification.updateInfo}", "VerifyPlugin"),
     Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): PluginVerificationResult {
-    val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(scheduledVerification.ideVersion)
+    val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(scheduledVerification.availableIde.version)
     return cacheEntry.use {
       when (cacheEntry) {
         is IdeDescriptorsCache.Result.Found -> {
@@ -36,10 +36,10 @@ class VerifyPluginTask(
           checkPluginWithIde(ideDescriptor)
         }
         is IdeDescriptorsCache.Result.NotFound -> {
-          throw IllegalStateException("IDE ${scheduledVerification.ideVersion} is not found: " + cacheEntry.reason)
+          throw IllegalStateException("IDE ${scheduledVerification.availableIde} is not found: " + cacheEntry.reason)
         }
         is IdeDescriptorsCache.Result.Failed -> {
-          throw IllegalStateException("Failed to get ${scheduledVerification.ideVersion}: ${cacheEntry.reason}", cacheEntry.error)
+          throw IllegalStateException("Failed to get ${scheduledVerification.availableIde}: ${cacheEntry.reason}", cacheEntry.error)
         }
       }
     }

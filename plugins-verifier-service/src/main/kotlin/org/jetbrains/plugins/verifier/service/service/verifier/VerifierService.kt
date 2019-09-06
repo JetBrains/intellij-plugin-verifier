@@ -2,9 +2,9 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.network.ServerUnavailable503Exception
-import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.plugins.verifier.service.server.ServiceDAO
@@ -121,7 +121,7 @@ class VerifierService(
     logger.info("Finished verification $scheduledVerification: $verificationVerdict")
     if (verificationResultsFilter.shouldSendVerificationResult(this, taskDescriptor.endTime!!, scheduledVerification)) {
       try {
-        verifierServiceProtocol.sendVerificationResult(this, scheduledVerification.updateInfo)
+        verifierServiceProtocol.sendVerificationResult(scheduledVerification, this)
         logger.info("Verification result has been successfully sent for $scheduledVerification")
       } catch (e: ServerUnavailable503Exception) {
         logger.info(

@@ -45,7 +45,7 @@ class DefaultVerifierServiceProtocol(
       .mapNotNull { buildScheduledVerification(it) }
 
   private fun buildScheduledVerification(json: ScheduledVerificationJson): ScheduledVerification? {
-    val ideVersion = IdeVersion.createIdeVersionIfValid(json.availableIde.buildNumber) ?: return null
+    val ideVersion = IdeVersion.createIdeVersionIfValid(json.availableIde.ideVersion) ?: return null
     val availableIde = ideRepository.fetchAvailableIde(ideVersion) ?: return null
     val updateInfo = pluginRepository.getPluginInfoById(json.updateId) ?: return null
     return ScheduledVerification(updateInfo, availableIde, json.manually)
@@ -103,6 +103,6 @@ private data class ScheduledVerificationJson(
 )
 
 private data class AvailableIdeJson(
-  @SerializedName("buildNumber") val buildNumber: String,
+  @SerializedName("ideVersion") val ideVersion: String,
   @SerializedName("releaseVersion") val releaseVersion: String?
 )

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import java.util.*
 
@@ -10,15 +10,15 @@ import java.util.*
  * meaning that it has more priority for execution than automatically scheduled ones.
  */
 data class ScheduledVerification(
-    val updateInfo: UpdateInfo,
-    val ideVersion: IdeVersion,
-    val manually: Boolean = false
+  val updateInfo: UpdateInfo,
+  val availableIde: AvailableIde,
+  val manually: Boolean = false
 ) {
-  override fun toString() = "$ideVersion against $updateInfo" + if (manually) " (manually)" else ""
+  override fun toString() = "$availableIde against $updateInfo" + if (manually) " (manually)" else ""
 
   override fun equals(other: Any?) = other is ScheduledVerification &&
-      updateInfo == other.updateInfo &&
-      ideVersion == other.ideVersion
+    updateInfo == other.updateInfo &&
+    availableIde == other.availableIde
 
-  override fun hashCode() = Objects.hash(updateInfo, ideVersion)
+  override fun hashCode() = Objects.hash(updateInfo, availableIde)
 }

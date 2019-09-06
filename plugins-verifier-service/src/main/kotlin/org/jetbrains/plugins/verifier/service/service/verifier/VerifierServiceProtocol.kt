@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.PluginVerificationResult
 
 /**
@@ -12,6 +11,6 @@ interface VerifierServiceProtocol {
 
   fun requestScheduledVerifications(): List<ScheduledVerification>
 
-  fun sendVerificationResult(verificationResult: PluginVerificationResult, updateInfo: UpdateInfo)
+  fun sendVerificationResult(scheduledVerification: ScheduledVerification, verificationResult: PluginVerificationResult)
 
 }
