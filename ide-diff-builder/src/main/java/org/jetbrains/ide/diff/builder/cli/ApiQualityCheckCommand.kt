@@ -112,7 +112,11 @@ class ApiQualityCheckCommand : Command {
                       is MemberAnnotation.AnnotatedViaPackage -> " via containing package ${experimentalMemberAnnotation.packageName.replace('/', '.')}"
                     }
                 )
-                append(" since $sinceVersion, while the current branch is ${report.apiQualityOptions.currentBranch}")
+                append(" since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
+                append("API shouldn't be marked @Experimental for too long (more than ${report.apiQualityOptions.maxExperimentalBranches} releases). ")
+                append("Please consider clarifying the API status by removing @Experimental and making it usable by external developers without hesitation. ")
+                append("Also verify that Javadoc is up to date ")
+                append("and consider advertising this API on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable.html.")
               }
               tc.testFailed(testName, message, "")
             }
@@ -139,6 +143,9 @@ class ApiQualityCheckCommand : Command {
                   append(" and scheduled for removal in $scheduledForRemovalInVersion.")
                 }
                 appendln()
+                append("If this API does not have external usages, consider removing it right now. ")
+                append("Otherwise, reach out to the external developers and ask them to stop using it ASAP. ")
+                append("Also consider promoting planned removal version a little bit.")
               }
               tc.testFailed(testName, message, "")
             }
