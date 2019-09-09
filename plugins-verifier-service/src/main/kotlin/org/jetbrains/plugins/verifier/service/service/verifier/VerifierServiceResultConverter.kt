@@ -34,8 +34,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         javaVersion,
         VerificationResultTypeDto.NON_DOWNLOADABLE,
         verificationVerdict,
-        null,
-        nonDownloadableReason = failedToDownloadReason
+        null
       )
     }
     is PluginVerificationResult.InvalidPlugin ->
@@ -55,8 +54,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         javaVersion,
         VerificationResultTypeDto.NON_DOWNLOADABLE,
         verificationVerdict,
-        null,
-        nonDownloadableReason = notFoundReason
+        null
       )
     is PluginVerificationResult.Verified ->
       FullVerificationResultDto(
@@ -80,10 +78,16 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
 
 private fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =
   when {
-    directMissingMandatoryDependencies.isNotEmpty() -> VerificationResultTypeDto.MISSING_DEPENDENCIES
-    compatibilityProblems.isNotEmpty() -> VerificationResultTypeDto.COMPATIBILITY_PROBLEMS
-    compatibilityWarnings.isNotEmpty() -> VerificationResultTypeDto.STRUCTURE_WARNINGS
-    else -> VerificationResultTypeDto.OK
+    compatibilityProblems.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
+    directMissingMandatoryDependencies.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
+    pluginStructureWarnings.isEmpty()
+      && compatibilityWarnings.isEmpty()
+      && deprecatedUsages.isEmpty()
+      && experimentalApiUsages.isEmpty()
+      && internalApiUsages.isEmpty()
+      && overrideOnlyMethodUsages.isEmpty()
+      && nonExtendableApiUsages.isEmpty() -> VerificationResultTypeDto.OK
+    else -> VerificationResultTypeDto.WARNINGS
   }
 
 private fun AvailableIde.convert() =

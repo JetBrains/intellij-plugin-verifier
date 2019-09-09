@@ -1,12 +1,13 @@
+@file:Suppress("unused")
+
 package org.jetbrains.plugins.verifier.service.service.verifier
 
 // This file must be synced with VerificationDto in the Marketplace repository.
 
 enum class VerificationResultTypeDto {
   OK,
-  STRUCTURE_WARNINGS,
-  COMPATIBILITY_PROBLEMS,
-  MISSING_DEPENDENCIES,
+  WARNINGS,
+  PROBLEMS,
   INVALID_PLUGIN,
   NON_DOWNLOADABLE;
 }
@@ -26,8 +27,7 @@ data class FullVerificationResultDto(
   val experimentalApiUsages: List<ExperimentalApiUsageDto> = emptyList(),
   val internalApiUsages: List<InternalApiUsageDto> = emptyList(),
   val overrideOnlyApiUsages: List<OverrideOnlyApiUsageDto> = emptyList(),
-  val nonExtendableApiUsages: List<NonExtendableApiUsageDto> = emptyList(),
-  val nonDownloadableReason: String? = null
+  val nonExtendableApiUsages: List<NonExtendableApiUsageDto> = emptyList()
 )
 
 data class AvailableIdeDto(
