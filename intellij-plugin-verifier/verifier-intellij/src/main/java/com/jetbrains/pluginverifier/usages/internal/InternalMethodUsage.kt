@@ -21,15 +21,15 @@ class InternalMethodUsage(
 ) : InternalApiUsage() {
 
   override val shortDescription
-    get() = "Internal " + apiElement.elementType.presentableName + " '${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)}' invocation"
+    get() = "Internal " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
   override val fullDescription
     get() = buildString {
       append("Internal " + apiElement.elementType.presentableName + " ")
-      append("'" + apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE) + "'")
-      append(" is invoked in '" + usageLocation.formatUsageLocation() + "'")
+      append(apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
+      append(" is invoked in " + usageLocation.formatUsageLocation())
       append(
-          ". This " + apiElement.elementType.presentableName + " is marked with '@org.jetbrains.annotations.ApiStatus.Internal' annotation and indicates " +
+          ". This " + apiElement.elementType.presentableName + " is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
               "that the method is not supposed to be used in client code."
       )
     }

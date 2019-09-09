@@ -17,15 +17,15 @@ class InternalClassUsage(
 ) : InternalApiUsage() {
 
   override val shortDescription
-    get() = "Internal " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)}' reference"
+    get() = "Internal " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} reference"
 
   override val fullDescription: String
     get() = buildString {
-      append("Internal " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}'")
-      append(" is referenced in '" + usageLocation.formatUsageLocation() + "'")
+      append("Internal " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}")
+      append(" is referenced in " + usageLocation.formatUsageLocation())
       append(". This " + apiElement.elementType.presentableName)
       append(
-          " is marked with '@org.jetbrains.annotations.ApiStatus.Internal' annotation and indicates " +
+          " is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
               "that the class is not supposed to be used in client code."
       )
     }

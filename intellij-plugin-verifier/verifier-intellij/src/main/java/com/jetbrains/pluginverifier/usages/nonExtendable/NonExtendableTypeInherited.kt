@@ -27,16 +27,16 @@ class NonExtendableTypeInherited(
     }
 
   override val shortDescription
-    get() = "Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)}' is $inheritanceVerb"
+    get() = "Non-extendable " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} is $inheritanceVerb"
 
   override val fullDescription: String
     get() = buildString {
-      append("Non-extendable " + apiElement.elementType.presentableName + " '${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}' is $inheritanceVerb by ")
-      append("'" + usageLocation.formatUsageLocation() + "'. ")
+      append("Non-extendable " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)} is $inheritanceVerb by ")
+      append(usageLocation.formatUsageLocation() + ". ")
       append("This " + apiElement.elementType.presentableName)
-      append(" is marked with '@org.jetbrains.annotations.ApiStatus.NonExtendable', which indicates that the ")
+      append(" is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable, which indicates that the ")
       append(apiElement.elementType.presentableName)
-      append(" is not supposed to be extended. See documentation of the '@ApiStatus.NonExtendable' for more info.")
+      append(" is not supposed to be extended. See documentation of the @ApiStatus.NonExtendable for more info.")
     }
 
   override fun equals(other: Any?) = other is NonExtendableTypeInherited

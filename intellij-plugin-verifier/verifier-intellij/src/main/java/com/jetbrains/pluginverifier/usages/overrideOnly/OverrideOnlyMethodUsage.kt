@@ -22,16 +22,16 @@ class OverrideOnlyMethodUsage(
 ) : ApiUsage() {
 
   override val shortDescription
-    get() = "Invocation of override-only method '" + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES) + "'"
+    get() = "Invocation of override-only method " + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)
 
   override val fullDescription
     get() = buildString {
-      append("Override-only method '" + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES) + "'")
-      append(" is invoked in '" + usageLocation.formatUsageLocation() + "'. ")
+      append("Override-only method " + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES))
+      append(" is invoked in " + usageLocation.formatUsageLocation() + ". ")
       append(
-          "This method is marked with '@org.jetbrains.annotations.ApiStatus.OverrideOnly' annotation, " +
+          "This method is marked with @org.jetbrains.annotations.ApiStatus.OverrideOnly annotation, " +
               "which indicates that the method must be only overridden but not invoked by client code. " +
-              "See documentation of the '@ApiStatus.OverrideOnly' for more info."
+              "See documentation of the @ApiStatus.OverrideOnly for more info."
       )
     }
 

@@ -23,17 +23,17 @@ class NonExtendableMethodOverriding(
     get() = apiElement.toReference()
 
   override val shortDescription
-    get() = "Non-extendable method '${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)}' is overridden"
+    get() = "Non-extendable method ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} is overridden"
 
   override val fullDescription
     get() = buildString {
       append("Non-extendable method ")
-      append("'" + apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE) + "'")
-      append(" is overridden by '" + usageLocation.formatUsageLocation() + "'. ")
+      append(apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
+      append(" is overridden by " + usageLocation.formatUsageLocation() + ". ")
       append(
-          "This method is marked with '@org.jetbrains.annotations.ApiStatus.NonExtendable' annotation, which indicates " +
+          "This method is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable annotation, which indicates " +
               "that the method is not supposed to be overridden by client code. " +
-              "See documentation of the '@ApiStatus.NonExtendable' for more info."
+              "See documentation of the @ApiStatus.NonExtendable for more info."
       )
     }
 
