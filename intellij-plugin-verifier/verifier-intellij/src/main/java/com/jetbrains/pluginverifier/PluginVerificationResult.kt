@@ -78,7 +78,17 @@ sealed class PluginVerificationResult(
         }
         if (deprecatedUsages.isNotEmpty()) {
           if (isNotEmpty()) append(". ")
-          append("${deprecatedUsages.size} ").append("usage".pluralize(deprecatedUsages.size)).append(" of deprecated API")
+          val scheduledForRemovalNumber = deprecatedUsages.count { it.deprecationInfo.forRemoval }
+          val deprecatedUsagesNumber = deprecatedUsages.size - scheduledForRemovalNumber
+          if (scheduledForRemovalNumber > 0) {
+            append("$scheduledForRemovalNumber ").append("usage".pluralize(scheduledForRemovalNumber)).append(" of scheduled for removal API")
+          }
+          if (deprecatedUsagesNumber > 0) {
+            if (scheduledForRemovalNumber > 0) {
+              append(" and ")
+            }
+            append("$deprecatedUsagesNumber ").append("usage".pluralize(deprecatedUsagesNumber)).append(" of deprecated API")
+          }
         }
         if (experimentalApiUsages.isNotEmpty()) {
           if (isNotEmpty()) append(". ")
