@@ -99,7 +99,22 @@ class ApiQualityCheckCommand : Command {
     if (report.tooLongExperimental.isNotEmpty()) {
       for ((sinceVersion, tooLongExperimentalApis) in report.tooLongExperimental.groupBy { it.sinceVersion }) {
         tc.testSuiteStarted("(API marked experimental since $sinceVersion)").use {
-          for ((signature, _, experimentalMemberAnnotation) in tooLongExperimentalApis) {
+          val (viaPackage, notViaPackage) = tooLongExperimentalApis.partition { it.experimentalMemberAnnotation is MemberAnnotation.AnnotatedViaPackage }
+          for ((packageName, samePackage) in viaPackage.groupBy { (it.experimentalMemberAnnotation as MemberAnnotation.AnnotatedViaPackage).packageName }) {
+            val javaPackageName = packageName.replace('/', '.')
+            val testName = "($javaPackageName)"
+            tc.testStarted(testName).use {
+              val message = buildString {
+                appendln("Package '$javaPackageName' is marked @ApiStatus.Experimental since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
+                appendln(getExperimentalNote(report))
+                appendln()
+                appendln("The following APIs belong to the package '$javaPackageName': " + samePackage.map { it.apiSignature.fullPresentation }.sorted().joinToString())
+              }
+              tc.testFailed(testName, message, "")
+            }
+          }
+
+          for ((signature, _, experimentalMemberAnnotation) in notViaPackage) {
             val testName = "(${signature.shortPresentation})"
             tc.testStarted(testName).use {
               val message = buildString {
@@ -113,10 +128,7 @@ class ApiQualityCheckCommand : Command {
                     }
                 )
                 append(" since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
-                append("API shouldn't be marked @Experimental for too long (more than ${report.apiQualityOptions.maxExperimentalBranches} releases). ")
-                append("Please consider clarifying the API status by removing @Experimental and making it usable by external developers without hesitation. ")
-                append("Also verify that Javadoc is up to date ")
-                append("and consider advertising this API on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable.html.")
+                append(getExperimentalNote(report))
               }
               tc.testFailed(testName, message, "")
             }
@@ -183,6 +195,13 @@ class ApiQualityCheckCommand : Command {
       }
       tc.buildStatusFailure(buildMessage)
     }
+  }
+
+  private fun getExperimentalNote(report: ApiQualityReport): String = buildString {
+    append("API shouldn't be marked @Experimental for too long (more than ${report.apiQualityOptions.maxExperimentalBranches} releases). ")
+    append("Please consider clarifying the API status by removing @Experimental and making it usable by external developers without hesitation. ")
+    append("Also verify that Javadoc is up to date ")
+    append("and consider advertising this API on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable.html.")
   }
 
   private val ApiSignature.shortPresentation: String
