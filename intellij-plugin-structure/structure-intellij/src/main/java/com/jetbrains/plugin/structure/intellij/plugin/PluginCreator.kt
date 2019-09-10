@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
 import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
@@ -110,9 +111,9 @@ internal class PluginCreator {
   }
 
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean) {
-    pluginName = bean.name
-    pluginId = if (bean.id != null) bean.id else bean.name
-    url = bean.url
+    pluginName = bean.name?.trim()
+    pluginId = bean.id?.trim() ?: pluginName
+    url = bean.url?.trim()
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
     definedModules.addAll(bean.modules)
     extensions.putAll(bean.extensions)
@@ -389,16 +390,20 @@ internal class PluginCreator {
         registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID))
       } else {
         validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
+        validateNewlines("id", id)
       }
     }
   }
 
   private fun validateName(name: String?) {
     when {
-      name.isNullOrEmpty() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
+      name.isNullOrBlank() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
       "Plugin display name here" == name -> registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME))
       "plugin".contains(name) -> registerProblem(PluginWordInPluginName(descriptorPath))
-      else -> validatePropertyLength("name", name, MAX_PROPERTY_LENGTH)
+      else -> {
+        validatePropertyLength("name", name, MAX_PROPERTY_LENGTH)
+        validateNewlines("name", name)
+      }
     }
   }
 
@@ -444,6 +449,12 @@ internal class PluginCreator {
     }
 
     validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH)
+  }
+
+  private fun validateNewlines(propertyName: String, propertyValue: String) {
+    if (propertyValue.trim().contains("\n")) {
+      registerProblem(ContainsNewlines(propertyName, descriptorPath))
+    }
   }
 
   private fun validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int) {

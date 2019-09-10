@@ -50,3 +50,9 @@ class UnableToReadDescriptor(descriptorPath: String, private val exceptionMessag
   override val level
     get() = Level.ERROR
 }
+
+class ContainsNewlines(propertyName: String, descriptorPath: String? = null) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage = "<$propertyName> can't contain newlines"
+
+  override val level = Level.ERROR
+}

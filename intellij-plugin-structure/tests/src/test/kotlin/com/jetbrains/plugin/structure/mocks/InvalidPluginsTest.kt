@@ -104,6 +104,48 @@ class InvalidPluginsTest {
   }
 
   @Test
+  fun `plugin name contains newline`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>Some\nname</name>"
+        },
+        listOf(ContainsNewlines("name", "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `plugin name contains newline at end`() {
+    val pluginName = "Some name"
+    val plugin = `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>$pluginName\n </name>"
+        }
+    )
+    assertEquals(pluginName, plugin.plugin.pluginName)
+  }
+
+  @Test
+  fun `plugin id contains newline`() {
+    `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          id = "<id>some\nId</id>"
+        },
+        listOf(ContainsNewlines("id", "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `plugin id contains newline at end`() {
+    val pluginId = "someId"
+    val plugin = `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          id = "<id>$pluginId\n </id>"
+        }
+    )
+    assertEquals(pluginId, plugin.plugin.pluginId)
+  }
+
+  @Test
   fun `plugin id is not specified but it is equal to name`() {
     val pluginXmlContent = perfectXmlBuilder.modify {
       id = ""
@@ -341,9 +383,9 @@ class InvalidPluginsTest {
     assertExpectedProblems(pluginFolder, expectedProblems)
   }
 
-  private fun `test valid plugin xml`(pluginXmlContent: String) {
+  private fun `test valid plugin xml`(pluginXmlContent: String): PluginCreationSuccess<IdePlugin> {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    getSuccessResult(pluginFolder)
+    return getSuccessResult(pluginFolder)
   }
 
   private fun getTempPluginFolder(pluginXmlContent: String): File {
