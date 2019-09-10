@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
@@ -144,14 +143,21 @@ class ApiQualityCheckCommand : Command {
             val testName = "(${signature.shortPresentation})"
             tc.testStarted(testName).use {
               val message = buildString {
-                appendln("${signature.fullPresentation} must have been removed in $removalVersion.")
+                append(signature.fullPresentation)
+                if (removalVersion.branch < report.apiQualityOptions.currentBranch) {
+                  append("must have been ")
+                } else {
+                  append("must be ")
+                }
+                append("removed in ${removalVersion.originalVersion}")
+                appendln()
                 append("It was deprecated")
                 if (deprecatedInVersion != null) {
                   append(" in $deprecatedInVersion")
                 } else {
                   append(" before ${BuildIdeApiAnnotationsCommand.MIN_BUILD_NUMBER.baselineVersion}")
                 }
-                if (scheduledForRemovalInVersion != null) {
+                if (scheduledForRemovalInVersion != null && scheduledForRemovalInVersion.baselineVersion <= removalVersion.branch) {
                   append(" and scheduled for removal in $scheduledForRemovalInVersion.")
                 }
                 appendln()
@@ -249,14 +255,12 @@ class ApiQualityCheckCommand : Command {
     }
 
     val deprecationInfo = classFileMember.deprecationInfo
-    val untilVersion = deprecationInfo?.untilVersion
+    val removalVersion = deprecationInfo?.untilVersion?.let { RemovalVersion.parseRemovalVersion(it) }
     if (deprecationInfo != null
         && deprecationInfo.forRemoval
-        && untilVersion != null
+        && removalVersion != null
     ) {
-      if (VersionComparatorUtil.compare(untilVersion, qualityOptions.currentBranch.toString()) <= 0
-          || VersionComparatorUtil.compare(untilVersion, branchToReleaseVersion(qualityOptions.currentBranch)) <= 0) {
-
+      if (removalVersion.branch <= qualityOptions.currentBranch) {
         val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
         val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
 
@@ -276,14 +280,11 @@ class ApiQualityCheckCommand : Command {
             signature,
             deprecatedInVersion,
             scheduledForRemovalInVersion,
-            untilVersion
+            removalVersion
         )
       }
     }
   }
-
-  private fun branchToReleaseVersion(branch: Int): String =
-      (2000 + branch / 10).toString() + "." + (branch % 10).toString()
 
   class CliOptions : IdeDiffCommand.CliOptions() {
     @set:Argument("current-branch", description = "Current release IDE branch. It is used to determine which APIs must already be removed")
@@ -312,8 +313,37 @@ private data class MustAlreadyBeRemoved(
     val apiSignature: ApiSignature,
     val deprecatedInVersion: IdeVersion?,
     val scheduledForRemovalInVersion: IdeVersion?,
-    val removalVersion: String
+    val removalVersion: RemovalVersion
 )
+
+private data class RemovalVersion(val originalVersion: String, val branch: Int) {
+
+  companion object {
+    private val BRANCH_REGEX = Regex("\\d\\d\\d")
+    private val IDE_RELEASE_REGEX = Regex("(\\d\\d\\d\\d)(\\.\\d)?")
+
+    fun parseRemovalVersion(version: String): RemovalVersion? =
+        parseAsReleaseVersion(version) ?: parseAsBranch(version)
+
+    private fun parseAsBranch(version: String): RemovalVersion? {
+      val match = BRANCH_REGEX.matchEntire(version) ?: return null
+      val branch = match.groupValues[1].toInt()
+      return RemovalVersion(version, branch)
+    }
+
+    private fun parseAsReleaseVersion(version: String): RemovalVersion? {
+      val match = IDE_RELEASE_REGEX.matchEntire(version) ?: return null
+      val year = match.groupValues[1].toInt()
+      val release = match.groups[2]?.value?.toInt()
+      val branch = if (release != null) {
+        (year - 2000) * 10 + release
+      } else {
+        (year - 2000) * 10 + 3
+      }
+      return RemovalVersion(version, branch)
+    }
+  }
+}
 
 private data class TooLongExperimental(
     val apiSignature: ApiSignature,
