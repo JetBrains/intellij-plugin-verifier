@@ -254,8 +254,8 @@ class ApiQualityCheckCommand : Command {
         && deprecationInfo.forRemoval
         && untilVersion != null
     ) {
-      if (VersionComparatorUtil.compare(untilVersion, qualityOptions.currentBranch.toString()) < 0
-          || VersionComparatorUtil.compare(untilVersion, branchToReleaseVersion(qualityOptions.currentBranch)) < 0) {
+      if (VersionComparatorUtil.compare(untilVersion, qualityOptions.currentBranch.toString()) <= 0
+          || VersionComparatorUtil.compare(untilVersion, branchToReleaseVersion(qualityOptions.currentBranch)) <= 0) {
 
         val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
         val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
