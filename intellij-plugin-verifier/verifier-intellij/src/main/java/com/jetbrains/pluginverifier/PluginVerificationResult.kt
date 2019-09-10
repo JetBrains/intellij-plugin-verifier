@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -56,10 +55,12 @@ sealed class PluginVerificationResult(
 
     override val verificationVerdict
       get() = buildString {
+        if (directMissingMandatoryDependencies.isEmpty() && compatibilityProblems.isEmpty() && compatibilityWarnings.isEmpty()) {
+          append("Compatible")
+        }
         if (directMissingMandatoryDependencies.isNotEmpty()) {
-          append("${directMissingMandatoryDependencies.size} mandatory ")
+          append("${directMissingMandatoryDependencies.size} missing mandatory ")
           append("dependency".pluralize(directMissingMandatoryDependencies.size))
-          append(" missing")
         }
         if (compatibilityProblems.isNotEmpty()) {
           if (isNotEmpty()) append(". ")
@@ -69,12 +70,10 @@ sealed class PluginVerificationResult(
           }
           append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
         }
-        if (directMissingMandatoryDependencies.isEmpty() && compatibilityProblems.isEmpty()) {
-          if (compatibilityWarnings.isEmpty()) {
-            append("Compatible")
-          } else {
-            append("Compatible with " + "warning".pluralizeWithNumber(compatibilityWarnings.size))
-          }
+        if (compatibilityWarnings.isNotEmpty()) {
+          if (isNotEmpty()) append(". ")
+          append(compatibilityWarnings.size)
+          append(" compatibility ").append("warning".pluralize(compatibilityWarnings.size))
         }
         if (deprecatedUsages.isNotEmpty()) {
           if (isNotEmpty()) append(". ")
@@ -107,7 +106,7 @@ sealed class PluginVerificationResult(
           append("${overrideOnlyMethodUsages.size} override-only API usage ").append("violation".pluralize(overrideOnlyMethodUsages.size))
         }
         if (pluginStructureWarnings.isNotEmpty()) {
-          if (this.isNotEmpty()) append(". ")
+          if (isNotEmpty()) append(". ")
           append("${pluginStructureWarnings.size} plugin configuration ").append("defect".pluralize(pluginStructureWarnings.size))
         }
       }
