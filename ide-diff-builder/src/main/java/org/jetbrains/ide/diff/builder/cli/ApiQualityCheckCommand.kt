@@ -66,8 +66,9 @@ class ApiQualityCheckCommand : Command {
     LOG.info(classFilter.toString())
 
     val currentBranch = cliOptions.currentBranch.toInt()
+    val maxRemovalBranch = cliOptions.maxRemovalBranch.toInt()
     val maxExperimentalBranches = cliOptions.maxExperimentalBranches.toInt()
-    val qualityOptions = ApiQualityOptions(currentBranch, maxExperimentalBranches)
+    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches)
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
@@ -104,10 +105,14 @@ class ApiQualityCheckCommand : Command {
             val testName = "($javaPackageName)"
             tc.testStarted(testName).use {
               val message = buildString {
-                appendln("Package '$javaPackageName' is marked @ApiStatus.Experimental since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
-                appendln(getExperimentalNote(report))
+                appendln("The following APIs belonging to package '$javaPackageName' are marked with @ApiStatus.Experimental for more than ${report.apiQualityOptions.maxExperimentalBranches} branches")
+                for ((apiSignature, _) in samePackage.sortedBy { it.apiSignature.fullPresentation }) {
+                  append("  ").append(apiSignature.fullPresentation).append(" is marked experimental since $sinceVersion")
+                  appendln()
+                }
+                appendln("The current branch is ${report.apiQualityOptions.currentBranch}")
                 appendln()
-                appendln("The following APIs belong to the package '$javaPackageName': " + samePackage.map { it.apiSignature.fullPresentation }.sorted().joinToString())
+                appendln(getExperimentalNote(report))
               }
               tc.testFailed(testName, message, "")
             }
@@ -145,9 +150,9 @@ class ApiQualityCheckCommand : Command {
               val message = buildString {
                 append(signature.fullPresentation)
                 if (removalVersion.branch < report.apiQualityOptions.currentBranch) {
-                  append("must have been ")
+                  append(" must have been ")
                 } else {
-                  append("must be ")
+                  append(" must be ")
                 }
                 append("removed in ${removalVersion.originalVersion}")
                 appendln()
@@ -260,7 +265,7 @@ class ApiQualityCheckCommand : Command {
         && deprecationInfo.forRemoval
         && removalVersion != null
     ) {
-      if (removalVersion.branch <= qualityOptions.currentBranch) {
+      if (removalVersion.branch <= qualityOptions.maxRemovalBranch) {
         val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
         val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
 
@@ -287,8 +292,12 @@ class ApiQualityCheckCommand : Command {
   }
 
   class CliOptions : IdeDiffCommand.CliOptions() {
-    @set:Argument("current-branch", description = "Current release IDE branch. It is used to determine which APIs must already be removed")
-    var currentBranch: String = "192"
+    @set:Argument("current-branch", description = "Current release IDE branch")
+    var currentBranch: String = "193"
+
+    @set:Argument("max-removal-branch", description = "Branch number used to find APIs that must already be removed. " +
+        "All @ScheduledForRemoval APIs will be found where 'inVersion' <= 'max-removal-branch'.")
+    var maxRemovalBranch: String = "193"
 
     @set:Argument("max-experimental-branches", description = "Maximum number of branches in which an API may stay experimental.")
     var maxExperimentalBranches: String = "3"
@@ -298,6 +307,7 @@ class ApiQualityCheckCommand : Command {
 
 private data class ApiQualityOptions(
     val currentBranch: Int,
+    val maxRemovalBranch: Int,
     val maxExperimentalBranches: Int
 )
 
@@ -334,7 +344,7 @@ private data class RemovalVersion(val originalVersion: String, val branch: Int) 
     private fun parseAsReleaseVersion(version: String): RemovalVersion? {
       val match = IDE_RELEASE_REGEX.matchEntire(version) ?: return null
       val year = match.groupValues[1].toInt()
-      val release = match.groups[2]?.value?.toInt()
+      val release = match.groups[2]?.value?.drop(1)?.toInt()
       val branch = if (release != null) {
         (year - 2000) * 10 + release
       } else {
@@ -343,6 +353,8 @@ private data class RemovalVersion(val originalVersion: String, val branch: Int) 
       return RemovalVersion(version, branch)
     }
   }
+
+  override fun toString() = originalVersion
 }
 
 private data class TooLongExperimental(
