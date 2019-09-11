@@ -5,17 +5,18 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class ExecutorWithProgress<T>(
-  executorName: String,
-  concurrentWorkers: Int,
-  private val failFastOnException: Boolean,
-  private val progress: (ProgressData<T>) -> Unit
+    executorName: String,
+    concurrentWorkers: Int,
+    private val failFastOnException: Boolean,
+    private val progress: (ProgressData<T>) -> Unit
 ) : Closeable {
 
   data class ProgressData<T>(
-    val finishedNumber: Int,
-    val totalNumber: Int,
-    val result: T?,
-    val exception: Throwable?
+      val finishedNumber: Int,
+      val totalNumber: Int,
+      val result: T?,
+      val exception: Throwable?,
+      val elapsedTime: Long
   )
 
   private val nameCounter = AtomicInteger()
@@ -33,41 +34,39 @@ class ExecutorWithProgress<T>(
 
   @Throws(InterruptedException::class)
   fun executeTasks(tasks: List<Callable<T>>): List<T> {
-    val completionService = ExecutorCompletionService<T>(executor)
-    val workers = arrayListOf<Future<T>>()
+    val completionService = ExecutorCompletionService<TimedResult<T>>(executor)
+    val futures = arrayListOf<Future<TimedResult<T>>>()
     try {
       for (task in tasks) {
-        val worker = try {
-          completionService.submit(task)
+        val timedCallable = TimedCallable(task)
+        val future = try {
+          completionService.submit(timedCallable)
         } catch (e: RejectedExecutionException) {
           if (executor.isShutdown) {
             throw InterruptedException()
           }
           throw RuntimeException("Failed to schedule task", e)
         }
-        workers.add(worker)
+        futures.add(future)
       }
-      return waitAllWorkersWithInterruptionChecks(completionService, workers)
+      return waitAllFutures(futures.size, completionService)
     } catch (e: Throwable) {
-      for (worker in workers) {
+      for (worker in futures) {
         worker.cancel(true)
       }
       throw e
     }
   }
 
-  private fun waitAllWorkersWithInterruptionChecks(
-    completionService: ExecutorCompletionService<T>,
-    workers: List<Future<T>>
-  ): List<T> {
+  private fun waitAllFutures(futuresNumber: Int, completionService: ExecutorCompletionService<TimedResult<T>>): List<T> {
     val results = arrayListOf<T>()
     val exceptions = arrayListOf<Throwable>()
-    for (finished in 1..workers.size) {
+    for (finished in 1..futuresNumber) {
       while (true) {
         checkIfInterrupted()
         val future = completionService.poll(100, TimeUnit.MILLISECONDS)
         if (future != null) {
-          val result = try {
+          val timedResult = try {
             future.get()
           } catch (e: InterruptedException) {
             throw e
@@ -78,17 +77,22 @@ class ExecutorWithProgress<T>(
             if (workerException is InterruptedException) {
               throw InterruptedException("Worker has been interrupted")
             }
-
-            if (failFastOnException) {
-              throw RuntimeException("Worker finished with error", workerException)
-            } else {
-              exceptions += workerException
-              progress(ProgressData(finished, workers.size, null, workerException))
-              continue
-            }
+            throw e.cause!!
           }
-          progress(ProgressData(finished, workers.size, result, null))
-          results.add(result)
+
+          val exception = timedResult.exception
+          if (exception != null) {
+            if (failFastOnException) {
+              throw RuntimeException("Worker finished with error", exception)
+            } else {
+              exceptions += exception
+              progress(ProgressData(finished, futuresNumber, null, exception, timedResult.elapsedTime))
+            }
+          } else {
+            val result = timedResult.result!!
+            progress(ProgressData(finished, futuresNumber, result, null, timedResult.elapsedTime))
+            results += result
+          }
           break
         }
       }
@@ -100,6 +104,27 @@ class ExecutorWithProgress<T>(
       throw error
     }
     return results
+  }
+
+  private data class TimedResult<T>(
+    val result: T?,
+    val exception: Throwable?,
+    val elapsedTime: Long
+  )
+
+  private class TimedCallable<T>(private val delegate: Callable<T>) : Callable<TimedResult<T>> {
+    override fun call(): TimedResult<T> {
+      val start = System.currentTimeMillis()
+      var result: T? = null
+      var exception: Throwable? = null
+      try {
+        result = delegate.call()
+      } catch (e: Throwable) {
+        exception = e
+      }
+      val elapsedTime = System.currentTimeMillis() - start
+      return TimedResult(result, exception, elapsedTime)
+    }
   }
 
 }
