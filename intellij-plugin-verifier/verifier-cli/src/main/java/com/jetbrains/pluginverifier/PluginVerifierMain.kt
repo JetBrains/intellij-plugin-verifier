@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
-import com.jetbrains.pluginverifier.reporting.DirectoryBasePluginVerificationReportage
+import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -104,7 +104,7 @@ object PluginVerifierMain {
     val ideFilesDiskSetting = getDiskSpaceSetting("plugin.verifier.cache.ide.dir.max.space", 10 * 1024)
     val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
 
-    DirectoryBasePluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+    DirectoryBasedPluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
         runner.getParametersBuilder(
