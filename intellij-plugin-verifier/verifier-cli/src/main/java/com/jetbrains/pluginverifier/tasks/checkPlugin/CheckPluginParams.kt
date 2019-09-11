@@ -15,9 +15,10 @@ class CheckPluginParams(
 ) : TaskParameters {
 
   override val presentableText
-    get() = """
-      |${verificationDescriptors.joinToString()}
-    """.trimMargin()
+    get() = buildString {
+      appendln("Scheduled verifications (${verificationDescriptors.size}:")
+      appendln(verificationDescriptors.joinToString())
+    }
 
   override fun close() {
     ideDescriptors.forEach { it.closeLogged() }

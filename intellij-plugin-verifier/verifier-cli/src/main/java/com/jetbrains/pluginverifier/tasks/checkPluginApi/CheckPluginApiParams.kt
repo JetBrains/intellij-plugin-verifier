@@ -20,10 +20,17 @@ class CheckPluginApiParams(
 ) : TaskParameters {
 
   override val presentableText
-    get() = """
-      |${baseVerificationDescriptors.joinToString()}
-      |${newVerificationDescriptors.joinToString()}
-    """.trimMargin()
+    get() = buildString {
+      appendln("Base verifications (${baseVerificationDescriptors.size}): ")
+      for ((apiPlugin, pluginVerifications) in baseVerificationDescriptors.groupBy { it.apiPlugin }) {
+        appendln(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
+      }
+
+      appendln("New verifications: (${newVerificationDescriptors.size}): ")
+      for ((apiPlugin, pluginVerifications) in newVerificationDescriptors.groupBy { it.apiPlugin }) {
+        appendln(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
+      }
+    }
 
   override fun close() {
     basePluginDetails.closeLogged()

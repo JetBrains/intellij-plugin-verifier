@@ -22,10 +22,20 @@ class CheckTrunkApiParams(
     val trunkVerificationTarget: PluginVerificationTarget.IDE
 ) : TaskParameters {
   override val presentableText: String
-    get() = """
-      |Trunk IDE        : $trunkIde
-      |Release IDE      : $releaseIde
-    """.trimMargin()
+    get() = buildString {
+      appendln("Trunk IDE: $trunkIde")
+      appendln("Release IDE: $releaseIde")
+
+      appendln("Release verifications (${releaseVerificationDescriptors.size}: ")
+      for ((ideVersion, ideVerifications) in releaseVerificationDescriptors.groupBy { it.ideVersion }) {
+        appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
+      }
+
+      appendln("Trunk verifications (${releaseVerificationDescriptors.size}: ")
+      for ((ideVersion, ideVerifications) in trunkVerificationDescriptors.groupBy { it.ideVersion }) {
+        appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
+      }
+    }
 
   override fun close() {
     trunkIde.closeLogged()

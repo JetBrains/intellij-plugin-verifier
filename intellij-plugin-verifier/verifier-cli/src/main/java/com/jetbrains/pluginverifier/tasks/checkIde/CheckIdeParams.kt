@@ -17,9 +17,12 @@ class CheckIdeParams(
 ) : TaskParameters {
 
   override val presentableText
-    get() = """
-      |${verificationDescriptors.joinToString()}
-    """.trimMargin()
+    get() = buildString {
+      appendln("Verifications (${verificationDescriptors.size}:")
+      for ((ideVersion, ideVerifications) in verificationDescriptors.groupBy { it.ideVersion }) {
+        appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
+      }
+    }
 
   override fun close() {
     ideDescriptor.closeLogged()
