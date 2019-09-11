@@ -76,12 +76,19 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       }
     }
 
-    val oldSpecialApiUsage: Map<SymbolicReference, ApiUsage> = twoTargetsVerificationResults.baseResults.asSequence()
-        .filterIsInstance<PluginVerificationResult.Verified>()
-        .flatMap {
-          it.deprecatedUsages.asSequence() + it.experimentalApiUsages.asSequence() + it.internalApiUsages.asSequence()
+    val oldApiUsages = ArrayListMultimap.create<SymbolicReference, ApiUsage>()
+    for (baseResult in twoTargetsVerificationResults.baseResults) {
+      if (baseResult is PluginVerificationResult.Verified) {
+        val apiUsages = baseResult.deprecatedUsages.asSequence() +
+            baseResult.experimentalApiUsages.asSequence() +
+            baseResult.internalApiUsages.asSequence() +
+            baseResult.nonExtendableApiUsages +
+            baseResult.overrideOnlyMethodUsages
+        for (apiUsage in apiUsages) {
+          oldApiUsages.put(apiUsage.apiElement.toReference(), apiUsage)
         }
-        .associateBy { it.apiElement.toReference() }
+      }
+    }
 
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
@@ -97,7 +104,13 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
-            val specialApiUsages = arrayListOf<ApiUsage>()
+            val oldProblemApiUsages = hashSetOf<ApiUsage>()
+            for (problem in problemsWithShortDescription) {
+              val symbolicReference = getProblemSymbolicReference(problem)
+              if (symbolicReference != null && oldApiUsages.containsKey(symbolicReference)) {
+                oldProblemApiUsages += oldApiUsages.get(symbolicReference)
+              }
+            }
 
             val testDetails = buildString {
               for ((plugin, problems) in plugin2Problems.asMap()) {
@@ -129,11 +142,6 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
                 val compatibilityProblems = buildString {
                   for ((index, problem) in problems.withIndex()) {
-                    val symbolicReference = getProblemSymbolicReference(problem)
-                    if (symbolicReference != null && oldSpecialApiUsage.containsKey(symbolicReference)) {
-                      specialApiUsages += oldSpecialApiUsage.getValue(symbolicReference)
-                    }
-
                     if (problems.size > 1) {
                       append("${index + 1}) ")
                     }
@@ -154,8 +162,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             val testMessage = buildString {
               appendln(shortDescription)
               appendln("This problem is detected for $newTarget but not for $baseTarget.")
-              if (specialApiUsages.isNotEmpty()) {
-                appendln(getSpecialApiUsagesNote(specialApiUsages))
+              if (oldProblemApiUsages.isNotEmpty()) {
+                appendln(getOldProblemApiUsagesNote(oldProblemApiUsages))
               } else {
                 appendln(documentationNote)
               }
@@ -176,46 +184,43 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
   }
 
-  private fun getSpecialApiUsagesNote(specialApiUsages: List<ApiUsage>): String {
-    if (specialApiUsages.isEmpty()) {
+  private fun getOldProblemApiUsagesNote(oldProblemApiUsages: Set<ApiUsage>): String {
+    if (oldProblemApiUsages.isEmpty()) {
       return ""
     }
-    val apiElement = specialApiUsages.first().apiElement
-    val presentableLocation = apiElement.presentableLocation
-    val experimentalApiUsage = specialApiUsages.filterIsInstance<ExperimentalApiUsage>().firstOrNull()
-    val deprecatedApiUsage = specialApiUsages.filterIsInstance<DeprecatedApiUsage>().firstOrNull()
-    val internalApiUsage = specialApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
+    val apiLocation = oldProblemApiUsages.first().apiElement.presentableLocation
     return buildString {
+      val experimentalApiUsage = oldProblemApiUsages.filterIsInstance<ExperimentalApiUsage>().firstOrNull()
       if (experimentalApiUsage != null) {
+        appendln("'$apiLocation' was marked @ApiStatus.Experimental so changes must be expected by external plugins. ")
+        appendln("And yet we want to keep track of breaking experimental API changes. You can mute this test on TeamCity with a comment 'Experimental API change'.")
+      }
+
+      val internalApiUsage = oldProblemApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
+      if (internalApiUsage != null) {
+        appendln("'$apiLocation' was marked @ApiStatus.Internal so external plugins must not you it. ")
+        appendln("And yet we want to keep track of breaking internal API changes. You can mute this test on TeamCity with a comment 'Internal API change'.")
+      }
+
+      val deprecatedApiUsage = oldProblemApiUsages.filterIsInstance<DeprecatedApiUsage>().firstOrNull()
+      if (deprecatedApiUsage != null) {
+        append(deprecatedApiUsage.apiElement.presentableLocation)
+        append(" was deprecated")
+        val deprecationInfo = deprecatedApiUsage.deprecationInfo
+        if (deprecationInfo.forRemoval) {
+          append(" and scheduled for removal")
+          if (deprecationInfo.untilVersion != null) {
+            append(" in ${deprecationInfo.untilVersion}")
+          }
+        }
+        appendln()
+        appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
         appendln(
-            "'$presentableLocation' was marked experimental so changes must be expected by external plugins. " +
-                "We would like to keep track of all experimental API changes. You can mute this test on TeamCity."
+            "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
+                "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
         )
       }
-      if (internalApiUsage != null) {
-        appendln("'$presentableLocation' was marked for internal use only. You can mute this test.")
-      }
-      if (deprecatedApiUsage != null) {
-        appendln(getDeprecatedApiRemovalNote(deprecatedApiUsage))
-      }
     }
-  }
-
-  private fun getDeprecatedApiRemovalNote(deprecatedApiUsage: DeprecatedApiUsage) = buildString {
-    append("${deprecatedApiUsage.apiElement.presentableLocation} was deprecated")
-    val deprecationInfo = deprecatedApiUsage.deprecationInfo
-    if (deprecationInfo.forRemoval) {
-      append(" and scheduled for removal")
-      if (deprecationInfo.untilVersion != null) {
-        append(" in ${deprecationInfo.untilVersion}")
-      }
-    }
-    appendln()
-    appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
-    appendln(
-        "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
-            "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
-    )
   }
 
   private fun getProblemSymbolicReference(problem: CompatibilityProblem): SymbolicReference? =
