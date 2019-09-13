@@ -68,7 +68,8 @@ class ApiQualityCheckCommand : Command {
     val currentBranch = cliOptions.currentBranch.toInt()
     val maxRemovalBranch = cliOptions.maxRemovalBranch.toInt()
     val maxExperimentalBranches = cliOptions.maxExperimentalBranches.toInt()
-    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches)
+    val findSfrApisWithoutVersion = cliOptions.findSfrApisWithoutVersion
+    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches, findSfrApisWithoutVersion)
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
@@ -220,6 +221,31 @@ class ApiQualityCheckCommand : Command {
       }
     }
 
+    if (report.apiQualityOptions.findSfrApisWithoutVersion && report.sfrApisWithoutPlannedVersion.isNotEmpty()) {
+      val suiteName = "(API to be removed in an unknown future version)"
+      tc.testSuiteStarted(suiteName).use {
+        for ((signature, deprecatedInVersion, scheduledForRemovalInVersion) in report.sfrApisWithoutPlannedVersion) {
+          val testName = "(${signature.shortPresentation})"
+          tc.testStarted(testName).use {
+            val message = buildString {
+              append(signature.fullPresentation)
+              appendln(" is to be removed in an unknown future version")
+              append("It was deprecated")
+              if (deprecatedInVersion != null) {
+                append(" in $deprecatedInVersion")
+              } else {
+                append(" before ${BuildIdeApiAnnotationsCommand.MIN_BUILD_NUMBER.baselineVersion}")
+              }
+              if (scheduledForRemovalInVersion != null) {
+                append(" and scheduled for removal in $scheduledForRemovalInVersion.")
+              }
+            }
+            tc.testFailed(testName, message, "")
+          }
+        }
+      }
+    }
+
     if (report.stabilizedExperimentalApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
         appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
@@ -232,7 +258,10 @@ class ApiQualityCheckCommand : Command {
       Paths.get("stabilized-experimental-apis.txt").writeText(stabilizedMessage)
     }
 
-    if (report.tooLongExperimental.isEmpty() && report.mustAlreadyBeRemoved.isEmpty()) {
+    if (report.tooLongExperimental.isEmpty()
+        && report.mustAlreadyBeRemoved.isEmpty()
+        && (!report.apiQualityOptions.findSfrApisWithoutVersion || report.sfrApisWithoutPlannedVersion.isEmpty())
+    ) {
       tc.buildStatusSuccess("API of ${report.ideVersion} is OK")
     } else {
       val buildMessage = buildString {
@@ -245,6 +274,12 @@ class ApiQualityCheckCommand : Command {
             append(" and ")
           }
           append("${report.mustAlreadyBeRemoved.size} APIs to be removed")
+        }
+        if (report.apiQualityOptions.findSfrApisWithoutVersion && report.sfrApisWithoutPlannedVersion.isNotEmpty()) {
+          if (report.tooLongExperimental.isNotEmpty() || report.mustAlreadyBeRemoved.isNotEmpty()) {
+            append(" and ")
+          }
+          append("${report.sfrApisWithoutPlannedVersion.size} APIs to be removed in an unknown future version")
         }
       }
       tc.buildStatusFailure(buildMessage)
@@ -307,33 +342,34 @@ class ApiQualityCheckCommand : Command {
     }
 
     val deprecationInfo = classFileMember.deprecationInfo
-    val removalVersion = deprecationInfo?.untilVersion?.let { RemovalVersion.parseRemovalVersion(it) }
-    if (deprecationInfo != null
-        && deprecationInfo.forRemoval
-        && removalVersion != null
-    ) {
-      if (removalVersion.branch <= qualityOptions.maxRemovalBranch) {
-        val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
-        val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
+    if (deprecationInfo != null && deprecationInfo.forRemoval) {
+      val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
+      val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
 
-        val firstDeprecated = markedDeprecated.map { it.ideVersion }.min()
-        val firstUnDeprecated = unmarkedDeprecated.map { it.ideVersion }.min()
+      val firstDeprecated = markedDeprecated.map { it.ideVersion }.min()
+      val firstUnDeprecated = unmarkedDeprecated.map { it.ideVersion }.min()
 
-        val scheduledForRemovalInVersion = markedDeprecated.filter { it.forRemoval }.minBy { it.ideVersion }?.ideVersion
+      val scheduledForRemovalInVersion = markedDeprecated.filter { it.forRemoval }.minBy { it.ideVersion }?.ideVersion
 
-        val wasDeprecatedBeforeFirstKnownIde = firstDeprecated != null && firstUnDeprecated != null && firstUnDeprecated <= firstDeprecated
-        val deprecatedInVersion = if (wasDeprecatedBeforeFirstKnownIde) {
-          null
-        } else {
-          markedDeprecated.minBy { it.ideVersion }?.ideVersion
+      val wasDeprecatedBeforeFirstKnownIde = firstDeprecated != null && firstUnDeprecated != null && firstUnDeprecated <= firstDeprecated
+      val deprecatedInVersion = if (wasDeprecatedBeforeFirstKnownIde) {
+        null
+      } else {
+        markedDeprecated.minBy { it.ideVersion }?.ideVersion
+      }
+
+      val removalVersion = deprecationInfo.untilVersion?.let { RemovalVersion.parseRemovalVersion(it) }
+      if (removalVersion != null) {
+        if (removalVersion.branch <= qualityOptions.maxRemovalBranch) {
+          qualityReport.mustAlreadyBeRemoved += MustAlreadyBeRemoved(
+              signature,
+              deprecatedInVersion,
+              scheduledForRemovalInVersion,
+              removalVersion
+          )
         }
-
-        qualityReport.mustAlreadyBeRemoved += MustAlreadyBeRemoved(
-            signature,
-            deprecatedInVersion,
-            scheduledForRemovalInVersion,
-            removalVersion
-        )
+      } else if (qualityOptions.findSfrApisWithoutVersion) {
+        qualityReport.sfrApisWithoutPlannedVersion += SfrApiWithoutPlannedVersion(signature, deprecatedInVersion, scheduledForRemovalInVersion)
       }
     }
   }
@@ -353,6 +389,9 @@ class ApiQualityCheckCommand : Command {
 
     @set:Argument("previous-tc-tests-file", description = "File containing TeamCity tests that were run in the previous build. ")
     var previousTcTestsFile: String? = null
+
+    @set:Argument("find-sfr-apis-without-version", description = "Find @ScheduledForRemoval APIs without 'inVersion' specified.")
+    var findSfrApisWithoutVersion: Boolean = false
   }
 
 }
@@ -360,7 +399,8 @@ class ApiQualityCheckCommand : Command {
 private data class ApiQualityOptions(
     val currentBranch: Int,
     val maxRemovalBranch: Int,
-    val maxExperimentalBranches: Int
+    val maxExperimentalBranches: Int,
+    val findSfrApisWithoutVersion: Boolean
 )
 
 private data class ApiQualityReport(
@@ -368,7 +408,8 @@ private data class ApiQualityReport(
     val apiQualityOptions: ApiQualityOptions,
     val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
     val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
-    val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf()
+    val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf(),
+    val sfrApisWithoutPlannedVersion: MutableList<SfrApiWithoutPlannedVersion> = arrayListOf()
 )
 
 private data class MustAlreadyBeRemoved(
@@ -376,6 +417,12 @@ private data class MustAlreadyBeRemoved(
     val deprecatedInVersion: IdeVersion?,
     val scheduledForRemovalInVersion: IdeVersion?,
     val removalVersion: RemovalVersion
+)
+
+private data class SfrApiWithoutPlannedVersion(
+    val apiSignature: ApiSignature,
+    val deprecatedInVersion: IdeVersion?,
+    val scheduledForRemovalInVersion: IdeVersion?
 )
 
 private data class RemovalVersion(val originalVersion: String, val branch: Int) {
