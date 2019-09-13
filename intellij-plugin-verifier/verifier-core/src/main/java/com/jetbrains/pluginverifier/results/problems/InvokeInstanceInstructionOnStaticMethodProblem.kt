@@ -3,9 +3,11 @@ package com.jetbrains.pluginverifier.results.problems
 import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class InvokeInstanceInstructionOnStaticMethodProblem(
+    val methodReference: MethodReference,
     val resolvedMethod: MethodLocation,
     val caller: MethodLocation,
     val instruction: Instruction
@@ -24,9 +26,10 @@ class InvokeInstanceInstructionOnStaticMethodProblem(
         ).formatMessage(caller, instruction, resolvedMethod)
 
   override fun equals(other: Any?) = other is InvokeInstanceInstructionOnStaticMethodProblem
+      && methodReference == other.methodReference
       && resolvedMethod == other.resolvedMethod
       && caller == other.caller
       && instruction == other.instruction
 
-  override fun hashCode() = Objects.hash(resolvedMethod, caller, instruction)
+  override fun hashCode() = Objects.hash(methodReference, resolvedMethod, caller, instruction)
 }

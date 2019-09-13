@@ -2,9 +2,11 @@ package com.jetbrains.pluginverifier.results.problems
 
 import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class InvokeStaticOnInstanceMethodProblem(
+    val methodReference: MethodReference,
     val resolvedMethod: MethodLocation,
     val caller: MethodLocation
 ) : CompatibilityProblem() {
@@ -21,8 +23,9 @@ class InvokeStaticOnInstanceMethodProblem(
         "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(caller, resolvedMethod)
 
   override fun equals(other: Any?) = other is InvokeStaticOnInstanceMethodProblem
+      && methodReference == other.methodReference
       && resolvedMethod == other.resolvedMethod
       && caller == other.caller
 
-  override fun hashCode() = Objects.hash(resolvedMethod, caller)
+  override fun hashCode() = Objects.hash(methodReference, resolvedMethod, caller)
 }

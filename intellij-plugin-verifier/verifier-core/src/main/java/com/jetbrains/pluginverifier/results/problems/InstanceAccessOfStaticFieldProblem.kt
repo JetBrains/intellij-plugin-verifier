@@ -4,9 +4,11 @@ import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.reference.FieldReference
 import java.util.*
 
 class InstanceAccessOfStaticFieldProblem(
+    val fieldReference: FieldReference,
     val field: FieldLocation,
     val accessor: MethodLocation,
     val instruction: Instruction
@@ -25,10 +27,11 @@ class InstanceAccessOfStaticFieldProblem(
         ).formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is InstanceAccessOfStaticFieldProblem
+      && fieldReference == other.fieldReference
       && field == other.field
       && accessor == other.accessor
 
-  override fun hashCode() = Objects.hash(field, accessor)
+  override fun hashCode() = Objects.hash(fieldReference, field, accessor)
 
 
 }

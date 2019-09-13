@@ -4,9 +4,11 @@ import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.reference.FieldReference
 import java.util.*
 
 class ChangeFinalFieldProblem(
+    val fieldReference: FieldReference,
     val field: FieldLocation,
     val accessor: MethodLocation,
     val instruction: Instruction
@@ -22,10 +24,11 @@ class ChangeFinalFieldProblem(
     get() = "Method {0} has modifying instruction *{1}* referencing a final field {2}. This can lead to **IllegalAccessError** exception at runtime.".formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is ChangeFinalFieldProblem
+      && fieldReference == other.fieldReference
       && field == other.field
       && accessor == other.accessor
       && instruction == other.instruction
 
-  override fun hashCode() = Objects.hash(field, accessor, instruction)
+  override fun hashCode() = Objects.hash(fieldReference, field, accessor, instruction)
 
 }

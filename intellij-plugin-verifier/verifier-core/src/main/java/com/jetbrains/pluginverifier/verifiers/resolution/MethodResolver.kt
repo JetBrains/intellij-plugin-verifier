@@ -474,7 +474,7 @@ private class MethodResolveImpl(
      superinterfaces of C that match the resolved method's name and descriptor and are not abstract,
      invokespecial throws an AbstractMethodError.
     */
-    context.problemRegistrar.registerProblem(AbstractMethodInvocationProblem(resolvedMethod.location, callerMethod.location, instruction))
+    context.problemRegistrar.registerProblem(AbstractMethodInvocationProblem(methodReference, resolvedMethod.location, callerMethod.location, instruction))
     return null
   }
 

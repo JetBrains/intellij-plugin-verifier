@@ -4,9 +4,11 @@ import com.jetbrains.plugin.structure.base.utils.formatMessage
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.reference.FieldReference
 import java.util.*
 
 class StaticAccessOfInstanceFieldProblem(
+    val fieldReference: FieldReference,
     val field: FieldLocation,
     val accessor: MethodLocation,
     val instruction: Instruction
@@ -24,9 +26,10 @@ class StaticAccessOfInstanceFieldProblem(
         "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is StaticAccessOfInstanceFieldProblem
+      && fieldReference == other.fieldReference
       && field == other.field
       && accessor == other.accessor
       && instruction == other.instruction
 
-  override fun hashCode() = Objects.hash(field, accessor, instruction)
+  override fun hashCode() = Objects.hash(fieldReference, field, accessor, instruction)
 }

@@ -35,7 +35,7 @@ class MethodInvokeInstructionVerifier(
       /*
       Otherwise, if the resolved method is a class (static) method, the invokevirtual instruction throws an IncompatibleClassChangeError.
        */
-      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(method.location, callerMethod.location, instruction))
+      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodReference, method.location, callerMethod.location, instruction))
     }
   }
 
@@ -60,7 +60,7 @@ class MethodInvokeInstructionVerifier(
     the invokespecial instruction throws an IncompatibleClassChangeError.
      */
     if (method.isStatic) {
-      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(method.location, callerMethod.location, instruction))
+      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodReference, method.location, callerMethod.location, instruction))
     }
 
     /*
@@ -107,7 +107,7 @@ class MethodInvokeInstructionVerifier(
        faulty bytecode. See PR-707 and a test class mock.plugin.noproblems.bridgeMethod.A
        */
       if (!callerMethod.isSynthetic || !callerMethod.isBridgeMethod) {
-        context.problemRegistrar.registerProblem(AbstractMethodInvocationProblem(resolvedMethod.location, callerMethod.location, instruction))
+        context.problemRegistrar.registerProblem(AbstractMethodInvocationProblem(methodReference, resolvedMethod.location, callerMethod.location, instruction))
       }
     }
   }
@@ -125,10 +125,10 @@ class MethodInvokeInstructionVerifier(
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
      */
     if (method.isPrivate || isTestPrivateInterfaceMethod(method)) {
-      context.problemRegistrar.registerProblem(InvokeInterfaceOnPrivateMethodProblem(method.location, callerMethod.location))
+      context.problemRegistrar.registerProblem(InvokeInterfaceOnPrivateMethodProblem(methodReference, method.location, callerMethod.location))
     }
     if (method.isStatic) {
-      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(method.location, callerMethod.location, instruction))
+      context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodReference, method.location, callerMethod.location, instruction))
     }
 
     /**
@@ -157,7 +157,7 @@ class MethodInvokeInstructionVerifier(
     Otherwise, if the resolved method is an instance method, the invokestatic instruction throws an IncompatibleClassChangeError.
      */
     if (!method.isStatic) {
-      context.problemRegistrar.registerProblem(InvokeStaticOnInstanceMethodProblem(method.location, callerMethod.location))
+      context.problemRegistrar.registerProblem(InvokeStaticOnInstanceMethodProblem(methodReference, method.location, callerMethod.location))
     }
   }
 
