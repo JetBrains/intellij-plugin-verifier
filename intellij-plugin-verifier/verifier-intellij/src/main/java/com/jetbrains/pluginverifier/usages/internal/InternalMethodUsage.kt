@@ -10,10 +10,12 @@ import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOpti
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.NO_RETURN_TYPE
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class InternalMethodUsage(
+    override val apiReference: MethodReference,
     override val apiElement: MethodLocation,
     override val usageLocation: Location
 ) : InternalApiUsage() {
@@ -33,8 +35,9 @@ class InternalMethodUsage(
     }
 
   override fun equals(other: Any?) = other is InternalMethodUsage
+      && apiReference == other.apiReference
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
 
-  override fun hashCode() = Objects.hash(apiElement, usageLocation)
+  override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation)
 }

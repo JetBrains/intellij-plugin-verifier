@@ -3,15 +3,16 @@ package com.jetbrains.pluginverifier.usages.javaPlugin
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaPluginApiUsageRegistrar) : ApiUsageProcessor {
-  override fun processApiUsage(classFileMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
-    if (classFileMember.isJavaPluginApi()) {
+  override fun processApiUsage(apiReference: SymbolicReference, resolvedMember: ClassFileMember, usageLocation: Location, context: VerificationContext) {
+    if (resolvedMember.isJavaPluginApi()) {
       javaPluginApiUsageRegistrar.registerJavaPluginClassUsage(
-          JavaPluginClassUsage(classFileMember.containingClassFile.location, usageLocation)
+          JavaPluginClassUsage(resolvedMember.containingClassFile.location, usageLocation)
       )
     }
   }

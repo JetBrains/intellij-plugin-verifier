@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.usages.nonExtendable
 
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HOST_NAME
 import com.jetbrains.pluginverifier.results.presentation.MethodParameterNameOption.NO_PARAMETER_NAMES
 import com.jetbrains.pluginverifier.results.presentation.MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE
@@ -17,6 +18,9 @@ class NonExtendableMethodOverriding(
     override val apiElement: MethodLocation,
     override val usageLocation: Location
 ) : NonExtendableApiUsage() {
+
+  override val apiReference
+    get() = apiElement.toReference()
 
   override val shortDescription
     get() = "Non-extendable method '${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)}' is overridden"

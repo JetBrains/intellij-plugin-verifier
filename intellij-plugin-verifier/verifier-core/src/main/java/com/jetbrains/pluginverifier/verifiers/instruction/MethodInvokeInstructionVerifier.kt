@@ -177,7 +177,7 @@ class MethodInvokeInstructionVerifier(
     val method = MethodResolver().resolveMethod(methodOwnerClass, methodReference, instruction, callerMethod, context)
     if (method != null) {
       val usageLocation = callerMethod.location
-      context.apiUsageProcessors.forEach { it.processApiUsage(method, usageLocation, context) }
+      context.apiUsageProcessors.forEach { it.processApiUsage(methodReference, method, usageLocation, context) }
     }
     return method
   }

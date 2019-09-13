@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.usages
 
 import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 
 /**
  * Base class for all usages of API in bytecode.
@@ -8,7 +9,12 @@ import com.jetbrains.pluginverifier.results.location.Location
 abstract class ApiUsage {
 
   /**
-   * API element being used
+   * API reference in bytecode.
+   */
+  abstract val apiReference: SymbolicReference
+
+  /**
+   * API element to which the [apiReference] resolves.
    */
   abstract val apiElement: Location
 

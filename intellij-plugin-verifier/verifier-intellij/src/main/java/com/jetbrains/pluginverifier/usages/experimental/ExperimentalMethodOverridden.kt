@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.usages.experimental
 
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.NO_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
 import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HOST_NAME
@@ -18,6 +19,9 @@ class ExperimentalMethodOverridden(
     override val apiElement: MethodLocation,
     override val usageLocation: MethodLocation
 ) : ExperimentalApiUsage() {
+
+  override val apiReference
+    get() = apiElement.toReference()
 
   override val shortDescription
     get() = "Experimental API method ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} is overridden"

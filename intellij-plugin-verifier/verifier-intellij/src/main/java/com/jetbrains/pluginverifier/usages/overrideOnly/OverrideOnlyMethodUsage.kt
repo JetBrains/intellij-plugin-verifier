@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.results.presentation.MethodParameterNameOpti
 import com.jetbrains.pluginverifier.results.presentation.MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME
 import com.jetbrains.pluginverifier.results.presentation.MethodReturnTypeOption.NO_RETURN_TYPE
 import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
+import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
@@ -15,6 +16,7 @@ import java.util.*
  * Violating invocation of `ApiStatus.OverrideOnly` method.
  */
 class OverrideOnlyMethodUsage(
+    override val apiReference: MethodReference,
     override val apiElement: MethodLocation,
     override val usageLocation: Location
 ) : ApiUsage() {
@@ -34,8 +36,9 @@ class OverrideOnlyMethodUsage(
     }
 
   override fun equals(other: Any?) = other is OverrideOnlyMethodUsage
+      && apiReference == other.apiReference
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
 
-  override fun hashCode() = Objects.hash(apiElement, usageLocation)
+  override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation)
 }

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.usages.nonExtendable
 
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.ElementType
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.NO_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.WITH_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
@@ -13,6 +14,9 @@ class NonExtendableTypeInherited(
     override val apiElement: ClassLocation,
     override val usageLocation: ClassLocation
 ) : NonExtendableApiUsage() {
+
+  override val apiReference
+    get() = apiElement.toReference()
 
   private val inheritanceVerb: String
     get() = when {

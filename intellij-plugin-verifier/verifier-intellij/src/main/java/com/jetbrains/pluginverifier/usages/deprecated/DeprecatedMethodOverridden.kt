@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.usages.deprecated
 
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption.NO_GENERICS
 import com.jetbrains.pluginverifier.results.presentation.ClassOption.FULL_NAME
 import com.jetbrains.pluginverifier.results.presentation.HostClassOption.FULL_HOST_NAME
@@ -19,6 +20,10 @@ class DeprecatedMethodOverridden(
     override val usageLocation: MethodLocation,
     deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
+
+  override val apiReference
+    get() = apiElement.toReference()
+
   override val shortDescription
     get() = "Deprecated method ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} is overridden"
 
@@ -33,8 +38,10 @@ class DeprecatedMethodOverridden(
     }
 
   override fun equals(other: Any?) = other is DeprecatedMethodOverridden
+      && apiReference == other.apiReference
       && apiElement == other.apiElement
       && usageLocation == other.usageLocation
+      && deprecationInfo == other.deprecationInfo
 
-  override fun hashCode() = Objects.hash(apiElement, usageLocation)
+  override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation, deprecationInfo)
 }

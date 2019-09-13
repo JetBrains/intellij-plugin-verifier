@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
 import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption
 import com.jetbrains.pluginverifier.results.presentation.ClassOption
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
@@ -24,6 +25,9 @@ class DiscouragingJdkClassUsage(
     override val usageLocation: Location,
     private val classFileOrigin: ClassFileOrigin
 ) : DeprecatedApiUsage(DeprecationInfo(false, "JDK 8")) {
+
+  override val apiReference
+    get() = apiElement.toReference()
 
   override val shortDescription: String
     get() = "Usage of JDK 8 specific " + apiElement.elementType.presentableName + " " +
