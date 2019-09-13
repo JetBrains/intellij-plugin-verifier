@@ -293,9 +293,11 @@ class ApiQualityCheckCommand : Command {
 
     val experimentalMemberAnnotation = classFileMember.findEffectiveExperimentalAnnotation(ideResolver)
     if (experimentalMemberAnnotation != null) {
-      val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
-      if (since != null && since.baselineVersion + qualityOptions.maxExperimentalBranches < qualityOptions.currentBranch) {
-        qualityReport.tooLongExperimental += TooLongExperimental(signature, since, experimentalMemberAnnotation)
+      if (experimentalMemberAnnotation !is MemberAnnotation.AnnotatedViaContainingClass) {
+        val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
+        if (since != null && since.baselineVersion + qualityOptions.maxExperimentalBranches < qualityOptions.currentBranch) {
+          qualityReport.tooLongExperimental += TooLongExperimental(signature, since, experimentalMemberAnnotation)
+        }
       }
     } else {
       val unmarkedExperimentalIn = apiEvents.filterIsInstance<UnmarkedExperimentalIn>().map { it.ideVersion }.max()
