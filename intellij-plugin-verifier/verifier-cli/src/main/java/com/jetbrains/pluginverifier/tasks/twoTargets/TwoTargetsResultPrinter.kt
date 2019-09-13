@@ -85,7 +85,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             baseResult.nonExtendableApiUsages +
             baseResult.overrideOnlyMethodUsages
         for (apiUsage in apiUsages) {
-          oldApiUsages.put(apiUsage.apiElement.toReference(), apiUsage)
+          oldApiUsages.put(apiUsage.apiReference, apiUsage)
         }
       }
     }
@@ -228,6 +228,25 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
         is ClassNotFoundProblem -> problem.unresolved
         is MethodNotFoundProblem -> problem.unresolvedMethod
         is FieldNotFoundProblem -> problem.unresolvedField
+        is IllegalClassAccessProblem -> problem.unavailableClass.toReference()
+        is IllegalMethodAccessProblem -> problem.bytecodeMethodReference
+        is IllegalFieldAccessProblem -> problem.fieldBytecodeReference
+        is AbstractClassInstantiationProblem -> problem.abstractClass.toReference()
+        is AbstractMethodInvocationProblem -> problem.bytecodeMethodReference
+        is ChangeFinalFieldProblem -> problem.fieldReference
+        is InheritFromFinalClassProblem -> problem.finalClass.toReference()
+        is InstanceAccessOfStaticFieldProblem -> problem.fieldReference
+        is InterfaceInstantiationProblem -> problem.interfaze.toReference()
+        is InvokeClassMethodOnInterfaceProblem -> problem.methodReference
+        is InvokeInstanceInstructionOnStaticMethodProblem -> problem.methodReference
+        is InvokeInterfaceOnPrivateMethodProblem -> problem.methodReference
+        is InvokeStaticOnInstanceMethodProblem -> problem.methodReference
+        is MethodNotImplementedProblem -> problem.abstractMethod.toReference()
+        is MultipleDefaultImplementationsProblem -> problem.methodReference
+        is OverridingFinalMethodProblem -> problem.finalMethod.toReference()
+        is StaticAccessOfInstanceFieldProblem -> problem.fieldReference
+        is SuperClassBecameInterfaceProblem -> problem.interfaze.toReference()
+        is SuperInterfaceBecameClassProblem -> problem.clazz.toReference()
         else -> null
       }
 
