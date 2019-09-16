@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 
 /**
- * Builder of [com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem.fullDescription].
+ * Utility builder of "package not found" message.
  */
 object PackageNotFoundDescriptionBuilder {
 
