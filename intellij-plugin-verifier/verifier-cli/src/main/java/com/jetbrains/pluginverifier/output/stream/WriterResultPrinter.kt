@@ -68,17 +68,17 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   private fun printWarnings(verificationTarget: PluginVerificationTarget, plugin: PluginInfo, warnings: Set<CompatibilityWarning>) {
     val warningsSize = warnings.size
     out.println("Against $verificationTarget the plugin $plugin has $warningsSize " + "warning".pluralize(warningsSize))
-    warnings.sortedBy { it.message }.forEach {
-      out.println("    #${it.message}")
+    warnings.sortedBy { it.message }.forEach { warning ->
+      out.println(warning.message.lineSequence().joinToString { "    $it" })
     }
   }
 
   private fun printProblems(verificationTarget: PluginVerificationTarget, plugin: PluginInfo, problems: Set<CompatibilityProblem>) {
     val problemsCnt = problems.size
     out.println("Against $verificationTarget the plugin $plugin has $problemsCnt " + "problem".pluralize(problemsCnt))
-    problems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach {
-      out.println("    #${it.key}")
-      it.value.forEach { fullDescription ->
+    problems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach { (shortDescription, fullDescriptions) ->
+      out.println("    #$shortDescription")
+      for (fullDescription in fullDescriptions) {
         out.println("        $fullDescription")
       }
     }
