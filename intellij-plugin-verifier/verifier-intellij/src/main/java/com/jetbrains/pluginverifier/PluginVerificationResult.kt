@@ -69,6 +69,15 @@ sealed class PluginVerificationResult(
             append(" possible")
           }
           append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
+
+          val allDirectMissingDependencies = dependenciesGraph.verifiedPlugin.missingDependencies
+          if (allDirectMissingDependencies.isNotEmpty()) {
+            append(", some of which may be caused by missing ")
+            if (allDirectMissingDependencies.all { it.dependency.isOptional }) {
+              append("optional ")
+            }
+            append("dependency".pluralize(allDirectMissingDependencies.size))
+          }
         }
         if (compatibilityWarnings.isNotEmpty()) {
           if (isNotEmpty()) append(". ")

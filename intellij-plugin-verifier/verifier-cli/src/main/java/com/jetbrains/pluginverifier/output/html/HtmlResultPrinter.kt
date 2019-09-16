@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.output.html
 
 import com.jetbrains.plugin.structure.base.utils.create
-import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -111,23 +110,7 @@ class HtmlResultPrinter(
     span(classes = "uMarker") { +"    " }
     +result.plugin.version
     small { +result.plugin.toString() }
-    small {
-      +with(result) {
-        when (this) {
-          is PluginVerificationResult.Verified -> when {
-            hasCompatibilityWarnings -> "${compatibilityWarnings.size} " + "warning".pluralize(compatibilityWarnings.size) + " found"
-            hasCompatibilityProblems -> "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size) + " found"
-            hasDirectMissingMandatoryDependencies -> "Plugin has " +
-                "${directMissingMandatoryDependencies.size} missing direct " + "dependency".pluralize(directMissingMandatoryDependencies.size) + " and " +
-                "${compatibilityProblems.size} " + "problem".pluralize(compatibilityProblems.size)
-            else -> "OK"
-          }
-          is PluginVerificationResult.InvalidPlugin -> "Plugin is invalid"
-          is PluginVerificationResult.NotFound -> "Plugin ${result.plugin} is not found in the Repository"
-          is PluginVerificationResult.FailedToDownload -> "Plugin ${result.plugin} is not downloaded from the Repository"
-        }
-      }
-    }
+    small { +result.verificationVerdict }
   }
 
   private fun HtmlBuilder.printProblemsAndWarnings(result: PluginVerificationResult) {
