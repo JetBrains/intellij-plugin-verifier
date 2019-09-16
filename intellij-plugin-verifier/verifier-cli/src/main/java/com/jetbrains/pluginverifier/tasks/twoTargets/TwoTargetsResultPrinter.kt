@@ -192,14 +192,16 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     return buildString {
       val experimentalApiUsage = oldProblemApiUsages.filterIsInstance<ExperimentalApiUsage>().firstOrNull()
       if (experimentalApiUsage != null) {
-        appendln("'$apiLocation' was marked @ApiStatus.Experimental so changes must be expected by external plugins. ")
+        appendln("$apiLocation was marked @ApiStatus.Experimental so changes must be expected by external plugins. ")
         appendln("And yet we want to keep track of breaking experimental API changes. You can mute this test on TeamCity with a comment 'Experimental API change'.")
+        appendln()
       }
 
       val internalApiUsage = oldProblemApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
       if (internalApiUsage != null) {
-        appendln("'$apiLocation' was marked @ApiStatus.Internal so external plugins must not you it. ")
+        appendln("$apiLocation was marked @ApiStatus.Internal so external plugins must not you it. ")
         appendln("And yet we want to keep track of breaking internal API changes. You can mute this test on TeamCity with a comment 'Internal API change'.")
+        appendln()
       }
 
       val deprecatedApiUsage = oldProblemApiUsages.filterIsInstance<DeprecatedApiUsage>().firstOrNull()
@@ -219,6 +221,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
                 "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
         )
+        appendln()
       }
     }
   }
