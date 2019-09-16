@@ -18,7 +18,7 @@ class CheckIdeParams(
 
   override val presentableText
     get() = buildString {
-      appendln("Verifications (${verificationDescriptors.size}:")
+      appendln("Scheduled verifications (${verificationDescriptors.size}):")
       for ((ideVersion, ideVerifications) in verificationDescriptors.groupBy { it.ideVersion }) {
         appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
       }

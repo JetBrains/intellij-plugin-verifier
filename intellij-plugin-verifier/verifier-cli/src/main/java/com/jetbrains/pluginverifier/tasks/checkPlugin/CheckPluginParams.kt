@@ -16,7 +16,7 @@ class CheckPluginParams(
 
   override val presentableText
     get() = buildString {
-      appendln("Scheduled verifications (${verificationDescriptors.size}:")
+      appendln("Scheduled verifications (${verificationDescriptors.size}):")
       appendln(verificationDescriptors.joinToString())
     }
 

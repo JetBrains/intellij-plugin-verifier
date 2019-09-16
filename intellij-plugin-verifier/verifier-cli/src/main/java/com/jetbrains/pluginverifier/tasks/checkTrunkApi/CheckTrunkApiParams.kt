@@ -26,12 +26,12 @@ class CheckTrunkApiParams(
       appendln("Trunk IDE: $trunkIde")
       appendln("Release IDE: $releaseIde")
 
-      appendln("Release verifications (${releaseVerificationDescriptors.size}: ")
+      appendln("Release verifications (${releaseVerificationDescriptors.size}): ")
       for ((ideVersion, ideVerifications) in releaseVerificationDescriptors.groupBy { it.ideVersion }) {
         appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
       }
 
-      appendln("Trunk verifications (${releaseVerificationDescriptors.size}: ")
+      appendln("Trunk verifications (${releaseVerificationDescriptors.size}): ")
       for ((ideVersion, ideVerifications) in trunkVerificationDescriptors.groupBy { it.ideVersion }) {
         appendln(ideVersion.asString() + " against " + ideVerifications.joinToString { it.checkedPlugin.presentableName })
       }
