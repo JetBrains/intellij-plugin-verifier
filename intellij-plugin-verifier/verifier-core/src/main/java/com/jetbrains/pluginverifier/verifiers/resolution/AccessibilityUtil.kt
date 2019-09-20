@@ -20,10 +20,20 @@ private fun isKotlinDefaultConstructorMarker(classFile: ClassFile): Boolean =
 
 fun detectAccessProblem(callee: ClassFileMember, caller: ClassFileMember, context: VerificationContext): AccessType? {
   when {
-    callee.isPrivate ->
+    callee.isPrivate -> {
+      if (callee is Method || callee is Field) {
+        val callerClass = if (caller is ClassFile) caller else caller.containingClassFile
+        val calleeClass = callee.containingClassFile
+        return if (doClassesBelongToTheSameNestHost(callerClass, calleeClass, context)) {
+          null
+        } else {
+          AccessType.PRIVATE
+        }
+      }
       if (caller.containingClassFile.name != callee.containingClassFile.name) {
         return AccessType.PRIVATE
       }
+    }
     callee.isProtected ->
       if (caller.containingClassFile.packageName != callee.containingClassFile.packageName) {
         if (!context.classResolver.isSubclassOf(caller.containingClassFile, callee.containingClassFile.name)) {
@@ -36,4 +46,18 @@ fun detectAccessProblem(callee: ClassFileMember, caller: ClassFileMember, contex
       }
   }
   return null
+}
+
+private fun getClassNestHost(classFile: ClassFile, context: VerificationContext): ClassFile? {
+  val nestHostClassName = classFile.nestHostClass ?: return classFile
+  return context.classResolver.resolveClassOrNull(nestHostClassName)
+}
+
+private fun doClassesBelongToTheSameNestHost(one: ClassFile, two: ClassFile, context: VerificationContext): Boolean {
+  if (one.name == two.name) {
+    return true
+  }
+  val oneNestHost = getClassNestHost(one, context)
+  val twoNestHost = getClassNestHost(two, context)
+  return oneNestHost != null && twoNestHost != null && oneNestHost.name == twoNestHost.name
 }

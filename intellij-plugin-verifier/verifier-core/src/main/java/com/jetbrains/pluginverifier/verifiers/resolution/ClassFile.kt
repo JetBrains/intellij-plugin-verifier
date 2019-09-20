@@ -31,4 +31,6 @@ interface ClassFile : ClassFileMember {
   override val isPackagePrivate: Boolean
   val isSuperFlag: Boolean
   override val isDeprecated: Boolean
+
+  val nestHostClass: String?
 }

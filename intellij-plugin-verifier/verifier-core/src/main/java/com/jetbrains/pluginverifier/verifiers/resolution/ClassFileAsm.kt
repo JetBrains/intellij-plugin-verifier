@@ -96,4 +96,6 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
   override val isSynthetic: Boolean
     get() = asmNode.access and Opcodes.ACC_SYNTHETIC != 0
 
+  override val nestHostClass: String?
+    get() = asmNode.nestHostClass
 }
