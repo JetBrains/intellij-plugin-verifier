@@ -53,7 +53,7 @@ internal class IdePluginImpl : IdePlugin {
 
   override val icons: MutableList<PluginIcon> = arrayListOf()
 
-  override val optionalDescriptors: MutableMap<String, IdePlugin> = hashMapOf()
+  override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
       (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)

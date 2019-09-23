@@ -373,23 +373,33 @@ class MockPluginsTest {
   private fun checkOptionalDescriptors(plugin: IdePlugin) {
     val optionalDescriptors = plugin.optionalDescriptors
     assertEquals(
-        setOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml"),
-        optionalDescriptors.keys
+        listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml"),
+        optionalDescriptors.map { it.configurationFilePath }
+    )
+
+    assertEquals(
+        listOf("JUnit", "optionalDependency", "otherDirOptionalDependency"),
+        optionalDescriptors.map { it.dependency.id }
+    )
+
+    assertEquals(
+        listOf(true, true, true),
+        optionalDescriptors.map { it.dependency.isOptional }
     )
 
     assertEquals(
         setOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.getValue("extension.xml"))
+        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "JUnit" }!!.optionalPlugin)
     )
 
     assertEquals(
         setOf("com.intellij.BeanClass".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.getValue("optionals/optional.xml"))
+        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin)
     )
 
     assertEquals(
         setOf("com.intellij.optional.BeanClass".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.getValue("../optionalsDir/otherDirOptional.xml"))
+        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "otherDirOptionalDependency" }!!.optionalPlugin)
     )
   }
 

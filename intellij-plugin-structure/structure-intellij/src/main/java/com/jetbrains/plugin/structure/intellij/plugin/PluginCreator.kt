@@ -44,7 +44,7 @@ internal class PluginCreator {
   }
 
   val pluginFile: File
-  val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = hashMapOf()
+  val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
   val descriptorPath: String
   private val validateDescriptor: Boolean
   private val plugin: IdePluginImpl?
@@ -92,7 +92,7 @@ internal class PluginCreator {
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val optionalPlugin = pluginCreationResult.plugin
-      plugin!!.optionalDescriptors[configurationFile] = optionalPlugin
+      plugin!!.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       plugin.extensions.putAll(optionalPlugin.extensions)
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)

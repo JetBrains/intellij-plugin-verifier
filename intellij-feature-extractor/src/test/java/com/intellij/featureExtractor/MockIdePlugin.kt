@@ -3,10 +3,7 @@ package com.intellij.featureExtractor
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -29,7 +26,7 @@ data class MockIdePlugin(
   override val productDescriptor: ProductDescriptor? = null
   override val dependencies: List<PluginDependency> = emptyList()
   override val underlyingDocument: Document = Document(Element("idea-plugin"))
-  override val optionalDescriptors: Map<String, IdePlugin> = emptyMap()
+  override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
   override val untilBuild: IdeVersion? = null
   override val definedModules: Set<String> = emptySet()

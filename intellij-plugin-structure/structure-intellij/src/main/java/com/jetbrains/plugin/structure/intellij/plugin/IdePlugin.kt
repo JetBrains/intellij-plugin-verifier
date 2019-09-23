@@ -19,7 +19,7 @@ interface IdePlugin : Plugin {
 
   val definedModules: Set<String>
 
-  val optionalDescriptors: Map<String, IdePlugin>
+  val optionalDescriptors: List<OptionalPluginDescriptor>
 
   val underlyingDocument: Document
 
