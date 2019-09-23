@@ -7,22 +7,15 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
 
 /**
- * [ClassesSelector] that selects for verification
- * all the classes that constitute the
- * plugin's class loader in IDEA, except for the
- * bundled libraries' classes.
- *
- * Specifically, those classes are
- * 1) all classes referenced in the `plugin.xml` and all adjacent ones;
+ * [ClassesSelector] that selects for verification all the classes that constitute the
+ * plugin's class loader in IDEA, except for the bundled libraries' classes:
+ * 1) all classes referenced in the `plugin.xml`.
  * 1) for .jar-red plugins, all the classes contained in `.jar`;
- * 2) for .zip-ped plugins, all the classes from the `/lib` directory
- * and from the `/classes` directory.
+ * 2) for .zip-ped plugins, all the classes from the `/lib` directory and from the `/classes` directory.
  *
- * Note that this selector tries
- * to ignore third-party classes from libraries bundled into the plugin distribution
- * because a) they typically don't contain IntelliJ API usages, and b)
- * the verification may produce false warnings since some libraries
- * optionally depend on another libraries, which may not be resolved.
+ * Note that this selector tries to ignore third-party classes from libraries bundled into the plugin distribution because
+ * a) they typically don't contain IntelliJ API usages
+ * b) the verification may produce false warnings since some libraries optionally depend on missing libraries.
  */
 class MainClassesSelector : ClassesSelector {
 
