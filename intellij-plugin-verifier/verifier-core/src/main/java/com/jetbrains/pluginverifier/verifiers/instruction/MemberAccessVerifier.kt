@@ -24,7 +24,7 @@ class MemberAccessVerifier : InstructionVerifier {
         Opcodes.INVOKESTATIC -> Instruction.INVOKE_STATIC
         else -> return
       }
-      verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instruction, context)
+      verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instructionNode, instruction, context)
     }
 
     if (instructionNode is FieldInsnNode) {
@@ -35,7 +35,7 @@ class MemberAccessVerifier : InstructionVerifier {
         Opcodes.GETSTATIC -> Instruction.GET_STATIC
         else -> return
       }
-      verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instruction, context)
+      verifyMemberAccess(method, instructionNode.owner, instructionNode.name, instructionNode.desc, instructionNode, instruction, context)
     }
 
     if (instructionNode is InvokeDynamicInsnNode) {
@@ -63,7 +63,7 @@ class MemberAccessVerifier : InstructionVerifier {
           else -> null
         } ?: continue
 
-        verifyMemberAccess(callerMethod, bsmArg.owner, bsmArg.name, bsmArg.desc, instruction, context)
+        verifyMemberAccess(callerMethod, bsmArg.owner, bsmArg.name, bsmArg.desc, instructionNode, instruction, context)
       }
     }
   }
@@ -74,6 +74,7 @@ class MemberAccessVerifier : InstructionVerifier {
       memberOwner: String,
       memberName: String,
       memberDesc: String,
+      instructionNode: AbstractInsnNode,
       instruction: Instruction,
       context: VerificationContext
   ) {
@@ -90,7 +91,7 @@ class MemberAccessVerifier : InstructionVerifier {
       when (instruction) {
         Instruction.INVOKE_VIRTUAL, Instruction.INVOKE_INTERFACE, Instruction.INVOKE_STATIC, Instruction.INVOKE_SPECIAL -> {
           val methodReference = MethodReference(memberOwner, memberName, memberDesc)
-          MethodInvokeInstructionVerifier(callerMethod, ownerClassFile, methodReference, context, instruction).verify()
+          MethodInvokeInstructionVerifier(callerMethod, ownerClassFile, methodReference, context, instruction, instructionNode).verify()
         }
 
         Instruction.GET_STATIC, Instruction.PUT_STATIC, Instruction.PUT_FIELD, Instruction.GET_FIELD -> {

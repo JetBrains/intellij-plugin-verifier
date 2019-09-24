@@ -52,7 +52,7 @@ fun Resolver.resolveClassChecked(
         }
         val usageLocation = referrer.location
         val classReference = ClassReference(className)
-        context.apiUsageProcessors.forEach { it.processApiUsage(classReference, classFile, usageLocation, context) }
+        context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, usageLocation, context) }
         classFile
       }
     }

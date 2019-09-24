@@ -4,41 +4,60 @@ import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import org.objectweb.asm.tree.AbstractInsnNode
 
 class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: ExperimentalApiRegistrar) : ApiUsageProcessor {
-  override fun processApiUsage(
-      apiReference: SymbolicReference,
-      resolvedMember: ClassFileMember,
-      usageLocation: Location,
-      context: VerificationContext
+
+  private fun isExperimental(
+    resolvedMember: ClassFileMember,
+    context: VerificationContext,
+    usageLocation: Location
+  ) = resolvedMember.isExperimentalApi(context.classResolver)
+    && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
+
+  override fun processClassReference(
+    classReference: ClassReference,
+    resolvedClass: ClassFile,
+    usageLocation: Location,
+    context: VerificationContext
   ) {
-    if (resolvedMember.isExperimentalApi(context.classResolver)
-        && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
-    ) {
-      when (resolvedMember) {
-        is ClassFile -> {
-          experimentalApiRegistrar.registerExperimentalApiUsage(
-              ExperimentalClassUsage(apiReference as ClassReference, resolvedMember.location, usageLocation)
-          )
-        }
-        is Method -> {
-          experimentalApiRegistrar.registerExperimentalApiUsage(
-              ExperimentalMethodUsage(apiReference as MethodReference, resolvedMember.location, usageLocation)
-          )
-        }
-        is Field -> {
-          experimentalApiRegistrar.registerExperimentalApiUsage(
-              ExperimentalFieldUsage(apiReference as FieldReference, resolvedMember.location, usageLocation)
-          )
-        }
-      }
+    if (isExperimental(resolvedClass, context, usageLocation)) {
+      experimentalApiRegistrar.registerExperimentalApiUsage(
+        ExperimentalClassUsage(classReference, resolvedClass.location, usageLocation)
+      )
+    }
+  }
+
+  override fun processMethodInvocation(
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    usageLocation: Location,
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode
+  ) {
+    if (isExperimental(resolvedMethod, context, usageLocation)) {
+      experimentalApiRegistrar.registerExperimentalApiUsage(
+        ExperimentalMethodUsage(methodReference, resolvedMethod.location, usageLocation)
+      )
+    }
+  }
+
+  override fun processFieldAccess(
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    usageLocation: Location,
+    context: VerificationContext
+  ) {
+    if (isExperimental(resolvedField, context, usageLocation)) {
+      experimentalApiRegistrar.registerExperimentalApiUsage(
+        ExperimentalFieldUsage(fieldReference, resolvedField.location, usageLocation)
+      )
     }
   }
 }

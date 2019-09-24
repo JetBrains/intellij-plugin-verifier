@@ -2,22 +2,25 @@ package com.jetbrains.pluginverifier.usages.overrideOnly
 
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.results.reference.SymbolicReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import org.objectweb.asm.tree.AbstractInsnNode
 
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
-  override fun processApiUsage(
-      apiReference: SymbolicReference,
-      resolvedMember: ClassFileMember,
-      usageLocation: Location,
-      context: VerificationContext
+
+  override fun processMethodInvocation(
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    usageLocation: Location,
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode
   ) {
-    if (resolvedMember is Method && resolvedMember.isOverrideOnlyMethod()) {
-      overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(OverrideOnlyMethodUsage(apiReference as MethodReference, resolvedMember.location, usageLocation))
+    if (resolvedMethod.isOverrideOnlyMethod()) {
+      overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
+        OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, usageLocation)
+      )
     }
   }
 

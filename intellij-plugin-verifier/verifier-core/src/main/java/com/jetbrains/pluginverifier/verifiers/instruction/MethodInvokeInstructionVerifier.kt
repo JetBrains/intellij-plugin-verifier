@@ -9,13 +9,15 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
+import org.objectweb.asm.tree.AbstractInsnNode
 
 class MethodInvokeInstructionVerifier(
     private val callerMethod: Method,
     private val methodOwnerClass: ClassFile,
     private val methodReference: MethodReference,
     private val context: VerificationContext,
-    private val instruction: Instruction
+    private val instruction: Instruction,
+    private val instructionNode: AbstractInsnNode
 ) {
 
   fun verify() {
@@ -177,7 +179,7 @@ class MethodInvokeInstructionVerifier(
     val method = MethodResolver().resolveMethod(methodOwnerClass, methodReference, instruction, callerMethod, context)
     if (method != null) {
       val usageLocation = callerMethod.location
-      context.apiUsageProcessors.forEach { it.processApiUsage(methodReference, method, usageLocation, context) }
+      context.apiUsageProcessors.forEach { it.processMethodInvocation(methodReference, method, usageLocation, context, instructionNode) }
     }
     return method
   }
