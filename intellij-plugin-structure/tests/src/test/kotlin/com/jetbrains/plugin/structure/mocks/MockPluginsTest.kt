@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
-import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -49,7 +49,7 @@ class MockPluginsTest {
       dir("optionalsDir", optionalsDir)
       dir("somePackage", pluginClassesRoot.resolve("somePackage"))
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> PluginClassFileOrigin.SingleJar(plugin) }
+    checkPluginConfiguration(pluginFile, true) { plugin -> PluginFileOrigin.SingleJar(plugin) }
   }
 
   @Test
@@ -61,7 +61,7 @@ class MockPluginsTest {
         dir("somePackage", pluginClassesRoot.resolve("somePackage"))
       }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> PluginClassFileOrigin.SingleJar(plugin) }
+    checkPluginConfiguration(pluginFile, true) { plugin -> PluginFileOrigin.SingleJar(plugin) }
   }
 
   @Test
@@ -85,7 +85,7 @@ class MockPluginsTest {
       }
     }
 
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -108,7 +108,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -133,7 +133,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarClassFileOrigin("plugin.jar", PluginClassFileOrigin.LibDirectory(plugin)) }
+    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
   }
 
   @Test
@@ -155,7 +155,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, false) { plugin -> PluginClassFileOrigin.ClassesDirectory(plugin) }
+    checkPluginConfiguration(pluginFile, false) { plugin -> PluginFileOrigin.ClassesDirectory(plugin) }
   }
 
   @Test
@@ -179,7 +179,7 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, false) { plugin -> PluginClassFileOrigin.ClassesDirectory(plugin) }
+    checkPluginConfiguration(pluginFile, false) { plugin -> PluginFileOrigin.ClassesDirectory(plugin) }
   }
 
   @Test
@@ -320,7 +320,7 @@ class MockPluginsTest {
   private fun checkPluginConfiguration(
       pluginFile: File,
       resolveXIncludesWithAbsoluteHref: Boolean,
-      classFileOriginProvider: (IdePlugin) -> ClassFileOrigin
+      fileOriginProvider: (IdePlugin) -> FileOrigin
   ) {
     val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
     val plugin = pluginCreationSuccess.plugin
@@ -334,11 +334,11 @@ class MockPluginsTest {
     checkDependenciesAndModules(plugin)
     checkUnderlyingDocument(plugin)
 
-    val classFileOrigin = classFileOriginProvider(plugin)
-    checkPluginClasses(plugin, classFileOrigin)
+    val fileOrigin = fileOriginProvider(plugin)
+    checkPluginClasses(plugin, fileOrigin)
   }
 
-  private fun checkPluginClasses(plugin: IdePlugin, expectedClassFileOrigin: ClassFileOrigin) {
+  private fun checkPluginClasses(plugin: IdePlugin, expectedFileOrigin: FileOrigin) {
     assertNotNull(plugin.originalFile)
     IdePluginClassesFinder.findPluginClasses(
         plugin,
@@ -358,8 +358,8 @@ class MockPluginsTest {
       assertTrue(mainResolver.containsPackage("somePackage"))
       assertTrue(mainResolver.containsPackage("somePackage/subPackage"))
 
-      val classFileOrigin = (mainResolver.resolveClass("somePackage/ClassOne") as ResolutionResult.Found).classFileOrigin
-      assertEquals(expectedClassFileOrigin, classFileOrigin)
+      val fileOrigin = (mainResolver.resolveClass("somePackage/ClassOne") as ResolutionResult.Found).fileOrigin
+      assertEquals(expectedFileOrigin, fileOrigin)
     }
   }
 
@@ -448,8 +448,8 @@ class MockPluginsTest {
     val compileLibraryClass = "com/some/compile/library/CompileLibraryClass"
     assertEquals(setOf(compileLibraryClass), libDirectoryClasses)
 
-    val classFileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).classFileOrigin
-    assertEquals(JarClassFileOrigin("compile-library.jar", PluginClassFileOrigin.CompileServer(plugin)), classFileOrigin)
+    val fileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).fileOrigin
+    assertEquals(JarFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)
 
     assertEquals(
         mapOf(

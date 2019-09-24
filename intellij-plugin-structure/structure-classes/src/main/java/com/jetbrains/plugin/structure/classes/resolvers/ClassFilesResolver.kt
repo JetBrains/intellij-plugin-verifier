@@ -9,7 +9,7 @@ import java.nio.file.Path
 
 class ClassFilesResolver(
     private val root: Path,
-    private val classFileOrigin: ClassFileOrigin,
+    private val classFileOrigin: FileOrigin,
     override val readMode: ReadMode = ReadMode.FULL
 ) : Resolver() {
 

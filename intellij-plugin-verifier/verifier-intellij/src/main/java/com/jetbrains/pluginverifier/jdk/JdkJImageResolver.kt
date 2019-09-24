@@ -23,7 +23,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     val JRT_SCHEME_URI: URI = URI.create("jrt:/")
   }
 
-  private val classFileOrigin: ClassFileOrigin = JdkClassFileOrigin(jdkPath)
+  private val fileOrigin: FileOrigin = JdkFileOrigin(jdkPath)
 
   private val classNameToModuleName: Map<String, String>
 
@@ -113,7 +113,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
         e.rethrowIfInterrupted()
         return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
       }
-      return ResolutionResult.Found(classNode, classFileOrigin)
+      return ResolutionResult.Found(classNode, fileOrigin)
     }
     return ResolutionResult.NotFound
   }

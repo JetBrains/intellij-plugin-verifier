@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.pluginverifier.filtering.documented.DocClassRemoved
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodParameterTypeChanged
@@ -21,8 +21,8 @@ import org.junit.Test
 
 class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
 
-  private object SomeClassFileOrigin : ClassFileOrigin {
-    override val parent: ClassFileOrigin? = null
+  private object SomeFileOrigin : FileOrigin {
+    override val parent: FileOrigin? = null
   }
 
   /**
@@ -46,7 +46,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val deletedClassRef = ClassReference("org/some/deleted/Class")
 
     val mockMethodLocation = MethodLocation(
-        ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeClassFileOrigin),
+        ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
         "someMethod",
         "()V",
         emptyList(),
@@ -132,8 +132,8 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val clientImplName = "client/Implementation"
     val methodName = "foo"
 
-    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), SomeClassFileOrigin)
-    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), SomeClassFileOrigin)
+    val libInterface = ClassLocation(libInterfaceName, null, Modifiers.of(PUBLIC, INTERFACE, ABSTRACT), SomeFileOrigin)
+    val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), SomeFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
         MethodLocation(

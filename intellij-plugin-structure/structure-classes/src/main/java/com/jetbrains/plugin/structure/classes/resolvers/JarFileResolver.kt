@@ -13,7 +13,7 @@ import java.util.jar.JarFile
 class JarFileResolver(
     private val ioJarFile: Path,
     override val readMode: ReadMode,
-    private val classFileOrigin: ClassFileOrigin
+    private val fileOrigin: FileOrigin
 ) : Resolver() {
 
   private companion object {
@@ -96,7 +96,7 @@ class JarFileResolver(
     }
     try {
       val classNode = evaluateNode(className) ?: return ResolutionResult.NotFound
-      return ResolutionResult.Found(classNode, classFileOrigin)
+      return ResolutionResult.Found(classNode, fileOrigin)
     } catch (e: InvalidClassFileException) {
       return ResolutionResult.InvalidClassFile(e.message)
     } catch (e: Exception) {
@@ -121,13 +121,13 @@ class JarFileResolver(
 fun buildJarFileResolvers(
     jars: Iterable<File>,
     readMode: Resolver.ReadMode,
-    parentOrigin: ClassFileOrigin
+    parentOrigin: FileOrigin
 ): List<Resolver> {
   val resolvers = arrayListOf<Resolver>()
   resolvers.closeOnException {
     jars.mapTo(resolvers) { jarFile ->
-      val jarClassFileOrigin = JarClassFileOrigin(jarFile.name, parentOrigin)
-      JarFileResolver(jarFile.toPath(), readMode, jarClassFileOrigin)
+      val jarFileOrigin = JarFileOrigin(jarFile.name, parentOrigin)
+      JarFileResolver(jarFile.toPath(), readMode, jarFileOrigin)
     }
   }
   return resolvers

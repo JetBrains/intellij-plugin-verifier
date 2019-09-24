@@ -1,7 +1,7 @@
 package com.intellij.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.ClassFilesResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.jdom2.Element
@@ -16,10 +16,10 @@ abstract class FeatureExtractorTestBase {
 
   @Before
   fun setUp() {
-    val classFileOrigin = object : ClassFileOrigin {
-      override val parent: ClassFileOrigin? = null
+    val fileOrigin = object : FileOrigin {
+      override val parent: FileOrigin? = null
     }
-    resolver = ClassFilesResolver(Paths.get("."), classFileOrigin)
+    resolver = ClassFilesResolver(Paths.get("."), fileOrigin)
     plugin = MockIdePlugin("pluginId", "1.0")
   }
 

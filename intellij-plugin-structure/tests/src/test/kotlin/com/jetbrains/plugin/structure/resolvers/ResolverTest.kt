@@ -19,16 +19,16 @@ class ResolverTest {
     val className = "a"
     val classNode = ClassNode()
     classNode.name = className
-    val classFileOrigin = object : ClassFileOrigin {
-      override val parent: ClassFileOrigin? = null
+    val fileOrigin = object : FileOrigin {
+      override val parent: FileOrigin? = null
     }
     val cacheResolver = CacheResolver(
-        FixedClassesResolver.create(listOf(classNode), classFileOrigin, Resolver.ReadMode.FULL)
+        FixedClassesResolver.create(listOf(classNode), fileOrigin, Resolver.ReadMode.FULL)
     )
     assertEquals(1, cacheResolver.allClasses.size)
     val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
     assertEquals(classNode, found.classNode)
-    assertEquals(classFileOrigin, found.classFileOrigin)
+    assertEquals(fileOrigin, found.fileOrigin)
     assertEquals(setOf(""), cacheResolver.allPackages)
     assertTrue(cacheResolver.containsPackage(""))
   }
@@ -47,23 +47,23 @@ class ResolverTest {
     val class2 = "$commonPackage/Some2"
     val class2Node = ClassNode().apply { name = class2 }
 
-    val origin1 = object : ClassFileOrigin {
-      override val parent: ClassFileOrigin? = null
+    val origin1 = object : FileOrigin {
+      override val parent: FileOrigin? = null
     }
-    val origin2 = object : ClassFileOrigin {
-      override val parent: ClassFileOrigin? = null
+    val origin2 = object : FileOrigin {
+      override val parent: FileOrigin? = null
     }
 
-    val resolver1 = FixedClassesResolver.create(listOf(class1Node, sameClassNode1), classFileOrigin = origin1)
-    val resolver2 = FixedClassesResolver.create(listOf(class2Node, sameClassNode2), classFileOrigin = origin2)
+    val resolver1 = FixedClassesResolver.create(listOf(class1Node, sameClassNode1), fileOrigin = origin1)
+    val resolver2 = FixedClassesResolver.create(listOf(class2Node, sameClassNode2), fileOrigin = origin2)
 
     val resolver = CompositeResolver.create(resolver1, resolver2)
 
     assertEquals(setOf("some", "some/package"), resolver.allPackages)
     assertEquals(setOf(sameClass, class1, class2), resolver.allClasses)
 
-    assertSame(origin1, (resolver.resolveClass(class1) as ResolutionResult.Found).classFileOrigin)
-    assertSame(origin2, (resolver.resolveClass(class2) as ResolutionResult.Found).classFileOrigin)
-    assertSame(origin1, (resolver.resolveClass(sameClass) as ResolutionResult.Found).classFileOrigin)
+    assertSame(origin1, (resolver.resolveClass(class1) as ResolutionResult.Found).fileOrigin)
+    assertSame(origin2, (resolver.resolveClass(class2) as ResolutionResult.Found).fileOrigin)
+    assertSame(origin1, (resolver.resolveClass(sameClass) as ResolutionResult.Found).fileOrigin)
   }
 }

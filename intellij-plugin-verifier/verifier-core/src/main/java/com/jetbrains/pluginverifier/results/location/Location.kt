@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.results.location
 
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.presentation.*
 import java.util.*
@@ -19,7 +19,7 @@ data class ClassLocation(
     val className: String,
     val signature: String?,
     val modifiers: Modifiers,
-    val classFileOrigin: ClassFileOrigin
+    val classFileOrigin: FileOrigin
 ) : Location() {
 
   val packageName

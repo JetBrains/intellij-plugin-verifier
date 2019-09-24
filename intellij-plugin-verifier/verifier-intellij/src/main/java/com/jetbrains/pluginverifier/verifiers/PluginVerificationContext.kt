@@ -3,8 +3,8 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
 import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
-import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
-import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
@@ -126,12 +126,12 @@ data class PluginVerificationContext(
 
   private fun shouldIndexDeprecatedClass(usageHostClass: ClassLocation, apiHostClass: ClassLocation): Boolean {
     val usageHostOrigin = usageHostClass.classFileOrigin
-    if (idePlugin == usageHostOrigin.findOriginOfType<PluginClassFileOrigin>()?.idePlugin) {
+    if (idePlugin == usageHostOrigin.findOriginOfType<PluginFileOrigin>()?.idePlugin) {
       val apiHostOrigin = apiHostClass.classFileOrigin
-      if (apiHostOrigin.isOriginOfType<IdeClassFileOrigin>()) {
+      if (apiHostOrigin.isOriginOfType<IdeFileOrigin>()) {
         return true
       }
-      val pluginOrigin = apiHostOrigin.findOriginOfType<PluginClassFileOrigin>()
+      val pluginOrigin = apiHostOrigin.findOriginOfType<PluginFileOrigin>()
       if (pluginOrigin != null && pluginOrigin.idePlugin != idePlugin) {
         return true
       }

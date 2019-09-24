@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExte
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.base.utils.readText
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.JdkClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarFileResolvers
 import com.jetbrains.plugin.structure.ide.Ide
@@ -81,7 +81,7 @@ object JdkDescriptorCreator {
       "JDK $jdkPath misses mandatory jars: ${missingJars.joinToString()}"
     }
 
-    val jarResolver = CompositeResolver.create(buildJarFileResolvers(jars, readMode, JdkClassFileOrigin(jdkPath)))
+    val jarResolver = CompositeResolver.create(buildJarFileResolvers(jars, readMode, JdkFileOrigin(jdkPath)))
     return JdkDescriptor(jdkPath, jarResolver, jdkVersion)
   }
 

@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.usages.discouraging
 
-import com.jetbrains.plugin.structure.classes.resolvers.JdkClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
-import com.jetbrains.plugin.structure.ide.classes.IdeClassFileOrigin
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -20,7 +20,7 @@ class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: Deprec
   ) {
     if (resolvedClass.isDiscouragingJdkClass()) {
       val classFileOrigin = resolvedClass.classFileOrigin
-      if (classFileOrigin.isOriginOfType<IdeClassFileOrigin>() || classFileOrigin.isOriginOfType<JdkClassFileOrigin>()) {
+      if (classFileOrigin.isOriginOfType<IdeFileOrigin>() || classFileOrigin.isOriginOfType<JdkFileOrigin>()) {
         deprecatedApiRegistrar.registerDeprecatedUsage(
             DiscouragingJdkClassUsage(resolvedClass.location, usageLocation, classFileOrigin)
         )

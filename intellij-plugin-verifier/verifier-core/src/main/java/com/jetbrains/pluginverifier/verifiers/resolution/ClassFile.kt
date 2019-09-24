@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import org.objectweb.asm.tree.AnnotationNode
 
@@ -8,7 +8,7 @@ interface ClassFile : ClassFileMember {
   override val location: ClassLocation
   override val containingClassFile: ClassFile
 
-  val classFileOrigin: ClassFileOrigin
+  val classFileOrigin: FileOrigin
   val name: String
   val packageName: String
   val javaPackageName: String

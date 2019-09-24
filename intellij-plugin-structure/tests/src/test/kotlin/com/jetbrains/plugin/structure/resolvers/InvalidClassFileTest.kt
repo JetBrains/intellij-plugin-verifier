@@ -17,8 +17,8 @@ class InvalidClassFileTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
-  private object InvalidClassFileOrigin : ClassFileOrigin {
-    override val parent: ClassFileOrigin? = null
+  private object InvalidFileOrigin : FileOrigin {
+    override val parent: FileOrigin? = null
   }
 
   @Test
@@ -27,7 +27,7 @@ class InvalidClassFileTest {
       file("invalid.class", "bad")
     }
     try {
-      ClassFilesResolver(classFilesRoot.toPath(), InvalidClassFileOrigin).use { }
+      ClassFilesResolver(classFilesRoot.toPath(), InvalidFileOrigin).use { }
     } catch (e: InvalidClassFileException) {
       assertTrue(e.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
       return
@@ -41,7 +41,7 @@ class InvalidClassFileTest {
       file("invalid.class", "bad")
     }
 
-    JarFileResolver(jarFile.toPath(), Resolver.ReadMode.FULL, InvalidClassFileOrigin).use { jarResolver ->
+    JarFileResolver(jarFile.toPath(), Resolver.ReadMode.FULL, InvalidFileOrigin).use { jarResolver ->
       val invalidResult = jarResolver.resolveClass("invalid") as ResolutionResult.InvalidClassFile
       assertTrue(invalidResult.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
     }

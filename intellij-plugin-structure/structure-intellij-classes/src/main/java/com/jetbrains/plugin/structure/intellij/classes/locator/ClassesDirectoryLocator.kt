@@ -12,7 +12,7 @@ class ClassesDirectoryLocator(private val readMode: Resolver.ReadMode) : Classes
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
     val classesDir = pluginFile.toPath().resolve("classes")
     if (Files.isDirectory(classesDir)) {
-      val classFileOrigin = PluginClassFileOrigin.ClassesDirectory(idePlugin)
+      val classFileOrigin = PluginFileOrigin.ClassesDirectory(idePlugin)
       return listOf(ClassFilesResolver(classesDir, classFileOrigin, readMode))
     }
     return emptyList()

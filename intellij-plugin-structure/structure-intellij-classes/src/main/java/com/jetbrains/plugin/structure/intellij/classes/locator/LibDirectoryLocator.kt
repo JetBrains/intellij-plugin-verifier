@@ -13,7 +13,7 @@ class LibDirectoryLocator(private val readMode: Resolver.ReadMode) : ClassesLoca
     val pluginLib = pluginFile.resolve("lib")
     if (pluginLib.isDirectory) {
       val jars = pluginLib.listFiles { file -> file.isJar() }.orEmpty().toList()
-      return buildJarFileResolvers(jars, readMode, PluginClassFileOrigin.LibDirectory(idePlugin))
+      return buildJarFileResolvers(jars, readMode, PluginFileOrigin.LibDirectory(idePlugin))
     }
     return emptyList()
   }

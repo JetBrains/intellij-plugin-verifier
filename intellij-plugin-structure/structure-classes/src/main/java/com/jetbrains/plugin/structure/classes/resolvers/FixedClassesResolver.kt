@@ -5,17 +5,17 @@ import org.objectweb.asm.tree.ClassNode
 class FixedClassesResolver private constructor(
     private val classes: Map<String, ClassNode>,
     override val readMode: ReadMode,
-    private val classFileOrigin: ClassFileOrigin
+    private val fileOrigin: FileOrigin
 ) : Resolver() {
 
   companion object {
 
     fun create(
         classes: Iterable<ClassNode>,
-        classFileOrigin: ClassFileOrigin,
+        fileOrigin: FileOrigin,
         readMode: ReadMode = ReadMode.FULL
     ): Resolver = FixedClassesResolver(
-        classes.reversed().associateBy { it.name }, readMode, classFileOrigin
+        classes.reversed().associateBy { it.name }, readMode, fileOrigin
     )
   }
 
@@ -34,7 +34,7 @@ class FixedClassesResolver private constructor(
 
   override fun resolveClass(className: String): ResolutionResult {
     val classNode = classes[className] ?: return ResolutionResult.NotFound
-    return ResolutionResult.Found(classNode, classFileOrigin)
+    return ResolutionResult.Found(classNode, fileOrigin)
   }
 
   override val allClasses

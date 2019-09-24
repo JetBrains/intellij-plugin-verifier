@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.usages.javaPlugin
 
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
-import com.jetbrains.plugin.structure.intellij.classes.locator.PluginClassFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -19,8 +19,8 @@ class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaP
   }
 
   private fun ClassFileMember.isJavaPluginApi(): Boolean {
-    val pluginClassFileOrigin = containingClassFile.classFileOrigin.findOriginOfType<PluginClassFileOrigin>()
-    return pluginClassFileOrigin != null && pluginClassFileOrigin.idePlugin.pluginId == "com.intellij.java"
+    val pluginFileOrigin = containingClassFile.classFileOrigin.findOriginOfType<PluginFileOrigin>()
+    return pluginFileOrigin != null && pluginFileOrigin.idePlugin.pluginId == "com.intellij.java"
   }
 
 }

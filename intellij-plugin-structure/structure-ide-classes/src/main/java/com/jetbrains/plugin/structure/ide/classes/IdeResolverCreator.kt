@@ -25,7 +25,7 @@ object IdeResolverCreator {
   fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val idePath = ide.idePath
     return when {
-      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeClassFileOrigin.IdeLibDirectory)
+      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory)
       isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode)
       else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
@@ -34,7 +34,7 @@ object IdeResolverCreator {
   private fun getJarsResolver(
       directory: File,
       readMode: Resolver.ReadMode,
-      parentOrigin: ClassFileOrigin
+      parentOrigin: FileOrigin
   ): Resolver {
     if (!directory.isDirectory) {
       return EmptyResolver
@@ -47,17 +47,17 @@ object IdeResolverCreator {
   private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode): Resolver {
     val resolvers = arrayListOf<Resolver>()
     resolvers.closeOnException {
-      resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeClassFileOrigin.SourceLibDirectory)
+      resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory)
       resolvers += getRepositoryLibrariesResolver(idePath, readMode)
 
       val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
       for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
-        val classFileOrigin = IdeClassFileOrigin.CompiledModule(moduleRoot.name)
-        resolvers += ClassFilesResolver(moduleRoot.toPath(), classFileOrigin, readMode)
+        val fileOrigin = IdeFileOrigin.CompiledModule(moduleRoot.name)
+        resolvers += ClassFilesResolver(moduleRoot.toPath(), fileOrigin, readMode)
       }
 
       if (isCompiledUltimate(idePath)) {
-        resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode, IdeClassFileOrigin.SourceLibDirectory)
+        resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory)
       }
       return CompositeResolver.create(resolvers)
     }
@@ -65,7 +65,7 @@ object IdeResolverCreator {
 
   private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode): Resolver {
     val jars = getRepositoryLibraries(idePath)
-    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, IdeClassFileOrigin.RepositoryLibrary))
+    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary))
   }
 
   private fun getRepositoryLibraries(projectPath: File): List<File> {

@@ -5,14 +5,7 @@ import java.io.Closeable
 import java.io.IOException
 
 /**
- *
- * Provides an access to the byte-code of a class by its name via the [.findClass].
- * Note that the way of constructing the `Resolver` affects the searching order
- * (it is similar to the Java *class-path* option)
- *
- * Note: the class is `Closeable` thus the `Resolver` requires to be closed when it is no longer needed.
- * Some resolvers may extract the classes in the temporary directory for performance reasons, so [.close] will
- * clean the used disk space.
+ * Resolves class files by name.
  */
 abstract class Resolver : Closeable {
 
@@ -43,7 +36,7 @@ abstract class Resolver : Closeable {
   abstract val allPackages: Set<String>
 
   /**
-   * Checks whether this resolver contains any class. Classes can be obtained through [.getAllClasses].
+   * Checks whether this resolver contains any class. Classes can be obtained through [allClasses].
    */
   abstract val isEmpty: Boolean
 

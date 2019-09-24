@@ -26,7 +26,7 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
           .filter { it.endsWith(".jar") }
           .map { File(pluginLib, it) }
           .filter { it.isFile }
-      return buildJarFileResolvers(allCompileJars, readMode, PluginClassFileOrigin.CompileServer(idePlugin))
+      return buildJarFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
     }
     return emptyList()
   }

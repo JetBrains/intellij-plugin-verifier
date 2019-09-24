@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.signatures
 
-import com.jetbrains.plugin.structure.classes.resolvers.ClassFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
@@ -60,8 +60,8 @@ class TestSignatures {
   }
 
   private fun genSomeClassLocation(className: String, signature: String?) =
-      ClassLocation(className, signature, Modifiers(0), object : ClassFileOrigin {
-        override val parent: ClassFileOrigin? = null
+      ClassLocation(className, signature, Modifiers(0), object : FileOrigin {
+        override val parent: FileOrigin? = null
       })
 
   @Test

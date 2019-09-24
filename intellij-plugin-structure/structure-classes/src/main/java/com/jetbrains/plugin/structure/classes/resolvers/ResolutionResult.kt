@@ -10,5 +10,5 @@ sealed class ResolutionResult {
 
   data class FailedToReadClassFile(val reason: String) : ResolutionResult()
 
-  data class Found(val classNode: ClassNode, val classFileOrigin: ClassFileOrigin) : ResolutionResult()
+  data class Found(val classNode: ClassNode, val fileOrigin: FileOrigin) : ResolutionResult()
 }
