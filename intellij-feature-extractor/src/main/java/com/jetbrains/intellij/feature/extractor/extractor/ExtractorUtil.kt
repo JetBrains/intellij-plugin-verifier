@@ -20,7 +20,7 @@ private val LOG = LoggerFactory.getLogger("FeaturesExtractor.ClassResolver")
 
 fun Resolver.findClassLogged(className: String): ClassNode? {
   try {
-    return (resolveClass(className.replace('.', '/')) as? ResolutionResult.Found)?.classNode ?: return null
+    return (resolveClass(className.replace('.', '/')) as? ResolutionResult.Found)?.value ?: return null
   } catch (e: Exception) {
     e.rethrowIfInterrupted()
     LOG.warn("Unable to get find class file '$className'", e)

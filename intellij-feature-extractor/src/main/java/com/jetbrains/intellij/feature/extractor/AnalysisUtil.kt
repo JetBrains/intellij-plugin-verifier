@@ -89,12 +89,12 @@ object AnalysisUtil {
         if (producer.owner == STRING_BUILDER && producer.name == "toString") {
           return evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
         } else {
-          val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.classNode ?: return null
+          val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.value ?: return null
           val methodNode = classNode.findMethod { it.name == producer.name && it.desc == producer.desc } ?: return null
           return extractConstantFunctionValue(classNode, methodNode, resolver)
         }
       } else if (producer is FieldInsnNode) {
-        val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.classNode ?: return null
+        val classNode = (resolver.resolveClass(producer.owner) as? ResolutionResult.Found)?.value ?: return null
         val fieldNode = classNode.findField { it.name == producer.name && it.desc == producer.desc } ?: return null
         return evaluateConstantFieldValue(classNode, fieldNode, resolver)
       }

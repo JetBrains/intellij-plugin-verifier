@@ -101,17 +101,17 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override val isEmpty: Boolean
     get() = classNameToModuleName.isEmpty()
 
-  override fun resolveClass(className: String): ResolutionResult {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
       val classPath = modulesPath.resolve(moduleName).resolve(className.replace("/", nameSeparator) + ".class")
       val classNode = try {
         readClassNode(className, classPath)
       } catch (e: InvalidClassFileException) {
-        return ResolutionResult.InvalidClassFile(e.message)
+        return ResolutionResult.Invalid(e.message)
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
-        return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+        return ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
       }
       return ResolutionResult.Found(classNode, fileOrigin)
     }

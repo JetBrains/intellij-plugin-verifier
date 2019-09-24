@@ -38,15 +38,15 @@ class ClassFilesResolver(
     return root
   }
 
-  override fun resolveClass(className: String): ResolutionResult {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classFile = nameToClassFile[className] ?: return ResolutionResult.NotFound
     val classNode = try {
       AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
     } catch (e: InvalidClassFileException) {
-      return ResolutionResult.InvalidClassFile(e.message)
+      return ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+      return ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
     }
     return ResolutionResult.Found(classNode, classFileOrigin)
   }

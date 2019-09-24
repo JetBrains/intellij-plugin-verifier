@@ -6,16 +6,15 @@ import com.google.common.cache.LoadingCache
 import org.objectweb.asm.tree.ClassNode
 import java.util.concurrent.ExecutionException
 
-class CacheResolver
-@JvmOverloads constructor(
+class CacheResolver(
     private val delegate: Resolver,
     cacheSize: Int = DEFAULT_CACHE_SIZE
 ) : Resolver() {
 
-  private val cache: LoadingCache<String, ResolutionResult> =
+  private val cache: LoadingCache<String, ResolutionResult<ClassNode>> =
       CacheBuilder.newBuilder()
           .maximumSize(cacheSize.toLong())
-          .build(object : CacheLoader<String, ResolutionResult>() {
+          .build(object : CacheLoader<String, ResolutionResult<ClassNode>>() {
             override fun load(key: String) = delegate.resolveClass(key)
           })
 
@@ -31,8 +30,8 @@ class CacheResolver
   override val readMode
     get() = delegate.readMode
 
-  override fun resolveClass(className: String): ResolutionResult = try {
-    cache.get(className)
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> = try {
+    cache.get(className) as ResolutionResult<ClassNode>
   } catch (e: ExecutionException) {
     throw e.cause ?: e
   }

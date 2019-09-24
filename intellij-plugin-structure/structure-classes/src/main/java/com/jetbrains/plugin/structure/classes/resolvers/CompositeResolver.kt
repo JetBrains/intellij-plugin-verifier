@@ -44,7 +44,7 @@ class CompositeResolver private constructor(
 
   override fun containsPackage(packageName: String) = packageName in packageToResolvers
 
-  override fun resolveClass(className: String): ResolutionResult {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName]
     if (resolvers == null || resolvers.isEmpty()) {

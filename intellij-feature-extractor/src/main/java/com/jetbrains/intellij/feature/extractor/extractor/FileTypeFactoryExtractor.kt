@@ -313,7 +313,7 @@ class FileTypeFactoryExtractor : Extractor {
       return null
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
-    val classNode = (resolver.resolveClass(first.desc) as? ResolutionResult.Found)?.classNode ?: return null
+    val classNode = (resolver.resolveClass(first.desc) as? ResolutionResult.Found)?.value ?: return null
     val method = classNode.findMethod {
       it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty()
     } ?: return null

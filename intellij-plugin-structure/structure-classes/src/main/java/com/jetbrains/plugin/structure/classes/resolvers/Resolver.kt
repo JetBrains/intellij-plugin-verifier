@@ -43,7 +43,7 @@ abstract class Resolver : Closeable {
   /**
    * Resolves class with specified binary name.
    */
-  abstract fun resolveClass(className: String): ResolutionResult
+  abstract fun resolveClass(className: String): ResolutionResult<ClassNode>
 
   /**
    * Returns true if `this` Resolver contains the given class. It may be faster

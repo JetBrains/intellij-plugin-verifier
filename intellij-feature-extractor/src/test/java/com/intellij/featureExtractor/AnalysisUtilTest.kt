@@ -11,7 +11,7 @@ class AnalysisUtilTest : FeatureExtractorTestBase() {
 
   @Test
   fun constantFunction() {
-    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).classNode
+    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).value
     val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "myFunction", methods, ".constantValue")
@@ -22,7 +22,7 @@ class AnalysisUtilTest : FeatureExtractorTestBase() {
 
   @Test
   fun concatenation() {
-    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).classNode
+    val classNode = (resolver.resolveClass("featureExtractor/common/ConstantHolder") as ResolutionResult.Found).value
     val methods = classNode.methods
 
     assertFunctionValueExtraction(classNode, "concat", methods, ".constantValueConcat")

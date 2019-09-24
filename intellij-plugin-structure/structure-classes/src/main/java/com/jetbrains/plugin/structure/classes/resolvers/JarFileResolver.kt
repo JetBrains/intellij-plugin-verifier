@@ -90,7 +90,7 @@ class JarFileResolver(
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
-  override fun resolveClass(className: String): ResolutionResult {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
@@ -98,10 +98,10 @@ class JarFileResolver(
       val classNode = evaluateNode(className) ?: return ResolutionResult.NotFound
       return ResolutionResult.Found(classNode, fileOrigin)
     } catch (e: InvalidClassFileException) {
-      return ResolutionResult.InvalidClassFile(e.message)
+      return ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return ResolutionResult.FailedToReadClassFile(e.localizedMessage ?: e.javaClass.name)
+      return ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
     }
   }
 

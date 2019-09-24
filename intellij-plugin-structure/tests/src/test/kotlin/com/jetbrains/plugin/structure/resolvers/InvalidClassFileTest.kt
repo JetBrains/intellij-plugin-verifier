@@ -42,7 +42,7 @@ class InvalidClassFileTest {
     }
 
     JarFileResolver(jarFile.toPath(), Resolver.ReadMode.FULL, InvalidFileOrigin).use { jarResolver ->
-      val invalidResult = jarResolver.resolveClass("invalid") as ResolutionResult.InvalidClassFile
+      val invalidResult = jarResolver.resolveClass("invalid") as ResolutionResult.Invalid
       assertTrue(invalidResult.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
     }
   }

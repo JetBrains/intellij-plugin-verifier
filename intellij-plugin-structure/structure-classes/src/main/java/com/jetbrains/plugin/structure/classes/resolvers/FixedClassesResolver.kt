@@ -32,7 +32,7 @@ class FixedClassesResolver private constructor(
           .asSequence()
           .all(processor)
 
-  override fun resolveClass(className: String): ResolutionResult {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classNode = classes[className] ?: return ResolutionResult.NotFound
     return ResolutionResult.Found(classNode, fileOrigin)
   }

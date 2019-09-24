@@ -36,7 +36,7 @@ class ModuleTypeExtractor : Extractor {
               && it.desc == "()V"
         }
         if (isDefaultParentInvocation) {
-          val superNode = (resolver.resolveClass(classNode.superName) as? ResolutionResult.Found)?.classNode ?: continue
+          val superNode = (resolver.resolveClass(classNode.superName) as? ResolutionResult.Found)?.value ?: continue
           return convertResult(extractFromClassNode(superNode, resolver))
         }
       }

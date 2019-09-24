@@ -14,7 +14,7 @@ fun Resolver.caching(): Resolver = CacheResolver(this)
 
 fun Resolver.resolveClassOrNull(className: String): ClassFile? {
   val resolutionResult = resolveClass(className) as? ResolutionResult.Found ?: return null
-  return ClassFileAsm(resolutionResult.classNode, resolutionResult.fileOrigin)
+  return ClassFileAsm(resolutionResult.value, resolutionResult.fileOrigin)
 }
 
 fun Resolver.resolveClassChecked(
@@ -31,20 +31,20 @@ fun Resolver.resolveClassChecked(
         }
         null
       }
-      is ResolutionResult.InvalidClassFile -> {
+      is ResolutionResult.Invalid -> {
         context.problemRegistrar.registerProblem(
             InvalidClassFileProblem(ClassReference(className), referrer.location, resolutionResult.message)
         )
         null
       }
-      is ResolutionResult.FailedToReadClassFile -> {
+      is ResolutionResult.FailedToRead -> {
         context.problemRegistrar.registerProblem(
             FailedToReadClassFileProblem(ClassReference(className), referrer.location, resolutionResult.reason)
         )
         null
       }
       is ResolutionResult.Found -> {
-        val classFile = ClassFileAsm(resolutionResult.classNode, resolutionResult.fileOrigin)
+        val classFile = ClassFileAsm(resolutionResult.value, resolutionResult.fileOrigin)
         if (!isClassAccessibleToOtherClass(classFile, referrer.containingClassFile)) {
           context.problemRegistrar.registerProblem(
               IllegalClassAccessProblem(classFile.location, classFile.accessType, referrer.location)

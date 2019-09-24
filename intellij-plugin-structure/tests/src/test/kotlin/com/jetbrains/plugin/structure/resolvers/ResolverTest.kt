@@ -27,7 +27,7 @@ class ResolverTest {
     )
     assertEquals(1, cacheResolver.allClasses.size)
     val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
-    assertEquals(classNode, found.classNode)
+    assertEquals(classNode, found.value)
     assertEquals(fileOrigin, found.fileOrigin)
     assertEquals(setOf(""), cacheResolver.allPackages)
     assertTrue(cacheResolver.containsPackage(""))

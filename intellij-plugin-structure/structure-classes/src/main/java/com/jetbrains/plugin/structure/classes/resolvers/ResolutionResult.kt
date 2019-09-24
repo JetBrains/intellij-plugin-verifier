@@ -1,14 +1,12 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import org.objectweb.asm.tree.ClassNode
+sealed class ResolutionResult<out T> {
 
-sealed class ResolutionResult {
+  object NotFound : ResolutionResult<Nothing>()
 
-  object NotFound : ResolutionResult()
+  data class Invalid(val message: String) : ResolutionResult<Nothing>()
 
-  data class InvalidClassFile(val message: String) : ResolutionResult()
+  data class FailedToRead(val reason: String) : ResolutionResult<Nothing>()
 
-  data class FailedToReadClassFile(val reason: String) : ResolutionResult()
-
-  data class Found(val classNode: ClassNode, val fileOrigin: FileOrigin) : ResolutionResult()
+  data class Found<T>(val value: T, val fileOrigin: FileOrigin) : ResolutionResult<T>()
 }
