@@ -1,30 +1,47 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
+import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
+import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 
 class DirectoryResolver(
     private val root: Path,
-    private val classFileOrigin: FileOrigin,
+    private val fileOrigin: FileOrigin,
     override val readMode: ReadMode = ReadMode.FULL
 ) : Resolver() {
 
-  private val nameToClassFile = hashMapOf<String, File>()
+  private val classNameToFile = hashMapOf<String, File>()
+
+  private val bundlePathToFile = hashMapOf<String, File>()
+
+  private val bundleNames = hashMapOf<String, MutableSet<String>>()
 
   private val packageSet = PackageSet()
 
   init {
-    val classFiles = FileUtils.listFiles(root.toFile().canonicalFile, arrayOf("class"), true)
-    for (classFile in classFiles) {
-      val className = AsmUtil.readClassName(classFile)
-      val classRoot = getClassRoot(classFile, className)
-      if (classRoot != null) {
-        nameToClassFile[className] = classFile
-        packageSet.addPackagesOfClass(className)
+    val canonicalRoot = root.toFile().canonicalFile
+    val files = FileUtils.listFiles(canonicalRoot, arrayOf("class", "properties"), true)
+    for (file in files) {
+      if (file.extension == "class") {
+        val className = AsmUtil.readClassName(file)
+        val classRoot = getClassRoot(file, className)
+        if (classRoot != null) {
+          classNameToFile[className] = file
+          packageSet.addPackagesOfClass(className)
+        }
+      }
+      if (file.extension == "properties") {
+        val bundlePath = file.relativeTo(canonicalRoot).path.toSystemIndependentName()
+        bundlePathToFile[bundlePath] = file
+        val fullBundleName = getBundleNameByBundlePath(bundlePath)
+        bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
       }
     }
   }
@@ -39,35 +56,53 @@ class DirectoryResolver(
   }
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
-    val classFile = nameToClassFile[className] ?: return ResolutionResult.NotFound
+    val classFile = classNameToFile[className] ?: return ResolutionResult.NotFound
     val classNode = try {
       AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
     } catch (e: InvalidClassFileException) {
       return ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
+      return ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
-    return ResolutionResult.Found(classNode, classFileOrigin)
+    return ResolutionResult.Found(classNode, fileOrigin)
+  }
+
+  override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
+    val control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES)
+    val bundleName = control.toBundleName(baseName, locale)
+    val bundlePath = control.toResourceName(bundleName, "properties")
+    val bundleFile = bundlePathToFile[bundlePath]
+    if (bundleFile != null) {
+      val propertyResourceBundle: PropertyResourceBundle = try {
+        PropertyResourceBundle(bundleFile.bufferedReader())
+      } catch (e: IllegalArgumentException) {
+        return ResolutionResult.Invalid(e.message ?: e.javaClass.name)
+      } catch (e: Exception) {
+        return ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
+      }
+      return ResolutionResult.Found(propertyResourceBundle, fileOrigin)
+    }
+    return ResolutionResult.NotFound
   }
 
   override val allPackages
     get() = packageSet.getAllPackages()
 
+  override val allBundleNameSet: ResourceBundleNameSet
+    get() = ResourceBundleNameSet(bundleNames)
+
   override val allClasses
-    get() = nameToClassFile.keys
+    get() = classNameToFile.keys
 
-  override val isEmpty
-    get() = nameToClassFile.isEmpty()
-
-  override fun containsClass(className: String) = className in nameToClassFile
+  override fun containsClass(className: String) = className in classNameToFile
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override fun close() = Unit
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
-    for ((className, classFile) in nameToClassFile) {
+    for ((className, classFile) in classNameToFile) {
       val classNode = AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
       if (!processor(classNode)) {
         return false

@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
@@ -12,6 +11,7 @@ import java.io.Closeable
 import java.net.URI
 import java.net.URLClassLoader
 import java.nio.file.*
+import java.util.*
 import java.util.stream.Collectors
 
 /**
@@ -92,14 +92,14 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
         .substringBeforeLast(".class").replace(nameSeparator, "/")
   }
 
-  override val allClasses: Set<String>
+  override val allClasses
     get() = classNameToModuleName.keys
 
-  override val allPackages: Set<String>
+  override val allPackages
     get() = packageSet.getAllPackages()
 
-  override val isEmpty: Boolean
-    get() = classNameToModuleName.isEmpty()
+  override val allBundleBaseNames
+    get() = emptySet<String>()
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]
@@ -117,6 +117,8 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     }
     return ResolutionResult.NotFound
   }
+
+  override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) = ResolutionResult.NotFound
 
   private fun readClassNode(className: String, classFilePath: Path): ClassNode =
       Files.newInputStream(classFilePath, StandardOpenOption.READ).use { inputStream ->

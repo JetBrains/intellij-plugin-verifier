@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import org.objectweb.asm.tree.ClassNode
+import java.util.*
 import java.util.concurrent.ExecutionException
 
 class CacheResolver(
@@ -11,27 +12,42 @@ class CacheResolver(
     cacheSize: Int = DEFAULT_CACHE_SIZE
 ) : Resolver() {
 
-  private val cache: LoadingCache<String, ResolutionResult<ClassNode>> =
+  private data class BundleCacheKey(val baseName: String, val locale: Locale)
+
+  private val classCache: LoadingCache<String, ResolutionResult<ClassNode>> =
       CacheBuilder.newBuilder()
           .maximumSize(cacheSize.toLong())
           .build(object : CacheLoader<String, ResolutionResult<ClassNode>>() {
             override fun load(key: String) = delegate.resolveClass(key)
           })
 
+  private val propertyBundleCache: LoadingCache<BundleCacheKey, ResolutionResult<PropertyResourceBundle>> =
+      CacheBuilder.newBuilder()
+          .maximumSize(cacheSize.toLong())
+          .build(object : CacheLoader<BundleCacheKey, ResolutionResult<PropertyResourceBundle>>() {
+            override fun load(key: BundleCacheKey) = delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale)
+          })
+
   override val allClasses
     get() = delegate.allClasses
 
+  override val allBundleNameSet
+    get() = delegate.allBundleNameSet
+
   override val allPackages
     get() = delegate.allPackages
-
-  override val isEmpty
-    get() = delegate.isEmpty
 
   override val readMode
     get() = delegate.readMode
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = try {
-    cache.get(className) as ResolutionResult<ClassNode>
+    classCache.get(className)
+  } catch (e: ExecutionException) {
+    throw e.cause ?: e
+  }
+
+  override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> = try {
+    propertyBundleCache.get(BundleCacheKey(baseName, locale))
   } catch (e: ExecutionException) {
     throw e.cause ?: e
   }

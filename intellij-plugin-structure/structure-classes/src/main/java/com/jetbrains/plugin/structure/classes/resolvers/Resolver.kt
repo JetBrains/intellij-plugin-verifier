@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.io.IOException
+import java.util.*
 
 /**
  * Resolves class files by name.
@@ -36,14 +37,20 @@ abstract class Resolver : Closeable {
   abstract val allPackages: Set<String>
 
   /**
-   * Checks whether this resolver contains any class. Classes can be obtained through [allClasses].
+   * Returns data structure used to obtain bundle names contained in this resolver.
    */
-  abstract val isEmpty: Boolean
+  abstract val allBundleNameSet: ResourceBundleNameSet
 
   /**
    * Resolves class with specified binary name.
    */
   abstract fun resolveClass(className: String): ResolutionResult<ClassNode>
+
+  /**
+   * Resolves property resource bundle with specified **exact** base name and locale.
+   * If no property bundle is available for that locale, the search in candidate locales **is not performed**.
+   */
+  abstract fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle>
 
   /**
    * Returns true if `this` Resolver contains the given class. It may be faster

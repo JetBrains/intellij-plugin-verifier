@@ -25,6 +25,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.time.LocalDate
+import java.util.*
 
 class MockPluginsTest {
 
@@ -36,85 +37,62 @@ class MockPluginsTest {
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
 
   private val optionalsDir = mockPluginRoot.resolve("optionalsDir")
-  private val pluginClassesRoot = mockPluginRoot.resolve("classes")
+  private val propertiesDir = mockPluginRoot.resolve("properties")
+  private val somePackageDir = mockPluginRoot.resolve("classes").resolve("somePackage")
 
   private val compileLibraryDir = mockPluginRoot.resolve("compileLibrary")
   private val compileLibraryClassesRoot = compileLibraryDir.resolve("classes")
   private val compileLibraryServices = compileLibraryDir.resolve("services")
 
+  private fun buildPluginSuccess(pluginFileBuilder: () -> File): IdePlugin {
+    val pluginFile = pluginFileBuilder()
+    val successResult = InvalidPluginsTest.getSuccessResult(pluginFile)
+    val (plugin, warnings) = successResult
+    checkWarnings(warnings)
+    assertEquals(pluginFile, plugin.originalFile)
+    return plugin
+  }
+
   @Test
   fun `single jar file`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
-      dir("META-INF", metaInfDir)
-      dir("optionalsDir", optionalsDir)
-      dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+    val plugin = buildPluginSuccess {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("somePackage", somePackageDir)
+        dir("properties", propertiesDir)
+      }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> PluginFileOrigin.SingleJar(plugin) }
+
+    checkPluginConfiguration(plugin, false)
+
+    val jarOrigin = PluginFileOrigin.SingleJar(plugin)
+    checkPluginClassesAndProperties(plugin, jarOrigin, jarOrigin)
   }
 
   @Test
   fun `invalid jar file renamed to zip`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      zip("plugin.jar") {
-        dir("META-INF", metaInfDir)
-        dir("optionalsDir", optionalsDir)
-        dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+    val plugin = buildPluginSuccess {
+      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+        zip("plugin.jar") {
+          dir("META-INF", metaInfDir)
+          dir("optionalsDir", optionalsDir)
+          dir("somePackage", somePackageDir)
+          dir("properties", propertiesDir)
+        }
       }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> PluginFileOrigin.SingleJar(plugin) }
+
+    checkPluginConfiguration(plugin, false)
+
+    val jarOrigin = PluginFileOrigin.SingleJar(plugin)
+    checkPluginClassesAndProperties(plugin, jarOrigin, jarOrigin)
   }
 
   @Test
   fun `plugin jar packed in lib directory of zip archive`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      dir("lib") {
-        dir("compile") {
-          zip("compile-library.jar") {
-            dir("META-INF") {
-              dir("services", compileLibraryServices)
-            }
-            dir("com", compileLibraryClassesRoot.resolve("com"))
-          }
-        }
-
-        zip("plugin.jar") {
-          dir("META-INF", metaInfDir)
-          dir("optionalsDir", optionalsDir)
-          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
-        }
-      }
-    }
-
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
-  }
-
-  @Test
-  fun `directory with lib subdirectory containing jar file`() {
-    val pluginFile = buildDirectory(temporaryFolder.newFolder("plugin")) {
-      dir("lib") {
-        dir("compile") {
-          zip("compile-library.jar") {
-            dir("META-INF") {
-              dir("services", compileLibraryServices)
-            }
-            dir("com", compileLibraryClassesRoot.resolve("com"))
-          }
-        }
-
-        zip("plugin.jar") {
-          dir("META-INF", metaInfDir)
-          dir("optionalsDir", optionalsDir)
-          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
-        }
-      }
-    }
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
-  }
-
-  @Test
-  fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      dir("plugin") {
+    val plugin = buildPluginSuccess {
+      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         dir("lib") {
           dir("compile") {
             zip("compile-library.jar") {
@@ -128,46 +106,93 @@ class MockPluginsTest {
           zip("plugin.jar") {
             dir("META-INF", metaInfDir)
             dir("optionalsDir", optionalsDir)
-            dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+            dir("somePackage", somePackageDir)
+            dir("properties", propertiesDir)
           }
         }
       }
     }
-    checkPluginConfiguration(pluginFile, true) { plugin -> JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin)) }
+
+    checkPluginConfiguration(plugin, false)
+
+    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
+  }
+
+  @Test
+  fun `directory with lib subdirectory containing jar file`() {
+    val plugin = buildPluginSuccess {
+      buildDirectory(temporaryFolder.newFolder("plugin")) {
+        dir("lib") {
+          dir("compile") {
+            zip("compile-library.jar") {
+              dir("META-INF") {
+                dir("services", compileLibraryServices)
+              }
+              dir("com", compileLibraryClassesRoot.resolve("com"))
+            }
+          }
+
+          zip("plugin.jar") {
+            dir("META-INF", metaInfDir)
+            dir("optionalsDir", optionalsDir)
+            dir("somePackage", somePackageDir)
+            dir("properties", propertiesDir)
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(plugin, false)
+
+    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
+  }
+
+  @Test
+  fun `plugin directory with lib containing jar file - packed in zip archive`() {
+    val plugin = buildPluginSuccess {
+      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+        dir("plugin") {
+          dir("lib") {
+            dir("compile") {
+              zip("compile-library.jar") {
+                dir("META-INF") {
+                  dir("services", compileLibraryServices)
+                }
+                dir("com", compileLibraryClassesRoot.resolve("com"))
+              }
+            }
+
+            zip("plugin.jar") {
+              dir("META-INF", metaInfDir)
+              dir("optionalsDir", optionalsDir)
+              dir("somePackage", somePackageDir)
+              dir("properties", propertiesDir)
+            }
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(plugin, false)
+
+    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
   }
 
   @Test
   fun `plugin as directory with classes`() {
-    val pluginFile = buildDirectory(temporaryFolder.newFolder("plugin")) {
-      dir("META-INF", metaInfDir)
-      dir("optionalsDir", optionalsDir)
-      dir("classes") {
-        dir("somePackage", pluginClassesRoot.resolve("somePackage"))
-      }
-      dir("lib") {
-        dir("compile") {
-          zip("compile-library.jar") {
-            dir("META-INF") {
-              dir("services", compileLibraryServices)
-            }
-            dir("com", compileLibraryClassesRoot.resolve("com"))
-          }
-        }
-      }
-    }
-    checkPluginConfiguration(pluginFile, false) { plugin -> PluginFileOrigin.ClassesDirectory(plugin) }
-  }
-
-  @Test
-  fun `plugin as zip with directory with classes`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      dir("plugin") {
+    val plugin = buildPluginSuccess {
+      buildDirectory(temporaryFolder.newFolder("plugin")) {
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
         dir("classes") {
-          dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+          dir("somePackage", somePackageDir)
         }
         dir("lib") {
+          zip("resources.jar") {
+            dir("properties", propertiesDir)
+          }
+
           dir("compile") {
             zip("compile-library.jar") {
               dir("META-INF") {
@@ -179,7 +204,46 @@ class MockPluginsTest {
         }
       }
     }
-    checkPluginConfiguration(pluginFile, false) { plugin -> PluginFileOrigin.ClassesDirectory(plugin) }
+    checkPluginConfiguration(plugin, true)
+
+    val classesDirOrigin = PluginFileOrigin.ClassesDirectory(plugin)
+    val resourcesJarOrigin = JarFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
+  }
+
+  @Test
+  fun `plugin as zip with directory with classes`() {
+    val plugin = buildPluginSuccess {
+      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+        dir("plugin") {
+          dir("META-INF", metaInfDir)
+          dir("optionalsDir", optionalsDir)
+          dir("classes") {
+            dir("somePackage", somePackageDir)
+          }
+          dir("lib") {
+            zip("resources.jar") {
+              dir("properties", propertiesDir)
+            }
+
+            dir("compile") {
+              zip("compile-library.jar") {
+                dir("META-INF") {
+                  dir("services", compileLibraryServices)
+                }
+                dir("com", compileLibraryClassesRoot.resolve("com"))
+              }
+            }
+          }
+        }
+      }
+    }
+
+    checkPluginConfiguration(plugin, true)
+
+    val classesDirOrigin = PluginFileOrigin.ClassesDirectory(plugin)
+    val resourcesJarOrigin = JarFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
   }
 
   @Test
@@ -223,7 +287,6 @@ class MockPluginsTest {
       }
     }
 
-
     val creationSuccess = InvalidPluginsTest.getSuccessResult(pluginDirectory)
     assertEquals(
         creationSuccess.warnings,
@@ -244,16 +307,17 @@ class MockPluginsTest {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       dir("META-INF", metaInfDir)
       dir("optionalsDir", optionalsDir)
-      dir("somePackage", pluginClassesRoot.resolve("somePackage"))
+      dir("somePackage", somePackageDir)
+      dir("properties", propertiesDir)
     }
 
     InvalidPluginsTest.assertExpectedProblems(
         pluginFile,
-        listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "somePackage")))
+        listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "properties", "somePackage")))
     )
   }
 
-  private fun checkPropertyValues(plugin: IdePlugin, resolveXIncludesWithAbsoluteHref: Boolean) {
+  private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
     assertEquals("1.0.0-beta-1038-IJ141-17", plugin.pluginVersion)
@@ -278,7 +342,7 @@ class MockPluginsTest {
     are not resolved against <plugin-directory> but against "/" root of the file system so they can't be resolved
     and the corresponding plugin must be considered invalid.
      */
-    if (resolveXIncludesWithAbsoluteHref) {
+    if (!isDirectoryBasedPlugin) {
       assertEquals("Change notes must be at least 40 characters long", plugin.changeNotes)
     } else {
       assertNull(plugin.changeNotes)
@@ -317,50 +381,63 @@ class MockPluginsTest {
     assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141")))
   }
 
-  private fun checkPluginConfiguration(
-      pluginFile: File,
-      resolveXIncludesWithAbsoluteHref: Boolean,
-      fileOriginProvider: (IdePlugin) -> FileOrigin
+  private fun checkPluginClassesAndProperties(
+      plugin: IdePlugin,
+      classFilesOrigin: FileOrigin,
+      propertyFileOrigin: FileOrigin
   ) {
-    val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
-    val plugin = pluginCreationSuccess.plugin
-    assertEquals(pluginFile, plugin.originalFile)
-
-    checkWarnings(pluginCreationSuccess.warnings)
-    checkIdeCompatibility(plugin)
-    checkPropertyValues(plugin, resolveXIncludesWithAbsoluteHref)
-    checkOptionalDescriptors(plugin)
-    checkExtensionPoints(plugin)
-    checkDependenciesAndModules(plugin)
-    checkUnderlyingDocument(plugin)
-
-    val fileOrigin = fileOriginProvider(plugin)
-    checkPluginClasses(plugin, fileOrigin)
-  }
-
-  private fun checkPluginClasses(plugin: IdePlugin, expectedFileOrigin: FileOrigin) {
     assertNotNull(plugin.originalFile)
-    IdePluginClassesFinder.findPluginClasses(
-        plugin,
-        Resolver.ReadMode.FULL,
-        listOf(CompileServerExtensionKey)
-    ).use { classesLocations ->
+    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { classesLocations ->
       checkCompileServerJars(classesLocations, plugin)
 
       val mainResolver = CompositeResolver.create(
           IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
       )
-      assertEquals(
-          setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
-          mainResolver.allClasses
-      )
-      assertEquals(setOf("somePackage", "somePackage/subPackage"), mainResolver.allPackages)
-      assertTrue(mainResolver.containsPackage("somePackage"))
-      assertTrue(mainResolver.containsPackage("somePackage/subPackage"))
 
-      val fileOrigin = (mainResolver.resolveClass("somePackage/ClassOne") as ResolutionResult.Found).fileOrigin
-      assertEquals(expectedFileOrigin, fileOrigin)
+      checkPluginClasses(mainResolver, classFilesOrigin)
+      checkPluginProperties(mainResolver, propertyFileOrigin)
     }
+  }
+
+  private fun checkPluginConfiguration(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
+    checkPluginValues(plugin, isDirectoryBasedPlugin)
+    checkIdeCompatibility(plugin)
+    checkOptionalDescriptors(plugin)
+    checkExtensionPoints(plugin)
+    checkDependenciesAndModules(plugin)
+    checkUnderlyingDocument(plugin)
+  }
+
+  private fun checkPluginClasses(resolver: Resolver, expectedFileOrigin: FileOrigin) {
+    assertEquals(
+        setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
+        resolver.allClasses
+    )
+    assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.allPackages)
+    assertTrue(resolver.containsPackage("somePackage"))
+    assertTrue(resolver.containsPackage("somePackage/subPackage"))
+
+    val fileOrigin = (resolver.resolveClass("somePackage/ClassOne") as ResolutionResult.Found).fileOrigin
+    assertEquals(expectedFileOrigin, fileOrigin)
+  }
+
+  private fun checkPluginProperties(resolver: Resolver, propertyFileOrigin: FileOrigin) {
+    val bundleNameSet = resolver.allBundleNameSet
+    assertEquals(setOf("properties.someBundle"), bundleNameSet.baseBundleNames)
+    assertEquals(setOf("properties.someBundle" , "properties.someBundle_en"), bundleNameSet["properties.someBundle"])
+
+    val (enBundle, enFileOrigin) = resolver.resolveExactPropertyResourceBundle("properties.someBundle", Locale.ENGLISH) as ResolutionResult.Found
+
+    assertEquals(propertyFileOrigin, enFileOrigin)
+    assertEquals("en.only.property.value", enBundle.getString("en.only.property"))
+    assertEquals("new.overridden.key.value", enBundle.getString("overridden.key"))
+    assertNull(enBundle.handleGetObject("common.key"))
+
+    val (rootBundle, rootFileOrigin) = resolver.resolveExactPropertyResourceBundle("properties.someBundle", Locale.ROOT) as ResolutionResult.Found
+
+    assertEquals(propertyFileOrigin, rootFileOrigin)
+    assertEquals("common.key.value", rootBundle.getString("common.key"))
+    assertEquals("overridden.key.value", rootBundle.getString("overridden.key"))
   }
 
   private fun checkUnderlyingDocument(plugin: IdePlugin) {

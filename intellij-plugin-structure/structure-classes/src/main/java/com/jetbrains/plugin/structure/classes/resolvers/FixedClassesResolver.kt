@@ -1,11 +1,14 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import org.objectweb.asm.tree.ClassNode
+import java.util.*
 
 class FixedClassesResolver private constructor(
     private val classes: Map<String, ClassNode>,
     override val readMode: ReadMode,
-    private val fileOrigin: FileOrigin
+    private val fileOrigin: FileOrigin,
+    private val resourceBundles: Map<String, PropertyResourceBundle>
 ) : Resolver() {
 
   companion object {
@@ -13,9 +16,13 @@ class FixedClassesResolver private constructor(
     fun create(
         classes: Iterable<ClassNode>,
         fileOrigin: FileOrigin,
-        readMode: ReadMode = ReadMode.FULL
+        readMode: ReadMode = ReadMode.FULL,
+        propertyResourceBundles: Map<String, PropertyResourceBundle> = emptyMap()
     ): Resolver = FixedClassesResolver(
-        classes.reversed().associateBy { it.name }, readMode, fileOrigin
+        classes.reversed().associateBy { it.name },
+        readMode,
+        fileOrigin,
+        propertyResourceBundles
     )
   }
 
@@ -37,14 +44,25 @@ class FixedClassesResolver private constructor(
     return ResolutionResult.Found(classNode, fileOrigin)
   }
 
+  override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
+    val control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES)
+    val bundleName = control.toBundleName(baseName, locale)
+    val propertyResourceBundle = resourceBundles[bundleName] ?: return ResolutionResult.NotFound
+    return ResolutionResult.Found(propertyResourceBundle, fileOrigin)
+  }
+
   override val allClasses
     get() = classes.keys
 
+  override val allBundleNameSet: ResourceBundleNameSet
+    get() = ResourceBundleNameSet(
+        resourceBundles.keys
+            .groupBy { getBundleBaseName(it) }
+            .mapValues { it.value.toSet() }
+    )
+
   override val allPackages: Set<String>
     get() = packageSet.getAllPackages()
-
-  override val isEmpty
-    get() = classes.isEmpty()
 
   override fun containsClass(className: String) = className in classes
 

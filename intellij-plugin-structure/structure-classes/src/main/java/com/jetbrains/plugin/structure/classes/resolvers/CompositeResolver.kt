@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
+import java.util.*
 
 /**
  * [Resolver] that combines several [resolvers] with the Java classpath search strategy.
@@ -10,26 +11,43 @@ class CompositeResolver private constructor(
     private val resolvers: List<Resolver>,
     override val readMode: ReadMode
 ) : Resolver() {
-  private val packageToResolvers: Map<String, List<Resolver>> = buildPackageToResolvers()
 
-  private fun buildPackageToResolvers(): Map<String, List<Resolver>> {
-    val result = hashMapOf<String, MutableList<Resolver>>()
+  private val packageToResolvers: MutableMap<String, MutableList<Resolver>> = hashMapOf()
+
+  private val fullBundleNames = hashMapOf<String, MutableSet<String>>()
+
+  private val baseBundleNameToResolvers: MutableMap<String, MutableList<Resolver>> = hashMapOf()
+
+  init {
+    buildIndex()
+  }
+
+  private fun buildIndex() {
     for (resolver in resolvers) {
       for (packageName in resolver.allPackages) {
-        result.getOrPut(packageName) { arrayListOf() } += resolver
+        packageToResolvers.getOrPut(packageName) { arrayListOf() } += resolver
+      }
+
+      val bundleNameSet = resolver.allBundleNameSet
+      for (baseBundleName in bundleNameSet.baseBundleNames) {
+        baseBundleNameToResolvers.getOrPut(baseBundleName) { arrayListOf() } += resolver
+
+        val resolverAllNames = bundleNameSet[baseBundleName]
+        if (resolverAllNames.isNotEmpty()) {
+          fullBundleNames.getOrPut(baseBundleName) { hashSetOf() } += resolverAllNames
+        }
       }
     }
-    return result
   }
 
   override val allClasses
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
 
+  override val allBundleNameSet: ResourceBundleNameSet
+    get() = ResourceBundleNameSet(fullBundleNames)
+
   override val allPackages
     get() = packageToResolvers.keys
-
-  override val isEmpty
-    get() = packageToResolvers.isEmpty()
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
       resolvers.asSequence().all { it.processAllClasses(processor) }
@@ -59,6 +77,20 @@ class CompositeResolver private constructor(
     return ResolutionResult.NotFound
   }
 
+  override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
+    val resolvers = baseBundleNameToResolvers[baseName]
+    if (resolvers == null || resolvers.isEmpty()) {
+      return ResolutionResult.NotFound
+    }
+    for (resolver in resolvers) {
+      val resolutionResult = resolver.resolveExactPropertyResourceBundle(baseName, locale)
+      if (resolutionResult !is ResolutionResult.NotFound) {
+        return resolutionResult
+      }
+    }
+    return ResolutionResult.NotFound
+  }
+
   override fun close() {
     resolvers.closeAll()
   }
@@ -72,20 +104,19 @@ class CompositeResolver private constructor(
 
     @JvmStatic
     fun create(resolvers: Iterable<Resolver>): Resolver {
-      val nonEmpty = resolvers.filterNot { it.isEmpty }
-      return when {
-        nonEmpty.isEmpty() -> EmptyResolver
-        nonEmpty.size == 1 -> nonEmpty[0]
-        else -> {
-          val readMode = if (nonEmpty.all { it.readMode == ReadMode.FULL }) {
-            ReadMode.FULL
-          } else {
-            ReadMode.SIGNATURES
-          }
-
-          CompositeResolver(nonEmpty, readMode)
-        }
+      val list = resolvers.toList()
+      if (list.isEmpty()) {
+        return EmptyResolver
       }
+      if (list.size == 1) {
+        return list.first()
+      }
+      val readMode = if (list.all { it.readMode == ReadMode.FULL }) {
+        ReadMode.FULL
+      } else {
+        ReadMode.SIGNATURES
+      }
+      return CompositeResolver(list, readMode)
     }
   }
 }

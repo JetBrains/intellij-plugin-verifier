@@ -171,7 +171,7 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
       println(classNode.name)
       println(byteCode)
     }
-    return createSimpleVerificationContext(FixedClassesResolver.create(classes, SomeFileOrigin, Resolver.ReadMode.FULL))
+    return createSimpleVerificationContext(FixedClassesResolver.create(classes, SomeFileOrigin, readMode = Resolver.ReadMode.FULL))
   }
 
   /**

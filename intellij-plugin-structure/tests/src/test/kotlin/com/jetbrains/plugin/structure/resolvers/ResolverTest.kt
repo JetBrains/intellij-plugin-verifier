@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.*
 import org.junit.Assert.*
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
+import java.util.*
 
 class ResolverTest {
   @Test
@@ -12,6 +13,9 @@ class ResolverTest {
     assertEquals(ResolutionResult.NotFound, cacheResolver.resolveClass("a"))
     assertTrue(cacheResolver.allClasses.isEmpty())
     assertEquals(emptySet<String>(), cacheResolver.allPackages)
+
+    assertEquals(ResolutionResult.NotFound, cacheResolver.resolveExactPropertyResourceBundle("a", Locale.ROOT))
+    assertTrue(cacheResolver.allBundleNameSet.isEmpty)
   }
 
   @Test
@@ -23,7 +27,7 @@ class ResolverTest {
       override val parent: FileOrigin? = null
     }
     val cacheResolver = CacheResolver(
-        FixedClassesResolver.create(listOf(classNode), fileOrigin, Resolver.ReadMode.FULL)
+        FixedClassesResolver.create(listOf(classNode), fileOrigin, readMode = Resolver.ReadMode.FULL)
     )
     assertEquals(1, cacheResolver.allClasses.size)
     val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
@@ -54,8 +58,8 @@ class ResolverTest {
       override val parent: FileOrigin? = null
     }
 
-    val resolver1 = FixedClassesResolver.create(listOf(class1Node, sameClassNode1), fileOrigin = origin1)
-    val resolver2 = FixedClassesResolver.create(listOf(class2Node, sameClassNode2), fileOrigin = origin2)
+    val resolver1 = FixedClassesResolver.create(listOf(class1Node, sameClassNode1), origin1)
+    val resolver2 = FixedClassesResolver.create(listOf(class2Node, sameClassNode2), origin2)
 
     val resolver = CompositeResolver.create(resolver1, resolver2)
 
@@ -66,4 +70,63 @@ class ResolverTest {
     assertSame(origin2, (resolver.resolveClass(class2) as ResolutionResult.Found).fileOrigin)
     assertSame(origin1, (resolver.resolveClass(sameClass) as ResolutionResult.Found).fileOrigin)
   }
+
+  @Test
+  fun `composite resolver bundle resolution`() {
+    val origin1 = object : FileOrigin {
+      override val parent: FileOrigin? = null
+    }
+
+    val origin2 = object : FileOrigin {
+      override val parent: FileOrigin? = null
+    }
+
+    val resolver1 = FixedClassesResolver.create(
+        emptyList(),
+        origin1,
+        propertyResourceBundles = mapOf(
+            "messages.SomeBundle" to buildPropertyResourceBundle(
+                mapOf(
+                    "key1" to "value1"
+                )
+            )
+        )
+    )
+
+    val resolver2 = FixedClassesResolver.create(
+        emptyList(),
+        origin2,
+        propertyResourceBundles = mapOf(
+            "messages.SomeBundle_en" to buildPropertyResourceBundle(
+                mapOf(
+                    "key1" to "value2",
+                    "en.only.key" to "value3"
+                )
+            )
+        )
+    )
+
+    val resolver = CompositeResolver.create(resolver1, resolver2)
+    val bundleNameSet = resolver.allBundleNameSet
+    assertEquals(setOf("messages.SomeBundle"), bundleNameSet.baseBundleNames)
+    assertEquals(setOf("messages.SomeBundle", "messages.SomeBundle_en"), bundleNameSet["messages.SomeBundle"])
+
+    val rootResolveResult = resolver.resolveExactPropertyResourceBundle("messages.SomeBundle", Locale.ROOT) as ResolutionResult.Found
+    assertEquals(origin1, rootResolveResult.fileOrigin)
+    assertEquals("value1", rootResolveResult.value.getString("key1"))
+
+    val enResolveResult = resolver.resolveExactPropertyResourceBundle("messages.SomeBundle", Locale.ENGLISH) as ResolutionResult.Found
+    assertEquals(origin2, enResolveResult.fileOrigin)
+    assertEquals("value2", enResolveResult.value.getString("key1"))
+    assertEquals("value3", enResolveResult.value.getString("en.only.key"))
+  }
+
+  private fun buildPropertyResourceBundle(properties: Map<String, String>): PropertyResourceBundle {
+    val reader = properties.entries.joinToString(separator = "\n") {
+      "${it.key}=${it.value}"
+    }.reader()
+
+    return PropertyResourceBundle(reader)
+  }
+
 }
