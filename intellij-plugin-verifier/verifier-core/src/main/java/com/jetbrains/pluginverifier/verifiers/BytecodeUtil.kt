@@ -2,23 +2,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.access.AccessType
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.MethodNode
-
-fun MethodNode.getParameterNames(): List<String> {
-  val arguments = Type.getArgumentTypes(desc)
-  val argumentsNumber = arguments.size
-  val offset = if (this.access and Opcodes.ACC_STATIC != 0) 0 else 1
-  var parameterNames: List<String> = emptyList()
-  if (localVariables != null) {
-    parameterNames = localVariables.map { it.name }.drop(offset).take(argumentsNumber)
-  }
-  if (parameterNames.size != argumentsNumber) {
-    parameterNames = (0 until argumentsNumber).map { "arg$it" }
-  }
-  return parameterNames
-}
 
 /**
  * Peels an internal JVM descriptor of a type.

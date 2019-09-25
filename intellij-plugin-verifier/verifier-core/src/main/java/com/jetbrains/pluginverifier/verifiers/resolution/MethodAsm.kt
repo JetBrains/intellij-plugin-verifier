@@ -4,21 +4,20 @@ import com.jetbrains.plugin.structure.base.utils.toList
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType
-import com.jetbrains.pluginverifier.verifiers.getParameterNames
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodNode
 
-class MethodAsm(override val containingClassFile: ClassFile, private val asmNode: MethodNode) : Method {
-
+class MethodAsm(override val containingClassFile: ClassFile, val asmNode: MethodNode) : Method {
   override val location
     get() = MethodLocation(
         containingClassFile.location,
         name,
         descriptor,
-        asmNode.getParameterNames(),
+        methodParameters.map { it.name },
         signature?.takeIf { it.isNotEmpty() },
         Modifiers(asmNode.access)
     )
@@ -40,6 +39,29 @@ class MethodAsm(override val containingClassFile: ClassFile, private val asmNode
 
   override val localVariables: List<LocalVariableNode>
     get() = asmNode.localVariables.orEmpty()
+
+  override val methodParameters: List<MethodParameter>
+    get() {
+      val parameterNames = asmNode.getParameterNames()
+      val parameterAnnotations: Array<out MutableList<AnnotationNode>?> = asmNode.invisibleParameterAnnotations.orEmpty()
+
+      //The simplest case: just zip parameter names and annotations.
+      if (parameterNames.size == parameterAnnotations.size) {
+        return parameterNames.mapIndexed { index, parameterName ->
+          MethodParameter(parameterName, parameterAnnotations[index].orEmpty())
+        }
+      }
+
+      //The first parameter is a parameter of an inner class' constructor => ignore the first annotation.
+      if (name == "<init>" && containingClassFile.isInnerClass && parameterNames.size == parameterAnnotations.size + 1) {
+        return parameterNames.mapIndexed { index, parameterName ->
+          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList<AnnotationNode>() }.orEmpty())
+        }
+      }
+
+      //Fallback: we don't know how to zip parameter names and annotations.
+      return parameterNames.map { parameterName -> MethodParameter(parameterName, emptyList()) }
+    }
 
   override val exceptions
     get() = asmNode.exceptions.orEmpty()
@@ -92,5 +114,26 @@ class MethodAsm(override val containingClassFile: ClassFile, private val asmNode
 
   override val isBridgeMethod
     get() = asmNode.access and Opcodes.ACC_BRIDGE != 0
+
+  private fun MethodNode.getParameterNames(): List<String> {
+    val descriptorArguments = Type.getArgumentTypes(desc)
+    val descriptorArgumentsNumber = descriptorArguments.size
+
+    if (localVariables != null) {
+      val parameters = if (access and Opcodes.ACC_STATIC != 0) {
+        localVariables.take(descriptorArgumentsNumber)
+      } else {
+        localVariables.drop(1).take(descriptorArgumentsNumber)
+      }
+
+      if (parameters.size == descriptorArgumentsNumber
+          && parameters.indices.all { index -> parameters[index].desc == descriptorArguments[index]?.descriptor }
+      ) {
+        return parameters.map { it.name }
+      }
+    }
+
+    return (0 until descriptorArgumentsNumber).map { "arg$it" }
+  }
 
 }
