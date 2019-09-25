@@ -27,7 +27,7 @@ class InvalidClassFileTest {
       file("invalid.class", "bad")
     }
     try {
-      ClassFilesResolver(classFilesRoot.toPath(), InvalidFileOrigin).use { }
+      DirectoryResolver(classFilesRoot.toPath(), InvalidFileOrigin).use { }
     } catch (e: InvalidClassFileException) {
       assertTrue(e.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
       return

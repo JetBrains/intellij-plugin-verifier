@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.nio.file.Path
 
-class ClassFilesResolver(
+class DirectoryResolver(
     private val root: Path,
     private val classFileOrigin: FileOrigin,
     override val readMode: ReadMode = ReadMode.FULL
