@@ -34,7 +34,6 @@ class FieldAsm(override val containingClassFile: ClassFile, private val asmNode:
   override val isStatic
     get() = asmNode.access and Opcodes.ACC_STATIC != 0
 
-
   override val isFinal
     get() = asmNode.access and Opcodes.ACC_FINAL != 0
 
@@ -56,4 +55,6 @@ class FieldAsm(override val containingClassFile: ClassFile, private val asmNode:
   override val isSynthetic: Boolean
     get() = asmNode.access and Opcodes.ACC_SYNTHETIC != 0
 
+  override val initialValue: Any?
+    get() = asmNode.value
 }

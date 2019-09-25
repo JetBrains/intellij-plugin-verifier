@@ -50,9 +50,8 @@ fun Resolver.resolveClassChecked(
               IllegalClassAccessProblem(classFile.location, classFile.accessType, referrer.location)
           )
         }
-        val usageLocation = referrer.location
         val classReference = ClassReference(className)
-        context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, usageLocation, context) }
+        context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer) }
         classFile
       }
     }

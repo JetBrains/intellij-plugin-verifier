@@ -20,4 +20,6 @@ interface Field : ClassFileMember {
   override val isProtected: Boolean
   override val isPrivate: Boolean
   override val isPackagePrivate: Boolean
+
+  val initialValue: Any?
 }

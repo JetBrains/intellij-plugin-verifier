@@ -22,11 +22,12 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
     && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
 
   override fun processClassReference(
-    classReference: ClassReference,
-    resolvedClass: ClassFile,
-    usageLocation: Location,
-    context: VerificationContext
+      classReference: ClassReference,
+      resolvedClass: ClassFile,
+      context: VerificationContext,
+      referrer: ClassFileMember
   ) {
+    val usageLocation = referrer.location
     if (isInternal(resolvedClass, context, usageLocation)) {
       internalApiRegistrar.registerInternalApiUsage(
         InternalClassUsage(classReference, resolvedClass.location, usageLocation)
@@ -35,12 +36,13 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
   }
 
   override fun processMethodInvocation(
-    methodReference: MethodReference,
-    resolvedMethod: Method,
-    usageLocation: Location,
-    context: VerificationContext,
-    instructionNode: AbstractInsnNode
+      methodReference: MethodReference,
+      resolvedMethod: Method,
+      instructionNode: AbstractInsnNode,
+      callerMethod: Method,
+      context: VerificationContext
   ) {
+    val usageLocation = callerMethod.location
     if (isInternal(resolvedMethod, context, usageLocation)) {
       internalApiRegistrar.registerInternalApiUsage(
         InternalMethodUsage(methodReference, resolvedMethod.location, usageLocation)
@@ -49,11 +51,12 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
   }
 
   override fun processFieldAccess(
-    fieldReference: FieldReference,
-    resolvedField: Field,
-    usageLocation: Location,
-    context: VerificationContext
+      fieldReference: FieldReference,
+      resolvedField: Field,
+      context: VerificationContext,
+      callerMethod: Method
   ) {
+    val usageLocation = callerMethod.location
     if (isInternal(resolvedField, context, usageLocation)) {
       internalApiRegistrar.registerInternalApiUsage(
         InternalFieldUsage(fieldReference, resolvedField.location, usageLocation)

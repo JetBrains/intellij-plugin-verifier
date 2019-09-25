@@ -25,6 +25,10 @@ interface ClassFile : ClassFileMember {
   val isAbstract: Boolean
   val isFinal: Boolean
   val isInterface: Boolean
+  val isStatic: Boolean
+
+  val isInnerClass: Boolean get() = enclosingClassName != null && !isStatic
+
   override val isPublic: Boolean
   override val isProtected: Boolean
   override val isPrivate: Boolean

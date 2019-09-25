@@ -178,8 +178,7 @@ class MethodInvokeInstructionVerifier(
   private fun resolveMethod(): Method? {
     val method = MethodResolver().resolveMethod(methodOwnerClass, methodReference, instruction, callerMethod, context)
     if (method != null) {
-      val usageLocation = callerMethod.location
-      context.apiUsageProcessors.forEach { it.processMethodInvocation(methodReference, method, usageLocation, context, instructionNode) }
+      context.apiUsageProcessors.forEach { it.processMethodInvocation(methodReference, method, instructionNode, callerMethod, context) }
     }
     return method
   }

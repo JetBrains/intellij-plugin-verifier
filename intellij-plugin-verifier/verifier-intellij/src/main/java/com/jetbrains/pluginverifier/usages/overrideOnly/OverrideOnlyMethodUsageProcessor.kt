@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.usages.overrideOnly
 
-import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
@@ -11,12 +10,13 @@ import org.objectweb.asm.tree.AbstractInsnNode
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   override fun processMethodInvocation(
-    methodReference: MethodReference,
-    resolvedMethod: Method,
-    usageLocation: Location,
-    context: VerificationContext,
-    instructionNode: AbstractInsnNode
+      methodReference: MethodReference,
+      resolvedMethod: Method,
+      instructionNode: AbstractInsnNode,
+      callerMethod: Method,
+      context: VerificationContext
   ) {
+    val usageLocation = callerMethod.location
     if (resolvedMethod.isOverrideOnlyMethod()) {
       overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
         OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, usageLocation)
