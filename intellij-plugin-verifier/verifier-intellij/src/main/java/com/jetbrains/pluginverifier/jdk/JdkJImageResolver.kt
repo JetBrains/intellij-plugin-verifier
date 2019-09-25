@@ -98,8 +98,8 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override val allPackages
     get() = packageSet.getAllPackages()
 
-  override val allBundleBaseNames
-    get() = emptySet<String>()
+  override val allBundleNameSet
+    get() = ResourceBundleNameSet(emptyMap())
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]

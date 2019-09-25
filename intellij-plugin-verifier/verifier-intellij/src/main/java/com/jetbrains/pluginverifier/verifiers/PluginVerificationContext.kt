@@ -32,6 +32,7 @@ import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.usages.properties.PropertyUsageProcessor
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
@@ -57,7 +58,8 @@ data class PluginVerificationContext(
           DiscouragingClassUsageProcessor(this),
           InternalApiUsageProcessor(this),
           OverrideOnlyMethodUsageProcessor(this),
-          JavaPluginApiUsageProcessor(this)
+          JavaPluginApiUsageProcessor(this),
+          PropertyUsageProcessor()
       )
 
   fun postProcessResults() {
