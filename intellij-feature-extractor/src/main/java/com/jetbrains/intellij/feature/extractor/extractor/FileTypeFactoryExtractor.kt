@@ -1,13 +1,18 @@
 package com.jetbrains.intellij.feature.extractor.extractor
 
-import com.jetbrains.intellij.feature.extractor.*
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.analysis.Frame
 import org.objectweb.asm.tree.analysis.SourceValue
 import org.objectweb.asm.tree.analysis.Value
@@ -45,18 +50,18 @@ class FileTypeFactoryExtractor : Extractor {
         .mapNotNull { extractFileTypes(it, resolver) }
   }
 
-  private fun extractFileTypes(classNode: ClassNode, resolver: Resolver): ExtensionPointFeatures? {
-    if (classNode.superName != FILE_TYPE_FACTORY) {
+  private fun extractFileTypes(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
+    if (classFile.superName != FILE_TYPE_FACTORY) {
       return null
     }
-    val method = classNode.findMethod {
-      it.name == "createFileTypes" && it.desc == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract()
+    val method = classFile.methods.find {
+      it.name == "createFileTypes" && it.descriptor == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract
     } ?: return null
 
-    val frames = AnalysisUtil.analyzeMethodFrames(classNode, method)
+    val frames = analyzeMethodFrames(method)
 
     val result = arrayListOf<String>()
-    val instructions = method.instructionsAsList()
+    val instructions = method.instructions
     instructions.forEachIndexed { index, instruction ->
       if (instruction is MethodInsnNode) {
 
@@ -64,7 +69,7 @@ class FileTypeFactoryExtractor : Extractor {
 
           if (instruction.desc == EXPLICIT_EXTENSION) {
             val frame = frames[index]
-            val stringValue = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+            val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
             if (stringValue != null) {
               result.addAll(parseExtensionsList(stringValue))
             }
@@ -158,7 +163,7 @@ class FileTypeFactoryExtractor : Extractor {
     }
 
     //insert dummy instructions to the end to prevent ArrayIndexOutOfBoundsException.
-    val instructions = methodInstructions + dummyValue.replicate(10)
+    val instructions = methodInstructions + Array(10) { dummyValue }.toList()
 
     //skip the ANEWARRAY instruction
     var pos = newArrayInstructionIndex + 1
@@ -184,7 +189,7 @@ class FileTypeFactoryExtractor : Extractor {
                 && initInvoke.name == "<init>"
                 && initInvoke.owner == EXACT_NAME_MATCHER
                 && initInvoke.desc == "(Ljava/lang/String;)V") {
-              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
                 return string
               }
@@ -222,7 +227,7 @@ class FileTypeFactoryExtractor : Extractor {
                   && initInvoke.owner == EXACT_NAME_MATCHER
                   && initInvoke.desc == "(Ljava/lang/String;Z)V") {
 
-                val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(1), resolver, frames, instructions)
+                val string = evaluateConstantString(frame.getOnStack(1), resolver, frames, instructions)
                 if (string != null) {
                   return string
                 }
@@ -258,7 +263,7 @@ class FileTypeFactoryExtractor : Extractor {
                 && initInvoke.owner == EXTENSIONS_MATCHER
                 && initInvoke.desc == "(Ljava/lang/String;)V") {
 
-              val string = AnalysisUtil.evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
                 return "*.$string"
               }
@@ -287,7 +292,7 @@ class FileTypeFactoryExtractor : Extractor {
     */
     fun parseSetElement(i: Int): String? {
       if (instructions[pos++].opcode == Opcodes.DUP) {
-        if (i == AnalysisUtil.takeNumberFromIntInstruction(instructions[pos++])) {
+        if (i == takeNumberFromIntInstruction(instructions[pos++])) {
           val block = parseBlock() ?: return null
           if (instructions[pos++].opcode == Opcodes.AASTORE) {
             return block
@@ -313,11 +318,12 @@ class FileTypeFactoryExtractor : Extractor {
       return null
     }
     val first = value.insns.first() as? TypeInsnNode ?: return null
-    val classNode = (resolver.resolveClass(first.desc) as? ResolutionResult.Found)?.value ?: return null
-    val method = classNode.findMethod {
-      it.name == "getDefaultExtension" && Type.getArgumentTypes(it.desc).isEmpty()
-    } ?: return null
-    return AnalysisUtil.extractConstantFunctionValue(classNode, method, resolver)
+    val className = first.desc.extractClassNameFromDescriptor() ?: return null
+    val classFile = resolver.resolveClassOrNull(className) ?: return null
+
+    val method = classFile.methods.find { it.name == "getDefaultExtension" && it.methodParameters.isEmpty() }
+        ?: return null
+    return extractConstantFunctionValue(method, resolver)
   }
 
 

@@ -25,8 +25,8 @@ Currently, the dependencies between the above projects are:
 
 - **ide-diff-builder** - independent module
 - **intellij-plugin-structure** - independent module
-- **intellij-feature-extractor** - depends on the **intellij-plugin-structure**
 - **intellij-plugin-verifier** - depends on the **intellij-plugin-structure**
+- **intellij-feature-extractor** - depends on the **intellij-plugin-verifier**
 - **plugins-verifier-service** - composite build dependency on **intellij-feature-extractor**, **intellij-plugin-verifier** and **intellij-plugin-structure**. 
 
 ####Configuring the local environment

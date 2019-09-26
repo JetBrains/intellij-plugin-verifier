@@ -1,11 +1,15 @@
 package com.jetbrains.intellij.feature.extractor.extractor
 
-import com.jetbrains.intellij.feature.extractor.*
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
+import com.jetbrains.pluginverifier.verifiers.evaluateConstantString
+import com.jetbrains.pluginverifier.verifiers.extractConstantFunctionValue
+import com.jetbrains.pluginverifier.verifiers.getOnStack
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 /**
@@ -25,11 +29,11 @@ class RunConfigurationExtractor : Extractor {
         .mapNotNull { extractConfigurationTypes(it, resolver) }
   }
 
-  private fun extractConfigurationTypes(classNode: ClassNode, resolver: Resolver): ExtensionPointFeatures? {
+  private fun extractConfigurationTypes(classNode: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
     if (classNode.superName == CONFIGURATION_BASE) {
-      val constructor = classNode.findMethod { it.isConstructor } ?: return null
-      val frames = AnalysisUtil.analyzeMethodFrames(classNode, constructor)
-      val constructorInstructions = constructor.instructionsAsList()
+      val constructor = classNode.methods.find { it.isConstructor } ?: return null
+      val frames = analyzeMethodFrames(constructor)
+      val constructorInstructions = constructor.instructions
       val superInitIndex = constructorInstructions.indexOfLast {
         it is MethodInsnNode
             && it.name == "<init>"
@@ -40,15 +44,14 @@ class RunConfigurationExtractor : Extractor {
       if (superInitIndex == -1) {
         return null
       }
-      val value = AnalysisUtil.evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), constructorInstructions)
+      val value = evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), constructorInstructions)
       return convertToResult(value)
     } else {
-      val method = classNode.findMethod { it.name == "getId" && Type.getArgumentTypes(it.desc).isEmpty() }
-          ?: return null
-      if (method.isAbstract()) {
+      val method = classNode.methods.find { it.name == "getId" && it.methodParameters.isEmpty() } ?: return null
+      if (method.isAbstract) {
         return null
       }
-      val value = AnalysisUtil.extractConstantFunctionValue(classNode, method, resolver)
+      val value = extractConstantFunctionValue(method, resolver)
       return convertToResult(value)
     }
   }

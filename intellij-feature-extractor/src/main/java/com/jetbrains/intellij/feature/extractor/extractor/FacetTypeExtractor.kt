@@ -1,9 +1,13 @@
 package com.jetbrains.intellij.feature.extractor.extractor
 
-import com.jetbrains.intellij.feature.extractor.*
+import com.jetbrains.intellij.feature.extractor.ExtensionPoint
+import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import org.objectweb.asm.tree.ClassNode
+import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
+import com.jetbrains.pluginverifier.verifiers.evaluateConstantString
+import com.jetbrains.pluginverifier.verifiers.getOnStack
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.analysis.Value
 
@@ -21,15 +25,15 @@ class FacetTypeExtractor : Extractor {
         .mapNotNull { extractFacetTypes(it, resolver) }
   }
 
-  private fun extractFacetTypes(classNode: ClassNode, resolver: Resolver): ExtensionPointFeatures? {
-    if (classNode.superName != FACET_TYPE) {
+  private fun extractFacetTypes(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
+    if (classFile.superName != FACET_TYPE) {
       return null
     }
 
-    for (constructorMethod in classNode.findMethods { it.isConstructor }) {
-      val frames = AnalysisUtil.analyzeMethodFrames(classNode, constructorMethod)
+    for (constructorMethod in classFile.methods.filter { it.isConstructor }) {
+      val frames = analyzeMethodFrames(constructorMethod)
 
-      constructorMethod.instructions.toArray().forEachIndexed { index, instruction ->
+      constructorMethod.instructions.forEachIndexed { index, instruction ->
         if (instruction is MethodInsnNode) {
           if (instruction.name == "<init>" && instruction.owner == FACET_TYPE) {
 
@@ -42,7 +46,7 @@ class FacetTypeExtractor : Extractor {
               else -> return@forEachIndexed
             }
 
-            val stringValue = AnalysisUtil.evaluateConstantString(value, resolver, frames, constructorMethod.instructionsAsList())
+            val stringValue = evaluateConstantString(value, resolver, frames, constructorMethod.instructions)
             if (stringValue != null) {
               return ExtensionPointFeatures(ExtensionPoint.FACET_TYPE, listOf(stringValue))
             }
