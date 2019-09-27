@@ -21,22 +21,6 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
  */
 class DependenciesGraphPrettyPrinter(private val dependenciesGraph: DependenciesGraph) {
 
-  private companion object {
-    const val NOT_LAST_DEPENDENCY_FIRST_LINE_PREFIX = "+--- "
-
-    const val NOT_LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX = "|    "
-
-    const val LAST_DEPENDENCY_FIRST_LINE_PREFIX = "\\--- "
-
-    const val LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX = "     "
-
-    const val TRANSITIVE_DEPENDENCY_SUFFIX = "(*)"
-
-    const val FAILED_DEPENDENCY_PREFIX = "(failed)"
-
-    const val OPTIONAL_DEPENDENCY_PREFIX = "(optional)"
-  }
-
   private val visitedNodes = hashSetOf<DependencyNode>()
 
   fun prettyPresentation(): String =
@@ -45,14 +29,14 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {
     if (currentNode in visitedNodes) {
       //This node has already been printed with all its dependencies.
-      return listOf("$currentNode $TRANSITIVE_DEPENDENCY_SUFFIX")
+      return listOf("$currentNode (*)")
     }
     visitedNodes.add(currentNode)
 
     val childrenLines = arrayListOf<List<String>>()
 
     currentNode.missingDependencies.sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-      listOf("$FAILED_DEPENDENCY_PREFIX ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
     }
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
@@ -68,7 +52,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       val childLines = recursivelyCalculateLines(edge.to)
       val headerLine = buildString {
         if (edge.dependency.isOptional) {
-          append("$OPTIONAL_DEPENDENCY_PREFIX ")
+          append("(optional) ")
         }
         append(childLines.first())
         if (edge.dependency.isModule) {
@@ -88,17 +72,15 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
       if (headingChildren.isNotEmpty()) {
         for (headingChild in headingChildren) {
-          val firstLine = headingChild.first().let { NOT_LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
-          val tailLines = headingChild.drop(1).map { NOT_LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
+          val firstLine = headingChild.first().let { "+--- $it" }
+          val tailLines = headingChild.drop(1).map { "|    $it" }
           result += firstLine
           result += tailLines
         }
       }
 
-      val lastChildFirstLine = lastChild.first().let { LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
-      val lastChildTailLines = lastChild.drop(1).map { LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
-      result += lastChildFirstLine
-      result += lastChildTailLines
+      result += lastChild.first().let { "\\--- $it" }
+      result += lastChild.drop(1).map { "     $it" }
     }
 
     return result
