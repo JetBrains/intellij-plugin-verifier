@@ -93,10 +93,10 @@ start:1.0
 +--- b:1.0
 |    +--- d:1.0 [declaring module mandatory.module]
 |    \--- c:1.0
-|         +--- (optional) d:1.0 (*) [declaring module optional.module]
-|         +--- (optional) d:1.0 (*) [declaring module optional.module.2]
 |         +--- (failed) e: plugin e is not found
-|         \--- (failed) f (optional): plugin e is not found
+|         +--- (failed) f (optional): plugin e is not found
+|         +--- (optional) d:1.0 (*) [declaring module optional.module]
+|         \--- (optional) d:1.0 (*) [declaring module optional.module.2]
 \--- c:1.0 (*)
 """.trim(), prettyPresentation
     )

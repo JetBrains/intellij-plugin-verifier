@@ -12,9 +12,9 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
  * start:1.0
  * +--- b:1.0
  * |    +--- c:1.0
- * |    |    +--- (optional) optional.module:IU-181.1 [declaring module optional.module]
  * |    |    +--- (failed) e: plugin e is not found
- * |    |    \--- (failed) f (optional): plugin e is not found
+ * |    |    +--- (failed) f (optional): plugin e is not found
+ * |    |    \--- (optional) optional.module:IU-181.1 [declaring module optional.module]
  * |    \--- some.module:IU-181.1 [declaring module some.module]
  * \--- c:1.0 (*)
  * ```
@@ -54,6 +54,10 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val childrenLines = arrayListOf<List<String>>()
 
+    currentNode.missingDependencies.sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
+      listOf("$FAILED_DEPENDENCY_PREFIX ${missingDependency.dependency}: ${missingDependency.missingReason}")
+    }
+
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
         .sortedWith(
             compareBy<DependencyEdge> { if (it.dependency.isOptional) -1 else 1 }
@@ -76,10 +80,6 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       }
       val tailLines = childLines.drop(1)
       childrenLines.add(listOf(headerLine) + tailLines)
-    }
-
-    currentNode.missingDependencies.mapTo(childrenLines) { missingDependency ->
-      listOf("$FAILED_DEPENDENCY_PREFIX ${missingDependency.dependency}: ${missingDependency.missingReason}")
     }
 
     if (childrenLines.isNotEmpty()) {
