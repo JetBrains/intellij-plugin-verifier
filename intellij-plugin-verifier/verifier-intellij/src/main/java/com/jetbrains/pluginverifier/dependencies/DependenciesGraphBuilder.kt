@@ -29,7 +29,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
     addTransitiveDependencies(depGraph, start)
     if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
-      maybeAddOptionalJavaPluginDependency(plugin, depGraph,ide)
+      maybeAddOptionalJavaPluginDependency(plugin, depGraph, ide)
       maybeAddBundledPluginsWithUseIdeaClassLoader(depGraph, ide)
     }
 
@@ -157,15 +157,15 @@ private data class DepEdge(
 private class DepGraph2ApiGraphConverter {
 
   fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
-    val startNode = graph.toDependencyNode(startVertex)!!
-    val vertices = graph.vertexSet().mapNotNull { graph.toDependencyNode(it) }
+    val startNode = startVertex.toDependencyNode(graph)!!
+    val vertices = graph.vertexSet().mapNotNull { it.toDependencyNode(graph) }
     val edges = graph.edgeSet().mapNotNull { graph.toDependencyEdge(it) }
     return DependenciesGraph(startNode, vertices, edges)
   }
 
   private fun DirectedGraph<DepVertex, DepEdge>.toDependencyEdge(depEdge: DepEdge): DependencyEdge? {
-    val from = this.toDependencyNode(getEdgeSource(depEdge)) ?: return null
-    val to = this.toDependencyNode(getEdgeTarget(depEdge)) ?: return null
+    val from = getEdgeSource(depEdge).toDependencyNode(this) ?: return null
+    val to = getEdgeTarget(depEdge).toDependencyNode(this) ?: return null
     return DependencyEdge(from, to, depEdge.dependency)
   }
 
@@ -206,12 +206,14 @@ private class DepGraph2ApiGraphConverter {
     }
   }
 
-  private fun DirectedGraph<DepVertex, DepEdge>.toDependencyNode(depVertex: DepVertex): DependencyNode? {
-    val missingDependencies = outgoingEdgesOf(depVertex).mapNotNull { it.toMissingDependency() }
-    val plugin = depVertex.dependencyResult.getPlugin()
-    return plugin?.run {
-      DependencyNode(pluginId ?: depVertex.pluginId, pluginVersion ?: "<empty version>", missingDependencies)
-    }
+  private fun DepVertex.toDependencyNode(directedGraph: DirectedGraph<DepVertex, DepEdge>): DependencyNode? {
+    val missingDependencies = directedGraph.outgoingEdgesOf(this).mapNotNull { it.toMissingDependency() }
+    val plugin = dependencyResult.getPlugin() ?: return null
+    return DependencyNode(
+        plugin.pluginId ?: this.pluginId,
+        plugin.pluginVersion ?: "<empty version>",
+        missingDependencies
+    )
   }
 
 }
