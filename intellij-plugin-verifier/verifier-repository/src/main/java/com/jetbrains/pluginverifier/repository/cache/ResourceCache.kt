@@ -111,7 +111,7 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
    */
   @Synchronized
   override fun close() {
-    LOG.info("Closing the $presentableName")
+    LOG.debug("Closing the $presentableName")
     if (!isClosed) {
       isClosed = true
       resourceRepository.removeAll()
