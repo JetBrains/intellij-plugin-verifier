@@ -39,9 +39,8 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
   private val visitedNodes = hashSetOf<DependencyNode>()
 
-  fun prettyPresentation(): String {
-    return recursivelyCalculateLines(dependenciesGraph.verifiedPlugin).joinToString(separator = "\n")
-  }
+  fun prettyPresentation(): String =
+      recursivelyCalculateLines(dependenciesGraph.verifiedPlugin).joinToString(separator = "\n")
 
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {
     if (currentNode in visitedNodes) {
@@ -49,8 +48,6 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       return listOf("$currentNode $TRANSITIVE_DEPENDENCY_SUFFIX")
     }
     visitedNodes.add(currentNode)
-    val result = arrayListOf<String>()
-    result.add(currentNode.toString())
 
     val childrenLines = arrayListOf<List<String>>()
 
@@ -82,6 +79,9 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
       childrenLines.add(listOf(headerLine) + tailLines)
     }
 
+    val result = arrayListOf<String>()
+    result += currentNode.toString()
+
     if (childrenLines.isNotEmpty()) {
       val headingChildren = childrenLines.dropLast(1)
       val lastChild = childrenLines.last()
@@ -90,15 +90,15 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         for (headingChild in headingChildren) {
           val firstLine = headingChild.first().let { NOT_LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
           val tailLines = headingChild.drop(1).map { NOT_LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
-          result.add(firstLine)
-          result.addAll(tailLines)
+          result += firstLine
+          result += tailLines
         }
       }
 
       val lastChildFirstLine = lastChild.first().let { LAST_DEPENDENCY_FIRST_LINE_PREFIX + it }
       val lastChildTailLines = lastChild.drop(1).map { LAST_DEPENDENCY_INTERMEDIATE_LINE_PREFIX + it }
-      result.add(lastChildFirstLine)
-      result.addAll(lastChildTailLines)
+      result += lastChildFirstLine
+      result += lastChildTailLines
     }
 
     return result
