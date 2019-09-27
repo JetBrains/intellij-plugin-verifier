@@ -57,11 +57,11 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
         .sortedWith(
-            compareBy<DependencyEdge> { if (it.dependency.isOptional) -1 else 1 }
-                .thenBy { if (it.dependency.isModule) -1 else 1 }
+            compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
+                .thenBy { if (it.dependency.isModule) 1 else -1 }
+                .thenBy { it.dependency.id }
                 .thenBy { it.to.pluginId }
                 .thenBy { it.to.version }
-                .thenBy { it.dependency.id }
         )
 
     for (edge in directEdges) {
@@ -72,7 +72,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         }
         append(childLines.first())
         if (edge.dependency.isModule) {
-          append(" " + "[declaring module ${edge.dependency.id}]")
+          append(" [declaring module ${edge.dependency.id}]")
         }
       }
       val tailLines = childLines.drop(1)
