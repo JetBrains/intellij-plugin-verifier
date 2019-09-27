@@ -58,7 +58,7 @@ class DependenciesGraphPrettyPrinterTest {
   }
 
   private fun createDependencyNode(pluginIdAndVersion: PluginIdAndVersion) =
-      DependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version, missingDependencies.getOrDefault(pluginIdAndVersion, arrayListOf()))
+      DependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version)
 
   @Test
   fun `test pretty print`() {
@@ -85,7 +85,8 @@ class DependenciesGraphPrettyPrinterTest {
     }
 
     val startVertex = vertices.find { it.pluginId == "start" }!!
-    val dependenciesGraph = DependenciesGraph(startVertex, vertices.toList(), edges)
+    val missingDeps = missingDependencies.map { DependencyNode(it.key.pluginId, it.key.version) to missingDependencies[it.key].orEmpty().toSet() }.toMap()
+    val dependenciesGraph = DependenciesGraph(startVertex, vertices.toList(), edges, missingDeps)
     val prettyPrinter = DependenciesGraphPrettyPrinter(dependenciesGraph)
     val prettyPresentation = prettyPrinter.prettyPresentation().trim()
 

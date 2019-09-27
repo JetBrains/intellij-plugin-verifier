@@ -4,8 +4,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -34,7 +34,7 @@ class VerificationTest {
 
   @Test
   fun `check that missing dependency is detected`() {
-    val missingDependencies = verificationResult.dependenciesGraph.verifiedPlugin.missingDependencies
+    val missingDependencies = verificationResult.dependenciesGraph.missingDependencies.getOrDefault(verificationResult.dependenciesGraph.verifiedPlugin, emptySet())
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
     val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500"))

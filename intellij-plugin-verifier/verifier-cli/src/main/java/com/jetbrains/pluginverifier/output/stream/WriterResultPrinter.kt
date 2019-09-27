@@ -31,7 +31,7 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   }
 
   private fun printVerificationResult(verificationResult: PluginVerificationResult.Verified) {
-    val directMissingDependencies = verificationResult.dependenciesGraph.verifiedPlugin.missingDependencies
+    val directMissingDependencies = verificationResult.dependenciesGraph.missingDependencies.getOrDefault(verificationResult.dependenciesGraph.verifiedPlugin, emptySet())
     if (directMissingDependencies.isNotEmpty()) {
       out.println("    Missing dependencies:")
       for (missingDependency in directMissingDependencies) {

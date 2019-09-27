@@ -35,9 +35,11 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val childrenLines = arrayListOf<List<String>>()
 
-    currentNode.missingDependencies.sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-      listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
-    }
+    dependenciesGraph.missingDependencies
+        .getOrDefault(currentNode, emptySet())
+        .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
+          listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+        }
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
         .sortedWith(

@@ -12,10 +12,10 @@ class TestDependenciesGraph {
     lateinit var SIMPLE_GRAPH_WITH_NO_CYCLES: DependenciesGraph
     lateinit var GRAPH_WITH_A_CYCLE: DependenciesGraph
 
-    val a = node("A", "1", emptyList())
-    val b = node("B", "2", emptyList())
-    val c = node("C", "3", emptyList())
-    val d = node("D", "4", listOf(missing("E", true, false, "broken download url")))
+    val a = node("A", "1")
+    val b = node("B", "2")
+    val c = node("C", "3")
+    val d = node("D", "4")
 
     @BeforeClass
     @JvmStatic
@@ -28,7 +28,8 @@ class TestDependenciesGraph {
               dependencyEdge(a, c, "C", false, false),
               dependencyEdge(b, d, "D", false, false),
               dependencyEdge(c, d, "D", false, false)
-          )
+          ),
+          mapOf(d to setOf(missing("E", true, false, "broken download url")))
       )
 
       GRAPH_WITH_A_CYCLE = SIMPLE_GRAPH_WITH_NO_CYCLES.copy(edges = SIMPLE_GRAPH_WITH_NO_CYCLES.edges + dependencyEdge(d, a, "A", false, false))
@@ -38,7 +39,7 @@ class TestDependenciesGraph {
 
     fun dependencyEdge(from: DependencyNode, to: DependencyNode, depId: String, isOptional: Boolean, isModule: Boolean) = DependencyEdge(from, to, PluginDependencyImpl(depId, isOptional, isModule))
 
-    fun node(id: String, version: String, missings: List<MissingDependency>): DependencyNode = DependencyNode(id, version, missings)
+    fun node(id: String, version: String): DependencyNode = DependencyNode(id, version)
   }
 
   @Test

@@ -43,14 +43,12 @@ class PluginApiClassResolverProvider(
 
       val checkedPluginNode = DependencyNode(
           checkedPluginDetails.pluginInfo.pluginId,
-          checkedPluginDetails.pluginInfo.version,
-          emptyList()
+          checkedPluginDetails.pluginInfo.version
       )
 
       val basePluginNode = DependencyNode(
           basePluginDetails.pluginInfo.pluginId,
-          basePluginDetails.pluginInfo.version,
-          emptyList()
+          basePluginDetails.pluginInfo.version
       )
 
       val dependenciesGraph = DependenciesGraph(
@@ -62,7 +60,8 @@ class PluginApiClassResolverProvider(
                   basePluginNode,
                   PluginDependencyImpl(basePluginNode.pluginId, false, false)
               )
-          )
+          ),
+          emptyMap()
       )
 
       return ClassResolverProvider.Result(

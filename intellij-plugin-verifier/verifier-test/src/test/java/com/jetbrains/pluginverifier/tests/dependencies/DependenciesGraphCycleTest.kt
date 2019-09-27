@@ -24,10 +24,10 @@ class DependenciesGraphCycleTest {
    */
   @Test
   fun `only cycles containing the verified plugin should be reported`() {
-    val a = DependencyNode("a", "1.0", emptyList())
-    val b = DependencyNode("b", "1.0", emptyList())
-    val c = DependencyNode("c", "1.0", emptyList())
-    val d = DependencyNode("d", "1.0", emptyList())
+    val a = DependencyNode("a", "1.0")
+    val b = DependencyNode("b", "1.0")
+    val c = DependencyNode("c", "1.0")
+    val d = DependencyNode("d", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
         a,
@@ -38,7 +38,8 @@ class DependenciesGraphCycleTest {
             DependencyEdge(c, b, PluginDependencyImpl("b", false, false)),
             DependencyEdge(b, d, PluginDependencyImpl("d", false, false)),
             DependencyEdge(d, a, PluginDependencyImpl("a", false, false))
-        )
+        ),
+        emptyMap()
     )
 
     val allCycles = dependenciesGraph.getAllCycles()

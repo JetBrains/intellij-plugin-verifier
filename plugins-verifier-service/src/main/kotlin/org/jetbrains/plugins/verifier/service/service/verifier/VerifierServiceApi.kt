@@ -110,16 +110,21 @@ data class NonExtendableApiUsageDto(
   val fullDescription: String
 )
 
+data class MissingDependenciesSetDto(
+  val dependencyNode: DependenciesGraphDto.DependencyNodeDto,
+  val missingDependencies: Set<DependenciesGraphDto.MissingDependencyDto>
+)
+
 class DependenciesGraphDto(
-  val start: DependencyNodeDto,
-  val vertices: List<DependencyNodeDto>,
-  val edges: List<DependencyEdgeDto>
+    val start: DependencyNodeDto,
+    val vertices: List<DependencyNodeDto>,
+    val edges: List<DependencyEdgeDto>,
+    val missingDependencies: List<MissingDependenciesSetDto>
 ) {
 
   data class DependencyNodeDto(
     val pluginId: String,
-    val version: String,
-    val missingDependencies: List<MissingDependencyDto>
+    val version: String
   )
 
   data class DependencyEdgeDto(
@@ -130,8 +135,8 @@ class DependenciesGraphDto(
 
   data class DependencyDto(
     val dependencyId: String,
-    val isOptional: Boolean,
-    val isModule: Boolean
+    val optional: Boolean,
+    val module: Boolean
   )
 
   data class MissingDependencyDto(

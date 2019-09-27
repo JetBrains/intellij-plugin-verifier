@@ -19,7 +19,8 @@ import kotlin.collections.ArrayList
 data class DependenciesGraph(
     val verifiedPlugin: DependencyNode,
     val vertices: List<DependencyNode>,
-    val edges: List<DependencyEdge>
+    val edges: List<DependencyEdge>,
+    val missingDependencies: Map<DependencyNode, Set<MissingDependency>>
 ) {
 
   /**
@@ -48,7 +49,7 @@ data class DependenciesGraph(
     val onVisit: (DependencyNode) -> Unit = {
       breadCrumbs.addLast(it)
       val copiedPath = ArrayList(breadCrumbs)
-      val elements = it.missingDependencies.map { MissingDependencyPath(copiedPath, it) }
+      val elements = missingDependencies.getOrDefault(it, emptySet()).map { MissingDependencyPath(copiedPath, it) }
       result.addAll(elements)
     }
     val onExit: (DependencyNode) -> Unit = { breadCrumbs.removeLast() }
@@ -76,15 +77,8 @@ data class DependencyEdge(
  * Represents a node in the [DependenciesGraph].
  *
  * The node is a plugin [pluginId] and [version].
- *
- * The plugin could depend on modules and plugins that might not
- * be resolved. Those modules and plugins are  [missingDependencies].
  */
-data class DependencyNode(
-    val pluginId: String,
-    val version: String,
-    val missingDependencies: List<MissingDependency>
-) {
+data class DependencyNode(val pluginId: String, val version: String) {
   override fun toString() = "$pluginId:$version"
 }
 
@@ -92,10 +86,7 @@ data class DependencyNode(
  * Represents a [dependency] of the [verified plugin] [DependenciesGraph.verifiedPlugin]
  * that was not resolved due to [missingReason].
  */
-data class MissingDependency(
-    val dependency: PluginDependency,
-    val missingReason: String
-) {
+data class MissingDependency(val dependency: PluginDependency, val missingReason: String) {
   override fun toString() = "$dependency: $missingReason"
 }
 
