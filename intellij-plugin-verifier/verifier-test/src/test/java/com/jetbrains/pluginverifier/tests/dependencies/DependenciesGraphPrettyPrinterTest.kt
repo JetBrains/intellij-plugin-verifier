@@ -70,9 +70,9 @@ class DependenciesGraphPrettyPrinterTest {
         "[module:optional.module.2][optional]c:1.0 -> d:1.0",
         "start:1.0 -> c:1.0",
         "[failed][reason:plugin e is not found]c:1.0 -> e:1.0",
-        "[failed][reason:plugin e is not found][optional]c:1.0 -> f:1.0",
+        "[failed][reason:plugin f is not found][optional]c:1.0 -> f:1.0",
         "[optional]start:1.0 -> e:1.0",
-        "[module:optional.module.3]start:1.0 -> f:1.0"
+        "[module:optional.module.3]start:1.0 -> g:1.0"
     )
 
     edgesDescriptions.forEach { edgeDescription -> parseDescription(edgeDescription) }
@@ -95,12 +95,12 @@ start:1.0
 +--- b:1.0
 |    +--- c:1.0
 |    |    +--- (failed) e: plugin e is not found
-|    |    +--- (failed) f (optional): plugin e is not found
+|    |    +--- (failed) f (optional): plugin f is not found
 |    |    +--- (optional) d:1.0 [declaring module optional.module]
 |    |    \--- (optional) d:1.0 (*) [declaring module optional.module.2]
 |    \--- d:1.0 (*) [declaring module mandatory.module]
 +--- c:1.0 (*)
-+--- f:1.0 [declaring module optional.module.3]
++--- g:1.0 [declaring module optional.module.3]
 \--- (optional) e:1.0
 """.trim(), prettyPresentation
     )
