@@ -3,9 +3,6 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
-import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphWalker
-import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * Graph of [plugin dependencies] [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency]
@@ -42,24 +39,6 @@ data class DependenciesGraph(
           .filter { verifiedPlugin in it }
           .map { it.reversed() }
 
-  /**
-   * Finds all the transitive dependencies starting at the [verifiedPlugin]
-   * and returns all the paths ending in [MissingDependency]s.
-   */
-  fun getMissingDependencyPaths(): List<MissingDependencyPath> {
-    val breadCrumbs: Deque<DependencyNode> = LinkedList()
-    val result: MutableList<MissingDependencyPath> = arrayListOf()
-    val onVisit: (DependencyNode) -> Unit = {
-      breadCrumbs.addLast(it)
-      val copiedPath = ArrayList(breadCrumbs)
-      val elements = missingDependencies.getOrDefault(it, emptySet()).map { MissingDependencyPath(copiedPath, it) }
-      result.addAll(elements)
-    }
-    val onExit: (DependencyNode) -> Unit = { breadCrumbs.removeLast() }
-    DependenciesGraphWalker(this, onVisit, onExit).walk(verifiedPlugin)
-    return result
-  }
-
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
 }
@@ -91,16 +70,4 @@ data class DependencyNode(val pluginId: String, val version: String) {
  */
 data class MissingDependency(val dependency: PluginDependency, val missingReason: String) {
   override fun toString() = "$dependency: $missingReason"
-}
-
-/**
- * Contains a path of [DependencyNode]s in the [DependenciesGraph]
- * starting at the [DependenciesGraph.verifiedPlugin] and ending in some
- * [missing] [missingDependency] dependency.
- */
-data class MissingDependencyPath(
-    val path: List<DependencyNode>,
-    val missingDependency: MissingDependency
-) {
-  override fun toString() = path.joinToString(" ---X--> ") + " ---X--> " + missingDependency
 }
