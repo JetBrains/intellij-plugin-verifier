@@ -51,7 +51,7 @@ sealed class PluginVerificationResult(
       get() = !hasDirectMissingMandatoryDependencies && !hasCompatibilityProblems && !hasCompatibilityWarnings
 
     val directMissingMandatoryDependencies: List<MissingDependency>
-      get() = dependenciesGraph.missingDependencies.getOrDefault(dependenciesGraph.verifiedPlugin, emptySet()).filterNot { it.dependency.isOptional }
+      get() = dependenciesGraph.getDirectMissingDependencies().filterNot { it.dependency.isOptional }
 
     override val verificationVerdict
       get() = buildString {
@@ -70,7 +70,7 @@ sealed class PluginVerificationResult(
           }
           append(" compatibility ").append("problem".pluralize(compatibilityProblems.size))
 
-          val allDirectMissingDependencies = dependenciesGraph.missingDependencies.getOrDefault(dependenciesGraph.verifiedPlugin, emptySet())
+          val allDirectMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
           if (allDirectMissingDependencies.isNotEmpty()) {
             append(", some of which may be caused by missing ")
             if (allDirectMissingDependencies.all { it.dependency.isOptional }) {

@@ -34,7 +34,7 @@ class VerificationTest {
 
   @Test
   fun `check that missing dependency is detected`() {
-    val missingDependencies = verificationResult.dependenciesGraph.missingDependencies.getOrDefault(verificationResult.dependenciesGraph.verifiedPlugin, emptySet())
+    val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
     val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500"))

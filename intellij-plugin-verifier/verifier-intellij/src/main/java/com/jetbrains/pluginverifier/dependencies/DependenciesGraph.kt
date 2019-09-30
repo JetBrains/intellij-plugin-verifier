@@ -11,10 +11,7 @@ import kotlin.collections.ArrayList
  * Graph of [plugin dependencies] [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency]
  * built for the plugin verification.
  *
- * The graph is stored as a set of [vertices] and [edges] starting at the [verifiedPlugin].
- *
- * The [nodes] [DependencyNode] contain additional data
- * on [missing] [MissingDependency] dependencies.
+ * The graph is stored as a set of [vertices] and [edges]. The starting vertex is [verifiedPlugin].
  */
 data class DependenciesGraph(
     val verifiedPlugin: DependencyNode,
@@ -22,6 +19,12 @@ data class DependenciesGraph(
     val edges: List<DependencyEdge>,
     val missingDependencies: Map<DependencyNode, Set<MissingDependency>>
 ) {
+
+  /**
+   * Returns all missing dependencies required by the verified plugin directly.
+   */
+  fun getDirectMissingDependencies(): Set<MissingDependency> =
+      missingDependencies.getOrDefault(verifiedPlugin, emptySet())
 
   /**
    * Returns all edges starting at the specified node.
