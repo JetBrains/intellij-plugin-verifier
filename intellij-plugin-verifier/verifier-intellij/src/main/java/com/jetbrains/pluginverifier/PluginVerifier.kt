@@ -62,14 +62,16 @@ class PluginVerifier(
 
 
   private fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
-    verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, classResolver, dependenciesGraph) ->
+    verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, allResolver, dependenciesGraph) ->
       val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 
       val context = PluginVerificationContext(
           pluginDetails.idePlugin,
           verificationDescriptor,
-          classResolver,
-          externalClassesPackageFilter
+          pluginResolver,
+          allResolver,
+          externalClassesPackageFilter,
+          dependenciesGraph
       )
 
       pluginDetails.pluginWarnings.forEach { context.registerPluginStructureWarning(PluginStructureWarning(it)) }

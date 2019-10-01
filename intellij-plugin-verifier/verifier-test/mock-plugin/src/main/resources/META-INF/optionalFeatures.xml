@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="org.some.company.plugin">
+        <someExtensionPoint implementation="mock.plugin.optional.OptionalDependencyClass"/>
+    </extensions>
+</idea-plugin>

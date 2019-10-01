@@ -7,6 +7,9 @@ import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
+import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
+import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -31,8 +34,8 @@ import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsageProcessor
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
-import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.usages.properties.PropertyUsageProcessor
+import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
@@ -40,8 +43,10 @@ import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 data class PluginVerificationContext(
     val idePlugin: IdePlugin,
     val verificationDescriptor: PluginVerificationDescriptor,
-    override val classResolver: Resolver,
-    override val externalClassesPackageFilter: PackageFilter
+    val pluginResolver: Resolver,
+    val allResolver: Resolver,
+    override val externalClassesPackageFilter: PackageFilter,
+    val dependenciesGraph: DependenciesGraph
 ) : VerificationContext,
     ProblemRegistrar,
     DeprecatedApiRegistrar,
@@ -50,6 +55,9 @@ data class PluginVerificationContext(
     InternalApiUsageRegistrar,
     NonExtendableApiRegistrar,
     JavaPluginApiUsageRegistrar {
+
+  override val classResolver
+    get() = allResolver
 
   override val apiUsageProcessors: List<ApiUsageProcessor> =
       listOf(
@@ -63,6 +71,7 @@ data class PluginVerificationContext(
       )
 
   fun postProcessResults() {
+    analyzeMissingClassesCausedByMissingOptionalDependencies()
     groupMissingClassesToMissingPackages()
   }
 
@@ -168,6 +177,31 @@ data class PluginVerificationContext(
       }
     }
     return null
+  }
+
+  private fun analyzeMissingClassesCausedByMissingOptionalDependencies() {
+    val classNotFoundProblems = compatibilityProblems.filterIsInstance<ClassNotFoundProblem>()
+    if (classNotFoundProblems.isEmpty()) {
+      return
+    }
+
+    if (dependenciesGraph.getDirectMissingDependencies().none { it.dependency.isOptional }) {
+      return
+    }
+
+    val reachabilityGraph = buildClassReachabilityGraph(idePlugin, pluginResolver, dependenciesGraph)
+
+    val ignoredProblems = arrayListOf<ClassNotFoundProblem>()
+    for (classNotFoundProblem in classNotFoundProblems) {
+      val usageClassName = classNotFoundProblem.usage.containingClass.className
+      if (reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
+          && !reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN)
+      ) {
+        ignoredProblems += classNotFoundProblem
+      }
+    }
+
+    compatibilityProblems.removeAll(ignoredProblems)
   }
 
   /**

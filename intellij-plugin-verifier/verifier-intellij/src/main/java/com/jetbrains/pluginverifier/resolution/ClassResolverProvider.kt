@@ -18,7 +18,7 @@ interface ClassResolverProvider {
 
   data class Result(
       val pluginResolver: Resolver,
-      val classResolver: Resolver,
+      val allResolver: Resolver,
       val dependenciesGraph: DependenciesGraph,
       private val closeableResources: List<Closeable>
   ) : Closeable {
