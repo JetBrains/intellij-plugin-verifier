@@ -94,12 +94,18 @@ internal class PluginCreator {
       val optionalPlugin = pluginCreationResult.plugin
       plugin!!.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       plugin.extensions.putAll(optionalPlugin.extensions)
+      plugin.applicationListeners.addAll((optionalPlugin as? IdePluginImpl)?.applicationListeners.orEmpty())
+      plugin.projectListeners.addAll((optionalPlugin as? IdePluginImpl)?.projectListeners.orEmpty())
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
           .errorsAndWarnings
           .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
     }
+  }
+
+  fun registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFileCycle: List<String>) {
+    registerProblem(OptionalDependencyDescriptorCycleProblem(descriptorPath, configurationFileCycle))
   }
 
   fun setPluginVersion(pluginVersion: String) {

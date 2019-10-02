@@ -44,18 +44,32 @@ class MockPluginsTest {
   private val compileLibraryClassesRoot = compileLibraryDir.resolve("classes")
   private val compileLibraryServices = compileLibraryDir.resolve("services")
 
-  private fun buildPluginSuccess(pluginFileBuilder: () -> File): IdePlugin {
+  private val expectedWarnings = listOf(
+      OptionalDependencyDescriptorResolutionProblem(
+          "missingDependency",
+          "missingFile.xml",
+          listOf(PluginDescriptorIsNotFound("missingFile.xml"))
+      ),
+      OptionalDependencyDescriptorResolutionProblem(
+          "referenceFromRoot",
+          "/META-INF/referencedFromRoot.xml",
+          listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
+      ),
+      DuplicatedDependencyWarning("duplicatedDependencyId")
+  )
+
+  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> File): IdePlugin {
     val pluginFile = pluginFileBuilder()
     val successResult = InvalidPluginsTest.getSuccessResult(pluginFile)
     val (plugin, warnings) = successResult
-    checkWarnings(warnings)
+    assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
     assertEquals(pluginFile, plugin.originalFile)
     return plugin
   }
 
   @Test
   fun `single jar file`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
@@ -72,7 +86,7 @@ class MockPluginsTest {
 
   @Test
   fun `invalid jar file renamed to zip`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         zip("plugin.jar") {
           dir("META-INF", metaInfDir)
@@ -91,7 +105,7 @@ class MockPluginsTest {
 
   @Test
   fun `plugin jar packed in lib directory of zip archive`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         dir("lib") {
           dir("compile") {
@@ -121,7 +135,7 @@ class MockPluginsTest {
 
   @Test
   fun `directory with lib subdirectory containing jar file`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
         dir("lib") {
           dir("compile") {
@@ -150,7 +164,7 @@ class MockPluginsTest {
 
   @Test
   fun `plugin directory with lib containing jar file - packed in zip archive`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         dir("plugin") {
           dir("lib") {
@@ -181,7 +195,7 @@ class MockPluginsTest {
 
   @Test
   fun `plugin as directory with classes`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
@@ -213,7 +227,7 @@ class MockPluginsTest {
 
   @Test
   fun `plugin as zip with directory with classes`() {
-    val plugin = buildPluginSuccess {
+    val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         dir("plugin") {
           dir("META-INF", metaInfDir)
@@ -244,6 +258,44 @@ class MockPluginsTest {
     val classesDirOrigin = PluginFileOrigin.ClassesDirectory(plugin)
     val resourcesJarOrigin = JarFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
     checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
+  }
+
+  @Test
+  fun `transitive dependencies in optional dependency configuration file`() {
+    val plugin = buildPluginSuccess(emptyList()) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF") {
+          file("plugin.xml") {
+            perfectXmlBuilder.modify {
+              depends += """<depends optional="true" config-file="optionalDependency.xml">optionalDependencyId</depends>"""
+            }
+          }
+
+          file(
+              "optionalDependency.xml",
+              """
+                <idea-plugin>
+                  <depends>transitiveMandatoryDependencyId</depends>
+                  <depends optional="true" config-file="transitiveOptionalDependency.xml">transitiveOptionalDependencyId</depends>
+                </idea-plugin>
+              """.trimIndent()
+          )
+
+          file("transitiveOptionalDependency.xml", """<idea-plugin></idea-plugin>""".trimIndent())
+        }
+      }
+    }
+
+    val optionalDescriptor = plugin.optionalDescriptors.single()
+    assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+    assertEquals(PluginDependencyImpl("optionalDependencyId", true, false), optionalDescriptor.dependency)
+
+    val optionalPlugin = optionalDescriptor.optionalPlugin
+    assertEquals(listOf("transitiveMandatoryDependencyId", "transitiveOptionalDependencyId"), optionalPlugin.dependencies.map { it.id })
+
+    val transitiveOptional = optionalPlugin.optionalDescriptors.find { it.dependency.id == "transitiveOptionalDependencyId" }!!
+    assertEquals("transitiveOptionalDependency.xml", transitiveOptional.configurationFilePath)
+    assertEquals(PluginDependencyImpl("transitiveOptionalDependencyId", true, false), transitiveOptional.dependency)
   }
 
   @Test
@@ -353,23 +405,6 @@ class MockPluginsTest {
     assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)
     assertEquals(20181, plugin.productDescriptor?.releaseVersion)
 
-  }
-
-  private fun checkWarnings(warnings: List<PluginProblem>) {
-    val expectedWarnings = listOf(
-        OptionalDependencyDescriptorResolutionProblem(
-            "missingDependency",
-            "missingFile.xml",
-            listOf(PluginDescriptorIsNotFound("missingFile.xml"))
-        ),
-        OptionalDependencyDescriptorResolutionProblem(
-            "referenceFromRoot",
-            "/META-INF/referencedFromRoot.xml",
-            listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
-        ),
-        DuplicatedDependencyWarning("duplicatedDependencyId")
-    )
-    assertEquals(expectedWarnings.toSet(), warnings.toSet())
   }
 
   private fun checkIdeCompatibility(plugin: IdePlugin) {

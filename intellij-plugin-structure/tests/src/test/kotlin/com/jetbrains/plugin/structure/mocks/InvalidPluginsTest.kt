@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
@@ -608,6 +609,38 @@ class InvalidPluginsTest {
             ElementMissingAttribute("listener", "topic")
         )
     )
+  }
+
+  @Test
+  fun `plugin has cycle in optional plugin dependencies configuration files`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="a.xml">a</depends>"""
+          }
+        }
+
+        file(
+            "a.xml",
+            """
+                <idea-plugin>
+                  <depends optional="true" config-file="b.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+            "b.xml",
+            """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+    assertExpectedProblems(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
   }
 
 }

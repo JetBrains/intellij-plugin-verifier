@@ -159,3 +159,11 @@ class UnableToReadTheme(descriptorPath: String, private val themePath: String, p
   override val level
     get() = Level.ERROR
 }
+
+class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private val cyclicPath: List<String>) : InvalidDescriptorProblem(descriptorPath) {
+  override val level
+    get() = Level.ERROR
+
+  override val detailedMessage: String
+    get() = "optional dependencies configuration files contain cycle: " + cyclicPath.joinToString(separator = " -> ")
+}

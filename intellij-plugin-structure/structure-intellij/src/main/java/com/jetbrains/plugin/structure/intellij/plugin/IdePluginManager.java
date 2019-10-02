@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.intellij.utils.URLUtil;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import kotlin.io.FilesKt;
 import kotlin.text.StringsKt;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.Document;
 import org.jdom2.input.JDOMParseException;
@@ -31,10 +30,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -292,15 +288,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
                                                          boolean validateDescriptor,
                                                          ResourceResolver resourceResolver) {
     descriptorPath = FileUtilKt.toSystemIndependentName(descriptorPath);
-    PluginCreator pluginCreator;
     if (pluginFile.isDirectory()) {
-      pluginCreator = loadPluginInfoFromDirectory(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
+      return loadPluginInfoFromDirectory(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
     } else if (FileUtilKt.isJar(pluginFile)) {
-      pluginCreator = loadPluginInfoFromJarFile(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
+      return loadPluginInfoFromJarFile(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
     } else {
-      return new PluginCreator(descriptorPath, PluginFileErrorsKt.createIncorrectIntellijFileProblem(pluginFile.getName()), pluginFile);
+      throw new IllegalArgumentException();
     }
-    return resolveOptionalDependencies(pluginFile, pluginCreator, resourceResolver);
   }
 
   @NotNull
@@ -323,32 +317,47 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     return null;
   }
 
-  private PluginCreator resolveOptionalDependencies(@NotNull File pluginFile,
-                                                    @NotNull PluginCreator pluginCreator,
-                                                    @NotNull ResourceResolver resourceResolver) {
+  private void resolveOptionalDependencies(File pluginFile, PluginCreator pluginCreator, ResourceResolver resourceResolver) {
     if (pluginCreator.isSuccess()) {
-      Map<PluginDependency, String> optionalConfigurationFiles = pluginCreator.getOptionalDependenciesConfigFiles();
-      return resolveOptionalDependencies(pluginFile, optionalConfigurationFiles, pluginCreator, resourceResolver);
-    } else {
-      return pluginCreator;
+      resolveOptionalDependencies(pluginCreator, new HashSet<>(), new LinkedList<>(), pluginFile, resourceResolver, pluginCreator);
     }
   }
 
-  private PluginCreator resolveOptionalDependencies(File pluginFile,
-                                                    Map<PluginDependency, String> optionalConfigurationFiles,
-                                                    PluginCreator pluginCreator,
-                                                    ResourceResolver resourceResolver) {
-    for (Map.Entry<PluginDependency, String> entry : optionalConfigurationFiles.entrySet()) {
+  private void resolveOptionalDependencies(PluginCreator currentPlugin,
+                                           Set<String> visitedConfigurationFiles,
+                                           LinkedList<String> path,
+                                           File pluginFile,
+                                           ResourceResolver resourceResolver,
+                                           PluginCreator mainPlugin) {
+    if (!visitedConfigurationFiles.add(currentPlugin.getDescriptorPath())) {
+      return;
+    }
+    path.addLast(currentPlugin.getDescriptorPath());
+
+    Map<PluginDependency, String> optionalDependenciesConfigFiles = currentPlugin.getOptionalDependenciesConfigFiles();
+    for (Map.Entry<PluginDependency, String> entry : optionalDependenciesConfigFiles.entrySet()) {
       PluginDependency pluginDependency = entry.getKey();
       String configurationFile = entry.getValue();
-      PluginCreator optionalCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver);
-      pluginCreator.addOptionalDescriptor(pluginDependency, configurationFile, optionalCreator);
+
+      if (path.contains(configurationFile)) {
+        List<String> configurationFilesCycle = new ArrayList<>(path);
+        configurationFilesCycle.add(configurationFile);
+        mainPlugin.registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFilesCycle);
+        return;
+      }
+
+      PluginCreator optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver);
+      currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator);
+
+      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, mainPlugin);
     }
-    return pluginCreator;
+
+    path.removeLast();
   }
 
   @NotNull
   private PluginCreator extractZipAndCreatePlugin(@NotNull File zipPlugin,
+                                                  @NotNull String descriptorPath,
                                                   boolean validateDescriptor,
                                                   @NotNull ResourceResolver resourceResolver) {
     ExtractorResult extractorResult;
@@ -356,14 +365,21 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
-      return new PluginCreator(PLUGIN_XML, new UnableToExtractZip(), zipPlugin);
+      return new PluginCreator(descriptorPath, new UnableToExtractZip(), zipPlugin);
     }
     if (extractorResult instanceof ExtractorResult.Success) {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {
-        return loadPluginInfoFromJarOrDirectory(extractedPlugin.getPluginFile(), PLUGIN_XML, validateDescriptor, resourceResolver);
+        File extractedFile = extractedPlugin.getPluginFile();
+        if (FileUtilKt.isJar(extractedFile) || extractedFile.isDirectory()) {
+          PluginCreator pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver);
+          resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver);
+          return pluginCreator;
+        }
+
+        return getInvalidPluginFileCreator(zipPlugin, descriptorPath);
       }
     } else {
-      return new PluginCreator(PLUGIN_XML, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
+      return new PluginCreator(descriptorPath, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
     }
   }
 
@@ -403,12 +419,20 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     }
     PluginCreator pluginCreator;
     if (FileUtilKt.isZip(pluginFile)) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, validateDescriptor, myResourceResolver);
-    } else {
+      pluginCreator = extractZipAndCreatePlugin(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
+    } else if (FileUtilKt.isJar(pluginFile) || pluginFile.isDirectory()) {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
+      resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver);
+    } else {
+      pluginCreator = getInvalidPluginFileCreator(pluginFile, descriptorPath);
     }
     pluginCreator.setOriginalFile(pluginFile);
     return pluginCreator;
+  }
+
+  @NotNull
+  private PluginCreator getInvalidPluginFileCreator(@NotNull File pluginFile, @NotNull String descriptorPath) {
+    return new PluginCreator(descriptorPath, PluginFileErrorsKt.createIncorrectIntellijFileProblem(pluginFile.getName()), pluginFile);
   }
 
   @NotNull
