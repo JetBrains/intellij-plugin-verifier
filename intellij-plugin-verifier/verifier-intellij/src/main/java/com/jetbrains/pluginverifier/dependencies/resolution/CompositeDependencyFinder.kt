@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-
 /**
  * [DependencyFinder] that subsequently delegates the search
  * to the [dependencyFinders] until the dependency is resolved.
@@ -13,16 +11,16 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
   override val presentableName
     get() = dependencyFinders.joinToString { it.presentableName }
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+  override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
     var lastNotFound: DependencyFinder.Result.NotFound? = null
     for (dependencyFinder in dependencyFinders) {
-      val findResult = dependencyFinder.findPluginDependency(dependency)
+      val findResult = dependencyFinder.findPluginDependency(dependencyId, isModule)
       if (findResult !is DependencyFinder.Result.NotFound) {
         return findResult
       }
       lastNotFound = findResult
     }
-    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency $dependency is not resolved. It was searched in the following locations: $presentableName")
+    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
   }
 
 }

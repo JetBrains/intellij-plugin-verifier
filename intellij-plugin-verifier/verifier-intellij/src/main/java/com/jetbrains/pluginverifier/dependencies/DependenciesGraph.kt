@@ -45,7 +45,7 @@ data class DependenciesGraph(
 
 /**
  * Represents an edge in the [DependenciesGraph],
- * which is a [dependency] of the plugin [from] on the plugin [to].
+ * which is a [dependency] of the plugin [from] to the plugin [to].
  */
 data class DependencyEdge(
     val from: DependencyNode,

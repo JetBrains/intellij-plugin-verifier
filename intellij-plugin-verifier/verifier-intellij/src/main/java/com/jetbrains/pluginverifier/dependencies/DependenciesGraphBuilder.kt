@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -24,65 +23,107 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   fun buildDependenciesGraph(plugin: IdePlugin, ide: Ide): Pair<DependenciesGraph, List<DependencyFinder.Result>> {
-    val depGraph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
+    val graph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
+    val missingDependencies = hashMapOf<DepId, MutableSet<DepMissingVertex>>()
 
-    val start = DepVertex(plugin.pluginId!!, DependencyFinder.Result.FoundPlugin(plugin))
-    addTransitiveDependencies(depGraph, start)
+    val start = DepVertex(plugin, DependencyFinder.Result.FoundPlugin(plugin))
+    addTransitiveDependencies(graph, start, missingDependencies)
     if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
-      maybeAddOptionalJavaPluginDependency(plugin, depGraph, ide)
-      maybeAddBundledPluginsWithUseIdeaClassLoader(depGraph, ide)
+      maybeAddOptionalJavaPluginDependency(plugin, ide, graph, missingDependencies)
+      maybeAddBundledPluginsWithUseIdeaClassLoader(ide, graph, missingDependencies)
     }
 
-    val dependenciesGraph = DepGraph2ApiGraphConverter().convert(depGraph, start)
-    return dependenciesGraph to depGraph.vertexSet().map { it.dependencyResult }
+    val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start, missingDependencies)
+    return dependenciesGraph to graph.vertexSet().map { it.dependencyResult }
   }
 
-  private fun addTransitiveDependencies(graph: DirectedGraph<DepVertex, DepEdge>, vertex: DepVertex) {
-    checkIfInterrupted()
+  private fun addTransitiveDependencies(
+      graph: DirectedGraph<DepVertex, DepEdge>,
+      vertex: DepVertex,
+      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+  ) {
     if (!graph.containsVertex(vertex)) {
       graph.addVertex(vertex)
-      val plugin = vertex.dependencyResult.getPlugin()
-      if (plugin != null) {
-        for (pluginDependency in plugin.dependencies) {
-          val resolvedDependency = resolveDependency(pluginDependency, graph)
-          addTransitiveDependencies(graph, resolvedDependency)
 
-          /**
-           * Skip the dependency onto itself.
-           * An example of a plugin that declares a transitive dependency
-           * on itself through modules dependencies is the 'IDEA CORE' plugin:
-           *
-           * PlatformLangPlugin.xml (declares module 'com.intellij.modules.lang') ->
-           *   x-include /idea/RichPlatformPlugin.xml ->
-           *   x-include /META-INF/DesignerCorePlugin.xml ->
-           *   depends on module 'com.intellij.modules.lang'
-           */
-          if (vertex.pluginId != resolvedDependency.pluginId) {
-            graph.addEdge(vertex, resolvedDependency, DepEdge(pluginDependency, vertex, resolvedDependency))
-          }
+      val dependencies = arrayListOf<PluginDependency>()
+      dependencies += vertex.plugin.dependencies
+      dependencies += getRecursiveOptionalDependencies(vertex.plugin).map { PluginDependencyImpl(it.id, true, it.isModule) }
+
+      for (pluginDependency in dependencies) {
+        val resolvedDependency = resolveDependency(vertex, pluginDependency, graph, missingDependencies) ?: continue
+
+        addTransitiveDependencies(graph, resolvedDependency, missingDependencies)
+
+        /**
+         * Skip the dependency onto itself.
+         * An example of a plugin that declares a transitive dependency
+         * on itself through modules dependencies is the 'IDEA CORE' plugin:
+         *
+         * PlatformLangPlugin.xml (declares module 'com.intellij.modules.lang') ->
+         *   x-include /idea/RichPlatformPlugin.xml ->
+         *   x-include /META-INF/DesignerCorePlugin.xml ->
+         *   depends on module 'com.intellij.modules.lang'
+         */
+        if (vertex.plugin != resolvedDependency.plugin) {
+          graph.addEdge(vertex, resolvedDependency, DepEdge(pluginDependency, vertex, resolvedDependency))
         }
       }
     }
   }
 
-  private fun DependencyFinder.Result.getPlugin() = when (this) {
-    is DependencyFinder.Result.DetailsProvided -> when (pluginDetailsCacheResult) {
-      is PluginDetailsCache.Result.Provided -> pluginDetailsCacheResult.pluginDetails.idePlugin
-      is PluginDetailsCache.Result.InvalidPlugin -> null
-      is PluginDetailsCache.Result.Failed -> null
-      is PluginDetailsCache.Result.FileNotFound -> null
-    }
-    is DependencyFinder.Result.FoundPlugin -> plugin
-    is DependencyFinder.Result.NotFound -> null
-  }
+  private fun resolveDependency(
+      vertex: DepVertex,
+      pluginDependency: PluginDependency,
+      graph: DirectedGraph<DepVertex, DepEdge>,
+      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+  ): DepVertex? {
+    val depId = DepId(pluginDependency.id, pluginDependency.isModule)
 
-  private fun resolveDependency(pluginDependency: PluginDependency, directedGraph: DirectedGraph<DepVertex, DepEdge>): DepVertex {
-    val existingVertex = directedGraph.vertexSet().find { pluginDependency.id == it.pluginId }
+    val existingVertex = graph.vertexSet().find {
+      if (depId.isModule) {
+        it.plugin.definedModules.contains(depId.id)
+      } else {
+        it.plugin.pluginId == depId.id
+      }
+    }
     if (existingVertex != null) {
       return existingVertex
     }
-    val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
-    return DepVertex(pluginDependency.id, dependencyResult)
+
+    fun registerMissingDependency(reason: String): DepVertex? {
+      missingDependencies.getOrPut(depId) { hashSetOf() } += DepMissingVertex(vertex, pluginDependency, reason)
+      return null
+    }
+
+    if (depId in missingDependencies) {
+      val sameReason = missingDependencies[depId]!!.first().reason
+      return registerMissingDependency(sameReason)
+    }
+
+    return when (val result = dependencyFinder.findPluginDependency(depId.id, depId.isModule)) {
+      is DependencyFinder.Result.FoundPlugin -> DepVertex(result.plugin, result)
+      is DependencyFinder.Result.DetailsProvided -> {
+        when (val cacheResult = result.pluginDetailsCacheResult) {
+          is PluginDetailsCache.Result.Provided -> DepVertex(cacheResult.pluginDetails.idePlugin, result)
+          is PluginDetailsCache.Result.InvalidPlugin -> registerMissingDependency(
+              cacheResult.pluginErrors.filter { it.level == PluginProblem.Level.ERROR }.joinToString()
+          )
+          is PluginDetailsCache.Result.Failed -> registerMissingDependency(cacheResult.reason)
+          is PluginDetailsCache.Result.FileNotFound -> registerMissingDependency(cacheResult.reason)
+        }
+      }
+      is DependencyFinder.Result.NotFound -> registerMissingDependency(result.reason)
+    }
+  }
+
+  private fun getRecursiveOptionalDependencies(plugin: IdePlugin): List<PluginDependency> {
+    val allDependencies = arrayListOf<PluginDependency>()
+    for (optionalDescriptor in plugin.optionalDescriptors) {
+      val optionalPlugin = optionalDescriptor.optionalPlugin
+      allDependencies += optionalPlugin.dependencies
+      allDependencies += getRecursiveOptionalDependencies(optionalPlugin)
+    }
+    return allDependencies
   }
 
   /**
@@ -95,25 +136,29 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    *
    * So let's forcibly add Java as an optional dependency for such plugins.
    */
-  private fun maybeAddOptionalJavaPluginDependency(plugin: IdePlugin, dependenciesGraph: DirectedGraph<DepVertex, DepEdge>, ide: Ide) {
+  private fun maybeAddOptionalJavaPluginDependency(
+      plugin: IdePlugin,
+      ide: Ide,
+      graph: DirectedGraph<DepVertex, DepEdge>,
+      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+  ) {
     if (ide.getPluginByModule(ALL_MODULES_ID) == null) {
       return
     }
     val isLegacyPlugin = plugin.dependencies.none { it.isModule }
     val isCustomPlugin = ide.bundledPlugins.none { it.pluginId == plugin.pluginId }
     if (isCustomPlugin || isLegacyPlugin) {
-      val javaModuleDependency = PluginDependencyImpl(JAVA_MODULE_ID, true, true)
-      val dependencyResult = dependencyFinder.findPluginDependency(javaModuleDependency)
-      val javaPluginId = when (dependencyResult) {
+      val dependencyResult = dependencyFinder.findPluginDependency(JAVA_MODULE_ID, true)
+      val javaPlugin = when (dependencyResult) {
         is DependencyFinder.Result.DetailsProvided -> {
           val providedCacheEntry = dependencyResult.pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided
-          providedCacheEntry?.pluginDetails?.idePlugin?.pluginId
+          providedCacheEntry?.pluginDetails?.idePlugin
         }
-        is DependencyFinder.Result.FoundPlugin -> dependencyResult.plugin.pluginId
+        is DependencyFinder.Result.FoundPlugin -> dependencyResult.plugin
         is DependencyFinder.Result.NotFound -> null
       } ?: return
-      val javaPluginVertex = DepVertex(javaPluginId, dependencyResult)
-      addTransitiveDependencies(dependenciesGraph, javaPluginVertex)
+      val javaPluginVertex = DepVertex(javaPlugin, dependencyResult)
+      addTransitiveDependencies(graph, javaPluginVertex, missingDependencies)
     }
   }
 
@@ -123,25 +168,29 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    *
    * We would like to emulate this behaviour by forcibly adding such plugins to the verification classpath.
    */
-  private fun maybeAddBundledPluginsWithUseIdeaClassLoader(dependenciesGraph: DirectedGraph<DepVertex, DepEdge>, ide: Ide) {
+  private fun maybeAddBundledPluginsWithUseIdeaClassLoader(
+      ide: Ide,
+      graph: DirectedGraph<DepVertex, DepEdge>,
+      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+  ) {
     for (bundledPlugin in ide.bundledPlugins) {
       if (bundledPlugin.useIdeClassLoader && bundledPlugin.pluginId != null) {
         val dependencyId = bundledPlugin.pluginId!!
         val pluginDependency = PluginDependencyImpl(dependencyId, true, false)
-        val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency)
-        val bundledVertex = DepVertex(dependencyId, dependencyResult)
-        addTransitiveDependencies(dependenciesGraph, bundledVertex)
+        val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency.id, pluginDependency.isModule)
+        val bundledVertex = DepVertex(bundledPlugin, dependencyResult)
+        addTransitiveDependencies(graph, bundledVertex, missingDependencies)
       }
     }
   }
 
 }
 
-private data class DepVertex(val pluginId: String, val dependencyResult: DependencyFinder.Result) {
+private data class DepVertex(val plugin: IdePlugin, val dependencyResult: DependencyFinder.Result) {
 
-  override fun equals(other: Any?) = other is DepVertex && pluginId == other.pluginId
+  override fun equals(other: Any?) = other is DepVertex && plugin == other.plugin
 
-  override fun hashCode() = pluginId.hashCode()
+  override fun hashCode() = plugin.hashCode()
 }
 
 private data class DepEdge(
@@ -154,63 +203,35 @@ private data class DepEdge(
   public override fun getTarget() = targetVertex
 }
 
+private data class DepId(val id: String, val isModule: Boolean)
+
+private data class DepMissingVertex(val vertex: DepVertex, val pluginDependency: PluginDependency, val reason: String)
+
 private class DepGraph2ApiGraphConverter {
 
-  fun convert(graph: DirectedGraph<DepVertex, DepEdge>, startVertex: DepVertex): DependenciesGraph {
-    val startNode = startVertex.toDependencyNode()!!
+  fun convert(
+      graph: DirectedGraph<DepVertex, DepEdge>,
+      startVertex: DepVertex,
+      vertexMissingDependencies: Map<DepId, Set<DepMissingVertex>>
+  ): DependenciesGraph {
+    val startNode = startVertex.toDependencyNode()
     val vertices = graph.vertexSet().mapNotNull { it.toDependencyNode() }
-    val edges = graph.edgeSet().mapNotNull { graph.toDependencyEdge(it) }
+    val edges = graph.edgeSet().mapNotNull { edge ->
+      val from = graph.getEdgeSource(edge).toDependencyNode()
+      val to = graph.getEdgeTarget(edge).toDependencyNode()
+      DependencyEdge(from, to, edge.dependency)
+    }
     val missingDependencies = hashMapOf<DependencyNode, MutableSet<MissingDependency>>()
-    for (edge in graph.edgeSet()) {
-      val sourceNode = graph.getEdgeSource(edge).toDependencyNode()
-      val missingDependency = edge.toMissingDependency()
-      if (sourceNode != null && missingDependency != null) {
-        missingDependencies.getOrPut(sourceNode) { hashSetOf() } += missingDependency
+    for ((_, missingDeps) in vertexMissingDependencies) {
+      for (missingDep in missingDeps) {
+        missingDependencies.getOrPut(missingDep.vertex.toDependencyNode()) { hashSetOf() } +=
+            MissingDependency(missingDep.pluginDependency, missingDep.reason)
       }
     }
     return DependenciesGraph(startNode, vertices, edges, missingDependencies)
   }
 
-  private fun DirectedGraph<DepVertex, DepEdge>.toDependencyEdge(depEdge: DepEdge): DependencyEdge? {
-    val from = getEdgeSource(depEdge).toDependencyNode() ?: return null
-    val to = getEdgeTarget(depEdge).toDependencyNode() ?: return null
-    return DependencyEdge(from, to, depEdge.dependency)
-  }
-
-  private fun DepEdge.toMissingDependency(): MissingDependency? {
-    return with(target.dependencyResult) {
-      when (this) {
-        is DependencyFinder.Result.DetailsProvided -> {
-          with(pluginDetailsCacheResult) {
-            when (this) {
-              is PluginDetailsCache.Result.Provided -> null
-              is PluginDetailsCache.Result.InvalidPlugin -> MissingDependency(
-                  dependency,
-                  pluginErrors
-                      .filter { it.level == PluginProblem.Level.ERROR }
-                      .joinToString()
-              )
-              is PluginDetailsCache.Result.Failed -> MissingDependency(dependency, reason)
-              is PluginDetailsCache.Result.FileNotFound -> MissingDependency(dependency, reason)
-            }
-          }
-        }
-        is DependencyFinder.Result.NotFound -> MissingDependency(dependency, reason)
-        is DependencyFinder.Result.FoundPlugin -> null
-      }
-    }
-  }
-
-  private fun DependencyFinder.Result.getIdePlugin(): IdePlugin? =
-      when (this) {
-        is DependencyFinder.Result.DetailsProvided -> (pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails?.idePlugin
-        is DependencyFinder.Result.FoundPlugin -> plugin
-        is DependencyFinder.Result.NotFound -> null
-      }
-
-  private fun DepVertex.toDependencyNode(): DependencyNode? {
-    val plugin = dependencyResult.getIdePlugin() ?: return null
-    return DependencyNode(plugin.pluginId ?: this.pluginId, plugin.pluginVersion ?: "<empty version>")
-  }
+  private fun DepVertex.toDependencyNode(): DependencyNode =
+      DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>")
 
 }

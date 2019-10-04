@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
@@ -18,11 +17,11 @@ class RepositoryDependencyFinder(
   override val presentableName
     get() = pluginRepository.toString()
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    if (dependency.isModule) {
-      return resolveModuleDependency(dependency.id)
+  override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
+    if (isModule) {
+      return resolveModuleDependency(dependencyId)
     }
-    return selectPluginVersion(dependency.id)
+    return selectPluginVersion(dependencyId)
   }
 
   private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {

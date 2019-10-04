@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginsRepository
 
@@ -14,9 +13,8 @@ class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache
   override val presentableName
     get() = "Bundled plugins of ${ide.version.asString()}"
 
-  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
-    val dependencyId = dependency.id
-    val bundledPluginInfo = if (dependency.isModule) {
+  override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
+    val bundledPluginInfo = if (isModule) {
       bundledPluginsRepository.findPluginByModule(dependencyId)
     } else {
       bundledPluginsRepository.findPluginById(dependencyId)

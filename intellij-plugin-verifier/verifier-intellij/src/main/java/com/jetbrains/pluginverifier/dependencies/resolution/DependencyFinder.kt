@@ -20,7 +20,7 @@ interface DependencyFinder {
    * Finds a plugin or a module that corresponds to the [dependency].
    * The possible results are represented as instances of the [Result].
    */
-  fun findPluginDependency(dependency: PluginDependency): Result
+  fun findPluginDependency(dependencyId: String, isModule: Boolean): Result
 
   /**
    * Represents possible results of the [findPluginDependency].
