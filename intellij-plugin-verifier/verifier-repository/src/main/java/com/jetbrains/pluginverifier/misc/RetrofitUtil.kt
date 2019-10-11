@@ -42,7 +42,13 @@ fun createOkHttpClient(
         return@addInterceptor response
       }
       val location = response.header(LOCATION) ?: return@addInterceptor response
-      val redirectedRequest = request.newBuilder().url(location).removeHeader("Authorization").build()
+      val locationUrl = if (location.startsWith("/")) {
+        //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
+        URL(request.url().host().trimEnd('/') + location)
+      } else {
+        URL(location)
+      }
+      val redirectedRequest = request.newBuilder().url(locationUrl).removeHeader("Authorization").build()
       chain.proceed(redirectedRequest)
     }
     .connectTimeout(timeOut, timeUnit)
