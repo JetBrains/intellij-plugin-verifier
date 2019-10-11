@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
@@ -43,7 +44,7 @@ object PluginVerifierMain {
       CheckPluginApiRunner()
   )
 
-  private val verifierHomeDir: Path by lazy {
+  private val verifierHomeDirectory: Path by lazy {
     val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
     if (verifierHomeDir != null) {
       Paths.get(verifierHomeDir)
@@ -62,11 +63,15 @@ object PluginVerifierMain {
         ?: "https://plugins.jetbrains.com"
   }
 
-  private val downloadDir: Path = verifierHomeDir.resolve("loaded-plugins").createDir()
+  private val downloadDirectory: Path = verifierHomeDirectory.resolve("loaded-plugins").createDir()
 
-  private val extractDir: Path = verifierHomeDir.resolve("extracted-plugins").createDir()
+  private fun getPluginsExtractDirectory(): Path {
+    val extractDirectory = verifierHomeDirectory.resolve("extracted-plugins").createDir()
+    extractDirectory.forceDeleteIfExists()
+    return extractDirectory
+  }
 
-  private val ideDownloadDir: Path = verifierHomeDir.resolve("ides").createDir()
+  private val ideDownloadDirectory: Path = verifierHomeDirectory.resolve("ides").createDir()
 
   @JvmStatic
   fun main(args: Array<String>) {
@@ -90,12 +95,12 @@ object PluginVerifierMain {
 
     val pluginRepository = MarketplaceRepository(URL(pluginRepositoryUrl))
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5 * 1024)
-    val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDir, pluginDownloadDirDiskSpaceSetting)
-    val pluginDetailsProvider = PluginDetailsProviderImpl(extractDir)
+    val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
+    val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
 
     val ideRepository = ReleaseIdeRepository()
     val ideFilesDiskSetting = getDiskSpaceSetting("plugin.verifier.cache.ide.dir.max.space", 10 * 1024)
-    val ideFilesBank = IdeFilesBank(ideDownloadDir, ideRepository, ideFilesDiskSetting)
+    val ideFilesBank = IdeFilesBank(ideDownloadDirectory, ideRepository, ideFilesDiskSetting)
 
     DirectoryBasedPluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
