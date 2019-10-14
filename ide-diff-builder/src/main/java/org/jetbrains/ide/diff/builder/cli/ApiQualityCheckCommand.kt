@@ -230,6 +230,7 @@ class ApiQualityCheckCommand : Command {
             val message = buildString {
               append(signature.fullPresentation)
               appendln(" is to be removed in an unknown future version")
+              appendln("Consider specifying exact planned removal version in 'YYYY.R' format, like '2020.3'.")
               append("It was deprecated")
               if (deprecatedInVersion != null) {
                 append(" in $deprecatedInVersion")
