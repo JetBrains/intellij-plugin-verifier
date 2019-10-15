@@ -68,8 +68,7 @@ class ApiQualityCheckCommand : Command {
     val currentBranch = cliOptions.currentBranch.toInt()
     val maxRemovalBranch = cliOptions.maxRemovalBranch.toInt()
     val maxExperimentalBranches = cliOptions.maxExperimentalBranches.toInt()
-    val findSfrApisWithoutVersion = cliOptions.findSfrApisWithoutVersion
-    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches, findSfrApisWithoutVersion)
+    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches)
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
@@ -400,9 +399,6 @@ class ApiQualityCheckCommand : Command {
 
     @set:Argument("previous-tc-tests-file", description = "File containing TeamCity tests that were run in the previous build. ")
     var previousTcTestsFile: String? = null
-
-    @set:Argument("find-sfr-apis-without-version", description = "Find @ScheduledForRemoval APIs without 'inVersion' specified.")
-    var findSfrApisWithoutVersion: Boolean = false
   }
 
 }
@@ -410,8 +406,7 @@ class ApiQualityCheckCommand : Command {
 private data class ApiQualityOptions(
     val currentBranch: Int,
     val maxRemovalBranch: Int,
-    val maxExperimentalBranches: Int,
-    val findSfrApisWithoutVersion: Boolean
+    val maxExperimentalBranches: Int
 )
 
 private data class ApiQualityReport(
