@@ -221,17 +221,22 @@ class ApiQualityCheckCommand : Command {
       }
     }
 
-    if (report.apiQualityOptions.findSfrApisWithoutVersion && report.sfrApisWithoutPlannedVersion.isNotEmpty()) {
-      val suiteName = "(API to be removed in an unknown future version)"
+    if (report.sfrApisWithWrongPlannedVersion.isNotEmpty()) {
+      val suiteName = "(Planned removal version of API must be specified in YYYY.R format)"
       tc.testSuiteStarted(suiteName).use {
-        for ((signature, deprecatedInVersion, scheduledForRemovalInVersion) in report.sfrApisWithoutPlannedVersion) {
+        for ((signature, deprecatedInVersion, scheduledForRemovalInVersion, inVersionValue) in report.sfrApisWithWrongPlannedVersion) {
           val testName = "(${signature.shortPresentation})"
           tc.testStarted(testName).use {
             val message = buildString {
               append(signature.fullPresentation)
-              appendln(" is to be removed in an unknown future version")
-              appendln("Consider specifying exact planned removal version in 'YYYY.R' format, like '2020.3'.")
-              append("It was deprecated")
+              append(" is scheduled to be removed. Its 'inVersion' value must be in YYYY.R format, like 2020.3, but ")
+              if (inVersionValue != null) {
+                append("it is '$inVersionValue'")
+              } else {
+                append("it is not specified")
+              }
+              appendln()
+              append("API was deprecated")
               if (deprecatedInVersion != null) {
                 append(" in $deprecatedInVersion")
               } else {
@@ -261,7 +266,7 @@ class ApiQualityCheckCommand : Command {
 
     if (report.tooLongExperimental.isEmpty()
         && report.mustAlreadyBeRemoved.isEmpty()
-        && (!report.apiQualityOptions.findSfrApisWithoutVersion || report.sfrApisWithoutPlannedVersion.isEmpty())
+        && report.sfrApisWithWrongPlannedVersion.isEmpty()
     ) {
       tc.buildStatusSuccess("API of ${report.ideVersion} is OK")
     } else {
@@ -276,11 +281,11 @@ class ApiQualityCheckCommand : Command {
           }
           append("${report.mustAlreadyBeRemoved.size} APIs to be removed")
         }
-        if (report.apiQualityOptions.findSfrApisWithoutVersion && report.sfrApisWithoutPlannedVersion.isNotEmpty()) {
+        if (report.sfrApisWithWrongPlannedVersion.isNotEmpty()) {
           if (report.tooLongExperimental.isNotEmpty() || report.mustAlreadyBeRemoved.isNotEmpty()) {
             append(" and ")
           }
-          append("${report.sfrApisWithoutPlannedVersion.size} APIs to be removed in an unknown future version")
+          append("${report.sfrApisWithWrongPlannedVersion.size} incorrect planned removal API versions.")
         }
       }
       tc.buildStatusFailure(buildMessage)
@@ -369,8 +374,13 @@ class ApiQualityCheckCommand : Command {
               removalVersion
           )
         }
-      } else if (qualityOptions.findSfrApisWithoutVersion) {
-        qualityReport.sfrApisWithoutPlannedVersion += SfrApiWithoutPlannedVersion(signature, deprecatedInVersion, scheduledForRemovalInVersion)
+      } else {
+        qualityReport.sfrApisWithWrongPlannedVersion += SfrApiWithWrongPlannedVersion(
+            signature,
+            deprecatedInVersion,
+            scheduledForRemovalInVersion,
+            deprecationInfo.untilVersion
+        )
       }
     }
   }
@@ -410,7 +420,7 @@ private data class ApiQualityReport(
     val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
     val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
     val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf(),
-    val sfrApisWithoutPlannedVersion: MutableList<SfrApiWithoutPlannedVersion> = arrayListOf()
+    val sfrApisWithWrongPlannedVersion: MutableList<SfrApiWithWrongPlannedVersion> = arrayListOf()
 )
 
 private data class MustAlreadyBeRemoved(
@@ -420,28 +430,19 @@ private data class MustAlreadyBeRemoved(
     val removalVersion: RemovalVersion
 )
 
-private data class SfrApiWithoutPlannedVersion(
+private data class SfrApiWithWrongPlannedVersion(
     val apiSignature: ApiSignature,
     val deprecatedInVersion: IdeVersion?,
-    val scheduledForRemovalInVersion: IdeVersion?
+    val scheduledForRemovalInVersion: IdeVersion?,
+    val inVersionValue: String?
 )
 
 private data class RemovalVersion(val originalVersion: String, val branch: Int) {
 
   companion object {
-    private val BRANCH_REGEX = Regex("\\d\\d\\d")
     private val IDE_RELEASE_REGEX = Regex("(\\d\\d\\d\\d)(\\.\\d)?")
 
-    fun parseRemovalVersion(version: String): RemovalVersion? =
-        parseAsReleaseVersion(version) ?: parseAsBranch(version)
-
-    private fun parseAsBranch(version: String): RemovalVersion? {
-      val match = BRANCH_REGEX.matchEntire(version) ?: return null
-      val branch = match.groupValues[1].toInt()
-      return RemovalVersion(version, branch)
-    }
-
-    private fun parseAsReleaseVersion(version: String): RemovalVersion? {
+    fun parseRemovalVersion(version: String): RemovalVersion? {
       val match = IDE_RELEASE_REGEX.matchEntire(version) ?: return null
       val year = match.groupValues[1].toInt()
       val release = match.groups[2]?.value?.drop(1)?.toInt()
