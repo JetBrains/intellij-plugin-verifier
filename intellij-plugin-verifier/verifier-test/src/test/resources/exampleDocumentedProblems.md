@@ -117,3 +117,5 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 `com.some.Interface` superinterface changed from `com.some.old.SuperIface` to `com.some.new.NewSuperIface`
 : It is a comment why
+`some.property.name` property removed from resource bundle messages.Bundle
+: It is a comment why

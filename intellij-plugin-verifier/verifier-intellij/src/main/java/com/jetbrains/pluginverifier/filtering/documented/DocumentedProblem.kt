@@ -122,6 +122,16 @@ data class DocFieldRemoved(val hostClass: String, val fieldName: String) : Docum
 }
 
 /**
+ * <property name> property removed from resource bundle <bundle name>
+ */
+data class DocPropertyRemoved(val propertyName: String, val bundleName: String) : DocumentedProblem {
+  override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
+      problem is MissingPropertyReferenceProblem
+          && problem.propertyKey == propertyName
+          && problem.bundleBaseName == bundleName
+}
+
+/**
  * <class name>.<field name> field type changed from <before> to <after>
  *
  * It supports the following case: given two types A and B such that B derives from A

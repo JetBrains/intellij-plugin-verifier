@@ -72,7 +72,8 @@ class DocumentedProblemsParserTest {
         DocMethodParameterMarkedWithAnnotation("com/some/Class", "someMarkedMethod", "com/some/Parameter", "com/some/Annotation"),
         DocClassTypeParameterAdded("com/some/Class"),
         DocSuperclassChanged("com/some/Class", "com/some/old/Super", "com/some/new/Super"),
-        DocSuperclassChanged("com/some/Interface", "com/some/old/SuperIface", "com/some/new/NewSuperIface")
+        DocSuperclassChanged("com/some/Interface", "com/some/old/SuperIface", "com/some/new/NewSuperIface"),
+        DocPropertyRemoved("some.property.name", "messages.Bundle")
     )
     for (expected in expectedProblems) {
       assertTrue("$expected is not found:\n${documentedProblems.joinToString("\n")}\nActual problems:", expected in documentedProblems)
