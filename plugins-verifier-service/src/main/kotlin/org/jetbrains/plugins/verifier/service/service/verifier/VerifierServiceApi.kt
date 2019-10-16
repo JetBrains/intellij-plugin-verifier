@@ -2,7 +2,11 @@
 
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-// This file must be synced with VerificationDto in the Marketplace repository.
+/*
+These classes must be synced with JSON schema expected by the Marketplace.
+Incompatible changes to the classes (e.g. fields renames or removals) are prohibited!
+Compatible additions of new fields are allowed.
+ */
 
 enum class VerificationResultTypeDto {
   OK,
