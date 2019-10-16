@@ -120,10 +120,11 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
     val descriptorArgumentsNumber = descriptorArguments.size
 
     if (localVariables != null) {
+      val allLocalVars = localVariables.sortedBy { it.index }
       val parameters = if (access and Opcodes.ACC_STATIC != 0) {
-        localVariables.take(descriptorArgumentsNumber)
+        allLocalVars.take(descriptorArgumentsNumber)
       } else {
-        localVariables.drop(1).take(descriptorArgumentsNumber)
+        allLocalVars.drop(1).take(descriptorArgumentsNumber)
       }
 
       if (parameters.size == descriptorArgumentsNumber

@@ -21,6 +21,10 @@ class PropertyUsageProcessor : ApiUsageProcessor {
       context: VerificationContext
   ) {
     val methodParameters = resolvedMethod.methodParameters
+    if (methodParameters.any { it.name.contains("default", true) }) {
+      //Some resource bundle methods provide default value parameter, which is used if such property is not available in the bundle.
+      return
+    }
     for ((parameterIndex, methodParameter) in methodParameters.withIndex()) {
       val propertyKeyAnnotation = methodParameter.annotations.findAnnotation("org/jetbrains/annotations/PropertyKey")
           ?: continue
