@@ -208,9 +208,7 @@ class ApiQualityCheckCommand : Command {
                   append(" and scheduled for removal in $scheduledForRemovalInVersion.")
                 }
                 appendln()
-                append("If this API does not have external usages, consider removing it right now. ")
-                append("Otherwise, reach out to the external developers and ask them to stop using it ASAP. ")
-                append("Also consider promoting planned removal version a little bit.")
+                append("Consider removing this API right now or promoting planned removal version a little bit if there are too many plugins still using it.")
               }
               failedTests += ApiQualityTeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
