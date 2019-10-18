@@ -31,6 +31,10 @@ configure(allprojects) {
       outputDir = file("$buildDir/classes/main")
     }
   }
+
+  bootRun {
+    systemProperties System.properties
+  }
   
   springBoot {
     buildInfo()
