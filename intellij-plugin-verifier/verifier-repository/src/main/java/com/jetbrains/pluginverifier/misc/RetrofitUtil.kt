@@ -44,7 +44,7 @@ fun createOkHttpClient(
       val location = response.header(LOCATION) ?: return@addInterceptor response
       val locationUrl = if (location.startsWith("/")) {
         //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
-        URL(request.url().host().trimEnd('/') + location)
+        request.url().resolve(location).url()
       } else {
         URL(location)
       }
