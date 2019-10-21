@@ -17,6 +17,7 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
+import java.net.HttpURLConnection
 import java.util.concurrent.TimeUnit
 
 class DefaultVerifierServiceProtocol(
@@ -53,19 +54,33 @@ class DefaultVerifierServiceProtocol(
 
   override fun sendVerificationResult(scheduledVerification: ScheduledVerification, verificationResult: PluginVerificationResult) {
     val verificationResultData = verificationResult.prepareResponse(scheduledVerification)
-    retrofitConnector.uploadVerificationResultContent(
+
+    val ideVersion = scheduledVerification.availableIde.version.asString()
+    val updateId = scheduledVerification.updateInfo.updateId
+
+    val addResponse = retrofitConnector.addVerificationResult(
       authorizationToken,
-      scheduledVerification.updateInfo.updateId,
-      verificationResultData.ideVersion.ideVersion,
+      updateId,
+      RequestBody.create(stringMediaType, ideVersion),
+      RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
+      RequestBody.create(stringMediaType, verificationResultData.resultType.name)
+    ).executeSuccessfully()
+
+    if (addResponse.code() == HttpURLConnection.HTTP_ACCEPTED) {
+      return
+    }
+
+    val uploadUrl = addResponse.body().string()
+
+    retrofitConnector.uploadVerificationResult(
+      uploadUrl,
       RequestBody.create(jsonMediaType, json.toJson(verificationResultData))
     ).executeSuccessfully()
 
-    retrofitConnector.sendVerificationResult(
+    retrofitConnector.saveVerificationResult(
       authorizationToken,
-      scheduledVerification.updateInfo.updateId,
-      RequestBody.create(stringMediaType, scheduledVerification.availableIde.version.asString()),
-      RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
-      RequestBody.create(stringMediaType, verificationResultData.resultType.name)
+      updateId,
+      RequestBody.create(stringMediaType, ideVersion)
     ).executeSuccessfully()
   }
 
@@ -76,17 +91,9 @@ private interface VerifierRetrofitConnector {
   @GET("/verification/getScheduledVerifications")
   fun getScheduledVerifications(@Header("Authorization") authorization: String): Call<List<ScheduledVerificationJson>>
 
-  @PUT("/verification/uploadVerificationResultContent")
-  fun uploadVerificationResultContent(
-    @Header("Authorization") authorization: String,
-    @Query("updateId") updateId: Int,
-    @Query("ideVersion") ideVersion: String,
-    @Body content: RequestBody
-  ): Call<ResponseBody>
-
-  @POST("/verification/receiveVerificationResult")
+  @POST("/verification/addVerificationResult")
   @Multipart
-  fun sendVerificationResult(
+  fun addVerificationResult(
     @Header("Authorization") authorization: String,
     @Part("updateId") updateId: Int,
     @Part("ideVersion") ideVersion: RequestBody,
@@ -94,7 +101,25 @@ private interface VerifierRetrofitConnector {
     @Part("resultType") resultType: RequestBody
   ): Call<ResponseBody>
 
+  @PUT
+  fun uploadVerificationResult(
+    @Url url: String,
+    @Body content: RequestBody
+  ): Call<ResponseBody>
+
+  @POST("/verification/saveVerificationResult")
+  @Multipart
+  fun saveVerificationResult(
+    @Header("Authorization") authorization: String,
+    @Part("updateId") updateId: Int,
+    @Part("ideVersion") ideVersion: RequestBody
+  ): Call<ResponseBody>
 }
+
+data class VerificationResultUploadUrl(
+  @SerializedName("resultId") val resultId: Int,
+  @SerializedName("uploadUrl") val uploadUrl: String
+)
 
 private data class ScheduledVerificationJson(
   @SerializedName("updateId") val updateId: Int,
