@@ -25,14 +25,14 @@ import java.util.concurrent.TimeUnit
  * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
 class VerifierService(
-    taskManager: TaskManager,
-    private val verifierServiceProtocol: VerifierServiceProtocol,
-    private val pluginDetailsCache: PluginDetailsCache,
-    private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val verificationResultsFilter: VerificationResultFilter,
-    private val pluginRepository: PluginRepository,
-    private val serviceDAO: ServiceDAO,
-    period: Long
+  taskManager: TaskManager,
+  private val verifierServiceProtocol: VerifierServiceProtocol,
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val ideDescriptorsCache: IdeDescriptorsCache,
+  private val verificationResultsFilter: VerificationResultFilter,
+  private val pluginRepository: PluginRepository,
+  private val serviceDAO: ServiceDAO,
+  period: Long
 ) : BaseService("VerifierService", 0, period, TimeUnit.SECONDS, taskManager) {
 
   private val scheduledVerifications = linkedMapOf<ScheduledVerification, TaskDescriptor>()
@@ -50,16 +50,16 @@ class VerifierService(
 
     val now = Instant.now()
     val verifications = allScheduledVerifications
-        .filter { it.shouldVerify(now) }
-        .sortedByDescending { it.updateInfo.updateId }
+      .filter { it.shouldVerify(now) }
+      .sortedByDescending { it.updateInfo.updateId }
     logger.info("There are ${verifications.size} pending verifications")
     verifications.forEach { scheduleVerification(it, now) }
   }
 
   private fun ScheduledVerification.shouldVerify(now: Instant) =
-      this !in scheduledVerifications
-          && !isCheckedRecently(this, now)
-          && verificationResultsFilter.shouldStartVerification(this, now)
+    this !in scheduledVerifications
+      && !isCheckedRecently(this, now)
+      && verificationResultsFilter.shouldStartVerification(this, now)
 
   private fun isCheckedRecently(scheduledVerification: ScheduledVerification, now: Instant): Boolean {
     val lastTime = lastVerifiedDate[scheduledVerification] ?: Instant.EPOCH
@@ -74,18 +74,18 @@ class VerifierService(
     val ignoreProblemsFilters = listOf(ignoredProblemsFilter)
 
     val task = VerifyPluginTask(
-        scheduledVerification,
-        pluginDetailsCache,
-        ideDescriptorsCache,
-        pluginRepository,
-        ignoreProblemsFilters
+      scheduledVerification,
+      pluginDetailsCache,
+      ideDescriptorsCache,
+      pluginRepository,
+      ignoreProblemsFilters
     )
 
     val taskDescriptor = taskManager.enqueue(
-        task,
-        { taskResult, taskDescriptor -> taskResult.onSuccess(taskDescriptor, scheduledVerification) },
-        { error, _ -> onError(scheduledVerification, error) },
-        { onCompletion(scheduledVerification) }
+      task,
+      { taskResult, taskDescriptor -> taskResult.onSuccess(taskDescriptor, scheduledVerification) },
+      { error, _ -> onError(scheduledVerification, error) },
+      { onCompletion(scheduledVerification) }
     )
     logger.info("Schedule verification $scheduledVerification with task #${taskDescriptor.taskId}")
     scheduledVerifications[scheduledVerification] = taskDescriptor
@@ -125,8 +125,8 @@ class VerifierService(
         logger.info("Verification result has been successfully sent for $scheduledVerification")
       } catch (e: ServerUnavailable503Exception) {
         logger.info(
-            "Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
-                "Stop all the scheduled verification tasks."
+          "Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
+            "Stop all the scheduled verification tasks."
         )
         pauseVerification()
       } catch (e: Exception) {

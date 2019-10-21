@@ -15,29 +15,29 @@ import org.springframework.web.bind.annotation.RequestParam
 @Controller
 @EnableConfigurationProperties(AuthorizationProperties::class)
 class ServiceController(
-    private val authorizationProperties: AuthorizationProperties
+  private val authorizationProperties: AuthorizationProperties
 ) {
   @Autowired
   private lateinit var serverContext: ServerContext
 
   @PostMapping("/control-service")
   fun controlServiceEndpoint(
-      @RequestParam("admin-password") adminPassword: String,
-      @RequestParam("service-name") serviceName: String,
-      @RequestParam command: String
+    @RequestParam("admin-password") adminPassword: String,
+    @RequestParam("service-name") serviceName: String,
+    @RequestParam command: String
   ): String {
     if (adminPassword != authorizationProperties.password) {
       throw AuthenticationFailedException("Incorrect password")
     }
     val service = serverContext.allServices.find { it.serviceName == serviceName }
-        ?: throw NotFoundException("Service $serviceName is not found")
+      ?: throw NotFoundException("Service $serviceName is not found")
     changeServiceState(service, command)
     return "redirect:/"
   }
 
   private fun changeServiceState(
-      service: BaseService,
-      command: String
+    service: BaseService,
+    command: String
   ) {
     val success = when (command) {
       "start" -> service.start()
@@ -48,7 +48,7 @@ class ServiceController(
 
     if (!success) {
       throw InvalidStateChangeException(
-          "Service's ${service.serviceName} state cannot be changed from ${service.getState()} by command '$command'"
+        "Service's ${service.serviceName} state cannot be changed from ${service.getState()} by command '$command'"
       )
     }
   }

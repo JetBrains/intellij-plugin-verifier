@@ -19,13 +19,13 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
  * Task that performs [scheduledVerification].
  */
 class VerifyPluginTask(
-    private val scheduledVerification: ScheduledVerification,
-    private val pluginDetailsCache: PluginDetailsCache,
-    private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val pluginRepository: PluginRepository,
-    private val problemsFilters: List<ProblemsFilter>
+  private val scheduledVerification: ScheduledVerification,
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val ideDescriptorsCache: IdeDescriptorsCache,
+  private val pluginRepository: PluginRepository,
+  private val problemsFilters: List<ProblemsFilter>
 ) : Task<PluginVerificationResult>("Check ${scheduledVerification.availableIde} against ${scheduledVerification.updateInfo}", "VerifyPlugin"),
-    Comparable<VerifyPluginTask> {
+  Comparable<VerifyPluginTask> {
 
   override fun execute(progress: ProgressIndicator): PluginVerificationResult {
     val cacheEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(scheduledVerification.availableIde.version)
@@ -47,22 +47,22 @@ class VerifyPluginTask(
 
   private fun checkPluginWithIde(ideDescriptor: IdeDescriptor): PluginVerificationResult {
     val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(
-        ideDescriptor.ide,
-        pluginRepository,
-        pluginDetailsCache
+      ideDescriptor.ide,
+      pluginRepository,
+      pluginDetailsCache
     )
 
     val classResolverProvider = DefaultClassResolverProvider(
-        dependencyFinder,
-        ideDescriptor,
-        DefaultPackageFilter(emptyList())
+      dependencyFinder,
+      ideDescriptor,
+      DefaultPackageFilter(emptyList())
     )
     val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, scheduledVerification.updateInfo)
     return PluginVerifier(
-        verificationDescriptor,
-        problemsFilters,
-        pluginDetailsCache,
-        listOf(DynamicallyLoadedFilter())
+      verificationDescriptor,
+      problemsFilters,
+      pluginDetailsCache,
+      listOf(DynamicallyLoadedFilter())
     ).loadPluginAndVerify()
   }
 

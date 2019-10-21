@@ -25,41 +25,41 @@ private interface FeaturesRetrofitConnector {
 
   @POST("/feature/receiveExtractedFeatures")
   fun sendExtractedFeatures(
-      @Header("Authorization") authorization: String,
-      @Body extractedFeatures: RequestBody
+    @Header("Authorization") authorization: String,
+    @Body extractedFeatures: RequestBody
   ): Call<ResponseBody>
 
 }
 
 class DefaultFeatureServiceProtocol(
-    token: String,
-    private val pluginRepository: MarketplaceRepository
+  token: String,
+  private val pluginRepository: MarketplaceRepository
 ) : FeatureServiceProtocol {
 
   private val authorizationToken = "Bearer $token"
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
-        .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(FeaturesRetrofitConnector::class.java)
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(FeaturesRetrofitConnector::class.java)
   }
 
   override fun getUpdatesToExtract(): List<UpdateInfo> =
-      retrofitConnector
-          .getUpdatesToExtractFeatures(authorizationToken)
-          .executeSuccessfully().body()
-          .sortedDescending()
-          .mapNotNull { pluginRepository.getPluginInfoById(it) }
+    retrofitConnector
+      .getUpdatesToExtractFeatures(authorizationToken)
+      .executeSuccessfully().body()
+      .sortedDescending()
+      .mapNotNull { pluginRepository.getPluginInfoById(it) }
 
 
   override fun sendExtractedFeatures(extractFeaturesResult: ExtractFeaturesTask.Result) {
     retrofitConnector
-        .sendExtractedFeatures(
-            authorizationToken,
-            createJsonRequestBody(extractFeaturesResult.prepareFeaturesResponse())
-        ).executeSuccessfully()
+      .sendExtractedFeatures(
+        authorizationToken,
+        createJsonRequestBody(extractFeaturesResult.prepareFeaturesResponse())
+      ).executeSuccessfully()
   }
 }

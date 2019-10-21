@@ -21,12 +21,12 @@ import java.util.concurrent.TimeUnit
  * and sends the features' reports.
  */
 class FeatureExtractorService(
-    taskManager: TaskManager,
-    private val featureServiceProtocol: FeatureServiceProtocol,
-    private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val pluginDetailsCache: PluginDetailsCache,
-    private val ideRepository: IdeRepository,
-    private val featureExtractorIdeVersion: IdeVersion
+  taskManager: TaskManager,
+  private val featureServiceProtocol: FeatureServiceProtocol,
+  private val ideDescriptorsCache: IdeDescriptorsCache,
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val ideRepository: IdeRepository,
+  private val featureExtractorIdeVersion: IdeVersion
 ) : BaseService("FeatureService", 0, 5, TimeUnit.MINUTES, taskManager) {
   private val scheduledUpdates = linkedMapOf<UpdateInfo, TaskDescriptor>()
 
@@ -48,17 +48,17 @@ class FeatureExtractorService(
 
   private fun schedule(updateInfo: UpdateInfo) {
     val extractTask = ExtractFeaturesTask(
-        updateInfo,
-        ideDescriptorsCache,
-        pluginDetailsCache,
-        ideRepository,
-        featureExtractorIdeVersion
+      updateInfo,
+      ideDescriptorsCache,
+      pluginDetailsCache,
+      ideRepository,
+      featureExtractorIdeVersion
     )
     val taskDescriptor = taskManager.enqueue(
-        extractTask,
-        { result, _ -> onSuccess(result) },
-        { t, tid -> onError(t, tid, extractTask) },
-        { _ -> onCompletion(extractTask) }
+      extractTask,
+      { result, _ -> onSuccess(result) },
+      { t, tid -> onError(t, tid, extractTask) },
+      { _ -> onCompletion(extractTask) }
     )
     scheduledUpdates[updateInfo] = taskDescriptor
     logger.info("Schedule extraction of features for $updateInfo with taskId #${taskDescriptor.taskId}")
@@ -71,9 +71,9 @@ class FeatureExtractorService(
 
   @Synchronized
   private fun onError(
-      error: Throwable,
-      taskDescriptor: TaskDescriptor,
-      task: ExtractFeaturesTask
+    error: Throwable,
+    taskDescriptor: TaskDescriptor,
+    task: ExtractFeaturesTask
   ) {
     logger.error("Unable to extract features of ${task.updateInfo} (#${taskDescriptor.taskId})", error)
   }

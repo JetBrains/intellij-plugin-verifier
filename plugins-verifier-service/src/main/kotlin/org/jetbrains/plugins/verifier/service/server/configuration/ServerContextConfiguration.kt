@@ -36,7 +36,7 @@ import java.nio.file.Paths
 
 @Configuration
 class ServerContextConfiguration(
-    @Value("\${verifier.service.max.disk.space.mb}") maxDiskSpace: Long
+  @Value("\${verifier.service.max.disk.space.mb}") maxDiskSpace: Long
 ) {
   companion object {
     private val LOG = LoggerFactory.getLogger(ServerContextConfiguration::class.java)
@@ -48,14 +48,14 @@ class ServerContextConfiguration(
 
   @Bean
   fun serverContext(
-      buildProperties: BuildProperties,
-      ideRepository: IdeRepository,
-      pluginRepository: MarketplaceRepository,
-      availableIdeProtocol: AvailableIdeProtocol,
-      featureServiceProtocol: FeatureServiceProtocol,
-      @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
-      @Value("\${verifier.service.home.directory}") applicationHomeDir: String,
-      @Value("\${verifier.service.clear.corrupted.database}") clearDatabaseOnCorruption: Boolean
+    buildProperties: BuildProperties,
+    ideRepository: IdeRepository,
+    pluginRepository: MarketplaceRepository,
+    availableIdeProtocol: AvailableIdeProtocol,
+    featureServiceProtocol: FeatureServiceProtocol,
+    @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
+    @Value("\${verifier.service.home.directory}") applicationHomeDir: String,
+    @Value("\${verifier.service.clear.corrupted.database}") clearDatabaseOnCorruption: Boolean
   ): ServerContext {
     LOG.info("Server is ready to start")
 
@@ -80,37 +80,37 @@ class ServerContextConfiguration(
     val verificationResultsFilter = VerificationResultFilter()
 
     return ServerContext(
-        buildProperties.version,
-        ideRepository,
-        ideFilesBank,
-        pluginRepository,
-        serviceDAO,
-        ideDescriptorsCache,
-        pluginDetailsCache,
-        verificationResultsFilter
+      buildProperties.version,
+      ideRepository,
+      ideFilesBank,
+      pluginRepository,
+      serviceDAO,
+      ideDescriptorsCache,
+      pluginDetailsCache,
+      verificationResultsFilter
     )
   }
 
   @Bean
   fun verifierService(
-      serverContext: ServerContext,
-      verifierServiceProtocol: VerifierServiceProtocol,
-      taskManager: TaskManager,
-      taskManagerProperties: TaskManagerProperties,
-      @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
-      @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
-      @Value("\${verifier.service.scheduler.period.seconds}") period: Long
+    serverContext: ServerContext,
+    verifierServiceProtocol: VerifierServiceProtocol,
+    taskManager: TaskManager,
+    taskManagerProperties: TaskManagerProperties,
+    @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
+    @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
+    @Value("\${verifier.service.scheduler.period.seconds}") period: Long
   ): VerifierService {
     val verifierService = with(serverContext) {
       VerifierService(
-          taskManager,
-          verifierServiceProtocol,
-          pluginDetailsCache,
-          ideDescriptorsCache,
-          verificationResultsFilter,
-          pluginRepository,
-          serviceDAO,
-          period
+        taskManager,
+        verifierServiceProtocol,
+        pluginDetailsCache,
+        ideDescriptorsCache,
+        verificationResultsFilter,
+        pluginRepository,
+        serviceDAO,
+        period
       )
     }
     if (enableService) {
@@ -121,20 +121,20 @@ class ServerContextConfiguration(
 
   @Bean
   fun featureService(
-      serverContext: ServerContext,
-      featureServiceProtocol: FeatureServiceProtocol,
-      taskManager: TaskManager,
-      @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean,
-      @Value("\${verifier.service.feature.extractor.ide.build}") featureExtractorIdeVersion: String
+    serverContext: ServerContext,
+    featureServiceProtocol: FeatureServiceProtocol,
+    taskManager: TaskManager,
+    @Value("\${verifier.service.enable.feature.extractor.service}") enableService: Boolean,
+    @Value("\${verifier.service.feature.extractor.ide.build}") featureExtractorIdeVersion: String
   ): FeatureExtractorService {
     val featureService = with(serverContext) {
       FeatureExtractorService(
-          taskManager,
-          featureServiceProtocol,
-          ideDescriptorsCache,
-          pluginDetailsCache,
-          ideRepository,
-          IdeVersion.createIdeVersion(featureExtractorIdeVersion)
+        taskManager,
+        featureServiceProtocol,
+        ideDescriptorsCache,
+        pluginDetailsCache,
+        ideRepository,
+        IdeVersion.createIdeVersion(featureExtractorIdeVersion)
       )
     }
     if (enableService) {
@@ -145,16 +145,16 @@ class ServerContextConfiguration(
 
   @Bean
   fun availableIdeService(
-      serverContext: ServerContext,
-      availableIdeProtocol: AvailableIdeProtocol,
-      taskManager: TaskManager,
-      @Value("\${verifier.service.enable.available.ide.service}") enableService: Boolean
+    serverContext: ServerContext,
+    availableIdeProtocol: AvailableIdeProtocol,
+    taskManager: TaskManager,
+    @Value("\${verifier.service.enable.available.ide.service}") enableService: Boolean
   ): AvailableIdeService {
     val availableIdeService = with(serverContext) {
       AvailableIdeService(
-          taskManager,
-          availableIdeProtocol,
-          ideRepository
+        taskManager,
+        availableIdeProtocol,
+        ideRepository
       )
     }
     if (enableService) {
@@ -196,8 +196,8 @@ class ServerContextConfiguration(
   private val maxDiskSpaceUsage = SpaceAmount.ofMegabytes(maxDiskSpace.coerceAtLeast(10000))
 
   private fun getIdeDownloadDirDiskSpaceSetting() =
-      DiskSpaceSetting(DiskUsageDistributionSetting.IDE_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
+    DiskSpaceSetting(DiskUsageDistributionSetting.IDE_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 
   private fun getPluginDownloadDirDiskSpaceSetting() =
-      DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
+    DiskSpaceSetting(DiskUsageDistributionSetting.PLUGIN_DOWNLOAD_DIR.getIntendedSpace(maxDiskSpaceUsage))
 }

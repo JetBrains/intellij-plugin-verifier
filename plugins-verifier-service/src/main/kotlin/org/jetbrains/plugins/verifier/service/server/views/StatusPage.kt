@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.verifier.service.server.views
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
@@ -19,12 +19,12 @@ import javax.servlet.http.HttpServletResponse
  * Generates a web page containing service's health and runtime information.
  */
 class StatusPage(
-    private val serverContext: ServerContext,
-    private val taskManager: TaskManager
+  private val serverContext: ServerContext,
+  private val taskManager: TaskManager
 ) : View {
   companion object {
     private val DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm:ss")
-        .withZone(ZoneId.systemDefault())
+      .withZone(ZoneId.systemDefault())
   }
 
   override fun getContentType() = "text/html"
@@ -57,12 +57,12 @@ class StatusPage(
             li { +"Max memory: $maxMemory" }
 
             val totalIdeFilesSize = serverContext.ideFilesBank.getAvailableIdeFiles()
-                .map { it.fileInfo.fileSize }
-                .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
+              .map { it.fileInfo.fileSize }
+              .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
 
             val totalPluginsSize = (serverContext.pluginDetailsCache.pluginFileProvider as PluginFilesBank).getAvailablePluginFiles()
-                .map { it.fileInfo.fileSize }
-                .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
+              .map { it.fileInfo.fileSize }
+              .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
 
             li { +"IDEs disk usage: $totalIdeFilesSize" }
             li { +"Plugins disk usage: $totalPluginsSize" }

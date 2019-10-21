@@ -13,9 +13,9 @@ import java.util.concurrent.RunnableFuture
  * Withing one `ExecutorService` all [task]s must be of the same class.
  */
 internal class PriorityTask<V>(
-    val taskDescriptor: TaskDescriptor,
-    val task: Task<V>,
-    val runnableFuture: FutureTask<V>
+  val taskDescriptor: TaskDescriptor,
+  val task: Task<V>,
+  val runnableFuture: FutureTask<V>
 ) : RunnableFuture<V> by runnableFuture, Comparable<PriorityTask<*>> {
 
   //Used by `PriorityBlockingQueue` supplied to `ExecutorService`.

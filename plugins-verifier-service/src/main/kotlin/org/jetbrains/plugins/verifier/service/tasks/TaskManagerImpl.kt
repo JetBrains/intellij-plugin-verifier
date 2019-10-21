@@ -47,46 +47,46 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
    * determined by [PriorityTask] implementation.
    */
   private fun createPriorityThreadPoolExecutor(concurrency: Int) =
-      object : ThreadPoolExecutor(
-          concurrency,
-          concurrency,
-          0L, TimeUnit.MILLISECONDS,
-          PriorityBlockingQueue(),
-          ThreadFactoryBuilder()
-              .setDaemon(true)
-              .setNameFormat("worker-%d")
-              .build()
-      ) {
+    object : ThreadPoolExecutor(
+      concurrency,
+      concurrency,
+      0L, TimeUnit.MILLISECONDS,
+      PriorityBlockingQueue(),
+      ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("worker-%d")
+        .build()
+    ) {
 
-        /**
-         * Override the [newTaskFor] in order to handle [PriorityTask]s specially.
-         */
-        /**
-         * Override the [newTaskFor] in order to handle [PriorityTask]s specially.
-         */
-        override fun <T : Any?> newTaskFor(runnable: Runnable?, value: T): RunnableFuture<T> {
-          if (runnable is PriorityTask<*>) {
-            @Suppress("UNCHECKED_CAST")
-            return runnable as PriorityTask<T>
-          }
-          return super.newTaskFor(runnable, value)
+      /**
+       * Override the [newTaskFor] in order to handle [PriorityTask]s specially.
+       */
+      /**
+       * Override the [newTaskFor] in order to handle [PriorityTask]s specially.
+       */
+      override fun <T : Any?> newTaskFor(runnable: Runnable?, value: T): RunnableFuture<T> {
+        if (runnable is PriorityTask<*>) {
+          @Suppress("UNCHECKED_CAST")
+          return runnable as PriorityTask<T>
         }
+        return super.newTaskFor(runnable, value)
       }
+    }
 
   /**
    * Aggregates callbacks to be invoked when the [task] [Task] completes.
    */
   private data class Callbacks<T>(
-      val onSuccess: (T, TaskDescriptor) -> Unit,
-      val onError: (Throwable, TaskDescriptor) -> Unit,
-      val onCompletion: (TaskDescriptor) -> Unit
+    val onSuccess: (T, TaskDescriptor) -> Unit,
+    val onError: (Throwable, TaskDescriptor) -> Unit,
+    val onCompletion: (TaskDescriptor) -> Unit
   )
 
   override val activeTasks: Map<TaskType, List<TaskDescriptor>>
     @Synchronized
     get() = _activeTasks.values
-        .groupBy { it.task.taskType }
-        .mapValues { it.value.sorted().map { it.taskDescriptor } }
+      .groupBy { it.task.taskType }
+      .mapValues { it.value.sorted().map { it.taskDescriptor } }
 
   override val lastFinishedTasks: Set<TaskDescriptor>
     @Synchronized
@@ -94,10 +94,10 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
 
   @Synchronized
   override fun <T> enqueue(
-      task: Task<T>,
-      onSuccess: (T, TaskDescriptor) -> Unit,
-      onError: (Throwable, TaskDescriptor) -> Unit,
-      onCompletion: (TaskDescriptor) -> Unit
+    task: Task<T>,
+    onSuccess: (T, TaskDescriptor) -> Unit,
+    onError: (Throwable, TaskDescriptor) -> Unit,
+    onCompletion: (TaskDescriptor) -> Unit
   ): TaskDescriptor {
     val taskId = ++nextTaskId
 
@@ -106,12 +106,12 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
     taskProgress.text = "Waiting to start..."
 
     val descriptor = TaskDescriptor(
-        taskId,
-        task.presentableName,
-        taskProgress,
-        Instant.now(),
-        null,
-        TaskDescriptor.State.WAITING
+      taskId,
+      task.presentableName,
+      taskProgress,
+      Instant.now(),
+      null,
+      TaskDescriptor.State.WAITING
     )
 
     val callbacks = Callbacks(onSuccess, onError, onCompletion)
@@ -125,16 +125,16 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
   }
 
   private fun <T> submitTask(priorityTask: PriorityTask<T>) =
-      taskExecutors
-          .getOrPut(priorityTask.task.taskType) {
-            createPriorityThreadPoolExecutor(concurrency)
-          }
-          .submit(priorityTask) as PriorityTask<*>
+    taskExecutors
+      .getOrPut(priorityTask.task.taskType) {
+        createPriorityThreadPoolExecutor(concurrency)
+      }
+      .submit(priorityTask) as PriorityTask<*>
 
   private fun <T> createRunnable(
-      task: Task<T>,
-      descriptor: TaskDescriptor,
-      callbacks: Callbacks<T>
+    task: Task<T>,
+    descriptor: TaskDescriptor,
+    callbacks: Callbacks<T>
   ) = Runnable {
     with(descriptor) {
       state = TaskDescriptor.State.RUNNING

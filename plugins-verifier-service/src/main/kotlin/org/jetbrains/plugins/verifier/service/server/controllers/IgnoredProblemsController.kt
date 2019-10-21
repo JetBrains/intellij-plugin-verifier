@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam
 @Controller
 @EnableConfigurationProperties(AuthorizationProperties::class)
 class IgnoredProblemsController(
-    private val authorizationProperties: AuthorizationProperties
+  private val authorizationProperties: AuthorizationProperties
 ) {
 
   private companion object {
@@ -33,8 +33,8 @@ class IgnoredProblemsController(
 
   @PostMapping("/modify-ignored-problems")
   fun modifyIgnoredProblemsEndpoint(
-      @RequestParam("ignored.problems") ignoredProblems: String,
-      @RequestParam("admin.password") adminPassword: String
+    @RequestParam("ignored.problems") ignoredProblems: String,
+    @RequestParam("admin.password") adminPassword: String
   ): String {
     if (adminPassword != authorizationProperties.password) {
       throw AuthenticationFailedException("Incorrect password")
@@ -52,7 +52,7 @@ class IgnoredProblemsController(
   }
 
   private fun parseIgnoreConditions(ignoredProblems: String) = ignoredProblems.lines()
-      .map { it.trim() }
-      .filterNot { it.isEmpty() }
-      .map { IgnoreCondition.parseCondition(it) }
+    .map { it.trim() }
+    .filterNot { it.isEmpty() }
+    .map { IgnoreCondition.parseCondition(it) }
 }

@@ -39,10 +39,10 @@ interface TaskManager : Closeable {
    * when then task completes, either successfully or abnormally.
    */
   fun <T> enqueue(
-      task: Task<T>,
-      onSuccess: (T, TaskDescriptor) -> Unit = { _, _ -> },
-      onError: (Throwable, TaskDescriptor) -> Unit = { _, _ -> },
-      onCompletion: (TaskDescriptor) -> Unit = { }
+    task: Task<T>,
+    onSuccess: (T, TaskDescriptor) -> Unit = { _, _ -> },
+    onError: (Throwable, TaskDescriptor) -> Unit = { _, _ -> },
+    onCompletion: (TaskDescriptor) -> Unit = { }
   ): TaskDescriptor
 
   /**

@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
-import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -63,9 +63,9 @@ class VerificationResultFilter {
 
   @Synchronized
   fun shouldSendVerificationResult(
-      verificationResult: PluginVerificationResult,
-      verificationEndTime: Instant,
-      scheduledVerification: ScheduledVerification
+    verificationResult: PluginVerificationResult,
+    verificationEndTime: Instant,
+    scheduledVerification: ScheduledVerification
   ): Boolean {
     doCleanup()
     val updateInfo = scheduledVerification.updateInfo
@@ -82,7 +82,7 @@ class VerificationResultFilter {
     val lastTime = times.max()!!
 
     val triedEnough = attempts.size >= RECHECK_ATTEMPTS
-        && Duration.between(firstTime, lastTime) > RECHECK_ATTEMPT_TIMEOUT.multipliedBy(RECHECK_ATTEMPTS.toLong())
+      && Duration.between(firstTime, lastTime) > RECHECK_ATTEMPT_TIMEOUT.multipliedBy(RECHECK_ATTEMPTS.toLong())
 
     if (triedEnough) {
       //Clear failed attempts for already sent results.
@@ -92,9 +92,9 @@ class VerificationResultFilter {
   }
 
   data class VerificationAttempt(
-      val verificationResult: PluginVerificationResult,
-      val scheduledVerification: ScheduledVerification,
-      val verificationEndTime: Instant
+    val verificationResult: PluginVerificationResult,
+    val scheduledVerification: ScheduledVerification,
+    val verificationEndTime: Instant
   )
 
 }

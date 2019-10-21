@@ -17,46 +17,46 @@ import retrofit2.http.POST
 import java.util.concurrent.TimeUnit
 
 private data class AvailableIdeJson(
-    @SerializedName("ideVersion")
-    val ideVersion: String,
+  @SerializedName("ideVersion")
+  val ideVersion: String,
 
-    @SerializedName("releasedVersion")
-    val releasedVersion: String?
+  @SerializedName("releasedVersion")
+  val releasedVersion: String?
 )
 
 private fun AvailableIde.convertToJson() = AvailableIdeJson(
-    version.asString(),
-    releaseVersion
+  version.asString(),
+  releaseVersion
 )
 
 private interface AvailableIdeConnector {
   @POST("/verification/receiveAvailableIdes")
   fun sendAvailableIdes(
-      @Header("Authorization") authorization: String,
-      @Body availableIdes: List<AvailableIdeJson>
+    @Header("Authorization") authorization: String,
+    @Body availableIdes: List<AvailableIdeJson>
   ): Call<ResponseBody>
 }
 
 class DefaultAvailableIdeProtocol(
-    token: String,
-    pluginRepository: MarketplaceRepository
+  token: String,
+  pluginRepository: MarketplaceRepository
 ) : AvailableIdeProtocol {
   private val authorizationToken = "Bearer $token"
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
-        .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(AvailableIdeConnector::class.java)
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(AvailableIdeConnector::class.java)
   }
 
   override fun sendAvailableIdes(availableIdes: List<AvailableIde>) {
     val jsonIdes = availableIdes.map { it.convertToJson() }
     retrofitConnector.sendAvailableIdes(
-        authorizationToken,
-        jsonIdes
+      authorizationToken,
+      jsonIdes
     ).executeSuccessfully().body()
   }
 

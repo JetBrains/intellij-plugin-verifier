@@ -13,13 +13,13 @@ class ServiceDAO(private val serverDatabase: ServerDatabase) : Closeable {
   private val properties = serverDatabase.openOrCreateMap("properties", ValueType.STRING, ValueType.STRING)
 
   private val _ignoreConditions: MutableList<IgnoreCondition> = Collections.synchronizedList(
-      serverDatabase.openOrCreateList(
-          "ignoredProblems",
-          ValueType.StringBased(
-              { it.serializeCondition() },
-              { IgnoreCondition.parseCondition(it) }
-          )
+    serverDatabase.openOrCreateList(
+      "ignoredProblems",
+      ValueType.StringBased(
+        { it.serializeCondition() },
+        { IgnoreCondition.parseCondition(it) }
       )
+    )
   )
 
   /**

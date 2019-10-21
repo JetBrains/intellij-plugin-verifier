@@ -20,18 +20,18 @@ import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
 class DefaultVerifierServiceProtocol(
-    token: String,
-    private val pluginRepository: MarketplaceRepository,
-    private val ideRepository: IdeRepository
+  token: String,
+  private val pluginRepository: MarketplaceRepository,
+  private val ideRepository: IdeRepository
 ) : VerifierServiceProtocol {
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
-        .addConverterFactory(GsonConverterFactory.create(Gson()))
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(VerifierRetrofitConnector::class.java)
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .addConverterFactory(GsonConverterFactory.create(Gson()))
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(VerifierRetrofitConnector::class.java)
   }
 
   private val authorizationToken = "Bearer $token"
@@ -78,10 +78,10 @@ private interface VerifierRetrofitConnector {
 
   @PUT("/verification/uploadVerificationResultContent")
   fun uploadVerificationResultContent(
-      @Header("Authorization") authorization: String,
-      @Query("updateId") updateId: Int,
-      @Query("ideVersion") ideVersion: String,
-      @Body content: RequestBody
+    @Header("Authorization") authorization: String,
+    @Query("updateId") updateId: Int,
+    @Query("ideVersion") ideVersion: String,
+    @Body content: RequestBody
   ): Call<ResponseBody>
 
   @POST("/verification/receiveVerificationResult")

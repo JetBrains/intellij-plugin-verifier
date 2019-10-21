@@ -21,14 +21,14 @@ class MarketplaceRepositoryConfiguration(private val pluginRepositoryProperties:
 
   @Bean
   fun availableIdeProtocol(pluginRepository: MarketplaceRepository): AvailableIdeProtocol = DefaultAvailableIdeProtocol(
-      pluginRepositoryProperties.token, pluginRepository
+    pluginRepositoryProperties.token, pluginRepository
   )
 
   @Bean
   fun featureServiceProtocol(pluginRepository: MarketplaceRepository): FeatureServiceProtocol =
-      DefaultFeatureServiceProtocol(pluginRepositoryProperties.token, pluginRepository)
+    DefaultFeatureServiceProtocol(pluginRepositoryProperties.token, pluginRepository)
 
   @Bean
   fun verifierServiceProtocol(pluginRepository: MarketplaceRepository, ideRepository: IdeRepository): VerifierServiceProtocol =
-      DefaultVerifierServiceProtocol(pluginRepositoryProperties.token, pluginRepository, ideRepository)
+    DefaultVerifierServiceProtocol(pluginRepositoryProperties.token, pluginRepository, ideRepository)
 }

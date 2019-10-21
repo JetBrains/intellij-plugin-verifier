@@ -48,14 +48,14 @@ private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeatur
 
 
 private data class ApiExtensionPointFeatures(
-    @SerializedName("extensionPoint") val extensionPoint: ApiExtensionPoint,
-    @SerializedName("featureNames") val featureNames: List<String>
+  @SerializedName("extensionPoint") val extensionPoint: ApiExtensionPoint,
+  @SerializedName("featureNames") val featureNames: List<String>
 )
 
 private data class ApiFeaturesResult(
-    @SerializedName("updateId") val updateId: Int,
-    @SerializedName("resultType") val resultType: ResultType,
-    @SerializedName("features") val features: List<ApiExtensionPointFeatures> = emptyList()
+  @SerializedName("updateId") val updateId: Int,
+  @SerializedName("resultType") val resultType: ResultType,
+  @SerializedName("features") val features: List<ApiExtensionPointFeatures> = emptyList()
 ) {
   enum class ResultType {
     NOT_FOUND,

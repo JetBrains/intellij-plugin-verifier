@@ -10,44 +10,44 @@ import java.time.Instant
  * Descriptor of a [task] [Task] being executed.
  */
 data class TaskDescriptor(
-    /**
-     * Unique ID of the task that can be
-     * used to identify the task in the tasks queue.
-     */
-    val taskId: Long,
+  /**
+   * Unique ID of the task that can be
+   * used to identify the task in the tasks queue.
+   */
+  val taskId: Long,
 
-    /**
-     * Presentable name of the task that
-     * can be shown on the status page.
-     */
-    val presentableName: String,
+  /**
+   * Presentable name of the task that
+   * can be shown on the status page.
+   */
+  val presentableName: String,
 
-    /**
-     * Progress indicator that can be
-     * used to monitor and control the execution
-     * of the task.
-     */
-    val progress: ProgressIndicator,
+  /**
+   * Progress indicator that can be
+   * used to monitor and control the execution
+   * of the task.
+   */
+  val progress: ProgressIndicator,
 
-    /**
-     * Point in time when the task was started.
-     */
-    val startTime: Instant,
+  /**
+   * Point in time when the task was started.
+   */
+  val startTime: Instant,
 
-    /**
-     * Point in time when the task was completed,
-     * either successfully or abnormally.
-     *
-     * `null` if the task is not completed yet.
-     */
-    @Volatile
-    var endTime: Instant?,
+  /**
+   * Point in time when the task was completed,
+   * either successfully or abnormally.
+   *
+   * `null` if the task is not completed yet.
+   */
+  @Volatile
+  var endTime: Instant?,
 
-    /**
-     * [State] [State] of the task.
-     */
-    @Volatile
-    var state: State
+  /**
+   * [State] [State] of the task.
+   */
+  @Volatile
+  var state: State
 ) {
 
   /**

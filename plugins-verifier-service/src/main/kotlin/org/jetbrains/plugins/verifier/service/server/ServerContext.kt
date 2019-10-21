@@ -19,14 +19,14 @@ import javax.annotation.PreDestroy
  * Server context must be closed on the server shutdown to de-allocate resources.
  */
 class ServerContext(
-    val appVersion: String?,
-    val ideRepository: IdeRepository,
-    val ideFilesBank: IdeFilesBank,
-    val pluginRepository: MarketplaceRepository,
-    val serviceDAO: ServiceDAO,
-    val ideDescriptorsCache: IdeDescriptorsCache,
-    val pluginDetailsCache: PluginDetailsCache,
-    val verificationResultsFilter: VerificationResultFilter
+  val appVersion: String?,
+  val ideRepository: IdeRepository,
+  val ideFilesBank: IdeFilesBank,
+  val pluginRepository: MarketplaceRepository,
+  val serviceDAO: ServiceDAO,
+  val ideDescriptorsCache: IdeDescriptorsCache,
+  val pluginDetailsCache: PluginDetailsCache,
+  val verificationResultsFilter: VerificationResultFilter
 ) {
   @Autowired
   private lateinit var applicationContext: ApplicationContext

@@ -29,8 +29,8 @@ sealed class ValueType<T> {
    * to and obtained from a string.
    */
   class StringBased<T>(
-      val toString: (T) -> String,
-      val fromString: (String) -> T
+    val toString: (T) -> String,
+    val fromString: (String) -> T
   ) : ValueType<T>() {
 
     override val serializer = object : Serializer<T> {
@@ -39,7 +39,7 @@ sealed class ValueType<T> {
       }
 
       override fun deserialize(input: DataInput2, available: Int) =
-          fromString(Serializer.STRING.deserialize(input, available))
+        fromString(Serializer.STRING.deserialize(input, available))
     }
   }
 

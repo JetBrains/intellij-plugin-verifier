@@ -6,17 +6,17 @@ typealias TaskType = String
  * Service task to be [execute]d.
  */
 abstract class Task<out T>(
-    /**
-     * Presentable name of the to be displayed
-     * to users.
-     */
-    val presentableName: String,
+  /**
+   * Presentable name of the to be displayed
+   * to users.
+   */
+  val presentableName: String,
 
-    /**
-     * Type used to distinguish tasks
-     * and run independent tasks in parallel.
-     */
-    val taskType: TaskType
+  /**
+   * Type used to distinguish tasks
+   * and run independent tasks in parallel.
+   */
+  val taskType: TaskType
 ) {
 
   /**

@@ -120,10 +120,10 @@ data class MissingDependenciesSetDto(
 )
 
 class DependenciesGraphDto(
-    val start: DependencyNodeDto,
-    val vertices: List<DependencyNodeDto>,
-    val edges: List<DependencyEdgeDto>,
-    val missingDependencies: List<MissingDependenciesSetDto>
+  val start: DependencyNodeDto,
+  val vertices: List<DependencyNodeDto>,
+  val edges: List<DependencyEdgeDto>,
+  val missingDependencies: List<MissingDependenciesSetDto>
 ) {
 
   data class DependencyNodeDto(

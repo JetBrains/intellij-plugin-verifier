@@ -95,15 +95,15 @@ private fun AvailableIde.convert() =
 
 private fun DependenciesGraph.convert() =
   DependenciesGraphDto(
-      verifiedPlugin.convert(),
-      vertices.map { it.convert() },
-      edges.map { it.convert() },
-      missingDependencies.entries.map { entry ->
-        MissingDependenciesSetDto(
-            entry.key.convert(),
-            entry.value.mapTo(hashSetOf()) { it.convert() }
-        )
-      }
+    verifiedPlugin.convert(),
+    vertices.map { it.convert() },
+    edges.map { it.convert() },
+    missingDependencies.entries.map { entry ->
+      MissingDependenciesSetDto(
+        entry.key.convert(),
+        entry.value.mapTo(hashSetOf()) { it.convert() }
+      )
+    }
   )
 
 private fun DependencyEdge.convert() =

@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory
  * [Task] that runs the [feature extractor] [FeaturesExtractor] for the [updateInfo].
  */
 class ExtractFeaturesTask(
-    val updateInfo: UpdateInfo,
-    private val ideDescriptorsCache: IdeDescriptorsCache,
-    private val pluginDetailsCache: PluginDetailsCache,
-    private val ideRepository: IdeRepository,
-    private val featureExtractorIdeVersion: IdeVersion
+  val updateInfo: UpdateInfo,
+  private val ideDescriptorsCache: IdeDescriptorsCache,
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val ideRepository: IdeRepository,
+  private val featureExtractorIdeVersion: IdeVersion
 ) : Task<ExtractFeaturesTask.Result>("Features of $updateInfo", "ExtractFeatures") {
 
   companion object {
@@ -33,12 +33,12 @@ class ExtractFeaturesTask(
    * Result of the [feature extractor service] [FeatureExtractorService] task.
    */
   data class Result(
-      val updateInfo: UpdateInfo,
-      val resultType: ResultType,
-      val features: List<ExtensionPointFeatures> = emptyList(),
-      val invalidPluginReason: String? = null,
-      val notFoundReason: String? = null,
-      val failedToDownloadReason: String? = null
+    val updateInfo: UpdateInfo,
+    val resultType: ResultType,
+    val features: List<ExtensionPointFeatures> = emptyList(),
+    val invalidPluginReason: String? = null,
+    val notFoundReason: String? = null,
+    val failedToDownloadReason: String? = null
   ) {
     enum class ResultType {
       NOT_FOUND,
@@ -78,40 +78,40 @@ class ExtractFeaturesTask(
   }
 
   private fun execute(ideDescriptor: IdeDescriptor): Result =
-      pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
-        with(it) {
-          when (this) {
-            is PluginDetailsCache.Result.Provided -> {
-              Result(
-                  updateInfo,
-                  Result.ResultType.EXTRACTED,
-                  FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, pluginDetails.idePlugin)
-              )
-            }
-            is PluginDetailsCache.Result.FileNotFound -> {
-              Result(
-                  updateInfo,
-                  Result.ResultType.NOT_FOUND,
-                  notFoundReason = reason
-              )
-            }
-            is PluginDetailsCache.Result.InvalidPlugin -> {
-              Result(
-                  updateInfo,
-                  Result.ResultType.BAD_PLUGIN,
-                  invalidPluginReason = "Plugin is invalid: " + pluginErrors.joinToString()
-              )
-            }
-            is PluginDetailsCache.Result.Failed -> {
-              LOG.info("Unable to get plugin details for $updateInfo", error)
-              Result(
-                  updateInfo,
-                  Result.ResultType.NOT_FOUND,
-                  failedToDownloadReason = reason
-              )
-            }
+    pluginDetailsCache.getPluginDetailsCacheEntry(updateInfo).use {
+      with(it) {
+        when (this) {
+          is PluginDetailsCache.Result.Provided -> {
+            Result(
+              updateInfo,
+              Result.ResultType.EXTRACTED,
+              FeaturesExtractor.extractFeatures(ideDescriptor.ide, ideDescriptor.ideResolver, pluginDetails.idePlugin)
+            )
+          }
+          is PluginDetailsCache.Result.FileNotFound -> {
+            Result(
+              updateInfo,
+              Result.ResultType.NOT_FOUND,
+              notFoundReason = reason
+            )
+          }
+          is PluginDetailsCache.Result.InvalidPlugin -> {
+            Result(
+              updateInfo,
+              Result.ResultType.BAD_PLUGIN,
+              invalidPluginReason = "Plugin is invalid: " + pluginErrors.joinToString()
+            )
+          }
+          is PluginDetailsCache.Result.Failed -> {
+            LOG.info("Unable to get plugin details for $updateInfo", error)
+            Result(
+              updateInfo,
+              Result.ResultType.NOT_FOUND,
+              failedToDownloadReason = reason
+            )
           }
         }
       }
+    }
 
 }

@@ -22,11 +22,11 @@ import java.util.concurrent.TimeUnit
  * by overriding the [onStop].
  */
 abstract class BaseService(
-    val serviceName: String,
-    private val initialDelay: Long,
-    private val period: Long,
-    private val timeUnit: TimeUnit,
-    protected val taskManager: TaskManager
+  val serviceName: String,
+  private val initialDelay: Long,
+  private val period: Long,
+  private val timeUnit: TimeUnit,
+  protected val taskManager: TaskManager
 ) {
 
   enum class State {
@@ -39,10 +39,10 @@ abstract class BaseService(
 
   private val executor by lazy {
     Executors.newSingleThreadScheduledExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("$serviceName-%d")
-            .build()
+      ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("$serviceName-%d")
+        .build()
     )
   }
 

@@ -10,9 +10,9 @@ import java.util.concurrent.TimeUnit
  * available for verification to the Marketplace.
  */
 class AvailableIdeService(
-    taskManager: TaskManager,
-    private val protocol: AvailableIdeProtocol,
-    private val ideRepository: IdeRepository
+  taskManager: TaskManager,
+  private val protocol: AvailableIdeProtocol,
+  private val ideRepository: IdeRepository
 ) : BaseService("AvailableIdeService", 0, 1, TimeUnit.MINUTES, taskManager) {
 
   override fun doServe() {
