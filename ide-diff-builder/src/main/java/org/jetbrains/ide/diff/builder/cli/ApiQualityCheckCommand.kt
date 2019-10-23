@@ -433,17 +433,13 @@ private data class SfrApiWithWrongPlannedVersion(
 private data class RemovalVersion(val originalVersion: String, val branch: Int) {
 
   companion object {
-    private val IDE_RELEASE_REGEX = Regex("(\\d\\d\\d\\d)(\\.\\d)?")
+    private val IDE_RELEASE_REGEX = Regex("\\d\\d\\d\\d\\.\\d")
 
     fun parseRemovalVersion(version: String): RemovalVersion? {
       val match = IDE_RELEASE_REGEX.matchEntire(version) ?: return null
       val year = match.groupValues[1].toInt()
-      val release = match.groups[2]?.value?.drop(1)?.toInt()
-      val branch = if (release != null) {
-        (year - 2000) * 10 + release
-      } else {
-        (year - 2000) * 10 + 3
-      }
+      val release = match.groupValues[2].toInt()
+      val branch = (year - 2000) * 10 + release
       return RemovalVersion(version, branch)
     }
   }
