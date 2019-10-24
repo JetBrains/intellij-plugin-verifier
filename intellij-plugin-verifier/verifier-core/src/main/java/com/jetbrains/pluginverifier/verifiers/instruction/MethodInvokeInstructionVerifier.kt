@@ -12,12 +12,12 @@ import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class MethodInvokeInstructionVerifier(
-    private val callerMethod: Method,
-    private val methodOwnerClass: ClassFile,
-    private val methodReference: MethodReference,
-    private val context: VerificationContext,
-    private val instruction: Instruction,
-    private val instructionNode: AbstractInsnNode
+  private val callerMethod: Method,
+  private val methodOwnerClass: ClassFile,
+  private val methodReference: MethodReference,
+  private val context: VerificationContext,
+  private val instruction: Instruction,
+  private val instructionNode: AbstractInsnNode
 ) {
 
   fun verify() {
@@ -89,7 +89,7 @@ class MethodInvokeInstructionVerifier(
     */
     val classRef: ClassFile = if (method.name != "<init>" && (!methodOwnerClass.isInterface && methodReference.hostClass.className == callerMethod.containingClassFile.superName) && callerMethod.containingClassFile.isSuperFlag) {
       context.classResolver.resolveClassChecked(callerMethod.containingClassFile.superName!!, callerMethod, context)
-          ?: return
+        ?: return
     } else {
       context.classResolver.resolveClassChecked(methodReference.hostClass.className, callerMethod, context) ?: return
     }
@@ -98,7 +98,7 @@ class MethodInvokeInstructionVerifier(
       The actual method to be invoked is selected by the following lookup procedure:
       */
     val (stepNumber, resolvedMethod) = MethodResolver().lookupSpecialMethod(classRef, methodReference, instruction, callerMethod, context, method)
-        ?: return
+      ?: return
 
     /*
     Otherwise, if step 1, step 2, or step 3 of the lookup procedure selects an abstract method, invokespecial throws an AbstractMethodError.
@@ -121,7 +121,7 @@ class MethodInvokeInstructionVerifier(
      * It's a workaround for the fact that we can't compile an interface with a private method.
      */
     fun isTestPrivateInterfaceMethod(method: Method): Boolean =
-        method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
+      method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
 
     /*
     Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
@@ -166,12 +166,12 @@ class MethodInvokeInstructionVerifier(
   private fun registerMethodNotFoundProblem(ownerClass: ClassFile) {
     val methodOwnerHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(ownerClass)
     context.problemRegistrar.registerProblem(
-        MethodNotFoundProblem(
-            methodReference,
-            callerMethod.location,
-            instruction,
-            methodOwnerHierarchy
-        )
+      MethodNotFoundProblem(
+        methodReference,
+        callerMethod.location,
+        instruction,
+        methodOwnerHierarchy
+      )
     )
   }
 

@@ -20,7 +20,8 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
       }
       lastNotFound = findResult
     }
-    return lastNotFound ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
+    return lastNotFound
+      ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
   }
 
 }

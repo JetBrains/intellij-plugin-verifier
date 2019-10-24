@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
+import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.utils.extractTo
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
@@ -34,7 +34,7 @@ object PluginExtractor {
   }
 
   private fun success(actualFile: File, fileToDelete: File): ExtractorResult =
-      ExtractorResult.Success(ExtractedPlugin(actualFile, fileToDelete))
+    ExtractorResult.Success(ExtractedPlugin(actualFile, fileToDelete))
 
   private fun fail(problem: PluginProblem, extractedPlugin: File): ExtractorResult {
     try {

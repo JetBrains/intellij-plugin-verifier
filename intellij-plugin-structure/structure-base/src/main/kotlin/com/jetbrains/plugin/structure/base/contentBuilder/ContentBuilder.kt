@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.base.contentBuilder
 
 import java.io.File
-import java.lang.IllegalArgumentException
 
 interface ContentBuilder {
   fun file(name: String)

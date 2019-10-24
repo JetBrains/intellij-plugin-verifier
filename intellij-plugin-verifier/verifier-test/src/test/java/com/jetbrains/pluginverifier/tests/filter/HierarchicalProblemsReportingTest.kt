@@ -47,120 +47,120 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
     val classBReference = ClassReference("org/test/other/B")
 
     val methodLocation = MethodLocation(
-        ClassLocation("SomeClass", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin),
-        "someMethod",
-        "()V",
-        emptyList(),
-        null,
-        Modifiers.of(Modifiers.Modifier.PUBLIC)
+      ClassLocation("SomeClass", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin),
+      "someMethod",
+      "()V",
+      emptyList(),
+      null,
+      Modifiers.of(Modifiers.Modifier.PUBLIC)
     )
 
     val methodFooIsNotFoundProblem = MethodNotFoundProblem(
-        MethodReference(classBReference, "foo", "()V"),
-        methodLocation,
-        Instruction.INVOKE_VIRTUAL,
-        JAVA_LANG_OBJECT_HIERARCHY
+      MethodReference(classBReference, "foo", "()V"),
+      methodLocation,
+      Instruction.INVOKE_VIRTUAL,
+      JAVA_LANG_OBJECT_HIERARCHY
     )
 
     val constructorIsNotFoundProblem = with(methodFooIsNotFoundProblem) {
       MethodNotFoundProblem(
-          unresolvedMethod.copy(methodName = "<init>"),
-          caller,
-          instruction,
-          methodOwnerHierarchy
+        unresolvedMethod.copy(methodName = "<init>"),
+        caller,
+        instruction,
+        methodOwnerHierarchy
       )
     }
 
     val illegalMethodAccessProblem = IllegalMethodAccessProblem(
-        constructorIsNotFoundProblem.unresolvedMethod,
-        MethodLocation(
-            classBLocation,
-            "foo",
-            "()V",
-            emptyList(),
-            null,
-            Modifiers.of(Modifiers.Modifier.PUBLIC)
-        ),
-        AccessType.PRIVATE,
-        methodLocation,
-        Instruction.INVOKE_SPECIAL
-    )
-
-    val illegalConstructorAccessProblem = with(illegalMethodAccessProblem) {
-      IllegalMethodAccessProblem(
-          bytecodeMethodReference,
-          inaccessibleMethod.copy(methodName = "<init>"),
-          methodAccessModifier,
-          caller,
-          instruction
-      )
-    }
-
-    val fieldXNotFoundProblem = FieldNotFoundProblem(
-        FieldReference(classBReference, "x", "I"),
-        methodLocation,
-        JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD
-    )
-
-    val abstractMethodLocation = MethodLocation(
-        ClassLocation("org/test/I", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin),
-        "abstractMethod",
+      constructorIsNotFoundProblem.unresolvedMethod,
+      MethodLocation(
+        classBLocation,
+        "foo",
         "()V",
         emptyList(),
         null,
         Modifiers.of(Modifiers.Modifier.PUBLIC)
+      ),
+      AccessType.PRIVATE,
+      methodLocation,
+      Instruction.INVOKE_SPECIAL
+    )
+
+    val illegalConstructorAccessProblem = with(illegalMethodAccessProblem) {
+      IllegalMethodAccessProblem(
+        bytecodeMethodReference,
+        inaccessibleMethod.copy(methodName = "<init>"),
+        methodAccessModifier,
+        caller,
+        instruction
+      )
+    }
+
+    val fieldXNotFoundProblem = FieldNotFoundProblem(
+      FieldReference(classBReference, "x", "I"),
+      methodLocation,
+      JAVA_LANG_OBJECT_HIERARCHY,
+      Instruction.GET_FIELD
+    )
+
+    val abstractMethodLocation = MethodLocation(
+      ClassLocation("org/test/I", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin),
+      "abstractMethod",
+      "()V",
+      emptyList(),
+      null,
+      Modifiers.of(Modifiers.Modifier.PUBLIC)
     )
     val incompleteClass = ClassLocation("org/test/IImplDerived", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
-        abstractMethodLocation,
-        incompleteClass
+      abstractMethodLocation,
+      incompleteClass
     )
 
     val classNotFoundProblem = ClassNotFoundProblem(
-        ClassReference("org/test/some/Inner\$Class"),
-        methodLocation
+      ClassReference("org/test/some/Inner\$Class"),
+      methodLocation
     )
 
     val overridingFinalMethodProblem = OverridingFinalMethodProblem(
-        MethodLocation(
-            classALocation,
-            "finalMethod",
-            "()V",
-            emptyList(),
-            null,
-            Modifiers.of(Modifiers.Modifier.PUBLIC, Modifiers.Modifier.FINAL)
-        ),
-        classCLocation
+      MethodLocation(
+        classALocation,
+        "finalMethod",
+        "()V",
+        emptyList(),
+        null,
+        Modifiers.of(Modifiers.Modifier.PUBLIC, Modifiers.Modifier.FINAL)
+      ),
+      classCLocation
     )
 
     return listOf(
-        methodFooIsNotFoundProblem to DocMethodRemoved("org/test/A", "foo"),
+      methodFooIsNotFoundProblem to DocMethodRemoved("org/test/A", "foo"),
 
-        methodFooIsNotFoundProblem to DocMethodReturnTypeChanged("org/test/A", "foo"),
+      methodFooIsNotFoundProblem to DocMethodReturnTypeChanged("org/test/A", "foo"),
 
-        methodFooIsNotFoundProblem to DocMethodParameterTypeChanged("org/test/A", "foo"),
+      methodFooIsNotFoundProblem to DocMethodParameterTypeChanged("org/test/A", "foo"),
 
-        fieldXNotFoundProblem to DocFieldRemoved("org/test/A", "x"),
+      fieldXNotFoundProblem to DocFieldRemoved("org/test/A", "x"),
 
-        fieldXNotFoundProblem to DocFieldTypeChanged("org/test/A", "x"),
+      fieldXNotFoundProblem to DocFieldTypeChanged("org/test/A", "x"),
 
-        methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod"),
+      methodNotImplementedProblem to DocAbstractMethodAdded("org/test/IImpl", "abstractMethod"),
 
-        classNotFoundProblem to DocClassRemoved("org/test/some/Inner\$Class"),
+      classNotFoundProblem to DocClassRemoved("org/test/some/Inner\$Class"),
 
-        constructorIsNotFoundProblem to DocMethodRemoved("org/test/other/B", "<init>"),
+      constructorIsNotFoundProblem to DocMethodRemoved("org/test/other/B", "<init>"),
 
-        constructorIsNotFoundProblem to DocMethodParameterTypeChanged("org/test/other/B", "<init>"),
+      constructorIsNotFoundProblem to DocMethodParameterTypeChanged("org/test/other/B", "<init>"),
 
-        illegalMethodAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "foo"),
+      illegalMethodAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "foo"),
 
-        illegalConstructorAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "<init>"),
+      illegalConstructorAccessProblem to DocMethodVisibilityChanged("org/test/other/B", "<init>"),
 
-        overridingFinalMethodProblem to DocMethodMarkedFinal("org/test/other/A", "finalMethod"),
+      overridingFinalMethodProblem to DocMethodMarkedFinal("org/test/other/A", "finalMethod"),
 
-        overridingFinalMethodProblem to DocFinalMethodInherited("org/test/other/B", "org/test/A", "finalMethod")
+      overridingFinalMethodProblem to DocFinalMethodInherited("org/test/other/B", "org/test/A", "finalMethod")
     )
   }
 
@@ -206,46 +206,46 @@ class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() 
    */
   private fun buildClassesForHierarchicalTest(): List<ClassNode> {
     val interfaceIDescriptor = ByteBuddy()
-        .makeInterface()
-        .name("org.test.I")
-        .make()
+      .makeInterface()
+      .name("org.test.I")
+      .make()
 
     val interfaceImplDescriptor = ByteBuddy()
-        .subclass(interfaceIDescriptor.typeDescription)
-        .name("org.test.IImpl")
-        .make()
+      .subclass(interfaceIDescriptor.typeDescription)
+      .name("org.test.IImpl")
+      .make()
 
     val interfaceImplDerived = ByteBuddy()
-        .subclass(interfaceImplDescriptor.typeDescription)
-        .name("org.test.IImplDerived")
-        .make()
+      .subclass(interfaceImplDescriptor.typeDescription)
+      .name("org.test.IImplDerived")
+      .make()
 
     val classADescriptor = ByteBuddy()
-        .subclass(Any::class.java)
-        .name("org.test.A")
-        .defineMethod("finalMethod", Void.TYPE, Visibility.PUBLIC, MethodManifestation.FINAL)
-        .intercept(ExceptionMethod.throwing(RuntimeException::class.java))
-        .make()
+      .subclass(Any::class.java)
+      .name("org.test.A")
+      .defineMethod("finalMethod", Void.TYPE, Visibility.PUBLIC, MethodManifestation.FINAL)
+      .intercept(ExceptionMethod.throwing(RuntimeException::class.java))
+      .make()
 
     val classBDescriptor = ByteBuddy()
-        .subclass(classADescriptor.typeDescription)
-        .name("org.test.other.B")
-        .make()
+      .subclass(classADescriptor.typeDescription)
+      .name("org.test.other.B")
+      .make()
 
     val classCDescriptor = ByteBuddy()
-        .subclass(classBDescriptor.typeDescription)
-        .name("org.test.third.C")
-        .defineMethod("finalMethod", Void.TYPE, Visibility.PUBLIC)
-        .intercept(ExceptionMethod.throwing(RuntimeException::class.java))
-        .make()
+      .subclass(classBDescriptor.typeDescription)
+      .name("org.test.third.C")
+      .defineMethod("finalMethod", Void.TYPE, Visibility.PUBLIC)
+      .intercept(ExceptionMethod.throwing(RuntimeException::class.java))
+      .make()
 
     return listOf(
-        classADescriptor,
-        classBDescriptor,
-        classCDescriptor,
-        interfaceIDescriptor,
-        interfaceImplDescriptor,
-        interfaceImplDerived
+      classADescriptor,
+      classBDescriptor,
+      classCDescriptor,
+      interfaceIDescriptor,
+      interfaceImplDescriptor,
+      interfaceImplDerived
     ).map { it.bytes.createClassNode() }
   }
 

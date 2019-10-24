@@ -16,10 +16,10 @@ sealed class Location {
 }
 
 data class ClassLocation(
-    val className: String,
-    val signature: String?,
-    val modifiers: Modifiers,
-    val classFileOrigin: FileOrigin
+  val className: String,
+  val signature: String?,
+  val modifiers: Modifiers,
+  val classFileOrigin: FileOrigin
 ) : Location() {
 
   val packageName
@@ -47,17 +47,17 @@ data class ClassLocation(
 }
 
 data class FieldLocation(
-    val hostClass: ClassLocation,
-    val fieldName: String,
-    val fieldDescriptor: String,
-    val signature: String?,
-    val modifiers: Modifiers
+  val hostClass: ClassLocation,
+  val fieldName: String,
+  val fieldDescriptor: String,
+  val signature: String?,
+  val modifiers: Modifiers
 ) : Location() {
 
   override fun equals(other: Any?) = other is FieldLocation
-      && hostClass == other.hostClass
-      && fieldName == other.fieldName
-      && fieldDescriptor == other.fieldDescriptor
+    && hostClass == other.hostClass
+    && fieldName == other.fieldName
+    && fieldDescriptor == other.fieldDescriptor
 
   override fun hashCode() = Objects.hash(hostClass, fieldName, fieldDescriptor)
 
@@ -72,18 +72,18 @@ data class FieldLocation(
 }
 
 data class MethodLocation(
-    val hostClass: ClassLocation,
-    val methodName: String,
-    val methodDescriptor: String,
-    val parameterNames: List<String>,
-    val signature: String?,
-    val modifiers: Modifiers
+  val hostClass: ClassLocation,
+  val methodName: String,
+  val methodDescriptor: String,
+  val parameterNames: List<String>,
+  val signature: String?,
+  val modifiers: Modifiers
 ) : Location() {
 
   override fun equals(other: Any?) = other is MethodLocation
-      && hostClass == other.hostClass
-      && methodName == other.methodName
-      && methodDescriptor == other.methodDescriptor
+    && hostClass == other.hostClass
+    && methodName == other.methodName
+    && methodDescriptor == other.methodDescriptor
 
   override fun hashCode() = Objects.hash(hostClass, methodName, methodDescriptor)
 

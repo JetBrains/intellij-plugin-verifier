@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * if multiple versions are available.
  */
 class RepositoryDependencyFinder(
-    private val pluginRepository: PluginRepository,
-    private val pluginVersionSelector: PluginVersionSelector,
-    private val pluginDetailsCache: PluginDetailsCache
+  private val pluginRepository: PluginRepository,
+  private val pluginVersionSelector: PluginVersionSelector,
+  private val pluginDetailsCache: PluginDetailsCache
 ) : DependencyFinder {
 
   override val presentableName
@@ -26,7 +26,7 @@ class RepositoryDependencyFinder(
 
   private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
     val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId)
-        ?: return DependencyFinder.Result.NotFound("Module '$moduleId' is not found")
+      ?: return DependencyFinder.Result.NotFound("Module '$moduleId' is not found")
     return selectPluginVersion(pluginId)
   }
 

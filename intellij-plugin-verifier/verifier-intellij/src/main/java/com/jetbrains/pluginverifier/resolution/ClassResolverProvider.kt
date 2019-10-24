@@ -17,10 +17,10 @@ interface ClassResolverProvider {
   fun provideExternalClassesPackageFilter(): PackageFilter
 
   data class Result(
-      val pluginResolver: Resolver,
-      val allResolver: Resolver,
-      val dependenciesGraph: DependenciesGraph,
-      private val closeableResources: List<Closeable>
+    val pluginResolver: Resolver,
+    val allResolver: Resolver,
+    val dependenciesGraph: DependenciesGraph,
+    private val closeableResources: List<Closeable>
   ) : Closeable {
     override fun close() {
       closeableResources.closeAll()

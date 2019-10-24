@@ -10,25 +10,25 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
 
   override fun execute(
-      reportage: PluginVerificationReportage,
-      pluginDetailsCache: PluginDetailsCache
+    reportage: PluginVerificationReportage,
+    pluginDetailsCache: PluginDetailsCache
   ): CheckIdeResult {
     with(parameters) {
       val verifiers = verificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            listOf(DynamicallyLoadedFilter())
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter())
         )
       }
 
       val results = runSeveralVerifiers(reportage, verifiers)
 
       return CheckIdeResult(
-          verificationTarget,
-          results,
-          missingCompatibleVersionsProblems
+        verificationTarget,
+        results,
+        missingCompatibleVersionsProblems
       )
     }
   }

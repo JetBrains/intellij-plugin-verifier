@@ -13,8 +13,8 @@ import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 class InterfacesVerifier : ClassVerifier {
   override fun verify(classFile: ClassFile, context: VerificationContext) {
     classFile.interfaces
-        .mapNotNull { context.classResolver.resolveClassChecked(it, classFile, context) }
-        .filterNot { it.isInterface }
-        .forEach { context.problemRegistrar.registerProblem(SuperInterfaceBecameClassProblem(classFile.location, it.location)) }
+      .mapNotNull { context.classResolver.resolveClassChecked(it, classFile, context) }
+      .filterNot { it.isInterface }
+      .forEach { context.problemRegistrar.registerProblem(SuperInterfaceBecameClassProblem(classFile.location, it.location)) }
   }
 }

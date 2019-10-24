@@ -14,11 +14,11 @@ import java.util.*
 class PropertyUsageProcessor : ApiUsageProcessor {
 
   override fun processMethodInvocation(
-      methodReference: MethodReference,
-      resolvedMethod: Method,
-      instructionNode: AbstractInsnNode,
-      callerMethod: Method,
-      context: VerificationContext
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    instructionNode: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
   ) {
     val methodParameters = resolvedMethod.methodParameters
     if (methodParameters.any { it.name.contains("default", true) }) {
@@ -27,7 +27,7 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     }
     for ((parameterIndex, methodParameter) in methodParameters.withIndex()) {
       val propertyKeyAnnotation = methodParameter.annotations.findAnnotation("org/jetbrains/annotations/PropertyKey")
-          ?: continue
+        ?: continue
 
       val resourceBundleName = propertyKeyAnnotation.getAnnotationValue("resourceBundle") as? String ?: continue
 
@@ -48,10 +48,10 @@ class PropertyUsageProcessor : ApiUsageProcessor {
   }
 
   private fun checkProperty(
-      resourceBundleName: String,
-      propertyKey: String,
-      context: VerificationContext,
-      usageLocation: MethodLocation
+    resourceBundleName: String,
+    propertyKey: String,
+    context: VerificationContext,
+    usageLocation: MethodLocation
   ) {
     if (resourceBundleName != getBundleBaseName(resourceBundleName)) {
       //In general, we can't resolve non-base bundles, like "some.Bundle_en" because we don't know the locale to use.

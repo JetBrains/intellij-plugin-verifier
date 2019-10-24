@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class ExperimentalFieldUsage(
-    override val apiReference: FieldReference,
-    override val apiElement: FieldLocation,
-    override val usageLocation: Location
+  override val apiReference: FieldReference,
+  override val apiElement: FieldLocation,
+  override val usageLocation: Location
 ) : ExperimentalApiUsage() {
 
   override val shortDescription
@@ -26,9 +26,9 @@ class ExperimentalFieldUsage(
     }
 
   override fun equals(other: Any?) = other is ExperimentalFieldUsage
-      && apiReference == other.apiReference
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiReference == other.apiReference
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation)
 }

@@ -28,8 +28,8 @@ class FacetTypeTests : FeatureExtractorTestBase() {
     val extractor = FacetTypeExtractor()
     val features = extractor.extract(plugin, resolver)
     Assert.assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FACET_TYPE, expectedFacetTypes)),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FACET_TYPE, expectedFacetTypes)),
+      features
     )
   }
 

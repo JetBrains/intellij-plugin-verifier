@@ -29,10 +29,10 @@ import com.jetbrains.pluginverifier.warnings.*
  * Performs verification specified by [verificationDescriptor] and returns [PluginVerificationResult].
  */
 class PluginVerifier(
-    val verificationDescriptor: PluginVerificationDescriptor,
-    private val problemFilters: List<ProblemsFilter>,
-    private val pluginDetailsCache: PluginDetailsCache,
-    private val classFilters: List<ClassFilter>
+  val verificationDescriptor: PluginVerificationDescriptor,
+  private val problemFilters: List<ProblemsFilter>,
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val classFilters: List<ClassFilter>
 ) {
 
   fun loadPluginAndVerify(): PluginVerificationResult {
@@ -40,11 +40,11 @@ class PluginVerifier(
       return when (cacheEntry) {
         is PluginDetailsCache.Result.InvalidPlugin -> {
           PluginVerificationResult.InvalidPlugin(
-              verificationDescriptor.checkedPlugin,
-              verificationDescriptor.toTarget(),
-              cacheEntry.pluginErrors
-                  .filter { it.level == PluginProblem.Level.ERROR }
-                  .mapTo(hashSetOf()) { PluginStructureError(it) }
+            verificationDescriptor.checkedPlugin,
+            verificationDescriptor.toTarget(),
+            cacheEntry.pluginErrors
+              .filter { it.level == PluginProblem.Level.ERROR }
+              .mapTo(hashSetOf()) { PluginStructureError(it) }
           )
         }
         is PluginDetailsCache.Result.FileNotFound -> {
@@ -66,12 +66,12 @@ class PluginVerifier(
       val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 
       val context = PluginVerificationContext(
-          pluginDetails.idePlugin,
-          verificationDescriptor,
-          pluginResolver,
-          allResolver,
-          externalClassesPackageFilter,
-          dependenciesGraph
+        pluginDetails.idePlugin,
+        verificationDescriptor,
+        pluginResolver,
+        allResolver,
+        externalClassesPackageFilter,
+        dependenciesGraph
       )
 
       pluginDetails.pluginWarnings.forEach { context.registerPluginStructureWarning(PluginStructureWarning(it)) }
@@ -82,18 +82,18 @@ class PluginVerifier(
       val classesToCheck = selectClassesForCheck(pluginDetails)
 
       BytecodeVerifier(
-          classFilters,
-          listOf(NonExtendableTypeInheritedProcessor(context)),
-          listOf(
-              MethodOverridingVerifier(
-                  listOf(
-                      ExperimentalMethodOverridingProcessor(context),
-                      DeprecatedMethodOverridingProcessor(context),
-                      NonExtendableMethodOverridingProcessor(context),
-                      InternalMethodOverridingProcessor(context)
-                  )
-              )
+        classFilters,
+        listOf(NonExtendableTypeInheritedProcessor(context)),
+        listOf(
+          MethodOverridingVerifier(
+            listOf(
+              ExperimentalMethodOverridingProcessor(context),
+              DeprecatedMethodOverridingProcessor(context),
+              NonExtendableMethodOverridingProcessor(context),
+              InternalMethodOverridingProcessor(context)
+            )
           )
+        )
       ).verify(classesToCheck, context) {}
 
       context.postProcessResults()
@@ -102,26 +102,26 @@ class PluginVerifier(
 
       return with(context) {
         PluginVerificationResult.Verified(
-            verificationDescriptor.checkedPlugin,
-            verificationDescriptor.toTarget(),
-            dependenciesGraph,
-            reportProblems,
-            ignoredProblems,
-            compatibilityWarnings,
-            deprecatedUsages,
-            experimentalApiUsages,
-            internalApiUsages,
-            nonExtendableApiUsages,
-            overrideOnlyMethodUsages,
-            pluginStructureWarnings
+          verificationDescriptor.checkedPlugin,
+          verificationDescriptor.toTarget(),
+          dependenciesGraph,
+          reportProblems,
+          ignoredProblems,
+          compatibilityWarnings,
+          deprecatedUsages,
+          experimentalApiUsages,
+          internalApiUsages,
+          nonExtendableApiUsages,
+          overrideOnlyMethodUsages,
+          pluginStructureWarnings
         )
       }
     }
   }
 
   private fun partitionReportAndIgnoredProblems(
-      allProblems: Set<CompatibilityProblem>,
-      verificationContext: VerificationContext
+    allProblems: Set<CompatibilityProblem>,
+    verificationContext: VerificationContext
   ): Pair<Set<CompatibilityProblem>, Map<CompatibilityProblem, String>> {
 
     val reportProblems = hashSetOf<CompatibilityProblem>()
@@ -129,9 +129,9 @@ class PluginVerifier(
 
     for (problem in allProblems) {
       val ignoreDecision = problemFilters.asSequence()
-          .map { it.shouldReportProblem(problem, verificationContext) }
-          .filterIsInstance<ProblemsFilter.Result.Ignore>()
-          .firstOrNull()
+        .map { it.shouldReportProblem(problem, verificationContext) }
+        .filterIsInstance<ProblemsFilter.Result.Ignore>()
+        .firstOrNull()
 
       if (ignoreDecision != null) {
         ignoredProblems[problem] = ignoreDecision.reason
@@ -183,4 +183,4 @@ class PluginVerifier(
 private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
 
 fun IdePluginClassesLocations.createPluginResolver() =
-    CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) })
+  CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) })

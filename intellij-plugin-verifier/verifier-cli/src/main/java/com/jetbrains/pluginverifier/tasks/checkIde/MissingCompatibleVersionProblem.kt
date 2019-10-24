@@ -10,11 +10,11 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
  * be published to the Plugin Repository to make the EAP useful.
  */
 data class MissingCompatibleVersionProblem(
-    val pluginId: String,
-    val ideVersion: IdeVersion,
-    private val details: String?
+  val pluginId: String,
+  val ideVersion: IdeVersion,
+  private val details: String?
 ) {
 
   override fun toString() = "For plugin '$pluginId' there are no versions compatible with $ideVersion " +
-      "in the Plugin Repository" + if (details != null) " $details" else ""
+    "in the Plugin Repository" + if (details != null) " $details" else ""
 }

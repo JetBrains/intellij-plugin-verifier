@@ -7,7 +7,7 @@ interface FileOrigin {
 }
 
 inline fun <reified T : FileOrigin> FileOrigin.findOriginOfType(): T? =
-    generateSequence(this) { it.parent }.filterIsInstance<T>().firstOrNull()
+  generateSequence(this) { it.parent }.filterIsInstance<T>().firstOrNull()
 
 inline fun <reified T : FileOrigin> FileOrigin.isOriginOfType(): Boolean = findOriginOfType<T>() != null
 

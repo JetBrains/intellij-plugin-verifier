@@ -13,8 +13,8 @@ import java.nio.file.Path
  * and saves them to `<plugin-verification>/ignored-problems.txt` file.
  */
 class IgnoredProblemsReporter(
-    private val pluginVerificationDirectory: Path,
-    private val verificationTarget: PluginVerificationTarget
+  private val pluginVerificationDirectory: Path,
+  private val verificationTarget: PluginVerificationTarget
 ) : Reporter<ProblemIgnoredEvent> {
 
   private val collectingReporter = CollectingReporter<ProblemIgnoredEvent>()
@@ -36,7 +36,7 @@ class IgnoredProblemsReporter(
     if (allIgnoredProblems.isNotEmpty()) {
       val ignoredProblemsFile = pluginVerificationDirectory.resolve("ignored-problems.txt")
       ignoredProblemsFile.writeText(
-          AllIgnoredProblemsReporter.formatManyIgnoredProblems(verificationTarget, allIgnoredProblems)
+        AllIgnoredProblemsReporter.formatManyIgnoredProblems(verificationTarget, allIgnoredProblems)
       )
     }
   }

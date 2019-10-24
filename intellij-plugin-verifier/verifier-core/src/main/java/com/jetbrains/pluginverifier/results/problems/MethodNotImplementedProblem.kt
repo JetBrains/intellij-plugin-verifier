@@ -14,8 +14,8 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import java.util.*
 
 class MethodNotImplementedProblem(
-    val abstractMethod: MethodLocation,
-    val incompleteClass: ClassLocation
+  val abstractMethod: MethodLocation,
+  val incompleteClass: ClassLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -28,8 +28,8 @@ class MethodNotImplementedProblem(
     get() = "Concrete class ${incompleteClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.NO_GENERICS)} inherits from ${abstractMethod.hostClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} but doesn't implement the abstract method ${abstractMethod.formatMethodLocation(NO_HOST, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **AbstractMethodError** exception at runtime."
 
   override fun equals(other: Any?) = other is MethodNotImplementedProblem
-      && abstractMethod == other.abstractMethod
-      && incompleteClass == other.incompleteClass
+    && abstractMethod == other.abstractMethod
+    && incompleteClass == other.incompleteClass
 
   override fun hashCode() = Objects.hash(abstractMethod, incompleteClass)
 }

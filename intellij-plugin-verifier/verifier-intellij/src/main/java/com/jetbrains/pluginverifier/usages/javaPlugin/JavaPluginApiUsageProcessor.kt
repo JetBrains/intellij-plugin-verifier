@@ -12,7 +12,7 @@ class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaP
   override fun processClassReference(classReference: ClassReference, resolvedClass: ClassFile, context: VerificationContext, referrer: ClassFileMember) {
     if (resolvedClass.isJavaPluginApi()) {
       javaPluginApiUsageRegistrar.registerJavaPluginClassUsage(
-          JavaPluginClassUsage(resolvedClass.containingClassFile.location, referrer.location)
+        JavaPluginClassUsage(resolvedClass.containingClassFile.location, referrer.location)
       )
     }
   }

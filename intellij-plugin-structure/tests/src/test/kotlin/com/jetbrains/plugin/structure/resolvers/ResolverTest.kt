@@ -27,7 +27,7 @@ class ResolverTest {
       override val parent: FileOrigin? = null
     }
     val cacheResolver = CacheResolver(
-        FixedClassesResolver.create(listOf(classNode), fileOrigin, readMode = Resolver.ReadMode.FULL)
+      FixedClassesResolver.create(listOf(classNode), fileOrigin, readMode = Resolver.ReadMode.FULL)
     )
     assertEquals(1, cacheResolver.allClasses.size)
     val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
@@ -82,28 +82,28 @@ class ResolverTest {
     }
 
     val resolver1 = FixedClassesResolver.create(
-        emptyList(),
-        origin1,
-        propertyResourceBundles = mapOf(
-            "messages.SomeBundle" to buildPropertyResourceBundle(
-                mapOf(
-                    "key1" to "value1"
-                )
-            )
+      emptyList(),
+      origin1,
+      propertyResourceBundles = mapOf(
+        "messages.SomeBundle" to buildPropertyResourceBundle(
+          mapOf(
+            "key1" to "value1"
+          )
         )
+      )
     )
 
     val resolver2 = FixedClassesResolver.create(
-        emptyList(),
-        origin2,
-        propertyResourceBundles = mapOf(
-            "messages.SomeBundle_en" to buildPropertyResourceBundle(
-                mapOf(
-                    "key1" to "value2",
-                    "en.only.key" to "value3"
-                )
-            )
+      emptyList(),
+      origin2,
+      propertyResourceBundles = mapOf(
+        "messages.SomeBundle_en" to buildPropertyResourceBundle(
+          mapOf(
+            "key1" to "value2",
+            "en.only.key" to "value3"
+          )
         )
+      )
     )
 
     val resolver = CompositeResolver.create(resolver1, resolver2)

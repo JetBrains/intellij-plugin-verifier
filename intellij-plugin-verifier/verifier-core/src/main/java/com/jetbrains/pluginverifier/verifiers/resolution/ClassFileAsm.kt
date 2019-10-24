@@ -10,10 +10,10 @@ import org.objectweb.asm.tree.ClassNode
 class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
   override val location
     get() = ClassLocation(
-        name,
-        signature?.takeIf { it.isNotEmpty() },
-        Modifiers(asmNode.access),
-        classFileOrigin
+      name,
+      signature?.takeIf { it.isNotEmpty() },
+      Modifiers(asmNode.access),
+      classFileOrigin
     )
 
   override val containingClassFile

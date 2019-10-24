@@ -21,18 +21,18 @@ import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentat
  * - SomeClass$321$XXX$555 -> SomeClass$321.XXX$555
  */
 private fun String.convertSimpleClassName() =
-    buildString {
-      for (part in this@convertSimpleClassName.split("$")) {
-        if (isNotEmpty()) {
-          if (part.isEmpty() || part.first().isDigit()) {
-            append("$")
-          } else {
-            append(".")
-          }
+  buildString {
+    for (part in this@convertSimpleClassName.split("$")) {
+      if (isNotEmpty()) {
+        if (part.isEmpty() || part.first().isDigit()) {
+          append("$")
+        } else {
+          append(".")
         }
-        append(part)
       }
+      append(part)
     }
+  }
 
 /**
  * Converts class name in binary form into Java-like presentation.
@@ -60,8 +60,8 @@ private fun FieldLocation.toFieldType(fieldTypeOption: FieldTypeOption): String 
 }
 
 fun ClassLocation.formatClassLocation(
-    classLocationOption: ClassOption,
-    classTypeSignatureOption: ClassGenericsSignatureOption
+  classLocationOption: ClassOption,
+  classTypeSignatureOption: ClassGenericsSignatureOption
 ): String {
   val converter = when (classLocationOption) {
     ClassOption.SIMPLE_NAME -> toSimpleJavaClassName
@@ -85,10 +85,10 @@ private fun ClassLocation.formatHostClass(hostClassOption: HostClassOption): Str
 }
 
 fun MethodLocation.formatMethodLocation(
-    hostClassOption: HostClassOption,
-    methodParameterTypeOption: MethodParameterTypeOption,
-    methodReturnTypeOption: MethodReturnTypeOption,
-    methodParameterNameOption: MethodParameterNameOption
+  hostClassOption: HostClassOption,
+  methodParameterTypeOption: MethodParameterTypeOption,
+  methodReturnTypeOption: MethodReturnTypeOption,
+  methodParameterNameOption: MethodParameterNameOption
 ): String = buildString {
   val formattedHost = hostClass.formatHostClass(hostClassOption)
   if (formattedHost.isNotEmpty()) {
@@ -116,16 +116,16 @@ fun FieldLocation.formatFieldLocation(hostClassOption: HostClassOption, fieldTyp
 }
 
 private fun MethodLocation.zipWithNamesIfPossible(parametersTypes: List<String>): List<String> =
-    if (parameterNames.size == parametersTypes.size) {
-      parametersTypes.zip(parameterNames).map { "${it.first} ${it.second}" }
-    } else {
-      parametersTypes
-    }
+  if (parameterNames.size == parametersTypes.size) {
+    parametersTypes.zip(parameterNames).map { "${it.first} ${it.second}" }
+  } else {
+    parametersTypes
+  }
 
 private fun MethodLocation.methodParametersWithNamesAndReturnType(
-    methodParameterTypeOption: MethodParameterTypeOption,
-    methodReturnTypeOption: MethodReturnTypeOption,
-    methodParameterNameOption: MethodParameterNameOption
+  methodParameterTypeOption: MethodParameterTypeOption,
+  methodReturnTypeOption: MethodReturnTypeOption,
+  methodParameterNameOption: MethodParameterNameOption
 ): Pair<List<String>, String> {
   val paramsConverter = when (methodParameterTypeOption) {
     MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME -> toSimpleJavaClassName

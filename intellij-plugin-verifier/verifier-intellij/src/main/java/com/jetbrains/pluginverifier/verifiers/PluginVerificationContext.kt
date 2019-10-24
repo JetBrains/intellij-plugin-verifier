@@ -41,34 +41,34 @@ import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWar
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
 data class PluginVerificationContext(
-    val idePlugin: IdePlugin,
-    val verificationDescriptor: PluginVerificationDescriptor,
-    val pluginResolver: Resolver,
-    val allResolver: Resolver,
-    override val externalClassesPackageFilter: PackageFilter,
-    val dependenciesGraph: DependenciesGraph
+  val idePlugin: IdePlugin,
+  val verificationDescriptor: PluginVerificationDescriptor,
+  val pluginResolver: Resolver,
+  val allResolver: Resolver,
+  override val externalClassesPackageFilter: PackageFilter,
+  val dependenciesGraph: DependenciesGraph
 ) : VerificationContext,
-    ProblemRegistrar,
-    DeprecatedApiRegistrar,
-    ExperimentalApiRegistrar,
-    OverrideOnlyRegistrar,
-    InternalApiUsageRegistrar,
-    NonExtendableApiRegistrar,
-    JavaPluginApiUsageRegistrar {
+  ProblemRegistrar,
+  DeprecatedApiRegistrar,
+  ExperimentalApiRegistrar,
+  OverrideOnlyRegistrar,
+  InternalApiUsageRegistrar,
+  NonExtendableApiRegistrar,
+  JavaPluginApiUsageRegistrar {
 
   override val classResolver
     get() = allResolver
 
   override val apiUsageProcessors: List<ApiUsageProcessor> =
-      listOf(
-          DeprecatedApiUsageProcessor(this),
-          ExperimentalApiUsageProcessor(this),
-          DiscouragingClassUsageProcessor(this),
-          InternalApiUsageProcessor(this),
-          OverrideOnlyMethodUsageProcessor(this),
-          JavaPluginApiUsageProcessor(this),
-          PropertyUsageProcessor()
-      )
+    listOf(
+      DeprecatedApiUsageProcessor(this),
+      ExperimentalApiUsageProcessor(this),
+      DiscouragingClassUsageProcessor(this),
+      InternalApiUsageProcessor(this),
+      OverrideOnlyMethodUsageProcessor(this),
+      JavaPluginApiUsageProcessor(this),
+      PropertyUsageProcessor()
+    )
 
   fun postProcessResults() {
     analyzeMissingClassesCausedByMissingOptionalDependencies()
@@ -122,7 +122,7 @@ data class PluginVerificationContext(
   override fun registerJavaPluginClassUsage(javaPluginClassUsage: JavaPluginClassUsage) {
     if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
       val noJavaDependencyWarning = compatibilityWarnings.filterIsInstance<NoExplicitDependencyOnJavaPluginWarning>().firstOrNull()
-          ?: NoExplicitDependencyOnJavaPluginWarning().also { compatibilityWarnings += it }
+        ?: NoExplicitDependencyOnJavaPluginWarning().also { compatibilityWarnings += it }
       noJavaDependencyWarning.javaPluginClassUsages += javaPluginClassUsage
     }
   }
@@ -195,7 +195,7 @@ data class PluginVerificationContext(
     for (classNotFoundProblem in classNotFoundProblems) {
       val usageClassName = classNotFoundProblem.usage.containingClass.className
       if (reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
-          && !reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN)
+        && !reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN)
       ) {
         ignoredProblems += classNotFoundProblem
       }
@@ -230,8 +230,8 @@ data class PluginVerificationContext(
       val missingPackage = classResolver.getTopMostMissingPackage(className)
       if (missingPackage != null) {
         packageToMissingProblems
-            .getOrPut(missingPackage) { hashSetOf() }
-            .add(classNotFoundProblem)
+          .getOrPut(missingPackage) { hashSetOf() }
+          .add(classNotFoundProblem)
       } else {
         noClassProblems.add(classNotFoundProblem)
       }

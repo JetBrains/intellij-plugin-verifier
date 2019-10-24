@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import java.util.*
 
 class AbstractClassInstantiationProblem(
-    val abstractClass: ClassLocation,
-    val creator: MethodLocation
+  val abstractClass: ClassLocation,
+  val creator: MethodLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -20,8 +20,8 @@ class AbstractClassInstantiationProblem(
     get() = "Method {0} has instantiation *new* instruction referencing an abstract class {1}. This can lead to **InstantiationError** exception at runtime.".formatMessage(creator, abstractClass)
 
   override fun equals(other: Any?) = other is AbstractClassInstantiationProblem
-      && abstractClass == other.abstractClass
-      && creator == other.creator
+    && abstractClass == other.abstractClass
+    && creator == other.creator
 
   override fun hashCode() = Objects.hash(abstractClass, creator)
 

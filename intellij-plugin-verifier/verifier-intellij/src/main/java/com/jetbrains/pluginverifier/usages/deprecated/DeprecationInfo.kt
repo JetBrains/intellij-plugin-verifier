@@ -7,6 +7,6 @@ package com.jetbrains.pluginverifier.usages.deprecated
  * (makes sense only if [forRemoval] is true)
  */
 data class DeprecationInfo(
-    val forRemoval: Boolean,
-    val untilVersion: String?
+  val forRemoval: Boolean,
+  val untilVersion: String?
 )

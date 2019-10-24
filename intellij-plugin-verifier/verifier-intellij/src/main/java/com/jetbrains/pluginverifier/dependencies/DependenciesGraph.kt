@@ -11,33 +11,33 @@ import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCyc
  * The graph is stored as a set of [vertices] and [edges]. The starting vertex is [verifiedPlugin].
  */
 data class DependenciesGraph(
-    val verifiedPlugin: DependencyNode,
-    val vertices: List<DependencyNode>,
-    val edges: List<DependencyEdge>,
-    val missingDependencies: Map<DependencyNode, Set<MissingDependency>>
+  val verifiedPlugin: DependencyNode,
+  val vertices: List<DependencyNode>,
+  val edges: List<DependencyEdge>,
+  val missingDependencies: Map<DependencyNode, Set<MissingDependency>>
 ) {
 
   /**
    * Returns all missing dependencies required by the verified plugin directly.
    */
   fun getDirectMissingDependencies(): Set<MissingDependency> =
-      missingDependencies.getOrDefault(verifiedPlugin, emptySet())
+    missingDependencies.getOrDefault(verifiedPlugin, emptySet())
 
   /**
    * Returns all edges starting at the specified node.
    */
   fun getEdgesFrom(dependencyNode: DependencyNode): List<DependencyEdge> =
-      edges.filter { it.from == dependencyNode }
+    edges.filter { it.from == dependencyNode }
 
   /**
    * Returns all cycles in this graph.
    * The dependencies cycles are harmful and should be fixed.
    */
   fun getAllCycles(): List<List<DependencyNode>> =
-      DependenciesGraphCycleFinder(this)
-          .findAllCycles()
-          .filter { verifiedPlugin in it }
-          .map { it.reversed() }
+    DependenciesGraphCycleFinder(this)
+      .findAllCycles()
+      .filter { verifiedPlugin in it }
+      .map { it.reversed() }
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
@@ -48,9 +48,9 @@ data class DependenciesGraph(
  * which is a [dependency] of the plugin [from] to the plugin [to].
  */
 data class DependencyEdge(
-    val from: DependencyNode,
-    val to: DependencyNode,
-    val dependency: PluginDependency
+  val from: DependencyNode,
+  val to: DependencyNode,
+  val dependency: PluginDependency
 ) {
   override fun toString() = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
 }

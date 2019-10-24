@@ -16,8 +16,8 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import java.util.*
 
 class InternalMethodOverridden(
-    override val apiElement: MethodLocation,
-    override val usageLocation: MethodLocation
+  override val apiElement: MethodLocation,
+  override val usageLocation: MethodLocation
 ) : InternalApiUsage() {
 
   override val apiReference
@@ -31,14 +31,14 @@ class InternalMethodOverridden(
       append("Internal method ${apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}")
       append(" is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}")
       append(
-          ". This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
-              "that the method is not supposed to be used in client code."
+        ". This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
+          "that the method is not supposed to be used in client code."
       )
     }
 
   override fun equals(other: Any?) = other is InternalMethodOverridden
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiElement, usageLocation)
 }

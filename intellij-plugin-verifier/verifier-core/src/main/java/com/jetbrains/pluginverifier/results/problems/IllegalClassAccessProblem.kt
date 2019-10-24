@@ -8,9 +8,9 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import java.util.*
 
 class IllegalClassAccessProblem(
-    val unavailableClass: ClassLocation,
-    val access: AccessType,
-    val usage: Location
+  val unavailableClass: ClassLocation,
+  val access: AccessType,
+  val usage: Location
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -26,9 +26,9 @@ class IllegalClassAccessProblem(
     }
 
   override fun equals(other: Any?) = other is IllegalClassAccessProblem
-      && unavailableClass == other.unavailableClass
-      && access == other.access
-      && usage == other.usage
+    && unavailableClass == other.unavailableClass
+    && access == other.access
+    && usage == other.usage
 
   override fun hashCode() = Objects.hash(unavailableClass, access, usage)
 }

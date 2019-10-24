@@ -1,8 +1,8 @@
 package com.intellij.featureExtractor
 
 import com.jetbrains.intellij.feature.extractor.ExtensionPoint
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.jdom2.Element
 import org.junit.After

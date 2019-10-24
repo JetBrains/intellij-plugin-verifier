@@ -32,9 +32,9 @@ object IdeResolverCreator {
   }
 
   private fun getJarsResolver(
-      directory: File,
-      readMode: Resolver.ReadMode,
-      parentOrigin: FileOrigin
+    directory: File,
+    readMode: Resolver.ReadMode,
+    parentOrigin: FileOrigin
   ): Resolver {
     if (!directory.isDirectory) {
       return EmptyResolver
@@ -72,12 +72,12 @@ object IdeResolverCreator {
     val pathVariables = createPathVariables()
     val project = loadProject(projectPath.absoluteFile, pathVariables)
     return JpsJavaExtensionService.dependencies(project)
-        .productionOnly()
-        .runtimeOnly()
-        .libraries
-        .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
-        .distinctBy { it.path }
-        .filter { it.isJar() }
+      .productionOnly()
+      .runtimeOnly()
+      .libraries
+      .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
+      .distinctBy { it.path }
+      .filter { it.isJar() }
   }
 
   private fun createPathVariables(): Map<String, String> {

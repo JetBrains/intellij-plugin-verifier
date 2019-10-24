@@ -15,8 +15,8 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class NonExtendableMethodOverriding(
-    override val apiElement: MethodLocation,
-    override val usageLocation: Location
+  override val apiElement: MethodLocation,
+  override val usageLocation: Location
 ) : NonExtendableApiUsage() {
 
   override val apiReference
@@ -31,15 +31,15 @@ class NonExtendableMethodOverriding(
       append(apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
       append(" is overridden by " + usageLocation.formatUsageLocation() + ". ")
       append(
-          "This method is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable annotation, which indicates " +
-              "that the method is not supposed to be overridden by client code. " +
-              "See documentation of the @ApiStatus.NonExtendable for more info."
+        "This method is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable annotation, which indicates " +
+          "that the method is not supposed to be overridden by client code. " +
+          "See documentation of the @ApiStatus.NonExtendable for more info."
       )
     }
 
   override fun equals(other: Any?) = other is NonExtendableMethodOverriding
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiElement, usageLocation)
 }

@@ -14,7 +14,7 @@ fun Location.toReference(): SymbolicReference = when (this) {
 fun ClassLocation.toReference() = ClassReference(className)
 
 fun MethodLocation.toReference(): MethodReference =
-    MethodReference(hostClass.toReference(), methodName, methodDescriptor)
+  MethodReference(hostClass.toReference(), methodName, methodDescriptor)
 
 fun FieldLocation.toReference(): FieldReference =
-    FieldReference(hostClass.toReference(), fieldName, fieldDescriptor)
+  FieldReference(hostClass.toReference(), fieldName, fieldDescriptor)

@@ -56,8 +56,8 @@ internal class IdePluginImpl : IdePlugin {
   override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
-      (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)
+    (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)
 
   override fun toString(): String =
-      (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
+    (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
 }

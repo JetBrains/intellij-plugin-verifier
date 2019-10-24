@@ -24,9 +24,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class CheckPluginApiParamsBuilder(
-    private val pluginRepository: PluginRepository,
-    private val pluginDetailsProvider: PluginDetailsProvider,
-    private val reportage: PluginVerificationReportage
+  private val pluginRepository: PluginRepository,
+  private val pluginDetailsProvider: PluginDetailsProvider,
+  private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   private companion object {
     const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
@@ -79,14 +79,14 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
           val newVerificationTarget = PluginVerificationTarget.Plugin(newPluginDetails.pluginInfo, jdkDescriptor.jdkVersion)
 
           return CheckPluginApiParams(
-              basePluginDetails,
-              newPluginDetails,
-              jdkDescriptor,
-              problemsFilters,
-              baseVerificationDescriptors,
-              newVerificationDescriptors,
-              baseVerificationTarget,
-              newVerificationTarget
+            basePluginDetails,
+            newPluginDetails,
+            jdkDescriptor,
+            problemsFilters,
+            baseVerificationDescriptors,
+            newVerificationDescriptors,
+            baseVerificationTarget,
+            newVerificationTarget
           )
         }
       }
@@ -94,31 +94,31 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
   }
 
   private fun parsePackageFilter(packages: Array<String>): PackageFilter =
-      DefaultPackageFilter(
-          packages
-              .map { it.trim() }
-              .mapNotNull {
-                val exclude = it.startsWith("-")
-                val binaryPackageName = it.trim('+', '-').replace('.', '/')
-                if (binaryPackageName.isEmpty()) {
-                  null
-                } else {
-                  DefaultPackageFilter.Descriptor(!exclude, binaryPackageName)
-                }
-              }
-      )
+    DefaultPackageFilter(
+      packages
+        .map { it.trim() }
+        .mapNotNull {
+          val exclude = it.startsWith("-")
+          val binaryPackageName = it.trim('+', '-').replace('.', '/')
+          if (binaryPackageName.isEmpty()) {
+            null
+          } else {
+            DefaultPackageFilter.Descriptor(!exclude, binaryPackageName)
+          }
+        }
+    )
 
 
   private fun providePluginDetails(pluginFile: Path) =
-      with(pluginDetailsProvider.providePluginDetails(pluginFile)) {
-        when (this) {
-          is PluginDetailsProvider.Result.Provided -> pluginDetails
-          is PluginDetailsProvider.Result.InvalidPlugin ->
-            throw IllegalArgumentException("Plugin $pluginFile is invalid: \n" + pluginErrors.joinToString(separator = "\n") { it.message })
-          is PluginDetailsProvider.Result.Failed ->
-            throw IllegalArgumentException("Couldn't read plugin $pluginFile: $reason", error)
-        }
+    with(pluginDetailsProvider.providePluginDetails(pluginFile)) {
+      when (this) {
+        is PluginDetailsProvider.Result.Provided -> pluginDetails
+        is PluginDetailsProvider.Result.InvalidPlugin ->
+          throw IllegalArgumentException("Plugin $pluginFile is invalid: \n" + pluginErrors.joinToString(separator = "\n") { it.message })
+        is PluginDetailsProvider.Result.Failed ->
+          throw IllegalArgumentException("Couldn't read plugin $pluginFile: $reason", error)
       }
+    }
 
   /**
    * Parses [pluginsToCheckFile] for a [PluginsSet].
@@ -140,7 +140,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 
       val pluginPath = try {
         Paths.get(path).takeIf { it.exists() }
-            ?: pluginsToCheckFile.resolveSibling(path).takeIf { it.exists() }
+          ?: pluginsToCheckFile.resolveSibling(path).takeIf { it.exists() }
       } catch (e: InvalidPathException) {
         null
       }
@@ -161,12 +161,12 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 class CheckPluginApiOpts {
 
   @set:Argument(
-      "plugin-packages", alias = "pp", delimiter = ",", description = "Specifies plugin's packages, classes of which are supposed to be resolved in this plugin.\n" +
-      "They are used to detect 'No such class' problems: if a verified plugin references a class belonging to one of the packages and it was not " +
-      "resolved in class files of the specific base plugin, it means that the class was removed/moved, leading to binary incompatibility\n" +
-      "The list is set up using comma separator. It is possible to exclude an inner package in case it doesn't belong to the base plugin\n" +
-      "The syntax for each package is as follows: [+|-]<package>\n" +
-      "Example: -plugin-packages org.jetbrains.kotlin,org.kotlin,-org.jetbrains.kotlin.extension"
+    "plugin-packages", alias = "pp", delimiter = ",", description = "Specifies plugin's packages, classes of which are supposed to be resolved in this plugin.\n" +
+    "They are used to detect 'No such class' problems: if a verified plugin references a class belonging to one of the packages and it was not " +
+    "resolved in class files of the specific base plugin, it means that the class was removed/moved, leading to binary incompatibility\n" +
+    "The list is set up using comma separator. It is possible to exclude an inner package in case it doesn't belong to the base plugin\n" +
+    "The syntax for each package is as follows: [+|-]<package>\n" +
+    "Example: -plugin-packages org.jetbrains.kotlin,org.kotlin,-org.jetbrains.kotlin.extension"
   )
   var pluginPackages: Array<String> = arrayOf()
 

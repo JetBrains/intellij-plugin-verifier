@@ -10,9 +10,11 @@ import java.io.Closeable
  * Holder of the class files of the [plugin] [idePlugin]
  * that could reside in different [locations] [LocationKey].
  */
-data class IdePluginClassesLocations(val idePlugin: IdePlugin,
-                                     private val allocatedResource: Closeable,
-                                     private val locations: Map<LocationKey, List<Resolver>>) : Closeable {
+data class IdePluginClassesLocations(
+  val idePlugin: IdePlugin,
+  private val allocatedResource: Closeable,
+  private val locations: Map<LocationKey, List<Resolver>>
+) : Closeable {
 
   private var isClosed: Boolean = false
 

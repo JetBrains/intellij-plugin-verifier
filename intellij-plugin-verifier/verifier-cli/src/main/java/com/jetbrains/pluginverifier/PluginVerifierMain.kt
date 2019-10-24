@@ -38,10 +38,10 @@ import kotlin.system.exitProcess
 object PluginVerifierMain {
 
   private val commandRunners: List<CommandRunner> = listOf(
-      CheckPluginRunner(),
-      CheckIdeRunner(),
-      CheckTrunkApiRunner(),
-      CheckPluginApiRunner()
+    CheckPluginRunner(),
+    CheckIdeRunner(),
+    CheckTrunkApiRunner(),
+    CheckPluginApiRunner()
   )
 
   private val verifierHomeDirectory: Path by lazy {
@@ -60,7 +60,7 @@ object PluginVerifierMain {
 
   private val pluginRepositoryUrl: String by lazy {
     System.getProperty("plugin.repository.url")?.trimEnd('/')
-        ?: "https://plugins.jetbrains.com"
+      ?: "https://plugins.jetbrains.com"
   }
 
   private val downloadDirectory: Path = verifierHomeDirectory.resolve("loaded-plugins").createDir()
@@ -80,7 +80,7 @@ object PluginVerifierMain {
 
     if (freeArgs.isEmpty()) {
       System.err.println(
-          "The command is not specified. Should be one of: " + commandRunners.joinToString { "'" + it.commandName + "'" }
+        "The command is not specified. Should be one of: " + commandRunners.joinToString { "'" + it.commandName + "'" }
       )
       Args.usage(System.err, CmdOpts())
 
@@ -106,16 +106,16 @@ object PluginVerifierMain {
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
         runner.getParametersBuilder(
-            pluginRepository,
-            ideFilesBank,
-            pluginDetailsCache,
-            reportage
+          pluginRepository,
+          ideFilesBank,
+          pluginDetailsCache,
+          reportage
         ).build(opts, freeArgs).use { parameters ->
           reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
           runner
-              .createTask(parameters, pluginRepository)
-              .execute(reportage, pluginDetailsCache)
+            .createTask(parameters, pluginRepository)
+            .execute(reportage, pluginDetailsCache)
         }
       }
 
@@ -151,6 +151,6 @@ object PluginVerifierMain {
   }
 
   private fun findTaskRunner(command: String?) = commandRunners.find { command == it.commandName }
-      ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${commandRunners.map { it.commandName }}")
+    ?: throw IllegalArgumentException("Unsupported command: $command. Supported commands: ${commandRunners.map { it.commandName }}")
 
 }

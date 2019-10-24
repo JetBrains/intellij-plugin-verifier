@@ -10,10 +10,10 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class DeprecatedFieldUsage(
-    override val apiReference: FieldReference,
-    override val apiElement: FieldLocation,
-    override val usageLocation: Location,
-    deprecationInfo: DeprecationInfo
+  override val apiReference: FieldReference,
+  override val apiElement: FieldLocation,
+  override val usageLocation: Location,
+  deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
 
   override val shortDescription
@@ -30,10 +30,10 @@ class DeprecatedFieldUsage(
     }
 
   override fun equals(other: Any?) = other is DeprecatedFieldUsage
-      && apiReference == other.apiReference
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
-      && deprecationInfo == other.deprecationInfo
+    && apiReference == other.apiReference
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
+    && deprecationInfo == other.deprecationInfo
 
   override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation, deprecationInfo)
 }

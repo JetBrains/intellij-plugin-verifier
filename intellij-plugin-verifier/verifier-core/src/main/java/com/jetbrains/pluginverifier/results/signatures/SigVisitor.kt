@@ -117,7 +117,7 @@ class SigVisitor : SignatureVisitor {
   }
 
   override fun visitParameterType(): SignatureVisitor =
-      SigVisitor().also { paramVisitors += it }
+    SigVisitor().also { paramVisitors += it }
 
   override fun visitFormalTypeParameter(name: String) {
     SigVisitor(name).also { formalTypeParameterVisitors += it }
@@ -144,14 +144,14 @@ class SigVisitor : SignatureVisitor {
   }
 
   override fun visitInterface(): SignatureVisitor =
-      SigVisitor().also { interfaceVisitors += it }
+    SigVisitor().also { interfaceVisitors += it }
 
   override fun visitTypeVariable(name: String) {
     typeVariable = name
   }
 
   override fun visitExceptionType(): SignatureVisitor =
-      SigVisitor().also { exceptionVisitors += it }
+    SigVisitor().also { exceptionVisitors += it }
 
   override fun visitArrayType(): SignatureVisitor {
     arrayDimensions++
@@ -159,10 +159,10 @@ class SigVisitor : SignatureVisitor {
   }
 
   override fun visitSuperclass(): SignatureVisitor =
-      SigVisitor().also { superClassVisitor = it }
+    SigVisitor().also { superClassVisitor = it }
 
   override fun visitReturnType(): SignatureVisitor =
-      SigVisitor().also { returnTypeVisitor = it }
+    SigVisitor().also { returnTypeVisitor = it }
 
   override fun visitClassType(name: String) {
     //Adds class name part and container for type arguments' visitors.
@@ -181,102 +181,102 @@ class SigVisitor : SignatureVisitor {
   }
 
   override fun visitTypeArgument(wildcard: Char): SignatureVisitor =
-      SigVisitor().also {
-        it.wildcardIndicator = if (wildcard == '+') {
-          WildcardIndicator.PLUS
-        } else if (wildcard == '-') {
-          WildcardIndicator.MINUS
-        } else {
-          null
-        }
-        classTypeArgumentsVisitors.last().add(it)
+    SigVisitor().also {
+      it.wildcardIndicator = if (wildcard == '+') {
+        WildcardIndicator.PLUS
+      } else if (wildcard == '-') {
+        WildcardIndicator.MINUS
+      } else {
+        null
       }
+      classTypeArgumentsVisitors.last().add(it)
+    }
 
   override fun visitEnd() = Unit
 
   fun getClassSignature(): ClassSignature =
-      ClassSignature(
-          getTypeParameters(),
-          superClassVisitor!!.getClassTypeSignature(),
-          interfaceVisitors.map { it.getClassTypeSignature() }
-      )
+    ClassSignature(
+      getTypeParameters(),
+      superClassVisitor!!.getClassTypeSignature(),
+      interfaceVisitors.map { it.getClassTypeSignature() }
+    )
 
   fun getMethodSignature(): MethodSignature =
-      MethodSignature(
-          getTypeParameters(),
-          paramVisitors.map { it.getJavaTypeSignature() },
-          returnTypeVisitor!!.getResult(),
-          exceptionVisitors.map { it.getThrowsSignature() }
-      )
+    MethodSignature(
+      getTypeParameters(),
+      paramVisitors.map { it.getJavaTypeSignature() },
+      returnTypeVisitor!!.getResult(),
+      exceptionVisitors.map { it.getThrowsSignature() }
+    )
 
   fun getFieldSignature(): FieldSignature =
-      FieldSignature(getReferenceTypeSignature())
+    FieldSignature(getReferenceTypeSignature())
 
   private fun getJavaTypeSignature(): JavaTypeSignature =
-      if (baseType != null) {
-        getBaseType()
-      } else {
-        getReferenceTypeSignature()
-      }
+    if (baseType != null) {
+      getBaseType()
+    } else {
+      getReferenceTypeSignature()
+    }
 
   private fun getBaseType() =
-      when (baseType) {
-        'B' -> BaseType.B
-        'J' -> BaseType.J
-        'Z' -> BaseType.Z
-        'I' -> BaseType.I
-        'S' -> BaseType.S
-        'C' -> BaseType.C
-        'F' -> BaseType.F
-        'D' -> BaseType.D
-        else -> throw IllegalArgumentException("$baseType")
-      }
+    when (baseType) {
+      'B' -> BaseType.B
+      'J' -> BaseType.J
+      'Z' -> BaseType.Z
+      'I' -> BaseType.I
+      'S' -> BaseType.S
+      'C' -> BaseType.C
+      'F' -> BaseType.F
+      'D' -> BaseType.D
+      else -> throw IllegalArgumentException("$baseType")
+    }
 
   private fun getTypeParameter(): TypeParameter =
-      TypeParameter(
-          formalTypeParameterName!!,
-          classBoundVisitor?.getReferenceTypeSignature(),
-          interfaceBoundVisitors.map { it.getReferenceTypeSignature() }
-      )
+    TypeParameter(
+      formalTypeParameterName!!,
+      classBoundVisitor?.getReferenceTypeSignature(),
+      interfaceBoundVisitors.map { it.getReferenceTypeSignature() }
+    )
 
   private fun getTypeParameters(): TypeParameters? =
-      formalTypeParameterVisitors
-          .map { it.getTypeParameter() }
-          .takeIf { it.isNotEmpty() }
-          ?.let { TypeParameters(it) }
+    formalTypeParameterVisitors
+      .map { it.getTypeParameter() }
+      .takeIf { it.isNotEmpty() }
+      ?.let { TypeParameters(it) }
 
   private fun getTypeVariableSignature(): TypeVariableSignature =
-      TypeVariableSignature(typeVariable!!)
+    TypeVariableSignature(typeVariable!!)
 
   private fun getThrowsSignature(): ThrowsSignature =
-      if (typeVariable != null) {
-        ThrowsSignature.TypeVar(getTypeVariableSignature())
-      } else {
-        ThrowsSignature.ClassType(getClassTypeSignature())
-      }
+    if (typeVariable != null) {
+      ThrowsSignature.TypeVar(getTypeVariableSignature())
+    } else {
+      ThrowsSignature.ClassType(getClassTypeSignature())
+    }
 
   private fun getResult(): Result =
-      if (baseType == 'V') {
-        Result.VoidDescriptor
-      } else {
-        Result.JavaType(getJavaTypeSignature())
-      }
+    if (baseType == 'V') {
+      Result.VoidDescriptor
+    } else {
+      Result.JavaType(getJavaTypeSignature())
+    }
 
   private fun ReferenceTypeSignature.maybeArray(): ReferenceTypeSignature =
-      if (arrayDimensions > 0) getArrayTypeSignature() else this
+    if (arrayDimensions > 0) getArrayTypeSignature() else this
 
   private fun JavaTypeSignature.getArrayTypeSignature() =
-      ArrayTypeSignature(this, arrayDimensions).also { check(arrayDimensions > 0) }
+    ArrayTypeSignature(this, arrayDimensions).also { check(arrayDimensions > 0) }
 
   private fun getReferenceTypeSignature(): ReferenceTypeSignature =
-      if (typeVariable != null) {
-        getTypeVariableSignature().maybeArray()
-      } else if (baseType != null) {
-        //If this is a base type, this method invocation must return array type.
-        getBaseType().getArrayTypeSignature()
-      } else {
-        getClassTypeSignature().maybeArray()
-      }
+    if (typeVariable != null) {
+      getTypeVariableSignature().maybeArray()
+    } else if (baseType != null) {
+      //If this is a base type, this method invocation must return array type.
+      getBaseType().getArrayTypeSignature()
+    } else {
+      getClassTypeSignature().maybeArray()
+    }
 
   private fun getClassTypeSignature(): ClassTypeSignature {
     check(classNameParts.isNotEmpty())
@@ -285,21 +285,21 @@ class SigVisitor : SignatureVisitor {
     val topClassTypeArgumentsVisitors = classTypeArgumentsVisitors.first()
 
     val innerClassTypeSignatures = classNameParts.indices
-        .drop(1)
-        .map { index ->
-          createSimpleClassTypeSignature(
-              classNameParts[index],
-              classTypeArgumentsVisitors[index]
-          )
-        }
+      .drop(1)
+      .map { index ->
+        createSimpleClassTypeSignature(
+          classNameParts[index],
+          classTypeArgumentsVisitors[index]
+        )
+      }
 
     val topClassTypeSignature = createSimpleClassTypeSignature(topClassName, topClassTypeArgumentsVisitors)
     return ClassTypeSignature(topClassTypeSignature, innerClassTypeSignatures)
   }
 
   private fun createSimpleClassTypeSignature(
-      identifier: Identifier,
-      typeArgumentVisitors: List<SigVisitor>
+    identifier: Identifier,
+    typeArgumentVisitors: List<SigVisitor>
   ) = SimpleClassTypeSignature(identifier, typeArgumentVisitors.createTypeArguments())
 
   private fun List<SigVisitor>.createTypeArguments(): TypeArguments? {

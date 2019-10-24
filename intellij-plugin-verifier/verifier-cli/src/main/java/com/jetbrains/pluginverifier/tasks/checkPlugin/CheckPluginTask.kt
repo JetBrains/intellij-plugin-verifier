@@ -19,16 +19,16 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
 
   override fun execute(
-      reportage: PluginVerificationReportage,
-      pluginDetailsCache: PluginDetailsCache
+    reportage: PluginVerificationReportage,
+    pluginDetailsCache: PluginDetailsCache
   ): CheckPluginResult {
     with(parameters) {
       val verifiers = verificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            listOf(DynamicallyLoadedFilter())
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter())
         )
       }
 

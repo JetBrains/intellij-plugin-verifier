@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import java.util.*
 
 class ClassNotFoundProblem(
-    val unresolved: ClassReference,
-    val usage: Location
+  val unresolved: ClassReference,
+  val usage: Location
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -20,12 +20,12 @@ class ClassNotFoundProblem(
     get() {
       val elementType = usage.elementType.presentableName.capitalize()
       return "{0} {1} references an unresolved class {2}. This can lead to **NoSuchClassError** exception at runtime."
-          .formatMessage(elementType, usage, unresolved)
+        .formatMessage(elementType, usage, unresolved)
     }
 
   override fun equals(other: Any?) = other is ClassNotFoundProblem
-      && unresolved == other.unresolved
-      && usage == other.usage
+    && unresolved == other.unresolved
+    && usage == other.usage
 
   override fun hashCode() = Objects.hash(unresolved, usage)
 }

@@ -16,22 +16,22 @@ import java.util.concurrent.atomic.AtomicInteger
 class ResourceRepositoryImplTest {
 
   private fun createSizedResourceRepository(
-      maximumSize: Int,
-      resourceProvider: (Int) -> Closeable
+    maximumSize: Int,
+    resourceProvider: (Int) -> Closeable
   ) = ResourceRepositoryImpl(
-      SizeEvictionPolicy(maximumSize),
-      Clock.systemUTC(),
-      object : ResourceProvider<Int, Closeable> {
-        override fun provide(key: Int) = ProvideResult.Provided(resourceProvider(key))
-      },
-      SizeWeight(0),
-      {
-        SizeWeight(1)
-      },
-      {
-        it.close()
-      },
-      "testRepository"
+    SizeEvictionPolicy(maximumSize),
+    Clock.systemUTC(),
+    object : ResourceProvider<Int, Closeable> {
+      override fun provide(key: Int) = ProvideResult.Provided(resourceProvider(key))
+    },
+    SizeWeight(0),
+    {
+      SizeWeight(1)
+    },
+    {
+      it.close()
+    },
+    "testRepository"
   )
 
   @Test

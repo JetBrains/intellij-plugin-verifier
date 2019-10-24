@@ -7,11 +7,11 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class MultipleDefaultImplementationsProblem(
-    val caller: MethodLocation,
-    val methodReference: MethodReference,
-    val instruction: Instruction,
-    val implementation1: MethodLocation,
-    val implementation2: MethodLocation
+  val caller: MethodLocation,
+  val methodReference: MethodReference,
+  val instruction: Instruction,
+  val implementation1: MethodLocation,
+  val implementation2: MethodLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -24,11 +24,11 @@ class MultipleDefaultImplementationsProblem(
     get() = "Method {0} contains an *{1}* instruction referencing a method reference {2} which has multiple default implementations: {3} and {4}. This can lead to **IncompatibleClassChangeError** exception at runtime.".formatMessage(caller, instruction, methodReference, implementation1, implementation2)
 
   override fun equals(other: Any?) = other is MultipleDefaultImplementationsProblem
-      && caller == other.caller
-      && instruction == other.instruction
-      && methodReference == other.methodReference
-      && implementation1 == other.implementation1
-      && implementation2 == other.implementation2
+    && caller == other.caller
+    && instruction == other.instruction
+    && methodReference == other.methodReference
+    && implementation1 == other.implementation1
+    && implementation2 == other.implementation2
 
   override fun hashCode() = Objects.hash(caller, instruction, methodReference, implementation1, implementation2)
 

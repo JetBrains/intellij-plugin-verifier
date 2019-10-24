@@ -12,9 +12,9 @@ import java.nio.file.Path
 import java.util.*
 
 class DirectoryResolver(
-    private val root: Path,
-    private val fileOrigin: FileOrigin,
-    override val readMode: ReadMode = ReadMode.FULL
+  private val root: Path,
+  private val fileOrigin: FileOrigin,
+  override val readMode: ReadMode = ReadMode.FULL
 ) : Resolver() {
 
   private val classNameToFile = hashMapOf<String, File>()

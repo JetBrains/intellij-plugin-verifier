@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import java.util.*
 
 class FailedToReadClassFileProblem(
-    val failedClass: ClassReference,
-    val usage: Location,
-    val reason: String
+  val failedClass: ClassReference,
+  val usage: Location,
+  val reason: String
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -19,11 +19,11 @@ class FailedToReadClassFileProblem(
 
   override val fullDescription
     get() = ("Class {0} referenced in {1} cannot be read. " +
-        "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(failedClass, usage, reason)
+      "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(failedClass, usage, reason)
 
   override fun equals(other: Any?) = other is FailedToReadClassFileProblem
-      && failedClass == other.failedClass
-      && usage == other.usage
+    && failedClass == other.failedClass
+    && usage == other.usage
 
   override fun hashCode() = Objects.hash(failedClass, usage)
 

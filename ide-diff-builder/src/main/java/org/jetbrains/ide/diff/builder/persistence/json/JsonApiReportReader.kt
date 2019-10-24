@@ -7,8 +7,8 @@ import java.nio.file.Path
 
 class JsonApiReportReader : ApiReportReader {
   override fun readApiReport(reportPath: Path): ApiReport =
-      jsonInstance.parse(
-          ApiReport.serializer(),
-          Files.newBufferedReader(reportPath).use { it.readText() }
-      )
+    jsonInstance.parse(
+      ApiReport.serializer(),
+      Files.newBufferedReader(reportPath).use { it.readText() }
+    )
 }

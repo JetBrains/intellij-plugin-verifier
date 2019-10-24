@@ -28,11 +28,11 @@ class DocumentedProblemsPagesFetcher {
 
   private fun fetchPageBody(pageUrl: String) = try {
     Jsoup
-        .connect(pageUrl)
-        .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
-        .method(Connection.Method.GET)
-        .execute()
-        .body()
+      .connect(pageUrl)
+      .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
+      .method(Connection.Method.GET)
+      .execute()
+      .body()
   } catch (e: Exception) {
     throw RuntimeException("Unable to fetch body of page $pageUrl", e)
   }

@@ -8,7 +8,7 @@ package com.jetbrains.plugin.structure.classes.utils
  * ```
  */
 fun getBundleNameByBundlePath(bundlePath: String): String =
-    bundlePath.substringBeforeLast(".properties").replace('/', '.')
+  bundlePath.substringBeforeLast(".properties").replace('/', '.')
 
 /**
  * ```

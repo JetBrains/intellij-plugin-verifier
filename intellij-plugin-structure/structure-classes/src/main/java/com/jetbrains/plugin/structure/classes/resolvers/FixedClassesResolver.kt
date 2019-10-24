@@ -5,24 +5,24 @@ import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
 class FixedClassesResolver private constructor(
-    private val classes: Map<String, ClassNode>,
-    override val readMode: ReadMode,
-    private val fileOrigin: FileOrigin,
-    private val resourceBundles: Map<String, PropertyResourceBundle>
+  private val classes: Map<String, ClassNode>,
+  override val readMode: ReadMode,
+  private val fileOrigin: FileOrigin,
+  private val resourceBundles: Map<String, PropertyResourceBundle>
 ) : Resolver() {
 
   companion object {
 
     fun create(
-        classes: Iterable<ClassNode>,
-        fileOrigin: FileOrigin,
-        readMode: ReadMode = ReadMode.FULL,
-        propertyResourceBundles: Map<String, PropertyResourceBundle> = emptyMap()
+      classes: Iterable<ClassNode>,
+      fileOrigin: FileOrigin,
+      readMode: ReadMode = ReadMode.FULL,
+      propertyResourceBundles: Map<String, PropertyResourceBundle> = emptyMap()
     ): Resolver = FixedClassesResolver(
-        classes.reversed().associateBy { it.name },
-        readMode,
-        fileOrigin,
-        propertyResourceBundles
+      classes.reversed().associateBy { it.name },
+      readMode,
+      fileOrigin,
+      propertyResourceBundles
     )
   }
 
@@ -35,9 +35,9 @@ class FixedClassesResolver private constructor(
   }
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
-      classes.values
-          .asSequence()
-          .all(processor)
+    classes.values
+      .asSequence()
+      .all(processor)
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classNode = classes[className] ?: return ResolutionResult.NotFound
@@ -56,9 +56,9 @@ class FixedClassesResolver private constructor(
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(
-        resourceBundles.keys
-            .groupBy { getBundleBaseName(it) }
-            .mapValues { it.value.toSet() }
+      resourceBundles.keys
+        .groupBy { getBundleBaseName(it) }
+        .mapValues { it.value.toSet() }
     )
 
   override val allPackages: Set<String>

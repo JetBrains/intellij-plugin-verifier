@@ -1,8 +1,8 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.ide.IdeManager
-import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
+import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths

@@ -25,11 +25,11 @@ class ReleaseIdeRepository : IdeRepository {
 
   private val dataServiceConnector by lazy {
     Retrofit.Builder()
-        .baseUrl(DATA_SERVICES_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(ProductsConnector::class.java)
+      .baseUrl(DATA_SERVICES_URL)
+      .addConverterFactory(GsonConverterFactory.create())
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(ProductsConnector::class.java)
   }
 
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
@@ -53,62 +53,62 @@ internal interface ProductsConnector {
 }
 
 internal data class Product(
-    @SerializedName("code")
-    val code: String,
+  @SerializedName("code")
+  val code: String,
 
-    @SerializedName("alternativeCodes")
-    val alternativeCodes: List<String>,
+  @SerializedName("alternativeCodes")
+  val alternativeCodes: List<String>,
 
-    @SerializedName("name")
-    val name: String,
+  @SerializedName("name")
+  val name: String,
 
-    @SerializedName("productFamilyName")
-    val productFamilyName: String,
+  @SerializedName("productFamilyName")
+  val productFamilyName: String,
 
-    @SerializedName("link")
-    val link: String,
+  @SerializedName("link")
+  val link: String,
 
-    @SerializedName("releases")
-    val releases: List<Release>
+  @SerializedName("releases")
+  val releases: List<Release>
 )
 
 internal data class Release(
-    @SerializedName("date")
-    val date: String,
+  @SerializedName("date")
+  val date: String,
 
-    @SerializedName("version")
-    val version: String?,
+  @SerializedName("version")
+  val version: String?,
 
-    @SerializedName("majorVersion")
-    val majorVersion: String,
+  @SerializedName("majorVersion")
+  val majorVersion: String,
 
-    @SerializedName("build")
-    val build: String?,
+  @SerializedName("build")
+  val build: String?,
 
-    @SerializedName("type")
-    val type: String,
+  @SerializedName("type")
+  val type: String,
 
-    @SerializedName("notesLink")
-    val notesLink: String,
+  @SerializedName("notesLink")
+  val notesLink: String,
 
-    @SerializedName("printableReleaseType")
-    val printableReleaseType: String?,
+  @SerializedName("printableReleaseType")
+  val printableReleaseType: String?,
 
-    @SerializedName("downloads")
-    val downloads: Map<String, Download>?
+  @SerializedName("downloads")
+  val downloads: Map<String, Download>?
 )
 
 internal data class Download(
-    @SerializedName("link")
-    val link: String,
+  @SerializedName("link")
+  val link: String,
 
-    @SerializedName("size")
-    val size: Long
+  @SerializedName("size")
+  val size: Long
 )
 
 fun IdeVersion.setProductCodeIfAbsent(productCode: String) =
-    if (this.productCode.isEmpty())
-      IdeVersion.createIdeVersion("$productCode-" + asStringWithoutProductCode())
-    else {
-      this
-    }
+  if (this.productCode.isEmpty())
+    IdeVersion.createIdeVersion("$productCode-" + asStringWithoutProductCode())
+  else {
+    this
+  }

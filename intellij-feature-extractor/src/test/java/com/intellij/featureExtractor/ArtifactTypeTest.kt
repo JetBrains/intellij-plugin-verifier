@@ -12,8 +12,8 @@ class ArtifactTypeTest : FeatureExtractorTestBase() {
     resetPluginExtensionPoint(ExtensionPoint.ARTIFACT_TYPE, className)
     val featuresList = ArtifactTypeExtractor().extract(plugin, resolver)
     Assert.assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.ARTIFACT_TYPE, expectedArtifactTypes)),
-        featuresList
+      listOf(ExtensionPointFeatures(ExtensionPoint.ARTIFACT_TYPE, expectedArtifactTypes)),
+      featuresList
     )
   }
 

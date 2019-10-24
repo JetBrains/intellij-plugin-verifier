@@ -38,17 +38,17 @@ class VerificationRunner {
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
       val classResolverProvider = DefaultClassResolverProvider(
-          BundledPluginDependencyFinder(ide, pluginDetailsCache),
-          ideDescriptor,
-          externalClassesPackageFilter
+        BundledPluginDependencyFinder(ide, pluginDetailsCache),
+        ideDescriptor,
+        externalClassesPackageFilter
       )
       val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
 
       val pluginVerifier = PluginVerifier(
-          verificationDescriptor,
-          emptyList(),
-          pluginDetailsCache,
-          listOf(DynamicallyLoadedFilter())
+        verificationDescriptor,
+        emptyList(),
+        pluginDetailsCache,
+        listOf(DynamicallyLoadedFilter())
       )
       pluginVerifier.loadPluginAndVerify()
     }

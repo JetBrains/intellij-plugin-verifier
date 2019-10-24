@@ -10,15 +10,15 @@ import java.time.Instant
  * until the lock is [released] [release] by the lock owner.
  */
 abstract class ResourceLock<out R, W : ResourceWeight<W>>(
-    /**
-     * The point in the time when the resource was locked
-     */
-    val lockTime: Instant,
+  /**
+   * The point in the time when the resource was locked
+   */
+  val lockTime: Instant,
 
-    /**
-     * The descriptor of the locked resource.
-     */
-    val resourceInfo: ResourceInfo<R, W>
+  /**
+   * The descriptor of the locked resource.
+   */
+  val resourceInfo: ResourceInfo<R, W>
 
 ) : Closeable {
 

@@ -9,11 +9,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 
 val jsonInstance: Json = Json(
-    JsonConfiguration.Stable.copy(
-        strictMode = false,
-        prettyPrint = true,
-        indent = "  "
-    )
+  JsonConfiguration.Stable.copy(
+    strictMode = false,
+    prettyPrint = true,
+    indent = "  "
+  )
 )
 
 @Serializer(forClass = IdeVersion::class)
@@ -26,5 +26,5 @@ object IdeVersionSerializer {
   }
 
   override fun deserialize(decoder: Decoder) =
-      IdeVersion.createIdeVersion(decoder.decodeString())
+    IdeVersion.createIdeVersion(decoder.decodeString())
 }

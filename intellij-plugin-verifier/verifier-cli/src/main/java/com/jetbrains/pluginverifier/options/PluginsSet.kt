@@ -15,22 +15,22 @@ import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
  * the actual set of plugins to be verified.
  */
 data class PluginsSet(
-    /**
-     * All plugins scheduled for the verification.
-     *
-     * Some of these plugins may be excluded later by [pluginFilters].
-     *
-     * The plugins listed here are not necessarily valid,
-     * but it may be unknown until the verification starts.
-     */
-    private val scheduledPlugins: MutableList<PluginInfo> = arrayListOf(),
+  /**
+   * All plugins scheduled for the verification.
+   *
+   * Some of these plugins may be excluded later by [pluginFilters].
+   *
+   * The plugins listed here are not necessarily valid,
+   * but it may be unknown until the verification starts.
+   */
+  private val scheduledPlugins: MutableList<PluginInfo> = arrayListOf(),
 
-    /**
-     * Plugin filters that determine which plugins should be verified.
-     *
-     * By default, the list is initialized with [DeprecatedPluginFilter].
-     */
-    private val pluginFilters: MutableList<PluginFilter> = arrayListOf(DeprecatedPluginFilter())
+  /**
+   * Plugin filters that determine which plugins should be verified.
+   *
+   * By default, the list is initialized with [DeprecatedPluginFilter].
+   */
+  private val pluginFilters: MutableList<PluginFilter> = arrayListOf(DeprecatedPluginFilter())
 
 ) {
 
@@ -58,10 +58,10 @@ data class PluginsSet(
 
   private fun getReasonToNotVerify(pluginInfo: PluginInfo): String? {
     return pluginFilters.asSequence()
-        .map { it.shouldVerifyPlugin(pluginInfo) }
-        .filterIsInstance<PluginFilter.Result.Ignore>()
-        .firstOrNull()
-        ?.reason
+      .map { it.shouldVerifyPlugin(pluginInfo) }
+      .filterIsInstance<PluginFilter.Result.Ignore>()
+      .firstOrNull()
+      ?.reason
   }
 
   fun shouldVerifyPlugin(pluginInfo: PluginInfo): Boolean {

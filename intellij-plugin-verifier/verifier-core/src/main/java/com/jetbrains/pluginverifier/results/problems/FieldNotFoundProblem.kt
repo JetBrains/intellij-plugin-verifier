@@ -9,10 +9,10 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import java.util.*
 
 class FieldNotFoundProblem(
-    val unresolvedField: FieldReference,
-    val accessor: MethodLocation,
-    val fieldOwnerHierarchy: ClassHierarchy,
-    val instruction: Instruction
+  val unresolvedField: FieldReference,
+  val accessor: MethodLocation,
+  val fieldOwnerHierarchy: ClassHierarchy,
+  val instruction: Instruction
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -24,16 +24,16 @@ class FieldNotFoundProblem(
   private val descriptionMainPart
     get() = buildString {
       append(
-          "Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
-              accessor.formatMethodLocation(
-                  HostClassOption.FULL_HOST_NAME,
-                  MethodParameterTypeOption.FULL_PARAM_CLASS_NAME,
-                  MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME,
-                  MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE
-              ),
-              instruction,
-              unresolvedField.formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)
-          )
+        "Method {0} contains a *{1}* instruction referencing an unresolved field {2}. ".formatMessage(
+          accessor.formatMethodLocation(
+            HostClassOption.FULL_HOST_NAME,
+            MethodParameterTypeOption.FULL_PARAM_CLASS_NAME,
+            MethodReturnTypeOption.FULL_RETURN_TYPE_CLASS_NAME,
+            MethodParameterNameOption.WITH_PARAM_NAMES_IF_AVAILABLE
+          ),
+          instruction,
+          unresolvedField.formatFieldReference(HostClassOption.FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)
+        )
       )
       append("This can lead to **NoSuchFieldError** exception at runtime.")
     }
@@ -51,9 +51,9 @@ class FieldNotFoundProblem(
     }
 
   override fun equals(other: Any?) = other is FieldNotFoundProblem
-      && unresolvedField == other.unresolvedField
-      && accessor == other.accessor
-      && instruction == other.instruction
+    && unresolvedField == other.unresolvedField
+    && accessor == other.accessor
+    && instruction == other.instruction
 
   override fun hashCode() = Objects.hash(unresolvedField, accessor, instruction)
 }

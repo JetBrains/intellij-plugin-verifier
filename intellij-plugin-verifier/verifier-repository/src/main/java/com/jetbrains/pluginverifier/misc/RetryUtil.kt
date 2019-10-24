@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit
 private val LOG = LoggerFactory.getLogger("LanguageUtils")
 
 fun <T, R> T.retry(
-    presentableBlockName: String,
-    attempts: Int = 5,
-    attemptsDelay: Long = 30,
-    attemptsDelayTimeUnit: TimeUnit = TimeUnit.SECONDS,
-    block: T.() -> R
+  presentableBlockName: String,
+  attempts: Int = 5,
+  attemptsDelay: Long = 30,
+  attemptsDelayTimeUnit: TimeUnit = TimeUnit.SECONDS,
+  block: T.() -> R
 ): R {
   for (attempt in 1..attempts) {
     try {

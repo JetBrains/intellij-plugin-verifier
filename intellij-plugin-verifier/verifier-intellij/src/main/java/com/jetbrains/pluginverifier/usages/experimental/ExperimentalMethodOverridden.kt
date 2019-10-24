@@ -16,8 +16,8 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import java.util.*
 
 class ExperimentalMethodOverridden(
-    override val apiElement: MethodLocation,
-    override val usageLocation: MethodLocation
+  override val apiElement: MethodLocation,
+  override val usageLocation: MethodLocation
 ) : ExperimentalApiUsage() {
 
   override val apiReference
@@ -34,8 +34,8 @@ class ExperimentalMethodOverridden(
     }
 
   override fun equals(other: Any?) = other is ExperimentalMethodOverridden
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiElement, usageLocation)
 }

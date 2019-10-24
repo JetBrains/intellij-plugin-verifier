@@ -32,10 +32,10 @@ import com.sampullara.cli.Argument
 import java.nio.file.Paths
 
 class CheckTrunkApiParamsBuilder(
-    private val pluginRepository: PluginRepository,
-    private val ideFilesBank: IdeFilesBank,
-    private val reportage: PluginVerificationReportage,
-    private val pluginDetailsCache: PluginDetailsCache
+  private val pluginRepository: PluginRepository,
+  private val ideFilesBank: IdeFilesBank,
+  private val reportage: PluginVerificationReportage,
+  private val pluginDetailsCache: PluginDetailsCache
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
@@ -86,23 +86,23 @@ class CheckTrunkApiParamsBuilder(
   }
 
   private fun buildParameters(
-      opts: CmdOpts,
-      apiOpts: CheckTrunkApiOpts,
-      releaseIdeDescriptor: IdeDescriptor,
-      trunkIdeDescriptor: IdeDescriptor,
-      deleteReleaseIdeOnExit: Boolean,
-      releaseIdeFileLock: FileLock
+    opts: CmdOpts,
+    apiOpts: CheckTrunkApiOpts,
+    releaseIdeDescriptor: IdeDescriptor,
+    trunkIdeDescriptor: IdeDescriptor,
+    deleteReleaseIdeOnExit: Boolean,
+    releaseIdeFileLock: FileLock
   ): CheckTrunkApiParams {
     val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
-        ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
-        ?: EmptyPluginRepository
+      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+      ?: EmptyPluginRepository
 
     val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
-        ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
-        ?: EmptyPluginRepository
+      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+      ?: EmptyPluginRepository
 
     val message = "Requesting a list of plugins compatible with the release IDE ${releaseIdeDescriptor.ideVersion}"
     reportage.logVerificationStage(message)
@@ -149,25 +149,25 @@ class CheckTrunkApiParamsBuilder(
     val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }
     if (releasePluginsToCheck.isNotEmpty()) {
       reportage.logVerificationStage(
-          "The following updates will be checked with both ${trunkIdeDescriptor.ideVersion} and #${releaseIdeDescriptor.ideVersion}:\n" +
-              releasePluginsToCheck
-                  .listPresentationInColumns(4, 60)
+        "The following updates will be checked with both ${trunkIdeDescriptor.ideVersion} and #${releaseIdeDescriptor.ideVersion}:\n" +
+          releasePluginsToCheck
+            .listPresentationInColumns(4, 60)
       )
     }
 
     val trunkLatestPluginsToCheck = latestCompatibleVersions.filter { trunkPluginsSet.shouldVerifyPlugin(it) }
     if (trunkLatestPluginsToCheck.isNotEmpty()) {
       reportage.logVerificationStage(
-          "The following updates will be checked with ${trunkIdeDescriptor.ideVersion} only for comparison with the release versions of the same plugins:\n" +
-              trunkLatestPluginsToCheck.listPresentationInColumns(4, 60)
+        "The following updates will be checked with ${trunkIdeDescriptor.ideVersion} only for comparison with the release versions of the same plugins:\n" +
+          trunkLatestPluginsToCheck.listPresentationInColumns(4, 60)
       )
     }
 
     val releaseFinder = createDependencyFinder(releaseIdeDescriptor.ide, releaseIdeDescriptor.ide, releaseLocalRepository, pluginDetailsCache)
     val releaseResolverProvider = DefaultClassResolverProvider(
-        releaseFinder,
-        releaseIdeDescriptor,
-        externalClassesPackageFilter
+      releaseFinder,
+      releaseIdeDescriptor,
+      externalClassesPackageFilter
     )
     val releaseVerificationDescriptors = releasePluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(releaseIdeDescriptor, releaseResolverProvider, it)
@@ -175,9 +175,9 @@ class CheckTrunkApiParamsBuilder(
 
     val trunkFinder = createDependencyFinder(trunkIdeDescriptor.ide, releaseIdeDescriptor.ide, trunkLocalRepository, pluginDetailsCache)
     val trunkResolverProvider = DefaultClassResolverProvider(
-        trunkFinder,
-        trunkIdeDescriptor,
-        externalClassesPackageFilter
+      trunkFinder,
+      trunkIdeDescriptor,
+      externalClassesPackageFilter
     )
     val trunkVerificationDescriptors = trunkPluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(trunkIdeDescriptor, trunkResolverProvider, it)
@@ -194,15 +194,15 @@ class CheckTrunkApiParamsBuilder(
     }
 
     return CheckTrunkApiParams(
-        trunkIdeDescriptor,
-        releaseIdeDescriptor,
-        deleteReleaseIdeOnExit,
-        releaseIdeFileLock,
-        problemsFilters,
-        releaseVerificationDescriptors,
-        trunkVerificationDescriptors,
-        releaseVerificationTarget,
-        trunkVerificationTarget
+      trunkIdeDescriptor,
+      releaseIdeDescriptor,
+      deleteReleaseIdeOnExit,
+      releaseIdeFileLock,
+      problemsFilters,
+      releaseVerificationDescriptors,
+      trunkVerificationDescriptors,
+      releaseVerificationTarget,
+      trunkVerificationTarget
     )
   }
 
@@ -213,31 +213,31 @@ class CheckTrunkApiParamsBuilder(
    * 3) Compatible with the **release** IDE
    */
   private fun createDependencyFinder(
-      releaseOrTrunkIde: Ide,
-      releaseIde: Ide,
-      localPluginRepository: PluginRepository,
-      pluginDetailsCache: PluginDetailsCache
+    releaseOrTrunkIde: Ide,
+    releaseIde: Ide,
+    localPluginRepository: PluginRepository,
+    pluginDetailsCache: PluginDetailsCache
   ): DependencyFinder {
     val bundledFinder = BundledPluginDependencyFinder(releaseOrTrunkIde, pluginDetailsCache)
 
     val localRepositoryDependencyFinder = RepositoryDependencyFinder(
-        localPluginRepository,
-        LastVersionSelector(),
-        pluginDetailsCache
+      localPluginRepository,
+      LastVersionSelector(),
+      pluginDetailsCache
     )
 
     val releaseDependencyFinder = RepositoryDependencyFinder(
-        pluginRepository,
-        LastCompatibleVersionSelector(releaseIde.version),
-        pluginDetailsCache
+      pluginRepository,
+      LastCompatibleVersionSelector(releaseIde.version),
+      pluginDetailsCache
     )
 
     return CompositeDependencyFinder(
-        listOf(
-            bundledFinder,
-            localRepositoryDependencyFinder,
-            releaseDependencyFinder
-        )
+      listOf(
+        bundledFinder,
+        localRepositoryDependencyFinder,
+        releaseDependencyFinder
+      )
     )
   }
 
@@ -260,10 +260,10 @@ class CheckTrunkApiParamsBuilder(
   }
 
   private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
-      ?: throw IllegalArgumentException(
-          "Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
-              "See https://www.jetbrains.com/intellij-repository/releases/"
-      )
+    ?: throw IllegalArgumentException(
+      "Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
+        "See https://www.jetbrains.com/intellij-repository/releases/"
+    )
 
 }
 
@@ -278,10 +278,10 @@ class CheckTrunkApiOpts {
   var majorIdePath: String? = null
 
   @set:Argument(
-      "release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
-      "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
-      "The Plugin Verifier will read the plugin descriptors from every plugin-like file under the specified directory." +
-      "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present, and from the public repository, otherwise."
+    "release-jetbrains-plugins", alias = "rjbp", description = "The root of the local plugin repository containing JetBrains plugins compatible with the release IDE. " +
+    "The local repository is a set of non-bundled JetBrains plugins built from the same sources (see Installers/<artifacts>/IU-plugins). " +
+    "The Plugin Verifier will read the plugin descriptors from every plugin-like file under the specified directory." +
+    "On the release IDE verification, the JetBrains plugins will be taken from the local repository if present, and from the public repository, otherwise."
   )
   var releaseLocalPluginRepositoryRoot: String? = null
 

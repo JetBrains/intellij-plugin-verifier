@@ -13,10 +13,10 @@ import java.nio.file.Path
 interface SweepPolicy<K> : EvictionPolicy<Path, K, SpaceWeight> {
 
   override fun isNecessary(totalWeight: SpaceWeight) =
-      isNecessary(totalWeight.spaceAmount)
+    isNecessary(totalWeight.spaceAmount)
 
   override fun selectResourcesForEviction(evictionInfo: EvictionInfo<Path, K, SpaceWeight>) =
-      selectFilesForDeletion(SweepInfo(evictionInfo))
+    selectFilesForDeletion(SweepInfo(evictionInfo))
 
   /**
    * Determines whether it is necessary to carry out the cleanup procedure at the moment.

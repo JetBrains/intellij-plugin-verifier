@@ -11,9 +11,9 @@ import java.util.*
 import java.util.jar.JarFile
 
 class JarFileResolver(
-    private val ioJarFile: Path,
-    override val readMode: ReadMode,
-    private val fileOrigin: FileOrigin
+  private val ioJarFile: Path,
+  override val readMode: ReadMode,
+  private val fileOrigin: FileOrigin
 ) : Resolver() {
 
   private companion object {
@@ -158,9 +158,9 @@ class JarFileResolver(
 }
 
 fun buildJarFileResolvers(
-    jars: Iterable<File>,
-    readMode: Resolver.ReadMode,
-    parentOrigin: FileOrigin
+  jars: Iterable<File>,
+  readMode: Resolver.ReadMode,
+  parentOrigin: FileOrigin
 ): List<Resolver> {
   val resolvers = arrayListOf<Resolver>()
   resolvers.closeOnException {

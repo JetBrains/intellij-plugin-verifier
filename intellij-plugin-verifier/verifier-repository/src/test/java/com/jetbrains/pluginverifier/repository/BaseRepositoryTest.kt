@@ -34,9 +34,9 @@ abstract class BaseRepositoryTest<R : PluginRepository> {
 
   fun checkDownloadPlugin(pluginInfo: PluginInfo) {
     val filesBank = PluginFilesBank.create(
-        repository,
-        temporaryFolder.newFolder().toPath(),
-        DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE)
+      repository,
+      temporaryFolder.newFolder().toPath(),
+      DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE)
     )
     val pluginFileResult = filesBank.getPluginFile(pluginInfo)
     assert(pluginFileResult is PluginFileProvider.Result.Found)
@@ -48,8 +48,8 @@ abstract class BaseRepositoryTest<R : PluginRepository> {
 
   fun parseXmlDocument(xml: String): Document {
     return DocumentBuilderFactory.newInstance()
-        .newDocumentBuilder()
-        .parse(InputSource(ByteArrayInputStream(xml.toByteArray())))
+      .newDocumentBuilder()
+      .parse(InputSource(ByteArrayInputStream(xml.toByteArray())))
   }
 
 }

@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
  * because of the [reason].
  */
 data class PluginIgnoredEvent(
-    val pluginInfo: PluginInfo,
-    val verificationTarget: PluginVerificationTarget,
-    val reason: String
+  val pluginInfo: PluginInfo,
+  val verificationTarget: PluginVerificationTarget,
+  val reason: String
 ) {
   override fun toString() = "Verification of $pluginInfo against $verificationTarget is ignored: $reason"
 }

@@ -13,8 +13,8 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 import org.jetbrains.ide.diff.builder.api.ApiEvent
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.api.ApiSignature
-import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.filter.ClassFilter
+import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
 import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportWriter
 import org.slf4j.LoggerFactory
@@ -30,10 +30,10 @@ class BuildIdeApiMetadata {
     private val LOG = LoggerFactory.getLogger("build-ide-api-metadata")
 
     private val ioExecutor = Executors.newCachedThreadPool(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("io-%d")
-            .build()
+      ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("io-%d")
+        .build()
     )
 
     /**
@@ -42,19 +42,19 @@ class BuildIdeApiMetadata {
      * So let's run IDE diff building in a single application thread to avoid IO errors.
      */
     private val ideDiffExecutor = Executors.newSingleThreadExecutor(
-        ThreadFactoryBuilder()
-            .setDaemon(true)
-            .setNameFormat("ide-diff-%d")
-            .build()
+      ThreadFactoryBuilder()
+        .setDaemon(true)
+        .setNameFormat("ide-diff-%d")
+        .build()
     )
   }
 
   fun buildMetadata(
-      idesToProcess: List<AvailableIde>,
-      ideFilesBank: IdeFilesBank,
-      jdkPath: Path,
-      classFilter: ClassFilter,
-      resultsDirectory: Path
+    idesToProcess: List<AvailableIde>,
+    ideFilesBank: IdeFilesBank,
+    jdkPath: Path,
+    classFilter: ClassFilter,
+    resultsDirectory: Path
   ): ApiReport {
     require(idesToProcess.size > 1) { "Too few IDE builds to process: ${idesToProcess.size}" }
 
@@ -92,10 +92,10 @@ class BuildIdeApiMetadata {
   }
 
   private fun buildAdjacentIdeDiffs(
-      idesToProcess: List<AvailableIde>,
-      ideFilesBank: IdeFilesBank,
-      diffsPath: Path,
-      ideDiffBuilder: IdeDiffBuilder
+    idesToProcess: List<AvailableIde>,
+    ideFilesBank: IdeFilesBank,
+    diffsPath: Path,
+    ideDiffBuilder: IdeDiffBuilder
   ): List<IdeDiff> {
     val tasks = (1 until idesToProcess.size).map { index ->
       val previousIde = idesToProcess[index - 1]
@@ -118,11 +118,11 @@ class BuildIdeApiMetadata {
   }
 
   private class BuildIdeDiffTask(
-      private val diffsPath: Path,
-      private val ideFilesBank: IdeFilesBank,
-      private val previousIde: AvailableIde,
-      private val currentIde: AvailableIde,
-      private val ideDiffBuilder: IdeDiffBuilder
+    private val diffsPath: Path,
+    private val ideFilesBank: IdeFilesBank,
+    private val previousIde: AvailableIde,
+    private val currentIde: AvailableIde,
+    private val ideDiffBuilder: IdeDiffBuilder
   ) : Callable<IdeDiff> {
     override fun call(): IdeDiff {
       LOG.info("Building IDE diff between $previousIde and $currentIde")
@@ -140,10 +140,10 @@ class BuildIdeApiMetadata {
     }
 
     private fun buildIdeDiffBetweenIdes(
-        oldIde: AvailableIde,
-        newIde: AvailableIde,
-        ideFilesBank: IdeFilesBank,
-        ideDiffBuilder: IdeDiffBuilder
+      oldIde: AvailableIde,
+      newIde: AvailableIde,
+      ideFilesBank: IdeFilesBank,
+      ideDiffBuilder: IdeDiffBuilder
     ): ApiReport {
       val oldIdeTask = ideFilesBank.downloadIdeAsync(oldIde)
       val newIdeTask = ideFilesBank.downloadIdeAsync(newIde)
@@ -164,31 +164,31 @@ class BuildIdeApiMetadata {
     }
 
     private fun <T> Future<T>.getOrException(): Pair<T?, Throwable?> =
-        try {
-          get() to null
-        } catch (e: ExecutionException) {
-          null to e.cause!!
-        } catch (e: Throwable) {
-          null to e
-        }
+      try {
+        get() to null
+      } catch (e: ExecutionException) {
+        null to e.cause!!
+      } catch (e: Throwable) {
+        null to e
+      }
 
     private fun IdeFilesBank.downloadIdeAsync(ide: AvailableIde): Future<FileLock> =
-        ioExecutor.submit<FileLock> { downloadIde(ide) }
+      ioExecutor.submit<FileLock> { downloadIde(ide) }
 
     private fun IdeFilesBank.downloadIde(ide: AvailableIde): FileLock =
-        retry("Download $ide") {
-          when (val ideFile = getIdeFile(ide.version)) {
-            is IdeFilesBank.Result.Found -> ideFile.ideFileLock
-            is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ide is not found: ${ideFile.reason}")
-            is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ide couldn't be downloaded: ${ideFile.reason}", ideFile.exception)
-          }
+      retry("Download $ide") {
+        when (val ideFile = getIdeFile(ide.version)) {
+          is IdeFilesBank.Result.Found -> ideFile.ideFileLock
+          is IdeFilesBank.Result.NotFound -> throw IllegalArgumentException("$ide is not found: ${ideFile.reason}")
+          is IdeFilesBank.Result.Failed -> throw IllegalArgumentException("$ide couldn't be downloaded: ${ideFile.reason}", ideFile.exception)
         }
+      }
   }
 
   private data class IdeDiff(
-      val reportPath: Path,
-      val oldIde: AvailableIde,
-      val newIde: AvailableIde
+    val reportPath: Path,
+    val oldIde: AvailableIde,
+    val newIde: AvailableIde
   )
 
 }

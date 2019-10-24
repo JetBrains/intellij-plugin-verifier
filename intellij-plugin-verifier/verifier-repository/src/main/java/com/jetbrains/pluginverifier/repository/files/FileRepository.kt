@@ -16,19 +16,19 @@ import java.time.Clock
  * [resource repository] [ResourceRepository] for files.
  */
 class FileRepository<K>(
-    sweepPolicy: SweepPolicy<K>,
-    resourceProvider: ResourceProvider<K, Path>,
-    clock: Clock = Clock.systemUTC(),
-    presentableName: String = "FileRepository"
+  sweepPolicy: SweepPolicy<K>,
+  resourceProvider: ResourceProvider<K, Path>,
+  clock: Clock = Clock.systemUTC(),
+  presentableName: String = "FileRepository"
 ) {
   private val resourceRepository = ResourceRepositoryImpl(
-      sweepPolicy,
-      clock,
-      resourceProvider,
-      SpaceWeight(SpaceAmount.ZERO_SPACE),
-      { SpaceWeight(it.fileSize) },
-      { path -> path.deleteLogged() },
-      presentableName
+    sweepPolicy,
+    clock,
+    resourceProvider,
+    SpaceWeight(SpaceAmount.ZERO_SPACE),
+    { SpaceWeight(it.fileSize) },
+    { path -> path.deleteLogged() },
+    presentableName
   )
 
   /**
@@ -66,11 +66,11 @@ class FileRepository<K>(
   fun getAllExistingKeys(): Set<K> = resourceRepository.getAllExistingKeys()
 
   fun getAvailableFiles(): List<AvailableFile<K>> =
-      resourceRepository.getAvailableResources().map {
-        with(it) {
-          AvailableFile(key, resourceInfo, usageStatistic, isLocked)
-        }
+    resourceRepository.getAvailableResources().map {
+      with(it) {
+        AvailableFile(key, resourceInfo, usageStatistic, isLocked)
       }
+    }
 
   fun cleanup() {
     resourceRepository.cleanup()

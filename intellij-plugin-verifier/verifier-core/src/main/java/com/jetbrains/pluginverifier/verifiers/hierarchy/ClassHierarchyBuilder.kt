@@ -14,27 +14,27 @@ class ClassHierarchyBuilder(private val context: VerificationContext) {
       context.classResolver.resolveClassChecked(superName, subclassFile, context)
     }
     parentsVisitor.visitClass(
-        classFile,
-        true,
-        onEnter = { parent ->
-          className2Hierarchy[parent.name] = ClassHierarchy(
-              parent.name,
-              parent.isInterface,
-              null,
-              emptyList()
-          )
-          true
-        },
-        onExit = { parent ->
-          val classHierarchy = className2Hierarchy[parent.name]!!
+      classFile,
+      true,
+      onEnter = { parent ->
+        className2Hierarchy[parent.name] = ClassHierarchy(
+          parent.name,
+          parent.isInterface,
+          null,
+          emptyList()
+        )
+        true
+      },
+      onExit = { parent ->
+        val classHierarchy = className2Hierarchy[parent.name]!!
 
-          val superName = parent.superName
-          if (superName != null) {
-            classHierarchy.superClass = className2Hierarchy[superName]
-          }
-
-          classHierarchy.superInterfaces = parent.interfaces.mapNotNull { className2Hierarchy[it] }
+        val superName = parent.superName
+        if (superName != null) {
+          classHierarchy.superClass = className2Hierarchy[superName]
         }
+
+        classHierarchy.superInterfaces = parent.interfaces.mapNotNull { className2Hierarchy[it] }
+      }
     )
 
     return className2Hierarchy[classFile.name]!!

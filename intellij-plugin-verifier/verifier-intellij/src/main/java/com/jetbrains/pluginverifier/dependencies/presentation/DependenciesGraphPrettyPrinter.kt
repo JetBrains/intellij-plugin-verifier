@@ -24,7 +24,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
   private val visitedNodes = hashSetOf<DependencyNode>()
 
   fun prettyPresentation(): String =
-      recursivelyCalculateLines(dependenciesGraph.verifiedPlugin).joinToString(separator = "\n")
+    recursivelyCalculateLines(dependenciesGraph.verifiedPlugin).joinToString(separator = "\n")
 
   private fun recursivelyCalculateLines(currentNode: DependencyNode): List<String> {
     if (currentNode in visitedNodes) {
@@ -36,19 +36,19 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     val childrenLines = arrayListOf<List<String>>()
 
     dependenciesGraph.missingDependencies
-        .getOrDefault(currentNode, emptySet())
-        .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-          listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
-        }
+      .getOrDefault(currentNode, emptySet())
+      .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
+        listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      }
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
-        .sortedWith(
-            compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
-                .thenBy { if (it.dependency.isModule) 1 else -1 }
-                .thenBy { it.dependency.id }
-                .thenBy { it.to.pluginId }
-                .thenBy { it.to.version }
-        )
+      .sortedWith(
+        compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
+          .thenBy { if (it.dependency.isModule) 1 else -1 }
+          .thenBy { it.dependency.id }
+          .thenBy { it.to.pluginId }
+          .thenBy { it.to.version }
+      )
 
     for (edge in directEdges) {
       val childLines = recursivelyCalculateLines(edge.to)

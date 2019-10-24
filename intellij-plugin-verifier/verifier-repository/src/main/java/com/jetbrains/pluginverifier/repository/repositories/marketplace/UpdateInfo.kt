@@ -11,33 +11,33 @@ import java.util.*
  * Identifier of a plugin hosted on the public Plugin Repository [MarketplaceRepository].
  */
 class UpdateInfo(
-    pluginId: String,
-    pluginName: String,
-    version: String,
-    sinceBuild: IdeVersion?,
-    untilBuild: IdeVersion?,
-    vendor: String,
-    val sourceCodeUrl: URL?,
-    override val downloadUrl: URL,
-    val updateId: Int,
-    override val browserUrl: URL,
-    val tags: List<String>
+  pluginId: String,
+  pluginName: String,
+  version: String,
+  sinceBuild: IdeVersion?,
+  untilBuild: IdeVersion?,
+  vendor: String,
+  val sourceCodeUrl: URL?,
+  override val downloadUrl: URL,
+  val updateId: Int,
+  override val browserUrl: URL,
+  val tags: List<String>
 ) : Downloadable, Browseable, PluginInfo(
-    pluginId,
-    pluginName,
-    version,
-    sinceBuild,
-    untilBuild,
-    vendor
+  pluginId,
+  pluginName,
+  version,
+  sinceBuild,
+  untilBuild,
+  vendor
 ) {
 
   override val presentableName
     get() = "$pluginId:$version (#$updateId)"
 
   override fun equals(other: Any?) = other is UpdateInfo
-      && pluginId == other.pluginId
-      && version == other.version
-      && updateId == other.updateId
+    && pluginId == other.pluginId
+    && version == other.version
+    && updateId == other.updateId
 
   override fun hashCode() = Objects.hash(pluginId, version, updateId)
 }

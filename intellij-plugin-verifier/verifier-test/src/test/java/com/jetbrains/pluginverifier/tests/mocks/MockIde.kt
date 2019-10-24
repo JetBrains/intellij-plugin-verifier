@@ -7,9 +7,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.io.File
 
 data class MockIde(
-    private val ideVersion: IdeVersion,
-    private val idePath: File = File(""),
-    private val bundledPlugins: List<IdePlugin> = emptyList()
+  private val ideVersion: IdeVersion,
+  private val idePath: File = File(""),
+  private val bundledPlugins: List<IdePlugin> = emptyList()
 ) : Ide() {
 
   override fun getIdePath() = idePath

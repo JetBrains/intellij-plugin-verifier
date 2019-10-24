@@ -23,7 +23,7 @@ class MainClassesSelector : ClassesSelector {
    * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
    */
   override fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver> =
-      IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
+    IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
 
   /**
    * Determines plugin's classes that must be verified.
@@ -55,7 +55,7 @@ class MainClassesSelector : ClassesSelector {
 
   private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> {
     return PluginXmlUtil.getAllClassesReferencedFromXml(plugin) +
-        plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.optionalPlugin) }
+      plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.optionalPlugin) }
   }
 
 

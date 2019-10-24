@@ -8,10 +8,10 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import java.util.*
 
 class StaticAccessOfInstanceFieldProblem(
-    val fieldReference: FieldReference,
-    val field: FieldLocation,
-    val accessor: MethodLocation,
-    val instruction: Instruction
+  val fieldReference: FieldReference,
+  val field: FieldLocation,
+  val accessor: MethodLocation,
+  val instruction: Instruction
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -22,14 +22,14 @@ class StaticAccessOfInstanceFieldProblem(
 
   override val fullDescription
     get() = ("Method {0} has static field access instruction *{1}* referencing an instance field {2}, " +
-        "what might have been caused by incompatible change of the field from static to instance. " +
-        "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
+      "what might have been caused by incompatible change of the field from static to instance. " +
+      "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(accessor, instruction, field)
 
   override fun equals(other: Any?) = other is StaticAccessOfInstanceFieldProblem
-      && fieldReference == other.fieldReference
-      && field == other.field
-      && accessor == other.accessor
-      && instruction == other.instruction
+    && fieldReference == other.fieldReference
+    && field == other.field
+    && accessor == other.accessor
+    && instruction == other.instruction
 
   override fun hashCode() = Objects.hash(fieldReference, field, accessor, instruction)
 }

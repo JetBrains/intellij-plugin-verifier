@@ -1,19 +1,19 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class TeamcityMockPluginsTest  {
+class TeamcityMockPluginsTest {
 
   @Rule
   @JvmField

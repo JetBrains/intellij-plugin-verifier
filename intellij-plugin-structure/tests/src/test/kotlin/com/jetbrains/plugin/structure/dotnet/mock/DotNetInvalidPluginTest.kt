@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
-import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -61,48 +60,48 @@ class DotNetInvalidPluginTest {
   @Test
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
-        "abracadabra",
-        listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
+      "abracadabra",
+      listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
     )
   }
 
   @Test
   fun `plugin id is not specified`() {
     `test invalid plugin xml`(
-        perfectDotNetBuilder.modify { id = "" },
-        listOf(PropertyNotSpecified("id"))
+      perfectDotNetBuilder.modify { id = "" },
+      listOf(PropertyNotSpecified("id"))
     )
   }
 
   @Test
   fun `plugin version is not specified`() {
     `test invalid plugin xml`(
-        perfectDotNetBuilder.modify { version = "" },
-        listOf(PropertyNotSpecified("version"))
+      perfectDotNetBuilder.modify { version = "" },
+      listOf(PropertyNotSpecified("version"))
     )
   }
 
   @Test
   fun `plugin license is not specified`() {
     `test invalid plugin xml`(
-        perfectDotNetBuilder.modify { licenseUrl = "" },
-        listOf(PropertyNotSpecified("licenseUrl"))
+      perfectDotNetBuilder.modify { licenseUrl = "" },
+      listOf(PropertyNotSpecified("licenseUrl"))
     )
   }
 
   @Test
   fun `plugin authors is not specified`() {
     `test invalid plugin xml`(
-        perfectDotNetBuilder.modify { authors = "" },
-        listOf(PropertyNotSpecified("authors"))
+      perfectDotNetBuilder.modify { authors = "" },
+      listOf(PropertyNotSpecified("authors"))
     )
   }
 
   @Test
   fun `plugin description is not specified`() {
     `test invalid plugin xml`(
-        perfectDotNetBuilder.modify { description = "" },
-        listOf(PropertyNotSpecified("description"))
+      perfectDotNetBuilder.modify { description = "" },
+      listOf(PropertyNotSpecified("description"))
     )
   }
 

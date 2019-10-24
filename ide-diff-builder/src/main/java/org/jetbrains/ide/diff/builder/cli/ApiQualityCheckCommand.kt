@@ -103,9 +103,9 @@ class ApiQualityCheckCommand : Command {
   }
 
   private fun reportOldSkippedTestsSuccessful(
-      previousTests: ApiQualityTeamCityHistory,
-      newTests: ApiQualityTeamCityHistory,
-      tc: TeamCityLog
+    previousTests: ApiQualityTeamCityHistory,
+    newTests: ApiQualityTeamCityHistory,
+    tc: TeamCityLog
   ) {
     val skippedTests = previousTests.tests - newTests.tests
     for ((suiteName, tests) in skippedTests.groupBy { it.suiteName }) {
@@ -124,7 +124,7 @@ class ApiQualityCheckCommand : Command {
   private data class ApiQualityTeamCityHistory(val tests: List<ApiQualityTeamCityTest>) {
     companion object {
       fun readFromFile(file: Path): ApiQualityTeamCityHistory =
-          jsonInstance.parse(serializer(), file.readText())
+        jsonInstance.parse(serializer(), file.readText())
     }
 
     fun writeToFile(file: Path) {
@@ -165,11 +165,11 @@ class ApiQualityCheckCommand : Command {
                 append(signature.fullPresentation)
                 append(" is marked @ApiStatus.Experimental")
                 append(
-                    when (experimentalMemberAnnotation) {
-                      is MemberAnnotation.AnnotatedDirectly -> ""
-                      is MemberAnnotation.AnnotatedViaContainingClass -> " via containing class ${experimentalMemberAnnotation.containingClass.toSignature().fullPresentation}"
-                      is MemberAnnotation.AnnotatedViaPackage -> " via containing package ${experimentalMemberAnnotation.packageName.replace('/', '.')}"
-                    }
+                  when (experimentalMemberAnnotation) {
+                    is MemberAnnotation.AnnotatedDirectly -> ""
+                    is MemberAnnotation.AnnotatedViaContainingClass -> " via containing class ${experimentalMemberAnnotation.containingClass.toSignature().fullPresentation}"
+                    is MemberAnnotation.AnnotatedViaPackage -> " via containing package ${experimentalMemberAnnotation.packageName.replace('/', '.')}"
+                  }
                 )
                 append(" since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
                 append(getExperimentalNote(report))
@@ -262,8 +262,8 @@ class ApiQualityCheckCommand : Command {
     }
 
     if (report.tooLongExperimental.isEmpty()
-        && report.mustAlreadyBeRemoved.isEmpty()
-        && report.sfrApisWithWrongPlannedVersion.isEmpty()
+      && report.mustAlreadyBeRemoved.isEmpty()
+      && report.sfrApisWithWrongPlannedVersion.isEmpty()
     ) {
       tc.buildStatusSuccess("API of ${report.ideVersion} is OK")
     } else {
@@ -320,11 +320,11 @@ class ApiQualityCheckCommand : Command {
     get() = externalPresentation
 
   private fun checkApi(
-      classFileMember: ClassFileMember,
-      apiMetadata: ApiReport,
-      ideResolver: Resolver,
-      qualityOptions: ApiQualityOptions,
-      qualityReport: ApiQualityReport
+    classFileMember: ClassFileMember,
+    apiMetadata: ApiReport,
+    ideResolver: Resolver,
+    qualityOptions: ApiQualityOptions,
+    qualityReport: ApiQualityReport
   ) {
     val signature = classFileMember.toSignature()
     val apiEvents = apiMetadata[signature]
@@ -365,18 +365,18 @@ class ApiQualityCheckCommand : Command {
       if (removalVersion != null) {
         if (removalVersion.branch <= qualityOptions.maxRemovalBranch) {
           qualityReport.mustAlreadyBeRemoved += MustAlreadyBeRemoved(
-              signature,
-              deprecatedInVersion,
-              scheduledForRemovalInVersion,
-              removalVersion
+            signature,
+            deprecatedInVersion,
+            scheduledForRemovalInVersion,
+            removalVersion
           )
         }
       } else {
         qualityReport.sfrApisWithWrongPlannedVersion += SfrApiWithWrongPlannedVersion(
-            signature,
-            deprecatedInVersion,
-            scheduledForRemovalInVersion,
-            deprecationInfo.untilVersion
+          signature,
+          deprecatedInVersion,
+          scheduledForRemovalInVersion,
+          deprecationInfo.untilVersion
         )
       }
     }
@@ -387,8 +387,8 @@ class ApiQualityCheckCommand : Command {
     var currentBranch: String = "193"
 
     @set:Argument(
-        "max-removal-branch", description = "Branch number used to find APIs that must already be removed. " +
-        "All @ScheduledForRemoval APIs will be found where 'inVersion' <= 'max-removal-branch'."
+      "max-removal-branch", description = "Branch number used to find APIs that must already be removed. " +
+      "All @ScheduledForRemoval APIs will be found where 'inVersion' <= 'max-removal-branch'."
     )
     var maxRemovalBranch: String = "193"
 
@@ -402,32 +402,32 @@ class ApiQualityCheckCommand : Command {
 }
 
 private data class ApiQualityOptions(
-    val currentBranch: Int,
-    val maxRemovalBranch: Int,
-    val maxExperimentalBranches: Int
+  val currentBranch: Int,
+  val maxRemovalBranch: Int,
+  val maxExperimentalBranches: Int
 )
 
 private data class ApiQualityReport(
-    val ideVersion: IdeVersion,
-    val apiQualityOptions: ApiQualityOptions,
-    val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
-    val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
-    val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf(),
-    val sfrApisWithWrongPlannedVersion: MutableList<SfrApiWithWrongPlannedVersion> = arrayListOf()
+  val ideVersion: IdeVersion,
+  val apiQualityOptions: ApiQualityOptions,
+  val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
+  val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
+  val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf(),
+  val sfrApisWithWrongPlannedVersion: MutableList<SfrApiWithWrongPlannedVersion> = arrayListOf()
 )
 
 private data class MustAlreadyBeRemoved(
-    val apiSignature: ApiSignature,
-    val deprecatedInVersion: IdeVersion?,
-    val scheduledForRemovalInVersion: IdeVersion?,
-    val removalVersion: RemovalVersion
+  val apiSignature: ApiSignature,
+  val deprecatedInVersion: IdeVersion?,
+  val scheduledForRemovalInVersion: IdeVersion?,
+  val removalVersion: RemovalVersion
 )
 
 private data class SfrApiWithWrongPlannedVersion(
-    val apiSignature: ApiSignature,
-    val deprecatedInVersion: IdeVersion?,
-    val scheduledForRemovalInVersion: IdeVersion?,
-    val inVersionValue: String?
+  val apiSignature: ApiSignature,
+  val deprecatedInVersion: IdeVersion?,
+  val scheduledForRemovalInVersion: IdeVersion?,
+  val inVersionValue: String?
 )
 
 private data class RemovalVersion(val originalVersion: String, val branch: Int) {
@@ -448,12 +448,12 @@ private data class RemovalVersion(val originalVersion: String, val branch: Int) 
 }
 
 private data class TooLongExperimental(
-    val apiSignature: ApiSignature,
-    val sinceVersion: IdeVersion,
-    val experimentalMemberAnnotation: MemberAnnotation
+  val apiSignature: ApiSignature,
+  val sinceVersion: IdeVersion,
+  val experimentalMemberAnnotation: MemberAnnotation
 )
 
 private data class StabilizedExperimentalApi(
-    val apiSignature: ApiSignature,
-    val unmarkedExperimentalIn: IdeVersion
+  val apiSignature: ApiSignature,
+  val unmarkedExperimentalIn: IdeVersion
 )

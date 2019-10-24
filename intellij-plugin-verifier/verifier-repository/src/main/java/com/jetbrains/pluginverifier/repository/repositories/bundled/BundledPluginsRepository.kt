@@ -9,30 +9,30 @@ import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
  * [PluginRepository] consisting of plugins bundled to the [IDE] [ide].
  */
 class BundledPluginsRepository(
-    val ide: Ide
+  val ide: Ide
 ) : PluginRepository {
   private fun getAllPlugins() = ide.bundledPlugins.map {
     BundledPluginInfo(ide.version, it)
   }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
-      getAllPlugins()
-          .filter { it.isCompatibleWith(ideVersion) }
-          .groupBy { it.pluginId }
-          .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
-          .values.toList()
+    getAllPlugins()
+      .filter { it.isCompatibleWith(ideVersion) }
+      .groupBy { it.pluginId }
+      .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
+      .values.toList()
 
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllPlugins().filter { it.isCompatibleWith(ideVersion) && it.pluginId == pluginId }
+    getAllPlugins().filter { it.isCompatibleWith(ideVersion) && it.pluginId == pluginId }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxWith(VERSION_COMPARATOR)
+    getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxWith(VERSION_COMPARATOR)
 
   override fun getAllVersionsOfPlugin(pluginId: String) =
-      getAllPlugins().filter { it.pluginId == pluginId }
+    getAllPlugins().filter { it.pluginId == pluginId }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
-      ide.getPluginByModule(moduleId)?.pluginId
+    ide.getPluginByModule(moduleId)?.pluginId
 
   fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
 

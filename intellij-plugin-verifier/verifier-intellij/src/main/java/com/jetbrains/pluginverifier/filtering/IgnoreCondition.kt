@@ -8,9 +8,9 @@ import java.util.*
  * - pattern - RegExp pattern of the short description
  */
 data class IgnoreCondition(
-    val pluginId: String?,
-    val version: String?,
-    val pattern: Regex
+  val pluginId: String?,
+  val version: String?,
+  val pattern: Regex
 ) {
 
   companion object {
@@ -55,9 +55,9 @@ data class IgnoreCondition(
   }
 
   override fun equals(other: Any?) = other is IgnoreCondition
-      && pluginId == other.pluginId
-      && version == other.version
-      && pattern.pattern == other.pattern.pattern
+    && pluginId == other.pluginId
+    && version == other.version
+    && pattern.pattern == other.pattern.pattern
 
   override fun hashCode() = Objects.hash(pluginId, version, pattern.pattern)
 }

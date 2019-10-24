@@ -35,8 +35,8 @@ internal class IntelliJRepositoryIndexParser {
 
       for (artifactInfo in ideArtifacts) {
         val ideVersion = IdeVersion.createIdeVersionIfValid(buildNumber)
-            ?.setProductCodeIfAbsent(IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId)!!)
-            ?: continue
+          ?.setProductCodeIfAbsent(IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId)!!)
+          ?: continue
 
         val downloadUrl = buildDownloadUrl(artifactInfo, channel, groupId, version)
 
@@ -52,16 +52,16 @@ internal class IntelliJRepositoryIndexParser {
      * Remove duplicated IDEs.
      */
     return allAvailableIdes
-        .groupBy { it.version }
-        .mapValues { getUniqueIde(it.value) }
-        .values.toList()
+      .groupBy { it.version }
+      .mapValues { getUniqueIde(it.value) }
+      .values.toList()
   }
 
   private fun buildDownloadUrl(
-      artifactInfo: ArtifactJson,
-      channel: IntelliJIdeRepository.Channel,
-      groupId: String,
-      version: String
+    artifactInfo: ArtifactJson,
+    channel: IntelliJIdeRepository.Channel,
+    groupId: String,
+    version: String
   ) = with(artifactInfo) {
     URL(channel.repositoryUrl + "/${groupId.replace('.', '/')}/$artifactId/$version/$artifactId-$version.$packaging")
   }
@@ -75,21 +75,21 @@ internal class IntelliJRepositoryIndexParser {
    * We'd like to keep only the release one.
    */
   private fun getUniqueIde(ides: List<AvailableIde>): AvailableIde =
-      if (ides.size == 2) {
-        val first = ides.first()
-        val second = ides.last()
-        if (first.isRelease != second.isRelease) {
-          if (first.isRelease) {
-            first
-          } else {
-            second
-          }
-        } else {
+    if (ides.size == 2) {
+      val first = ides.first()
+      val second = ides.last()
+      if (first.isRelease != second.isRelease) {
+        if (first.isRelease) {
           first
+        } else {
+          second
         }
       } else {
-        ides.first()
+        first
       }
+    } else {
+      ides.first()
+    }
 
   /**
    * Examples of release versions:

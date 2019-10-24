@@ -35,10 +35,10 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   companion object {
     @Throws(XIncluderException::class)
     fun resolveXIncludes(
-        document: Document,
-        documentUrl: URL,
-        documentPath: String,
-        resourceResolver: ResourceResolver
+      document: Document,
+      documentUrl: URL,
+      documentPath: String,
+      resourceResolver: ResourceResolver
     ): Document = XIncluder(resourceResolver).resolveXIncludes(document, documentUrl, documentPath)
   }
 
@@ -54,11 +54,11 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> =
-      if (isIncludeElement(element)) {
-        resolveXIncludeElements(element, bases)
-      } else {
-        listOf(resolveNonXIncludeElement(element, bases))
-      }
+    if (isIncludeElement(element)) {
+      resolveXIncludeElements(element, bases)
+    } else {
+      listOf(resolveNonXIncludeElement(element, bases))
+    }
 
   private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {
     val href = xincludeElement.getAttributeValue(HREF)
@@ -111,10 +111,10 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveXIncludesOfRemoteDocument(
-      remoteDocument: Document,
-      xincludeElement: Element,
-      xincludeEntry: XIncludeEntry,
-      bases: Stack<XIncludeEntry>
+    remoteDocument: Document,
+    xincludeElement: Element,
+    xincludeEntry: XIncludeEntry,
+    bases: Stack<XIncludeEntry>
   ): List<Content> {
     val presentableXInclude = xincludeElement.getElementNameAndAttributes()
     checkCyclicReference(xincludeEntry, bases)
@@ -143,7 +143,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
     val remoteRootElement = remoteContents.single() as? Element
-        ?: throw XIncluderException(bases, "Root element, not '${remoteContents.single().cType}', must have been resolved in $presentableXInclude")
+      ?: throw XIncluderException(bases, "Root element, not '${remoteContents.single().cType}', must have been resolved in $presentableXInclude")
 
     return selectContents(xincludeElement, xincludeEntry, remoteRootElement, bases)
   }
@@ -183,13 +183,13 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun selectContents(
-      xincludeElement: Element,
-      xincludeEntry: XIncludeEntry,
-      remoteRootElement: Element,
-      bases: Stack<XIncludeEntry>
+    xincludeElement: Element,
+    xincludeEntry: XIncludeEntry,
+    remoteRootElement: Element,
+    bases: Stack<XIncludeEntry>
   ): List<Content> {
     val xPointer = xincludeElement.getAttributeValue(XPOINTER)
-        ?: return listOf(remoteRootElement)
+      ?: return listOf(remoteRootElement)
 
     val pointerMatcher = XPOINTER_PATTERN.matcher(xPointer)
     if (!pointerMatcher.matches()) {
@@ -212,7 +212,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     val subTagName = selectorMatcher.group(2)?.drop(1)
     val selectedChildren = if (subTagName != null) {
       val child = remoteRootElement.getChild(subTagName)
-          ?: throw XIncluderException(bases, "No elements are selected in document '${xincludeEntry.documentPath}' referenced in ${xincludeElement.getElementNameAndAttributes()}")
+        ?: throw XIncluderException(bases, "No elements are selected in document '${xincludeEntry.documentPath}' referenced in ${xincludeElement.getElementNameAndAttributes()}")
       child.content
     } else {
       remoteRootElement.content
@@ -227,7 +227,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun isIncludeElement(element: Element): Boolean =
-      element.name == INCLUDE && element.namespace == HTTP_XINCLUDE_NAMESPACE
+    element.name == INCLUDE && element.namespace == HTTP_XINCLUDE_NAMESPACE
 }
 
 private const val HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude"

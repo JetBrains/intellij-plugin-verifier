@@ -28,10 +28,10 @@ class AndroidStudioIdeRepository : IdeRepository {
 
   private val feedConnector by lazy {
     Retrofit.Builder()
-        .baseUrl("https://unused.com")
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(FeedConnector::class.java)
+      .baseUrl("https://unused.com")
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(FeedConnector::class.java)
   }
 
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
@@ -84,20 +84,20 @@ private interface FeedConnector {
 private data class Feed(@SerializedName("entries") val entries: List<FeedEntry>)
 
 private data class FeedEntry(
-    @SerializedName("build")
-    val build: String,
+  @SerializedName("build")
+  val build: String,
 
-    @SerializedName("version")
-    val version: String,
+  @SerializedName("version")
+  val version: String,
 
-    @SerializedName("package")
-    val packageInfo: PackageInfo
+  @SerializedName("package")
+  val packageInfo: PackageInfo
 )
 
 private data class PackageInfo(
-    @SerializedName("type")
-    val type: String,
+  @SerializedName("type")
+  val type: String,
 
-    @SerializedName("url")
-    val url: URL
+  @SerializedName("url")
+  val url: URL
 )

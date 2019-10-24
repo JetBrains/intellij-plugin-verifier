@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class InvokeStaticOnInstanceMethodProblem(
-    val methodReference: MethodReference,
-    val resolvedMethod: MethodLocation,
-    val caller: MethodLocation
+  val methodReference: MethodReference,
+  val resolvedMethod: MethodLocation,
+  val caller: MethodLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -19,13 +19,13 @@ class InvokeStaticOnInstanceMethodProblem(
 
   override val fullDescription
     get() = ("Method {0} contains *invokestatic* instruction referencing instance method {1}, " +
-        "what might have been caused by incompatible change of the method from static to instance. " +
-        "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(caller, resolvedMethod)
+      "what might have been caused by incompatible change of the method from static to instance. " +
+      "This can lead to **IncompatibleClassChangeError** exception at runtime.").formatMessage(caller, resolvedMethod)
 
   override fun equals(other: Any?) = other is InvokeStaticOnInstanceMethodProblem
-      && methodReference == other.methodReference
-      && resolvedMethod == other.resolvedMethod
-      && caller == other.caller
+    && methodReference == other.methodReference
+    && resolvedMethod == other.resolvedMethod
+    && caller == other.caller
 
   override fun hashCode() = Objects.hash(methodReference, resolvedMethod, caller)
 }

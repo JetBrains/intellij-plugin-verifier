@@ -19,21 +19,21 @@ enum class ExtensionPoint(val extensionPointName: String) {
  * E.g. `com.intellij.openapi.fileTypes.FileTypeFactory` allows to specify multiple supported file types in one instance.
  */
 data class ExtensionPointFeatures(
-    /**
-     * Extension point which allows to specify custom plugin implementation
-     * of the IntelliJ API class for a specific feature type
-     */
-    val extensionPoint: ExtensionPoint,
-    /**
-     * Extracted feature name:
-     *
-     * For configuration type it is the ID of the configuration (e.g. JUnit)
-     *
-     * For facet types it is the ID of the facet (e.g. django)
-     *
-     * For file types it is the file extension pattern (e.g. '*.php', '*.scala')
-     *
-     * For artifact type it is the ID of the artifact (e.g. war, apk)
-     */
-    val featureNames: List<String>
+  /**
+   * Extension point which allows to specify custom plugin implementation
+   * of the IntelliJ API class for a specific feature type
+   */
+  val extensionPoint: ExtensionPoint,
+  /**
+   * Extracted feature name:
+   *
+   * For configuration type it is the ID of the configuration (e.g. JUnit)
+   *
+   * For facet types it is the ID of the facet (e.g. django)
+   *
+   * For file types it is the file extension pattern (e.g. '*.php', '*.scala')
+   *
+   * For artifact type it is the ID of the artifact (e.g. war, apk)
+   */
+  val featureNames: List<String>
 )

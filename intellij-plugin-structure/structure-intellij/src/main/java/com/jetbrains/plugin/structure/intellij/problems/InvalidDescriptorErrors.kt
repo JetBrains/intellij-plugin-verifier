@@ -5,8 +5,8 @@ import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class PropertyWithDefaultValue(
-    descriptorPath: String,
-    private val defaultProperty: DefaultProperty
+  descriptorPath: String,
+  private val defaultProperty: DefaultProperty
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   enum class DefaultProperty(val propertyName: String, val defaultValue: String) {
@@ -49,8 +49,8 @@ class SinceBuildNotSpecified(descriptorPath: String) : InvalidDescriptorProblem(
 }
 
 class InvalidSinceBuild(
-    descriptorPath: String,
-    private val sinceBuild: String
+  descriptorPath: String,
+  private val sinceBuild: String
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "invalid since build: $sinceBuild"
@@ -60,8 +60,8 @@ class InvalidSinceBuild(
 }
 
 class InvalidUntilBuild(
-    descriptorPath: String,
-    private val untilBuild: String
+  descriptorPath: String,
+  private val untilBuild: String
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "invalid until build: $untilBuild"
@@ -71,9 +71,9 @@ class InvalidUntilBuild(
 }
 
 class SinceBuildGreaterThanUntilBuild(
-    descriptorPath: String,
-    private val sinceBuild: IdeVersion,
-    private val untilBuild: IdeVersion
+  descriptorPath: String,
+  private val sinceBuild: IdeVersion,
+  private val untilBuild: IdeVersion
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "since build $sinceBuild is greater than until build $untilBuild"
@@ -83,24 +83,24 @@ class SinceBuildGreaterThanUntilBuild(
 }
 
 class ErroneousSinceBuild(
-    descriptorPath: String,
-    val sinceBuild: IdeVersion
+  descriptorPath: String,
+  val sinceBuild: IdeVersion
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "since build '$sinceBuild' must match the multi-part build number format '<branch>.<build_number>.<version>', for example '182.4132.789'. " +
-        "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
+      "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
 
   override val level: Level
     get() = Level.ERROR
 }
 
 class ErroneousUntilBuild(
-    descriptorPath: String,
-    val untilBuild: IdeVersion
+  descriptorPath: String,
+  val untilBuild: IdeVersion
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "until build '$untilBuild' must match the multi-part build number format, for example '182.4132.789' or '182.*'. " +
-        "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
+      "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
 
   override val level: Level
     get() = Level.ERROR
@@ -115,10 +115,10 @@ class XIncludeResolutionErrors(descriptorPath: String, private val details: Stri
 }
 
 class TooLongPropertyValue(
-    descriptorPath: String,
-    private val propertyName: String,
-    private val propertyValueLength: Int,
-    private val maxLength: Int
+  descriptorPath: String,
+  private val propertyName: String,
+  private val propertyValueLength: Int,
+  private val maxLength: Int
 ) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "value of property '$propertyName' is too long. Its length is $propertyValueLength which is more than maximum $maxLength characters long"

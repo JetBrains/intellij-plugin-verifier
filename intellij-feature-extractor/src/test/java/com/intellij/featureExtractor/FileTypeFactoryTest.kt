@@ -12,8 +12,8 @@ class FileTypeFactoryTest : FeatureExtractorTestBase() {
     resetPluginExtensionPoint(ExtensionPoint.FILE_TYPE_FACTORY, className)
     val features = FileTypeFactoryExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE_FACTORY, expectedExtensions)),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE_FACTORY, expectedExtensions)),
+      features
     )
   }
 

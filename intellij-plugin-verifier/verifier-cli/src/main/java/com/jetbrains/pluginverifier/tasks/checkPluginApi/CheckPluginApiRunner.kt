@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
-import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.TaskParameters
@@ -16,18 +16,18 @@ class CheckPluginApiRunner : CommandRunner() {
   override val commandName: String = "check-plugin-api"
 
   override fun getParametersBuilder(
-      pluginRepository: PluginRepository,
-      ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache,
-      reportage: PluginVerificationReportage
+    pluginRepository: PluginRepository,
+    ideFilesBank: IdeFilesBank,
+    pluginDetailsCache: PluginDetailsCache,
+    reportage: PluginVerificationReportage
   ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider, reportage)
 
   override fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository) =
-      CheckPluginApiTask(parameters as CheckPluginApiParams)
+    CheckPluginApiTask(parameters as CheckPluginApiParams)
 
   override fun createTaskResultsPrinter(
-      outputOptions: OutputOptions,
-      pluginRepository: PluginRepository
+    outputOptions: OutputOptions,
+    pluginRepository: PluginRepository
   ) = TwoTargetsResultPrinter(outputOptions)
 
 }

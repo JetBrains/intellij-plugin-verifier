@@ -19,51 +19,51 @@ import java.util.concurrent.TimeUnit
  * @param timeUnit - time unit of [timeOut]
  */
 fun createOkHttpClient(
-    needLog: Boolean,
-    timeOut: Long,
-    timeUnit: TimeUnit
+  needLog: Boolean,
+  timeOut: Long,
+  timeUnit: TimeUnit
 ) = OkHttpClient.Builder()
-    .dispatcher(
-        Dispatcher(
-            Executors.newCachedThreadPool(
-                ThreadFactoryBuilder()
-                    .setNameFormat("ok-http-thread-%d")
-                    .setDaemon(true)
-                    .build()
-            )
-        )
+  .dispatcher(
+    Dispatcher(
+      Executors.newCachedThreadPool(
+        ThreadFactoryBuilder()
+          .setNameFormat("ok-http-thread-%d")
+          .setDaemon(true)
+          .build()
+      )
     )
-    .addInterceptor { chain: Interceptor.Chain ->
-      // Manually handle PUT redirect,
-      // can be removed when this issue will be fixed https://github.com/square/okhttp/issues/3111
-      val request = chain.request()
-      val response = chain.proceed(request)
-      if (response.code() != 307 && response.code() != 308) {
-        return@addInterceptor response
-      }
-      val location = response.header(LOCATION) ?: return@addInterceptor response
-      val locationUrl = if (location.startsWith("/")) {
-        //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
-        request.url().resolve(location).url()
-      } else {
-        URL(location)
-      }
-      val redirectedRequest = request.newBuilder().url(locationUrl).removeHeader("Authorization").build()
-      chain.proceed(redirectedRequest)
+  )
+  .addInterceptor { chain: Interceptor.Chain ->
+    // Manually handle PUT redirect,
+    // can be removed when this issue will be fixed https://github.com/square/okhttp/issues/3111
+    val request = chain.request()
+    val response = chain.proceed(request)
+    if (response.code() != 307 && response.code() != 308) {
+      return@addInterceptor response
     }
-    .connectTimeout(timeOut, timeUnit)
-    .readTimeout(timeOut, timeUnit)
-    .writeTimeout(timeOut, timeUnit)
-    .addInterceptor(
-        HttpLoggingInterceptor().setLevel(
-            if (needLog) {
-              HttpLoggingInterceptor.Level.BASIC
-            } else {
-              HttpLoggingInterceptor.Level.NONE
-            }
-        )
+    val location = response.header(LOCATION) ?: return@addInterceptor response
+    val locationUrl = if (location.startsWith("/")) {
+      //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
+      request.url().resolve(location).url()
+    } else {
+      URL(location)
+    }
+    val redirectedRequest = request.newBuilder().url(locationUrl).removeHeader("Authorization").build()
+    chain.proceed(redirectedRequest)
+  }
+  .connectTimeout(timeOut, timeUnit)
+  .readTimeout(timeOut, timeUnit)
+  .writeTimeout(timeOut, timeUnit)
+  .addInterceptor(
+    HttpLoggingInterceptor().setLevel(
+      if (needLog) {
+        HttpLoggingInterceptor.Level.BASIC
+      } else {
+        HttpLoggingInterceptor.Level.NONE
+      }
     )
-    .build()!!
+  )
+  .build()!!
 
 /**
  * `equals()` for URL that doesn't require internet connection in contrast to [URL.equals]

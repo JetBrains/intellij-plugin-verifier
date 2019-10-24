@@ -9,8 +9,8 @@ abstract class PluginFileError : PluginProblem() {
 }
 
 class IncorrectPluginFile(
-    private val fileName: String,
-    private val expectedFileType: String
+  private val fileName: String,
+  private val expectedFileType: String
 ) : PluginFileError() {
   override val message
     get() = "Incorrect plugin file $fileName. Must be a $expectedFileType"
@@ -21,7 +21,7 @@ class UnableToExtractZip : PluginFileError() {
     get() = "Unable to extract plugin zip file"
 }
 
-class PluginFileSizeIsTooLarge(private val sizeLimit: Long): PluginFileError() {
+class PluginFileSizeIsTooLarge(private val sizeLimit: Long) : PluginFileError() {
   override val message
     get() = "Plugin file size is too large. Maximum allowed size is " + FileUtils.byteCountToDisplaySize(sizeLimit)
 }

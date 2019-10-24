@@ -19,7 +19,7 @@ class TypeGraph {
   }
 
   fun getEdgesTo(to: ClassName): Set<ClassName> =
-      backTypeEdges[to].orEmpty()
+    backTypeEdges[to].orEmpty()
 }
 
 class ReachabilityGraph(private val graph: TypeGraph) {
@@ -72,9 +72,9 @@ class ReachabilityGraph(private val graph: TypeGraph) {
 
 
 fun buildClassReachabilityGraph(
-    idePlugin: IdePlugin,
-    pluginResolver: Resolver,
-    dependenciesGraph: DependenciesGraph
+  idePlugin: IdePlugin,
+  pluginResolver: Resolver,
+  dependenciesGraph: DependenciesGraph
 ): ReachabilityGraph {
   val typeGraph = buildTypeGraph(pluginResolver)
   val reachabilityGraph = ReachabilityGraph(typeGraph)

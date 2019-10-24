@@ -12,25 +12,25 @@ import org.objectweb.asm.tree.AbstractInsnNode
 
 interface ApiUsageProcessor {
   fun processClassReference(
-      classReference: ClassReference,
-      resolvedClass: ClassFile,
-      context: VerificationContext,
-      referrer: ClassFileMember
+    classReference: ClassReference,
+    resolvedClass: ClassFile,
+    context: VerificationContext,
+    referrer: ClassFileMember
   ) = Unit
 
   fun processMethodInvocation(
-      methodReference: MethodReference,
-      resolvedMethod: Method,
-      instructionNode: AbstractInsnNode,
-      callerMethod: Method,
-      context: VerificationContext
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    instructionNode: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
   ) = Unit
 
   fun processFieldAccess(
-      fieldReference: FieldReference,
-      resolvedField: Field,
-      context: VerificationContext,
-      callerMethod: Method
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    context: VerificationContext,
+    callerMethod: Method
   ) = Unit
 
 }

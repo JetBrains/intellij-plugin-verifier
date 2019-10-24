@@ -30,9 +30,9 @@ data class UnmarkedExperimentalIn(override val ideVersion: IdeVersion) : ApiEven
 }
 
 data class MarkedDeprecatedIn(
-    override val ideVersion: IdeVersion,
-    val forRemoval: Boolean,
-    val removalVersion: String?
+  override val ideVersion: IdeVersion,
+  val forRemoval: Boolean,
+  val removalVersion: String?
 ) : ApiEvent() {
   override fun toString() = buildString {
     append("Marked deprecated")

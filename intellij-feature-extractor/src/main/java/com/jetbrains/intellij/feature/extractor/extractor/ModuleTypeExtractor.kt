@@ -23,7 +23,7 @@ class ModuleTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.MODULE_TYPE)
-        .mapNotNull { extractModuleType(it, resolver) }
+      .mapNotNull { extractModuleType(it, resolver) }
   }
 
   private fun extractModuleType(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
@@ -35,9 +35,9 @@ class ModuleTypeExtractor : Extractor {
       if (constructor.descriptor == "()V") {
         val isDefaultParentInvocation = constructor.instructions.any {
           it is MethodInsnNode
-              && it.opcode == Opcodes.INVOKESPECIAL
-              && it.owner == classFile.superName
-              && it.desc == "()V"
+            && it.opcode == Opcodes.INVOKESPECIAL
+            && it.owner == classFile.superName
+            && it.desc == "()V"
         }
         val superName = classFile.superName
         if (isDefaultParentInvocation && superName != null) {
@@ -62,19 +62,19 @@ class ModuleTypeExtractor : Extractor {
       val instructionsAsList = constructor.instructions
       val superClassConstructorInitIndex = instructionsAsList.indexOfLast { instructionNode ->
         instructionNode is MethodInsnNode
-            && instructionNode.name == "<init>"
-            && instructionNode.desc == "(Ljava/lang/String;)V"
-            && instructionNode.opcode == Opcodes.INVOKESPECIAL
-            && instructionNode.owner == MODULE_TYPE_CLASS_NAME
+          && instructionNode.name == "<init>"
+          && instructionNode.desc == "(Ljava/lang/String;)V"
+          && instructionNode.opcode == Opcodes.INVOKESPECIAL
+          && instructionNode.owner == MODULE_TYPE_CLASS_NAME
       }
       if (superClassConstructorInitIndex != -1) {
         val constructorFrames = analyzeMethodFrames(constructor)
         val moduleIdArgumentValue = constructorFrames[superClassConstructorInitIndex].getOnStack(0)
         val moduleIdPassedToSuperClass = evaluateConstantString(
-            moduleIdArgumentValue,
-            resolver,
-            constructorFrames,
-            instructionsAsList
+          moduleIdArgumentValue,
+          resolver,
+          constructorFrames,
+          instructionsAsList
         )
         if (moduleIdPassedToSuperClass != null) {
           return moduleIdPassedToSuperClass
@@ -88,11 +88,11 @@ class ModuleTypeExtractor : Extractor {
             val moduleIdCalleeStackIndex = constructor.methodParameters.size - moduleIdParameterIndex
 
             val passedModuleId = findDelegatingConstructorAndExtractPassedValue(
-                constructor,
-                constructors,
-                classFile,
-                moduleIdCalleeStackIndex,
-                resolver
+              constructor,
+              constructors,
+              classFile,
+              moduleIdCalleeStackIndex,
+              resolver
             )
             if (passedModuleId != null) {
               return passedModuleId
@@ -105,21 +105,21 @@ class ModuleTypeExtractor : Extractor {
   }
 
   private fun findDelegatingConstructorAndExtractPassedValue(
-      thisConstructor: Method,
-      allConstructors: Sequence<Method>,
-      classNode: ClassFile,
-      moduleIdCalleeStackIndex: Int,
-      resolver: Resolver
+    thisConstructor: Method,
+    allConstructors: Sequence<Method>,
+    classNode: ClassFile,
+    moduleIdCalleeStackIndex: Int,
+    resolver: Resolver
   ): String? {
     for (otherConstructor in allConstructors) {
       val otherConstructorInstruction = otherConstructor.instructions
 
       val thisConstructorCallIndex = otherConstructorInstruction.indexOfLast {
         it is MethodInsnNode
-            && it.name == "<init>"
-            && it.desc == thisConstructor.descriptor
-            && it.opcode == Opcodes.INVOKESPECIAL
-            && it.owner == classNode.name
+          && it.name == "<init>"
+          && it.desc == thisConstructor.descriptor
+          && it.opcode == Opcodes.INVOKESPECIAL
+          && it.owner == classNode.name
       }
 
       if (thisConstructorCallIndex != -1) {

@@ -11,23 +11,23 @@ class ExperimentalProcessor : ApiDiffProcessor {
   val unmarkedExperimental: MutableList<ClassFileMember> = arrayListOf()
 
   override fun process(
-      oldMember: ClassFileMember?,
-      newMember: ClassFileMember?,
-      oldResolver: Resolver,
-      newResolver: Resolver
+    oldMember: ClassFileMember?,
+    newMember: ClassFileMember?,
+    oldResolver: Resolver,
+    newResolver: Resolver
   ) {
     if ((oldMember == null || !oldMember.isAccessible || !oldMember.isExperimentalApi(oldResolver))
-        && newMember != null
-        && newMember.isAccessible
-        && newMember.isExperimentalApi(newResolver)
+      && newMember != null
+      && newMember.isAccessible
+      && newMember.isExperimentalApi(newResolver)
     ) {
       markedExperimental += newMember
     }
 
     if (oldMember != null
-        && oldMember.isAccessible
-        && oldMember.isExperimentalApi(oldResolver)
-        && (newMember == null || !newMember.isAccessible || !newMember.isExperimentalApi(newResolver))
+      && oldMember.isAccessible
+      && oldMember.isExperimentalApi(oldResolver)
+      && (newMember == null || !newMember.isAccessible || !newMember.isExperimentalApi(newResolver))
     ) {
       unmarkedExperimental += oldMember
     }

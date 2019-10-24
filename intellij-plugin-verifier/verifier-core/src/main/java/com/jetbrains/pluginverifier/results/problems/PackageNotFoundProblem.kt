@@ -9,8 +9,8 @@ import java.util.*
  * of many independent ones.
  */
 class PackageNotFoundProblem(
-    val packageName: String,
-    val classNotFoundProblems: Set<ClassNotFoundProblem>
+  val packageName: String,
+  val classNotFoundProblems: Set<ClassNotFoundProblem>
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -23,8 +23,8 @@ class PackageNotFoundProblem(
     get() = PackageNotFoundDescriptionBuilder.buildDescription(this)
 
   override fun equals(other: Any?) = other is PackageNotFoundProblem
-      && packageName == other.packageName
-      && classNotFoundProblems == other.classNotFoundProblems
+    && packageName == other.packageName
+    && classNotFoundProblems == other.classNotFoundProblems
 
   override fun hashCode() = Objects.hash(packageName, classNotFoundProblems)
 }

@@ -12,8 +12,8 @@ import java.util.*
  * `The following plugins are incompatible with the current IDE build`.
  */
 class PluginIsMarkedIncompatibleProblem(
-    private val pluginInfo: PluginInfo,
-    private val ideVersion: IdeVersion
+  private val pluginInfo: PluginInfo,
+  private val ideVersion: IdeVersion
 ) : CompatibilityProblem() {
 
   override val problemType: String
@@ -24,14 +24,14 @@ class PluginIsMarkedIncompatibleProblem(
 
   override val fullDescription: String
     get() = "Plugin $pluginInfo is marked as incompatible with $ideVersion in the special file 'brokenPlugins.txt' bundled " +
-        "to the IDE distribution. This option is used to prevent loading of broken plugins, which may lead to IDE startup errors, " +
-        "if the plugins remain locally installed (in config>/plugins directory) and the IDE is updated to newer version where " +
-        "this plugin is no more compatible. The new IDE will refuse to load this plugin with a message " +
-        "'The following plugins are incompatible with the current IDE build: ${pluginInfo.pluginId}' or similar."
+      "to the IDE distribution. This option is used to prevent loading of broken plugins, which may lead to IDE startup errors, " +
+      "if the plugins remain locally installed (in config>/plugins directory) and the IDE is updated to newer version where " +
+      "this plugin is no more compatible. The new IDE will refuse to load this plugin with a message " +
+      "'The following plugins are incompatible with the current IDE build: ${pluginInfo.pluginId}' or similar."
 
   override fun equals(other: Any?) = other is PluginIsMarkedIncompatibleProblem &&
-      pluginInfo == other.pluginInfo &&
-      ideVersion == other.ideVersion
+    pluginInfo == other.pluginInfo &&
+    ideVersion == other.ideVersion
 
   override fun hashCode() = Objects.hash(pluginInfo, ideVersion)
 }

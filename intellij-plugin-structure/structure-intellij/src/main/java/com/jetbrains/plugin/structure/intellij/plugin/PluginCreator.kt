@@ -51,13 +51,13 @@ internal class PluginCreator {
   private val problems = arrayListOf<PluginProblem>()
 
   constructor(
-      descriptorPath: String,
-      validateDescriptor: Boolean,
-      document: Document,
-      documentUrl: URL,
-      pathResolver: ResourceResolver,
-      pluginFile: File,
-      icons: List<PluginIcon>
+    descriptorPath: String,
+    validateDescriptor: Boolean,
+    document: Document,
+    documentUrl: URL,
+    pathResolver: ResourceResolver,
+    pluginFile: File,
+    icons: List<PluginIcon>
   ) {
     this.descriptorPath = descriptorPath
     this.pluginFile = pluginFile
@@ -85,9 +85,9 @@ internal class PluginCreator {
     }
 
   fun addOptionalDescriptor(
-      pluginDependency: PluginDependency,
-      configurationFile: String,
-      optionalDependencyCreator: PluginCreator
+    pluginDependency: PluginDependency,
+    configurationFile: String,
+    optionalDependencyCreator: PluginCreator
   ) {
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
@@ -98,8 +98,8 @@ internal class PluginCreator {
       plugin.projectListeners.addAll((optionalPlugin as? IdePluginImpl)?.projectListeners.orEmpty())
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
-          .errorsAndWarnings
-          .filter { e -> e.level === PluginProblem.Level.ERROR }
+        .errorsAndWarnings
+        .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
     }
   }
@@ -165,9 +165,9 @@ internal class PluginCreator {
     if (productDescriptorBean != null) {
 
       productDescriptor = ProductDescriptor(
-          productDescriptorBean.code,
-          LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
-          Integer.parseInt(productDescriptorBean.releaseVersion)
+        productDescriptorBean.code,
+        LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
+        Integer.parseInt(productDescriptorBean.releaseVersion)
       )
     }
     changeNotes = bean.changeNotes
@@ -266,11 +266,11 @@ internal class PluginCreator {
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
     dependencies.map { it.id }
-        .groupingBy { it }
-        .eachCount()
-        .filterValues { it > 1 }
-        .map { it.key }
-        .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
+      .groupingBy { it }
+      .eachCount()
+      .filterValues { it > 1 }
+      .map { it.key }
+      .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
 
     if (dependencies.count { it.isModule } == 0) {
       registerProblem(NoModuleDependencies(descriptorPath))
@@ -309,11 +309,11 @@ internal class PluginCreator {
   }
 
   private fun resolveDocumentAndValidateBean(
-      originalDocument: Document,
-      documentUrl: URL,
-      documentPath: String,
-      pathResolver: ResourceResolver,
-      icons: List<PluginIcon>
+    originalDocument: Document,
+    documentUrl: URL,
+    documentPath: String,
+    pathResolver: ResourceResolver,
+    icons: List<PluginIcon>
   ): IdePluginImpl? {
     val document = resolveXIncludesOfDocument(originalDocument, documentUrl, documentPath, pathResolver) ?: return null
     val bean = readDocumentIntoXmlBean(document) ?: return null
@@ -361,10 +361,10 @@ internal class PluginCreator {
   }
 
   private fun resolveXIncludesOfDocument(
-      document: Document,
-      documentUrl: URL,
-      documentPath: String,
-      pathResolver: ResourceResolver
+    document: Document,
+    documentUrl: URL,
+    documentPath: String,
+    pathResolver: ResourceResolver
   ): Document? = try {
     XIncluder.resolveXIncludes(document, documentUrl, documentPath, pathResolver)
   } catch (e: XIncluderException) {

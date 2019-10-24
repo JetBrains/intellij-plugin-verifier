@@ -19,7 +19,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
     fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
-        TeamcityPluginManager(validateBean)
+      TeamcityPluginManager(validateBean)
 
   }
 

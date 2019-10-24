@@ -117,7 +117,7 @@ internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Dec
   }
 
   override fun nextEntryStream(): InputStream? =
-      zipFile.getInputStream(this.entry)
+    zipFile.getInputStream(this.entry)
 
   override fun closeStream() {
     zipFile.close()

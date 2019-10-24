@@ -25,23 +25,23 @@ internal interface MarketplaceConnector {
 }
 
 internal data class JsonUpdateInfo(
-    @SerializedName("pluginId") val pluginId: String,
-    @SerializedName("pluginName") val pluginName: String,
-    @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
-    @SerializedName("updateId") val updateId: Int,
-    @SerializedName("vendor") val vendor: String,
-    @SerializedName("since") val sinceString: String,
-    @SerializedName("until") val untilString: String,
-    @SerializedName("sourceCodeUrl") val sourceCodeUrl: String?,
-    @SerializedName("tags") val tags: List<String>?
+  @SerializedName("pluginId") val pluginId: String,
+  @SerializedName("pluginName") val pluginName: String,
+  @SerializedName("version", alternate = arrayOf("pluginVersion")) val version: String,
+  @SerializedName("updateId") val updateId: Int,
+  @SerializedName("vendor") val vendor: String,
+  @SerializedName("since") val sinceString: String,
+  @SerializedName("until") val untilString: String,
+  @SerializedName("sourceCodeUrl") val sourceCodeUrl: String?,
+  @SerializedName("tags") val tags: List<String>?
 )
 
 internal data class JsonUpdatesIdsHolder(
-    @SerializedName("updates")
-    val updateIds: List<JsonUpdateIdHolder>
+  @SerializedName("updates")
+  val updateIds: List<JsonUpdateIdHolder>
 )
 
 internal data class JsonUpdateIdHolder(
-    @SerializedName("updateId", alternate = ["id"])
-    val updateId: Int
+  @SerializedName("updateId", alternate = ["id"])
+  val updateId: Int
 )

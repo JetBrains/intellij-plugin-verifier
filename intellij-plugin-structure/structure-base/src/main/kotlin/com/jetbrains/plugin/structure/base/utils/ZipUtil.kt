@@ -30,10 +30,10 @@ import java.io.InputStream
  */
 @Throws(IOException::class)
 fun archiveDirectory(
-    directory: File,
-    destination: File,
-    includeDirectory: Boolean = true,
-    includeEmptyDirectories: Boolean = true
+  directory: File,
+  destination: File,
+  includeDirectory: Boolean = true,
+  includeEmptyDirectories: Boolean = true
 ) {
   destination.deleteLogged()
   FileUtils.forceMkdirParent(destination.absoluteFile)
@@ -47,10 +47,10 @@ fun archiveDirectory(
 
   builder.enableLogging(ConsoleLogger(Logger.LEVEL_ERROR, "Archive logger"))
   builder.addFileSet(
-      DefaultFileSet
-          .fileSet(directory)
-          .prefixed(if (includeDirectory) directory.name + "/" else "")
-          .includeEmptyDirs(includeEmptyDirectories)
+    DefaultFileSet
+      .fileSet(directory)
+      .prefixed(if (includeDirectory) directory.name + "/" else "")
+      .includeEmptyDirs(includeEmptyDirectories)
   )
 
   builder.destFile = destination.absoluteFile

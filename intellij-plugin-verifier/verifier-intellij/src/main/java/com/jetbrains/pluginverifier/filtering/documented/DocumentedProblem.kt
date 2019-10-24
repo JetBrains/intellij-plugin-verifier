@@ -25,12 +25,12 @@ interface DocumentedProblem {
  */
 data class DocClassRemoved(val className: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) =
-      when (problem) {
-        is ClassNotFoundProblem -> problem.unresolved.className == className
-        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass(className)
-        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass(className)
-        else -> false
-      }
+    when (problem) {
+      is ClassNotFoundProblem -> problem.unresolved.className == className
+      is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass(className)
+      is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass(className)
+      else -> false
+    }
 }
 
 /**
@@ -41,9 +41,9 @@ data class DocClassRemoved(val className: String) : DocumentedProblem {
  */
 data class DocMethodRemoved(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is MethodNotFoundProblem
-          && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+    problem is MethodNotFoundProblem
+      && problem.unresolvedMethod.methodName == methodName
+      && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
 }
 
 /**
@@ -54,13 +54,13 @@ data class DocMethodRemoved(val hostClass: String, val methodName: String) : Doc
  */
 data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is MethodNotFoundProblem
-          && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
-          ||
-          problem is MethodNotImplementedProblem
-          && problem.abstractMethod.methodName == methodName
-          && problem.abstractMethod.hostClass.className == hostClass
+    problem is MethodNotFoundProblem
+      && problem.unresolvedMethod.methodName == methodName
+      && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+      ||
+      problem is MethodNotImplementedProblem
+      && problem.abstractMethod.methodName == methodName
+      && problem.abstractMethod.hostClass.className == hostClass
 }
 
 /**
@@ -68,7 +68,7 @@ data class DocMethodReturnTypeChanged(val hostClass: String, val methodName: Str
  */
 data class DocMethodVisibilityChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is IllegalMethodAccessProblem && problem.inaccessibleMethod.hostClass.className == hostClass && problem.inaccessibleMethod.methodName == methodName
+    problem is IllegalMethodAccessProblem && problem.inaccessibleMethod.hostClass.className == hostClass && problem.inaccessibleMethod.methodName == methodName
 }
 
 /**
@@ -76,7 +76,7 @@ data class DocMethodVisibilityChanged(val hostClass: String, val methodName: Str
  */
 data class DocMethodMarkedFinal(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is OverridingFinalMethodProblem && problem.finalMethod.hostClass.className == hostClass && problem.finalMethod.methodName == methodName
+    problem is OverridingFinalMethodProblem && problem.finalMethod.hostClass.className == hostClass && problem.finalMethod.methodName == methodName
 }
 
 /**
@@ -84,11 +84,11 @@ data class DocMethodMarkedFinal(val hostClass: String, val methodName: String) :
  */
 data class DocFinalMethodInherited(val changedClass: String, val newParent: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is OverridingFinalMethodProblem
-          && problem.finalMethod.methodName == methodName
-          && problem.finalMethod.hostClass.className == newParent
-          && context.classResolver.isSubclassOrSelf(problem.invalidClass.className, changedClass)
-          && context.classResolver.isSubclassOf(changedClass, newParent)
+    problem is OverridingFinalMethodProblem
+      && problem.finalMethod.methodName == methodName
+      && problem.finalMethod.hostClass.className == newParent
+      && context.classResolver.isSubclassOrSelf(problem.invalidClass.className, changedClass)
+      && context.classResolver.isSubclassOf(changedClass, newParent)
 }
 
 /**
@@ -99,13 +99,13 @@ data class DocFinalMethodInherited(val changedClass: String, val newParent: Stri
  */
 data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is MethodNotFoundProblem
-          && problem.unresolvedMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
-          ||
-          problem is MethodNotImplementedProblem
-          && problem.abstractMethod.methodName == methodName
-          && problem.abstractMethod.hostClass.className == hostClass
+    problem is MethodNotFoundProblem
+      && problem.unresolvedMethod.methodName == methodName
+      && context.classResolver.isSubclassOrSelf(problem.unresolvedMethod.hostClass.className, hostClass)
+      ||
+      problem is MethodNotImplementedProblem
+      && problem.abstractMethod.methodName == methodName
+      && problem.abstractMethod.hostClass.className == hostClass
 }
 
 /**
@@ -116,9 +116,9 @@ data class DocMethodParameterTypeChanged(val hostClass: String, val methodName: 
  */
 data class DocFieldRemoved(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is FieldNotFoundProblem
-          && problem.unresolvedField.fieldName == fieldName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
+    problem is FieldNotFoundProblem
+      && problem.unresolvedField.fieldName == fieldName
+      && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
 }
 
 /**
@@ -126,9 +126,9 @@ data class DocFieldRemoved(val hostClass: String, val fieldName: String) : Docum
  */
 data class DocPropertyRemoved(val propertyName: String, val bundleName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is MissingPropertyReferenceProblem
-          && problem.propertyKey == propertyName
-          && problem.bundleBaseName == bundleName
+    problem is MissingPropertyReferenceProblem
+      && problem.propertyKey == propertyName
+      && problem.bundleBaseName == bundleName
 }
 
 /**
@@ -139,9 +139,9 @@ data class DocPropertyRemoved(val propertyName: String, val bundleName: String) 
  */
 data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is FieldNotFoundProblem
-          && problem.unresolvedField.fieldName == fieldName
-          && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
+    problem is FieldNotFoundProblem
+      && problem.unresolvedField.fieldName == fieldName
+      && context.classResolver.isSubclassOrSelf(problem.unresolvedField.hostClass.className, hostClass)
 }
 
 /**
@@ -149,7 +149,7 @@ data class DocFieldTypeChanged(val hostClass: String, val fieldName: String) : D
  */
 data class DocFieldVisibilityChanged(val hostClass: String, val fieldName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is IllegalFieldAccessProblem && problem.inaccessibleField.hostClass.className == hostClass && problem.inaccessibleField.fieldName == fieldName
+    problem is IllegalFieldAccessProblem && problem.inaccessibleField.hostClass.className == hostClass && problem.inaccessibleField.fieldName == fieldName
 }
 
 /**
@@ -160,13 +160,13 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
   private fun String.belongsToPackage() = startsWith("$packageName/")
 
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) =
-      when (problem) {
-        is PackageNotFoundProblem -> problem.packageName == packageName || problem.packageName.belongsToPackage()
-        is ClassNotFoundProblem -> problem.unresolved.className.belongsToPackage()
-        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.belongsToPackage() }
-        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.belongsToPackage() }
-        else -> false
-      }
+    when (problem) {
+      is PackageNotFoundProblem -> problem.packageName == packageName || problem.packageName.belongsToPackage()
+      is ClassNotFoundProblem -> problem.unresolved.className.belongsToPackage()
+      is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.belongsToPackage() }
+      is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.belongsToPackage() }
+      else -> false
+    }
 }
 
 /**
@@ -174,9 +174,9 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
  */
 data class DocAbstractMethodAdded(val hostClass: String, val methodName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext): Boolean =
-      problem is MethodNotImplementedProblem
-          && problem.abstractMethod.methodName == methodName
-          && context.classResolver.isSubclassOrSelf(problem.incompleteClass.className, hostClass)
+    problem is MethodNotImplementedProblem
+      && problem.abstractMethod.methodName == methodName
+      && context.classResolver.isSubclassOrSelf(problem.incompleteClass.className, hostClass)
 }
 
 /**
@@ -184,12 +184,12 @@ data class DocAbstractMethodAdded(val hostClass: String, val methodName: String)
  */
 data class DocClassMovedToPackage(val oldClassName: String, val newPackageName: String) : DocumentedProblem {
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) =
-      when (problem) {
-        is ClassNotFoundProblem -> problem.unresolved.className == oldClassName
-        is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it == oldClassName }
-        is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it == oldClassName }
-        else -> false
-      }
+    when (problem) {
+      is ClassNotFoundProblem -> problem.unresolved.className == oldClassName
+      is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it == oldClassName }
+      is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it == oldClassName }
+      else -> false
+    }
 }
 
 /**
@@ -212,10 +212,10 @@ object DocConstructorInjectionNotSupported : NoOpValidatingDocumentedProblem()
  * <class name>.<method name> method <class name> parameter marked <class name>
  */
 data class DocMethodParameterMarkedWithAnnotation(
-    val hostClass: String,
-    val methodName: String,
-    val parameterClassName: String,
-    val annotationName: String
+  val hostClass: String,
+  val methodName: String,
+  val parameterClassName: String,
+  val annotationName: String
 ) : NoOpValidatingDocumentedProblem()
 
 /**
@@ -233,14 +233,14 @@ data class DocSuperclassChanged(val className: String, val oldSuperClassName: St
  * the class [className].
  */
 private fun MethodReference.doesMethodDependOnClass(className: String) =
-    doesMethodDependOnClass { it == className }
+  doesMethodDependOnClass { it == className }
 
 /**
  * Checks if the field's signature of _this_ [FieldReference] contains
  * the class [className].
  */
 private fun FieldReference.doesFieldDependOnClass(className: String) =
-    doesFieldDependOnClass { it == className }
+  doesFieldDependOnClass { it == className }
 
 /**
  * Checks if the method's signature of _this_ [MethodReference] contains

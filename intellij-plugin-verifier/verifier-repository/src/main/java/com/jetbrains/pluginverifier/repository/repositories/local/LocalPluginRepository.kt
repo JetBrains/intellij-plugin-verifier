@@ -17,22 +17,22 @@ class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = 
   }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
-      plugins.filter { it.isCompatibleWith(ideVersion) }
-          .groupBy { it.pluginId }
-          .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
-          .values.toList()
+    plugins.filter { it.isCompatibleWith(ideVersion) }
+      .groupBy { it.pluginId }
+      .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
+      .values.toList()
 
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      plugins.filter { it.isCompatibleWith(ideVersion) && it.pluginId == pluginId }
+    plugins.filter { it.isCompatibleWith(ideVersion) && it.pluginId == pluginId }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxWith(VERSION_COMPARATOR)
+    getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxWith(VERSION_COMPARATOR)
 
   override fun getAllVersionsOfPlugin(pluginId: String) =
-      plugins.filter { it.pluginId == pluginId }
+    plugins.filter { it.pluginId == pluginId }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
-      plugins.find { moduleId in it.definedModules }?.pluginId
+    plugins.find { moduleId in it.definedModules }?.pluginId
 
   override fun toString() = "Local Plugin Repository"
 

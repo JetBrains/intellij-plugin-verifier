@@ -3,9 +3,9 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.filter.ClassFilter
 import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
+import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.ExternalAnnotationsApiReportWriter
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -65,9 +65,11 @@ class IdeDiffCommand : Command {
     @set:Argument("jdk-path", alias = "jp", description = "Path to JDK home directory (e.g. /usr/lib/jvm/java-8-oracle). If not specified, JAVA_HOME will be used.")
     var jdkPathStr: String? = null
 
-    @set:Argument("packages", delimiter = ";", description = "Semicolon (';') separated list of packages to be processed. " +
-        "By default it is equal to \"org.jetbrains;com.jetbrains;org.intellij;com.intellij\". " +
-        "If an empty package is specified using \"\", all packages will be processed.")
+    @set:Argument(
+      "packages", delimiter = ";", description = "Semicolon (';') separated list of packages to be processed. " +
+      "By default it is equal to \"org.jetbrains;com.jetbrains;org.intellij;com.intellij\". " +
+      "If an empty package is specified using \"\", all packages will be processed."
+    )
     var packagesArray: Array<String> = arrayOf("org.jetbrains", "com.jetbrains", "org.intellij", "com.intellij")
 
     fun classFilter(): ClassFilter = PackagesClassFilter(packagesArray.toList())

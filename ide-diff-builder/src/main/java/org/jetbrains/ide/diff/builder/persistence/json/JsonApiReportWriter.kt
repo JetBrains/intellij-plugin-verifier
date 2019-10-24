@@ -16,9 +16,9 @@ class JsonApiReportWriter : ApiReportWriter {
     reportPath.parent.createDir()
     val json = jsonInstance.stringify(ApiReport.serializer(), apiReport)
     Files.newBufferedWriter(
-        reportPath,
-        StandardOpenOption.CREATE,
-        StandardOpenOption.WRITE
+      reportPath,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.WRITE
     ).use { writer ->
       writer.write(json)
     }

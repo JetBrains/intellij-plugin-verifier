@@ -11,9 +11,9 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class ExperimentalClassUsage(
-    override val apiReference: ClassReference,
-    override val apiElement: ClassLocation,
-    override val usageLocation: Location
+  override val apiReference: ClassReference,
+  override val apiElement: ClassLocation,
+  override val usageLocation: Location
 ) : ExperimentalApiUsage() {
 
   override val shortDescription
@@ -29,9 +29,9 @@ class ExperimentalClassUsage(
     }
 
   override fun equals(other: Any?) = other is ExperimentalClassUsage
-      && apiReference == other.apiReference
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiReference == other.apiReference
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation)
 }

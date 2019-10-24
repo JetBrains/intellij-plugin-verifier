@@ -38,9 +38,9 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun addTransitiveDependencies(
-      graph: DirectedGraph<DepVertex, DepEdge>,
-      vertex: DepVertex,
-      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+    graph: DirectedGraph<DepVertex, DepEdge>,
+    vertex: DepVertex,
+    missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
     if (!graph.containsVertex(vertex)) {
       graph.addVertex(vertex)
@@ -72,10 +72,10 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun resolveDependency(
-      vertex: DepVertex,
-      pluginDependency: PluginDependency,
-      graph: DirectedGraph<DepVertex, DepEdge>,
-      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+    vertex: DepVertex,
+    pluginDependency: PluginDependency,
+    graph: DirectedGraph<DepVertex, DepEdge>,
+    missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ): DepVertex? {
     val depId = DepId(pluginDependency.id, pluginDependency.isModule)
 
@@ -106,7 +106,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
         when (val cacheResult = result.pluginDetailsCacheResult) {
           is PluginDetailsCache.Result.Provided -> DepVertex(cacheResult.pluginDetails.idePlugin, result)
           is PluginDetailsCache.Result.InvalidPlugin -> registerMissingDependency(
-              cacheResult.pluginErrors.filter { it.level == PluginProblem.Level.ERROR }.joinToString()
+            cacheResult.pluginErrors.filter { it.level == PluginProblem.Level.ERROR }.joinToString()
           )
           is PluginDetailsCache.Result.Failed -> registerMissingDependency(cacheResult.reason)
           is PluginDetailsCache.Result.FileNotFound -> registerMissingDependency(cacheResult.reason)
@@ -137,10 +137,10 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    * So let's forcibly add Java as an optional dependency for such plugins.
    */
   private fun maybeAddOptionalJavaPluginDependency(
-      plugin: IdePlugin,
-      ide: Ide,
-      graph: DirectedGraph<DepVertex, DepEdge>,
-      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+    plugin: IdePlugin,
+    ide: Ide,
+    graph: DirectedGraph<DepVertex, DepEdge>,
+    missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
     if (ide.getPluginByModule(ALL_MODULES_ID) == null) {
       return
@@ -169,9 +169,9 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    * We would like to emulate this behaviour by forcibly adding such plugins to the verification classpath.
    */
   private fun maybeAddBundledPluginsWithUseIdeaClassLoader(
-      ide: Ide,
-      graph: DirectedGraph<DepVertex, DepEdge>,
-      missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
+    ide: Ide,
+    graph: DirectedGraph<DepVertex, DepEdge>,
+    missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
     for (bundledPlugin in ide.bundledPlugins) {
       if (bundledPlugin.useIdeClassLoader && bundledPlugin.pluginId != null) {
@@ -194,9 +194,9 @@ private data class DepVertex(val plugin: IdePlugin, val dependencyResult: Depend
 }
 
 private data class DepEdge(
-    val dependency: PluginDependency,
-    private val sourceVertex: DepVertex,
-    private val targetVertex: DepVertex
+  val dependency: PluginDependency,
+  private val sourceVertex: DepVertex,
+  private val targetVertex: DepVertex
 ) : DefaultEdge() {
   public override fun getSource() = sourceVertex
 
@@ -210,9 +210,9 @@ private data class DepMissingVertex(val vertex: DepVertex, val pluginDependency:
 private class DepGraph2ApiGraphConverter {
 
   fun convert(
-      graph: DirectedGraph<DepVertex, DepEdge>,
-      startVertex: DepVertex,
-      vertexMissingDependencies: Map<DepId, Set<DepMissingVertex>>
+    graph: DirectedGraph<DepVertex, DepEdge>,
+    startVertex: DepVertex,
+    vertexMissingDependencies: Map<DepId, Set<DepMissingVertex>>
   ): DependenciesGraph {
     val startNode = startVertex.toDependencyNode()
     val vertices = graph.vertexSet().mapNotNull { it.toDependencyNode() }
@@ -225,13 +225,13 @@ private class DepGraph2ApiGraphConverter {
     for ((_, missingDeps) in vertexMissingDependencies) {
       for (missingDep in missingDeps) {
         missingDependencies.getOrPut(missingDep.vertex.toDependencyNode()) { hashSetOf() } +=
-            MissingDependency(missingDep.pluginDependency, missingDep.reason)
+          MissingDependency(missingDep.pluginDependency, missingDep.reason)
       }
     }
     return DependenciesGraph(startNode, vertices, edges, missingDependencies)
   }
 
   private fun DepVertex.toDependencyNode(): DependencyNode =
-      DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>")
+    DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>")
 
 }

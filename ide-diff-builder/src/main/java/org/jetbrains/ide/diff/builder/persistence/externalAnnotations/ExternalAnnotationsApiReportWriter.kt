@@ -96,12 +96,12 @@ class ExternalAnnotationsApiReportWriter : ApiReportWriter {
       val xmlFile = resolveXmlFile(packageName)
       val needStart = !xmlFile.exists() || Files.size(xmlFile) == 0L
       val xmlWriter = ExternalAnnotationsXmlWriter(
-          Files.newBufferedWriter(
-              xmlFile,
-              StandardOpenOption.CREATE,
-              StandardOpenOption.WRITE,
-              StandardOpenOption.APPEND
-          )
+        Files.newBufferedWriter(
+          xmlFile,
+          StandardOpenOption.CREATE,
+          StandardOpenOption.WRITE,
+          StandardOpenOption.APPEND
+        )
       )
       if (needStart) {
         xmlWriter.appendXmlStart()
@@ -261,42 +261,42 @@ private fun MethodSignature.convertMethodSignature(): Triple<String, String, Str
 
   return if (signature.isNullOrEmpty()) {
     Triple(
-        name,
-        rawParamTypes.drop(dropParamsNumber).joinToString(),
-        rawReturnType
+      name,
+      rawParamTypes.drop(dropParamsNumber).joinToString(),
+      rawReturnType
     )
   } else {
     val methodSignature = SigVisitor().also { SignatureReader(signature).accept(it) }.getMethodSignature()
     val formatOptions = FormatOptions(
-        isInterface = false,
-        formalTypeParameters = false,
-        formalTypeParametersBounds = false,
-        methodThrows = false,
-        internalNameConverter = toFullJavaClassName,
+      isInterface = false,
+      formalTypeParameters = false,
+      formalTypeParametersBounds = false,
+      methodThrows = false,
+      internalNameConverter = toFullJavaClassName,
 
-        typeArguments = true,
-        superClass = true,
-        superInterfaces = true,
+      typeArguments = true,
+      superClass = true,
+      superInterfaces = true,
 
-        /**
-         * Type arguments in method signature parameters and return type
-         * are not separated with ", " but with ",".
-         * This is due to "canonical" presentation of those parameters
-         * used in [com.intellij.psi.util.PsiFormatUtil#formatType].
-         */
+      /**
+       * Type arguments in method signature parameters and return type
+       * are not separated with ", " but with ",".
+       * This is due to "canonical" presentation of those parameters
+       * used in [com.intellij.psi.util.PsiFormatUtil#formatType].
+       */
 
-        /**
-         * Type arguments in method signature parameters and return type
-         * are not separated with ", " but with ",".
-         * This is due to "canonical" presentation of those parameters
-         * used in [com.intellij.psi.util.PsiFormatUtil#formatType].
-         */
-        typeArgumentsSeparator = ","
+      /**
+       * Type arguments in method signature parameters and return type
+       * are not separated with ", " but with ",".
+       * This is due to "canonical" presentation of those parameters
+       * used in [com.intellij.psi.util.PsiFormatUtil#formatType].
+       */
+      typeArgumentsSeparator = ","
     )
     Triple(
-        name,
-        methodSignature.parameterSignatures.drop(dropParamsNumber).joinToString { it.format(formatOptions) },
-        methodSignature.result.format(formatOptions)
+      name,
+      methodSignature.parameterSignatures.drop(dropParamsNumber).joinToString { it.format(formatOptions) },
+      methodSignature.result.format(formatOptions)
     )
   }
 }

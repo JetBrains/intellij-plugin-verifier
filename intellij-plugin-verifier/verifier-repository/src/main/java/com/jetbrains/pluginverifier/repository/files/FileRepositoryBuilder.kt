@@ -26,10 +26,10 @@ class FileRepositoryBuilder<K> {
 
   fun build(): FileRepository<K> {
     val fileRepository = FileRepository(
-        sweepPolicy,
-        resourceProvider,
-        clock,
-        presentableName
+      sweepPolicy,
+      resourceProvider,
+      clock,
+      presentableName
     )
     if (initDirectory != null && keyProvider != null) {
       processAvailableFiles(fileRepository, initDirectory!!, keyProvider!!)
@@ -64,9 +64,9 @@ class FileRepositoryBuilder<K> {
   }
 
   private fun <K> processAvailableFiles(
-      fileRepository: FileRepository<K>,
-      repositoryDir: Path,
-      keyProvider: (Path) -> K?
+    fileRepository: FileRepository<K>,
+    repositoryDir: Path,
+    keyProvider: (Path) -> K?
   ) {
     if (repositoryDir.exists()) {
       for (file in repositoryDir.listFiles()) {

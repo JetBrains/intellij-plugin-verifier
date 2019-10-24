@@ -18,10 +18,10 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class MethodNotFoundProblem(
-    val unresolvedMethod: MethodReference,
-    val caller: MethodLocation,
-    val instruction: Instruction,
-    val methodOwnerHierarchy: ClassHierarchy
+  val unresolvedMethod: MethodReference,
+  val caller: MethodLocation,
+  val instruction: Instruction,
+  val methodOwnerHierarchy: ClassHierarchy
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -29,19 +29,19 @@ class MethodNotFoundProblem(
 
   override val shortDescription
     get() = "Invocation of unresolved {0} {1}".formatMessage(
-        unresolvedMethod.methodOrConstructorWord,
-        unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
+      unresolvedMethod.methodOrConstructorWord,
+      unresolvedMethod.formatMethodReference(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, SIMPLE_RETURN_TYPE_CLASS_NAME)
     )
 
   private val descriptionMainPart
     get() = buildString {
       append(
-          "${caller.elementType.presentableName.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
-              caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
-              instruction,
-              unresolvedMethod.methodOrConstructorWord,
-              unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
-          )
+        "${caller.elementType.presentableName.capitalize()} {0} contains an *{1}* instruction referencing an unresolved {2} {3}. ".formatMessage(
+          caller.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE),
+          instruction,
+          unresolvedMethod.methodOrConstructorWord,
+          unresolvedMethod.formatMethodReference(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME)
+        )
       )
       append("This can lead to **NoSuchMethodError** exception at runtime.")
     }
@@ -59,9 +59,9 @@ class MethodNotFoundProblem(
     }
 
   override fun equals(other: Any?) = other is MethodNotFoundProblem
-      && unresolvedMethod == other.unresolvedMethod
-      && caller == other.caller
-      && instruction == other.instruction
+    && unresolvedMethod == other.unresolvedMethod
+    && caller == other.caller
+    && instruction == other.instruction
 
   override fun hashCode() = Objects.hash(unresolvedMethod, caller, instruction)
 

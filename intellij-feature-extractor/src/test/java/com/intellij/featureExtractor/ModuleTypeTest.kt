@@ -12,8 +12,8 @@ class ModuleTypeTest : FeatureExtractorTestBase() {
     resetPluginExtensionPoint(ExtensionPoint.MODULE_TYPE, className)
     val features = ModuleTypeExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.MODULE_TYPE, expectedModuleIds)),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.MODULE_TYPE, expectedModuleIds)),
+      features
     )
   }
 

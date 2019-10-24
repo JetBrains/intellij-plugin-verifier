@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.filtering.documented.DocClassRemoved
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodParameterTypeChanged
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodReturnTypeChanged
@@ -46,77 +46,77 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val deletedClassRef = ClassReference("org/some/deleted/Class")
 
     val mockMethodLocation = MethodLocation(
-        ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
-        "someMethod",
-        "()V",
-        emptyList(),
-        null,
-        Modifiers.of(PUBLIC)
+      ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
+      "someMethod",
+      "()V",
+      emptyList(),
+      null,
+      Modifiers.of(PUBLIC)
     )
 
     //method with deleted owner
     val methodWithRemovedOwnerProblem = MethodNotFoundProblem(
-        MethodReference(deletedClassRef, "foo", "()V"),
-        mockMethodLocation,
-        Instruction.INVOKE_VIRTUAL,
-        JAVA_LANG_OBJECT_HIERARCHY
+      MethodReference(deletedClassRef, "foo", "()V"),
+      mockMethodLocation,
+      Instruction.INVOKE_VIRTUAL,
+      JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted owner
     val fieldWithRemovedOwnerProblem = FieldNotFoundProblem(
-        FieldReference(deletedClassRef, "x", "I"),
-        mockMethodLocation,
-        JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD
+      FieldReference(deletedClassRef, "x", "I"),
+      mockMethodLocation,
+      JAVA_LANG_OBJECT_HIERARCHY,
+      Instruction.GET_FIELD
     )
 
     val unrelatedClassRef = ClassReference("org/just/some/Class")
 
     //method with deleted param type
     val methodWithRemovedClassInSignature = MethodNotFoundProblem(
-        MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
-        mockMethodLocation,
-        Instruction.INVOKE_VIRTUAL,
-        JAVA_LANG_OBJECT_HIERARCHY
+      MethodReference(unrelatedClassRef, "foo", "(Lorg/some/deleted/Class;)V"),
+      mockMethodLocation,
+      Instruction.INVOKE_VIRTUAL,
+      JAVA_LANG_OBJECT_HIERARCHY
     )
 
     //field with deleted param type
     val fieldWithRemovedClassInType = FieldNotFoundProblem(
-        FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
-        mockMethodLocation,
-        JAVA_LANG_OBJECT_HIERARCHY,
-        Instruction.GET_FIELD
+      FieldReference(unrelatedClassRef, "x", "Lorg/some/deleted/Class;"),
+      mockMethodLocation,
+      JAVA_LANG_OBJECT_HIERARCHY,
+      Instruction.GET_FIELD
     )
 
     val methodWithOwnerFromRemovedPackage = with(methodWithRemovedOwnerProblem) {
       MethodNotFoundProblem(
-          unresolvedMethod.copy(hostClass = ClassReference("some/removed/package/Class")),
-          caller,
-          instruction,
-          methodOwnerHierarchy
+        unresolvedMethod.copy(hostClass = ClassReference("some/removed/package/Class")),
+        caller,
+        instruction,
+        methodOwnerHierarchy
       )
     }
 
     val fieldWithOwnerFromRemovedPackage = with(fieldWithRemovedOwnerProblem) {
       FieldNotFoundProblem(
-          unresolvedField.copy(hostClass = ClassReference("some/removed/package/Class")),
-          accessor,
-          fieldOwnerHierarchy,
-          instruction
+        unresolvedField.copy(hostClass = ClassReference("some/removed/package/Class")),
+        accessor,
+        fieldOwnerHierarchy,
+        instruction
       )
     }
 
     val docClassRemoved = DocClassRemoved("org/some/deleted/Class")
     val docPackageRemoved = DocPackageRemoved("some/removed/package")
     val problemToDocumentation = listOf(
-        methodWithRemovedOwnerProblem to docClassRemoved,
-        fieldWithRemovedOwnerProblem to docClassRemoved,
+      methodWithRemovedOwnerProblem to docClassRemoved,
+      fieldWithRemovedOwnerProblem to docClassRemoved,
 
-        methodWithRemovedClassInSignature to docClassRemoved,
-        fieldWithRemovedClassInType to docClassRemoved,
+      methodWithRemovedClassInSignature to docClassRemoved,
+      fieldWithRemovedClassInType to docClassRemoved,
 
-        methodWithOwnerFromRemovedPackage to docPackageRemoved,
-        fieldWithOwnerFromRemovedPackage to docPackageRemoved
+      methodWithOwnerFromRemovedPackage to docPackageRemoved,
+      fieldWithOwnerFromRemovedPackage to docPackageRemoved
     )
 
     assertProblemsDocumented(problemToDocumentation, createSimpleVerificationContext(EmptyResolver))
@@ -136,23 +136,23 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
     val clientImplementation = ClassLocation(clientImplName, null, Modifiers.of(PUBLIC), SomeFileOrigin)
 
     val methodNotImplementedProblem = MethodNotImplementedProblem(
-        MethodLocation(
-            libInterface,
-            methodName,
-            "()V",
-            emptyList(),
-            null,
-            Modifiers.of(PUBLIC, ABSTRACT)
-        ),
-        clientImplementation
+      MethodLocation(
+        libInterface,
+        methodName,
+        "()V",
+        emptyList(),
+        null,
+        Modifiers.of(PUBLIC, ABSTRACT)
+      ),
+      clientImplementation
     )
 
     assertProblemsDocumented(
-        listOf(
-            methodNotImplementedProblem to DocMethodReturnTypeChanged(libInterfaceName, methodName),
-            methodNotImplementedProblem to DocMethodParameterTypeChanged(libInterfaceName, methodName)
-        ),
-        createSimpleVerificationContext(EmptyResolver)
+      listOf(
+        methodNotImplementedProblem to DocMethodReturnTypeChanged(libInterfaceName, methodName),
+        methodNotImplementedProblem to DocMethodParameterTypeChanged(libInterfaceName, methodName)
+      ),
+      createSimpleVerificationContext(EmptyResolver)
     )
   }
 }

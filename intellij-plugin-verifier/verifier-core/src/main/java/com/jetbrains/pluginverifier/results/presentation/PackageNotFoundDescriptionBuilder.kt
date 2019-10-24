@@ -39,9 +39,9 @@ object PackageNotFoundDescriptionBuilder {
     appendln(".")
 
     appendln(
-        "Probably the package '$normalPackageName' belongs to a library or dependency that is not resolved by the checker.\n" +
-            "It is also possible, however, that this package was actually removed from a dependency causing the detected problems. " +
-            "Access to unresolved classes at runtime may lead to **NoSuchClassError**."
+      "Probably the package '$normalPackageName' belongs to a library or dependency that is not resolved by the checker.\n" +
+        "It is also possible, however, that this package was actually removed from a dependency causing the detected problems. " +
+        "Access to unresolved classes at runtime may lead to **NoSuchClassError**."
     )
 
     val (showClasses, hideClasses) = if (missingClassesNumber < NOT_FOUND_CLASSES_SAMPLES + MINIMUM_HIDDEN) {
@@ -61,15 +61,15 @@ object PackageNotFoundDescriptionBuilder {
      * Group unresolved classes and sort by number of occurrences.
      */
     val classRefToProblems = classNotFoundProblems
-        .groupBy { it.unresolved }
-        .toList()
-        .sortedWith(Comparator { one, two ->
-          if (one.second.size != two.second.size) {
-            two.second.size.compareTo(one.second.size)
-          } else {
-            one.first.className.compareTo(two.first.className)
-          }
-        })
+      .groupBy { it.unresolved }
+      .toList()
+      .sortedWith(Comparator { one, two ->
+        if (one.second.size != two.second.size) {
+          two.second.size.compareTo(one.second.size)
+        } else {
+          one.first.className.compareTo(two.first.className)
+        }
+      })
 
     for ((classRef, problems) in classRefToProblems.take(showClasses)) {
       val (showLocations, hideLocations) = if (problems.size < NOT_FOUND_LOCATIONS + MINIMUM_HIDDEN) {
@@ -94,16 +94,16 @@ object PackageNotFoundDescriptionBuilder {
    * from as many different locations as possible.
    */
   private fun selectFromDifferentLocations(
-      number: Int,
-      problems: List<ClassNotFoundProblem>
+    number: Int,
+    problems: List<ClassNotFoundProblem>
   ): List<ClassNotFoundProblem> {
     if (problems.size <= number) {
       return problems
     }
 
     val hostClassToProblems = problems
-        .groupBy { it.usage.hostClass() }
-        .mapValues { it.value.sortedBy { it.usage.presentableLocation } }
+      .groupBy { it.usage.hostClass() }
+      .mapValues { it.value.sortedBy { it.usage.presentableLocation } }
 
     val result = arrayListOf<ClassNotFoundProblem>()
     var index = 0
@@ -125,13 +125,13 @@ object PackageNotFoundDescriptionBuilder {
     }
     if (one is MethodLocation && two is MethodLocation) {
       return@r compareBy<MethodLocation> { it.hostClass.className }
-          .thenBy { it.methodName }
-          .compare(one, two)
+        .thenBy { it.methodName }
+        .compare(one, two)
     }
     if (one is FieldLocation && two is FieldLocation) {
       return@r compareBy<FieldLocation> { it.hostClass.className }
-          .thenBy { it.fieldName }
-          .compare(one, two)
+        .thenBy { it.fieldName }
+        .compare(one, two)
     }
     return@r one.presentableLocation.compareTo(two.presentableLocation)
   }

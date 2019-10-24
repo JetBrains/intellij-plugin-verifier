@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.IdeFilesBank.Result.Found
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -22,41 +23,41 @@ import java.nio.file.Path
  * thread deletes it.
  */
 class IdeFilesBank(
-    private val bankDirectory: Path,
-    ideRepository: IdeRepository,
-    diskSpaceSetting: DiskSpaceSetting
+  private val bankDirectory: Path,
+  ideRepository: IdeRepository,
+  diskSpaceSetting: DiskSpaceSetting
 ) {
 
   private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
-      .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
-      .resourceProvider(IdeDownloadProvider(bankDirectory, ideRepository))
-      .presentableName("IDEs bank at $bankDirectory")
-      .addInitialFilesFrom(bankDirectory) { getIdeVersionByPath(it) }
-      .build()
+    .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
+    .resourceProvider(IdeDownloadProvider(bankDirectory, ideRepository))
+    .presentableName("IDEs bank at $bankDirectory")
+    .addInitialFilesFrom(bankDirectory) { getIdeVersionByPath(it) }
+    .build()
 
   private fun getIdeVersionByPath(file: Path) =
-      if (file.isDirectory) {
-        IdeVersion.createIdeVersionIfValid(file.simpleName)
-            ?.setProductCodeIfAbsent("IU")
-      } else {
-        null
-      }
+    if (file.isDirectory) {
+      IdeVersion.createIdeVersionIfValid(file.simpleName)
+        ?.setProductCodeIfAbsent("IU")
+    } else {
+      null
+    }
 
   fun getAvailableIdeVersions(): Set<IdeVersion> =
-      ideFilesRepository.getAllExistingKeys()
+    ideFilesRepository.getAllExistingKeys()
 
   fun getAvailableIdeFiles(): List<AvailableFile<IdeVersion>> =
-      ideFilesRepository.getAvailableFiles()
+    ideFilesRepository.getAvailableFiles()
 
   @Throws(InterruptedException::class)
   fun getIdeFile(ideVersion: IdeVersion): Result =
-      with(ideFilesRepository.getFile(ideVersion)) {
-        when (this) {
-          is FileRepositoryResult.Found -> Result.Found(lockedFile)
-          is FileRepositoryResult.NotFound -> Result.NotFound(reason)
-          is FileRepositoryResult.Failed -> Result.Failed(reason, error)
-        }
+    with(ideFilesRepository.getFile(ideVersion)) {
+      when (this) {
+        is FileRepositoryResult.Found -> Result.Found(lockedFile)
+        is FileRepositoryResult.NotFound -> Result.NotFound(reason)
+        is FileRepositoryResult.Failed -> Result.Failed(reason, error)
       }
+    }
 
   /**
    * Result of [getting] [getIdeFile] IDE file.
@@ -91,13 +92,13 @@ class IdeFilesBank(
 }
 
 private class IdeDownloadProvider(
-    bankDirectory: Path,
-    val ideRepository: IdeRepository
+  bankDirectory: Path,
+  val ideRepository: IdeRepository
 ) : ResourceProvider<IdeVersion, Path> {
 
   private val ideFileNameMapper = object : FileNameMapper<AvailableIde> {
     override fun getFileNameWithoutExtension(key: AvailableIde) =
-        key.version.asString()
+      key.version.asString()
   }
 
   private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader(), ideFileNameMapper)

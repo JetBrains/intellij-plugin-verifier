@@ -8,14 +8,14 @@ import org.objectweb.asm.tree.*
 import org.objectweb.asm.tree.analysis.*
 
 fun analyzeMethodFrames(method: Method, interpreter: Interpreter<SourceValue> = SourceInterpreter()): List<Frame<SourceValue>> =
-    if (method is MethodAsm) {
-      Analyzer(interpreter).analyze(method.containingClassFile.name, method.asmNode).toList()
-    } else {
-      emptyList()
-    }
+  if (method is MethodAsm) {
+    Analyzer(interpreter).analyze(method.containingClassFile.name, method.asmNode).toList()
+  } else {
+    emptyList()
+  }
 
 fun Frame<SourceValue>.getOnStack(index: Int): Value? =
-    getStack(stackSize - 1 - index)
+  getStack(stackSize - 1 - index)
 
 fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
   if (instruction is InsnNode) {
@@ -40,10 +40,10 @@ fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
 }
 
 fun evaluateConstantString(
-    value: Value?,
-    resolver: Resolver,
-    frames: List<Frame<SourceValue>>,
-    instructions: List<AbstractInsnNode>
+  value: Value?,
+  resolver: Resolver,
+  frames: List<Frame<SourceValue>>,
+  instructions: List<AbstractInsnNode>
 ): String? {
   if (value !is SourceValue) {
     return null
@@ -63,13 +63,13 @@ fun evaluateConstantString(
       } else {
         val classNode = resolver.resolveClassOrNull(producer.owner) ?: return null
         val methodAsm = classNode.methods.find { it.name == producer.name && it.descriptor == producer.desc }
-            ?: return null
+          ?: return null
         return extractConstantFunctionValue(methodAsm, resolver)
       }
     } else if (producer is FieldInsnNode) {
       val classFile = resolver.resolveClassOrNull(producer.owner) ?: return null
       val fieldNode = classFile.fields.find { it.name == producer.name && it.descriptor == producer.desc }
-          ?: return null
+        ?: return null
       return evaluateConstantFieldValue(classFile, fieldNode, resolver)
     }
   }
@@ -101,9 +101,9 @@ fun extractConstantFunctionValue(method: Method, resolver: Resolver): String? {
 }
 
 private fun evaluateConstantFieldValue(
-    classFile: ClassFile,
-    field: Field,
-    resolver: Resolver
+  classFile: ClassFile,
+  field: Field,
+  resolver: Resolver
 ): String? {
   if (!field.isStatic) {
     return null
@@ -119,20 +119,20 @@ private fun evaluateConstantFieldValue(
   val instructions = classInitializer.instructions
   val putStaticInstructionIndex = instructions.indexOfLast {
     it is FieldInsnNode
-        && it.opcode == Opcodes.PUTSTATIC
-        && it.owner == classFile.name
-        && it.name == field.name
-        && it.desc == field.descriptor
+      && it.opcode == Opcodes.PUTSTATIC
+      && it.owner == classFile.name
+      && it.name == field.name
+      && it.desc == field.descriptor
   }
   return evaluateConstantString(frames[putStaticInstructionIndex].getOnStack(0), resolver, frames.toList(), instructions)
 }
 
 
 private fun evaluateConcatenatedStringValue(
-    producer: MethodInsnNode,
-    frames: List<Frame<SourceValue>>,
-    resolver: Resolver,
-    instructions: List<AbstractInsnNode>
+  producer: MethodInsnNode,
+  frames: List<Frame<SourceValue>>,
+  resolver: Resolver,
+  instructions: List<AbstractInsnNode>
 ): String? {
   val producerIndex = instructions.indexOf(producer)
   if (producerIndex == -1) {
@@ -148,7 +148,7 @@ private fun evaluateConcatenatedStringValue(
       val frame = frames[i]
       val appendValue = frame.getOnStack(0)
       val value = evaluateConstantString(appendValue, resolver, frames, instructions)
-          ?: return null
+        ?: return null
       result.append(value)
     }
   }

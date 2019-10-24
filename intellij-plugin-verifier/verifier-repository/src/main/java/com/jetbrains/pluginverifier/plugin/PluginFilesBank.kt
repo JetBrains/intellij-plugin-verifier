@@ -25,16 +25,16 @@ import java.nio.file.Path
  * when one thread uses the file and another thread deletes it.
  */
 class PluginFilesBank(
-    private val fileRepository: FileRepository<PluginInfo>,
-    private val urlProvider: (PluginInfo) -> URL?,
-    private val downloadProvider: DownloadProvider<PluginInfo>
+  private val fileRepository: FileRepository<PluginInfo>,
+  private val urlProvider: (PluginInfo) -> URL?,
+  private val downloadProvider: DownloadProvider<PluginInfo>
 ) : PluginFileProvider {
 
   companion object {
     fun create(
-        repository: PluginRepository,
-        pluginsDir: Path,
-        diskSpaceSetting: DiskSpaceSetting
+      repository: PluginRepository,
+      pluginsDir: Path,
+      diskSpaceSetting: DiskSpaceSetting
     ): PluginFilesBank {
       val sweepPolicy = LruFileSizeSweepPolicy<PluginInfo>(diskSpaceSetting)
 
@@ -44,11 +44,11 @@ class PluginFilesBank(
       val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, PluginFileNameMapper)
 
       val fileRepository = FileRepositoryBuilder<PluginInfo>()
-          .sweepPolicy(sweepPolicy)
-          .resourceProvider(downloadProvider)
-          .presentableName("downloaded-plugins")
-          .addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
-          .build()
+        .sweepPolicy(sweepPolicy)
+        .resourceProvider(downloadProvider)
+        .presentableName("downloaded-plugins")
+        .addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
+        .build()
 
       return PluginFilesBank(fileRepository, urlProvider, downloadProvider)
     }
@@ -81,7 +81,7 @@ class PluginFilesBank(
    */
   override fun getPluginFile(pluginInfo: PluginInfo): PluginFileProvider.Result {
     val downloadUrl = urlProvider(pluginInfo)
-        ?: return PluginFileProvider.Result.NotFound("Cannot find plugin $pluginInfo")
+      ?: return PluginFileProvider.Result.NotFound("Cannot find plugin $pluginInfo")
     if (downloadUrl.protocol == "file") {
       val file = FileUtils.toFile(downloadUrl)
       return if (file.exists()) {

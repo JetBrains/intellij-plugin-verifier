@@ -1,15 +1,15 @@
 package com.jetbrains.plugin.structure.mocks
 
+import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class MockThemePluginsTest  {
+class MockThemePluginsTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
@@ -32,7 +32,7 @@ class MockThemePluginsTest  {
       }
 
       file(
-          "theme.theme.json", """
+        "theme.theme.json", """
         {
           "name": "theme",
           "dark": true,
@@ -44,7 +44,7 @@ class MockThemePluginsTest  {
       )
 
       file(
-          "relativeTheme.theme.json", """
+        "relativeTheme.theme.json", """
         {
           "name": "relativeTheme",
           "dark": false,
@@ -68,8 +68,8 @@ class MockThemePluginsTest  {
 
   private fun testPluginThemes(plugin: IdePlugin) {
     assertEquals(
-        setOf(IdeTheme("theme", true), IdeTheme("relativeTheme", false)),
-        plugin.declaredThemes.toSet()
+      setOf(IdeTheme("theme", true), IdeTheme("relativeTheme", false)),
+      plugin.declaredThemes.toSet()
     )
   }
 }

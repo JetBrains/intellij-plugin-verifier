@@ -13,28 +13,28 @@ import java.util.*
  * [PluginInfo] for a plugin from [CustomPluginRepository].
  */
 class CustomPluginInfo(
-    pluginId: String,
-    pluginName: String,
-    version: String,
-    vendor: String,
-    override val downloadUrl: URL,
-    override val browserUrl: URL,
-    val sourceCodeUrl: URL?,
-    sinceBuild: IdeVersion? = null,
-    untilBuild: IdeVersion? = null
+  pluginId: String,
+  pluginName: String,
+  version: String,
+  vendor: String,
+  override val downloadUrl: URL,
+  override val browserUrl: URL,
+  val sourceCodeUrl: URL?,
+  sinceBuild: IdeVersion? = null,
+  untilBuild: IdeVersion? = null
 ) : Downloadable, Browseable, PluginInfo(
-    pluginId,
-    pluginName,
-    version,
-    sinceBuild,
-    untilBuild,
-    vendor
+  pluginId,
+  pluginName,
+  version,
+  sinceBuild,
+  untilBuild,
+  vendor
 ) {
 
   override fun equals(other: Any?) = other is CustomPluginInfo
-      && pluginId == other.pluginId
-      && version == other.version
-      && downloadUrl.safeEquals(other.downloadUrl)
+    && pluginId == other.pluginId
+    && version == other.version
+    && downloadUrl.safeEquals(other.downloadUrl)
 
   override fun hashCode() = Objects.hash(pluginId, version, downloadUrl.safeHashCode())
 }

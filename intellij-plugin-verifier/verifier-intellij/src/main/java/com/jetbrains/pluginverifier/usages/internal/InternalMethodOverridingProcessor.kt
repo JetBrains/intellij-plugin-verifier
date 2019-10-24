@@ -8,10 +8,10 @@ class InternalMethodOverridingProcessor(private val internalApiUsageRegistrar: I
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
     if (overriddenMethod.isInternalApi(context.classResolver)) {
       internalApiUsageRegistrar.registerInternalApiUsage(
-          InternalMethodOverridden(
-              overriddenMethod.location,
-              method.location
-          )
+        InternalMethodOverridden(
+          overriddenMethod.location,
+          method.location
+        )
       )
     }
   }

@@ -10,15 +10,15 @@ import java.util.*
  * Identifier of a plugin bundled to IDE.
  */
 class BundledPluginInfo(
-    val ideVersion: IdeVersion,
-    val idePlugin: IdePlugin
+  val ideVersion: IdeVersion,
+  val idePlugin: IdePlugin
 ) : PluginInfo(
-    idePlugin.pluginId!!,
-    idePlugin.pluginName ?: idePlugin.pluginId!!,
-    idePlugin.pluginVersion ?: ideVersion.asString(),
-    idePlugin.sinceBuild,
-    idePlugin.untilBuild,
-    idePlugin.vendor
+  idePlugin.pluginId!!,
+  idePlugin.pluginName ?: idePlugin.pluginId!!,
+  idePlugin.pluginVersion ?: ideVersion.asString(),
+  idePlugin.sinceBuild,
+  idePlugin.untilBuild,
+  idePlugin.vendor
 ) {
 
   private fun writeReplace(): Any = throw UnsupportedOperationException("Bundled plugins cannot be serialized")
@@ -27,8 +27,8 @@ class BundledPluginInfo(
   private fun readObject(stream: ObjectInputStream): Unit = throw UnsupportedOperationException("Bundled plugins cannot be deserialized")
 
   override fun equals(other: Any?) = other is BundledPluginInfo
-      && ideVersion == other.ideVersion
-      && idePlugin == other.idePlugin
+    && ideVersion == other.ideVersion
+    && idePlugin == other.idePlugin
 
   override fun hashCode() = Objects.hash(ideVersion, idePlugin)
 

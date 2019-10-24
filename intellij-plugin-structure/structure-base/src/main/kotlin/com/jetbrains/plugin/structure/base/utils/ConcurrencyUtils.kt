@@ -5,18 +5,18 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 class ExecutorWithProgress<T>(
-    executorName: String,
-    concurrentWorkers: Int,
-    private val failFastOnException: Boolean,
-    private val progress: (ProgressData<T>) -> Unit
+  executorName: String,
+  concurrentWorkers: Int,
+  private val failFastOnException: Boolean,
+  private val progress: (ProgressData<T>) -> Unit
 ) : Closeable {
 
   data class ProgressData<T>(
-      val finishedNumber: Int,
-      val totalNumber: Int,
-      val result: T?,
-      val exception: Throwable?,
-      val elapsedTime: Long
+    val finishedNumber: Int,
+    val totalNumber: Int,
+    val result: T?,
+    val exception: Throwable?,
+    val elapsedTime: Long
   )
 
   private val nameCounter = AtomicInteger()

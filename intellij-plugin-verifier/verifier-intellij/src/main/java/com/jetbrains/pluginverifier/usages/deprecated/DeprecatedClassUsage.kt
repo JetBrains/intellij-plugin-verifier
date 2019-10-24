@@ -11,10 +11,10 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class DeprecatedClassUsage(
-    override val apiReference: ClassReference,
-    override val apiElement: ClassLocation,
-    override val usageLocation: Location,
-    deprecationInfo: DeprecationInfo
+  override val apiReference: ClassReference,
+  override val apiElement: ClassLocation,
+  override val usageLocation: Location,
+  deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
   override val shortDescription
     get() = "Deprecated " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} reference"
@@ -30,10 +30,10 @@ class DeprecatedClassUsage(
     }
 
   override fun equals(other: Any?) = other is DeprecatedClassUsage
-      && apiReference == other.apiReference
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
-      && deprecationInfo == other.deprecationInfo
+    && apiReference == other.apiReference
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
+    && deprecationInfo == other.deprecationInfo
 
   override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation, deprecationInfo)
 }

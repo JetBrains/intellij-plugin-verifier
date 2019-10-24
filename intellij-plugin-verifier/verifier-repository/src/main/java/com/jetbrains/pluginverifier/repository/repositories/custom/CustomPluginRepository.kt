@@ -21,16 +21,16 @@ abstract class CustomPluginRepository : PluginRepository {
   private fun getAllPlugins(): List<CustomPluginInfo> = allPluginsCache.get()
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
-      getAllPlugins()
+    getAllPlugins()
 
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllPlugins()
+    getAllPlugins()
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllPlugins().maxWith(VERSION_COMPARATOR)
+    getAllPlugins().maxWith(VERSION_COMPARATOR)
 
   override fun getAllVersionsOfPlugin(pluginId: String) =
-      getAllPlugins().filter { it.pluginId == pluginId }
+    getAllPlugins().filter { it.pluginId == pluginId }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? = null
 

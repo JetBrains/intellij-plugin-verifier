@@ -20,16 +20,16 @@ import java.io.Closeable
  * The cache must be [closed] [close] on the application shutdown to free all the details.
  */
 class PluginDetailsCache(
-    cacheSize: Int,
-    val pluginFileProvider: PluginFileProvider,
-    val pluginDetailsProvider: PluginDetailsProvider
+  cacheSize: Int,
+  val pluginFileProvider: PluginFileProvider,
+  val pluginDetailsProvider: PluginDetailsProvider
 ) : Closeable {
 
   private val internalCache = createSizeLimitedResourceCache(
-      cacheSize,
-      PluginDetailsResourceProvider(pluginFileProvider, pluginDetailsProvider),
-      { it.close() },
-      "PluginDetailsCache"
+    cacheSize,
+    PluginDetailsResourceProvider(pluginFileProvider, pluginDetailsProvider),
+    { it.close() },
+    "PluginDetailsCache"
   )
 
   /**
@@ -122,8 +122,8 @@ class PluginDetailsCache(
  * Bridge utility class that maps [PluginDetailsProvider] to [ResourceProvider].
  */
 private class PluginDetailsResourceProvider(
-    val pluginFileProvider: PluginFileProvider,
-    val pluginDetailsProvider: PluginDetailsProvider
+  val pluginFileProvider: PluginFileProvider,
+  val pluginDetailsProvider: PluginDetailsProvider
 ) : ResourceProvider<PluginInfo, PluginDetailsProvider.Result> {
 
   override fun provide(key: PluginInfo) = when (key) {

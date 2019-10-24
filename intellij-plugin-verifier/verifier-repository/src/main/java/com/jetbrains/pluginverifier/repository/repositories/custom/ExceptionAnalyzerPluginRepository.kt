@@ -17,40 +17,40 @@ import javax.xml.parsers.DocumentBuilderFactory
  * [PluginRepository] of Exception Analyzer plugin for IntelliJ IDEA.
  */
 class ExceptionAnalyzerPluginRepository(
-    override val repositoryUrl: URL,
-    private val sourceCodeUrl: URL
+  override val repositoryUrl: URL,
+  private val sourceCodeUrl: URL
 ) : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
-      .baseUrl("https://unused.com")
-      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-      .build()
-      .create(ExceptionAnalyzerRepositoryConnector::class.java)
+    .baseUrl("https://unused.com")
+    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+    .build()
+    .create(ExceptionAnalyzerRepositoryConnector::class.java)
 
   override fun requestAllPlugins(): List<CustomPluginInfo> {
     val pluginsXmlUrl = repositoryUrl.toExternalForm().trimEnd('/') + "/plugins.xml"
     val document = repositoryConnector.getPluginsList(pluginsXmlUrl)
-        .executeSuccessfully()
-        .body().byteStream().use {
-          DocumentBuilderFactory.newInstance()
-              .newDocumentBuilder()
-              .parse(it)
-        }
+      .executeSuccessfully()
+      .body().byteStream().use {
+        DocumentBuilderFactory.newInstance()
+          .newDocumentBuilder()
+          .parse(it)
+      }
     return parsePluginsList(document)
   }
 
   private fun parsePluginsList(document: Document) =
-      parsePluginsListXml(document).map {
-        CustomPluginInfo(
-            it.id,
-            "ExceptionAnalyzer",
-            it.version,
-            "JetBrains",
-            URL(repositoryUrl.toExternalForm().trimEnd('/') + "/" + it.url),
-            repositoryUrl,
-            sourceCodeUrl
-        )
-      }
+    parsePluginsListXml(document).map {
+      CustomPluginInfo(
+        it.id,
+        "ExceptionAnalyzer",
+        it.version,
+        "JetBrains",
+        URL(repositoryUrl.toExternalForm().trimEnd('/') + "/" + it.url),
+        repositoryUrl,
+        sourceCodeUrl
+      )
+    }
 
   override fun toString() = "ExceptionAnalyzer Plugin Repository: ${repositoryUrl.toExternalForm()}"
 

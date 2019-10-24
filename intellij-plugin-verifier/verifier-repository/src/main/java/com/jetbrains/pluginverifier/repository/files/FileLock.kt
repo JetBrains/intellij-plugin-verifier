@@ -12,7 +12,7 @@ import java.time.Instant
  * by the lock owner.
  */
 abstract class FileLock(
-    lockTime: Instant,
-    val file: Path,
-    fileSize: SpaceAmount
+  lockTime: Instant,
+  val file: Path,
+  fileSize: SpaceAmount
 ) : ResourceLock<Path, SpaceWeight>(lockTime, FileInfo(file, fileSize))

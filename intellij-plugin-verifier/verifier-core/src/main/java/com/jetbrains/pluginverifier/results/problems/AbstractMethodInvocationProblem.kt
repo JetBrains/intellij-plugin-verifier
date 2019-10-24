@@ -7,10 +7,10 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class AbstractMethodInvocationProblem(
-    val bytecodeMethodReference: MethodReference,
-    val method: MethodLocation,
-    val caller: MethodLocation,
-    val instruction: Instruction
+  val bytecodeMethodReference: MethodReference,
+  val method: MethodLocation,
+  val caller: MethodLocation,
+  val instruction: Instruction
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -23,10 +23,10 @@ class AbstractMethodInvocationProblem(
     get() = "Method {0} contains an *{1}* instruction referencing a method {2} which doesn''t have an implementation. This can lead to **AbstractMethodError** exception at runtime.".formatMessage(caller, instruction, method)
 
   override fun equals(other: Any?) = other is AbstractMethodInvocationProblem
-      && bytecodeMethodReference == other.bytecodeMethodReference
-      && method == other.method
-      && caller == other.caller
-      && instruction == other.instruction
+    && bytecodeMethodReference == other.bytecodeMethodReference
+    && method == other.method
+    && caller == other.caller
+    && instruction == other.instruction
 
   override fun hashCode() = Objects.hash(bytecodeMethodReference, method, caller, instruction)
 

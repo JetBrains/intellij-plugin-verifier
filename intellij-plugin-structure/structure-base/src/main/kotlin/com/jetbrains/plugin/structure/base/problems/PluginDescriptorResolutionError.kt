@@ -13,10 +13,10 @@ class PluginDescriptorIsNotFound(private val descriptorPath: String) : PluginDes
 }
 
 class MultiplePluginDescriptors(
-    private val firstDescriptorPath: String,
-    private val firstDescriptorContainingFileName: String,
-    private val secondDescriptorPath: String,
-    private val secondDescriptorContainingFileName: String
+  private val firstDescriptorPath: String,
+  private val firstDescriptorContainingFileName: String,
+  private val secondDescriptorPath: String,
+  private val secondDescriptorContainingFileName: String
 ) : PluginDescriptorResolutionError() {
   override val message: String
     get() {

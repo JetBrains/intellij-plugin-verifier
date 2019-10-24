@@ -7,8 +7,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.jetbrains.ide.diff.builder.api.BaseOldNewIdesTest.Companion.getOldIdeFile
-import org.jetbrains.ide.diff.builder.api.ClassSignature
-import org.jetbrains.ide.diff.builder.api.FieldSignature
 import org.jetbrains.ide.diff.builder.ide.toSignature
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
 import org.junit.AfterClass
@@ -45,16 +43,16 @@ class ExternalNameFormatTest {
   }
 
   private val className2externalName = mapOf(
-      "same/Same" to "same.Same",
-      "same/Same\$Inner" to "same.Same.Inner",
-      "same/Same\$Nested" to "same.Same.Nested"
+    "same/Same" to "same.Same",
+    "same/Same\$Inner" to "same.Same.Inner",
+    "same/Same\$Nested" to "same.Same.Nested"
   )
 
   private val fieldName2externalName = mapOf(
-      "f1" to "same.Same f1",
-      "f2" to "same.Same f2",
-      "f3" to "same.Same f3",
-      "f4" to "same.Same f4"
+    "f1" to "same.Same f1",
+    "f2" to "same.Same f2",
+    "f3" to "same.Same f3",
+    "f4" to "same.Same f4"
   )
 
   @Test
@@ -67,24 +65,24 @@ class ExternalNameFormatTest {
   fun `check many signatures from A`() {
     val aClass = findClassFile("same/Same")
     val methodName2externalName = mapOf(
-        "<init>" to "same.Same Same(int)",
-        "m1" to "same.Same void m1()",
-        "m2" to "same.Same int m2()",
-        "m3" to "same.Same java.lang.String m3()",
-        "m4" to "same.Same void m4(java.lang.String)",
-        "m5" to "same.Same void m5(java.util.List<java.lang.String>)",
-        "m6" to "same.Same T m6()",
-        "m7" to "same.Same void m7(T)",
-        "m8" to "same.Same T m8(S)",
-        "m9" to "same.Same void m9(java.util.Map<java.lang.String,java.lang.Integer>)",
-        "m10" to "same.Same void m10(java.util.Map<K,V>)",
-        "m11" to "same.Same int[] m11()",
-        "m12" to "same.Same java.lang.String[][] m12()",
-        "m13" to "same.Same java.util.List<java.lang.Comparable<? extends java.lang.Number>> m13()",
-        "m14" to "same.Same java.lang.Class<? extends E> m14()",
-        "m15" to "same.Same java.lang.Class<? super E> m15()",
-        "m16" to "same.Same java.util.Map<java.lang.Object,java.lang.String> m16(java.lang.Object, java.util.Map<java.lang.Object,java.lang.String>, T)",
-        "m17" to "same.Same void m17(java.lang.Class<?>, java.lang.Class<?>[][])"
+      "<init>" to "same.Same Same(int)",
+      "m1" to "same.Same void m1()",
+      "m2" to "same.Same int m2()",
+      "m3" to "same.Same java.lang.String m3()",
+      "m4" to "same.Same void m4(java.lang.String)",
+      "m5" to "same.Same void m5(java.util.List<java.lang.String>)",
+      "m6" to "same.Same T m6()",
+      "m7" to "same.Same void m7(T)",
+      "m8" to "same.Same T m8(S)",
+      "m9" to "same.Same void m9(java.util.Map<java.lang.String,java.lang.Integer>)",
+      "m10" to "same.Same void m10(java.util.Map<K,V>)",
+      "m11" to "same.Same int[] m11()",
+      "m12" to "same.Same java.lang.String[][] m12()",
+      "m13" to "same.Same java.util.List<java.lang.Comparable<? extends java.lang.Number>> m13()",
+      "m14" to "same.Same java.lang.Class<? extends E> m14()",
+      "m15" to "same.Same java.lang.Class<? super E> m15()",
+      "m16" to "same.Same java.util.Map<java.lang.Object,java.lang.String> m16(java.lang.Object, java.util.Map<java.lang.Object,java.lang.String>, T)",
+      "m17" to "same.Same void m17(java.lang.Class<?>, java.lang.Class<?>[][])"
     )
     checkMethods(aClass, methodName2externalName)
   }

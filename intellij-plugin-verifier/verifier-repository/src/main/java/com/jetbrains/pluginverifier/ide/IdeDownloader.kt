@@ -26,9 +26,9 @@ class IdeDownloader : Downloader<AvailableIde> {
   }
 
   private fun downloadIde(
-      availableIde: AvailableIde,
-      ideVersion: IdeVersion,
-      tempDirectory: Path
+    availableIde: AvailableIde,
+    ideVersion: IdeVersion,
+    tempDirectory: Path
   ) = with(urlDownloader.download(availableIde, tempDirectory)) {
     when (this) {
       is DownloadResult.Downloaded -> {

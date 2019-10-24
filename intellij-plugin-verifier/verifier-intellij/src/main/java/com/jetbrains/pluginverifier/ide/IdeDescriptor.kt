@@ -23,10 +23,10 @@ import java.nio.file.Path
  * It will be closed along with `this` descriptor.
  */
 data class IdeDescriptor(
-    val ide: Ide,
-    val ideResolver: Resolver,
-    val jdkDescriptor: JdkDescriptor,
-    val ideFileLock: FileLock?
+  val ide: Ide,
+  val ideResolver: Resolver,
+  val jdkDescriptor: JdkDescriptor,
+  val ideFileLock: FileLock?
 ) : Closeable {
 
   val ideVersion get() = ide.version
@@ -52,7 +52,7 @@ data class IdeDescriptor(
       val ideResolver = IdeResolverCreator.createIdeResolver(ide)
       ideResolver.closeOnException {
         val jdkDescriptor = JdkDescriptorCreator.createBundledJdkDescriptor(ide)
-            ?: JdkDescriptorCreator.createJdkDescriptor(defaultJdkPath)
+          ?: JdkDescriptorCreator.createJdkDescriptor(defaultJdkPath)
         return IdeDescriptor(ide, ideResolver, jdkDescriptor, ideFileLock)
       }
     }

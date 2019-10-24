@@ -17,15 +17,17 @@ import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 
 class CheckPluginParamsBuilder(
-    val pluginRepository: PluginRepository,
-    val reportage: PluginVerificationReportage,
-    val pluginDetailsCache: PluginDetailsCache
+  val pluginRepository: PluginRepository,
+  val reportage: PluginVerificationReportage,
+  val pluginDetailsCache: PluginDetailsCache
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
-    require(freeArgs.size > 1) { "You must specify plugin to check and IDE(s), example:\n" +
+    require(freeArgs.size > 1) {
+      "You must specify plugin to check and IDE(s), example:\n" +
         "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
-        "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963" }
+        "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963"
+    }
 
     val ideDescriptors = freeArgs.drop(1).map { Paths.get(it) }.map {
       reportage.logVerificationStage("Reading IDE $it")
@@ -40,8 +42,8 @@ class CheckPluginParamsBuilder(
     when {
       pluginToTestArg.startsWith("@") -> {
         pluginsParsing.addPluginsListedInFile(
-            Paths.get(pluginToTestArg.substringAfter("@")),
-            ideVersions
+          Paths.get(pluginToTestArg.substringAfter("@")),
+          ideVersions
         )
       }
       else -> {
@@ -55,9 +57,9 @@ class CheckPluginParamsBuilder(
     val verificationDescriptors = ideDescriptors.flatMap { ideDescriptor ->
       val dependencyFinder = createDependencyFinder(pluginsSet.localRepository, ideDescriptor, pluginDetailsCache)
       val classResolverProvider = DefaultClassResolverProvider(
-          dependencyFinder,
-          ideDescriptor,
-          externalClassesPackageFilter
+        dependencyFinder,
+        ideDescriptor,
+        externalClassesPackageFilter
       )
 
       pluginsSet.pluginsToCheck.map {
@@ -76,10 +78,10 @@ class CheckPluginParamsBuilder(
     }
 
     return CheckPluginParams(
-        ideDescriptors,
-        problemsFilters,
-        verificationDescriptors,
-        pluginsSet.invalidPluginFiles
+      ideDescriptors,
+      problemsFilters,
+      verificationDescriptors,
+      pluginsSet.invalidPluginFiles
     )
   }
 

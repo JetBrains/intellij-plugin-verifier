@@ -15,9 +15,9 @@ import com.jetbrains.pluginverifier.verifiers.resolution.caching
 import java.io.Closeable
 
 class PluginApiClassResolverProvider(
-    private val jdkDescriptor: JdkDescriptor,
-    private val basePluginDetails: PluginDetails,
-    private val basePluginPackageFilter: PackageFilter
+  private val jdkDescriptor: JdkDescriptor,
+  private val basePluginDetails: PluginDetails,
+  private val basePluginPackageFilter: PackageFilter
 ) : ClassResolverProvider {
 
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
@@ -42,33 +42,33 @@ class PluginApiClassResolverProvider(
       val resolver = CompositeResolver.create(checkedPluginClassResolver, basePluginResolver, jdkDescriptor.jdkResolver).caching()
 
       val checkedPluginNode = DependencyNode(
-          checkedPluginDetails.pluginInfo.pluginId,
-          checkedPluginDetails.pluginInfo.version
+        checkedPluginDetails.pluginInfo.pluginId,
+        checkedPluginDetails.pluginInfo.version
       )
 
       val basePluginNode = DependencyNode(
-          basePluginDetails.pluginInfo.pluginId,
-          basePluginDetails.pluginInfo.version
+        basePluginDetails.pluginInfo.pluginId,
+        basePluginDetails.pluginInfo.version
       )
 
       val dependenciesGraph = DependenciesGraph(
-          checkedPluginNode,
-          listOf(checkedPluginNode, basePluginNode),
-          listOf(
-              DependencyEdge(
-                  checkedPluginNode,
-                  basePluginNode,
-                  PluginDependencyImpl(basePluginNode.pluginId, false, false)
-              )
-          ),
-          emptyMap()
+        checkedPluginNode,
+        listOf(checkedPluginNode, basePluginNode),
+        listOf(
+          DependencyEdge(
+            checkedPluginNode,
+            basePluginNode,
+            PluginDependencyImpl(basePluginNode.pluginId, false, false)
+          )
+        ),
+        emptyMap()
       )
 
       return ClassResolverProvider.Result(
-          checkedPluginClassResolver,
-          resolver,
-          dependenciesGraph,
-          closeableResources
+        checkedPluginClassResolver,
+        resolver,
+        dependenciesGraph,
+        closeableResources
       )
     }
   }

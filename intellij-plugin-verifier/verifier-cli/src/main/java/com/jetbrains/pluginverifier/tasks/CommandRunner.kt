@@ -11,17 +11,17 @@ abstract class CommandRunner {
   abstract val commandName: String
 
   abstract fun getParametersBuilder(
-      pluginRepository: PluginRepository,
-      ideFilesBank: IdeFilesBank,
-      pluginDetailsCache: PluginDetailsCache,
-      reportage: PluginVerificationReportage
+    pluginRepository: PluginRepository,
+    ideFilesBank: IdeFilesBank,
+    pluginDetailsCache: PluginDetailsCache,
+    reportage: PluginVerificationReportage
   ): TaskParametersBuilder
 
   abstract fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository): Task
 
   abstract fun createTaskResultsPrinter(
-      outputOptions: OutputOptions,
-      pluginRepository: PluginRepository
+    outputOptions: OutputOptions,
+    pluginRepository: PluginRepository
   ): TaskResultPrinter
 
 }

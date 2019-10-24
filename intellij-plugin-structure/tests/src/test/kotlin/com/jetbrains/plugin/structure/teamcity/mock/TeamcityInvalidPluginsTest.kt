@@ -88,18 +88,18 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
-        "abracadabra",
-        listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
+      "abracadabra",
+      listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
     )
   }
 
   @Test
   fun `plugin name is not specified`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          name = ""
-        },
-        listOf(PropertyNotSpecified("name"))
+      perfectXmlBuilder.modify {
+        name = ""
+      },
+      listOf(PropertyNotSpecified("name"))
     )
   }
 
@@ -107,40 +107,40 @@ class TeamcityInvalidPluginsTest {
   @Test
   fun `plugin display name is not specified`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          displayName = ""
-        },
-        listOf(PropertyNotSpecified("display-name"))
+      perfectXmlBuilder.modify {
+        displayName = ""
+      },
+      listOf(PropertyNotSpecified("display-name"))
     )
   }
 
   @Test
   fun `plugin display name contains plugin word`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          displayName = "<display-name>My plugin</display-name>"
-        },
-        listOf(ForbiddenWordInPluginName)
+      perfectXmlBuilder.modify {
+        displayName = "<display-name>My plugin</display-name>"
+      },
+      listOf(ForbiddenWordInPluginName)
     )
   }
 
   @Test
   fun `plugin display name contains teamcity word`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          displayName = "<display-name>Teamcity runner</display-name>"
-        },
-        listOf(ForbiddenWordInPluginName)
+      perfectXmlBuilder.modify {
+        displayName = "<display-name>Teamcity runner</display-name>"
+      },
+      listOf(ForbiddenWordInPluginName)
     )
   }
 
   @Test
   fun `plugin version is not specified`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          version = ""
-        },
-        listOf(PropertyNotSpecified("version"))
+      perfectXmlBuilder.modify {
+        version = ""
+      },
+      listOf(PropertyNotSpecified("version"))
     )
   }
 }

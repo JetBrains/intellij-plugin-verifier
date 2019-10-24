@@ -47,7 +47,7 @@ class FileTypeFactoryExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.FILE_TYPE_FACTORY)
-        .mapNotNull { extractFileTypes(it, resolver) }
+      .mapNotNull { extractFileTypes(it, resolver) }
   }
 
   private fun extractFileTypes(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
@@ -93,10 +93,10 @@ class FileTypeFactoryExtractor : Extractor {
   }
 
   private fun computeExtensionsPassedToFileNameMatcherArray(
-      methodInstructions: List<AbstractInsnNode>,
-      arrayUserInstructionIndex: Int,
-      frames: List<Frame<SourceValue>>,
-      resolver: Resolver
+    methodInstructions: List<AbstractInsnNode>,
+    arrayUserInstructionIndex: Int,
+    frames: List<Frame<SourceValue>>,
+    resolver: Resolver
   ): List<String>? {
     val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
     if (arrayProducer !is SourceValue || arrayProducer.insns.size != 1) {
@@ -110,11 +110,11 @@ class FileTypeFactoryExtractor : Extractor {
         return null
       }
       return aggregateFileNameMatcherAsArrayElements(
-          newArrayInstructionIndex,
-          arrayUserInstructionIndex,
-          methodInstructions,
-          frames,
-          resolver
+        newArrayInstructionIndex,
+        arrayUserInstructionIndex,
+        methodInstructions,
+        frames,
+        resolver
       )
     }
     return null
@@ -148,11 +148,11 @@ class FileTypeFactoryExtractor : Extractor {
    * of the i-th element of the array.
    */
   private fun aggregateFileNameMatcherAsArrayElements(
-      newArrayInstructionIndex: Int,
-      arrayUserInstructionIndex: Int,
-      methodInstructions: List<AbstractInsnNode>,
-      frames: List<Frame<SourceValue>>,
-      resolver: Resolver
+    newArrayInstructionIndex: Int,
+    arrayUserInstructionIndex: Int,
+    methodInstructions: List<AbstractInsnNode>,
+    frames: List<Frame<SourceValue>>,
+    resolver: Resolver
   ): List<String> {
     val dummyValue: AbstractInsnNode = object : AbstractInsnNode(-1) {
       override fun getType(): Int = -1
@@ -186,9 +186,9 @@ class FileTypeFactoryExtractor : Extractor {
             pos++
 
             if (initInvoke is MethodInsnNode
-                && initInvoke.name == "<init>"
-                && initInvoke.owner == EXACT_NAME_MATCHER
-                && initInvoke.desc == "(Ljava/lang/String;)V") {
+              && initInvoke.name == "<init>"
+              && initInvoke.owner == EXACT_NAME_MATCHER
+              && initInvoke.desc == "(Ljava/lang/String;)V") {
               val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
                 return string
@@ -223,9 +223,9 @@ class FileTypeFactoryExtractor : Extractor {
               pos++
 
               if (initInvoke is MethodInsnNode
-                  && initInvoke.name == "<init>"
-                  && initInvoke.owner == EXACT_NAME_MATCHER
-                  && initInvoke.desc == "(Ljava/lang/String;Z)V") {
+                && initInvoke.name == "<init>"
+                && initInvoke.owner == EXACT_NAME_MATCHER
+                && initInvoke.desc == "(Ljava/lang/String;Z)V") {
 
                 val string = evaluateConstantString(frame.getOnStack(1), resolver, frames, instructions)
                 if (string != null) {
@@ -259,9 +259,9 @@ class FileTypeFactoryExtractor : Extractor {
             pos++
 
             if (initInvoke is MethodInsnNode
-                && initInvoke.name == "<init>"
-                && initInvoke.owner == EXTENSIONS_MATCHER
-                && initInvoke.desc == "(Ljava/lang/String;)V") {
+              && initInvoke.name == "<init>"
+              && initInvoke.owner == EXTENSIONS_MATCHER
+              && initInvoke.desc == "(Ljava/lang/String;)V") {
 
               val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
               if (string != null) {
@@ -277,9 +277,9 @@ class FileTypeFactoryExtractor : Extractor {
 
     fun parseBlock(): String? {
       return tryParseExactMatcherConstructorOfOneArgument()
-          ?: tryParseExactMatcherConstructorOfTwoArguments()
-          ?: tryParseExtensionMatcher()
-          ?: return null
+        ?: tryParseExactMatcherConstructorOfTwoArguments()
+        ?: tryParseExtensionMatcher()
+        ?: return null
     }
 
     val result = arrayListOf<String>()
@@ -322,7 +322,7 @@ class FileTypeFactoryExtractor : Extractor {
     val classFile = resolver.resolveClassOrNull(className) ?: return null
 
     val method = classFile.methods.find { it.name == "getDefaultExtension" && it.methodParameters.isEmpty() }
-        ?: return null
+      ?: return null
     return extractConstantFunctionValue(method, resolver)
   }
 

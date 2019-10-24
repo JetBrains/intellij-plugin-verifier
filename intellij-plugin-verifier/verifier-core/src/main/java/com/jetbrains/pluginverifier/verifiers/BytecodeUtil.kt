@@ -47,7 +47,7 @@ fun getAccessType(accessCode: Int): AccessType = when {
 }
 
 fun List<AnnotationNode>.findAnnotation(className: String): AnnotationNode? =
-    find { it.desc?.extractClassNameFromDescriptor() == className }
+  find { it.desc?.extractClassNameFromDescriptor() == className }
 
 fun AnnotationNode.getAnnotationValue(key: String): Any? {
   val vls = values ?: return null

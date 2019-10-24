@@ -21,4 +21,4 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 }
 
 fun createMockPluginInfo(pluginId: String, version: String): PluginInfo =
-    object : PluginInfo(pluginId, pluginId, version, null, null, null) {}
+  object : PluginInfo(pluginId, pluginId, version, null, null, null) {}

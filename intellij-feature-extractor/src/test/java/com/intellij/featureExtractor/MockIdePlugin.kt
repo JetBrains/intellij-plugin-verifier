@@ -10,8 +10,8 @@ import org.jdom2.Element
 import java.io.File
 
 data class MockIdePlugin(
-    override val pluginId: String?,
-    override val pluginVersion: String?
+  override val pluginId: String?,
+  override val pluginVersion: String?
 ) : IdePlugin {
   override val extensions: Multimap<String, Element> = HashMultimap.create()
 

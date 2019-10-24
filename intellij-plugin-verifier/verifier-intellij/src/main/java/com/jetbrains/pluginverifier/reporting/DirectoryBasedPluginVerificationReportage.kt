@@ -58,9 +58,9 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
   }
 
   override fun logPluginVerificationIgnored(
-      pluginInfo: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      reason: String
+    pluginInfo: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    reason: String
   ) {
     ignoredPluginsReporters.forEach { it.report(PluginIgnoredEvent(pluginInfo, verificationTarget, reason)) }
   }
@@ -93,8 +93,8 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
   override fun reportVerificationResult(pluginVerificationResult: PluginVerificationResult) {
     with(pluginVerificationResult) {
       val directory = targetDirectoryProvider(verificationTarget)
-          .resolve("plugins")
-          .resolve(createPluginVerificationDirectory(plugin))
+        .resolve("plugins")
+        .resolve(createPluginVerificationDirectory(plugin))
 
       reportVerificationDetails(directory, "verification-verdict.txt", listOf(pluginVerificationResult)) { it.verificationVerdict }
 
@@ -123,10 +123,10 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
   }
 
   private fun <T> reportVerificationDetails(
-      directory: Path,
-      fileName: String,
-      content: Iterable<T>,
-      lineProvider: (T) -> String = { it.toString() }
+    directory: Path,
+    fileName: String,
+    content: Iterable<T>,
+    lineProvider: (T) -> String = { it.toString() }
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
   }

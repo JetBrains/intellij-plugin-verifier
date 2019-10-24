@@ -36,37 +36,37 @@ import java.time.Clock
  * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
  */
 class ResourceCache<R, in K, W : ResourceWeight<W>>(
-    /**
-     * [ResourceProvider] that provides the
-     * requested resources by [keys] [K].
-     */
-    resourceProvider: ResourceProvider<K, R>,
-    /**
-     * The disposer used to close the resources.
-     *
-     * The resources are closed either when the [cleanup] [SizeEvictionPolicy] procedure
-     * determines to evict the corresponding resources,
-     * or when the resources are removed from the [resourceRepository].
-     * On [close], all the resources are removed and closed.
-     */
-    disposer: (R) -> Unit,
-    /**
-     * [EvictionPolicy] that manages eviction of resources
-     * held in this cache.
-     */
-    evictionPolicy: EvictionPolicy<R, K, W>,
-    /**
-     * Initial weight of the resources held in this cache.
-     */
-    initialWeight: W,
-    /**
-     * Weigher of the resources held in this cache.
-     */
-    weigher: (R) -> W,
-    /**
-     * The cache name that can be used for logging and debugging purposes
-     */
-    private val presentableName: String
+  /**
+   * [ResourceProvider] that provides the
+   * requested resources by [keys] [K].
+   */
+  resourceProvider: ResourceProvider<K, R>,
+  /**
+   * The disposer used to close the resources.
+   *
+   * The resources are closed either when the [cleanup] [SizeEvictionPolicy] procedure
+   * determines to evict the corresponding resources,
+   * or when the resources are removed from the [resourceRepository].
+   * On [close], all the resources are removed and closed.
+   */
+  disposer: (R) -> Unit,
+  /**
+   * [EvictionPolicy] that manages eviction of resources
+   * held in this cache.
+   */
+  evictionPolicy: EvictionPolicy<R, K, W>,
+  /**
+   * Initial weight of the resources held in this cache.
+   */
+  initialWeight: W,
+  /**
+   * Weigher of the resources held in this cache.
+   */
+  weigher: (R) -> W,
+  /**
+   * The cache name that can be used for logging and debugging purposes
+   */
+  private val presentableName: String
 ) : Closeable {
 
   companion object {
@@ -84,13 +84,13 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
    * unused resources are [disposed] [disposer].
    */
   private val resourceRepository = ResourceRepositoryImpl(
-      evictionPolicy,
-      Clock.systemUTC(),
-      resourceProvider,
-      initialWeight,
-      weigher,
-      disposer,
-      presentableName
+    evictionPolicy,
+    Clock.systemUTC(),
+    resourceProvider,
+    initialWeight,
+    weigher,
+    disposer,
+    presentableName
   )
 
   /**
@@ -175,15 +175,15 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
 }
 
 fun <K, R> createSizeLimitedResourceCache(
-    cacheSize: Int,
-    resourceProvider: ResourceProvider<K, R>,
-    disposer: (R) -> Unit,
-    presentableName: String
+  cacheSize: Int,
+  resourceProvider: ResourceProvider<K, R>,
+  disposer: (R) -> Unit,
+  presentableName: String
 ): ResourceCache<R, K, SizeWeight> = ResourceCache(
-    resourceProvider,
-    disposer,
-    SizeEvictionPolicy(cacheSize),
-    SizeWeight(0),
-    { SizeWeight(1) },
-    presentableName
+  resourceProvider,
+  disposer,
+  SizeEvictionPolicy(cacheSize),
+  SizeWeight(0),
+  { SizeWeight(1) },
+  presentableName
 )

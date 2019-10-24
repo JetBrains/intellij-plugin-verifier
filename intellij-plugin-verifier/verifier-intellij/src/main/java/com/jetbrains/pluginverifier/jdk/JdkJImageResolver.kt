@@ -47,14 +47,14 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     modulesPath = fileSystem.getPath("/modules")
 
     classNameToModuleName = Files.walk(modulesPath)
-        .filter { p -> p.fileName.toString().endsWith(".class") }
-        .collect(
-            Collectors.toMap(
-                { p -> getClassName(p) },
-                { p -> getModuleName(p) },
-                { one, _ -> one }
-            )
+      .filter { p -> p.fileName.toString().endsWith(".class") }
+      .collect(
+        Collectors.toMap(
+          { p -> getClassName(p) },
+          { p -> getModuleName(p) },
+          { one, _ -> one }
         )
+      )
 
     for (className in classNameToModuleName.keys) {
       packageSet.addPackagesOfClass(className)
@@ -83,13 +83,13 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   }
 
   private fun getModuleName(classPath: Path): String =
-      modulesPath.relativize(classPath).first().toString()
+    modulesPath.relativize(classPath).first().toString()
 
   private fun getClassName(classPath: Path): String {
     val relative = modulesPath.relativize(classPath)
     return relative
-        .subpath(1, relative.nameCount).toString()
-        .substringBeforeLast(".class").replace(nameSeparator, "/")
+      .subpath(1, relative.nameCount).toString()
+      .substringBeforeLast(".class").replace(nameSeparator, "/")
   }
 
   override val allClasses
@@ -121,9 +121,9 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) = ResolutionResult.NotFound
 
   private fun readClassNode(className: String, classFilePath: Path): ClassNode =
-      Files.newInputStream(classFilePath, StandardOpenOption.READ).use { inputStream ->
-        AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
-      }
+    Files.newInputStream(classFilePath, StandardOpenOption.READ).use { inputStream ->
+      AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
+    }
 
   override fun containsClass(className: String) = className in classNameToModuleName
 

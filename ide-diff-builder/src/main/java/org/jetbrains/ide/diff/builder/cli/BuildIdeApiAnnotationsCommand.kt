@@ -1,6 +1,7 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
@@ -49,13 +50,13 @@ class BuildIdeApiAnnotationsCommand : Command {
     var idesDirPath: String? = null
 
     fun getIdesDirectory(): Path =
-        if (idesDirPath != null) {
-          Paths.get(idesDirPath!!)
-        } else {
-          Files.createTempDirectory("ides-dir").also {
-            it.toFile().deleteOnExit()
-          }
+      if (idesDirPath != null) {
+        Paths.get(idesDirPath!!)
+      } else {
+        Files.createTempDirectory("ides-dir").also {
+          it.toFile().deleteOnExit()
         }
+      }
   }
 
   override fun execute(freeArgs: List<String>) {
@@ -82,11 +83,11 @@ class BuildIdeApiAnnotationsCommand : Command {
     LOG.info("The following ${idesToProcess.size} IU IDEs (> $MIN_BUILD_NUMBER) are available in all IDE repositories: " + idesToProcess.joinToString())
 
     val metadata = BuildIdeApiMetadata().buildMetadata(
-        idesToProcess,
-        ideFilesBank,
-        jdkPath,
-        classFilter,
-        resultsDirectory
+      idesToProcess,
+      ideFilesBank,
+      jdkPath,
+      classFilter,
+      resultsDirectory
     )
 
     val metadataPath = resultsDirectory.resolve("metadata.json")
@@ -95,26 +96,26 @@ class BuildIdeApiAnnotationsCommand : Command {
 
     LOG.info("Building annotations for last IDEs of each branch.")
     val lastBranchIdes = idesToProcess
-        .groupBy { it.version.baselineVersion }
-        .mapValues { (_, branchIdes) -> branchIdes.maxBy { it.version }!! }
-        .values
-        .toList()
+      .groupBy { it.version.baselineVersion }
+      .mapValues { (_, branchIdes) -> branchIdes.maxBy { it.version }!! }
+      .values
+      .toList()
 
     val annotationsClassFilter = AndClassFilter(listOf(classFilter, NonImplementationClassFilter))
     buildExternalAnnotations(metadata, resultsDirectory, lastBranchIdes, annotationsClassFilter)
   }
 
   private fun getIdesToProcess(releaseOnly: Boolean) =
-      allIdeRepository
-          .fetchIndex()
-          .filter { !releaseOnly || it.isRelease }
-          .filter { it.version.productCode == "IU" && it.version >= MIN_BUILD_NUMBER }
+    allIdeRepository
+      .fetchIndex()
+      .filter { !releaseOnly || it.isRelease }
+      .filter { it.version.productCode == "IU" && it.version >= MIN_BUILD_NUMBER }
 
   private fun buildExternalAnnotations(
-      metadata: ApiReport,
-      resultsDirectory: Path,
-      ides: List<AvailableIde>,
-      classFilter: ClassFilter
+    metadata: ApiReport,
+    resultsDirectory: Path,
+    ides: List<AvailableIde>,
+    classFilter: ClassFilter
   ) {
     for (ide in ides) {
       val ideVersion = ide.version

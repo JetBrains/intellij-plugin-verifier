@@ -3,9 +3,9 @@ package com.jetbrains.plugin.structure.intellij.version
 import java.util.*
 
 class IdeVersionImpl(
-    private val productCode: String,
-    private val components: IntArray,
-    private val isSnapshot: Boolean = false
+  private val productCode: String,
+  private val components: IntArray,
+  private val isSnapshot: Boolean = false
 ) : IdeVersion() {
 
   override fun asString(includeProductCode: Boolean, includeSnapshotMarker: Boolean): String {
@@ -152,19 +152,19 @@ class IdeVersionImpl(
 
     // See https://www.jetbrains.net/confluence/display/IDEADEV/Build+Number+Ranges for historic build ranges
     private fun getBaseLineForHistoricBuilds(bn: Int) =
-        when {
-          bn >= 10000 -> 88 // Maia, 9x builds
-          bn >= 9500 -> 85 // 8.1 builds
-          bn >= 9100 -> 81 // 8.0.x builds
-          bn >= 8000 -> 80 // 8.0, including pre-release builds
-          bn >= 7500 -> 75 // 7.0.2+
-          bn >= 7200 -> 72 // 7.0 final
-          bn >= 6900 -> 69 // 7.0 pre-M2
-          bn >= 6500 -> 65 // 7.0 pre-M1
-          bn >= 6000 -> 60 // 6.0.2+
-          bn >= 5000 -> 55 // 6.0 branch, including all 6.0 EAP builds
-          bn >= 4000 -> 50 // 5.1 branch
-          else -> 40
-        }
+      when {
+        bn >= 10000 -> 88 // Maia, 9x builds
+        bn >= 9500 -> 85 // 8.1 builds
+        bn >= 9100 -> 81 // 8.0.x builds
+        bn >= 8000 -> 80 // 8.0, including pre-release builds
+        bn >= 7500 -> 75 // 7.0.2+
+        bn >= 7200 -> 72 // 7.0 final
+        bn >= 6900 -> 69 // 7.0 pre-M2
+        bn >= 6500 -> 65 // 7.0 pre-M1
+        bn >= 6000 -> 60 // 6.0.2+
+        bn >= 5000 -> 55 // 6.0 branch, including all 6.0 EAP builds
+        bn >= 4000 -> 50 // 5.1 branch
+        else -> 40
+      }
   }
 }

@@ -15,9 +15,9 @@ import com.jetbrains.pluginverifier.verifiers.resolution.caching
 import java.io.Closeable
 
 class DefaultClassResolverProvider(
-    private val dependencyFinder: DependencyFinder,
-    private val ideDescriptor: IdeDescriptor,
-    private val externalClassesPackageFilter: PackageFilter
+  private val dependencyFinder: DependencyFinder,
+  private val ideDescriptor: IdeDescriptor,
+  private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
 
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
@@ -26,17 +26,17 @@ class DefaultClassResolverProvider(
       val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
 
       val (dependenciesGraph, dependenciesResults) =
-          DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
+        DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
 
       closeableResources += dependenciesResults
 
       val dependenciesClassResolver = createDependenciesResolver(dependenciesResults)
 
       val resolver = CompositeResolver.create(
-          pluginResolver,
-          ideDescriptor.jdkDescriptor.jdkResolver,
-          ideDescriptor.ideResolver,
-          dependenciesClassResolver
+        pluginResolver,
+        ideDescriptor.jdkDescriptor.jdkResolver,
+        ideDescriptor.ideResolver,
+        dependenciesClassResolver
       ).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }

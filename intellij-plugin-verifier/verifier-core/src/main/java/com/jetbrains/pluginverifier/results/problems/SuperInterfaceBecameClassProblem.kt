@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import java.util.*
 
 class SuperInterfaceBecameClassProblem(
-    val child: ClassLocation,
-    val clazz: ClassLocation
+  val child: ClassLocation,
+  val clazz: ClassLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -23,8 +23,8 @@ class SuperInterfaceBecameClassProblem(
     }
 
   override fun equals(other: Any?) = other is SuperInterfaceBecameClassProblem
-      && child == other.child
-      && clazz == other.clazz
+    && child == other.child
+    && clazz == other.clazz
 
   override fun hashCode() = Objects.hash(child, clazz)
 

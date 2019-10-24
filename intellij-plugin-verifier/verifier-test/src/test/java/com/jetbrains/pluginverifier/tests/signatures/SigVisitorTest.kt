@@ -15,41 +15,41 @@ import org.objectweb.asm.signature.SignatureReader
 class SigVisitorTest {
 
   private val fullOptions = FormatOptions(
-      superClass = true,
-      superInterfaces = true,
-      formalTypeParameters = true,
-      formalTypeParametersBounds = true,
-      typeArguments = true,
-      internalNameConverter = toFullJavaClassName,
-      methodThrows = true
+    superClass = true,
+    superInterfaces = true,
+    formalTypeParameters = true,
+    formalTypeParametersBounds = true,
+    typeArguments = true,
+    internalNameConverter = toFullJavaClassName,
+    methodThrows = true
   )
 
   @Test
   fun `class signatures`() {
     val testData = listOf(
-        Triple(
-            "<E extends java.lang.Enum<E>> implements java.lang.Comparable<E>, java.io.Serializable",
-            "<E:Ljava/lang/Enum<TE;>;>Ljava/lang/Object;Ljava/lang/Comparable<TE;>;Ljava/io/Serializable;",
-            fullOptions
-        ),
+      Triple(
+        "<E extends java.lang.Enum<E>> implements java.lang.Comparable<E>, java.io.Serializable",
+        "<E:Ljava/lang/Enum<TE;>;>Ljava/lang/Object;Ljava/lang/Comparable<TE;>;Ljava/io/Serializable;",
+        fullOptions
+      ),
 
-        Triple(
-            "<D extends java.lang.reflect.GenericDeclaration> extends java.lang.reflect.Type",
-            "<D::Ljava/lang/reflect/GenericDeclaration;>Ljava/lang/Object;Ljava/lang/reflect/Type;",
-            fullOptions.copy(isInterface = true)
-        ),
+      Triple(
+        "<D extends java.lang.reflect.GenericDeclaration> extends java.lang.reflect.Type",
+        "<D::Ljava/lang/reflect/GenericDeclaration;>Ljava/lang/Object;Ljava/lang/reflect/Type;",
+        fullOptions.copy(isInterface = true)
+      ),
 
-        Triple(
-            "<K, V> extends java.util.AbstractMap<K, V> implements java.util.concurrent.ConcurrentMap<K, V>, java.io.Serializable",
-            "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/util/concurrent/ConcurrentMap<TK;TV;>;Ljava/io/Serializable;",
-            fullOptions
-        ),
+      Triple(
+        "<K, V> extends java.util.AbstractMap<K, V> implements java.util.concurrent.ConcurrentMap<K, V>, java.io.Serializable",
+        "<K:Ljava/lang/Object;V:Ljava/lang/Object;>Ljava/util/AbstractMap<TK;TV;>;Ljava/util/concurrent/ConcurrentMap<TK;TV;>;Ljava/io/Serializable;",
+        fullOptions
+      ),
 
-        Triple(
-            "<T, R extends T>",
-            "<T:Ljava/lang/Object;R:TT;>Ljava/lang/Object;",
-            fullOptions
-        )
+      Triple(
+        "<T, R extends T>",
+        "<T:Ljava/lang/Object;R:TT;>Ljava/lang/Object;",
+        fullOptions
+      )
     )
 
     for ((expected, signature, options) in testData) {
@@ -60,35 +60,35 @@ class SigVisitorTest {
   @Test
   fun `method signatures`() {
     val testData = listOf(
-        "void() throws E, F" to
-            "()V^TE;^TF;",
+      "void() throws E, F" to
+        "()V^TE;^TF;",
 
-        "void(A<E>.B<F>)" to
-            "(LA<TE;>.B<TF;>;)V",
+      "void(A<E>.B<F>)" to
+        "(LA<TE;>.B<TF;>;)V",
 
-        "void(A<E>.B<F>)" to
-            "(LA<TE;>.B<TF;>;)V",
+      "void(A<E>.B<F>)" to
+        "(LA<TE;>.B<TF;>;)V",
 
-        "void(boolean, byte, char, short, int, float, long, double)" to
-            "(ZBCSIFJD)V",
+      "void(boolean, byte, char, short, int, float, long, double)" to
+        "(ZBCSIFJD)V",
 
-        "<E extends java.lang.Class> java.lang.Class<? extends E>()" to
-            "<E:Ljava/lang/Class;>()Ljava/lang/Class<+TE;>;",
+      "<E extends java.lang.Class> java.lang.Class<? extends E>()" to
+        "<E:Ljava/lang/Class;>()Ljava/lang/Class<+TE;>;",
 
-        "<E extends java.lang.Class> java.lang.Class<? super E>()" to
-            "<E:Ljava/lang/Class;>()Ljava/lang/Class<-TE;>;",
+      "<E extends java.lang.Class> java.lang.Class<? super E>()" to
+        "<E:Ljava/lang/Class;>()Ljava/lang/Class<-TE;>;",
 
-        "void(java.lang.String, java.lang.Class<?>, java.lang.reflect.Method[], java.lang.reflect.Method, java.lang.reflect.Method)" to
-            "(Ljava/lang/String;Ljava/lang/Class<*>;[Ljava/lang/reflect/Method;Ljava/lang/reflect/Method;Ljava/lang/reflect/Method;)V",
+      "void(java.lang.String, java.lang.Class<?>, java.lang.reflect.Method[], java.lang.reflect.Method, java.lang.reflect.Method)" to
+        "(Ljava/lang/String;Ljava/lang/Class<*>;[Ljava/lang/reflect/Method;Ljava/lang/reflect/Method;Ljava/lang/reflect/Method;)V",
 
-        "java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>)" to
-            "(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;",
+      "java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>)" to
+        "(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;",
 
-        "<T> java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>, T)" to
-            "<T:Ljava/lang/Object;>(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;TT;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;",
+      "<T> java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>, T)" to
+        "<T:Ljava/lang/Object;>(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;TT;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;",
 
-        "<E, T extends java.lang.Comparable<E>> java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>, T)" to
-            "<E:Ljava/lang/Object;T::Ljava/lang/Comparable<TE;>;>(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;TT;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;"
+      "<E, T extends java.lang.Comparable<E>> java.util.Map<java.lang.Object, java.lang.String>(java.lang.Object, java.util.Map<java.lang.Object, java.lang.String>, T)" to
+        "<E:Ljava/lang/Object;T::Ljava/lang/Comparable<TE;>;>(Ljava/lang/Object;Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;TT;)Ljava/util/Map<Ljava/lang/Object;Ljava/lang/String;>;"
     )
 
     for ((expected, signature) in testData) {
@@ -99,29 +99,29 @@ class SigVisitorTest {
   @Test
   fun `field signatures`() {
     val testData = listOf(
-        "T[]" to
-            "[TT;",
+      "T[]" to
+        "[TT;",
 
-        "AA<byte[][]>" to
-            "LAA<[[B>;",
+      "AA<byte[][]>" to
+        "LAA<[[B>;",
 
-        "java.lang.Class<?>" to
-            "Ljava/lang/Class<*>;",
+      "java.lang.Class<?>" to
+        "Ljava/lang/Class<*>;",
 
-        "java.lang.reflect.Constructor<T>" to
-            "Ljava/lang/reflect/Constructor<TT;>;",
+      "java.lang.reflect.Constructor<T>" to
+        "Ljava/lang/reflect/Constructor<TT;>;",
 
-        "java.util.Hashtable<?, ?>" to
-            "Ljava/util/Hashtable<**>;",
+      "java.util.Hashtable<?, ?>" to
+        "Ljava/util/Hashtable<**>;",
 
-        "java.util.concurrent.atomic.AtomicReferenceFieldUpdater<java.io.BufferedInputStream, byte[]>" to
-            "Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater<Ljava/io/BufferedInputStream;[B>;",
+      "java.util.concurrent.atomic.AtomicReferenceFieldUpdater<java.io.BufferedInputStream, byte[]>" to
+        "Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater<Ljava/io/BufferedInputStream;[B>;",
 
-        "AA<java.util.Map<java.lang.String, java.lang.String>[][]>" to
-            "LAA<[[Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;>;",
+      "AA<java.util.Map<java.lang.String, java.lang.String>[][]>" to
+        "LAA<[[Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;>;",
 
-        "java.util.Hashtable<java.lang.Object, java.lang.String>" to
-            "Ljava/util/Hashtable<Ljava/lang/Object;Ljava/lang/String;>;"
+      "java.util.Hashtable<java.lang.Object, java.lang.String>" to
+        "Ljava/util/Hashtable<Ljava/lang/Object;Ljava/lang/String;>;"
     )
 
     for ((expected, signature) in testData) {
@@ -148,12 +148,12 @@ class SigVisitorTest {
   }
 
   private fun parseClassSignature(signature: String): ClassSignature =
-      SigVisitor().also { SignatureReader(signature).accept(it) }.getClassSignature()
+    SigVisitor().also { SignatureReader(signature).accept(it) }.getClassSignature()
 
   private fun parseMethodSignature(signature: String): MethodSignature =
-      SigVisitor().also { SignatureReader(signature).accept(it) }.getMethodSignature()
+    SigVisitor().also { SignatureReader(signature).accept(it) }.getMethodSignature()
 
   private fun parseFieldSignature(signature: String): FieldSignature =
-      SigVisitor().also { SignatureReader(signature).acceptType(it) }.getFieldSignature()
+    SigVisitor().also { SignatureReader(signature).acceptType(it) }.getFieldSignature()
 
 }

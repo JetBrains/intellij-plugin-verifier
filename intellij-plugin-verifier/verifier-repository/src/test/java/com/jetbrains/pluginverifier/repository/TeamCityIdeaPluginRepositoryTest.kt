@@ -52,7 +52,7 @@ class TeamCityIdeaPluginRepositoryTest : BaseRepositoryTest<TeamCityIdeaPluginRe
   @Test
   fun `parse plugins list for TeamCity Integration IDEA plugin`() {
     val document = parseXmlDocument(
-        """
+      """
       <plugins>
       <plugin id="Jetbrains TeamCity Plugin" url="TeamCity-IDEAplugin.zip" version="2018.1.58183"/>
       </plugins>

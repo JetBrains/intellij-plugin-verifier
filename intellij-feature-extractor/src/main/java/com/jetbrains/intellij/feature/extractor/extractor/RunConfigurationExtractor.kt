@@ -26,7 +26,7 @@ class RunConfigurationExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.CONFIGURATION_TYPE)
-        .mapNotNull { extractConfigurationTypes(it, resolver) }
+      .mapNotNull { extractConfigurationTypes(it, resolver) }
   }
 
   private fun extractConfigurationTypes(classNode: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
@@ -36,10 +36,10 @@ class RunConfigurationExtractor : Extractor {
       val constructorInstructions = constructor.instructions
       val superInitIndex = constructorInstructions.indexOfLast {
         it is MethodInsnNode
-            && it.name == "<init>"
-            && it.opcode == Opcodes.INVOKESPECIAL
-            && it.owner == CONFIGURATION_BASE
-            && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V"
+          && it.name == "<init>"
+          && it.opcode == Opcodes.INVOKESPECIAL
+          && it.owner == CONFIGURATION_BASE
+          && it.desc == "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljavax/swing/Icon;)V"
       }
       if (superInitIndex == -1) {
         return null
@@ -57,9 +57,9 @@ class RunConfigurationExtractor : Extractor {
   }
 
   private fun convertToResult(value: String?): ExtensionPointFeatures? =
-      if (value != null) {
-        ExtensionPointFeatures(ExtensionPoint.CONFIGURATION_TYPE, listOf(value))
-      } else {
-        null
-      }
+    if (value != null) {
+      ExtensionPointFeatures(ExtensionPoint.CONFIGURATION_TYPE, listOf(value))
+    } else {
+      null
+    }
 }

@@ -7,8 +7,7 @@ $(".detailsLink").click(function () {
 
     if (longDiv.css('display') !== 'block') {
         longDiv.css('display', 'block')
-    }
-    else {
+    } else {
         longDiv.css('display', 'none')
     }
 

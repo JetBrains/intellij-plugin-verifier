@@ -10,11 +10,11 @@ import org.objectweb.asm.tree.AbstractInsnNode
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   override fun processMethodInvocation(
-      methodReference: MethodReference,
-      resolvedMethod: Method,
-      instructionNode: AbstractInsnNode,
-      callerMethod: Method,
-      context: VerificationContext
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    instructionNode: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
   ) {
     val usageLocation = callerMethod.location
     if (resolvedMethod.isOverrideOnlyMethod()) {
@@ -25,8 +25,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
   }
 
   private fun Method.isOverrideOnlyMethod(): Boolean =
-      runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
-          || containingClassFile.runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
+    runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
+      || containingClassFile.runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
 
   private companion object {
     const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"

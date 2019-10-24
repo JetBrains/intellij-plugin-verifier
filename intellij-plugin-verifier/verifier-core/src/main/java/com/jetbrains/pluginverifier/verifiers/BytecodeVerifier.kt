@@ -11,43 +11,43 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 
 class BytecodeVerifier(
-    private val verificationFilters: List<ClassFilter> = emptyList(),
-    additionalClassVerifiers: List<ClassVerifier> = emptyList(),
-    additionalMethodVerifiers: List<MethodVerifier> = emptyList(),
-    additionalFieldVerifiers: List<FieldVerifier> = emptyList(),
-    additionalInstructionVerifiers: List<InstructionVerifier> = emptyList()
+  private val verificationFilters: List<ClassFilter> = emptyList(),
+  additionalClassVerifiers: List<ClassVerifier> = emptyList(),
+  additionalMethodVerifiers: List<MethodVerifier> = emptyList(),
+  additionalFieldVerifiers: List<FieldVerifier> = emptyList(),
+  additionalInstructionVerifiers: List<InstructionVerifier> = emptyList()
 ) {
 
   private val fieldVerifiers = listOf<FieldVerifier>(FieldTypeVerifier()) + additionalFieldVerifiers
 
   private val classVerifiers = listOf(
-      SuperClassVerifier(),
-      InterfacesVerifier(),
-      AbstractMethodVerifier(),
-      InheritFromFinalClassVerifier()
+    SuperClassVerifier(),
+    InterfacesVerifier(),
+    AbstractMethodVerifier(),
+    InheritFromFinalClassVerifier()
   ) + additionalClassVerifiers
 
   private val methodVerifiers = listOf(
-      OverrideNonFinalVerifier(),
-      MethodReturnTypeVerifier(),
-      MethodArgumentTypesVerifier(),
-      MethodLocalVarsVerifier(),
-      MethodThrowsVerifier(),
-      MethodTryCatchVerifier()
+    OverrideNonFinalVerifier(),
+    MethodReturnTypeVerifier(),
+    MethodArgumentTypesVerifier(),
+    MethodLocalVarsVerifier(),
+    MethodThrowsVerifier(),
+    MethodTryCatchVerifier()
   ) + additionalMethodVerifiers
 
   private val instructionVerifiers = listOf(
-      MemberAccessVerifier(),
-      TypeInstructionVerifier(),
-      LdcInstructionVerifier(),
-      MultiANewArrayInstructionVerifier()
+    MemberAccessVerifier(),
+    TypeInstructionVerifier(),
+    LdcInstructionVerifier(),
+    MultiANewArrayInstructionVerifier()
   ) + additionalInstructionVerifiers
 
   @Throws(InterruptedException::class)
   fun verify(
-      classesToCheck: Set<String>,
-      context: VerificationContext,
-      progressIndicator: (Double) -> Unit
+    classesToCheck: Set<String>,
+    context: VerificationContext,
+    progressIndicator: (Double) -> Unit
   ) {
     if (classesToCheck.isNotEmpty()) {
       for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {

@@ -34,9 +34,9 @@ class FileRepositoryTest {
   fun `basic operations`() {
     val folder = tempFolder.newFolderPath()
     val fileRepository = FileRepositoryBuilder<Int>()
-        .clock(Clock.systemUTC())
-        .resourceProvider(createDownloadingProvider(folder))
-        .build()
+      .clock(Clock.systemUTC())
+      .resourceProvider(createDownloadingProvider(folder))
+      .build()
 
     val get0 = fileRepository.getFile(0) as FileRepositoryResult.Found
     val get0Locked = get0.lockedFile
@@ -57,9 +57,9 @@ class FileRepositoryTest {
     folder.resolve("1").writeText("1")
 
     val fileRepository = FileRepositoryBuilder<Int>()
-        .resourceProvider(createDownloadingProvider(folder))
-        .addInitialFilesFrom(folder) { it.nameWithoutExtension.toIntOrNull() }
-        .build()
+      .resourceProvider(createDownloadingProvider(folder))
+      .addInitialFilesFrom(folder) { it.nameWithoutExtension.toIntOrNull() }
+      .build()
 
     val get0 = fileRepository.getFound(0)
     assertEquals("0", get0.lockedFile.file.readText())
@@ -75,8 +75,8 @@ class FileRepositoryTest {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
     val fileRepository = FileRepositoryBuilder<Int>()
-        .resourceProvider(DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()))
-        .build()
+      .resourceProvider(DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()))
+      .build()
 
     val numberOfThreads = 10
     val executorService = Executors.newFixedThreadPool(numberOfThreads)
@@ -104,15 +104,15 @@ class FileRepositoryTest {
       override fun isNecessary(totalSpaceUsed: SpaceAmount): Boolean = true
 
       override fun selectFilesForDeletion(sweepInfo: SweepInfo<Int>): List<AvailableFile<Int>> =
-          sweepInfo.availableFiles
-              .sortedBy { it.usageStatistic.lastAccessTime }
-              .dropLast(n)
+        sweepInfo.availableFiles
+          .sortedBy { it.usageStatistic.lastAccessTime }
+          .dropLast(n)
     }
 
     val fileRepository = FileRepositoryBuilder<Int>()
-        .sweepPolicy(lruNSweepPolicy)
-        .resourceProvider(createDownloadingProvider(tempFolder.newFolderPath()))
-        .build()
+      .sweepPolicy(lruNSweepPolicy)
+      .resourceProvider(createDownloadingProvider(tempFolder.newFolderPath()))
+      .build()
 
     val found0 = fileRepository.getFound(0)
     val found1 = fileRepository.getFound(1)
@@ -145,10 +145,10 @@ class FileRepositoryTest {
     //create the file repository with maximum cache size of 5 bytes,
     // low space threshold 2 bytes and after-cleanup free space 3 bytes
     FileRepositoryBuilder<Int>()
-        .sweepPolicy(LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3)))
-        .resourceProvider(createDownloadingProvider(repositoryDir))
-        .addInitialFilesFrom(repositoryDir) { it.nameWithoutExtension.toIntOrNull() }
-        .build()
+      .sweepPolicy(LruFileSizeSweepPolicy(DiskSpaceSetting(ONE_BYTE * 5, ONE_BYTE * 2, ONE_BYTE * 3)))
+      .resourceProvider(createDownloadingProvider(repositoryDir))
+      .addInitialFilesFrom(repositoryDir) { it.nameWithoutExtension.toIntOrNull() }
+      .build()
 
     //cleanup procedure on repository startup must make its size 2 bytes (i.e. remove 8 files)
     val repoSize = repositoryDir.fileSize
@@ -178,8 +178,8 @@ class FileRepositoryTest {
     }
 
     val fileRepository = FileRepositoryBuilder<Int>()
-        .resourceProvider(DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()))
-        .build()
+      .resourceProvider(DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()))
+      .build()
 
     val fileLock = AtomicReference<FileLock>()
     val downloadThread = Thread {
@@ -222,9 +222,9 @@ class FileRepositoryTest {
     trueFile.writeText("1")
 
     val fileRepository = FileRepositoryBuilder<Int>()
-        .resourceProvider(createDownloadingProvider(tempFolder))
-        .addInitialFilesFrom(tempFolder) { it.nameWithoutExtension.toIntOrNull() }
-        .build()
+      .resourceProvider(createDownloadingProvider(tempFolder))
+      .addInitialFilesFrom(tempFolder) { it.nameWithoutExtension.toIntOrNull() }
+      .build()
 
     assertEquals(setOf(1), fileRepository.getAllExistingKeys())
     assertEquals(listOf(trueFile), tempFolder.listFiles())
@@ -234,8 +234,8 @@ class FileRepositoryTest {
   fun `all existing keys`() {
     val tempFolder = tempFolder.newFolderPath()
     val fileRepository = FileRepositoryBuilder<Int>()
-        .resourceProvider(createDownloadingProvider(tempFolder))
-        .build()
+      .resourceProvider(createDownloadingProvider(tempFolder))
+      .build()
     with(fileRepository) {
       val one = getFile(1) as FileRepositoryResult.Found
       val two = getFile(2) as FileRepositoryResult.Found

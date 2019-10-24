@@ -23,10 +23,10 @@ class ApiReportSerializationTest : BaseOldNewIdesTest() {
   }
 
   private fun saveAndRead(
-      originalReport: ApiReport,
-      reportPath: Path,
-      apiReportReader: ApiReportReader,
-      reportWriter: ApiReportWriter
+    originalReport: ApiReport,
+    reportPath: Path,
+    apiReportReader: ApiReportReader,
+    reportWriter: ApiReportWriter
   ) {
     reportWriter.saveReport(originalReport, reportPath)
     val restoredReport = apiReportReader.readApiReport(reportPath)

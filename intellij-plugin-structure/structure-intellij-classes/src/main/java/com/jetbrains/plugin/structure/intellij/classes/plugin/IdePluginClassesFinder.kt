@@ -15,10 +15,10 @@ import java.io.File
 import java.io.IOException
 
 class IdePluginClassesFinder private constructor(
-    private val idePlugin: IdePlugin,
-    private val extractDirectory: File,
-    private val readMode: Resolver.ReadMode,
-    private val locatorKeys: List<LocationKey>
+  private val idePlugin: IdePlugin,
+  private val extractDirectory: File,
+  private val readMode: Resolver.ReadMode,
+  private val locatorKeys: List<LocationKey>
 ) {
 
   private fun findPluginClasses(): IdePluginClassesLocations {
@@ -73,30 +73,30 @@ class IdePluginClassesFinder private constructor(
     val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
 
     fun findPluginClasses(
-        idePlugin: IdePlugin,
-        additionalKeys: List<LocationKey> = emptyList()
+      idePlugin: IdePlugin,
+      additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations =
-        findPluginClasses(idePlugin, Resolver.ReadMode.FULL, additionalKeys)
+      findPluginClasses(idePlugin, Resolver.ReadMode.FULL, additionalKeys)
 
     fun findPluginClasses(
-        idePlugin: IdePlugin,
-        readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
-        additionalKeys: List<LocationKey> = emptyList()
+      idePlugin: IdePlugin,
+      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
+      additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
       val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().createDir()
       return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
     fun findPluginClasses(
-        idePlugin: IdePlugin,
-        extractDirectory: File,
-        readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
-        additionalKeys: List<LocationKey> = emptyList()
+      idePlugin: IdePlugin,
+      extractDirectory: File,
+      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
+      additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations = IdePluginClassesFinder(
-        idePlugin,
-        extractDirectory,
-        readMode,
-        MAIN_CLASSES_KEYS + additionalKeys
+      idePlugin,
+      extractDirectory,
+      readMode,
+      MAIN_CLASSES_KEYS + additionalKeys
     ).findPluginClasses()
   }
 

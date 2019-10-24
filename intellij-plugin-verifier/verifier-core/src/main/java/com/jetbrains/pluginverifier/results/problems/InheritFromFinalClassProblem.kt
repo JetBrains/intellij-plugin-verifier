@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import java.util.*
 
 class InheritFromFinalClassProblem(
-    val child: ClassLocation,
-    val finalClass: ClassLocation
+  val child: ClassLocation,
+  val finalClass: ClassLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -23,8 +23,8 @@ class InheritFromFinalClassProblem(
     }
 
   override fun equals(other: Any?) = other is InheritFromFinalClassProblem
-      && finalClass == other.finalClass
-      && child == other.child
+    && finalClass == other.finalClass
+    && child == other.child
 
   override fun hashCode() = Objects.hash(finalClass, child)
 }

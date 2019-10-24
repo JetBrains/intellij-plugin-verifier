@@ -12,24 +12,24 @@ import java.util.*
  * from source repository, such as https://download.jetbrains.com
  */
 data class AvailableIde(
-    /**
-     * IDE build number of _this_ IDE.
-     */
-    val version: IdeVersion,
-    /**
-     * Official release version of this IDE,
-     * like `2017.3.4, 2017.3`, or `null`
-     * if this IDE is not a release IDE.
-     */
-    val releaseVersion: String?,
-    /**
-     * URL to download this IDE build.
-     */
-    val downloadUrl: URL,
-    /**
-     * Date when this IDE was uploaded to repository.
-     */
-    val uploadDate: LocalDate
+  /**
+   * IDE build number of _this_ IDE.
+   */
+  val version: IdeVersion,
+  /**
+   * Official release version of this IDE,
+   * like `2017.3.4, 2017.3`, or `null`
+   * if this IDE is not a release IDE.
+   */
+  val releaseVersion: String?,
+  /**
+   * URL to download this IDE build.
+   */
+  val downloadUrl: URL,
+  /**
+   * Date when this IDE was uploaded to repository.
+   */
+  val uploadDate: LocalDate
 ) {
 
   override fun toString() = version.toString() + (if (isRelease) " ($releaseVersion)" else "")
@@ -38,10 +38,10 @@ data class AvailableIde(
     get() = releaseVersion != null
 
   override fun equals(other: Any?) = other is AvailableIde
-      && version == other.version
-      && releaseVersion == other.releaseVersion
-      && uploadDate == other.uploadDate
-      && downloadUrl.safeEquals(other.downloadUrl)
+    && version == other.version
+    && releaseVersion == other.releaseVersion
+    && uploadDate == other.uploadDate
+    && downloadUrl.safeEquals(other.downloadUrl)
 
   override fun hashCode() = Objects.hash(version, releaseVersion, uploadDate, downloadUrl.safeHashCode())
 }

@@ -19,5 +19,5 @@ object NonImplementationClassFilter : ClassFilter {
   private fun hasImplementationLikePackage(className: String): Boolean = "/impl/" in className
 
   override fun shouldProcessClass(className: String) =
-      !hasImplementationLikeName(className) && !hasImplementationLikePackage(className)
+    !hasImplementationLikeName(className) && !hasImplementationLikePackage(className)
 }

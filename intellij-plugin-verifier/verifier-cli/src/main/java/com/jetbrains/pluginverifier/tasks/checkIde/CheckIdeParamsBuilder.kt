@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -15,6 +14,7 @@ import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -23,9 +23,9 @@ import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import java.nio.file.Paths
 
 class CheckIdeParamsBuilder(
-    val pluginRepository: PluginRepository,
-    val pluginDetailsCache: PluginDetailsCache,
-    val reportage: PluginVerificationReportage
+  val pluginRepository: PluginRepository,
+  val pluginDetailsCache: PluginDetailsCache,
+  val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
@@ -49,9 +49,9 @@ class CheckIdeParamsBuilder(
       val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
 
       val classResolverProvider = DefaultClassResolverProvider(
-          dependencyFinder,
-          ideDescriptor,
-          externalClassesPackageFilter
+        dependencyFinder,
+        ideDescriptor,
+        externalClassesPackageFilter
       )
 
       val verificationDescriptors = pluginsSet.pluginsToCheck.map {
@@ -64,11 +64,11 @@ class CheckIdeParamsBuilder(
       }
 
       return CheckIdeParams(
-          verificationTarget,
-          verificationDescriptors,
-          problemsFilters,
-          missingCompatibleVersionsProblems,
-          ideDescriptor
+        verificationTarget,
+        verificationDescriptors,
+        problemsFilters,
+        missingCompatibleVersionsProblems,
+        ideDescriptor
       )
     }
   }
@@ -85,16 +85,16 @@ class CheckIdeParamsBuilder(
     val existingPluginIds = pluginRepository.getLastCompatiblePlugins(ideVersion).map { it.pluginId }
 
     return (pluginIds - existingPluginIds)
-        .map {
-          val buildForCommunity = findVersionCompatibleWithCommunityEdition(it, ideVersion) as? UpdateInfo
-          if (buildForCommunity != null) {
-            val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
-                "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
-            MissingCompatibleVersionProblem(it, ideVersion, details)
-          } else {
-            MissingCompatibleVersionProblem(it, ideVersion, null)
-          }
+      .map {
+        val buildForCommunity = findVersionCompatibleWithCommunityEdition(it, ideVersion) as? UpdateInfo
+        if (buildForCommunity != null) {
+          val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
+            "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
+          MissingCompatibleVersionProblem(it, ideVersion, details)
+        } else {
+          MissingCompatibleVersionProblem(it, ideVersion, null)
         }
+      }
   }
 
   private fun findVersionCompatibleWithCommunityEdition(pluginId: String, version: IdeVersion): PluginInfo? {

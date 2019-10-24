@@ -44,9 +44,9 @@ class MemberAccessVerifier : InstructionVerifier {
   }
 
   private fun processInvokeDynamic(
-      callerMethod: Method,
-      instructionNode: InvokeDynamicInsnNode,
-      context: VerificationContext
+    callerMethod: Method,
+    instructionNode: InvokeDynamicInsnNode,
+    context: VerificationContext
   ) {
     for (bsmArg in instructionNode.bsmArgs) {
       if (bsmArg is Handle) {
@@ -70,13 +70,13 @@ class MemberAccessVerifier : InstructionVerifier {
 
 
   private fun verifyMemberAccess(
-      callerMethod: Method,
-      memberOwner: String,
-      memberName: String,
-      memberDesc: String,
-      instructionNode: AbstractInsnNode,
-      instruction: Instruction,
-      context: VerificationContext
+    callerMethod: Method,
+    memberOwner: String,
+    memberName: String,
+    memberDesc: String,
+    instructionNode: AbstractInsnNode,
+    instruction: Instruction,
+    context: VerificationContext
   ) {
     if (memberOwner.startsWith("[")) {
       val arrayType = memberOwner.extractClassNameFromDescriptor()

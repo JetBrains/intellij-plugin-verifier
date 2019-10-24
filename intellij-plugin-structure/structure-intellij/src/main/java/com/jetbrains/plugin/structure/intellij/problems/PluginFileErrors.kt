@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.IncorrectPluginFile
 import com.jetbrains.plugin.structure.base.problems.PluginFileError
 
 fun createIncorrectIntellijFileProblem(fileName: String): PluginFileError =
-    IncorrectPluginFile(fileName, ".zip or .jar archive or a directory.")
+  IncorrectPluginFile(fileName, ".zip or .jar archive or a directory.")
 
 class PluginZipIsEmpty : PluginFileError() {
 

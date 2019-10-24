@@ -18,9 +18,9 @@ class DownloadStatistics {
   }
 
   fun getTotalDownloadedAmount(): SpaceAmount =
-      events.fold(SpaceAmount.ZERO_SPACE) { acc, event ->
-        acc + event.downloadedAmount
-      }
+    events.fold(SpaceAmount.ZERO_SPACE) { acc, event ->
+      acc + event.downloadedAmount
+    }
 
   fun getTotalAstronomicalDownloadDuration(): Duration {
     //Use sweep line algorithm, because events may intersect.
@@ -44,12 +44,12 @@ class DownloadStatistics {
   }
 
   fun downloadStarted(): DownloadEvent =
-      DownloadEvent(Instant.now())
+    DownloadEvent(Instant.now())
 
   inner class DownloadEvent(
-      internal val startInstant: Instant,
-      internal var endInstant: Instant = Instant.EPOCH,
-      internal var downloadedAmount: SpaceAmount = SpaceAmount.ZERO_SPACE
+    internal val startInstant: Instant,
+    internal var endInstant: Instant = Instant.EPOCH,
+    internal var downloadedAmount: SpaceAmount = SpaceAmount.ZERO_SPACE
   ) {
     @Synchronized
     fun downloadEnded(downloadedAmount: SpaceAmount) {

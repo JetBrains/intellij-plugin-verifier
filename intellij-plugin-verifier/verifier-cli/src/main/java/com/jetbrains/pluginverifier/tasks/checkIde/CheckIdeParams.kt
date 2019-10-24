@@ -9,11 +9,11 @@ import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 
 class CheckIdeParams(
-    val verificationTarget: PluginVerificationTarget.IDE,
-    val verificationDescriptors: List<PluginVerificationDescriptor.IDE>,
-    val problemsFilters: List<ProblemsFilter>,
-    val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>,
-    private val ideDescriptor: IdeDescriptor
+  val verificationTarget: PluginVerificationTarget.IDE,
+  val verificationDescriptors: List<PluginVerificationDescriptor.IDE>,
+  val problemsFilters: List<ProblemsFilter>,
+  val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>,
+  private val ideDescriptor: IdeDescriptor
 ) : TaskParameters {
 
   override val presentableText

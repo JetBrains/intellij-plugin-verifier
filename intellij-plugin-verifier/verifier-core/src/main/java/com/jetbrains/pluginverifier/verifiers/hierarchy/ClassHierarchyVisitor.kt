@@ -7,10 +7,10 @@ class ClassHierarchyVisitor(private val visitInterfaces: Boolean) {
   private val visitedClasses = hashSetOf<String>()
 
   fun visitClassHierarchy(
-      currentClass: ClassHierarchy,
-      visitSelf: Boolean,
-      onEnter: (ClassHierarchy) -> Boolean,
-      onExit: (ClassHierarchy) -> Unit = {}
+    currentClass: ClassHierarchy,
+    visitSelf: Boolean,
+    onEnter: (ClassHierarchy) -> Boolean,
+    onExit: (ClassHierarchy) -> Unit = {}
   ) {
     visitedClasses.add(currentClass.name)
 
@@ -27,9 +27,9 @@ class ClassHierarchyVisitor(private val visitInterfaces: Boolean) {
     val superParents = listOfNotNull(currentClass.superClass) + interfaces
 
     superParents
-        .asSequence()
-        .filterNot { it.name in visitedClasses }
-        .forEach { visitClassHierarchy(it, true, onEnter, onExit) }
+      .asSequence()
+      .filterNot { it.name in visitedClasses }
+      .forEach { visitClassHierarchy(it, true, onEnter, onExit) }
 
     if (visitSelf) {
       onExit(currentClass)

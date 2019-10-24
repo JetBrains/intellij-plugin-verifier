@@ -16,21 +16,21 @@ object JdkDescriptorCreator {
 
   fun createBundledJdkDescriptor(ide: Ide, readMode: Resolver.ReadMode = Resolver.ReadMode.FULL): JdkDescriptor? {
     val bundledJdkPath = listOf(
-        ide.idePath.resolve("jbr"),
-        ide.idePath.resolve("jre64")
+      ide.idePath.resolve("jbr"),
+      ide.idePath.resolve("jre64")
     ).find { it.isDirectory } ?: return null
     return createJdkDescriptor(bundledJdkPath.toPath(), readMode, ide.version)
   }
 
   fun createJdkDescriptor(
-      jdkPath: Path,
-      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL
+    jdkPath: Path,
+    readMode: Resolver.ReadMode = Resolver.ReadMode.FULL
   ): JdkDescriptor = createJdkDescriptor(jdkPath, readMode, null)
 
   private fun createJdkDescriptor(
-      jdkPath: Path,
-      readMode: Resolver.ReadMode,
-      bundledTo: IdeVersion?
+    jdkPath: Path,
+    readMode: Resolver.ReadMode,
+    bundledTo: IdeVersion?
   ): JdkDescriptor {
     val fullJavaVersion = readFullVersion(jdkPath)
     val jdkVersion = JdkVersion(fullJavaVersion, bundledTo)

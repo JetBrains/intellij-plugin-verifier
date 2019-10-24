@@ -9,7 +9,7 @@ class InheritFromFinalClassVerifier : ClassVerifier {
   override fun verify(classFile: ClassFile, context: VerificationContext) {
     val superClassName = classFile.superName ?: return
     val superClass = context.classResolver.resolveClassChecked(superClassName, classFile, context)
-        ?: return
+      ?: return
     if (superClass.isFinal) {
       context.problemRegistrar.registerProblem(InheritFromFinalClassProblem(classFile.location, superClass.location))
     }

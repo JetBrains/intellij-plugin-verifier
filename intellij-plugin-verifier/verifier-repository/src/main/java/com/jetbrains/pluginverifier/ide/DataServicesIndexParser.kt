@@ -21,7 +21,7 @@ internal class DataServicesIndexParser {
             if (download != null && release.build != null) {
               val downloadUrl = URL(download.link)
               val ideVersion = IdeVersion.createIdeVersionIfValid(release.build)
-                  ?.setProductCodeIfAbsent(intelliJPlatformProduct.productCode)
+                ?.setProductCodeIfAbsent(intelliJPlatformProduct.productCode)
               if (ideVersion != null) {
                 val releaseVersion = getReleaseVersion(release)
                 val uploadDate = LocalDate.parse(release.date)
@@ -40,10 +40,10 @@ internal class DataServicesIndexParser {
    * Release version is only applicable for "release" IDEs.
    */
   private fun getReleaseVersion(release: Release) =
-      if (release.type == "release") release.version else null
+    if (release.type == "release") release.version else null
 
   private fun getIntelliJProduct(product: Product) =
-      IntelliJPlatformProduct.fromProductCode(product.code)
+    IntelliJPlatformProduct.fromProductCode(product.code)
 
   /**
    * "downloads" map provides download URL for different distribution types.
@@ -51,5 +51,5 @@ internal class DataServicesIndexParser {
    * All IntelliJ IDEs have either "linux" (IU, IC, PC...) or "zip" (MPS) distribution.
    */
   private fun getBuildDownload(downloads: Map<String, Download>): Download? =
-      downloads["linux"] ?: downloads["zip"]
+    downloads["linux"] ?: downloads["zip"]
 }

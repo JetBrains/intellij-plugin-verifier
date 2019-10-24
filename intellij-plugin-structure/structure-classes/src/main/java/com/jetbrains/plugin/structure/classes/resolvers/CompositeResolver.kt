@@ -8,8 +8,8 @@ import java.util.*
  * [Resolver] that combines several [resolvers] with the Java classpath search strategy.
  */
 class CompositeResolver private constructor(
-    private val resolvers: List<Resolver>,
-    override val readMode: ReadMode
+  private val resolvers: List<Resolver>,
+  override val readMode: ReadMode
 ) : Resolver() {
 
   private val packageToResolvers: MutableMap<String, MutableList<Resolver>> = hashMapOf()
@@ -50,7 +50,7 @@ class CompositeResolver private constructor(
     get() = packageToResolvers.keys
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean) =
-      resolvers.asSequence().all { it.processAllClasses(processor) }
+    resolvers.asSequence().all { it.processAllClasses(processor) }
 
   private fun getPackageName(className: String) = className.substringBeforeLast('/', "")
 

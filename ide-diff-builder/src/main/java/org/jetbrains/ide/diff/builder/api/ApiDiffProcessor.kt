@@ -5,9 +5,9 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 interface ApiDiffProcessor {
   fun process(
-      oldMember: ClassFileMember?,
-      newMember: ClassFileMember?,
-      oldResolver: Resolver,
-      newResolver: Resolver
+    oldMember: ClassFileMember?,
+    newMember: ClassFileMember?,
+    oldResolver: Resolver,
+    newResolver: Resolver
   )
 }

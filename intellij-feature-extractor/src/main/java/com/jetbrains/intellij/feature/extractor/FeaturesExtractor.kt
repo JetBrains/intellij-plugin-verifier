@@ -3,8 +3,8 @@ package com.jetbrains.intellij.feature.extractor
 import com.jetbrains.intellij.feature.extractor.FeaturesExtractor.extractFeatures
 import com.jetbrains.intellij.feature.extractor.extractor.*
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -21,12 +21,12 @@ import java.io.Closeable
 object FeaturesExtractor {
 
   private val ALL_EXTRACTORS = listOf(
-      RunConfigurationExtractor(),
-      FacetTypeExtractor(),
-      FileTypeFactoryExtractor(),
-      FileTypeExtractor(),
-      ArtifactTypeExtractor(),
-      ModuleTypeExtractor()
+    RunConfigurationExtractor(),
+    FacetTypeExtractor(),
+    FileTypeFactoryExtractor(),
+    FileTypeExtractor(),
+    ArtifactTypeExtractor(),
+    ModuleTypeExtractor()
   )
 
   fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: IdePlugin): List<ExtensionPointFeatures> {
@@ -43,6 +43,6 @@ object FeaturesExtractor {
   }
 
   private fun IdePluginClassesLocations.constructMainPluginResolver(): Resolver =
-      CompositeResolver.create(IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { getResolvers(it) })
+    CompositeResolver.create(IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { getResolvers(it) })
 
 }

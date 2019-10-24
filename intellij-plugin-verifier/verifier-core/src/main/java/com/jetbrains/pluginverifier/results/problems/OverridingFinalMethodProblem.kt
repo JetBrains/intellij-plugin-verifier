@@ -15,8 +15,8 @@ import com.jetbrains.pluginverifier.results.presentation.formatMethodLocation
 import java.util.*
 
 class OverridingFinalMethodProblem(
-    val finalMethod: MethodLocation,
-    val invalidClass: ClassLocation
+  val finalMethod: MethodLocation,
+  val invalidClass: ClassLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -29,8 +29,8 @@ class OverridingFinalMethodProblem(
     get() = "Class ${invalidClass.formatClassLocation(ClassOption.FULL_NAME, ClassGenericsSignatureOption.WITH_GENERICS)} overrides the final method ${finalMethod.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}. This can lead to **VerifyError** exception at runtime."
 
   override fun equals(other: Any?) = other is OverridingFinalMethodProblem
-      && finalMethod == other.finalMethod
-      && invalidClass == other.invalidClass
+    && finalMethod == other.finalMethod
+    && invalidClass == other.invalidClass
 
   override fun hashCode() = Objects.hash(finalMethod, invalidClass)
 }

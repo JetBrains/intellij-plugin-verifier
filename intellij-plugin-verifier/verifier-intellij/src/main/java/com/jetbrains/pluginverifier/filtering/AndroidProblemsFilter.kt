@@ -9,8 +9,8 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 class AndroidProblemsFilter : ProblemsFilter {
 
   override fun shouldReportProblem(
-      problem: CompatibilityProblem,
-      context: VerificationContext
+    problem: CompatibilityProblem,
+    context: VerificationContext
   ): ProblemsFilter.Result {
     return if (problem.relatesToAndroid()) {
       ProblemsFilter.Result.Report

@@ -42,16 +42,16 @@ class NoExplicitDependencyOnJavaPluginTest {
     // Build class files
 
     val javaPluginException = ByteBuddy()
-        .subclass(RuntimeException::class.java)
-        .name("javaPlugin.JavaPluginException")
-        .make()
+      .subclass(RuntimeException::class.java)
+      .name("javaPlugin.JavaPluginException")
+      .make()
 
     val usageClass = ByteBuddy()
-        .subclass(Any::class.java)
-        .name("usage.Usage")
-        .defineMethod("method", Void.TYPE, Visibility.PUBLIC)
-        .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
-        .make()
+      .subclass(Any::class.java)
+      .name("usage.Usage")
+      .defineMethod("method", Void.TYPE, Visibility.PUBLIC)
+      .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
+      .make()
 
     // Build mock plugin
 
@@ -148,6 +148,7 @@ class NoExplicitDependencyOnJavaPluginTest {
         For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
         
       """.trimIndent()
-    ), verificationResult.compatibilityWarnings.map { it.message }.toSet())
+    ), verificationResult.compatibilityWarnings.map { it.message }.toSet()
+    )
   }
 }

@@ -11,14 +11,14 @@ import com.jetbrains.pluginverifier.repository.files.AvailableFile
 class LruFileSizeSweepPolicy<K>(private val diskSpaceSetting: DiskSpaceSetting) : SweepPolicy<K> {
 
   private fun estimateFreeSpaceAmount(totalSpaceUsed: SpaceAmount) =
-      diskSpaceSetting.maxSpaceUsage - totalSpaceUsed
+    diskSpaceSetting.maxSpaceUsage - totalSpaceUsed
 
   override fun isNecessary(totalSpaceUsed: SpaceAmount): Boolean =
-      estimateFreeSpaceAmount(totalSpaceUsed) < diskSpaceSetting.lowSpaceThreshold
+    estimateFreeSpaceAmount(totalSpaceUsed) < diskSpaceSetting.lowSpaceThreshold
 
   private val lruHeaviestFilesComparator = compareBy<AvailableFile<K>> { it.usageStatistic.lastAccessTime }
-      .thenByDescending { it.fileInfo.fileSize }
-      .thenBy { it.fileInfo.file.fileName }
+    .thenByDescending { it.fileInfo.fileSize }
+    .thenBy { it.fileInfo.file.fileName }
 
   override fun selectFilesForDeletion(sweepInfo: SweepInfo<K>): List<AvailableFile<K>> {
     if (isNecessary(sweepInfo.totalSpaceUsed)) {

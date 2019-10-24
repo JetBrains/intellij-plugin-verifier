@@ -1,19 +1,19 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
 
 class CheckPluginResultPrinter(
-    private val outputOptions: OutputOptions,
-    private val pluginRepository: PluginRepository
+  private val outputOptions: OutputOptions,
+  private val pluginRepository: PluginRepository
 ) : TaskResultPrinter {
 
   override fun printResults(taskResult: TaskResult) {
@@ -32,9 +32,9 @@ class CheckPluginResultPrinter(
 
   private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog) {
     TeamCityResultPrinter(
-        tcLog,
-        outputOptions.teamCityGroupType,
-        pluginRepository
+      tcLog,
+      outputOptions.teamCityGroupType,
+      pluginRepository
     ).printResults(results)
 
     TeamCityResultPrinter.printInvalidPluginFiles(tcLog, invalidPluginFiles)

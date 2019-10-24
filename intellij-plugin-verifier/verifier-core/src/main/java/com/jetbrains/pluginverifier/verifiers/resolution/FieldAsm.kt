@@ -9,11 +9,11 @@ import org.objectweb.asm.tree.FieldNode
 class FieldAsm(override val containingClassFile: ClassFile, private val asmNode: FieldNode) : Field {
   override val location
     get() = FieldLocation(
-        containingClassFile.location,
-        name,
-        descriptor,
-        signature?.takeIf { it.isNotEmpty() },
-        Modifiers(asmNode.access)
+      containingClassFile.location,
+      name,
+      descriptor,
+      signature?.takeIf { it.isNotEmpty() },
+      Modifiers(asmNode.access)
     )
 
   override val name: String

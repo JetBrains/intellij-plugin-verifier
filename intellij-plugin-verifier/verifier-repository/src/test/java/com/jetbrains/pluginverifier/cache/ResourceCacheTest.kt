@@ -28,20 +28,20 @@ class ResourceCacheTest {
     val openedResources = Collections.synchronizedMap(hashMapOf<Int, Closeable>())
 
     val resourceCache = createSizeLimitedResourceCache(
-        elementsNum,
-        object : ResourceProvider<Int, Closeable> {
-          override fun provide(key: Int): ProvideResult.Provided<Closeable> {
-            val closeable = Closeable {
-              openedResources.remove(key)
-            }
-            openedResources[key] = closeable
-            return ProvideResult.Provided(
-                closeable
-            )
+      elementsNum,
+      object : ResourceProvider<Int, Closeable> {
+        override fun provide(key: Int): ProvideResult.Provided<Closeable> {
+          val closeable = Closeable {
+            openedResources.remove(key)
           }
-        },
-        { it.close() },
-        "testCache"
+          openedResources[key] = closeable
+          return ProvideResult.Provided(
+            closeable
+          )
+        }
+      },
+      { it.close() },
+      "testCache"
     )
 
     //Populate the cache with keys [0; N)

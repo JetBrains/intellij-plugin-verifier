@@ -3,17 +3,17 @@ package com.jetbrains.pluginverifier.verifiers.hierarchy
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 class ClassParentsVisitor(
-    private val visitInterfaces: Boolean,
-    private val parentResolver: (subclassFile: ClassFile, parentClassName: String) -> ClassFile?
+  private val visitInterfaces: Boolean,
+  private val parentResolver: (subclassFile: ClassFile, parentClassName: String) -> ClassFile?
 ) {
 
   private val visitedClasses = hashSetOf<String>()
 
   fun visitClass(
-      currentClass: ClassFile,
-      visitSelf: Boolean,
-      onEnter: (ClassFile) -> Boolean,
-      onExit: (ClassFile) -> Unit = {}
+    currentClass: ClassFile,
+    visitSelf: Boolean,
+    onEnter: (ClassFile) -> Boolean,
+    onExit: (ClassFile) -> Unit = {}
   ) {
     visitedClasses.add(currentClass.name)
 

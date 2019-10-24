@@ -20,13 +20,13 @@ import java.util.concurrent.FutureTask
  * where the resources can be added, accessed and removed by multiple threads.
  */
 class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
-    private val evictionPolicy: EvictionPolicy<R, K, W>,
-    private val clock: Clock,
-    private val resourceProvider: ResourceProvider<K, R>,
-    initialWeight: W,
-    weigher: (R) -> W,
-    disposer: (R) -> Unit,
-    private val presentableName: String = "ResourceRepository"
+  private val evictionPolicy: EvictionPolicy<R, K, W>,
+  private val clock: Clock,
+  private val resourceProvider: ResourceProvider<K, R>,
+  initialWeight: W,
+  weigher: (R) -> W,
+  disposer: (R) -> Unit,
+  private val presentableName: String = "ResourceRepository"
 ) : ResourceRepository<R, K, W> {
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
@@ -46,11 +46,11 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
 
   @Synchronized
   override fun add(key: K, resource: R) =
-      try {
-        addResource(key, resource)
-      } finally {
-        cleanup()
-      }
+    try {
+      addResource(key, resource)
+    } finally {
+      cleanup()
+    }
 
   /**
    * Adds the [resource] to the [resourcesRegistrar].
@@ -230,9 +230,9 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
 
   @Synchronized
   override fun getAvailableResources() =
-      resourcesRegistrar.resources.map { (key, resourceInfo) ->
-        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
-      }
+    resourcesRegistrar.resources.map { (key, resourceInfo) ->
+      AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
+    }
 
   @Synchronized
   override fun cleanup() {
@@ -246,9 +246,9 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
         logger.debugMaybe {
           "It's time to evict unused resources. " +
-              "Total weight: ${resourcesRegistrar.totalWeight}. " +
-              "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
-              " will be evicted with total weight $disposedTotalWeight"
+            "Total weight: ${resourcesRegistrar.totalWeight}. " +
+            "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
+            " will be evicted with total weight $disposedTotalWeight"
         }
         for (resource in resourcesForEviction) {
           remove(resource.key)

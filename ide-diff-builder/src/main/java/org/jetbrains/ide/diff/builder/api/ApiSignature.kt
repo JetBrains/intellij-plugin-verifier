@@ -13,19 +13,19 @@ import kotlinx.serialization.list
 sealed class ApiSignature
 
 data class ClassSignature(
-    val className: String
+  val className: String
 ) : ApiSignature()
 
 data class MethodSignature(
-    val hostSignature: ClassSignature,
-    val methodName: String,
-    val methodDescriptor: String,
-    val signature: String?
+  val hostSignature: ClassSignature,
+  val methodName: String,
+  val methodDescriptor: String,
+  val signature: String?
 ) : ApiSignature()
 
 data class FieldSignature(
-    val hostSignature: ClassSignature,
-    val fieldName: String
+  val hostSignature: ClassSignature,
+  val fieldName: String
 ) : ApiSignature()
 
 @Serializer(forClass = ApiSignature::class)
@@ -39,38 +39,38 @@ object ApiSignatureSerializer {
   }
 
   override fun deserialize(decoder: Decoder): ApiSignature =
-      decoder.decodeSerializableValue(StringSerializer.list).decodeSignature()
+    decoder.decodeSerializableValue(StringSerializer.list).decodeSignature()
 
   private fun List<String>.decodeSignature(): ApiSignature = when (first()) {
     "class" -> ClassSignature(get(1))
     "method" -> MethodSignature(
-        ClassSignature(get(1)),
-        get(2),
-        get(3),
-        get(4).takeIf { it.isNotEmpty() }
+      ClassSignature(get(1)),
+      get(2),
+      get(3),
+      get(4).takeIf { it.isNotEmpty() }
     )
     else -> FieldSignature(
-        ClassSignature(get(1)),
-        get(2)
+      ClassSignature(get(1)),
+      get(2)
     )
   }
 
   private fun ApiSignature.encodeToList(): List<String> = when (this) {
     is ClassSignature -> listOf(
-        "class",
-        className
+      "class",
+      className
     )
     is MethodSignature -> listOf(
-        "method",
-        hostSignature.className,
-        methodName,
-        methodDescriptor,
-        signature ?: ""
+      "method",
+      hostSignature.className,
+      methodName,
+      methodDescriptor,
+      signature ?: ""
     )
     is FieldSignature -> listOf(
-        "field",
-        hostSignature.className,
-        fieldName
+      "field",
+      hostSignature.className,
+      fieldName
     )
   }
 }

@@ -19,9 +19,9 @@ sealed class PluginVerificationDescriptor {
   abstract val classResolverProvider: ClassResolverProvider
 
   class IDE(
-      private val ideDescriptor: IdeDescriptor,
-      override val classResolverProvider: DefaultClassResolverProvider,
-      override val checkedPlugin: PluginInfo
+    private val ideDescriptor: IdeDescriptor,
+    override val classResolverProvider: DefaultClassResolverProvider,
+    override val checkedPlugin: PluginInfo
   ) : PluginVerificationDescriptor() {
     val ideVersion: IdeVersion
       get() = ideDescriptor.ideVersion
@@ -36,10 +36,10 @@ sealed class PluginVerificationDescriptor {
   }
 
   class Plugin(
-      override val checkedPlugin: PluginInfo,
-      val apiPlugin: PluginInfo,
-      override val classResolverProvider: PluginApiClassResolverProvider,
-      val jdkVersion: JdkVersion
+    override val checkedPlugin: PluginInfo,
+    val apiPlugin: PluginInfo,
+    override val classResolverProvider: PluginApiClassResolverProvider,
+    val jdkVersion: JdkVersion
   ) : PluginVerificationDescriptor() {
 
     override fun toString() = "$checkedPlugin against API of $apiPlugin"
@@ -53,7 +53,7 @@ fun PluginVerificationDescriptor.toTarget(): PluginVerificationTarget = when (th
 }
 
 fun PluginVerificationDescriptor.Plugin.toTarget(): PluginVerificationTarget.Plugin =
-    PluginVerificationTarget.Plugin(apiPlugin, jdkVersion)
+  PluginVerificationTarget.Plugin(apiPlugin, jdkVersion)
 
 fun PluginVerificationDescriptor.IDE.toTarget(): PluginVerificationTarget.IDE =
-    PluginVerificationTarget.IDE(ideVersion, jdkVersion)
+  PluginVerificationTarget.IDE(ideVersion, jdkVersion)

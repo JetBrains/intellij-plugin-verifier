@@ -23,10 +23,10 @@ class ZipBombsTest {
   val tempFolder = TemporaryFolder()
 
   private val properties = listOf(
-      Settings.INTELLIJ_PLUGIN_SIZE_LIMIT,
-      Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT,
-      Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT,
-      Settings.HUB_PLUGIN_SIZE_LIMIT
+    Settings.INTELLIJ_PLUGIN_SIZE_LIMIT,
+    Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT,
+    Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT,
+    Settings.HUB_PLUGIN_SIZE_LIMIT
   )
 
   private val oldValues = mutableMapOf<Settings, String>()

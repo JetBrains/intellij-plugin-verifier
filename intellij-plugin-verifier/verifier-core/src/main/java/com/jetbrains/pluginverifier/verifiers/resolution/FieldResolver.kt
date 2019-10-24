@@ -14,23 +14,23 @@ import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
 class FieldResolver {
 
   fun resolveField(
-      classFile: ClassFile,
-      fieldReference: FieldReference,
-      context: VerificationContext,
-      callerMethod: Method,
-      instruction: Instruction
+    classFile: ClassFile,
+    fieldReference: FieldReference,
+    context: VerificationContext,
+    callerMethod: Method,
+    instruction: Instruction
   ): Field? =
-      when (val resolutionResult = doResolveField(classFile, fieldReference, context)) {
-        FieldResolutionResult.Abort -> null
-        FieldResolutionResult.NotFound -> {
-          registerFieldNotFoundProblem(context, fieldReference, instruction, callerMethod, classFile)
-          null
-        }
-        is FieldResolutionResult.Found -> {
-          checkFieldIsAccessible(resolutionResult.field, fieldReference, callerMethod, instruction, context)
-          resolutionResult.field
-        }
+    when (val resolutionResult = doResolveField(classFile, fieldReference, context)) {
+      FieldResolutionResult.Abort -> null
+      FieldResolutionResult.NotFound -> {
+        registerFieldNotFoundProblem(context, fieldReference, instruction, callerMethod, classFile)
+        null
       }
+      is FieldResolutionResult.Found -> {
+        checkFieldIsAccessible(resolutionResult.field, fieldReference, callerMethod, instruction, context)
+        resolutionResult.field
+      }
+    }
 
   private sealed class FieldResolutionResult {
     object Abort : FieldResolutionResult()
@@ -41,9 +41,9 @@ class FieldResolver {
   }
 
   private fun doResolveField(
-      classFile: ClassFile,
-      fieldReference: FieldReference,
-      context: VerificationContext
+    classFile: ClassFile,
+    fieldReference: FieldReference,
+    context: VerificationContext
   ): FieldResolutionResult {
     /**
      * 1) Firstly, the field is searched in the class of the field reference.
@@ -58,7 +58,7 @@ class FieldResolver {
      */
     for (anInterface in classFile.interfaces) {
       val resolvedInterface = context.classResolver.resolveClassChecked(anInterface, classFile, context)
-          ?: return FieldResolutionResult.Abort
+        ?: return FieldResolutionResult.Abort
 
       when (val lookupResult = doResolveField(resolvedInterface, fieldReference, context)) {
         FieldResolutionResult.NotFound -> Unit
@@ -73,7 +73,7 @@ class FieldResolver {
     val superName = classFile.superName
     if (superName != null) {
       val resolvedSuper = context.classResolver.resolveClassChecked(superName, classFile, context)
-          ?: return FieldResolutionResult.Abort
+        ?: return FieldResolutionResult.Abort
 
       when (val lookupResult = doResolveField(resolvedSuper, fieldReference, context)) {
         FieldResolutionResult.NotFound -> Unit
@@ -89,35 +89,35 @@ class FieldResolver {
   }
 
   private fun registerFieldNotFoundProblem(
-      context: VerificationContext,
-      fieldReference: FieldReference,
-      instruction: Instruction,
-      callerMethod: Method,
-      classFile: ClassFile
+    context: VerificationContext,
+    fieldReference: FieldReference,
+    instruction: Instruction,
+    callerMethod: Method,
+    classFile: ClassFile
   ) {
     val classHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(classFile)
     context.problemRegistrar.registerProblem(
-        FieldNotFoundProblem(fieldReference, callerMethod.location, classHierarchy, instruction)
+      FieldNotFoundProblem(fieldReference, callerMethod.location, classHierarchy, instruction)
     )
   }
 
   private fun checkFieldIsAccessible(
-      field: Field,
-      fieldReference: FieldReference,
-      callerMethod: Method,
-      instruction: Instruction,
-      context: VerificationContext
+    field: Field,
+    fieldReference: FieldReference,
+    callerMethod: Method,
+    instruction: Instruction,
+    context: VerificationContext
   ) {
     val accessProblem = detectAccessProblem(field, callerMethod, context)
     if (accessProblem != null) {
       context.problemRegistrar.registerProblem(
-          IllegalFieldAccessProblem(
-              fieldReference,
-              field.location,
-              callerMethod.location,
-              instruction,
-              accessProblem
-          )
+        IllegalFieldAccessProblem(
+          fieldReference,
+          field.location,
+          callerMethod.location,
+          instruction,
+          accessProblem
+        )
       )
     }
   }

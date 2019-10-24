@@ -11,8 +11,8 @@ class IdeaOnlyProblemsFilter : ProblemsFilter {
   private val androidProblemsFilter = AndroidProblemsFilter()
 
   override fun shouldReportProblem(
-      problem: CompatibilityProblem,
-      context: VerificationContext
+    problem: CompatibilityProblem,
+    context: VerificationContext
   ): ProblemsFilter.Result {
     return when (androidProblemsFilter.shouldReportProblem(problem, context)) {
       ProblemsFilter.Result.Report -> ProblemsFilter.Result.Ignore("the problem belongs to Android subsystem")

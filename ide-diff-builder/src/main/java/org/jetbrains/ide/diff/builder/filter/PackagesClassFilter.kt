@@ -11,24 +11,24 @@ class PackagesClassFilter(private val interestingPackages: List<String>) : Class
   }
 
   override fun toString(): String =
-      if (interestingPackages.any { it.isEmpty() }) {
-        "All packages will be processed"
-      } else {
-        "The following packages will be processed: " + interestingPackages.joinToString()
-      }
+    if (interestingPackages.any { it.isEmpty() }) {
+      "All packages will be processed"
+    } else {
+      "The following packages will be processed: " + interestingPackages.joinToString()
+    }
 
 
   companion object {
     private val knownObfuscatedPackages = listOf(
-        "a",
-        "b",
-        "com.intellij.a",
-        "com.intellij.b",
-        "com.intellij.ide.a",
-        "com.intellij.ide.b",
-        "com.jetbrains.a",
-        "com.jetbrains.b",
-        "com.jetbrains.ls"
+      "a",
+      "b",
+      "com.intellij.a",
+      "com.intellij.b",
+      "com.intellij.ide.a",
+      "com.intellij.ide.b",
+      "com.jetbrains.a",
+      "com.jetbrains.b",
+      "com.jetbrains.ls"
     )
   }
 

@@ -6,9 +6,9 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import java.util.*
 
 class InvokeInterfaceOnPrivateMethodProblem(
-    val methodReference: MethodReference,
-    val resolvedMethod: MethodLocation,
-    val caller: MethodLocation
+  val methodReference: MethodReference,
+  val resolvedMethod: MethodLocation,
+  val caller: MethodLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -21,9 +21,9 @@ class InvokeInterfaceOnPrivateMethodProblem(
     get() = "Method {0} contains an *invokeinterface* instruction referencing a private method {1}. This can lead to **IncompatibleClassChangeError** exception at runtime.".formatMessage(caller, resolvedMethod)
 
   override fun equals(other: Any?) = other is InvokeInterfaceOnPrivateMethodProblem
-      && methodReference == other.methodReference
-      && resolvedMethod == other.resolvedMethod
-      && caller == other.caller
+    && methodReference == other.methodReference
+    && resolvedMethod == other.resolvedMethod
+    && caller == other.caller
 
   override fun hashCode() = Objects.hash(methodReference, resolvedMethod, caller)
 

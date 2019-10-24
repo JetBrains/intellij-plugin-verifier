@@ -25,21 +25,21 @@ class DefaultPackageFilter(private val packages: List<Descriptor>) : PackageFilt
 
   override fun acceptPackageOfClass(binaryClassName: String): Boolean {
     val longestIncluding = packages.asSequence()
-        .filter { it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
-        .maxBy { it.binaryPackageName.length }
-        ?: return false
+      .filter { it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
+      .maxBy { it.binaryPackageName.length }
+      ?: return false
 
     /**
      * Check that there is no excluding package with
      * a length bigger than the longest including one.
      */
     return packages.asSequence()
-        .filter { !it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
-        .none { it.binaryPackageName.length >= longestIncluding.binaryPackageName.length }
+      .filter { !it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
+      .none { it.binaryPackageName.length >= longestIncluding.binaryPackageName.length }
   }
 
   private fun Descriptor.matchesPackageOf(binaryClassName: String) =
-      binaryClassName.startsWith("$binaryPackageName/")
+    binaryClassName.startsWith("$binaryPackageName/")
 
   /**
    * Descriptor of a package, used by the [DefaultPackageFilter].

@@ -6,8 +6,8 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import java.util.*
 
 class InterfaceInstantiationProblem(
-    val interfaze: ClassLocation,
-    val creator: MethodLocation
+  val interfaze: ClassLocation,
+  val creator: MethodLocation
 ) : CompatibilityProblem() {
 
   override val problemType
@@ -20,8 +20,8 @@ class InterfaceInstantiationProblem(
     get() = "Method {0} has instantiation *new* instruction referencing an interface {1}. This can lead to **InstantiationError** exception at runtime.".formatMessage(creator, interfaze)
 
   override fun equals(other: Any?) = other is InterfaceInstantiationProblem
-      && interfaze == other.interfaze
-      && creator == other.creator
+    && interfaze == other.interfaze
+    && creator == other.creator
 
   override fun hashCode() = Objects.hash(interfaze, creator)
 

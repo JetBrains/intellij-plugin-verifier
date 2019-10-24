@@ -48,46 +48,46 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
 
 
   fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport =
-      JdkDescriptorCreator.createJdkDescriptor(jdkPath, Resolver.ReadMode.SIGNATURES).use { jdkDescriptor ->
-        buildIdeResources(oldIde, Resolver.ReadMode.SIGNATURES).use { oldResources ->
-          buildIdeResources(newIde, Resolver.ReadMode.SIGNATURES).use { newResources ->
-            val completeOldResolver = CacheResolver(CompositeResolver.create(listOf(oldResources.allResolver, jdkDescriptor.jdkResolver)))
-            val completeNewResolver = CacheResolver(CompositeResolver.create(listOf(newResources.allResolver, jdkDescriptor.jdkResolver)))
+    JdkDescriptorCreator.createJdkDescriptor(jdkPath, Resolver.ReadMode.SIGNATURES).use { jdkDescriptor ->
+      buildIdeResources(oldIde, Resolver.ReadMode.SIGNATURES).use { oldResources ->
+        buildIdeResources(newIde, Resolver.ReadMode.SIGNATURES).use { newResources ->
+          val completeOldResolver = CacheResolver(CompositeResolver.create(listOf(oldResources.allResolver, jdkDescriptor.jdkResolver)))
+          val completeNewResolver = CacheResolver(CompositeResolver.create(listOf(newResources.allResolver, jdkDescriptor.jdkResolver)))
 
-            val introducedProcessor = IntroducedProcessor()
-            val removedProcessor = RemovedProcessor()
-            val experimentalProcessor = ExperimentalProcessor()
-            val deprecatedProcessor = DeprecatedProcessor()
-            val diffBuilder = ApiDiffBuilder(
-                classFilter,
-                listOf(removedProcessor, introducedProcessor, experimentalProcessor, deprecatedProcessor)
-            )
+          val introducedProcessor = IntroducedProcessor()
+          val removedProcessor = RemovedProcessor()
+          val experimentalProcessor = ExperimentalProcessor()
+          val deprecatedProcessor = DeprecatedProcessor()
+          val diffBuilder = ApiDiffBuilder(
+            classFilter,
+            listOf(removedProcessor, introducedProcessor, experimentalProcessor, deprecatedProcessor)
+          )
 
-            diffBuilder.buildDiff(
-                completeOldResolver,
-                completeNewResolver,
-                oldResources.allResolver.allClasses,
-                newResources.allResolver.allClasses
-            )
+          diffBuilder.buildDiff(
+            completeOldResolver,
+            completeNewResolver,
+            oldResources.allResolver.allClasses,
+            newResources.allResolver.allClasses
+          )
 
-            buildApiReport(
-                newIde.version,
-                introducedProcessor,
-                removedProcessor,
-                experimentalProcessor,
-                deprecatedProcessor
-            )
-          }
+          buildApiReport(
+            newIde.version,
+            introducedProcessor,
+            removedProcessor,
+            experimentalProcessor,
+            deprecatedProcessor
+          )
         }
       }
+    }
 
   @Suppress("DuplicatedCode")
   private fun buildApiReport(
-      ideVersion: IdeVersion,
-      introducedProcessor: IntroducedProcessor,
-      removedProcessor: RemovedProcessor,
-      experimentalProcessor: ExperimentalProcessor,
-      deprecatedProcessor: DeprecatedProcessor
+    ideVersion: IdeVersion,
+    introducedProcessor: IntroducedProcessor,
+    removedProcessor: RemovedProcessor,
+    experimentalProcessor: ExperimentalProcessor,
+    deprecatedProcessor: DeprecatedProcessor
   ): ApiReport {
     val apiSignatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
 
@@ -152,14 +152,14 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
 fun ClassFileMember.toSignature(): ApiSignature = when (this) {
   is ClassFile -> ClassSignature(name)
   is Method -> MethodSignature(
-      ClassSignature(containingClassFile.name),
-      name,
-      descriptor,
-      signature
+    ClassSignature(containingClassFile.name),
+    name,
+    descriptor,
+    signature
   )
   is Field -> FieldSignature(
-      ClassSignature(containingClassFile.name),
-      name
+    ClassSignature(containingClassFile.name),
+    name
   )
   else -> throw IllegalArgumentException()
 }

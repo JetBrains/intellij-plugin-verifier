@@ -101,7 +101,7 @@ class VerificationTest {
 
     fun Set<DescriptionHolder>.findSimilar(descriptionHolder: DescriptionHolder): DescriptionHolder? {
       return find { it.fullDescription == descriptionHolder.fullDescription }
-          ?: find { it.shortDescription == descriptionHolder.shortDescription }
+        ?: find { it.shortDescription == descriptionHolder.shortDescription }
     }
 
     val separator = "-".repeat(10)

@@ -8,14 +8,14 @@ import java.io.ObjectInputStream
  * Identifier of a local plugin.
  */
 class LocalPluginInfo(
-    val idePlugin: IdePlugin
+  val idePlugin: IdePlugin
 ) : PluginInfo(
-    idePlugin.pluginId!!,
-    idePlugin.pluginName ?: idePlugin.pluginId!!,
-    idePlugin.pluginVersion!!,
-    idePlugin.sinceBuild,
-    idePlugin.untilBuild,
-    idePlugin.vendor
+  idePlugin.pluginId!!,
+  idePlugin.pluginName ?: idePlugin.pluginId!!,
+  idePlugin.pluginVersion!!,
+  idePlugin.sinceBuild,
+  idePlugin.untilBuild,
+  idePlugin.vendor
 ) {
 
   val definedModules: Set<String>

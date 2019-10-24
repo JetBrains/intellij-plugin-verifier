@@ -5,8 +5,8 @@ import java.io.Closeable
 import java.io.File
 
 data class ExtractedPlugin(
-    val pluginFile: File,
-    private val fileToDelete: File
+  val pluginFile: File,
+  private val fileToDelete: File
 ) : Closeable {
   override fun close() {
     FileUtils.deleteQuietly(fileToDelete)

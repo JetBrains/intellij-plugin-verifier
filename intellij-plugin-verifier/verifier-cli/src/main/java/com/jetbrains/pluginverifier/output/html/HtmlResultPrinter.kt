@@ -13,8 +13,8 @@ import java.io.PrintWriter
 import java.nio.file.Files
 
 class HtmlResultPrinter(
-    private val verificationTarget: PluginVerificationTarget,
-    private val outputOptions: OutputOptions
+  private val verificationTarget: PluginVerificationTarget,
+  private val outputOptions: OutputOptions
 ) : ResultPrinter {
 
   override fun printResults(results: List<PluginVerificationResult>) {
@@ -60,8 +60,8 @@ class HtmlResultPrinter(
       }
       div {
         pluginResults
-            .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR) { it.plugin.version })
-            .forEach { printPluginResult(it) }
+          .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR) { it.plugin.version })
+          .forEach { printPluginResult(it) }
       }
     }
   }
@@ -152,12 +152,12 @@ class HtmlResultPrinter(
 
   private fun HtmlBuilder.printProblems(problems: Set<CompatibilityProblem>) {
     problems
-        .sortedBy { it.shortDescription }
-        .groupBy { it.shortDescription }
-        .forEach { (shortDesc, problems) ->
-          val allProblems = problems.joinToString(separator = "\n") { it.fullDescription }
-          printShortAndFullDescription(shortDesc, allProblems)
-        }
+      .sortedBy { it.shortDescription }
+      .groupBy { it.shortDescription }
+      .forEach { (shortDesc, problems) ->
+        val allProblems = problems.joinToString(separator = "\n") { it.fullDescription }
+        printShortAndFullDescription(shortDesc, allProblems)
+      }
   }
 
   private fun HtmlBuilder.printShortAndFullDescription(shortDescription: String, fullDescription: String) {

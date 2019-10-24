@@ -18,8 +18,8 @@ class FileTypeTest : FeatureExtractorTestBase() {
     val expectedExtensions = listOf("*.one", "*.two", "*.three")
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, expectedExtensions)),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, expectedExtensions)),
+      features
     )
   }
 
@@ -30,8 +30,8 @@ class FileTypeTest : FeatureExtractorTestBase() {
     plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf(".NameOne", "nameTwo.txt", "ExAcTNameThree.example"))),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf(".NameOne", "nameTwo.txt", "ExAcTNameThree.example"))),
+      features
     )
   }
 
@@ -42,8 +42,8 @@ class FileTypeTest : FeatureExtractorTestBase() {
     element.setAttribute("fileNamesCaseInsensitive", ".nameone;nametwo.txt;exactnametree.example")
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf(".nameone", "nametwo.txt", "exactnametree.example"))),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf(".nameone", "nametwo.txt", "exactnametree.example"))),
+      features
     )
   }
 
@@ -54,8 +54,8 @@ class FileTypeTest : FeatureExtractorTestBase() {
     element.setAttribute("patterns", "*.js.flow")
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf("*.js.flow"))),
-        features
+      listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf("*.js.flow"))),
+      features
     )
   }
 

@@ -20,9 +20,9 @@ import java.nio.file.Paths
  * Utility class used to fill [pluginsSet] with a list of plugins to check.
  */
 class PluginsParsing(
-    private val pluginRepository: PluginRepository,
-    private val reportage: PluginVerificationReportage,
-    private val pluginsSet: PluginsSet
+  private val pluginRepository: PluginRepository,
+  private val reportage: PluginVerificationReportage,
+  private val pluginsSet: PluginsSet
 ) {
 
   /**
@@ -69,9 +69,9 @@ class PluginsParsing(
    */
   fun addPluginsListedInFile(pluginsListFile: Path, ideVersions: List<IdeVersion>) {
     val specs = pluginsListFile.readLines()
-        .map { it.trim() }
-        .filterNot { it.isEmpty() }
-        .filterNot { it.startsWith("//") }
+      .map { it.trim() }
+      .filterNot { it.isEmpty() }
+      .filterNot { it.startsWith("//") }
 
     for (spec in specs) {
       addPluginBySpec(spec, pluginsListFile, ideVersions)
@@ -112,7 +112,7 @@ class PluginsParsing(
       val pluginFile = if (spec.startsWith("path:")) {
         val linePath = spec.substringAfter("path:")
         tryFindPluginByPath(basePath, linePath)
-            ?: throw IllegalArgumentException("Invalid path: $linePath")
+          ?: throw IllegalArgumentException("Invalid path: $linePath")
       } else {
         tryFindPluginByPath(basePath, spec)
       }

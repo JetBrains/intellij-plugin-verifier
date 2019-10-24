@@ -80,10 +80,10 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     for (baseResult in twoTargetsVerificationResults.baseResults) {
       if (baseResult is PluginVerificationResult.Verified) {
         val apiUsages = baseResult.deprecatedUsages.asSequence() +
-            baseResult.experimentalApiUsages.asSequence() +
-            baseResult.internalApiUsages.asSequence() +
-            baseResult.nonExtendableApiUsages +
-            baseResult.overrideOnlyMethodUsages
+          baseResult.experimentalApiUsages.asSequence() +
+          baseResult.internalApiUsages.asSequence() +
+          baseResult.nonExtendableApiUsages +
+          baseResult.overrideOnlyMethodUsages
         for (apiUsage in apiUsages) {
           oldApiUsages.put(apiUsage.apiReference, apiUsage)
         }
@@ -218,8 +218,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
         appendln()
         appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
         appendln(
-            "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
-                "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
+          "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
+            "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
         )
         appendln()
       }
@@ -227,31 +227,31 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   }
 
   private fun getProblemSymbolicReference(problem: CompatibilityProblem): SymbolicReference? =
-      when (problem) {
-        is ClassNotFoundProblem -> problem.unresolved
-        is MethodNotFoundProblem -> problem.unresolvedMethod
-        is FieldNotFoundProblem -> problem.unresolvedField
-        is IllegalClassAccessProblem -> problem.unavailableClass.toReference()
-        is IllegalMethodAccessProblem -> problem.bytecodeMethodReference
-        is IllegalFieldAccessProblem -> problem.fieldBytecodeReference
-        is AbstractClassInstantiationProblem -> problem.abstractClass.toReference()
-        is AbstractMethodInvocationProblem -> problem.bytecodeMethodReference
-        is ChangeFinalFieldProblem -> problem.fieldReference
-        is InheritFromFinalClassProblem -> problem.finalClass.toReference()
-        is InstanceAccessOfStaticFieldProblem -> problem.fieldReference
-        is InterfaceInstantiationProblem -> problem.interfaze.toReference()
-        is InvokeClassMethodOnInterfaceProblem -> problem.methodReference
-        is InvokeInstanceInstructionOnStaticMethodProblem -> problem.methodReference
-        is InvokeInterfaceOnPrivateMethodProblem -> problem.methodReference
-        is InvokeStaticOnInstanceMethodProblem -> problem.methodReference
-        is MethodNotImplementedProblem -> problem.abstractMethod.toReference()
-        is MultipleDefaultImplementationsProblem -> problem.methodReference
-        is OverridingFinalMethodProblem -> problem.finalMethod.toReference()
-        is StaticAccessOfInstanceFieldProblem -> problem.fieldReference
-        is SuperClassBecameInterfaceProblem -> problem.interfaze.toReference()
-        is SuperInterfaceBecameClassProblem -> problem.clazz.toReference()
-        else -> null
-      }
+    when (problem) {
+      is ClassNotFoundProblem -> problem.unresolved
+      is MethodNotFoundProblem -> problem.unresolvedMethod
+      is FieldNotFoundProblem -> problem.unresolvedField
+      is IllegalClassAccessProblem -> problem.unavailableClass.toReference()
+      is IllegalMethodAccessProblem -> problem.bytecodeMethodReference
+      is IllegalFieldAccessProblem -> problem.fieldBytecodeReference
+      is AbstractClassInstantiationProblem -> problem.abstractClass.toReference()
+      is AbstractMethodInvocationProblem -> problem.bytecodeMethodReference
+      is ChangeFinalFieldProblem -> problem.fieldReference
+      is InheritFromFinalClassProblem -> problem.finalClass.toReference()
+      is InstanceAccessOfStaticFieldProblem -> problem.fieldReference
+      is InterfaceInstantiationProblem -> problem.interfaze.toReference()
+      is InvokeClassMethodOnInterfaceProblem -> problem.methodReference
+      is InvokeInstanceInstructionOnStaticMethodProblem -> problem.methodReference
+      is InvokeInterfaceOnPrivateMethodProblem -> problem.methodReference
+      is InvokeStaticOnInstanceMethodProblem -> problem.methodReference
+      is MethodNotImplementedProblem -> problem.abstractMethod.toReference()
+      is MultipleDefaultImplementationsProblem -> problem.methodReference
+      is OverridingFinalMethodProblem -> problem.finalMethod.toReference()
+      is StaticAccessOfInstanceFieldProblem -> problem.fieldReference
+      is SuperClassBecameInterfaceProblem -> problem.interfaze.toReference()
+      is SuperInterfaceBecameClassProblem -> problem.clazz.toReference()
+      else -> null
+    }
 
   private val documentationNote: String
     get() = """
@@ -268,30 +268,30 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     """.trimIndent()
 
   private fun createCompatibilityNote(
-      plugin: PluginInfo,
-      baseTarget: PluginVerificationTarget,
-      newTarget: PluginVerificationTarget,
-      latestPluginVerification: PluginVerificationResult?,
-      problems: Collection<CompatibilityProblem>
+    plugin: PluginInfo,
+    baseTarget: PluginVerificationTarget,
+    newTarget: PluginVerificationTarget,
+    latestPluginVerification: PluginVerificationResult?,
+    problems: Collection<CompatibilityProblem>
   ): String = buildString {
     if (baseTarget is PluginVerificationTarget.IDE
-        && newTarget is PluginVerificationTarget.IDE
-        && !plugin.isCompatibleWith(newTarget.ideVersion)
+      && newTarget is PluginVerificationTarget.IDE
+      && !plugin.isCompatibleWith(newTarget.ideVersion)
     ) {
       appendln(
-          "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
-              "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
+        "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
+          "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
       )
       if (latestPluginVerification != null) {
         appendln(
-            "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
-                "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
+          "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
+            "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
         )
         val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
         if (latestVersionSameProblemsCount > 0) {
           appendln(
-              "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
-                  "and thus it has also been affected by this breaking change."
+            "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
+              "and thus it has also been affected by this breaking change."
           )
         } else {
           appendln("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
@@ -309,14 +309,14 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   }
 
   private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency) =
-      edges.find { it.dependency == dependency }?.to
+    edges.find { it.dependency == dependency }?.to
 
   private fun PluginVerificationResult.getResolvedDependency(dependency: PluginDependency) =
-      (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
+    (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
 
   private fun getMissingDependenciesNote(
-      baseResult: PluginVerificationResult.Verified,
-      newResult: PluginVerificationResult.Verified
+    baseResult: PluginVerificationResult.Verified,
+    newResult: PluginVerificationResult.Verified
   ): String = buildString {
     appendln("Note: some problems might have been caused by missing dependencies: [")
     for ((dependency, missingReason) in newResult.directMissingMandatoryDependencies) {
@@ -360,9 +360,9 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
 }
 
 private data class TwoResults(
-    val oldResult: PluginVerificationResult.Verified,
-    val newResult: PluginVerificationResult.Verified,
-    val newProblems: Set<CompatibilityProblem>
+  val oldResult: PluginVerificationResult.Verified,
+  val newResult: PluginVerificationResult.Verified,
+  val newProblems: Set<CompatibilityProblem>
 ) {
   init {
     check(oldResult.plugin == newResult.plugin)
@@ -404,7 +404,7 @@ private fun PluginVerificationResult.isKnownProblem(problem: CompatibilityProble
       so this is not the "new" API breakage.
       */
       knownProblems.any { it is MethodNotFoundProblem && it.unresolvedMethod == problem.bytecodeMethodReference } ||
-          knownProblems.any { it is IllegalMethodAccessProblem && it.bytecodeMethodReference == problem.bytecodeMethodReference }
+        knownProblems.any { it is IllegalMethodAccessProblem && it.bytecodeMethodReference == problem.bytecodeMethodReference }
     }
     is IllegalFieldAccessProblem -> {
       /*
@@ -412,7 +412,7 @@ private fun PluginVerificationResult.isKnownProblem(problem: CompatibilityProble
       This is similar to the method's case.
        */
       knownProblems.any { it is FieldNotFoundProblem && it.unresolvedField == problem.fieldBytecodeReference } ||
-          knownProblems.any { it is IllegalFieldAccessProblem && it.fieldBytecodeReference == problem.fieldBytecodeReference }
+        knownProblems.any { it is IllegalFieldAccessProblem && it.fieldBytecodeReference == problem.fieldBytecodeReference }
     }
     is FieldNotFoundProblem -> {
       /*

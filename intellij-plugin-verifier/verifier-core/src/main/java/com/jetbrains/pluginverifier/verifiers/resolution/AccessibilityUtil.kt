@@ -5,10 +5,10 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.isSubclassOf
 
 fun isClassAccessibleToOtherClass(me: ClassFile, other: ClassFile): Boolean =
-    me.isPublic
-        || me.isPrivate && me.name == other.name
-        || me.javaPackageName == other.javaPackageName
-        || isKotlinDefaultConstructorMarker(me)
+  me.isPublic
+    || me.isPrivate && me.name == other.name
+    || me.javaPackageName == other.javaPackageName
+    || isKotlinDefaultConstructorMarker(me)
 
 /**
  * In Kotlin classes the default constructor has a special parameter of type `DefaultConstructorMarker`.
@@ -16,7 +16,7 @@ fun isClassAccessibleToOtherClass(me: ClassFile, other: ClassFile): Boolean =
  * We should not report "illegal access" for this class.
  */
 private fun isKotlinDefaultConstructorMarker(classFile: ClassFile): Boolean =
-    classFile.name == "kotlin/jvm/internal/DefaultConstructorMarker"
+  classFile.name == "kotlin/jvm/internal/DefaultConstructorMarker"
 
 fun detectAccessProblem(callee: ClassFileMember, caller: ClassFileMember, context: VerificationContext): AccessType? {
   when {

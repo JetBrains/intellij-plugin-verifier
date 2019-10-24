@@ -22,10 +22,10 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
 
   override fun processClassReference(
-      classReference: ClassReference,
-      resolvedClass: ClassFile,
-      context: VerificationContext,
-      referrer: ClassFileMember
+    classReference: ClassReference,
+    resolvedClass: ClassFile,
+    context: VerificationContext,
+    referrer: ClassFileMember
   ) {
     val usageLocation = referrer.location
     if (isExperimental(resolvedClass, context, usageLocation)) {
@@ -36,11 +36,11 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
   }
 
   override fun processMethodInvocation(
-      methodReference: MethodReference,
-      resolvedMethod: Method,
-      instructionNode: AbstractInsnNode,
-      callerMethod: Method,
-      context: VerificationContext
+    methodReference: MethodReference,
+    resolvedMethod: Method,
+    instructionNode: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
   ) {
     val usageLocation = callerMethod.location
     if (isExperimental(resolvedMethod, context, usageLocation)) {
@@ -51,10 +51,10 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
   }
 
   override fun processFieldAccess(
-      fieldReference: FieldReference,
-      resolvedField: Field,
-      context: VerificationContext,
-      callerMethod: Method
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    context: VerificationContext,
+    callerMethod: Method
   ) {
     val usageLocation = callerMethod.location
     if (isExperimental(resolvedField, context, usageLocation)) {

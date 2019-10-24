@@ -42,9 +42,9 @@ class DependenciesGraphPrettyPrinterTest {
     }
 
     val pluginDependency = PluginDependencyImpl(
-        moduleId ?: to.pluginId,
-        isOptional,
-        moduleId != null
+      moduleId ?: to.pluginId,
+      isOptional,
+      moduleId != null
     )
 
     missingDependencies.putIfAbsent(from, arrayListOf())
@@ -58,21 +58,21 @@ class DependenciesGraphPrettyPrinterTest {
   }
 
   private fun createDependencyNode(pluginIdAndVersion: PluginIdAndVersion) =
-      DependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version)
+    DependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version)
 
   @Test
   fun `test pretty print`() {
     val edgesDescriptions = listOf(
-        "start:1.0 -> b:1.0",
-        "b:1.0 -> c:1.0",
-        "[module:mandatory.module]b:1.0 -> d:1.0",
-        "[module:optional.module][optional]c:1.0 -> d:1.0",
-        "[module:optional.module.2][optional]c:1.0 -> d:1.0",
-        "start:1.0 -> c:1.0",
-        "[failed][reason:plugin e is not found]c:1.0 -> e:1.0",
-        "[failed][reason:plugin f is not found][optional]c:1.0 -> f:1.0",
-        "[optional]start:1.0 -> e:1.0",
-        "[module:optional.module.3]start:1.0 -> g:1.0"
+      "start:1.0 -> b:1.0",
+      "b:1.0 -> c:1.0",
+      "[module:mandatory.module]b:1.0 -> d:1.0",
+      "[module:optional.module][optional]c:1.0 -> d:1.0",
+      "[module:optional.module.2][optional]c:1.0 -> d:1.0",
+      "start:1.0 -> c:1.0",
+      "[failed][reason:plugin e is not found]c:1.0 -> e:1.0",
+      "[failed][reason:plugin f is not found][optional]c:1.0 -> f:1.0",
+      "[optional]start:1.0 -> e:1.0",
+      "[module:optional.module.3]start:1.0 -> g:1.0"
     )
 
     edgesDescriptions.forEach { edgeDescription -> parseDescription(edgeDescription) }
@@ -91,7 +91,7 @@ class DependenciesGraphPrettyPrinterTest {
     val prettyPresentation = prettyPrinter.prettyPresentation().trim()
 
     Assert.assertEquals(
-        """
+      """
 start:1.0
 +--- b:1.0
 |    +--- c:1.0

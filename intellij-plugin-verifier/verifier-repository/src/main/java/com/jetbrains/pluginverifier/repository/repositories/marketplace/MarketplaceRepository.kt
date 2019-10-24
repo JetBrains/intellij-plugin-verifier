@@ -25,8 +25,8 @@ import java.util.concurrent.TimeUnit
  * plugins compatible with [products].
  */
 class MarketplaceRepository(
-    val repositoryURL: URL,
-    val products: List<IntelliJPlatformProduct> = listOf(IntelliJPlatformProduct.IDEA)
+  val repositoryURL: URL,
+  val products: List<IntelliJPlatformProduct> = listOf(IntelliJPlatformProduct.IDEA)
 ) : PluginRepository {
 
   companion object {
@@ -42,19 +42,19 @@ class MarketplaceRepository(
      * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
      */
     private val INTELLIJ_MODULE_TO_CONTAINING_PLUGIN = ImmutableMap.of(
-        "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
-        "com.intellij.modules.php", "com.jetbrains.php",
-        "com.intellij.modules.python", "Pythonid",
-        "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
+      "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
+      "com.intellij.modules.php", "com.jetbrains.php",
+      "com.intellij.modules.python", "Pythonid",
+      "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
     )
   }
 
   private val repositoryConnector = Retrofit.Builder()
-      .baseUrl(HttpUrl.get(repositoryURL))
-      .addConverterFactory(GsonConverterFactory.create(Gson()))
-      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-      .build()
-      .create(MarketplaceConnector::class.java)
+    .baseUrl(HttpUrl.get(repositoryURL))
+    .addConverterFactory(GsonConverterFactory.create(Gson()))
+    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+    .build()
+    .create(MarketplaceConnector::class.java)
 
   private val updateInfosRequester = UpdateInfosRequester()
 
@@ -68,32 +68,32 @@ class MarketplaceRepository(
    * returns its more detailed [UpdateInfo].
    */
   fun getPluginInfoById(updateId: Int) =
-      updateInfosRequester.getUpdateInfoById(updateId, DEFAULT_BATCH_REQUEST_SIZE)
+    updateInfosRequester.getUpdateInfoById(updateId, DEFAULT_BATCH_REQUEST_SIZE)
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
+    getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> =
-      try {
-        repositoryConnector
-            .getPluginUpdates(pluginId).executeSuccessfully().body()
-            .updateIds
-            .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
-      } catch (e: Exception) {
-        e.rethrowIfInterrupted()
-        emptyList()
-      }
+    try {
+      repositoryConnector
+        .getPluginUpdates(pluginId).executeSuccessfully().body()
+        .updateIds
+        .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      emptyList()
+    }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
-      repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
-          .executeSuccessfully().body()
-          .map { updateInfosRequester.putJsonUpdateInfo(it) }
+    repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
+      .executeSuccessfully().body()
+      .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-      getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
+    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
-      INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
+    INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
 
   override fun toString() = "Plugin Repository " + repositoryURL.toExternalForm()
 
@@ -112,17 +112,17 @@ class MarketplaceRepository(
      * the guava's caches don't allow to cache `null` values.
      */
     private val updateInfos = CacheBuilder
-        .newBuilder()
-        .expireAfterWrite(1, TimeUnit.HOURS)
-        .build<Int, Optional<UpdateInfo>>()
+      .newBuilder()
+      .expireAfterWrite(1, TimeUnit.HOURS)
+      .build<Int, Optional<UpdateInfo>>()
 
     //synchronized block is used here to avoid
     //performing unnecessary interleaving batch requests
     @Synchronized
     fun getUpdateInfoById(updateId: Int, batchSize: Int): UpdateInfo? =
-        updateInfos
-            .get(updateId) { requestUpdateInfo(updateId, batchSize) }
-            .orElse(null)
+      updateInfos
+        .get(updateId) { requestUpdateInfo(updateId, batchSize) }
+        .orElse(null)
 
     @Synchronized
     fun putJsonUpdateInfo(jsonUpdateInfo: JsonUpdateInfo): UpdateInfo {
@@ -170,9 +170,9 @@ class MarketplaceRepository(
       val (start, end) = getBatchEndings(updateId, batchSize)
       return try {
         repositoryConnector
-            .getUpdateInfosForIdsBetween(start, end)
-            .executeSuccessfully().body()
-            .map { it.toUpdateInfo() }
+          .getUpdateInfosForIdsBetween(start, end)
+          .executeSuccessfully().body()
+          .map { it.toUpdateInfo() }
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
         LOG.info("Unable to request [$start; $end] UpdateInfos", e)
@@ -181,23 +181,23 @@ class MarketplaceRepository(
     }
 
     private fun requestSingleUpdateInfo(updateId: Int): UpdateInfo? =
-        try {
-          repositoryConnector
-              .getUpdateInfoById(updateId)
-              .executeSuccessfully().body()
-              .toUpdateInfo()
-        } catch (e: Exception) {
-          e.rethrowIfInterrupted()
-          LOG.error("Unable to request UpdateInfo #$updateId", e)
-          null
-        }
+      try {
+        repositoryConnector
+          .getUpdateInfoById(updateId)
+          .executeSuccessfully().body()
+          .toUpdateInfo()
+      } catch (e: Exception) {
+        e.rethrowIfInterrupted()
+        LOG.error("Unable to request UpdateInfo #$updateId", e)
+        null
+      }
 
     private fun String?.prepareIdeVersion(): IdeVersion? =
-        if (this == null || this == "" || this == "0.0") {
-          null
-        } else {
-          IdeVersion.createIdeVersionIfValid(this)
-        }
+      if (this == null || this == "" || this == "0.0") {
+        null
+      } else {
+        IdeVersion.createIdeVersionIfValid(this)
+      }
 
     private fun parseSourceCodeUrl(url: String?): URL? {
       if (url.isNullOrBlank()) {
@@ -211,17 +211,17 @@ class MarketplaceRepository(
     }
 
     private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
-        pluginId,
-        pluginName,
-        version,
-        sinceString.prepareIdeVersion(),
-        untilString.prepareIdeVersion(),
-        vendor,
-        parseSourceCodeUrl(sourceCodeUrl),
-        getDownloadUrl(updateId),
-        updateId,
-        getBrowserUrl(pluginId),
-        tags.orEmpty()
+      pluginId,
+      pluginName,
+      version,
+      sinceString.prepareIdeVersion(),
+      untilString.prepareIdeVersion(),
+      vendor,
+      parseSourceCodeUrl(sourceCodeUrl),
+      getDownloadUrl(updateId),
+      updateId,
+      getBrowserUrl(pluginId),
+      tags.orEmpty()
     )
 
   }

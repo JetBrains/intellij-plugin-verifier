@@ -8,10 +8,10 @@ class RemovedProcessor : ApiDiffProcessor {
   val result: MutableList<ClassFileMember> = arrayListOf()
 
   override fun process(
-      oldMember: ClassFileMember?,
-      newMember: ClassFileMember?,
-      oldResolver: Resolver,
-      newResolver: Resolver
+    oldMember: ClassFileMember?,
+    newMember: ClassFileMember?,
+    oldResolver: Resolver,
+    newResolver: Resolver
   ) {
     if (oldMember != null && oldMember.isAccessible && (newMember == null || !newMember.isAccessible)) {
       result += oldMember

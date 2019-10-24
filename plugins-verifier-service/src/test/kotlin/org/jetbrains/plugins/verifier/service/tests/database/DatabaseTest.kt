@@ -39,11 +39,13 @@ class DatabaseTest {
   }
 
   private fun <T, R> openSetAndRun(valueType: ValueType<T>, f: MutableSet<T>.() -> R) =
-      MapDbServerDatabase(temp
-          .resolve("database")).use {
-        val set = it.openOrCreateSet("set", valueType)
-        f(set)
-      }
+    MapDbServerDatabase(
+      temp
+        .resolve("database")
+    ).use {
+      val set = it.openOrCreateSet("set", valueType)
+      f(set)
+    }
 
   @Test
   fun `database set open-write-recreate-read`() {
@@ -74,8 +76,8 @@ class DatabaseTest {
   @Test
   fun `serialization of the toString serializer`() {
     val valueType = ValueType.StringBased(
-        toString = { it.toString() },
-        fromString = { Integer.parseInt(it) }
+      toString = { it.toString() },
+      fromString = { Integer.parseInt(it) }
     )
 
     openSetAndRun(valueType) {

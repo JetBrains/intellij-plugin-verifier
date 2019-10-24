@@ -10,13 +10,13 @@ import com.jetbrains.pluginverifier.repository.resources.ResourceWeight
 data class SpaceWeight(val spaceAmount: SpaceAmount) : ResourceWeight<SpaceWeight> {
 
   override fun plus(other: SpaceWeight) =
-      SpaceWeight(spaceAmount + other.spaceAmount)
+    SpaceWeight(spaceAmount + other.spaceAmount)
 
   override fun minus(other: SpaceWeight) =
-      SpaceWeight(spaceAmount - other.spaceAmount)
+    SpaceWeight(spaceAmount - other.spaceAmount)
 
   override fun compareTo(other: SpaceWeight) =
-      spaceAmount.compareTo(other.spaceAmount)
+    spaceAmount.compareTo(other.spaceAmount)
 
   override fun toString() = spaceAmount.toString()
 

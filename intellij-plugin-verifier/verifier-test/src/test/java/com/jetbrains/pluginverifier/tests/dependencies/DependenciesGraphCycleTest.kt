@@ -30,16 +30,16 @@ class DependenciesGraphCycleTest {
     val d = DependencyNode("d", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
-        a,
-        listOf(a, b, c, d),
-        listOf(
-            DependencyEdge(a, b, PluginDependencyImpl("b", false, false)),
-            DependencyEdge(b, c, PluginDependencyImpl("c", false, false)),
-            DependencyEdge(c, b, PluginDependencyImpl("b", false, false)),
-            DependencyEdge(b, d, PluginDependencyImpl("d", false, false)),
-            DependencyEdge(d, a, PluginDependencyImpl("a", false, false))
-        ),
-        emptyMap()
+      a,
+      listOf(a, b, c, d),
+      listOf(
+        DependencyEdge(a, b, PluginDependencyImpl("b", false, false)),
+        DependencyEdge(b, c, PluginDependencyImpl("c", false, false)),
+        DependencyEdge(c, b, PluginDependencyImpl("b", false, false)),
+        DependencyEdge(b, d, PluginDependencyImpl("d", false, false)),
+        DependencyEdge(d, a, PluginDependencyImpl("a", false, false))
+      ),
+      emptyMap()
     )
 
     val allCycles = dependenciesGraph.getAllCycles()

@@ -21,80 +21,80 @@ fun <T> T?.toStringOrEmpty(): String = this?.toString() ?: ""
 */
 
 data class FormatOptions(
-    /**
-     * Whether the type signature to be formatted relates to interface
-     * rather than a class. If so, word "extends" will be used in respect
-     * to implemented interfaces instead of "implements".
-     */
-    val isInterface: Boolean = false,
+  /**
+   * Whether the type signature to be formatted relates to interface
+   * rather than a class. If so, word "extends" will be used in respect
+   * to implemented interfaces instead of "implements".
+   */
+  val isInterface: Boolean = false,
 
-    /**
-     * Whether generic type parameters of classes or methods must be printed.
-     * ```
-     * public class A<T> -> A<T>
-     * public static <T> T foo() {} -> T foo
-     * ```
-     */
-    val formalTypeParameters: Boolean = false,
-    /**
-     * Whether formal type parameters' bounds must be printed.
-     * ```
-     * public class A<T extends Number> -> A<T extends Number>
-     * ```
-     */
-    val formalTypeParametersBounds: Boolean = false,
+  /**
+   * Whether generic type parameters of classes or methods must be printed.
+   * ```
+   * public class A<T> -> A<T>
+   * public static <T> T foo() {} -> T foo
+   * ```
+   */
+  val formalTypeParameters: Boolean = false,
+  /**
+   * Whether formal type parameters' bounds must be printed.
+   * ```
+   * public class A<T extends Number> -> A<T extends Number>
+   * ```
+   */
+  val formalTypeParametersBounds: Boolean = false,
 
-    /**
-     * Whether generic type arguments of this top-level class
-     * or inner classes must be printed.
-     */
-    val typeArguments: Boolean = false,
+  /**
+   * Whether generic type arguments of this top-level class
+   * or inner classes must be printed.
+   */
+  val typeArguments: Boolean = false,
 
-    /**
-     * Whether super class of the class represented by this signature must be printed.
-     */
-    val superClass: Boolean = false,
+  /**
+   * Whether super class of the class represented by this signature must be printed.
+   */
+  val superClass: Boolean = false,
 
-    /**
-     * Whether implemented interfaces of the class represented by this signature must be printed.
-     */
-    val superInterfaces: Boolean = false,
+  /**
+   * Whether implemented interfaces of the class represented by this signature must be printed.
+   */
+  val superInterfaces: Boolean = false,
 
-    /**
-     * Whether exceptions thrown by the method represented by this signature must be printed.
-     */
-    val methodThrows: Boolean = false,
+  /**
+   * Whether exceptions thrown by the method represented by this signature must be printed.
+   */
+  val methodThrows: Boolean = false,
 
-    /**
-     * Function used to convert fully-qualified internal
-     * class names to presentable names.
-     *
-     * By default [toFullJavaClassName] is used, which converts
-     * names to Java fully-qualified names.
-     * ```
-     * org/some/Class -> org.some.Class
-     * org/some/Nester$Class -> org.some.Nester.Class
-     * org/some/Anonymous$1 -> org.some.Anonymous$1
-     * ```
-     */
-    val internalNameConverter: (String) -> String = toFullJavaClassName,
+  /**
+   * Function used to convert fully-qualified internal
+   * class names to presentable names.
+   *
+   * By default [toFullJavaClassName] is used, which converts
+   * names to Java fully-qualified names.
+   * ```
+   * org/some/Class -> org.some.Class
+   * org/some/Nester$Class -> org.some.Nester.Class
+   * org/some/Anonymous$1 -> org.some.Anonymous$1
+   * ```
+   */
+  val internalNameConverter: (String) -> String = toFullJavaClassName,
 
-    /**
-     * Separator string used to separate several type
-     * arguments of a reference type signature from each other.
-     * ```
-     * <T, K> -> <T, K>
-     * ```
-     */
-    val typeArgumentsSeparator: String = ", ",
-    /**
-     * Separator string used to separate several type parameters
-     * of a class signature from each other.
-     * ```
-     * public class A<T, K> -> <T, K>
-     * ```
-     */
-    val typeParametersSeparator: String = ", "
+  /**
+   * Separator string used to separate several type
+   * arguments of a reference type signature from each other.
+   * ```
+   * <T, K> -> <T, K>
+   * ```
+   */
+  val typeArgumentsSeparator: String = ", ",
+  /**
+   * Separator string used to separate several type parameters
+   * of a class signature from each other.
+   * ```
+   * public class A<T, K> -> <T, K>
+   * ```
+   */
+  val typeParametersSeparator: String = ", "
 ) {
   /**
    * Converts internal class name to presentable name,
@@ -138,16 +138,16 @@ sealed class BaseType(private val char: Char) : JavaTypeSignature() {
   object D : BaseType('D')
 
   override fun format(formatOptions: FormatOptions): String =
-      when (this) {
-        BaseType.B -> "byte"
-        BaseType.J -> "long"
-        BaseType.Z -> "boolean"
-        BaseType.I -> "int"
-        BaseType.S -> "short"
-        BaseType.C -> "char"
-        BaseType.F -> "float"
-        BaseType.D -> "double"
-      }
+    when (this) {
+      BaseType.B -> "byte"
+      BaseType.J -> "long"
+      BaseType.Z -> "boolean"
+      BaseType.I -> "int"
+      BaseType.S -> "short"
+      BaseType.C -> "char"
+      BaseType.F -> "float"
+      BaseType.D -> "double"
+    }
 
   override fun toString() = char.toString()
 }
@@ -178,27 +178,27 @@ sealed class ReferenceTypeSignature : JavaTypeSignature()
  * ```
  */
 data class ClassTypeSignature(
-    val topClassTypeSignature: SimpleClassTypeSignature,
-    val innerClassTypeSignatures: List<SimpleClassTypeSignature>
+  val topClassTypeSignature: SimpleClassTypeSignature,
+  val innerClassTypeSignatures: List<SimpleClassTypeSignature>
 ) : ReferenceTypeSignature() {
 
   override fun format(formatOptions: FormatOptions) =
-      buildString {
-        append(topClassTypeSignature.format(formatOptions))
-        for (innerClass in innerClassTypeSignatures) {
-          append(".").append(innerClass.format(formatOptions))
-        }
+    buildString {
+      append(topClassTypeSignature.format(formatOptions))
+      for (innerClass in innerClassTypeSignatures) {
+        append(".").append(innerClass.format(formatOptions))
       }
+    }
 
   override fun toString() =
-      buildString {
-        append("L")
-        append(topClassTypeSignature)
-        for (suffix in innerClassTypeSignatures) {
-          append(".").append(suffix)
-        }
-        append(";")
+    buildString {
+      append("L")
+      append(topClassTypeSignature)
+      for (suffix in innerClassTypeSignatures) {
+        append(".").append(suffix)
       }
+      append(";")
+    }
 }
 
 /**
@@ -220,13 +220,13 @@ data class TypeVariableSignature(val identifier: Identifier) : ReferenceTypeSign
  * ```
  */
 data class ArrayTypeSignature(
-    val javaTypeSignature: JavaTypeSignature,
-    val dimensions: Int
+  val javaTypeSignature: JavaTypeSignature,
+  val dimensions: Int
 ) : ReferenceTypeSignature() {
   override fun toString() = "[".repeat(dimensions) + "$javaTypeSignature"
 
   override fun format(formatOptions: FormatOptions) =
-      javaTypeSignature.format(formatOptions) + "[]".repeat(dimensions)
+    javaTypeSignature.format(formatOptions) + "[]".repeat(dimensions)
 }
 
 /**
@@ -236,18 +236,18 @@ data class ArrayTypeSignature(
  * ```
  */
 data class SimpleClassTypeSignature(
-    val identifier: Identifier,
-    val typeArguments: TypeArguments?
+  val identifier: Identifier,
+  val typeArguments: TypeArguments?
 ) : FormattableSignature {
   override fun toString() = identifier + typeArguments.toStringOrEmpty()
 
   override fun format(formatOptions: FormatOptions): String =
-      buildString {
-        append(formatOptions.convertClassName(identifier))
-        if (formatOptions.typeArguments && typeArguments != null) {
-          append(typeArguments.format(formatOptions))
-        }
+    buildString {
+      append(formatOptions.convertClassName(identifier))
+      if (formatOptions.typeArguments && typeArguments != null) {
+        append(typeArguments.format(formatOptions))
       }
+    }
 }
 
 /**
@@ -260,7 +260,7 @@ data class TypeArguments(val typeArguments: List<TypeArgument>) : FormattableSig
   override fun toString() = "<" + typeArguments.tightJoin() + ">"
 
   override fun format(formatOptions: FormatOptions) =
-      "<" + typeArguments.joinToString(separator = formatOptions.typeArgumentsSeparator) { it.format(formatOptions) } + ">"
+    "<" + typeArguments.joinToString(separator = formatOptions.typeArgumentsSeparator) { it.format(formatOptions) } + ">"
 }
 
 /**
@@ -278,8 +278,8 @@ sealed class TypeArgument : FormattableSignature {
   }
 
   data class RefType(
-      val wildcardIndicator: WildcardIndicator?,
-      val referenceTypeSignature: ReferenceTypeSignature
+    val wildcardIndicator: WildcardIndicator?,
+    val referenceTypeSignature: ReferenceTypeSignature
   ) : TypeArgument() {
 
     override fun toString() = when (wildcardIndicator) {
@@ -289,11 +289,11 @@ sealed class TypeArgument : FormattableSignature {
     } + "$referenceTypeSignature"
 
     override fun format(formatOptions: FormatOptions) =
-        when (wildcardIndicator) {
-          WildcardIndicator.PLUS -> "? extends "
-          WildcardIndicator.MINUS -> "? super "
-          null -> ""
-        } + referenceTypeSignature.format(formatOptions)
+      when (wildcardIndicator) {
+        WildcardIndicator.PLUS -> "? extends "
+        WildcardIndicator.MINUS -> "? super "
+        null -> ""
+      } + referenceTypeSignature.format(formatOptions)
   }
 }
 
@@ -316,34 +316,34 @@ enum class WildcardIndicator {
  * ```
  */
 data class ClassSignature(
-    val typeParameters: TypeParameters?,
-    val superclassSignature: ClassTypeSignature,
-    val superinterfaceSignatures: List<ClassTypeSignature>
+  val typeParameters: TypeParameters?,
+  val superclassSignature: ClassTypeSignature,
+  val superinterfaceSignatures: List<ClassTypeSignature>
 ) : FormattableSignature {
 
   override fun toString() = typeParameters.toStringOrEmpty() +
-      "$superclassSignature" + superinterfaceSignatures.tightJoin()
+    "$superclassSignature" + superinterfaceSignatures.tightJoin()
 
   override fun format(formatOptions: FormatOptions) =
-      buildString {
-        if (formatOptions.formalTypeParameters && typeParameters != null) {
-          append(typeParameters.format(formatOptions))
-        }
-        if (formatOptions.superClass && superclassSignature.topClassTypeSignature.identifier != "java/lang/Object") {
-          addSpaceIfNecessary()
-          append("extends ")
-          append(superclassSignature.format(formatOptions))
-        }
-        if (formatOptions.superInterfaces && superinterfaceSignatures.isNotEmpty()) {
-          addSpaceIfNecessary()
-          if (formatOptions.isInterface) {
-            append("extends ")
-          } else {
-            append("implements ")
-          }
-          append(superinterfaceSignatures.joinToString { it.format(formatOptions) })
-        }
+    buildString {
+      if (formatOptions.formalTypeParameters && typeParameters != null) {
+        append(typeParameters.format(formatOptions))
       }
+      if (formatOptions.superClass && superclassSignature.topClassTypeSignature.identifier != "java/lang/Object") {
+        addSpaceIfNecessary()
+        append("extends ")
+        append(superclassSignature.format(formatOptions))
+      }
+      if (formatOptions.superInterfaces && superinterfaceSignatures.isNotEmpty()) {
+        addSpaceIfNecessary()
+        if (formatOptions.isInterface) {
+          append("extends ")
+        } else {
+          append("implements ")
+        }
+        append(superinterfaceSignatures.joinToString { it.format(formatOptions) })
+      }
+    }
 }
 
 /**
@@ -356,7 +356,7 @@ data class TypeParameters(val typeParameters: List<TypeParameter>) : Formattable
   override fun toString() = "<" + typeParameters.tightJoin() + ">"
 
   override fun format(formatOptions: FormatOptions) =
-      "<" + typeParameters.joinToString(separator = formatOptions.typeParametersSeparator) { it.format(formatOptions) } + ">"
+    "<" + typeParameters.joinToString(separator = formatOptions.typeParametersSeparator) { it.format(formatOptions) } + ">"
 }
 
 /**
@@ -372,37 +372,37 @@ data class TypeParameters(val typeParameters: List<TypeParameter>) : Formattable
  *```
  */
 data class TypeParameter(
-    val identifier: Identifier,
-    val classBound: ReferenceTypeSignature?,
-    val interfaceBounds: List<ReferenceTypeSignature>
+  val identifier: Identifier,
+  val classBound: ReferenceTypeSignature?,
+  val interfaceBounds: List<ReferenceTypeSignature>
 ) : FormattableSignature {
   override fun toString() =
-      buildString {
-        append(identifier)
-        append(":").append(classBound.toStringOrEmpty())
-        for (interfaceBound in interfaceBounds) {
-          append(":").append(interfaceBound)
-        }
+    buildString {
+      append(identifier)
+      append(":").append(classBound.toStringOrEmpty())
+      for (interfaceBound in interfaceBounds) {
+        append(":").append(interfaceBound)
       }
+    }
 
   override fun format(formatOptions: FormatOptions): String =
-      buildString {
-        append(identifier)
-        if (formatOptions.formalTypeParametersBounds) {
-          val needSuper = classBound != null && !(classBound is ClassTypeSignature && classBound.topClassTypeSignature.identifier == "java/lang/Object")
+    buildString {
+      append(identifier)
+      if (formatOptions.formalTypeParametersBounds) {
+        val needSuper = classBound != null && !(classBound is ClassTypeSignature && classBound.topClassTypeSignature.identifier == "java/lang/Object")
+        if (needSuper) {
+          append(" extends ").append(classBound!!.format(formatOptions))
+        }
+        if (interfaceBounds.isNotEmpty()) {
           if (needSuper) {
-            append(" extends ").append(classBound!!.format(formatOptions))
+            append(", ")
+          } else {
+            append(" extends ")
           }
-          if (interfaceBounds.isNotEmpty()) {
-            if (needSuper) {
-              append(", ")
-            } else {
-              append(" extends ")
-            }
-            append(interfaceBounds.joinToString { it.format(formatOptions) })
-          }
+          append(interfaceBounds.joinToString { it.format(formatOptions) })
         }
       }
+    }
 }
 
 /**
@@ -412,10 +412,10 @@ data class TypeParameter(
  * ```
  */
 data class MethodSignature(
-    val typeParameters: TypeParameters?,
-    val parameterSignatures: List<JavaTypeSignature>,
-    val result: Result,
-    val throwsSignatures: List<ThrowsSignature>
+  val typeParameters: TypeParameters?,
+  val parameterSignatures: List<JavaTypeSignature>,
+  val result: Result,
+  val throwsSignatures: List<ThrowsSignature>
 ) : FormattableSignature {
   override fun format(formatOptions: FormatOptions): String {
     return buildString {
@@ -435,7 +435,7 @@ data class MethodSignature(
   }
 
   override fun toString() = typeParameters.toStringOrEmpty() +
-      "(" + parameterSignatures.tightJoin() + ")" + result.toString() + throwsSignatures.tightJoin()
+    "(" + parameterSignatures.tightJoin() + ")" + result.toString() + throwsSignatures.tightJoin()
 }
 
 /**
@@ -450,7 +450,7 @@ sealed class Result : FormattableSignature {
     override fun toString() = javaTypeSignature.toString()
 
     override fun format(formatOptions: FormatOptions) =
-        javaTypeSignature.format(formatOptions)
+      javaTypeSignature.format(formatOptions)
   }
 
   object VoidDescriptor : Result() {
@@ -470,14 +470,14 @@ sealed class ThrowsSignature : FormattableSignature {
     override fun toString() = "^$classTypeSignature"
 
     override fun format(formatOptions: FormatOptions) =
-        classTypeSignature.format(formatOptions)
+      classTypeSignature.format(formatOptions)
   }
 
   data class TypeVar(val typeVariableSignature: TypeVariableSignature) : ThrowsSignature() {
     override fun toString() = "^$typeVariableSignature"
 
     override fun format(formatOptions: FormatOptions) =
-        typeVariableSignature.format(formatOptions)
+      typeVariableSignature.format(formatOptions)
   }
 }
 

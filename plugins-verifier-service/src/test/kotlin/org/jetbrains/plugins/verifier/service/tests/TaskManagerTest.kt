@@ -32,16 +32,16 @@ class TaskManagerTest {
       val error = AtomicReference<Throwable>()
 
       tm.enqueue(
-          serviceTask,
-          onSuccess = { result, _ ->
-            success.set(result)
-          },
-          onError = { e, _ ->
-            error.set(e)
-          },
-          onCompletion = {
-            status.set(it)
-          }
+        serviceTask,
+        onSuccess = { result, _ ->
+          success.set(result)
+        },
+        onError = { e, _ ->
+          error.set(e)
+        },
+        onCompletion = {
+          status.set(it)
+        }
       )
 
       assertEquals(1, tm.activeTasks.size)
@@ -100,8 +100,8 @@ class TaskManagerTest {
 
     TaskManagerImpl(1).use { tm ->
       priorities
-          .map { TestTask(it) }
-          .forEach { tm.enqueue(it) }
+        .map { TestTask(it) }
+        .forEach { tm.enqueue(it) }
       start.countDown()
     }
 
@@ -141,10 +141,10 @@ class TaskManagerTest {
       val descriptors = (0 until 8).map { index ->
 
         taskManager.enqueue(
-            TestTask(index),
-            { _, _ -> },
-            { _, _ -> },
-            { _ -> completedTasks.add(index) }
+          TestTask(index),
+          { _, _ -> },
+          { _, _ -> },
+          { _ -> completedTasks.add(index) }
         )
       }
 
@@ -201,12 +201,12 @@ class TaskManagerTest {
 
       val finishedTasks = synchronizedSet(hashSetOf<Long>())
       val finishedTaskIds = (0 until 4)
-          .map {
-            taskManager.enqueue(
-                TaskFast(),
-                onCompletion = { td -> finishedTasks.add(td.taskId) }
-            )
-          }.mapTo(hashSetOf()) { it.taskId }
+        .map {
+          taskManager.enqueue(
+            TaskFast(),
+            onCompletion = { td -> finishedTasks.add(td.taskId) }
+          )
+        }.mapTo(hashSetOf()) { it.taskId }
 
       val startTime = System.currentTimeMillis()
       while (finishedTasks.size != 4 && System.currentTimeMillis() - startTime < 5000) {

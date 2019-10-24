@@ -47,8 +47,8 @@ class StripTopLevelDirectoryTest {
     f.resolve("b").createDir()
     stripTopLevelDirectory(f.toPath())
     assertEquals(
-        listOf(f.resolve("a"), f.resolve("b")),
-        f.listFiles().orEmpty().sorted()
+      listOf(f.resolve("a"), f.resolve("b")),
+      f.listFiles().orEmpty().sorted()
     )
   }
 
@@ -71,8 +71,8 @@ class StripTopLevelDirectoryTest {
     s.resolve("b").writeText("42")
     stripTopLevelDirectory(f.toPath())
     assertEquals(
-        listOf(f.resolve("a"), f.resolve("b")),
-        f.listFiles().orEmpty().sorted()
+      listOf(f.resolve("a"), f.resolve("b")),
+      f.listFiles().orEmpty().sorted()
     )
     assertEquals("42", f.resolve("b").readText())
   }
@@ -100,8 +100,8 @@ class StripTopLevelDirectoryTest {
 
     stripTopLevelDirectory(f.toPath())
     assertEquals(
-        listOf(f.resolve("a"), f.resolve("s")),
-        f.listFiles().orEmpty().sorted()
+      listOf(f.resolve("a"), f.resolve("s")),
+      f.listFiles().orEmpty().sorted()
     )
 
     assertEquals("42", f.resolve("s").resolve("b.txt").readText())

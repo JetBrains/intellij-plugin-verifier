@@ -14,12 +14,12 @@ import org.objectweb.asm.tree.MethodNode
 class MethodAsm(override val containingClassFile: ClassFile, val asmNode: MethodNode) : Method {
   override val location
     get() = MethodLocation(
-        containingClassFile.location,
-        name,
-        descriptor,
-        methodParameters.map { it.name },
-        signature?.takeIf { it.isNotEmpty() },
-        Modifiers(asmNode.access)
+      containingClassFile.location,
+      name,
+      descriptor,
+      methodParameters.map { it.name },
+      signature?.takeIf { it.isNotEmpty() },
+      Modifiers(asmNode.access)
     )
 
   override val name: String
@@ -128,7 +128,7 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
       }
 
       if (parameters.size == descriptorArgumentsNumber
-          && parameters.indices.all { index -> parameters[index].desc == descriptorArguments[index]?.descriptor }
+        && parameters.indices.all { index -> parameters[index].desc == descriptorArguments[index]?.descriptor }
       ) {
         return parameters.map { it.name }
       }

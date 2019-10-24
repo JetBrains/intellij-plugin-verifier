@@ -8,9 +8,9 @@ import java.nio.file.Path
  * Holder of class files of the JDK.
  */
 data class JdkDescriptor(
-    val jdkPath: Path,
-    val jdkResolver: Resolver,
-    val jdkVersion: JdkVersion
+  val jdkPath: Path,
+  val jdkResolver: Resolver,
+  val jdkVersion: JdkVersion
 ) : Closeable {
   override fun toString(): String = jdkPath.toAbsolutePath().toString()
 

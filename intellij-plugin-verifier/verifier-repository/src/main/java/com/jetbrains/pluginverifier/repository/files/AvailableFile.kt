@@ -12,10 +12,10 @@ import java.nio.file.Path
  * [cleanup procedure] [com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy].
  */
 class AvailableFile<out K>(
-    key: K,
-    resourceInfo: ResourceInfo<Path, SpaceWeight>,
-    usageStatistic: UsageStatistic,
-    isLocked: Boolean
+  key: K,
+  resourceInfo: ResourceInfo<Path, SpaceWeight>,
+  usageStatistic: UsageStatistic,
+  isLocked: Boolean
 ) : AvailableResource<Path, K, SpaceWeight>(key, resourceInfo, usageStatistic, isLocked) {
   /**
    * File descriptor

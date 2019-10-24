@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 abstract class ExperimentalApiUsage : ApiUsage()
 
 fun ClassFileMember.isExperimentalApi(resolver: Resolver): Boolean =
-    findEffectiveExperimentalAnnotation(resolver) != null
+  findEffectiveExperimentalAnnotation(resolver) != null
 
 fun ClassFileMember.findEffectiveExperimentalAnnotation(resolver: Resolver): MemberAnnotation? =
-    findEffectiveMemberAnnotation("org/jetbrains/annotations/ApiStatus\$Experimental", resolver)
+  findEffectiveMemberAnnotation("org/jetbrains/annotations/ApiStatus\$Experimental", resolver)

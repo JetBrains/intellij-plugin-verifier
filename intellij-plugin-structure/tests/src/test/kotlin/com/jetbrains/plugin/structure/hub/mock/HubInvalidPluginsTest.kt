@@ -11,7 +11,10 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
-import com.jetbrains.plugin.structure.hub.problems.*
+import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
+import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
+import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
+import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -122,7 +125,7 @@ class HubInvalidPluginsTest {
 
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file(HubPluginManager.DESCRIPTOR_NAME) {
-        perfectHubPluginBuilder.modify {  }
+        perfectHubPluginBuilder.modify { }
       }
       (0 until tooManyNumber).forEach { i ->
         file("file_$i.txt", "$i")
@@ -137,7 +140,7 @@ class HubInvalidPluginsTest {
 
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file(HubPluginManager.DESCRIPTOR_NAME) {
-        perfectHubPluginBuilder.modify {  }
+        perfectHubPluginBuilder.modify { }
       }
 
       file("bigFile.bin", ByteArray(tooBigSize))

@@ -11,7 +11,7 @@ interface Task {
    * Runs the task.
    */
   fun execute(
-      reportage: PluginVerificationReportage,
-      pluginDetailsCache: PluginDetailsCache
+    reportage: PluginVerificationReportage,
+    pluginDetailsCache: PluginDetailsCache
   ): TaskResult
 }

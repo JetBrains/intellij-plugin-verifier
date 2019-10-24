@@ -22,7 +22,7 @@ class FacetTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.FACET_TYPE)
-        .mapNotNull { extractFacetTypes(it, resolver) }
+      .mapNotNull { extractFacetTypes(it, resolver) }
   }
 
   private fun extractFacetTypes(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {

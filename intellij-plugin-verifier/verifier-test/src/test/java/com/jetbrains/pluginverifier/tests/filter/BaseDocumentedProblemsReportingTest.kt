@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.tests.filter
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblem
+import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -20,16 +20,16 @@ abstract class BaseDocumentedProblemsReportingTest {
 
   protected companion object {
     val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
-        "java/lang/Object",
-        false,
-        null,
-        emptyList()
+      "java/lang/Object",
+      false,
+      null,
+      emptyList()
     )
   }
 
   fun assertProblemsDocumented(
-      problemAndItsDocumentation: List<Pair<CompatibilityProblem, DocumentedProblem>>,
-      context: VerificationContext
+    problemAndItsDocumentation: List<Pair<CompatibilityProblem, DocumentedProblem>>,
+    context: VerificationContext
   ) {
     val problems = problemAndItsDocumentation.map { it.first }
     val documentedProblems = problemAndItsDocumentation.map { it.second }
@@ -45,21 +45,21 @@ abstract class BaseDocumentedProblemsReportingTest {
   }
 
   fun createSimpleVerificationContext(resolver: Resolver): VerificationContext =
-      object : VerificationContext {
-        override val externalClassesPackageFilter: PackageFilter
-          get() = DefaultPackageFilter(emptyList())
+    object : VerificationContext {
+      override val externalClassesPackageFilter: PackageFilter
+        get() = DefaultPackageFilter(emptyList())
 
-        override val classResolver: Resolver
-          get() = resolver
+      override val classResolver: Resolver
+        get() = resolver
 
-        override val problemRegistrar: ProblemRegistrar
-          get() = object : ProblemRegistrar {
+      override val problemRegistrar: ProblemRegistrar
+        get() = object : ProblemRegistrar {
 
-            override fun registerProblem(problem: CompatibilityProblem) = Unit
+          override fun registerProblem(problem: CompatibilityProblem) = Unit
 
-          }
+        }
 
-        override val apiUsageProcessors: List<ApiUsageProcessor>
-          get() = emptyList()
-      }
+      override val apiUsageProcessors: List<ApiUsageProcessor>
+        get() = emptyList()
+    }
 }

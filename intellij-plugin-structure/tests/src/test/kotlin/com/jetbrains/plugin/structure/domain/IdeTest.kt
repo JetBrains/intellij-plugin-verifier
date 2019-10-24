@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.domain
 
+import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
@@ -7,7 +8,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
-import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -34,8 +34,8 @@ class IdeTest {
     val separator = File.separator
     expectedEx.expect(InvalidIdeException::class.java)
     expectedEx.expectMessage(
-        "IDE by path '$idePath' is invalid: Build number is not found in the following files relative to $idePath: " +
-            "'build.txt', 'Resources${separator}build.txt', 'community${separator}build.txt', 'ultimate${separator}community${separator}build.txt'"
+      "IDE by path '$idePath' is invalid: Build number is not found in the following files relative to $idePath: " +
+        "'build.txt', 'Resources${separator}build.txt', 'community${separator}build.txt', 'ultimate${separator}community${separator}build.txt'"
     )
 
     IdeManager.createManager().createIde(idePath)
@@ -124,13 +124,13 @@ class IdeTest {
               dir("META-INF") {
                 file("plugin.xml") {
                   perfectXmlBuilder
-                      .modify {
-                        additionalContent = """
+                    .modify {
+                      additionalContent = """
                           <extensions defaultExtensionNs="com.intellij">
                             <themeProvider id="someId" path="/someTheme.theme.json"/>
                           </extensions>
                         """.trimIndent()
-                      }
+                    }
                 }
               }
             }

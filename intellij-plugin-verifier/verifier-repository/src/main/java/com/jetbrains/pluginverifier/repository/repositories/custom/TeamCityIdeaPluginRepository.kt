@@ -17,27 +17,27 @@ import javax.xml.parsers.DocumentBuilderFactory
  * [PluginRepository] of JetBrains TeamCity Plugin for IntelliJ IDEA, which is built on TeamCity.
  */
 class TeamCityIdeaPluginRepository(
-    private val buildServerUrl: URL,
-    private val sourceCodeUrl: URL
+  private val buildServerUrl: URL,
+  private val sourceCodeUrl: URL
 ) : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
-      .baseUrl(HttpUrl.get(buildServerUrl))
-      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-      .build()
-      .create(TeamCityPluginRepositoryConnector::class.java)
+    .baseUrl(HttpUrl.get(buildServerUrl))
+    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+    .build()
+    .create(TeamCityPluginRepositoryConnector::class.java)
 
   override val repositoryUrl: URL
     get() = buildServerUrl
 
   override fun requestAllPlugins(): List<CustomPluginInfo> {
     val document = repositoryConnector.getPluginsList()
-        .executeSuccessfully()
-        .body().byteStream().use {
-          DocumentBuilderFactory.newInstance()
-              .newDocumentBuilder()
-              .parse(it)
-        }
+      .executeSuccessfully()
+      .body().byteStream().use {
+        DocumentBuilderFactory.newInstance()
+          .newDocumentBuilder()
+          .parse(it)
+      }
     return parsePluginsList(document, buildServerUrl, sourceCodeUrl)
   }
 
@@ -50,17 +50,17 @@ class TeamCityIdeaPluginRepository(
 
   companion object {
     fun parsePluginsList(document: Document, buildServerUrl: URL, sourceCodeUrl: URL) =
-        parsePluginsListXml(document).map {
-          CustomPluginInfo(
-              it.id,
-              "TeamCity Integration",
-              it.version,
-              "JetBrains",
-              URL(buildServerUrl, "/update/${it.url}"),
-              buildServerUrl,
-              sourceCodeUrl
-          )
-        }
+      parsePluginsListXml(document).map {
+        CustomPluginInfo(
+          it.id,
+          "TeamCity Integration",
+          it.version,
+          "JetBrains",
+          URL(buildServerUrl, "/update/${it.url}"),
+          buildServerUrl,
+          sourceCodeUrl
+        )
+      }
   }
 
 }

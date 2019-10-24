@@ -1,19 +1,19 @@
 package com.jetbrains.plugin.structure.mocks
 
 data class PluginXmlBuilder(
-    var ideaPluginTagOpen: String = "<idea-plugin>",
-    var ideaPluginTagClose: String = "</idea-plugin>",
-    var id: String = "",
-    var name: String = "",
-    var version: String = "",
-    var vendor: String = "",
-    var description: String = "",
-    var changeNotes: String = "",
-    var ideaVersion: String = "",
-    var modules: List<String> = emptyList(),
-    var depends: String = "",
-    var productDescriptor: String = "",
-    var additionalContent: String = ""
+  var ideaPluginTagOpen: String = "<idea-plugin>",
+  var ideaPluginTagClose: String = "</idea-plugin>",
+  var id: String = "",
+  var name: String = "",
+  var version: String = "",
+  var vendor: String = "",
+  var description: String = "",
+  var changeNotes: String = "",
+  var ideaVersion: String = "",
+  var modules: List<String> = emptyList(),
+  var depends: String = "",
+  var productDescriptor: String = "",
+  var additionalContent: String = ""
 ) {
 
   fun asString(): String = """

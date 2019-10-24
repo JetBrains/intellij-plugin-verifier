@@ -16,17 +16,17 @@ class HtmlBuilder(val output: PrintWriter) {
   }
 
   private fun renderAttributes(attr: Map<String, String>) =
-      attr.asSequence()
-          .filter { it.value.isNotEmpty() }
-          .joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
+    attr.asSequence()
+      .filter { it.value.isNotEmpty() }
+      .joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
 
   fun closedTag(tagName: String, attr: Map<String, String> = emptyMap()) {
     output.println(
-        if (attr.isEmpty()) {
-          "<$tagName/>"
-        } else {
-          "<$tagName ${renderAttributes(attr)}/>"
-        }
+      if (attr.isEmpty()) {
+        "<$tagName/>"
+      } else {
+        "<$tagName ${renderAttributes(attr)}/>"
+      }
     )
   }
 
@@ -49,49 +49,49 @@ class HtmlBuilder(val output: PrintWriter) {
   fun li(block: () -> Unit) = tag("li", block)
 
   fun form(
-      id: String,
-      style: String = "",
-      action: String,
-      classes: String = "",
-      method: String = "get",
-      block: () -> Unit
+    id: String,
+    style: String = "",
+    action: String,
+    classes: String = "",
+    method: String = "get",
+    block: () -> Unit
   ) = tag(
-      "form",
-      block,
-      mapOf(
-          "action" to action,
-          "id" to id,
-          "style" to style,
-          "class" to classes,
-          "method" to method
-      )
+    "form",
+    block,
+    mapOf(
+      "action" to action,
+      "id" to id,
+      "style" to style,
+      "class" to classes,
+      "method" to method
+    )
   )
 
   fun textarea(
-      classes: String,
-      form: String,
-      name: String,
-      title: String,
-      block: () -> Unit
+    classes: String,
+    form: String,
+    name: String,
+    title: String,
+    block: () -> Unit
   ) =
-      tag(
-          "textarea",
-          block,
-          mapOf(
-              "class" to classes,
-              "form" to form,
-              "name" to name,
-              "title" to title
-          )
+    tag(
+      "textarea",
+      block,
+      mapOf(
+        "class" to classes,
+        "form" to form,
+        "name" to name,
+        "title" to title
       )
+    )
 
   fun input(
-      type: String,
-      name: String,
-      value: String? = null,
-      classes: String = "",
-      form: String? = null,
-      title: String = name
+    type: String,
+    name: String,
+    value: String? = null,
+    classes: String = "",
+    form: String? = null,
+    title: String = name
   ) {
     val tags = mutableMapOf("type" to type, "name" to name, "class" to classes, "title" to title)
     if (form != null) {

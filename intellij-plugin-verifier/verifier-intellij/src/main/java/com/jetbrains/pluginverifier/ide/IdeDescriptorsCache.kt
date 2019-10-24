@@ -20,10 +20,10 @@ import java.nio.file.Path
 class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdkPath: Path) : Closeable {
 
   private val descriptorsCache = createSizeLimitedResourceCache(
-      cacheSize,
-      IdeDescriptorResourceProvider(ideFilesBank, defaultJdkPath),
-      { it.close() },
-      "IdeDescriptorsCache"
+    cacheSize,
+    IdeDescriptorResourceProvider(ideFilesBank, defaultJdkPath),
+    { it.close() },
+    "IdeDescriptorsCache"
   )
 
   /**
@@ -61,8 +61,8 @@ class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdk
   }
 
   private class IdeDescriptorResourceProvider(
-      private val ideFilesBank: IdeFilesBank,
-      private val defaultJdkPath: Path
+    private val ideFilesBank: IdeFilesBank,
+    private val defaultJdkPath: Path
   ) : ResourceProvider<IdeVersion, IdeDescriptor> {
 
     override fun provide(key: IdeVersion): ProvideResult<IdeDescriptor> {

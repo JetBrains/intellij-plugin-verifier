@@ -33,16 +33,16 @@ class TeamCityResultPrinterTest {
       override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = pluginInfos
 
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? =
-          second.takeIf { pluginId == it.pluginId }
+        second.takeIf { pluginId == it.pluginId }
 
       override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> =
-          pluginInfos.takeIf { pluginId == "id" }.orEmpty()
+        pluginInfos.takeIf { pluginId == "id" }.orEmpty()
     }
 
     val updateInfos = mockRepository.pluginInfos
     val output = getTeamCityOutput(mockRepository, updateInfos)
     Assert.assertEquals(
-        """##teamcity[testSuiteStarted name='id']
+      """##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(version)']
 ##teamcity[testFinished name='(version)']
 ##teamcity[testStarted name='(version 2 - newest)']
@@ -57,7 +57,7 @@ class TeamCityResultPrinterTest {
     val mockPluginRepository = noConnectionPluginRepository()
     val output = getTeamCityOutput(mockPluginRepository, listOf(createMockPluginInfo("id", "v")))
     Assert.assertEquals(
-        """##teamcity[testSuiteStarted name='id']
+      """##teamcity[testSuiteStarted name='id']
 ##teamcity[testStarted name='(v)']
 ##teamcity[testFinished name='(v)']
 ##teamcity[testSuiteFinished name='id']
@@ -69,19 +69,19 @@ class TeamCityResultPrinterTest {
     return StringWriter().use { stringWriter ->
       val tcLog = TeamCityLog(PrintWriter(stringWriter))
       val tcPrinter = TeamCityResultPrinter(
-          tcLog,
-          TeamCityResultPrinter.GroupBy.BY_PLUGIN,
-          pluginRepository
+        tcLog,
+        TeamCityResultPrinter.GroupBy.BY_PLUGIN,
+        pluginRepository
       )
       val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("IU-145"), JdkVersion("1.8", null))
       tcPrinter.printResults(
-          pluginInfos.map {
-            PluginVerificationResult.NotFound(
-                it,
-                verificationTarget,
-                "Repository is off"
-            )
-          }
+        pluginInfos.map {
+          PluginVerificationResult.NotFound(
+            it,
+            verificationTarget,
+            "Repository is off"
+          )
+        }
       )
       stringWriter.toString()
     }

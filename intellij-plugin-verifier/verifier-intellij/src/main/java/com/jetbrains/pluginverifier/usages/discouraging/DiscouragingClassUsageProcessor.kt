@@ -13,16 +13,16 @@ import com.jetbrains.pluginverifier.verifiers.resolution.isDiscouragingJdkClass
 
 class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : ApiUsageProcessor {
   override fun processClassReference(
-      classReference: ClassReference,
-      resolvedClass: ClassFile,
-      context: VerificationContext,
-      referrer: ClassFileMember
+    classReference: ClassReference,
+    resolvedClass: ClassFile,
+    context: VerificationContext,
+    referrer: ClassFileMember
   ) {
     if (resolvedClass.isDiscouragingJdkClass()) {
       val classFileOrigin = resolvedClass.classFileOrigin
       if (classFileOrigin.isOriginOfType<IdeFileOrigin>() || classFileOrigin.isOriginOfType<JdkFileOrigin>()) {
         deprecatedApiRegistrar.registerDeprecatedUsage(
-            DiscouragingJdkClassUsage(resolvedClass.location, referrer.location, classFileOrigin)
+          DiscouragingJdkClassUsage(resolvedClass.location, referrer.location, classFileOrigin)
         )
       }
     }

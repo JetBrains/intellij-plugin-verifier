@@ -10,8 +10,8 @@ abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : P
 }
 
 class UnexpectedDescriptorElements(
-    override val detailedMessage: String,
-    descriptorPath: String? = null
+  override val detailedMessage: String,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val level
@@ -20,8 +20,8 @@ class UnexpectedDescriptorElements(
 }
 
 class PropertyNotSpecified(
-    private val propertyName: String,
-    descriptorPath: String? = null
+  private val propertyName: String,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val detailedMessage: String
@@ -32,8 +32,8 @@ class PropertyNotSpecified(
 }
 
 class NotNumber(
-    private val propertyName: String,
-    descriptorPath: String? = null
+  private val propertyName: String,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val detailedMessage: String

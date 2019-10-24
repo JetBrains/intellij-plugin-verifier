@@ -18,8 +18,8 @@ class AllIgnoredProblemsReporter(private val targetDirectoryProvider: (PluginVer
   @Synchronized
   override fun report(t: ProblemIgnoredEvent) {
     targetToProblemsCollector
-        .getOrPut(t.verificationTarget) { CollectingReporter() }
-        .report(t)
+      .getOrPut(t.verificationTarget) { CollectingReporter() }
+      .report(t)
   }
 
   override fun close() {
@@ -44,8 +44,8 @@ class AllIgnoredProblemsReporter(private val targetDirectoryProvider: (PluginVer
 
   companion object {
     fun formatManyIgnoredProblems(
-        verificationTarget: PluginVerificationTarget,
-        allIgnoredProblems: List<ProblemIgnoredEvent>
+      verificationTarget: PluginVerificationTarget,
+      allIgnoredProblems: List<ProblemIgnoredEvent>
     ) = buildString {
       appendln("The following problems against $verificationTarget were ignored:")
       for ((reason, allWithReason) in allIgnoredProblems.groupBy { it.reason }) {

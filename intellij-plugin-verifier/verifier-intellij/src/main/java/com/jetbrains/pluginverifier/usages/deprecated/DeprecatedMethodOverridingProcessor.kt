@@ -9,11 +9,11 @@ class DeprecatedMethodOverridingProcessor(private val deprecatedApiRegistrar: De
     val methodDeprecated = overriddenMethod.deprecationInfo
     if (methodDeprecated != null) {
       deprecatedApiRegistrar.registerDeprecatedUsage(
-          DeprecatedMethodOverridden(
-              overriddenMethod.location,
-              method.location,
-              methodDeprecated
-          )
+        DeprecatedMethodOverridden(
+          overriddenMethod.location,
+          method.location,
+          methodDeprecated
+        )
       )
     }
   }

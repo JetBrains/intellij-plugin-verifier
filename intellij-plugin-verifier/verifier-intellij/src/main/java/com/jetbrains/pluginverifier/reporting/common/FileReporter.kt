@@ -13,8 +13,8 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class FileReporter<in T>(
-    private val file: Path,
-    private val lineProvider: (T) -> String = { it.toString() }
+  private val file: Path,
+  private val lineProvider: (T) -> String = { it.toString() }
 ) : Reporter<T> {
 
   private var fileWriter: Writer? = null

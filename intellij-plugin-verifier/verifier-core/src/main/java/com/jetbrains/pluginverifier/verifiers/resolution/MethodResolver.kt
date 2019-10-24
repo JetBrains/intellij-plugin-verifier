@@ -15,53 +15,53 @@ import java.util.*
 class MethodResolver {
 
   fun resolveMethod(
-      ownerClass: ClassFile,
-      methodReference: MethodReference,
-      instruction: Instruction,
-      callerMethod: Method,
-      context: VerificationContext
+    ownerClass: ClassFile,
+    methodReference: MethodReference,
+    instruction: Instruction,
+    callerMethod: Method,
+    context: VerificationContext
   ): Method? =
-      when (val resolutionResult = MethodResolveImpl(methodReference, instruction, callerMethod, context).resolveMethod(ownerClass)) {
-        MethodResolutionResult.Abort -> null
-        is MethodResolutionResult.NotFound -> {
-          registerMethodNotFoundProblem(ownerClass, context, methodReference, instruction, callerMethod)
-          null
-        }
-        is MethodResolutionResult.Found -> {
-          checkMethodIsAccessible(resolutionResult.method, context, methodReference, callerMethod, instruction)
-          resolutionResult.method
-        }
+    when (val resolutionResult = MethodResolveImpl(methodReference, instruction, callerMethod, context).resolveMethod(ownerClass)) {
+      MethodResolutionResult.Abort -> null
+      is MethodResolutionResult.NotFound -> {
+        registerMethodNotFoundProblem(ownerClass, context, methodReference, instruction, callerMethod)
+        null
       }
+      is MethodResolutionResult.Found -> {
+        checkMethodIsAccessible(resolutionResult.method, context, methodReference, callerMethod, instruction)
+        resolutionResult.method
+      }
+    }
 
   fun lookupSpecialMethod(
-      ownerClass: ClassFile,
-      methodReference: MethodReference,
-      instruction: Instruction,
-      callerLocation: Method,
-      context: VerificationContext,
-      resolvedMethod: Method
+    ownerClass: ClassFile,
+    methodReference: MethodReference,
+    instruction: Instruction,
+    callerLocation: Method,
+    context: VerificationContext,
+    resolvedMethod: Method
   ): Pair<Int, Method>? = MethodResolveImpl(
-      methodReference,
-      instruction,
-      callerLocation,
-      context
+    methodReference,
+    instruction,
+    callerLocation,
+    context
   ).lookupSpecialMethod(ownerClass, resolvedMethod)
 
   private fun registerMethodNotFoundProblem(
-      ownerClass: ClassFile,
-      context: VerificationContext,
-      methodReference: MethodReference,
-      instruction: Instruction,
-      callerMethod: Method
+    ownerClass: ClassFile,
+    context: VerificationContext,
+    methodReference: MethodReference,
+    instruction: Instruction,
+    callerMethod: Method
   ) {
     val methodOwnerHierarchy = ClassHierarchyBuilder(context).buildClassHierarchy(ownerClass)
     context.problemRegistrar.registerProblem(
-        MethodNotFoundProblem(
-            methodReference,
-            callerMethod.location,
-            instruction,
-            methodOwnerHierarchy
-        )
+      MethodNotFoundProblem(
+        methodReference,
+        callerMethod.location,
+        instruction,
+        methodOwnerHierarchy
+      )
     )
   }
 
@@ -76,22 +76,22 @@ class MethodResolver {
    * - R is private and is declared in D.
    */
   private fun checkMethodIsAccessible(
-      resolvedMethod: Method,
-      context: VerificationContext,
-      methodReference: MethodReference,
-      callerMethod: Method,
-      instruction: Instruction
+    resolvedMethod: Method,
+    context: VerificationContext,
+    methodReference: MethodReference,
+    callerMethod: Method,
+    instruction: Instruction
   ) {
     val accessProblem = detectAccessProblem(resolvedMethod, callerMethod, context)
     if (accessProblem != null) {
       context.problemRegistrar.registerProblem(
-          IllegalMethodAccessProblem(
-              methodReference,
-              resolvedMethod.location,
-              accessProblem,
-              callerMethod.location,
-              instruction
-          )
+        IllegalMethodAccessProblem(
+          methodReference,
+          resolvedMethod.location,
+          accessProblem,
+          callerMethod.location,
+          instruction
+        )
       )
     }
   }
@@ -107,10 +107,10 @@ private sealed class MethodResolutionResult {
 }
 
 private class MethodResolveImpl(
-    private val methodReference: MethodReference,
-    private val instruction: Instruction,
-    private val callerMethod: Method,
-    private val context: VerificationContext
+  private val methodReference: MethodReference,
+  private val instruction: Instruction,
+  private val callerMethod: Method,
+  private val context: VerificationContext
 ) {
 
   private val methodName = methodReference.methodName
@@ -118,17 +118,17 @@ private class MethodResolveImpl(
   private val methodDescriptor = methodReference.methodDescriptor
 
   fun resolveMethod(ownerClass: ClassFile): MethodResolutionResult =
-      when (instruction) {
-        Instruction.INVOKE_VIRTUAL -> resolveClassMethod(ownerClass)
-        Instruction.INVOKE_INTERFACE -> resolveInterfaceMethod(ownerClass)
-        Instruction.INVOKE_STATIC -> resolveClassMethod(ownerClass)
-        Instruction.INVOKE_SPECIAL -> if (ownerClass.isInterface) {
-          resolveInterfaceMethod(ownerClass)
-        } else {
-          resolveClassMethod(ownerClass)
-        }
-        else -> throw IllegalArgumentException()
+    when (instruction) {
+      Instruction.INVOKE_VIRTUAL -> resolveClassMethod(ownerClass)
+      Instruction.INVOKE_INTERFACE -> resolveInterfaceMethod(ownerClass)
+      Instruction.INVOKE_STATIC -> resolveClassMethod(ownerClass)
+      Instruction.INVOKE_SPECIAL -> if (ownerClass.isInterface) {
+        resolveInterfaceMethod(ownerClass)
+      } else {
+        resolveClassMethod(ownerClass)
       }
+      else -> throw IllegalArgumentException()
+    }
 
   /**
    * To resolve an unresolved symbolic reference from D to an interface method in an interface C,
@@ -164,7 +164,7 @@ private class MethodResolveImpl(
     method lookup succeeds.
     */
     val objectClass = context.classResolver.resolveClassChecked("java/lang/Object", interfaceFile, context)
-        ?: return MethodResolutionResult.Abort
+      ?: return MethodResolutionResult.Abort
     val objectMethod = objectClass.methods.firstOrNull { it.name == methodName && it.descriptor == methodDescriptor && it.isPublic && !it.isStatic }
     if (objectMethod != null) {
       return MethodResolutionResult.Found(objectMethod)
@@ -176,7 +176,7 @@ private class MethodResolveImpl(
     have its ACC_ABSTRACT flag set, then this method is chosen and method lookup succeeds.
      */
     val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(interfaceFile)
-        ?: return MethodResolutionResult.Abort
+      ?: return MethodResolutionResult.Abort
     val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.name == methodName && it.descriptor == methodDescriptor && !it.isAbstract }
     if (single != null) {
       return MethodResolutionResult.Found(single)
@@ -187,7 +187,7 @@ private class MethodResolveImpl(
     reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
     val matchingMethods = getSuperInterfaceMethods(interfaceFile) { it.name == methodName && it.descriptor == methodDescriptor && !it.isPrivate && !it.isStatic }
-        ?: return MethodResolutionResult.Abort
+      ?: return MethodResolutionResult.Abort
     if (matchingMethods.isNotEmpty()) {
       return MethodResolutionResult.Found(matchingMethods.first())
     }
@@ -214,7 +214,7 @@ private class MethodResolveImpl(
     return allMatching.filter { method ->
       allMatching.none { otherMethod ->
         otherMethod.containingClassFile.name != method.containingClassFile.name
-            && context.classResolver.isSubclassOf(otherMethod.containingClassFile, method.containingClassFile.name)
+          && context.classResolver.isSubclassOf(otherMethod.containingClassFile, method.containingClassFile.name)
       }
     }
   }
@@ -236,7 +236,7 @@ private class MethodResolveImpl(
       cur.interfaces.forEach {
         if (it !in visited) {
           val resolveClass = context.classResolver.resolveClassChecked(it, cur, context)
-              ?: return null
+            ?: return null
           visited.add(it)
           queue.add(resolveClass)
         }
@@ -246,7 +246,7 @@ private class MethodResolveImpl(
       if (superName != null) {
         if (superName !in visited) {
           val resolvedSuper = context.classResolver.resolveClassChecked(superName, cur, context)
-              ?: return null
+            ?: return null
           visited.add(superName)
           queue.add(resolvedSuper)
         }
@@ -312,10 +312,10 @@ private class MethodResolveImpl(
    * In Java SE 8, the only signature polymorphic methods are the invoke and invokeExact methods of the class java.lang.invoke.MethodHandle.
    */
   private fun isSignaturePolymorphic(methodNode: Method): Boolean =
-      "java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
-          && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
-          && methodNode.isVararg
-          && methodNode.isNative
+    "java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
+      && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
+      && methodNode.isVararg
+      && methodNode.isNative
 
 
   private fun resolveClassMethodStep2(currentClass: ClassFile): MethodResolutionResult {
@@ -351,7 +351,7 @@ private class MethodResolveImpl(
     val superName = currentClass.superName
     if (superName != null) {
       val resolvedSuper = context.classResolver.resolveClassChecked(superName, currentClass, context)
-          ?: return MethodResolutionResult.Abort
+        ?: return MethodResolutionResult.Abort
       when (val lookupResult = resolveClassMethodStep2(resolvedSuper)) {
         is MethodResolutionResult.Found -> return lookupResult
         MethodResolutionResult.Abort -> return MethodResolutionResult.Abort
@@ -370,7 +370,7 @@ private class MethodResolveImpl(
     flag set, then this method is chosen and method lookup succeeds.
      */
     val maximallySpecificSuperInterfaceMethods = getMaximallySpecificSuperInterfaceMethods(currentClass)
-        ?: return MethodResolutionResult.Abort
+      ?: return MethodResolutionResult.Abort
     val single = maximallySpecificSuperInterfaceMethods.singleOrNull { it.name == methodName && it.descriptor == methodDescriptor && !it.isAbstract }
     if (single != null) {
       return MethodResolutionResult.Found(single)
@@ -382,7 +382,7 @@ private class MethodResolveImpl(
     flag set, one of these is arbitrarily chosen and method lookup succeeds.
      */
     val matchingMethods = getSuperInterfaceMethods(currentClass) { it.name == methodName && it.descriptor == methodDescriptor && !it.isPrivate && !it.isStatic }
-        ?: return MethodResolutionResult.Abort
+      ?: return MethodResolutionResult.Abort
     if (matchingMethods.isNotEmpty()) {
       return MethodResolutionResult.Found(matchingMethods.first())
     }
@@ -414,7 +414,7 @@ private class MethodResolveImpl(
     */
     if (!classRef.isInterface && classRef.superName != null) {
       var current: ClassFile = context.classResolver.resolveClassChecked(classRef.superName!!, classRef, context)
-          ?: return null
+        ?: return null
       while (true) {
         val match = current.methods.find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor }
         if (match != null) {
@@ -424,7 +424,7 @@ private class MethodResolveImpl(
         val superName = current.superName
         superName ?: break
         current = context.classResolver.resolveClassChecked(superName, current, context)
-            ?: return null
+          ?: return null
       }
     }
 
@@ -434,7 +434,7 @@ private class MethodResolveImpl(
     */
     if (classRef.isInterface) {
       val objectClass = context.classResolver.resolveClassChecked("java/lang/Object", classRef, context)
-          ?: return null
+        ?: return null
       val match = objectClass.methods.find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor && it.isPublic }
       if (match != null) {
         return 3 to match

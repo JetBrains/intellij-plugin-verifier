@@ -47,10 +47,10 @@ object OptionsParser {
     println("Verification reports directory: $verificationReportsDirectory")
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     return OutputOptions(
-        verificationReportsDirectory,
-        teamCityLog,
-        TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-        opts.dumpBrokenPluginsFile
+      verificationReportsDirectory,
+      teamCityLog,
+      TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
+      opts.dumpBrokenPluginsFile
     )
   }
 
@@ -77,17 +77,17 @@ object OptionsParser {
     val build = opts.actualIdeVersion
     if (!build.isNullOrBlank()) {
       return IdeVersion.createIdeVersionIfValid(build)
-          ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
+        ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
     }
     return null
   }
 
   fun getExternalClassesPackageFilter(opts: CmdOpts): PackageFilter =
-      opts.externalClassesPrefixes
-          .map { it.replace('.', '/') }
-          .let { list ->
-            DefaultPackageFilter(list.map { DefaultPackageFilter.Descriptor(true, it) })
-          }
+    opts.externalClassesPrefixes
+      .map { it.replace('.', '/') }
+      .let { list ->
+        DefaultPackageFilter(list.map { DefaultPackageFilter.Descriptor(true, it) })
+      }
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
@@ -106,19 +106,19 @@ object OptionsParser {
    * or both IDEA and Android problems (-all).
    */
   private fun createSubsystemProblemsFilter(opts: CmdOpts) =
-      when (opts.subsystemsToCheck) {
-        "android-only" -> AndroidProblemsFilter()
-        "without-android" -> IdeaOnlyProblemsFilter()
-        else -> null
-      }
+    when (opts.subsystemsToCheck) {
+      "android-only" -> AndroidProblemsFilter()
+      "without-android" -> IdeaOnlyProblemsFilter()
+      else -> null
+    }
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = createDocumentedProblemsFilter()
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
     return listOfNotNull(ignoredProblemsFilter) +
-        listOfNotNull(documentedProblemsFilter) +
-        listOfNotNull(codeProblemsFilter)
+      listOfNotNull(documentedProblemsFilter) +
+      listOfNotNull(codeProblemsFilter)
   }
 
   private fun createDocumentedProblemsFilter(): DocumentedProblemsFilter {

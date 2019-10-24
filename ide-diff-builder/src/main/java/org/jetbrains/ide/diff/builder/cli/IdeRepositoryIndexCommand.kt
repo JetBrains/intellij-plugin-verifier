@@ -67,9 +67,9 @@ class IdeRepositoryIndexCommand : Command {
     }
 
     val index = repository
-        .fetchIndex()
-        .filter { options.productCode == null || options.productCode == it.version.productCode }
-        .sortedByDescending { it.version }
+      .fetchIndex()
+      .filter { options.productCode == null || options.productCode == it.version.productCode }
+      .sortedByDescending { it.version }
 
     val sortedIdes = if (options.ascendingOrder) {
       index.sortedBy { it.version }
@@ -93,9 +93,9 @@ val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel
 val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
 val allIdeRepository = CompositeIdeRepository(
-    listOf(
-        releasesIdeRepository,
-        snapshotsIdeRepository,
-        nightlyIdeRepository
-    )
+  listOf(
+    releasesIdeRepository,
+    snapshotsIdeRepository,
+    nightlyIdeRepository
+  )
 )

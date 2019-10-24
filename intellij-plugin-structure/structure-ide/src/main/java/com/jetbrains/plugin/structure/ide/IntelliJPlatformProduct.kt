@@ -6,10 +6,10 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
  * Enumerates known IntelliJ Platform IDEs.
  */
 enum class IntelliJPlatformProduct(
-    val productCode: String,
-    val productName: String,
-    val platformPrefix: String,
-    val alternativeProductCode: String? = null
+  val productCode: String,
+  val productName: String,
+  val platformPrefix: String,
+  val alternativeProductCode: String? = null
 ) {
 
   IDEA("IU", "IntelliJ IDEA", "idea", "IIU"),
@@ -30,9 +30,9 @@ enum class IntelliJPlatformProduct(
 
   companion object {
     fun fromProductCode(productCode: String): IntelliJPlatformProduct? =
-        values().find { it.productCode == productCode || it.alternativeProductCode == productCode }
+      values().find { it.productCode == productCode || it.alternativeProductCode == productCode }
 
     fun fromIdeVersion(ideVersion: IdeVersion): IntelliJPlatformProduct? =
-        fromProductCode(ideVersion.productCode)
+      fromProductCode(ideVersion.productCode)
   }
 }

@@ -18,40 +18,40 @@ fun Resolver.resolveClassOrNull(className: String): ClassFile? {
 }
 
 fun Resolver.resolveClassChecked(
-    className: String,
-    referrer: ClassFileMember,
-    context: VerificationContext
+  className: String,
+  referrer: ClassFileMember,
+  context: VerificationContext
 ): ClassFile? =
-    when (val resolutionResult = resolveClass(className)) {
-      ResolutionResult.NotFound -> {
-        if (!context.externalClassesPackageFilter.acceptPackageOfClass(className)) {
-          context.problemRegistrar.registerProblem(
-              ClassNotFoundProblem(ClassReference(className), referrer.location)
-          )
-        }
-        null
-      }
-      is ResolutionResult.Invalid -> {
+  when (val resolutionResult = resolveClass(className)) {
+    ResolutionResult.NotFound -> {
+      if (!context.externalClassesPackageFilter.acceptPackageOfClass(className)) {
         context.problemRegistrar.registerProblem(
-            InvalidClassFileProblem(ClassReference(className), referrer.location, resolutionResult.message)
+          ClassNotFoundProblem(ClassReference(className), referrer.location)
         )
-        null
       }
-      is ResolutionResult.FailedToRead -> {
-        context.problemRegistrar.registerProblem(
-            FailedToReadClassFileProblem(ClassReference(className), referrer.location, resolutionResult.reason)
-        )
-        null
-      }
-      is ResolutionResult.Found -> {
-        val classFile = ClassFileAsm(resolutionResult.value, resolutionResult.fileOrigin)
-        if (!isClassAccessibleToOtherClass(classFile, referrer.containingClassFile)) {
-          context.problemRegistrar.registerProblem(
-              IllegalClassAccessProblem(classFile.location, classFile.accessType, referrer.location)
-          )
-        }
-        val classReference = ClassReference(className)
-        context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer) }
-        classFile
-      }
+      null
     }
+    is ResolutionResult.Invalid -> {
+      context.problemRegistrar.registerProblem(
+        InvalidClassFileProblem(ClassReference(className), referrer.location, resolutionResult.message)
+      )
+      null
+    }
+    is ResolutionResult.FailedToRead -> {
+      context.problemRegistrar.registerProblem(
+        FailedToReadClassFileProblem(ClassReference(className), referrer.location, resolutionResult.reason)
+      )
+      null
+    }
+    is ResolutionResult.Found -> {
+      val classFile = ClassFileAsm(resolutionResult.value, resolutionResult.fileOrigin)
+      if (!isClassAccessibleToOtherClass(classFile, referrer.containingClassFile)) {
+        context.problemRegistrar.registerProblem(
+          IllegalClassAccessProblem(classFile.location, classFile.accessType, referrer.location)
+        )
+      }
+      val classReference = ClassReference(className)
+      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer) }
+      classFile
+    }
+  }

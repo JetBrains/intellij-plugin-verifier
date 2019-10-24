@@ -26,29 +26,29 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
   override fun providePluginDetails(pluginFile: Path) = createPluginDetails(pluginFile, null, null)
 
   override fun providePluginDetails(
-      pluginInfo: PluginInfo,
-      pluginFileLock: FileLock
+    pluginInfo: PluginInfo,
+    pluginFileLock: FileLock
   ) = pluginFileLock.closeOnException {
     createPluginDetails(pluginFileLock.file, pluginFileLock, pluginInfo)
   }
 
   override fun providePluginDetails(
-      pluginInfo: PluginInfo,
-      idePlugin: IdePlugin
+    pluginInfo: PluginInfo,
+    idePlugin: IdePlugin
   ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null)
 
   private fun createPluginDetails(
-      pluginFile: Path,
-      pluginFileLock: FileLock?,
-      pluginInfo: PluginInfo?
+    pluginFile: Path,
+    pluginFileLock: FileLock?,
+    pluginInfo: PluginInfo?
   ) = with(idePluginManager.createPlugin(pluginFile.toFile())) {
     when (this) {
       is PluginCreationSuccess -> {
         readPluginClasses(
-            pluginInfo ?: LocalPluginInfo(plugin),
-            plugin,
-            warnings,
-            pluginFileLock
+          pluginInfo ?: LocalPluginInfo(plugin),
+          plugin,
+          warnings,
+          pluginFileLock
         )
       }
 
@@ -63,10 +63,10 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
   }
 
   private fun readPluginClasses(
-      pluginInfo: PluginInfo,
-      idePlugin: IdePlugin,
-      warnings: List<PluginProblem>,
-      pluginFileLock: FileLock?
+    pluginInfo: PluginInfo,
+    idePlugin: IdePlugin,
+    warnings: List<PluginProblem>,
+    pluginFileLock: FileLock?
   ): PluginDetailsProvider.Result {
 
     val pluginClassesLocations = try {
@@ -77,13 +77,13 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     }
 
     return PluginDetailsProvider.Result.Provided(
-        PluginDetails(
-            pluginInfo,
-            idePlugin,
-            warnings,
-            pluginClassesLocations,
-            pluginFileLock
-        )
+      PluginDetails(
+        pluginInfo,
+        idePlugin,
+        warnings,
+        pluginClassesLocations,
+        pluginFileLock
+      )
     )
   }
 

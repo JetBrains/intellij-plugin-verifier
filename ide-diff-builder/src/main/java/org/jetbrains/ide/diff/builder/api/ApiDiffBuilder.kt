@@ -7,15 +7,15 @@ import org.jetbrains.ide.diff.builder.filter.ClassFilter
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ApiDiffBuilder(
-    private val classFilter: ClassFilter,
-    private val processors: List<ApiDiffProcessor>
+  private val classFilter: ClassFilter,
+  private val processors: List<ApiDiffProcessor>
 ) {
 
   fun buildDiff(
-      oldResolver: Resolver,
-      newResolver: Resolver,
-      oldClasses: Set<String>,
-      newClasses: Set<String>
+    oldResolver: Resolver,
+    newResolver: Resolver,
+    oldClasses: Set<String>,
+    newClasses: Set<String>
   ) {
     for (className in (oldClasses + newClasses)) {
       if (isIgnoredClassName(className)) {
@@ -35,11 +35,11 @@ class ApiDiffBuilder(
   }
 
   private fun buildApiDiff(
-      oldClass: ClassFile?,
-      newClass: ClassFile?,
-      oldResolver: Resolver,
-      newResolver: Resolver,
-      processor: (ClassFileMember?, ClassFileMember?) -> Unit
+    oldClass: ClassFile?,
+    newClass: ClassFile?,
+    oldResolver: Resolver,
+    newResolver: Resolver,
+    processor: (ClassFileMember?, ClassFileMember?) -> Unit
   ) {
     processor(oldClass, newClass)
 
@@ -50,7 +50,7 @@ class ApiDiffBuilder(
       val oldMethod = oldMethods[nameDescriptor]
       val newMethod = newMethods[nameDescriptor]
       if (oldMethod != null && isMethodOverriding(oldMethod, oldResolver)
-          || newMethod != null && isMethodOverriding(newMethod, newResolver)) {
+        || newMethod != null && isMethodOverriding(newMethod, newResolver)) {
         continue
       }
       processor(oldMethod, newMethod)
@@ -68,10 +68,10 @@ class ApiDiffBuilder(
 
   private fun isMethodOverriding(method: Method, resolver: Resolver): Boolean {
     if (method.isConstructor
-        || method.isClassInitializer
-        || method.isStatic
-        || method.isPrivate
-        || method.isPackagePrivate
+      || method.isClassInitializer
+      || method.isStatic
+      || method.isPrivate
+      || method.isPackagePrivate
     ) {
       return false
     }
@@ -84,10 +84,10 @@ class ApiDiffBuilder(
     parentsVisitor.visitClass(method.containingClassFile, false, onEnter = { parentClass ->
       val hasSameMethod = parentClass.methods.any {
         it.name == method.name
-            && it.descriptor == method.descriptor
-            && !it.isStatic
-            && !it.isPrivate
-            && !it.isPackagePrivate
+          && it.descriptor == method.descriptor
+          && !it.isStatic
+          && !it.isPrivate
+          && !it.isPackagePrivate
       }
       if (hasSameMethod) {
         isOverriding.set(true)
@@ -99,11 +99,11 @@ class ApiDiffBuilder(
   }
 
   private fun isSyntheticLikeName(name: String) = name.contains("$$")
-      || name.endsWith("$")
-      || name.substringAfterLast('$', "").toIntOrNull() != null
+    || name.endsWith("$")
+    || name.substringAfterLast('$', "").toIntOrNull() != null
 
   private fun isIgnoredClassName(className: String): Boolean =
-      isSyntheticLikeName(className) || !classFilter.shouldProcessClass(className)
+    isSyntheticLikeName(className) || !classFilter.shouldProcessClass(className)
 
   private val ClassFileMember.isIgnored: Boolean
     get() = when (this) {

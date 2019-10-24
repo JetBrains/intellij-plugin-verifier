@@ -11,8 +11,8 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class NonExtendableTypeInherited(
-    override val apiElement: ClassLocation,
-    override val usageLocation: ClassLocation
+  override val apiElement: ClassLocation,
+  override val usageLocation: ClassLocation
 ) : NonExtendableApiUsage() {
 
   override val apiReference
@@ -40,8 +40,8 @@ class NonExtendableTypeInherited(
     }
 
   override fun equals(other: Any?) = other is NonExtendableTypeInherited
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiElement, usageLocation)
 }

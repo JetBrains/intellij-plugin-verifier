@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
  */
 class ExternalBuildClassesSelector : ClassesSelector {
   override fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver> =
-      classesLocations.getResolvers(CompileServerExtensionKey)
+    classesLocations.getResolvers(CompileServerExtensionKey)
 
   override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
     val compileServerResolvers = classesLocations.getResolvers(CompileServerExtensionKey)
@@ -20,17 +20,17 @@ class ExternalBuildClassesSelector : ClassesSelector {
     val allServiceImplementations = hashSetOf<String>()
     for (jarFileResolver in jarFileResolvers) {
       jarFileResolver.implementedServiceProviders
-          .filterKeys { isJetbrainsServiceProvider(it) }
-          .flatMapTo(allServiceImplementations) { it.value }
+        .filterKeys { isJetbrainsServiceProvider(it) }
+        .flatMapTo(allServiceImplementations) { it.value }
     }
 
     return compileServerResolvers
-        .filter { resolver ->
-          allServiceImplementations.any { serviceImplementation -> resolver.containsClass(serviceImplementation.replace('.', '/')) }
-        }
-        .flatMapTo(hashSetOf()) { it.allClasses }
+      .filter { resolver ->
+        allServiceImplementations.any { serviceImplementation -> resolver.containsClass(serviceImplementation.replace('.', '/')) }
+      }
+      .flatMapTo(hashSetOf()) { it.allClasses }
   }
 
   private fun isJetbrainsServiceProvider(serviceProvider: String): Boolean =
-      serviceProvider.startsWith("org.jetbrains.")
+    serviceProvider.startsWith("org.jetbrains.")
 }

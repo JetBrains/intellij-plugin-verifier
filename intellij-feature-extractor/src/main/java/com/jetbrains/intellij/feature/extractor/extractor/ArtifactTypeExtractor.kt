@@ -19,19 +19,19 @@ import org.objectweb.asm.tree.MethodInsnNode
 class ArtifactTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver) =
-      getExtensionPointImplementors(plugin, resolver, ExtensionPoint.ARTIFACT_TYPE)
-          .flatMap { extractArtifactTypes(it, resolver) }
+    getExtensionPointImplementors(plugin, resolver, ExtensionPoint.ARTIFACT_TYPE)
+      .flatMap { extractArtifactTypes(it, resolver) }
 
   private fun extractArtifactTypes(classFile: ClassFile, resolver: Resolver): List<ExtensionPointFeatures> {
     return classFile.methods.filter { it.isConstructor }
-        .mapNotNull { extractArtifactTypesFromConstructor(it, classFile, resolver) }
-        .toList()
+      .mapNotNull { extractArtifactTypesFromConstructor(it, classFile, resolver) }
+      .toList()
   }
 
   private fun extractArtifactTypesFromConstructor(
-      classConstructor: Method,
-      classFile: ClassFile,
-      resolver: Resolver
+    classConstructor: Method,
+    classFile: ClassFile,
+    resolver: Resolver
   ): ExtensionPointFeatures? {
     val instructions = classConstructor.instructions
     val superInitIndex = instructions.indexOfLast {

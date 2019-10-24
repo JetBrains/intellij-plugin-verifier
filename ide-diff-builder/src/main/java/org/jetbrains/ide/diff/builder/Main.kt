@@ -9,7 +9,8 @@ import org.jetbrains.ide.diff.builder.cli.IdeRepositoryIndexCommand
 import kotlin.system.exitProcess
 
 private fun usage(): Nothing {
-  System.err.println("""
+  System.err.println(
+    """
     Usage: java -jar <command> <args> [-h]
     <command> := ${AVAILABLE_COMMANDS.joinToString(separator = " | ") { it.commandName }}
     <args> depend on command. See -h (help) for details on each command.
@@ -19,10 +20,10 @@ private fun usage(): Nothing {
 }
 
 private val AVAILABLE_COMMANDS = listOf(
-    IdeDiffCommand(),
-    IdeRepositoryIndexCommand(),
-    BuildIdeApiAnnotationsCommand(),
-    ApiQualityCheckCommand()
+  IdeDiffCommand(),
+  IdeRepositoryIndexCommand(),
+  BuildIdeApiAnnotationsCommand(),
+  ApiQualityCheckCommand()
 )
 
 fun main(args: Array<String>) {

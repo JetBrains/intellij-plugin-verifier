@@ -14,8 +14,8 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
 
   override fun execute(
-      reportage: PluginVerificationReportage,
-      pluginDetailsCache: PluginDetailsCache
+    reportage: PluginVerificationReportage,
+    pluginDetailsCache: PluginDetailsCache
   ): TwoTargetsVerificationResults {
     with(parameters) {
       val classFilters = listOf(DynamicallyLoadedFilter())
@@ -23,19 +23,19 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
       val verifiers = arrayListOf<PluginVerifier>()
       verifiers += releaseVerificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            classFilters
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          classFilters
         )
       }
 
       verifiers += trunkVerificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            classFilters
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          classFilters
         )
       }
 
@@ -47,10 +47,10 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
       val results = runSeveralVerifiers(reportage, sortedVerifiers)
 
       return TwoTargetsVerificationResults(
-          releaseVerificationTarget,
-          results.filter { it.verificationTarget == releaseVerificationTarget },
-          trunkVerificationTarget,
-          results.filter { it.verificationTarget == trunkVerificationTarget }
+        releaseVerificationTarget,
+        results.filter { it.verificationTarget == releaseVerificationTarget },
+        trunkVerificationTarget,
+        results.filter { it.verificationTarget == trunkVerificationTarget }
       )
     }
   }

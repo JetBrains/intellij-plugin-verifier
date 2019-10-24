@@ -14,10 +14,10 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 
 class IdeResources(
-    val ide: Ide,
-    platformResolver: Resolver,
-    bundledPluginResolvers: List<Resolver>,
-    private val closeableResources: List<Closeable>
+  val ide: Ide,
+  platformResolver: Resolver,
+  bundledPluginResolvers: List<Resolver>,
+  private val closeableResources: List<Closeable>
 ) : Closeable {
 
   val allResolver: Resolver = CompositeResolver.create(listOf(platformResolver) + bundledPluginResolvers)
@@ -60,7 +60,7 @@ private val IGNORED_PLUGIN_IDS = setOf("org.jetbrains.kotlin", "org.jetbrains.an
 private val pluginClassesLocationsKeys = IdePluginClassesFinder.MAIN_CLASSES_KEYS + listOf(CompileServerExtensionKey)
 
 private fun readBundledPluginsClassesLocations(ide: Ide, readMode: Resolver.ReadMode): List<IdePluginClassesLocations> =
-    ide.bundledPlugins.mapNotNull { readPluginClassesExceptionally(it, readMode) }
+  ide.bundledPlugins.mapNotNull { readPluginClassesExceptionally(it, readMode) }
 
 private fun readPluginClassesExceptionally(idePlugin: IdePlugin, readMode: Resolver.ReadMode): IdePluginClassesLocations? {
   if (idePlugin.pluginId in IGNORED_PLUGIN_IDS) {
@@ -71,4 +71,4 @@ private fun readPluginClassesExceptionally(idePlugin: IdePlugin, readMode: Resol
 }
 
 private fun IdePluginClassesLocations.getPluginClassesResolver(): List<Resolver> =
-    pluginClassesLocationsKeys.flatMap { getResolvers(it) }
+  pluginClassesLocationsKeys.flatMap { getResolvers(it) }

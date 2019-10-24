@@ -21,8 +21,8 @@ class ConfigurationTypeTest : FeatureExtractorTestBase() {
     resetPluginExtensionPoint(ExtensionPoint.CONFIGURATION_TYPE, className)
     val actual = RunConfigurationExtractor().extract(plugin, resolver)
     Assert.assertEquals(
-        listOf(ExtensionPointFeatures(ExtensionPoint.CONFIGURATION_TYPE, expectedConfigurationIds)),
-        actual
+      listOf(ExtensionPointFeatures(ExtensionPoint.CONFIGURATION_TYPE, expectedConfigurationIds)),
+      actual
     )
   }
 

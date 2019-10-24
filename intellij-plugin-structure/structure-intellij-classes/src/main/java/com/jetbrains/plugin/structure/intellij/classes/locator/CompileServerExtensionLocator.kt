@@ -21,11 +21,11 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
     if (pluginLib.isDirectory) {
       val elements = idePlugin.extensions.get(EXTENSION_POINT_NAME)
       val allCompileJars = elements
-          .mapNotNull { it.getAttributeValue("classpath") }
-          .flatMap { it.split(";") }
-          .filter { it.endsWith(".jar") }
-          .map { File(pluginLib, it) }
-          .filter { it.isFile }
+        .mapNotNull { it.getAttributeValue("classpath") }
+        .flatMap { it.split(";") }
+        .filter { it.endsWith(".jar") }
+        .map { File(pluginLib, it) }
+        .filter { it.isFile }
       return buildJarFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
     }
     return emptyList()

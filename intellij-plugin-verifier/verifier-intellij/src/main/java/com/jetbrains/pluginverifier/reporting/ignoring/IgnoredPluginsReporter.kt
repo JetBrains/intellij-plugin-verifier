@@ -33,8 +33,8 @@ class IgnoredPluginsReporter(private val targetDirectoryProvider: (PluginVerific
       val ignoredPluginsFile = targetDirectoryProvider(verificationTarget).resolve("all-ignored-plugins.txt")
 
       ignoredPluginsFile.writeText(
-          "The following plugins were excluded from the verification: \n" +
-              ignoredPlugins.joinToString(separator = "\n") { "${it.pluginInfo}: ${it.reason}" }
+        "The following plugins were excluded from the verification: \n" +
+          ignoredPlugins.joinToString(separator = "\n") { "${it.pluginInfo}: ${it.reason}" }
       )
     }
   }

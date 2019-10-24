@@ -5,10 +5,10 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 
 fun ClassReference.formatClassReference(classReferenceOption: ClassOption): String =
-    when (classReferenceOption) {
-      ClassOption.SIMPLE_NAME -> toSimpleJavaClassName(className)
-      ClassOption.FULL_NAME -> toFullJavaClassName(className)
-    }
+  when (classReferenceOption) {
+    ClassOption.SIMPLE_NAME -> toSimpleJavaClassName(className)
+    ClassOption.FULL_NAME -> toFullJavaClassName(className)
+  }
 
 val MethodReference.methodOrConstructorWord: String
   get() = if (methodName == "<init>") {
@@ -18,9 +18,9 @@ val MethodReference.methodOrConstructorWord: String
   }
 
 fun MethodReference.formatMethodReference(
-    hostClassOption: HostClassOption,
-    methodParameterTypeOption: MethodParameterTypeOption,
-    methodReturnTypeOption: MethodReturnTypeOption
+  hostClassOption: HostClassOption,
+  methodParameterTypeOption: MethodParameterTypeOption,
+  methodReturnTypeOption: MethodReturnTypeOption
 ): String = buildString {
   val formattedHost = hostClass.formatHost(hostClassOption)
   if (formattedHost.isNotEmpty()) {
@@ -63,8 +63,8 @@ private fun FieldReference.getFieldType(fieldTypeOption: FieldTypeOption): Strin
 }
 
 private fun MethodReference.getMethodParametersAndReturnType(
-    methodParameterTypeOption: MethodParameterTypeOption,
-    methodReturnTypeOption: MethodReturnTypeOption
+  methodParameterTypeOption: MethodParameterTypeOption,
+  methodReturnTypeOption: MethodReturnTypeOption
 ): Pair<List<String>, String> {
   val paramConverter = if (methodParameterTypeOption == MethodParameterTypeOption.SIMPLE_PARAM_CLASS_NAME) toSimpleJavaClassName else toFullJavaClassName
   val returnConverter = if (methodReturnTypeOption == MethodReturnTypeOption.SIMPLE_RETURN_TYPE_CLASS_NAME) toSimpleJavaClassName else toFullJavaClassName

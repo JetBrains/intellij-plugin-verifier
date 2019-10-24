@@ -11,35 +11,35 @@ import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
 
   override fun execute(
-      reportage: PluginVerificationReportage,
-      pluginDetailsCache: PluginDetailsCache
+    reportage: PluginVerificationReportage,
+    pluginDetailsCache: PluginDetailsCache
   ): TwoTargetsVerificationResults {
     with(parameters) {
       val verifiers = arrayListOf<PluginVerifier>()
       verifiers += baseVerificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            listOf(DynamicallyLoadedFilter())
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter())
         )
       }
 
       verifiers += newVerificationDescriptors.map {
         PluginVerifier(
-            it,
-            problemsFilters,
-            pluginDetailsCache,
-            listOf(DynamicallyLoadedFilter())
+          it,
+          problemsFilters,
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter())
         )
       }
 
       val results = runSeveralVerifiers(reportage, verifiers)
       return TwoTargetsVerificationResults(
-          baseVerificationTarget,
-          results.filter { it.verificationTarget == baseVerificationTarget },
-          newVerificationTarget,
-          results.filter { it.verificationTarget == newVerificationTarget }
+        baseVerificationTarget,
+        results.filter { it.verificationTarget == baseVerificationTarget },
+        newVerificationTarget,
+        results.filter { it.verificationTarget == newVerificationTarget }
       )
     }
   }

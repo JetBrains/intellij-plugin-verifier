@@ -10,8 +10,8 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 class IgnoredProblemsFilter(val ignoreConditions: List<IgnoreCondition>) : ProblemsFilter {
 
   override fun shouldReportProblem(
-      problem: CompatibilityProblem,
-      context: VerificationContext
+    problem: CompatibilityProblem,
+    context: VerificationContext
   ): ProblemsFilter.Result {
     if (context !is PluginVerificationContext) {
       return ProblemsFilter.Result.Report

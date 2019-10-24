@@ -13,10 +13,10 @@ class DeprecatedProcessor : ApiDiffProcessor {
   val unmarkedDeprecated: MutableList<ClassFileMember> = arrayListOf()
 
   override fun process(
-      oldMember: ClassFileMember?,
-      newMember: ClassFileMember?,
-      oldResolver: Resolver,
-      newResolver: Resolver
+    oldMember: ClassFileMember?,
+    newMember: ClassFileMember?,
+    oldResolver: Resolver,
+    newResolver: Resolver
   ) {
     val oldDeprecation = oldMember?.deprecationInfo
     val newDeprecation = newMember?.deprecationInfo

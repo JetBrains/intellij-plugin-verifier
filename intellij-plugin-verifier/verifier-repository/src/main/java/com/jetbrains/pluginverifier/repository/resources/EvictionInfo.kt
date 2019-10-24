@@ -7,13 +7,13 @@ package com.jetbrains.pluginverifier.repository.resources
  * of resources to be removed on the cleanup procedure.
  */
 data class EvictionInfo<out R, out K, W : ResourceWeight<W>>(
-    /**
-     * The total weight of the resources at the moment
-     */
-    val totalWeight: W,
+  /**
+   * The total weight of the resources at the moment
+   */
+  val totalWeight: W,
 
-    /**
-     * The currently available resources
-     */
-    val availableResources: List<AvailableResource<R, K, W>>
+  /**
+   * The currently available resources
+   */
+  val availableResources: List<AvailableResource<R, K, W>>
 )

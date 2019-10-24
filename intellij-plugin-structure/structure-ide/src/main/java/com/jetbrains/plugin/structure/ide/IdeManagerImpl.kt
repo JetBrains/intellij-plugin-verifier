@@ -117,17 +117,17 @@ class IdeManagerImpl : IdeManager() {
 
   private fun readIdeVersionFromDistribution(idePath: File): IdeVersion {
     val locations = listOf(
-        idePath.resolve("build.txt"),
-        idePath.resolve("Resources").resolve("build.txt"),
-        idePath.resolve("community").resolve("build.txt"),
-        idePath.resolve("ultimate").resolve("community").resolve("build.txt")
+      idePath.resolve("build.txt"),
+      idePath.resolve("Resources").resolve("build.txt"),
+      idePath.resolve("community").resolve("build.txt"),
+      idePath.resolve("ultimate").resolve("community").resolve("build.txt")
     )
     val buildTxtFile = locations.find { it.exists() }
-        ?: throw InvalidIdeException(
-            idePath,
-            "Build number is not found in the following files relative to $idePath: " +
-                locations.joinToString { "'" + it.relativeTo(idePath) + "'" }
-        )
+      ?: throw InvalidIdeException(
+        idePath,
+        "Build number is not found in the following files relative to $idePath: " +
+          locations.joinToString { "'" + it.relativeTo(idePath) + "'" }
+      )
     return readBuildNumber(buildTxtFile)
   }
 
@@ -147,11 +147,11 @@ class IdeManagerImpl : IdeManager() {
 
   private fun readVersionFromIdeSources(idePath: File): IdeVersion {
     val locations = listOf(
-        idePath.resolve("build.txt"),
-        idePath.resolve("community").resolve("build.txt")
+      idePath.resolve("build.txt"),
+      idePath.resolve("community").resolve("build.txt")
     )
     val buildTxtFile = locations.find { it.exists() }
-        ?: throw InvalidIdeException(idePath, "Unable to find IDE version file 'build.txt' or 'community/build.txt'")
+      ?: throw InvalidIdeException(idePath, "Unable to find IDE version file 'build.txt' or 'community/build.txt'")
     return readBuildNumber(buildTxtFile)
   }
 
@@ -168,10 +168,10 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readCompiledBundledPlugins(
-      idePath: File,
-      moduleRoots: List<File>,
-      pathResolver: ResourceResolver,
-      ideVersion: IdeVersion
+    idePath: File,
+    moduleRoots: List<File>,
+    pathResolver: ResourceResolver,
+    ideVersion: IdeVersion
   ): List<IdePlugin> {
     val plugins = arrayListOf<IdePlugin>()
     for (moduleRoot in moduleRoots) {
@@ -184,11 +184,11 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readPlatformPlugins(
-      idePath: File,
-      product: IntelliJPlatformProduct,
-      jarFiles: List<File>,
-      platformResourceResolver: ResourceResolver,
-      ideVersion: IdeVersion
+    idePath: File,
+    product: IntelliJPlatformProduct,
+    jarFiles: List<File>,
+    platformResourceResolver: ResourceResolver,
+    ideVersion: IdeVersion
   ): List<IdePlugin> {
     val platformPlugins = arrayListOf<IdePlugin>()
     val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
@@ -210,21 +210,21 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readBundledPlugins(
-      idePath: File,
-      platformResourceResolver: ResourceResolver,
-      ideVersion: IdeVersion
+    idePath: File,
+    platformResourceResolver: ResourceResolver,
+    ideVersion: IdeVersion
   ): List<IdePlugin> {
     val pluginsFiles = idePath.resolve("plugins").listFiles().orEmpty()
     return pluginsFiles
-        .filter { it.isDirectory }
-        .mapNotNull { readBundledPlugin(idePath, it, platformResourceResolver, ideVersion) }
+      .filter { it.isDirectory }
+      .mapNotNull { readBundledPlugin(idePath, it, platformResourceResolver, ideVersion) }
   }
 
   private fun readBundledPlugin(
-      idePath: File,
-      pluginFile: File,
-      pathResolver: ResourceResolver,
-      ideVersion: IdeVersion
+    idePath: File,
+    pluginFile: File,
+    pathResolver: ResourceResolver,
+    ideVersion: IdeVersion
   ): IdePlugin? = try {
     createBundledPluginExceptionally(idePath, pluginFile, pathResolver, IdePluginManager.PLUGIN_XML, ideVersion)
   } catch (e: InvalidIdeException) {
@@ -233,20 +233,20 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun createBundledPluginExceptionally(
-      idePath: File,
-      pluginFile: File,
-      pathResolver: ResourceResolver,
-      descriptorPath: String,
-      ideVersion: IdeVersion
+    idePath: File,
+    pluginFile: File,
+    pathResolver: ResourceResolver,
+    descriptorPath: String,
+    ideVersion: IdeVersion
   ): IdePlugin = when (val creationResult = IdePluginManager
-      .createManager(pathResolver)
-      .createBundledPlugin(pluginFile, ideVersion, descriptorPath)
+    .createManager(pathResolver)
+    .createBundledPlugin(pluginFile, ideVersion, descriptorPath)
     ) {
     is PluginCreationSuccess -> creationResult.plugin
     is PluginCreationFail -> throw InvalidIdeException(
-        idePath,
-        "Plugin '${pluginFile.relativeTo(idePath)}' is invalid: " +
-            creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
+      idePath,
+      "Plugin '${pluginFile.relativeTo(idePath)}' is invalid: " +
+        creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
     )
   }
 
@@ -255,22 +255,22 @@ class IdeManagerImpl : IdeManager() {
     private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
 
     fun isCompiledUltimate(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
-        ideaDir.resolve(".idea").isDirectory &&
-        ideaDir.resolve("community").resolve(".idea").isDirectory
+      ideaDir.resolve(".idea").isDirectory &&
+      ideaDir.resolve("community").resolve(".idea").isDirectory
 
     fun isCompiledCommunity(ideaDir: File) = getCompiledClassesRoot(ideaDir) != null &&
-        ideaDir.resolve(".idea").isDirectory &&
-        !ideaDir.resolve("community").resolve(".idea").isDirectory
+      ideaDir.resolve(".idea").isDirectory &&
+      !ideaDir.resolve("community").resolve(".idea").isDirectory
 
     fun isDistributionIde(ideaDir: File) = ideaDir.resolve("lib").isDirectory &&
-        !ideaDir.resolve(".idea").isDirectory
+      !ideaDir.resolve(".idea").isDirectory
 
     fun getCompiledClassesRoot(ideaDir: File): File? =
-        listOf(
-            ideaDir.resolve("out").resolve("production"),
-            ideaDir.resolve("out").resolve("classes").resolve("production"),
-            ideaDir.resolve("out").resolve("compilation").resolve("classes").resolve("production")
-        ).find { it.isDirectory }
+      listOf(
+        ideaDir.resolve("out").resolve("production"),
+        ideaDir.resolve("out").resolve("classes").resolve("production"),
+        ideaDir.resolve("out").resolve("compilation").resolve("classes").resolve("production")
+      ).find { it.isDirectory }
   }
 
 }

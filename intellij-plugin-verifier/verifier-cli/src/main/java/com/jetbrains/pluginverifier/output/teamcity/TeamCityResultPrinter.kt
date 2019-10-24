@@ -24,9 +24,9 @@ import org.slf4j.LoggerFactory
 
 
 class TeamCityResultPrinter(
-    private val tcLog: TeamCityLog,
-    private val groupBy: GroupBy,
-    private val repository: PluginRepository
+  private val tcLog: TeamCityLog,
+  private val groupBy: GroupBy,
+  private val repository: PluginRepository
 ) : ResultPrinter {
 
   companion object {
@@ -129,11 +129,11 @@ class TeamCityResultPrinter(
   }
 
   private fun PluginVerificationResult.getProblems(): Set<CompatibilityProblem> =
-      if (this is PluginVerificationResult.Verified) {
-        compatibilityProblems
-      } else {
-        emptySet()
-      }
+    if (this is PluginVerificationResult.Verified) {
+      compatibilityProblems
+    } else {
+      emptySet()
+    }
 
   private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<PluginVerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
@@ -193,9 +193,9 @@ class TeamCityResultPrinter(
    * ```
    */
   private fun printResultsForSpecificPluginId(
-      pluginId: String,
-      pluginResults: List<PluginVerificationResult>,
-      targetToLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
+    pluginId: String,
+    pluginResults: List<PluginVerificationResult>,
+    targetToLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
   ) {
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
@@ -208,9 +208,9 @@ class TeamCityResultPrinter(
   }
 
   private fun printResultOfSpecificVersion(
-      plugin: PluginInfo,
-      verificationResult: PluginVerificationResult,
-      testName: String
+    plugin: PluginInfo,
+    verificationResult: PluginVerificationResult,
+    testName: String
   ) {
     tcLog.testStarted(testName).use {
       return@use when (verificationResult) {
@@ -226,10 +226,10 @@ class TeamCityResultPrinter(
   }
 
   private fun printCompatibilityProblemsAndMissingDependencies(
-      plugin: PluginInfo,
-      testName: String,
-      problems: Set<CompatibilityProblem>,
-      missingDependencies: List<MissingDependency>
+    plugin: PluginInfo,
+    testName: String,
+    problems: Set<CompatibilityProblem>,
+    missingDependencies: List<MissingDependency>
   ) {
     val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
     if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {
@@ -282,8 +282,8 @@ class TeamCityResultPrinter(
   }
 
   private fun getTooManyUnknownClassesProblems(
-      notFoundClassesProblems: List<ClassNotFoundProblem>,
-      problems: Set<CompatibilityProblem>
+    notFoundClassesProblems: List<ClassNotFoundProblem>,
+    problems: Set<CompatibilityProblem>
   ): String {
     val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems })
     return buildString {
@@ -302,20 +302,20 @@ class TeamCityResultPrinter(
    * and compatible with this IDE.
    */
   private fun requestLastVersionsOfCheckedPlugins(verificationTargets: List<PluginVerificationTarget>): Map<PluginVerificationTarget, List<PluginInfo>> =
-      verificationTargets.associateWith { target ->
-        try {
-          when (target) {
-            is PluginVerificationTarget.IDE -> {
-              requestLastVersionsOfEachCompatiblePlugins(target.ideVersion)
-            }
-            is PluginVerificationTarget.Plugin -> emptyList()
+    verificationTargets.associateWith { target ->
+      try {
+        when (target) {
+          is PluginVerificationTarget.IDE -> {
+            requestLastVersionsOfEachCompatiblePlugins(target.ideVersion)
           }
-        } catch (e: Exception) {
-          e.rethrowIfInterrupted()
-          LOG.info("Unable to determine the last compatible updates of IDE $target", e)
-          emptyList<PluginInfo>() //Kotlin fails to determine type.
+          is PluginVerificationTarget.Plugin -> emptyList()
         }
+      } catch (e: Exception) {
+        e.rethrowIfInterrupted()
+        LOG.info("Unable to determine the last compatible updates of IDE $target", e)
+        emptyList<PluginInfo>() //Kotlin fails to determine type.
       }
+    }
 
   private fun requestLastVersionsOfEachCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> {
     val plugins = repository.getLastCompatiblePlugins(ideVersion)
@@ -344,9 +344,9 @@ class TeamCityResultPrinter(
    * 2) `(173.3727.244.997 - newest)`
    */
   private fun getPluginVersionAsTestName(
-      pluginInfo: PluginInfo,
-      verificationTarget: PluginVerificationTarget,
-      ideLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
+    pluginInfo: PluginInfo,
+    verificationTarget: PluginVerificationTarget,
+    ideLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
   ): String {
     val lastVersions = ideLastPluginVersions.getOrDefault(verificationTarget, emptyList())
     return if (pluginInfo in lastVersions) {

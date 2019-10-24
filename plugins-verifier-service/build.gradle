@@ -35,7 +35,7 @@ configure(allprojects) {
   bootRun {
     systemProperties System.properties
   }
-  
+
   springBoot {
     buildInfo()
   }

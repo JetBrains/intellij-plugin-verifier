@@ -45,17 +45,17 @@ class MockPluginsTest {
   private val compileLibraryServices = compileLibraryDir.resolve("services")
 
   private val expectedWarnings = listOf(
-      OptionalDependencyDescriptorResolutionProblem(
-          "missingDependency",
-          "missingFile.xml",
-          listOf(PluginDescriptorIsNotFound("missingFile.xml"))
-      ),
-      OptionalDependencyDescriptorResolutionProblem(
-          "referenceFromRoot",
-          "/META-INF/referencedFromRoot.xml",
-          listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
-      ),
-      DuplicatedDependencyWarning("duplicatedDependencyId")
+    OptionalDependencyDescriptorResolutionProblem(
+      "missingDependency",
+      "missingFile.xml",
+      listOf(PluginDescriptorIsNotFound("missingFile.xml"))
+    ),
+    OptionalDependencyDescriptorResolutionProblem(
+      "referenceFromRoot",
+      "/META-INF/referencedFromRoot.xml",
+      listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
+    ),
+    DuplicatedDependencyWarning("duplicatedDependencyId")
   )
 
   private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> File): IdePlugin {
@@ -272,8 +272,8 @@ class MockPluginsTest {
           }
 
           file(
-              "optionalDependency.xml",
-              """
+            "optionalDependency.xml",
+            """
                 <idea-plugin>
                   <depends>transitiveMandatoryDependencyId</depends>
                   <depends optional="true" config-file="transitiveOptionalDependency.xml">transitiveOptionalDependencyId</depends>
@@ -341,14 +341,14 @@ class MockPluginsTest {
 
     val creationSuccess = InvalidPluginsTest.getSuccessResult(pluginDirectory)
     assertEquals(
-        creationSuccess.warnings,
-        listOf(
-            OptionalDependencyDescriptorResolutionProblem(
-                "someDependencyId",
-                "optionalDependency.xml",
-                listOf(MultiplePluginDescriptors("optionalDependency.xml", "one.jar", "optionalDependency.xml", "two.jar"))
-            )
+      creationSuccess.warnings,
+      listOf(
+        OptionalDependencyDescriptorResolutionProblem(
+          "someDependencyId",
+          "optionalDependency.xml",
+          listOf(MultiplePluginDescriptors("optionalDependency.xml", "one.jar", "optionalDependency.xml", "two.jar"))
         )
+      )
     )
   }
 
@@ -364,8 +364,8 @@ class MockPluginsTest {
     }
 
     InvalidPluginsTest.assertExpectedProblems(
-        pluginFile,
-        listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "properties", "somePackage")))
+      pluginFile,
+      listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "properties", "somePackage")))
     )
   }
 
@@ -417,16 +417,16 @@ class MockPluginsTest {
   }
 
   private fun checkPluginClassesAndProperties(
-      plugin: IdePlugin,
-      classFilesOrigin: FileOrigin,
-      propertyFileOrigin: FileOrigin
+    plugin: IdePlugin,
+    classFilesOrigin: FileOrigin,
+    propertyFileOrigin: FileOrigin
   ) {
     assertNotNull(plugin.originalFile)
     IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { classesLocations ->
       checkCompileServerJars(classesLocations, plugin)
 
       val mainResolver = CompositeResolver.create(
-          IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
+        IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
       )
 
       checkPluginClasses(mainResolver, classFilesOrigin)
@@ -445,8 +445,8 @@ class MockPluginsTest {
 
   private fun checkPluginClasses(resolver: Resolver, expectedFileOrigin: FileOrigin) {
     assertEquals(
-        setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
-        resolver.allClasses
+      setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
+      resolver.allClasses
     )
     assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.allPackages)
     assertTrue(resolver.containsPackage("somePackage"))
@@ -459,7 +459,7 @@ class MockPluginsTest {
   private fun checkPluginProperties(resolver: Resolver, propertyFileOrigin: FileOrigin) {
     val bundleNameSet = resolver.allBundleNameSet
     assertEquals(setOf("properties.someBundle"), bundleNameSet.baseBundleNames)
-    assertEquals(setOf("properties.someBundle" , "properties.someBundle_en"), bundleNameSet["properties.someBundle"])
+    assertEquals(setOf("properties.someBundle", "properties.someBundle_en"), bundleNameSet["properties.someBundle"])
 
     val (enBundle, enFileOrigin) = resolver.resolveExactPropertyResourceBundle("properties.someBundle", Locale.ENGLISH) as ResolutionResult.Found
 
@@ -485,33 +485,33 @@ class MockPluginsTest {
   private fun checkOptionalDescriptors(plugin: IdePlugin) {
     val optionalDescriptors = plugin.optionalDescriptors
     assertEquals(
-        listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml"),
-        optionalDescriptors.map { it.configurationFilePath }
+      listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml"),
+      optionalDescriptors.map { it.configurationFilePath }
     )
 
     assertEquals(
-        listOf("JUnit", "optionalDependency", "otherDirOptionalDependency"),
-        optionalDescriptors.map { it.dependency.id }
+      listOf("JUnit", "optionalDependency", "otherDirOptionalDependency"),
+      optionalDescriptors.map { it.dependency.id }
     )
 
     assertEquals(
-        listOf(true, true, true),
-        optionalDescriptors.map { it.dependency.isOptional }
+      listOf(true, true, true),
+      optionalDescriptors.map { it.dependency.isOptional }
     )
 
     assertEquals(
-        setOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "JUnit" }!!.optionalPlugin)
+      setOf("org.jetbrains.plugins.scala.project.maven.MavenWorkingDirectoryProviderImpl".replace('.', '/')),
+      getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "JUnit" }!!.optionalPlugin)
     )
 
     assertEquals(
-        setOf("com.intellij.BeanClass".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin)
+      setOf("com.intellij.BeanClass".replace('.', '/')),
+      getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin)
     )
 
     assertEquals(
-        setOf("com.intellij.optional.BeanClass".replace('.', '/')),
-        getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "otherDirOptionalDependency" }!!.optionalPlugin)
+      setOf("com.intellij.optional.BeanClass".replace('.', '/')),
+      getAllClassesReferencedFromXml(optionalDescriptors.find { it.dependency.id == "otherDirOptionalDependency" }!!.optionalPlugin)
     )
   }
 
@@ -519,15 +519,15 @@ class MockPluginsTest {
     assertEquals(9, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
-        PluginDependencyImpl("JUnit", true, false),
-        PluginDependencyImpl("optionalDependency", true, false),
-        PluginDependencyImpl("otherDirOptionalDependency", true, false),
-        PluginDependencyImpl("referenceFromRoot", true, false),
-        PluginDependencyImpl("missingDependency", true, false),
-        PluginDependencyImpl("mandatoryDependency", false, false),
-        PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true),
-        PluginDependencyImpl("duplicatedDependencyId", false, false),
-        PluginDependencyImpl("duplicatedDependencyId", false, false)
+      PluginDependencyImpl("JUnit", true, false),
+      PluginDependencyImpl("optionalDependency", true, false),
+      PluginDependencyImpl("otherDirOptionalDependency", true, false),
+      PluginDependencyImpl("referenceFromRoot", true, false),
+      PluginDependencyImpl("missingDependency", true, false),
+      PluginDependencyImpl("mandatoryDependency", false, false),
+      PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true),
+      PluginDependencyImpl("duplicatedDependencyId", false, false),
+      PluginDependencyImpl("duplicatedDependencyId", false, false)
     )
     assertEquals(expectedDependencies, plugin.dependencies)
 
@@ -537,12 +537,12 @@ class MockPluginsTest {
   private fun checkExtensionPoints(plugin: IdePlugin) {
     val extensions = plugin.extensions
     val expectedExtensionPoints = HashMultiset.create(
-        listOf(
-            "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
-            "com.intellij.compileServer.plugin",
-            "org.jetbrains.kotlin.defaultErrorMessages",
-            "org.jetbrains.kotlin.diagnosticSuppressor"
-        )
+      listOf(
+        "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
+        "com.intellij.compileServer.plugin",
+        "org.jetbrains.kotlin.defaultErrorMessages",
+        "org.jetbrains.kotlin.diagnosticSuppressor"
+      )
     )
 
     assertEquals(expectedExtensionPoints, extensions.keys())
@@ -564,14 +564,14 @@ class MockPluginsTest {
     assertEquals(JarFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)
 
     assertEquals(
-        mapOf(
-            "com.example.service.Service" to setOf(
-                "com.some.compile.library.One",
-                "com.some.compile.library.Two",
-                "com.some.compile.library.Three"
-            )
-        ),
-        singleResolver.implementedServiceProviders
+      mapOf(
+        "com.example.service.Service" to setOf(
+          "com.some.compile.library.One",
+          "com.some.compile.library.Two",
+          "com.some.compile.library.Three"
+        )
+      ),
+      singleResolver.implementedServiceProviders
     )
   }
 

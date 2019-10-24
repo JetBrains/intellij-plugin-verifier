@@ -12,8 +12,8 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
   val executor = ExecutorWithProgress<PluginVerificationResult>("verifier", getConcurrencyLevel(), true) { progressData ->
     val result = progressData.result!!
     reportage.logVerificationStage(
-        "Finished ${progressData.finishedNumber} of ${progressData.totalNumber} verifications (in ${String.format("%.1f", progressData.elapsedTime.toDouble() / 1000)} s): " +
-            "${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}"
+      "Finished ${progressData.finishedNumber} of ${progressData.totalNumber} verifications (in ${String.format("%.1f", progressData.elapsedTime.toDouble() / 1000)} s): " +
+        "${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}"
     )
   }
 

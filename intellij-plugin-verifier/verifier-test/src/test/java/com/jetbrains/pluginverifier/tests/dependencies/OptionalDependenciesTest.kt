@@ -61,46 +61,46 @@ class OptionalDependenciesTest {
     val duplicatedMandatoryDependencyId = PluginDependencyImpl("duplicatedMandatoryDependencyId", false, false)
 
     val optionalPluginDescriptor = MockIdePlugin(
-        dependencies = listOf(
-            optionalMandatoryPluginId,
-            otherOptionalPluginId,
+      dependencies = listOf(
+        optionalMandatoryPluginId,
+        otherOptionalPluginId,
 
-            missingMandatoryPluginId,
-            missingOptionalPluginId,
+        missingMandatoryPluginId,
+        missingOptionalPluginId,
 
-            duplicatedMandatoryDependencyId
+        duplicatedMandatoryDependencyId
+      ),
+      optionalDescriptors = listOf(
+        OptionalPluginDescriptor(
+          otherOptionalPluginId,
+          otherOptionalPluginDescriptor,
+          "otherOptionalPlugin.xml"
         ),
-        optionalDescriptors = listOf(
-            OptionalPluginDescriptor(
-                otherOptionalPluginId,
-                otherOptionalPluginDescriptor,
-                "otherOptionalPlugin.xml"
-            ),
-            OptionalPluginDescriptor(
-                missingOptionalPluginId,
-                missingOptionalPluginDescriptor,
-                "missingOptionalPlugin.xml"
-            )
+        OptionalPluginDescriptor(
+          missingOptionalPluginId,
+          missingOptionalPluginDescriptor,
+          "missingOptionalPlugin.xml"
         )
+      )
     )
 
     //Plugin descriptor corresponding to "plugin.xml"
     val optionalPluginId = PluginDependencyImpl("optionalPluginId", true, false)
 
     val somePluginDescriptor = MockIdePlugin(
-        pluginId = "someId",
-        pluginVersion = "1.0",
-        dependencies = listOf(
-            optionalPluginId,
-            duplicatedMandatoryDependencyId
-        ),
-        optionalDescriptors = listOf(
-            OptionalPluginDescriptor(
-                optionalPluginId,
-                optionalPluginDescriptor,
-                "optionalPlugin.xml"
-            )
+      pluginId = "someId",
+      pluginVersion = "1.0",
+      dependencies = listOf(
+        optionalPluginId,
+        duplicatedMandatoryDependencyId
+      ),
+      optionalDescriptors = listOf(
+        OptionalPluginDescriptor(
+          optionalPluginId,
+          optionalPluginDescriptor,
+          "optionalPlugin.xml"
         )
+      )
     )
 
     val dependencyFinder = object : DependencyFinder {
@@ -148,14 +148,14 @@ class OptionalDependenciesTest {
     assertEquals(4, dependenciesGraph.edges.size)
 
     assertEquals(
-        mapOf(
-            somePluginNode to setOf(
-                //Mandatory dependency "missingMandatoryPluginId" of file "optionalPlugin.xml" becomes missing direct optional dependency of "somePlugin"
-                MissingDependency(PluginDependencyImpl("missingMandatoryPluginId", true, false), "missingMandatoryPluginId mandatory plugin is not found"),
-                MissingDependency(PluginDependencyImpl("missingOptionalPluginId", true, false), "missingOptionalPluginId optional plugin is not found")
-            )
-        ),
-        dependenciesGraph.missingDependencies
+      mapOf(
+        somePluginNode to setOf(
+          //Mandatory dependency "missingMandatoryPluginId" of file "optionalPlugin.xml" becomes missing direct optional dependency of "somePlugin"
+          MissingDependency(PluginDependencyImpl("missingMandatoryPluginId", true, false), "missingMandatoryPluginId mandatory plugin is not found"),
+          MissingDependency(PluginDependencyImpl("missingOptionalPluginId", true, false), "missingOptionalPluginId optional plugin is not found")
+        )
+      ),
+      dependenciesGraph.missingDependencies
     )
   }
 

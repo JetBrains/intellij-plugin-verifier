@@ -26,25 +26,25 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
   }
 
   operator fun times(multiplier: Double) =
-      SpaceAmount((bytes * multiplier).toLong())
+    SpaceAmount((bytes * multiplier).toLong())
 
   operator fun times(multiplier: Long) =
-      SpaceAmount(bytes * multiplier)
+    SpaceAmount(bytes * multiplier)
 
   operator fun times(multiplier: Int) =
-      SpaceAmount(bytes * multiplier)
+    SpaceAmount(bytes * multiplier)
 
   operator fun plus(otherAmount: SpaceAmount) =
-      SpaceAmount(bytes + otherAmount.bytes)
+    SpaceAmount(bytes + otherAmount.bytes)
 
   operator fun minus(otherAmount: SpaceAmount) =
-      SpaceAmount(bytes - otherAmount.bytes)
+    SpaceAmount(bytes - otherAmount.bytes)
 
   operator fun div(divisor: Double) =
-      SpaceAmount((bytes / divisor).toLong())
+    SpaceAmount((bytes / divisor).toLong())
 
   override fun compareTo(other: SpaceAmount) =
-      bytes.compareTo(other.bytes)
+    bytes.compareTo(other.bytes)
 
   fun to(spaceUnit: SpaceUnit): Double = SpaceUnit.BYTE.to(bytes, spaceUnit)
 

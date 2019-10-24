@@ -19,18 +19,18 @@ data class ClassReference(val className: String) : SymbolicReference() {
 }
 
 data class MethodReference(
-    val hostClass: ClassReference,
-    val methodName: String,
-    val methodDescriptor: String
+  val hostClass: ClassReference,
+  val methodName: String,
+  val methodDescriptor: String
 ) : SymbolicReference() {
 
   constructor(hostClass: String, methodName: String, methodDescriptor: String)
-      : this(ClassReference(hostClass), methodName, methodDescriptor)
+    : this(ClassReference(hostClass), methodName, methodDescriptor)
 
   override fun equals(other: Any?) = other is MethodReference
-      && hostClass == other.hostClass
-      && methodName == other.methodName
-      && methodDescriptor == other.methodDescriptor
+    && hostClass == other.hostClass
+    && methodName == other.methodName
+    && methodDescriptor == other.methodDescriptor
 
   override fun hashCode() = Objects.hash(hostClass, methodName, methodDescriptor)
 
@@ -40,17 +40,17 @@ data class MethodReference(
 }
 
 data class FieldReference(
-    val hostClass: ClassReference,
-    val fieldName: String,
-    val fieldDescriptor: String
+  val hostClass: ClassReference,
+  val fieldName: String,
+  val fieldDescriptor: String
 ) : SymbolicReference() {
 
   constructor(hostClass: String, fieldName: String, fieldDescriptor: String)
-      : this(ClassReference(hostClass), fieldName, fieldDescriptor)
+    : this(ClassReference(hostClass), fieldName, fieldDescriptor)
 
   override fun equals(other: Any?) = other is FieldReference
-      && fieldName == other.fieldName
-      && fieldDescriptor == other.fieldDescriptor
+    && fieldName == other.fieldName
+    && fieldDescriptor == other.fieldDescriptor
 
   override fun hashCode() = Objects.hash(hostClass, fieldName, fieldDescriptor)
 

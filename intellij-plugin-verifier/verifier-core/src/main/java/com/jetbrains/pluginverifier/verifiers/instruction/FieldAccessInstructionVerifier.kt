@@ -12,11 +12,11 @@ import com.jetbrains.pluginverifier.verifiers.resolution.FieldResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 
 class FieldAccessInstructionVerifier(
-    private val callerMethod: Method,
-    private val fieldOwnerClass: ClassFile,
-    private val fieldReference: FieldReference,
-    private val context: VerificationContext,
-    private val instruction: Instruction
+  private val callerMethod: Method,
+  private val fieldOwnerClass: ClassFile,
+  private val fieldReference: FieldReference,
+  private val context: VerificationContext,
+  private val instruction: Instruction
 ) {
 
   fun verify() {

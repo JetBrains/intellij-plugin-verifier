@@ -8,10 +8,10 @@ class ExperimentalMethodOverridingProcessor(private val experimentalApiRegistrar
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
     if (overriddenMethod.isExperimentalApi(context.classResolver)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
-          ExperimentalMethodOverridden(
-              overriddenMethod.location,
-              method.location
-          )
+        ExperimentalMethodOverridden(
+          overriddenMethod.location,
+          method.location
+        )
       )
     }
   }

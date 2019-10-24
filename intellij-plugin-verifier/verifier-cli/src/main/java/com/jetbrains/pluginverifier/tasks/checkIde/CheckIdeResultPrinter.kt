@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.pluginverifier.*
 import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
+import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -31,14 +31,14 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
 
       if (outputOptions.dumpBrokenPluginsFile != null) {
         val brokenPlugins = results
-            .filterNot { it is PluginVerificationResult.Verified && (it.isOk || it.hasCompatibilityWarnings) }
-            .map { it.plugin }
-            .distinct()
+          .filterNot { it is PluginVerificationResult.Verified && (it.isOk || it.hasCompatibilityWarnings) }
+          .map { it.plugin }
+          .distinct()
 
         File(outputOptions.dumpBrokenPluginsFile).writeText(
-            IdeIncompatiblePluginsUtil
-                .dumpIncompatiblePluginsLines(brokenPlugins.map { PluginIdAndVersion(it.pluginId, it.version) })
-                .joinToString(separator = "\n")
+          IdeIncompatiblePluginsUtil
+            .dumpIncompatiblePluginsLines(brokenPlugins.map { PluginIdAndVersion(it.pluginId, it.version) })
+            .joinToString(separator = "\n")
         )
       }
     }

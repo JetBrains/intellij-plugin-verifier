@@ -5,16 +5,16 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 fun createIdeBundledOrPluginRepositoryDependencyFinder(
-    ide: Ide,
-    pluginRepository: PluginRepository,
-    pluginDetailsCache: PluginDetailsCache
-) : DependencyFinder {
+  ide: Ide,
+  pluginRepository: PluginRepository,
+  pluginDetailsCache: PluginDetailsCache
+): DependencyFinder {
   val bundledPluginFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
 
   val repositoryDependencyFinder = RepositoryDependencyFinder(
-      pluginRepository,
-      LastCompatibleVersionSelector(ide.version),
-      pluginDetailsCache
+    pluginRepository,
+    LastCompatibleVersionSelector(ide.version),
+    pluginDetailsCache
   )
 
   return CompositeDependencyFinder(listOf(bundledPluginFinder, repositoryDependencyFinder))

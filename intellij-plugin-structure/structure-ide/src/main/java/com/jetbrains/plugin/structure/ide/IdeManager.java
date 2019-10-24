@@ -23,7 +23,7 @@ public abstract class IdeManager {
    *
    * @param idePath an IDE home directory
    * @return created IDE instance
-   * @throws IOException if io-error occurs
+   * @throws IOException         if io-error occurs
    * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull
@@ -37,7 +37,7 @@ public abstract class IdeManager {
    * @param idePath IDE home directory
    * @param version version of the IDE
    * @return created IDE instance
-   * @throws IOException if io-error occurs
+   * @throws IOException         if io-error occurs
    * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull

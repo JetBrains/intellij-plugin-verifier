@@ -18,7 +18,7 @@ fun File.isZip(): Boolean = this.hasExtension("zip")
 fun File.isJar(): Boolean = this.hasExtension("jar")
 
 fun File.hasExtension(expected: String) =
-    isFile && expected == extension
+  isFile && expected == extension
 
 fun File.forceDeleteIfExists() {
   if (exists()) {
@@ -27,10 +27,10 @@ fun File.forceDeleteIfExists() {
 }
 
 fun File.listRecursivelyAllFilesWithName(name: String): Collection<File> =
-    FileUtils.listFiles(this, NameFileFilter(name), TrueFileFilter.TRUE)
+  FileUtils.listFiles(this, NameFileFilter(name), TrueFileFilter.TRUE)
 
 fun File.listRecursivelyAllFilesWithExtension(extension: String): Collection<File> =
-    FileUtils.listFiles(this, WildcardFileFilter("*.$extension"), TrueFileFilter.TRUE)
+  FileUtils.listFiles(this, WildcardFileFilter("*.$extension"), TrueFileFilter.TRUE)
 
 fun File.deleteLogged(): Boolean = try {
   forceDeleteIfExists()

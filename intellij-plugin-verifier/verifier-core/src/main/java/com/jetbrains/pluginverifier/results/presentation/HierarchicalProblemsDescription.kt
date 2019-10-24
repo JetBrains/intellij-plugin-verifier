@@ -22,10 +22,10 @@ object HierarchicalProblemsDescription {
   }
 
   fun presentableElementMightHaveBeenDeclaredInSuperTypes(
-      elementType: String,
-      ownerHierarchy: ClassHierarchy,
-      canBeDeclaredInSuperClass: Boolean,
-      canBeDeclaredInSuperInterface: Boolean
+    elementType: String,
+    ownerHierarchy: ClassHierarchy,
+    canBeDeclaredInSuperClass: Boolean,
+    canBeDeclaredInSuperInterface: Boolean
   ): String {
     val (allSuperClasses, allSuperInterfaces) = findCandidateSuperClassesAndInterfaces(ownerHierarchy)
 

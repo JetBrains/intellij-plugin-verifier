@@ -38,30 +38,30 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
      * If a new IDE is published to the repository, it should be registered here.
      */
     private val artifactIdGroupIdAndProductCode = listOf(
-        Triple("ideaIC", "com.jetbrains.intellij.idea", "IC"),
-        Triple("ideaIU", "com.jetbrains.intellij.idea", "IU"),
-        Triple("riderRD", "com.jetbrains.intellij.rider", "RD"),
-        Triple("mps", "com.jetbrains.mps", "MPS"),
-        Triple("clion", "com.jetbrains.intellij.clion", "CL")
+      Triple("ideaIC", "com.jetbrains.intellij.idea", "IC"),
+      Triple("ideaIU", "com.jetbrains.intellij.idea", "IU"),
+      Triple("riderRD", "com.jetbrains.intellij.rider", "RD"),
+      Triple("mps", "com.jetbrains.mps", "MPS"),
+      Triple("clion", "com.jetbrains.intellij.clion", "CL")
     )
 
     fun getArtifactIdByProductCode(productCode: String): String? =
-        artifactIdGroupIdAndProductCode.find { it.third == productCode }?.first
+      artifactIdGroupIdAndProductCode.find { it.third == productCode }?.first
 
     fun getGroupIdByProductCode(productCode: String): String? =
-        artifactIdGroupIdAndProductCode.find { it.third == productCode }?.second
+      artifactIdGroupIdAndProductCode.find { it.third == productCode }?.second
 
     fun getProductCodeByArtifactId(artifactId: String): String? =
-        artifactIdGroupIdAndProductCode.find { it.first == artifactId }?.third
+      artifactIdGroupIdAndProductCode.find { it.first == artifactId }?.third
   }
 
   private val repositoryIndexConnector by lazy {
     Retrofit.Builder()
-        .baseUrl("https://unused.com")
-        .addConverterFactory(GsonConverterFactory.create())
-        .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-        .build()
-        .create(RepositoryIndexConnector::class.java)
+      .baseUrl("https://unused.com")
+      .addConverterFactory(GsonConverterFactory.create())
+      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
+      .build()
+      .create(RepositoryIndexConnector::class.java)
   }
 
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
@@ -89,28 +89,28 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
 }
 
 internal data class ArtifactsJson(
-    @SerializedName("artifacts")
-    val artifacts: List<ArtifactJson>
+  @SerializedName("artifacts")
+  val artifacts: List<ArtifactJson>
 )
 
 internal data class ArtifactJson(
-    @SerializedName("groupId")
-    val groupId: String,
+  @SerializedName("groupId")
+  val groupId: String,
 
-    @SerializedName("artifactId")
-    val artifactId: String,
+  @SerializedName("artifactId")
+  val artifactId: String,
 
-    @SerializedName("version")
-    val version: String,
+  @SerializedName("version")
+  val version: String,
 
-    @SerializedName("packaging")
-    val packaging: String,
+  @SerializedName("packaging")
+  val packaging: String,
 
-    @SerializedName("content")
-    val content: String?,
+  @SerializedName("content")
+  val content: String?,
 
-    @SerializedName("lastModifiedUnixTimeMs")
-    val lastModifiedUnixTimeMs: Long
+  @SerializedName("lastModifiedUnixTimeMs")
+  val lastModifiedUnixTimeMs: Long
 )
 
 private interface RepositoryIndexConnector {

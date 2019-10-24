@@ -11,9 +11,9 @@ import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
 class InternalClassUsage(
-    override val apiReference: ClassReference,
-    override val apiElement: ClassLocation,
-    override val usageLocation: Location
+  override val apiReference: ClassReference,
+  override val apiElement: ClassLocation,
+  override val usageLocation: Location
 ) : InternalApiUsage() {
 
   override val shortDescription
@@ -25,15 +25,15 @@ class InternalClassUsage(
       append(" is referenced in " + usageLocation.formatUsageLocation())
       append(". This " + apiElement.elementType.presentableName)
       append(
-          " is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
-              "that the class is not supposed to be used in client code."
+        " is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
+          "that the class is not supposed to be used in client code."
       )
     }
 
   override fun equals(other: Any?) = other is InternalClassUsage
-      && apiReference == other.apiReference
-      && apiElement == other.apiElement
-      && usageLocation == other.usageLocation
+    && apiReference == other.apiReference
+    && apiElement == other.apiElement
+    && usageLocation == other.usageLocation
 
   override fun hashCode() = Objects.hash(apiReference, apiElement, usageLocation)
 }

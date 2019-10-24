@@ -60,10 +60,10 @@ fun String.pluralizeWithNumber(times: Long): String = pluralizeWithNumber(times.
 private fun Long.coerceToIntegerMax() = coerceAtMost(Integer.MAX_VALUE.toLong()).toInt()
 
 private val knownPluralForms = mapOf(
-    "this" to "these",
-    "that" to "those",
-    "is" to "are",
-    "was" to "were"
+  "this" to "these",
+  "that" to "those",
+  "is" to "are",
+  "was" to "were"
 )
 
 fun String.pluralize(times: Long): String = pluralize(times.coerceToIntegerMax())

@@ -23,29 +23,29 @@ enum class DescriptionType {
 }
 
 fun parseExpectedProblems(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.PROBLEM)
+  parseDescriptions(DescriptionType.PROBLEM)
 
 fun parseExpectedDeprecated(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.DEPRECATED)
+  parseDescriptions(DescriptionType.DEPRECATED)
 
 fun parseExpectedExperimental(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.EXPERIMENTAL)
+  parseDescriptions(DescriptionType.EXPERIMENTAL)
 
 fun parseInternalApiUsages(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.INTERNAL)
+  parseDescriptions(DescriptionType.INTERNAL)
 
 fun parseOverrideOnlyUsages(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.OVERRIDE_ONLY)
+  parseDescriptions(DescriptionType.OVERRIDE_ONLY)
 
 fun parseNonExtendable(): Sequence<DescriptionHolder> =
-    parseDescriptions(DescriptionType.NON_EXTENDABLE)
+  parseDescriptions(DescriptionType.NON_EXTENDABLE)
 
 private val descriptionRegex = Regex("(.*?)\n\n(.*)", RegexOption.DOT_MATCHES_ALL)
 
 private fun parseDescriptions(type: DescriptionType): Sequence<DescriptionHolder> =
-    sourceFiles()
-        .flatMap { expectedBlocks(it, type) }
-        .map { block -> parseDescription(block, type) }
+  sourceFiles()
+    .flatMap { expectedBlocks(it, type) }
+    .map { block -> parseDescription(block, type) }
 
 private fun parseDescription(block: String, type: DescriptionType): DescriptionHolder {
   val matchResult = descriptionRegex.matchEntire(block)
@@ -54,10 +54,10 @@ private fun parseDescription(block: String, type: DescriptionType): DescriptionH
 }
 
 private fun sourceFiles(): Sequence<String> =
-    findMockPluginSourcePath().toFile()
-        .listRecursivelyAllFilesWithExtension("java")
-        .asSequence()
-        .map { it.readText() }
+  findMockPluginSourcePath().toFile()
+    .listRecursivelyAllFilesWithExtension("java")
+    .asSequence()
+    .map { it.readText() }
 
 private fun expectedBlocks(sourceCode: String, expectedType: DescriptionType): Sequence<String> {
   val regex = Regex("/\\*expected\\(${expectedType.name}\\)(.*?)\\*/", RegexOption.DOT_MATCHES_ALL)

@@ -10,8 +10,8 @@ class NoModuleDependencies(private val descriptorPath: String) : PluginProblem()
 
   override val message
     get() = "Plugin descriptor $descriptorPath does not include any module dependency tags. " +
-        "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. " +
-        "See https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html"
+      "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. " +
+      "See https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html"
 }
 
 class NonLatinDescription : PluginProblem() {
@@ -62,9 +62,9 @@ class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem
 }
 
 class OptionalDependencyDescriptorResolutionProblem(
-    private val dependencyId: String,
-    private val configurationFile: String,
-    private val errors: List<PluginProblem>
+  private val dependencyId: String,
+  private val configurationFile: String,
+  private val errors: List<PluginProblem>
 ) : PluginProblem() {
 
   override val level
@@ -107,26 +107,26 @@ class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId:
 }
 
 class ElementAvailableOnlySinceNewerVersion(
-    private val elementName: String,
-    private val availableSinceBuild: IdeVersion,
-    private val pluginSinceBuild: IdeVersion,
-    private val pluginUntilBuild: IdeVersion?
+  private val elementName: String,
+  private val availableSinceBuild: IdeVersion,
+  private val pluginSinceBuild: IdeVersion,
+  private val pluginUntilBuild: IdeVersion?
 ) : PluginProblem() {
   override val level
     get() = Level.WARNING
 
   override val message
     get() = "Element <$elementName> is available only since ${availableSinceBuild.asStringWithoutProductCode()} but the plugin can be installed in " +
-        if (pluginUntilBuild != null) {
-          pluginSinceBuild.asStringWithoutProductCode() + "—" + pluginUntilBuild.asStringWithoutProductCode()
-        } else {
-          pluginSinceBuild.asStringWithoutProductCode() + "+"
-        }
+      if (pluginUntilBuild != null) {
+        pluginSinceBuild.asStringWithoutProductCode() + "—" + pluginUntilBuild.asStringWithoutProductCode()
+      } else {
+        pluginSinceBuild.asStringWithoutProductCode() + "+"
+      }
 }
 
 class ElementMissingAttribute(
-    private val elementName: String,
-    private val attributeName: String
+  private val elementName: String,
+  private val attributeName: String
 ) : PluginProblem() {
   override val level
     get() = Level.WARNING

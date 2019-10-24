@@ -13,32 +13,32 @@ import java.io.Closeable
  */
 class PluginDetails(
 
-    /**
-     * Identifier of a verified plugin.
-     */
-    val pluginInfo: PluginInfo,
+  /**
+   * Identifier of a verified plugin.
+   */
+  val pluginInfo: PluginInfo,
 
-    /**
-     * IDE plugin being verified.
-     */
-    val idePlugin: IdePlugin,
+  /**
+   * IDE plugin being verified.
+   */
+  val idePlugin: IdePlugin,
 
-    /**
-     * Warnings of the plugin structure.
-     */
-    val pluginWarnings: List<PluginProblem>,
+  /**
+   * Warnings of the plugin structure.
+   */
+  val pluginWarnings: List<PluginProblem>,
 
-    /**
-     * Accessor of classes of the verified plugin.
-     */
-    val pluginClassesLocations: IdePluginClassesLocations,
+  /**
+   * Accessor of classes of the verified plugin.
+   */
+  val pluginClassesLocations: IdePluginClassesLocations,
 
-    /**
-     * [File lock] [FileLock] registered for the plugin's file
-     * which guarantees that the file will not be deleted
-     * while it is used.
-     */
-    private val pluginFileLock: FileLock?
+  /**
+   * [File lock] [FileLock] registered for the plugin's file
+   * which guarantees that the file will not be deleted
+   * while it is used.
+   */
+  private val pluginFileLock: FileLock?
 
 ) : Closeable {
 

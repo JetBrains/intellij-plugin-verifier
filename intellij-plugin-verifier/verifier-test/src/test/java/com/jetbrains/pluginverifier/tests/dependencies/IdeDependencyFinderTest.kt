@@ -51,54 +51,54 @@ class IdeDependencyFinderTest {
     Dependency resolution on `externalPlugin` must fail.
      */
     val testPlugin = MockIdePlugin(
-        pluginId = "test",
-        pluginVersion = "1.0",
-        dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false))
+      pluginId = "test",
+      pluginVersion = "1.0",
+      dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false))
     )
     val somePlugin = MockIdePlugin(
-        pluginId = "somePlugin",
-        pluginVersion = "1.0"
+      pluginId = "somePlugin",
+      pluginVersion = "1.0"
     )
     val moduleContainer = MockIdePlugin(
-        pluginId = "moduleContainer",
-        pluginVersion = "1.0",
-        definedModules = setOf("someModule")
+      pluginId = "moduleContainer",
+      pluginVersion = "1.0",
+      definedModules = setOf("someModule")
     )
 
     val ideVersion = IdeVersion.createIdeVersion("IU-144")
     val ide = MockIde(
-        ideVersion,
-        bundledPlugins = listOf(
-            MockIdePlugin(
-                pluginId = "com.intellij",
-                pluginName = "IDEA CORE",
-                originalFile = tempFolder.newFolder("idea.core"),
-                definedModules = setOf(
-                    "com.intellij.modules.platform",
-                    "com.intellij.modules.lang",
-                    "com.intellij.modules.vcs",
-                    "com.intellij.modules.xml",
-                    "com.intellij.modules.xdebugger",
-                    "com.intellij.modules.java",
-                    "com.intellij.modules.ultimate",
-                    "com.intellij.modules.all"
-                )
-            ),
-            testPlugin,
-            somePlugin,
-            moduleContainer
-        )
+      ideVersion,
+      bundledPlugins = listOf(
+        MockIdePlugin(
+          pluginId = "com.intellij",
+          pluginName = "IDEA CORE",
+          originalFile = tempFolder.newFolder("idea.core"),
+          definedModules = setOf(
+            "com.intellij.modules.platform",
+            "com.intellij.modules.lang",
+            "com.intellij.modules.vcs",
+            "com.intellij.modules.xml",
+            "com.intellij.modules.xdebugger",
+            "com.intellij.modules.java",
+            "com.intellij.modules.ultimate",
+            "com.intellij.modules.all"
+          )
+        ),
+        testPlugin,
+        somePlugin,
+        moduleContainer
+      )
     )
 
     val externalModuleDependency = PluginDependencyImpl("externalModule", false, true)
     val startPlugin = MockIdePlugin(
-        pluginId = "myPlugin",
-        pluginVersion = "1.0",
-        dependencies = listOf(
-            PluginDependencyImpl("test", true, false),
-            externalModuleDependency,
-            PluginDependencyImpl("com.intellij.modules.platform", false, true)
-        )
+      pluginId = "myPlugin",
+      pluginVersion = "1.0",
+      dependencies = listOf(
+        PluginDependencyImpl("test", true, false),
+        externalModuleDependency,
+        PluginDependencyImpl("com.intellij.modules.platform", false, true)
+      )
     )
 
     val ideDependencyFinder = configureTestIdeDependencyFinder(ide)
@@ -114,10 +114,10 @@ class IdeDependencyFinderTest {
   private fun configureTestIdeDependencyFinder(ide: Ide): DependencyFinder {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
       override fun getIdOfPluginDeclaringModule(moduleId: String) =
-          if (moduleId == "externalModule") "externalPlugin" else null
+        if (moduleId == "externalModule") "externalPlugin" else null
 
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-          if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, "1.0") else null
+        if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, "1.0") else null
     }
 
     val pluginFileProvider = object : PluginFileProvider {
@@ -135,17 +135,17 @@ class IdeDependencyFinderTest {
       override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) = throw IllegalArgumentException()
 
       override fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin) = PluginDetailsProvider.Result.Provided(
-          PluginDetails(
-              pluginInfo,
-              idePlugin,
-              emptyList(),
-              IdePluginClassesLocations(
-                  idePlugin,
-                  Closeable { },
-                  emptyMap()
-              ),
-              null
-          )
+        PluginDetails(
+          pluginInfo,
+          idePlugin,
+          emptyList(),
+          IdePluginClassesLocations(
+            idePlugin,
+            Closeable { },
+            emptyMap()
+          ),
+          null
+        )
       )
     }
 

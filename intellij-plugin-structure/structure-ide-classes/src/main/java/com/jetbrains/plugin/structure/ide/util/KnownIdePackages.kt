@@ -8,12 +8,12 @@ object KnownIdePackages {
   private val idePackages: Set<String> by lazy(::readKnownIdePackages)
 
   fun isKnownPackage(packageName: String): Boolean =
-      idePackages.any { packageName == it || packageName.startsWith("$it.") }
+    idePackages.any { packageName == it || packageName.startsWith("$it.") }
 
   private fun readKnownIdePackages() =
-      KnownIdePackages::class.java.classLoader
-          .getResourceAsStream("com.jetbrains.plugin.structure.ide/knownIdePackages.txt")!!
-          .bufferedReader()
-          .readLines()
-          .toSet()
+    KnownIdePackages::class.java.classLoader
+      .getResourceAsStream("com.jetbrains.plugin.structure.ide/knownIdePackages.txt")!!
+      .bufferedReader()
+      .readLines()
+      .toSet()
 }

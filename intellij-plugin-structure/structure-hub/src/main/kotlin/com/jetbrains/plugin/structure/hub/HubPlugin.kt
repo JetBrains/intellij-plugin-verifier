@@ -7,25 +7,25 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class HubPlugin(
-    @JsonProperty("key")
-    override val pluginId: String? = null,
-    @JsonProperty("name")
-    override val pluginName: String? = null,
-    @JsonProperty("version")
-    override val pluginVersion: String? = null,
-    @JsonProperty("homeUrl")
-    override val url: String = "",
-    @JsonProperty("description")
-    override val description: String? = null,
+  @JsonProperty("key")
+  override val pluginId: String? = null,
+  @JsonProperty("name")
+  override val pluginName: String? = null,
+  @JsonProperty("version")
+  override val pluginVersion: String? = null,
+  @JsonProperty("homeUrl")
+  override val url: String = "",
+  @JsonProperty("description")
+  override val description: String? = null,
 
-    @JsonProperty("author")
-    val author: String = "",
-    @JsonProperty("iconUrl")
-    val iconUrl: String? = null,
-    @JsonProperty("dependencies")
-    val dependencies: Map<String, String>? = null,
-    @JsonProperty("products")
-    val products: Map<String, String>? = null
+  @JsonProperty("author")
+  val author: String = "",
+  @JsonProperty("iconUrl")
+  val iconUrl: String? = null,
+  @JsonProperty("dependencies")
+  val dependencies: Map<String, String>? = null,
+  @JsonProperty("products")
+  val products: Map<String, String>? = null
 
 ) : Plugin {
   var manifestContent: String = ""

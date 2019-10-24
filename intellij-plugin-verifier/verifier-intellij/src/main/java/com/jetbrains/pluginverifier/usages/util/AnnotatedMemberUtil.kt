@@ -13,25 +13,25 @@ sealed class MemberAnnotation {
   abstract val annotationName: String
 
   class AnnotatedDirectly(
-      override val member: ClassFileMember,
-      override val annotationName: String
+    override val member: ClassFileMember,
+    override val annotationName: String
   ) : MemberAnnotation()
 
   class AnnotatedViaContainingClass(
-      val containingClass: ClassFileMember,
-      override val member: ClassFileMember,
-      override val annotationName: String
+    val containingClass: ClassFileMember,
+    override val member: ClassFileMember,
+    override val annotationName: String
   ) : MemberAnnotation()
 
   class AnnotatedViaPackage(
-      val packageName: String,
-      override val member: ClassFileMember,
-      override val annotationName: String
+    val packageName: String,
+    override val member: ClassFileMember,
+    override val annotationName: String
   ) : MemberAnnotation()
 }
 
 fun ClassFileMember.isMemberEffectivelyAnnotatedWith(annotationName: String, resolver: Resolver): Boolean =
-    findEffectiveMemberAnnotation(annotationName, resolver) != null
+  findEffectiveMemberAnnotation(annotationName, resolver) != null
 
 fun ClassFileMember.findEffectiveMemberAnnotation(annotationName: String, resolver: Resolver): MemberAnnotation? {
   if (isDirectlyAnnotatedWith(annotationName)) {
@@ -70,4 +70,4 @@ fun ClassFileMember.findEffectiveMemberAnnotation(annotationName: String, resolv
 }
 
 private fun ClassFileMember.isDirectlyAnnotatedWith(annotationName: String): Boolean =
-    runtimeInvisibleAnnotations.findAnnotation(annotationName) != null
+  runtimeInvisibleAnnotations.findAnnotation(annotationName) != null

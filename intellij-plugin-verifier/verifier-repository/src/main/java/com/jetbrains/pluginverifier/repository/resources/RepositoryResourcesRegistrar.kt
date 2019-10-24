@@ -12,10 +12,10 @@ import org.slf4j.Logger
  * the resources being removed.
  */
 internal class RepositoryResourcesRegistrar<R, K, W : ResourceWeight<W>>(
-    initWeight: W,
-    private val weigher: (R) -> W,
-    private val disposer: (R) -> Unit,
-    private val logger: Logger
+  initWeight: W,
+  private val weigher: (R) -> W,
+  private val disposer: (R) -> Unit,
+  private val logger: Logger
 ) {
 
   private var _totalWeight: W = initWeight

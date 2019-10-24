@@ -21,12 +21,12 @@ object DocumentedProblemsPageVerifierMain {
         documentedProblemsParser.parse(page.pageBody)
       } catch (e: DocumentedProblemsParseException) {
         throw RuntimeException(
-            buildString {
-              appendln(pageDescriptor)
-              appendln("Failed to parse documented problems page")
-              appendln()
-              appendln(e.message)
-            }
+          buildString {
+            appendln(pageDescriptor)
+            appendln("Failed to parse documented problems page")
+            appendln()
+            appendln(e.message)
+          }
         )
       }
 

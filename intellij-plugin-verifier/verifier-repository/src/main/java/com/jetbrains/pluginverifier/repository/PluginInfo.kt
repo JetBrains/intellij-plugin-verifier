@@ -6,43 +6,43 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
  * Identifier of a plugin.
  */
 abstract class PluginInfo(
-    /**
-     * Unique plugin ID, which may be equal
-     * to name if ID is not specified.
-     */
-    val pluginId: String,
+  /**
+   * Unique plugin ID, which may be equal
+   * to name if ID is not specified.
+   */
+  val pluginId: String,
 
-    /**
-     * Plugin name.
-     */
-    val pluginName: String,
+  /**
+   * Plugin name.
+   */
+  val pluginName: String,
 
-    /**
-     * Plugin version.
-     */
-    val version: String,
+  /**
+   * Plugin version.
+   */
+  val version: String,
 
-    /**
-     * "since" compatibility range.
-     */
-    val sinceBuild: IdeVersion?,
+  /**
+   * "since" compatibility range.
+   */
+  val sinceBuild: IdeVersion?,
 
-    /**
-     * "until" compatibility range.
-     */
-    val untilBuild: IdeVersion?,
+  /**
+   * "until" compatibility range.
+   */
+  val untilBuild: IdeVersion?,
 
-    /**
-     * Vendor of the plugin.
-     */
-    val vendor: String?
+  /**
+   * Vendor of the plugin.
+   */
+  val vendor: String?
 ) {
 
   /**
    * Checks whether this plugin is compatible with [ideVersion].
    */
   fun isCompatibleWith(ideVersion: IdeVersion) =
-      (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
+    (sinceBuild == null || sinceBuild <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild)
 
   val presentableSinceUntilRange: String
     get() {
