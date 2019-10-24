@@ -7,6 +7,7 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -22,7 +23,8 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckIdeResult) {
       if (outputOptions.teamCityLog != null) {
-        printTcLog(outputOptions.teamCityGroupType, this, outputOptions.teamCityLog)
+        val teamCityHistory = printTcLog(outputOptions.teamCityGroupType, this, outputOptions.teamCityLog)
+        outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
         printOnStdOut(this)
       }
@@ -44,11 +46,11 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
     }
   }
 
-  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult, tcLog: TeamCityLog) {
+  private fun printTcLog(groupBy: TeamCityResultPrinter.GroupBy, checkIdeResult: CheckIdeResult, tcLog: TeamCityLog): TeamCityHistory {
     with(checkIdeResult) {
       val resultPrinter = TeamCityResultPrinter(tcLog, groupBy, pluginRepository)
-      resultPrinter.printResults(results)
-      resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
+      val resultsHistory = resultPrinter.printResults(results)
+      val versionsHistory = resultPrinter.printNoCompatibleVersionsProblems(missingCompatibleVersionsProblems)
       val problems = hashSetOf<CompatibilityProblem>()
       val brokenPlugins = hashSetOf<PluginInfo>()
       for (result in results) {
@@ -63,6 +65,8 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
       } else {
         tcLog.buildStatusSuccess("IDE ${ide.ideVersion} doesn't have broken API problems")
       }
+
+      return TeamCityHistory(resultsHistory.tests + versionsHistory.tests)
     }
   }
 

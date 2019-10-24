@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -19,7 +20,8 @@ class CheckPluginResultPrinter(
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as CheckPluginResult) {
       if (outputOptions.teamCityLog != null) {
-        printTcLog(true, outputOptions.teamCityLog)
+        val teamCityHistory = printTcLog(true, outputOptions.teamCityLog)
+        outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
         printOnStdout(this)
       }
@@ -30,8 +32,8 @@ class CheckPluginResultPrinter(
     }
   }
 
-  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog) {
-    TeamCityResultPrinter(
+  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog): TeamCityHistory {
+    val teamCityHistory = TeamCityResultPrinter(
       tcLog,
       outputOptions.teamCityGroupType,
       pluginRepository
@@ -42,6 +44,7 @@ class CheckPluginResultPrinter(
     if (setBuildStatus) {
       setTeamCityBuildStatus(tcLog)
     }
+    return teamCityHistory
   }
 
   private fun CheckPluginResult.setTeamCityBuildStatus(tcLog: TeamCityLog) {

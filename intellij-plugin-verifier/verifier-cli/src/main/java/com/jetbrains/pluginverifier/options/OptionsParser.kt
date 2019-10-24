@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsPages
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
@@ -46,10 +47,12 @@ object OptionsParser {
     val verificationReportsDirectory = getVerificationReportsDirectory(opts)
     println("Verification reports directory: $verificationReportsDirectory")
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
+    val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
     return OutputOptions(
       verificationReportsDirectory,
       teamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
+      previousTcHistory,
       opts.dumpBrokenPluginsFile
     )
   }

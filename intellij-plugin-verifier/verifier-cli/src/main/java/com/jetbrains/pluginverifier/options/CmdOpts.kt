@@ -21,6 +21,9 @@ open class CmdOpts(
   @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems: either 'plugin' to group by each plugin or 'problem_type' to group by problem type")
   var teamCityGroupType: String? = null,
 
+  @set:Argument("previous-tc-tests-file", description = "File containing TeamCity tests that were run in the previous build. ")
+  var previousTcTestsFile: String? = null,
+
   @set:Argument("plugins-to-check-all-builds", alias = "p-all", delimiter = ":", description = "The plugin IDs to check with IDE. The plugin verifier will check ALL compatible plugin builds")
   var pluginToCheckAllBuilds: Array<String> = arrayOf(),
 

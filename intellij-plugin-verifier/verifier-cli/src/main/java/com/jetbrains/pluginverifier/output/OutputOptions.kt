@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import java.nio.file.Path
@@ -10,6 +11,7 @@ data class OutputOptions(
   private val verificationReportsDirectory: Path,
   val teamCityLog: TeamCityLog?,
   val teamCityGroupType: TeamCityResultPrinter.GroupBy,
+  val previousTcHistory: TeamCityHistory?,
   val dumpBrokenPluginsFile: String?
 ) {
 
@@ -19,6 +21,15 @@ data class OutputOptions(
 
     is PluginVerificationTarget.Plugin -> verificationReportsDirectory
       .resolve("${verificationTarget.plugin.pluginId} ${verificationTarget.plugin.version}".replaceInvalidFileNameCharacters())
+  }
+
+  fun postProcessTeamCityTests(newTcHistory: TeamCityHistory) {
+    if (teamCityLog != null) {
+      newTcHistory.writeToFile(verificationReportsDirectory.resolve("tc-tests.json"))
+      if (previousTcHistory != null) {
+        newTcHistory.reportOldSkippedTestsSuccessful(previousTcHistory, teamCityLog)
+      }
+    }
   }
 
 }

@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -27,7 +26,7 @@ class TeamCityResultPrinter(
   private val tcLog: TeamCityLog,
   private val groupBy: GroupBy,
   private val repository: PluginRepository
-) : ResultPrinter {
+) {
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityResultPrinter::class.java)
@@ -66,27 +65,29 @@ class TeamCityResultPrinter(
 
   }
 
-  fun printNoCompatibleVersionsProblems(missingVersionsProblems: List<MissingCompatibleVersionProblem>) {
-    return when (groupBy) {
-      GroupBy.NOT_GROUPED -> {
-        missingVersionsProblems.forEach { tcLog.buildProblem(it.toString()) }
-      }
+  fun printNoCompatibleVersionsProblems(missingVersionsProblems: List<MissingCompatibleVersionProblem>): TeamCityHistory {
+    val failedTests = arrayListOf<TeamCityTest>()
+    when (groupBy) {
       GroupBy.BY_PLUGIN -> {
         missingVersionsProblems.forEach { missingProblem ->
-          tcLog.testSuiteStarted(missingProblem.pluginId).use {
+          val testSuiteName = missingProblem.pluginId
+          tcLog.testSuiteStarted(testSuiteName).use {
             val testName = "(no compatible version)"
             tcLog.testStarted(testName).use {
+              failedTests += TeamCityTest(testSuiteName, testName)
               tcLog.testFailed(testName, "#$missingProblem\n", "")
             }
           }
         }
       }
       GroupBy.BY_PROBLEM_TYPE -> {
-        tcLog.testSuiteStarted("(no compatible version)").use {
+        val testSuiteName = "(no compatible version)"
+        tcLog.testSuiteStarted(testSuiteName).use {
           missingVersionsProblems.forEach { problem ->
             tcLog.testSuiteStarted(problem.pluginId).use {
               val testName = problem.pluginId
               tcLog.testStarted(testName).use {
+                failedTests += TeamCityTest(testSuiteName, testName)
                 tcLog.testFailed(testName, "#$problem\n", "")
               }
             }
@@ -94,39 +95,15 @@ class TeamCityResultPrinter(
         }
       }
     }
-
+    return TeamCityHistory(failedTests)
   }
 
 
-  override fun printResults(results: List<PluginVerificationResult>) {
+  fun printResults(results: List<PluginVerificationResult>): TeamCityHistory =
     when (groupBy) {
-      GroupBy.NOT_GROUPED -> notGrouped(results)
       GroupBy.BY_PROBLEM_TYPE -> groupByProblemType(results)
       GroupBy.BY_PLUGIN -> groupByPlugin(results)
     }
-  }
-
-  private fun notGrouped(results: List<PluginVerificationResult>) {
-    //problem1 (in a:1.0, a:1.2, b:1.0)
-    //problem2 (in a:1.0, c:1.3)
-    //missing dependencies: missing#1 (required for plugin1, plugin2, plugin3)
-    //missing dependencies: missing#2 (required for plugin2, plugin4)
-
-    printProblemAndAffectedPluginsAsBuildProblem(results)
-    printMissingDependenciesAndRequiredPluginsAsBuildProblem(results)
-  }
-
-  private fun printProblemAndAffectedPluginsAsBuildProblem(results: List<PluginVerificationResult>) {
-    val shortDescription2Plugins: Multimap<String, PluginInfo> = HashMultimap.create()
-    for (result in results) {
-      for (problem in result.getProblems()) {
-        shortDescription2Plugins.put(problem.shortDescription, result.plugin)
-      }
-    }
-    shortDescription2Plugins.asMap().forEach { (description, allPluginsWithThisProblem) ->
-      tcLog.buildProblem("$description (in ${allPluginsWithThisProblem.joinToString()})")
-    }
-  }
 
   private fun PluginVerificationResult.getProblems(): Set<CompatibilityProblem> =
     if (this is PluginVerificationResult.Verified) {
@@ -134,13 +111,6 @@ class TeamCityResultPrinter(
     } else {
       emptySet()
     }
-
-  private fun printMissingDependenciesAndRequiredPluginsAsBuildProblem(results: List<PluginVerificationResult>) {
-    val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
-    missingToRequired.asMap().entries.forEach {
-      tcLog.buildProblem("Missing dependency ${it.key} (required for ${it.value.joinToString()})")
-    }
-  }
 
   private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Multimap<MissingDependency, PluginInfo> {
     val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
@@ -153,26 +123,28 @@ class TeamCityResultPrinter(
   }
 
 
-  private fun groupByPlugin(results: List<PluginVerificationResult>) {
-    //pluginOne
-    //....(1.0)
-    //........#invoking unknown method
-    //............someClass
-    //........#accessing to unknown class
-    //............another class
-    //....(1.2)
-    //........#invoking unknown method
-    //............someClass
-    //........missing non-optional dependency dep#1
-    //........missing non-optional dependency pluginOne:1.2 -> otherPlugin:3.3 -> dep#2 (it doesn't have a compatible build with IDE #IU-162.1121.10)
-    //........missing optional dependency dep#3
-    //pluginTwo
-    //...and so on...
+  //pluginOne
+  //....(1.0)
+  //........#invoking unknown method
+  //............someClass
+  //........#accessing to unknown class
+  //............another class
+  //....(1.2)
+  //........#invoking unknown method
+  //............someClass
+  //........missing non-optional dependency dep#1
+  //........missing non-optional dependency pluginOne:1.2 -> otherPlugin:3.3 -> dep#2 (it doesn't have a compatible build with IDE #IU-162.1121.10)
+  //........missing optional dependency dep#3
+  //pluginTwo
+  //...and so on...
+  private fun groupByPlugin(results: List<PluginVerificationResult>): TeamCityHistory {
+    val failedTests = arrayListOf<TeamCityTest>()
     val verificationTargets = results.map { it.verificationTarget }.distinct()
     val targetToLastPluginVersions = requestLastVersionsOfCheckedPlugins(verificationTargets)
     results.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-      printResultsForSpecificPluginId(pluginId, pluginResults, targetToLastPluginVersions)
+      failedTests += printResultsForSpecificPluginId(pluginId, pluginResults, targetToLastPluginVersions)
     }
+    return TeamCityHistory(failedTests)
   }
 
   /**
@@ -196,44 +168,44 @@ class TeamCityResultPrinter(
     pluginId: String,
     pluginResults: List<PluginVerificationResult>,
     targetToLastPluginVersions: Map<PluginVerificationTarget, List<PluginInfo>>
-  ) {
+  ): List<TeamCityTest> {
+    val failedTests = arrayListOf<TeamCityTest>()
     tcLog.testSuiteStarted(pluginId).use {
       pluginResults.groupBy { it.plugin.version }.forEach { versionToResults ->
         versionToResults.value.forEach { result ->
           val testName = getPluginVersionAsTestName(result.plugin, result.verificationTarget, targetToLastPluginVersions)
-          printResultOfSpecificVersion(result.plugin, result, testName)
+          tcLog.testStarted(testName).use {
+            when (result) {
+              is PluginVerificationResult.Verified -> {
+                val message = getMessageCompatibilityProblemsAndMissingDependencies(result.plugin, result.compatibilityProblems, result.directMissingMandatoryDependencies)
+                if (message != null) {
+                  failedTests += TeamCityTest(pluginId, testName)
+                  tcLog.testFailed(testName, message, "")
+                }
+              }
+              is PluginVerificationResult.InvalidPlugin -> {
+                val message = "Plugin is invalid: ${result.pluginStructureErrors.joinToString()}"
+                failedTests += TeamCityTest(pluginId, testName)
+                tcLog.testFailed(testName, message, "")
+                Unit
+              }
+              else -> Unit
+            }
+          }
         }
       }
     }
+    return failedTests
   }
 
-  private fun printResultOfSpecificVersion(
+  private fun getMessageCompatibilityProblemsAndMissingDependencies(
     plugin: PluginInfo,
-    verificationResult: PluginVerificationResult,
-    testName: String
-  ) {
-    tcLog.testStarted(testName).use {
-      return@use when (verificationResult) {
-        is PluginVerificationResult.Verified -> when {
-          verificationResult.hasCompatibilityProblems -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, emptyList())
-          verificationResult.hasDirectMissingMandatoryDependencies -> printCompatibilityProblemsAndMissingDependencies(plugin, testName, verificationResult.compatibilityProblems, verificationResult.directMissingMandatoryDependencies)
-          else -> Unit
-        }
-        is PluginVerificationResult.InvalidPlugin -> printBadPluginResult(verificationResult, testName)
-        else -> Unit
-      }
-    }
-  }
-
-  private fun printCompatibilityProblemsAndMissingDependencies(
-    plugin: PluginInfo,
-    testName: String,
     problems: Set<CompatibilityProblem>,
     missingDependencies: List<MissingDependency>
-  ) {
+  ): String? {
     val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
     if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {
-      val overview = buildString {
+      return buildString {
         appendln(getPluginOverviewLink(plugin))
         if (problems.isNotEmpty()) {
           appendln("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
@@ -247,29 +219,24 @@ class TeamCityResultPrinter(
             appendln("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
           }
         }
-      }
 
-      val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
-      val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
-        getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
-      } else {
-        getProblemsContent(problems)
-      }
+        val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
+        val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+          getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
+        } else {
+          getProblemsContent(problems)
+        }
 
-      tcLog.testStdErr(testName, overview)
-      tcLog.testFailed(testName, problemsContent, "")
+        appendln()
+        appendln(problemsContent)
+      }
     }
+    return null
   }
 
   private fun getPluginOverviewLink(plugin: PluginInfo): String {
     val url = (plugin as? Browseable)?.browserUrl ?: return ""
     return "Plugin URL: $url"
-  }
-
-  private fun printBadPluginResult(verificationResult: PluginVerificationResult.InvalidPlugin, versionTestName: String) {
-    val message = "Plugin is invalid: ${verificationResult.pluginStructureErrors.joinToString()}"
-    tcLog.testStdErr(versionTestName, message)
-    tcLog.testFailed(versionTestName, message, "")
   }
 
   private fun getProblemsContent(problems: Iterable<CompatibilityProblem>): String = buildString {
@@ -356,15 +323,17 @@ class TeamCityResultPrinter(
     }
   }
 
-  private fun groupByProblemType(results: List<PluginVerificationResult>) {
-    //accessing to unknown class SomeClass
-    //....(pluginOne:1.2.0)
-    //....(pluginTwo:2.0.0)
-    //invoking unknown method method
-    //....(pluginThree:1.0.0)
-    //missing dependencies
-    //....(missing#1)
-    //.........Required for plugin1, plugin2, plugin3
+  //accessing to unknown class SomeClass
+  //....(pluginOne:1.2.0)
+  //....(pluginTwo:2.0.0)
+  //invoking unknown method method
+  //....(pluginThree:1.0.0)
+  //missing dependencies
+  //....(missing#1)
+  //.........Required for plugin1, plugin2, plugin3
+  private fun groupByProblemType(results: List<PluginVerificationResult>): TeamCityHistory {
+    val failedTests = arrayListOf<TeamCityTest>()
+
     val problem2Plugin: Multimap<CompatibilityProblem, PluginInfo> = HashMultimap.create()
     for (result in results) {
       for (problem in result.getProblems()) {
@@ -375,12 +344,14 @@ class TeamCityResultPrinter(
     val allProblems = problem2Plugin.keySet()
     for ((problemClass, problemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val prefix = convertProblemClassNameToSentence(problemClass)
-      tcLog.testSuiteStarted("($prefix)").use {
+      val testSuiteName = "($prefix)"
+      tcLog.testSuiteStarted(testSuiteName).use {
         for (problem in problemsOfClass) {
           for (plugin in problem2Plugin.get(problem)) {
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
+                failedTests += TeamCityTest(testSuiteName, testName)
                 tcLog.testFailed(testName, getPluginOverviewLink(plugin) + "\nPlugin: $plugin", problem.fullDescription)
               }
             }
@@ -389,36 +360,33 @@ class TeamCityResultPrinter(
       }
     }
 
-    printMissingDependenciesAsTests(results)
-  }
-
-  private fun printMissingDependenciesAsTests(results: List<PluginVerificationResult>) {
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
     if (!missingToRequired.isEmpty) {
-      tcLog.testSuiteStarted("(missing dependencies)").use {
+      val testSuiteName = "(missing dependencies)"
+      tcLog.testSuiteStarted(testSuiteName).use {
         missingToRequired.asMap().entries.forEach { entry ->
           val testName = "(${entry.key})"
           tcLog.testStarted(testName).use {
-            tcLog.testFailed(testName, "Required for ${entry.value.joinToString()}", "")
+            failedTests += TeamCityTest(testSuiteName, testName)
+            tcLog.testFailed(testName, "Required for ${entry.value.joinToString<PluginInfo?>()}", "")
           }
         }
       }
     }
+
+    return TeamCityHistory(failedTests)
   }
 
 
   enum class GroupBy(private val arg: String) {
-    NOT_GROUPED("not-grouped"),
     BY_PROBLEM_TYPE("problem_type"),
     BY_PLUGIN("plugin");
 
     companion object {
 
       @JvmStatic
-      fun parse(groupValue: String?): GroupBy {
-        groupValue ?: return NOT_GROUPED
-        return values().find { it.arg == groupValue } ?: NOT_GROUPED
-      }
+      fun parse(groupValue: String?): GroupBy =
+        values().find { it.arg == groupValue } ?: BY_PLUGIN
     }
   }
 

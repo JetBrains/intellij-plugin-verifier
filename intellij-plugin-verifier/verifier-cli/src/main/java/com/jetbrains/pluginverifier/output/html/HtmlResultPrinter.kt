@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import java.io.PrintWriter
@@ -15,9 +14,9 @@ import java.nio.file.Files
 class HtmlResultPrinter(
   private val verificationTarget: PluginVerificationTarget,
   private val outputOptions: OutputOptions
-) : ResultPrinter {
+) {
 
-  override fun printResults(results: List<PluginVerificationResult>) {
+  fun printResults(results: List<PluginVerificationResult>) {
     val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
     PrintWriter(Files.newBufferedWriter(reportHtmlFile.create())).use {
       val htmlBuilder = HtmlBuilder(it)

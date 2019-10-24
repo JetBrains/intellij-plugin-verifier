@@ -1,10 +1,15 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityTest
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.results.presentation.toSimpleJavaClassName
 import com.jetbrains.pluginverifier.usages.deprecated.deprecationInfo
@@ -14,15 +19,12 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import kotlinx.serialization.Serializable
 import org.jetbrains.ide.diff.builder.api.*
 import org.jetbrains.ide.diff.builder.ide.buildIdeResources
 import org.jetbrains.ide.diff.builder.ide.toSignature
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
 import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
-import org.jetbrains.ide.diff.builder.persistence.json.jsonInstance
 import org.slf4j.LoggerFactory
-import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
@@ -96,44 +98,14 @@ class ApiQualityCheckCommand : Command {
     val newTcHistory = printReport(report, tc)
     newTcHistory.writeToFile(Paths.get("tc-tests.json"))
 
-    val previousTcHistory = cliOptions.previousTcTestsFile?.let { Paths.get(it) }?.let { ApiQualityTeamCityHistory.readFromFile(it) }
+    val previousTcHistory = cliOptions.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
     if (previousTcHistory != null) {
-      reportOldSkippedTestsSuccessful(previousTcHistory, newTcHistory, tc)
+      newTcHistory.reportOldSkippedTestsSuccessful(previousTcHistory, tc)
     }
   }
 
-  private fun reportOldSkippedTestsSuccessful(
-    previousTests: ApiQualityTeamCityHistory,
-    newTests: ApiQualityTeamCityHistory,
-    tc: TeamCityLog
-  ) {
-    val skippedTests = previousTests.tests - newTests.tests
-    for ((suiteName, tests) in skippedTests.groupBy { it.suiteName }) {
-      tc.testSuiteStarted(suiteName).use {
-        for (test in tests) {
-          tc.testStarted(test.testName).close()
-        }
-      }
-    }
-  }
-
-  @Serializable
-  private data class ApiQualityTeamCityTest(val suiteName: String, val testName: String)
-
-  @Serializable
-  private data class ApiQualityTeamCityHistory(val tests: List<ApiQualityTeamCityTest>) {
-    companion object {
-      fun readFromFile(file: Path): ApiQualityTeamCityHistory =
-        jsonInstance.parse(serializer(), file.readText())
-    }
-
-    fun writeToFile(file: Path) {
-      file.writeText(jsonInstance.stringify(serializer(), this))
-    }
-  }
-
-  private fun printReport(report: ApiQualityReport, tc: TeamCityLog): ApiQualityTeamCityHistory {
-    val failedTests = arrayListOf<ApiQualityTeamCityTest>()
+  private fun printReport(report: ApiQualityReport, tc: TeamCityLog): TeamCityHistory {
+    val failedTests = arrayListOf<TeamCityTest>()
     if (report.tooLongExperimental.isNotEmpty()) {
       for ((sinceVersion, tooLongExperimentalApis) in report.tooLongExperimental.groupBy { it.sinceVersion }) {
         val suiteName = "(API marked experimental since $sinceVersion)"
@@ -153,7 +125,7 @@ class ApiQualityCheckCommand : Command {
                 appendln()
                 appendln(getExperimentalNote(report))
               }
-              failedTests += ApiQualityTeamCityTest(suiteName, testName)
+              failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
             }
           }
@@ -174,7 +146,7 @@ class ApiQualityCheckCommand : Command {
                 append(" since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
                 append(getExperimentalNote(report))
               }
-              failedTests += ApiQualityTeamCityTest(suiteName, testName)
+              failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
             }
           }
@@ -210,7 +182,7 @@ class ApiQualityCheckCommand : Command {
                 appendln()
                 append("Consider removing this API right now or promoting planned removal version a little bit if there are too many plugins still using it.")
               }
-              failedTests += ApiQualityTeamCityTest(suiteName, testName)
+              failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
             }
           }
@@ -288,7 +260,7 @@ class ApiQualityCheckCommand : Command {
       tc.buildStatusFailure(buildMessage)
     }
 
-    return ApiQualityTeamCityHistory(failedTests)
+    return TeamCityHistory(failedTests)
   }
 
   private fun getExperimentalNote(report: ApiQualityReport): String = buildString {

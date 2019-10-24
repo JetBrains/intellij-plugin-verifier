@@ -11,8 +11,10 @@ import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.output.teamcity.TeamCityTest
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -31,7 +33,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
   override fun printResults(taskResult: TaskResult) {
     with(taskResult as TwoTargetsVerificationResults) {
       if (outputOptions.teamCityLog != null) {
-        printResultsOnTeamCity(this, outputOptions.teamCityLog)
+        val newTcHistory = printResultsOnTeamCity(this, outputOptions.teamCityLog)
+        outputOptions.postProcessTeamCityTests(newTcHistory)
       } else {
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
@@ -55,7 +58,9 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
    * (Problem type)
    *   ...
    */
-  private fun printResultsOnTeamCity(twoTargetsVerificationResults: TwoTargetsVerificationResults, tcLog: TeamCityLog) {
+  private fun printResultsOnTeamCity(twoTargetsVerificationResults: TwoTargetsVerificationResults, tcLog: TeamCityLog): TeamCityHistory {
+    val failedTests = arrayListOf<TeamCityTest>()
+
     val baseTarget = twoTargetsVerificationResults.baseTarget
     val newTarget = twoTargetsVerificationResults.newTarget
 
@@ -92,7 +97,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
     for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
-      tcLog.testSuiteStarted("($problemTypeSuite)").use {
+      val testSuiteName = "($problemTypeSuite)"
+      tcLog.testSuiteStarted(testSuiteName).use {
         for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.shortDescription }) {
           val testName = "($shortDescription)"
           tcLog.testStarted(testName).use {
@@ -169,6 +175,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
               }
             }
 
+            failedTests += TeamCityTest(testSuiteName, testName)
             tcLog.testFailed(testName, testMessage, testDetails)
           }
         }
@@ -182,6 +189,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     } else {
       tcLog.buildStatusSuccess("No new compatibility problems found in $newTarget compared to $baseTarget")
     }
+
+    return TeamCityHistory(failedTests)
   }
 
   private fun getOldProblemApiUsagesNote(oldProblemApiUsages: Set<ApiUsage>): String {
