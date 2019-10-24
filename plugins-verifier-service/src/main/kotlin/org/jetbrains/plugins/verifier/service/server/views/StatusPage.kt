@@ -179,7 +179,7 @@ class StatusPage(
             td { +DATE_FORMAT.format(startTime) }
             td { +state.toString() }
             td { +progress.text }
-            td { +String.format("%.2f", progress.fraction) }
+            td { +String.format("%.2f", progress.fraction * 100) }
             td { +elapsedTime.toMillis().toString() }
           }
         }
