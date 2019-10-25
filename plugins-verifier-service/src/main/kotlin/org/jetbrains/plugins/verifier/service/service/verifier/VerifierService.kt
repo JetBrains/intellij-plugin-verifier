@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
@@ -109,10 +110,10 @@ class VerifierService(
    */
   @Synchronized
   private fun pauseVerification() {
-    for ((scheduledVerification, taskDescriptor) in scheduledVerifications.entries) {
-      logger.info("Cancel verification $scheduledVerification")
+    for (taskDescriptor in scheduledVerifications.values) {
       taskManager.cancel(taskDescriptor)
     }
+    logger.info("Cancelled " + "verification".pluralizeWithNumber(scheduledVerifications.size) + ": " + scheduledVerifications.keys.take(10).joinToString() + "...")
     scheduledVerifications.clear()
   }
 
