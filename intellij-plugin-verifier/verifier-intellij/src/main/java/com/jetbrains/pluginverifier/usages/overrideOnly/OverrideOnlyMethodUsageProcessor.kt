@@ -16,13 +16,17 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     callerMethod: Method,
     context: VerificationContext
   ) {
-    val usageLocation = callerMethod.location
-    if (resolvedMethod.isOverrideOnlyMethod()) {
+    if (resolvedMethod.isOverrideOnlyMethod() && !isCallOfSuperConstructor(callerMethod, resolvedMethod)) {
       overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
-        OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, usageLocation)
+        OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, callerMethod.location)
       )
     }
   }
+
+  private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =
+    resolvedMethod.isConstructor
+      && callerMethod.isConstructor
+      && callerMethod.containingClassFile.superName == resolvedMethod.containingClassFile.name
 
   private fun Method.isOverrideOnlyMethod(): Boolean =
     runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
