@@ -12,12 +12,13 @@ enum class IntelliJPlatformProduct(
   val alternativeProductCode: String? = null
 ) {
 
-  IDEA("IU", "IntelliJ IDEA", "idea", "IIU"),
-  IDEA_IC("IC", "IntelliJ IDEA Community Edition", "Idea", "IIC"),
+  IDEA("IU", "IntelliJ IDEA Ultimate", "idea", "IIU"),
+  IDEA_IC("IC", "IntelliJ IDEA Community", "Idea", "IIC"),
+  IDEA_IE("IE", "IntelliJ IDEA Educational", "Idea", "IIC"),
   RUBY_MINE("RM", "RubyMine", "Ruby"),
-  PY_CHARM("PY", "PyCharm", "Python", "PCP"),
-  PY_CHARM_PC("PC", "PyCharm Community Edition", "PyCharmCore", "PCC"),
-  PYCHARM_EDU("PE", "PyCharm Educational Edition", "PyCharmEdu", "PCE"),
+  PY_CHARM("PY", "PyCharm Professional", "Python", "PCP"),
+  PY_CHARM_PC("PC", "PyCharm Community", "PyCharmCore", "PCC"),
+  PYCHARM_EDU("PE", "PyCharm Educational", "PyCharmEdu", "PCE"),
   PHP_STORM("PS", "PhpStorm", "PhpStorm"),
   WEB_STORM("WS", "WebStorm", "WebStorm"),
   APPCODE("OC", "AppCode", "AppCode"),

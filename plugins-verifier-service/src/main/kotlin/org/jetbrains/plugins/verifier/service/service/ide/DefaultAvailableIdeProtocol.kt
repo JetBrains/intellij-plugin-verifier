@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.ide
 
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
@@ -20,13 +21,17 @@ private data class AvailableIdeJson(
   @SerializedName("ideVersion")
   val ideVersion: String,
 
-  @SerializedName("releasedVersion")
-  val releasedVersion: String?
+  @SerializedName("releaseVersion")
+  val releaseVersion: String?,
+
+  @SerializedName("productName")
+  val productName: String
 )
 
 private fun AvailableIde.convertToJson() = AvailableIdeJson(
   version.asString(),
-  releaseVersion
+  releaseVersion,
+  IntelliJPlatformProduct.fromIdeVersion(version)?.productName ?: IntelliJPlatformProduct.IDEA.productName
 )
 
 private interface AvailableIdeConnector {
