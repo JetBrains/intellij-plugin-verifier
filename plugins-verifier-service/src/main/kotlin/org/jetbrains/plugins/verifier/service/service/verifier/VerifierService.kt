@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
@@ -33,6 +34,7 @@ class VerifierService(
   private val verificationResultsFilter: VerificationResultFilter,
   private val pluginRepository: PluginRepository,
   private val serviceDAO: ServiceDAO,
+  private val minIdeVersion: IdeVersion,
   period: Long
 ) : BaseService("VerifierService", 0, period, TimeUnit.SECONDS, taskManager) {
 
@@ -60,6 +62,7 @@ class VerifierService(
   private fun ScheduledVerification.shouldVerify(now: Instant) =
     this !in scheduledVerifications
       && !isCheckedRecently(this, now)
+      && (manually || availableIde.version >= minIdeVersion)
       && verificationResultsFilter.shouldStartVerification(this, now)
 
   private fun isCheckedRecently(scheduledVerification: ScheduledVerification, now: Instant): Boolean {

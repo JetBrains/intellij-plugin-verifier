@@ -99,7 +99,8 @@ class ServerContextConfiguration(
     taskManagerProperties: TaskManagerProperties,
     @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
     @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
-    @Value("\${verifier.service.scheduler.period.seconds}") period: Long
+    @Value("\${verifier.service.scheduler.period.seconds}") period: Long,
+    @Value("\${verifier.service.verifier.min.ide}") verifierMinIdeVersion: String
   ): VerifierService {
     val verifierService = with(serverContext) {
       VerifierService(
@@ -110,6 +111,7 @@ class ServerContextConfiguration(
         verificationResultsFilter,
         pluginRepository,
         serviceDAO,
+        IdeVersion.createIdeVersion(verifierMinIdeVersion),
         period
       )
     }

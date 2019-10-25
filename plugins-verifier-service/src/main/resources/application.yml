@@ -13,6 +13,9 @@ verifier:
       available:
         ide:
           service: false
+    verifier:
+      min:
+        ide: "181.1"
     feature:
       extractor:
         ide:
