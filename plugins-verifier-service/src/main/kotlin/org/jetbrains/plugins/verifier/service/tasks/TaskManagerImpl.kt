@@ -158,7 +158,7 @@ class TaskManagerImpl(private val concurrency: Int) : TaskManager {
           LOG.debug(message, e)
         } catch (e: Throwable) {
           state = TaskDescriptor.State.ERROR
-          progress.text = "Finished with error: ${e.message}"
+          progress.text = "Finished with error: ${e.message ?: e::class.java.name}"
           descriptor.errorTask(e, callbacks)
         }
       } finally {
