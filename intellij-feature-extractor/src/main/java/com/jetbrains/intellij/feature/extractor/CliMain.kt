@@ -12,9 +12,7 @@ import java.io.File
  * Command-line entry point of feature extractor.
  */
 fun main(args: Array<String>) {
-  if (args.size != 2) {
-    throw IllegalArgumentException("Usage: <plugin> <ide>")
-  }
+  require(args.size == 2) { "Usage: <plugin> <ide>" }
   val jsonSerializer = Gson()
   val pluginFile = File(args[0])
   val ideaFile = File(args[1])
