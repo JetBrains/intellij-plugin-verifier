@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.*
@@ -54,8 +53,8 @@ fun evaluateConstantString(
         return producer.cst as String
       }
     } else if (producer is MethodInsnNode) {
-      if (producer.owner == "java/lang/StringBuilder" && producer.name == "toString") {
-        return evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
+      return if (producer.owner == "java/lang/StringBuilder" && producer.name == "toString") {
+        evaluateConcatenatedStringValue(producer, frames, resolver, instructions)
       } else {
         val classNode = resolver.resolveClassOrNull(producer.owner) ?: return null
         val methodAsm = classNode.methods.find { it.name == producer.name && it.descriptor == producer.desc }
@@ -74,26 +73,26 @@ fun evaluateConstantString(
 
 
 fun extractConstantFunctionValue(method: Method, resolver: Resolver): String? {
-  if (method.isAbstract) {
+  if (method.isAbstract || method.descriptor != "()Ljava/lang/String;") {
     return null
   }
 
-  var producer: SourceValue? = null
-
-  val interpreter = object : SourceInterpreter(AsmUtil.ASM_API_LEVEL) {
-    override fun returnOperation(insn: AbstractInsnNode?, value: SourceValue?, expected: SourceValue?) {
-      producer = value
-      super.returnOperation(insn, value, expected)
-    }
+  val instructions = method.instructions
+  val isReturnPredicate: (AbstractInsnNode) -> Boolean = { it is InsnNode && it.opcode >= Opcodes.IRETURN && it.opcode <= Opcodes.RETURN }
+  if (instructions.count(isReturnPredicate) > 1) {
+    return null
   }
 
-  val frames = analyzeMethodFrames(method, interpreter = interpreter)
-
-  if (producer != null) {
-    return evaluateConstantString(producer, resolver, frames, method.instructions)
+  val returnIndex = instructions.indexOfLast(isReturnPredicate)
+  if (returnIndex < 0) {
+    return null
   }
 
-  return null
+  val frames = analyzeMethodFrames(method)
+  val frame = frames.getOrNull(returnIndex) ?: return null
+
+  val sourceValue = frame.getOnStack(0) ?: return null
+  return evaluateConstantString(sourceValue, resolver, frames, instructions)
 }
 
 private fun evaluateConstantFieldValue(

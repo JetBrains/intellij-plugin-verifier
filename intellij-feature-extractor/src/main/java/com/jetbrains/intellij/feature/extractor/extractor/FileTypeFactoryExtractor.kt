@@ -99,7 +99,7 @@ class FileTypeFactoryExtractor : Extractor {
     resolver: Resolver
   ): List<String>? {
     val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
-    if (arrayProducer !is SourceValue || arrayProducer.insns.size != 1) {
+    if (arrayProducer.insns.size != 1) {
       return null
     }
 

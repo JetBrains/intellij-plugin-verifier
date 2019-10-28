@@ -34,7 +34,7 @@ class PropertyUsageProcessor : ApiUsageProcessor {
       val instructions = callerMethod.instructions
       val instructionIndex = instructions.indexOf(instructionNode)
 
-      val frames = analyzeMethodFrames(callerMethod).toList()
+      val frames = analyzeMethodFrames(callerMethod)
       val frame = frames.getOrNull(instructionIndex) ?: continue
 
       val onStackIndex = methodParameters.size - 1 - parameterIndex
