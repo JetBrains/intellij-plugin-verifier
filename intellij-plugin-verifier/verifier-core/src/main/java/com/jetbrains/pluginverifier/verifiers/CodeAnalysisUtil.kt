@@ -14,7 +14,7 @@ fun analyzeMethodFrames(method: Method, interpreter: Interpreter<SourceValue> = 
     emptyList()
   }
 
-fun Frame<SourceValue>.getOnStack(index: Int): Value? =
+fun <V : Value> Frame<V>.getOnStack(index: Int): V? =
   getStack(stackSize - 1 - index)
 
 fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
@@ -40,16 +40,12 @@ fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
 }
 
 fun evaluateConstantString(
-  value: Value?,
+  value: SourceValue?,
   resolver: Resolver,
   frames: List<Frame<SourceValue>>,
   instructions: List<AbstractInsnNode>
 ): String? {
-  if (value !is SourceValue) {
-    return null
-  }
-
-  val sourceInstructions = value.insns ?: return null
+  val sourceInstructions = value?.insns ?: return null
 
   if (sourceInstructions.size == 1) {
     val producer = sourceInstructions.first()
@@ -82,7 +78,7 @@ fun extractConstantFunctionValue(method: Method, resolver: Resolver): String? {
     return null
   }
 
-  var producer: Value? = null
+  var producer: SourceValue? = null
 
   val interpreter = object : SourceInterpreter(AsmUtil.ASM_API_LEVEL) {
     override fun returnOperation(insn: AbstractInsnNode?, value: SourceValue?, expected: SourceValue?) {
