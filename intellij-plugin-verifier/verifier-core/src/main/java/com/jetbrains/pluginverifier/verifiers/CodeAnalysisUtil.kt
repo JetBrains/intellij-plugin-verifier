@@ -45,45 +45,57 @@ class CodeAnalysis {
   ): String? {
     val sourceInstructions = sourceValue?.insns ?: return null
     if (sourceInstructions.size == 1) {
-      when (val producer = sourceInstructions.first()) {
-        is LdcInsnNode -> {
-          if (producer.cst is String) {
-            return producer.cst as String
+      val producer = sourceInstructions.first()
+      return evaluateInstructionConstantString(producer, analyzedMethod, frames)
+    }
+    return null
+  }
+
+
+  private fun evaluateInstructionConstantString(
+    instruction: AbstractInsnNode,
+    analyzedMethod: Method,
+    frames: List<Frame<SourceValue>>
+  ): String? {
+    when (instruction) {
+      is LdcInsnNode -> {
+        if (instruction.cst is String) {
+          return instruction.cst as String
+        }
+      }
+      is MethodInsnNode -> {
+        if (instruction.owner == "java/lang/StringBuilder" && instruction.name == "toString") {
+          val instructions = analyzedMethod.instructions
+          val toStringIndex = instructions.indexOf(instruction)
+          if (toStringIndex == -1) {
+            return null
+          }
+          val initIndex = instructions.take(toStringIndex).indexOfLast {
+            it is MethodInsnNode && it.name == "<init>" && it.owner == "java/lang/StringBuilder"
+          }
+          if (initIndex == -1) {
+            return null
+          }
+          val stringBuildingInstructions = instructions.subList(initIndex + 1, toStringIndex)
+          return evaluateConcatenatedStringValue(frames, analyzedMethod, stringBuildingInstructions)
+        } else if (instruction.owner == analyzedMethod.containingClassFile.name) {
+          val selfMethod = analyzedMethod.containingClassFile.methods.find {
+            it.name == instruction.name && it.descriptor == instruction.desc
+          }
+          if (selfMethod != null) {
+            val cantBeOverridden = selfMethod.isStatic || selfMethod.isPrivate || selfMethod.isFinal
+            if (cantBeOverridden) {
+              return evaluateConstantFunctionValue(selfMethod)
+            }
           }
         }
-        is MethodInsnNode -> {
-          if (producer.owner == "java/lang/StringBuilder" && producer.name == "toString") {
-            val instructions = analyzedMethod.instructions
-            val producerIndex = instructions.indexOf(producer)
-            if (producerIndex == -1) {
-              return null
-            }
-            val initIndex = instructions.take(producerIndex).indexOfLast {
-              it is MethodInsnNode && it.name == "<init>" && it.owner == "java/lang/StringBuilder"
-            }
-            if (initIndex == -1) {
-              return null
-            }
-            return evaluateConcatenatedStringValue(initIndex, producerIndex, frames, analyzedMethod)
-          } else if (producer.owner == analyzedMethod.containingClassFile.name) {
-            val selfMethod = analyzedMethod.containingClassFile.methods.find {
-              it.name == producer.name && it.descriptor == producer.desc
-            }
-            if (selfMethod != null) {
-              val cantBeOverridden = selfMethod.isStatic || selfMethod.isPrivate || selfMethod.isFinal
-              if (cantBeOverridden) {
-                return evaluateConstantFunctionValue(selfMethod)
-              }
-            }
-          }
-        }
-        is FieldInsnNode -> {
-          if (producer.owner == analyzedMethod.containingClassFile.name) {
-            val fieldNode = analyzedMethod.containingClassFile.fields.find {
-              it.name == producer.name && it.descriptor == producer.desc
-            } ?: return null
-            return evaluateConstantFieldValue(fieldNode)
-          }
+      }
+      is FieldInsnNode -> {
+        if (instruction.owner == analyzedMethod.containingClassFile.name) {
+          val fieldNode = analyzedMethod.containingClassFile.fields.find {
+            it.name == instruction.name && it.descriptor == instruction.desc
+          } ?: return null
+          return evaluateConstantFieldValue(fieldNode)
         }
       }
     }
@@ -156,32 +168,76 @@ class CodeAnalysis {
 
 
   /**
-   * Analyzes bytecode corresponding to:
+   * Analyzes bytecode corresponding to String built with StringBuilder:
    * ```
-   * sb = new StringBuilder()  //fromIndex
-   * sb.append("one")
-   * sb.append("two")
-   * sb.append("three")
-   * sb.toString()             //toIndex
+   * LDC "One"
+   * INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
+   * ALOAD 0
+   * INVOKEVIRTUAL some/SomeClass.someConstantFunction ()Ljava/lang/String;
+   * INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
+   * GETSTATIC     some/SomeClass.SOME_STATIC_FINAL_CONSTANT : Ljava/lang/String;
+   * INVOKEVIRTUAL java/lang/StringBuilder.append (Ljava/lang/String;)Ljava/lang/StringBuilder;
    * ```
+   *
+   * It firstly splits the instructions by `StringBuilder.append()`:
+   * ```
+   * LDC         "One"
+   * INVOKE      someConstantFunction()
+   * GETSTATIC   SOME_STATIC_FINAL_CONSTANT
+   * ```
+   *
+   * Then constructs the result: "One" + someConstantFunction() + SOME_STATIC_FINAL_CONSTANT
    */
   private fun evaluateConcatenatedStringValue(
-    fromIndex: Int,
-    toIndex: Int,
     frames: List<Frame<SourceValue>>,
-    analyzedMethod: Method
+    analyzedMethod: Method,
+    stringBuildingInstructions: List<AbstractInsnNode>
   ): String? {
-    val instructions = analyzedMethod.instructions
-    val result = StringBuilder()
-    for (i in fromIndex until toIndex) {
-      val instructionNode = instructions.getOrNull(i) ?: return null
-      if (instructionNode is MethodInsnNode && instructionNode.name == "append" && instructionNode.owner == "java/lang/StringBuilder") {
-        val frame = frames.getOrNull(i) ?: return null
-        val appendValue = frame.getOnStack(0) ?: return null
-        val value = evaluateConstantString(analyzedMethod, frames, appendValue) ?: return null
-        result.append(value)
+
+    val isAppendInstruction = { ins: AbstractInsnNode ->
+      ins is MethodInsnNode && ins.name == "append" && ins.owner == "java/lang/StringBuilder"
+    }
+
+    fun evaluateAppendInstructions(instructions: List<AbstractInsnNode>): String? {
+      if (instructions.isEmpty()) {
+        return null
+      }
+      if (instructions.size == 1) {
+        val single = instructions.single()
+        return evaluateInstructionConstantString(single, analyzedMethod, frames)
+      }
+      if (instructions.size == 2) {
+        val first = instructions.first()
+        val second = instructions.last()
+        if (first is VarInsnNode && first.`var` == 0 && !analyzedMethod.isStatic) {
+          return evaluateInstructionConstantString(second, analyzedMethod, frames)
+        }
+      }
+      return null
+    }
+
+    val stringResult = StringBuilder()
+    val nonAppendInstructionParts = stringBuildingInstructions.splitByPredicate(isAppendInstruction)
+    for (appendInstructionsPart in nonAppendInstructionParts) {
+      val string = evaluateAppendInstructions(appendInstructionsPart)
+        ?: return null
+      stringResult.append(string)
+    }
+
+    return stringResult.toString()
+  }
+
+  private fun <T> List<T>.splitByPredicate(predicate: (T) -> Boolean): List<List<T>> {
+    val result = arrayListOf<List<T>>()
+    val current = arrayListOf<T>()
+    for (t in this) {
+      if (predicate(t)) {
+        result += current.toList()
+        current.clear()
+      } else {
+        current += t
       }
     }
-    return result.toString()
+    return result
   }
 }
