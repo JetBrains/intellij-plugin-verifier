@@ -25,6 +25,8 @@ class CodeAnalysis {
 
   private val inVisitMethods: Deque<Method> = LinkedList()
 
+  private val inVisitFields: Deque<Field> = LinkedList()
+
   fun evaluateConstantString(
     analyzedMethod: Method,
     instructionIndex: Int,
@@ -124,20 +126,28 @@ class CodeAnalysis {
       return field.initialValue as String
     }
 
-    val classFile = field.containingClassFile
-    val classInitializer = classFile.methods.find { it.name == "<clinit>" } ?: return null
-    val frames = analyzeMethodFrames(classInitializer) ?: return null
-
-    val instructions = classInitializer.instructions
-    val putStaticInstructionIndex = instructions.indexOfLast {
-      it is FieldInsnNode
-        && it.opcode == Opcodes.PUTSTATIC
-        && it.owner == classFile.name
-        && it.name == field.name
-        && it.desc == field.descriptor
+    if (inVisitFields.any { it.name == field.name && it.descriptor == field.descriptor && it.containingClassFile.name == field.containingClassFile.name }) {
+      return null
     }
-    val frame = frames.getOrNull(putStaticInstructionIndex) ?: return null
-    return evaluateConstantString(classInitializer, frames, frame.getOnStack(0))
+    inVisitFields.addLast(field)
+    try {
+      val classFile = field.containingClassFile
+      val classInitializer = classFile.methods.find { it.name == "<clinit>" } ?: return null
+      val frames = analyzeMethodFrames(classInitializer) ?: return null
+
+      val instructions = classInitializer.instructions
+      val putStaticInstructionIndex = instructions.indexOfLast {
+        it is FieldInsnNode
+          && it.opcode == Opcodes.PUTSTATIC
+          && it.owner == classFile.name
+          && it.name == field.name
+          && it.desc == field.descriptor
+      }
+      val frame = frames.getOrNull(putStaticInstructionIndex) ?: return null
+      return evaluateConstantString(classInitializer, frames, frame.getOnStack(0))
+    } finally {
+      inVisitFields.removeLast()
+    }
   }
 
 
