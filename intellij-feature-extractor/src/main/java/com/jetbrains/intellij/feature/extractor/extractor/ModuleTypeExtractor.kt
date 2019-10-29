@@ -4,8 +4,8 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
-import com.jetbrains.pluginverifier.verifiers.evaluateConstantString
 import com.jetbrains.pluginverifier.verifiers.getOnStack
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
@@ -13,7 +13,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.VarInsnNode
-import org.objectweb.asm.tree.analysis.SourceValue
 
 class ModuleTypeExtractor : Extractor {
 
@@ -28,7 +27,7 @@ class ModuleTypeExtractor : Extractor {
 
   private fun extractModuleType(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
     if (classFile.superName == MODULE_TYPE_CLASS_NAME) {
-      return convertResult(extractFromClassNode(classFile, resolver))
+      return convertResult(extractFromClassNode(classFile))
     }
     val constructors = classFile.methods.filter { it.isConstructor }
     for (constructor in constructors) {
@@ -42,7 +41,7 @@ class ModuleTypeExtractor : Extractor {
         val superName = classFile.superName
         if (isDefaultParentInvocation && superName != null) {
           val superClassFile = resolver.resolveClassOrNull(superName) ?: continue
-          return convertResult(extractFromClassNode(superClassFile, resolver))
+          return convertResult(extractFromClassNode(superClassFile))
         }
       }
     }
@@ -56,7 +55,7 @@ class ModuleTypeExtractor : Extractor {
     return null
   }
 
-  private fun extractFromClassNode(classFile: ClassFile, resolver: Resolver): String? {
+  private fun extractFromClassNode(classFile: ClassFile): String? {
     val constructors = classFile.methods.filter { it.isConstructor }
     for (constructor in constructors) {
       val instructionsAsList = constructor.instructions
@@ -68,19 +67,18 @@ class ModuleTypeExtractor : Extractor {
           && instructionNode.owner == MODULE_TYPE_CLASS_NAME
       }
       if (superClassConstructorInitIndex != -1) {
-        val constructorFrames = analyzeMethodFrames(constructor)
-        val moduleIdArgumentValue = constructorFrames[superClassConstructorInitIndex].getOnStack(0)
-        val moduleIdPassedToSuperClass = evaluateConstantString(
-          moduleIdArgumentValue,
-          resolver,
+        val constructorFrames = analyzeMethodFrames(constructor) ?: return null
+        val moduleIdArgumentValue = constructorFrames[superClassConstructorInitIndex].getOnStack(0) ?: return null
+        val moduleIdPassedToSuperClass = CodeAnalysis().evaluateConstantString(
+          constructor,
           constructorFrames,
-          instructionsAsList
+          moduleIdArgumentValue
         )
         if (moduleIdPassedToSuperClass != null) {
           return moduleIdPassedToSuperClass
         }
 
-        if (moduleIdArgumentValue is SourceValue && moduleIdArgumentValue.insns.size == 1) {
+        if (moduleIdArgumentValue.insns.size == 1) {
           val moduleIdProducerInstruction = moduleIdArgumentValue.insns.first()
           if (moduleIdProducerInstruction is VarInsnNode) {
             val moduleIdParameterIndex = moduleIdProducerInstruction.`var`
@@ -91,8 +89,7 @@ class ModuleTypeExtractor : Extractor {
               constructor,
               constructors,
               classFile,
-              moduleIdCalleeStackIndex,
-              resolver
+              moduleIdCalleeStackIndex
             )
             if (passedModuleId != null) {
               return passedModuleId
@@ -108,8 +105,7 @@ class ModuleTypeExtractor : Extractor {
     thisConstructor: Method,
     allConstructors: Sequence<Method>,
     classNode: ClassFile,
-    moduleIdCalleeStackIndex: Int,
-    resolver: Resolver
+    moduleIdCalleeStackIndex: Int
   ): String? {
     for (otherConstructor in allConstructors) {
       val otherConstructorInstruction = otherConstructor.instructions
@@ -123,12 +119,7 @@ class ModuleTypeExtractor : Extractor {
       }
 
       if (thisConstructorCallIndex != -1) {
-        val frames = analyzeMethodFrames(otherConstructor)
-        val thisConstructorInvocationFrame = frames[thisConstructorCallIndex]
-        if (moduleIdCalleeStackIndex < thisConstructorInvocationFrame.stackSize) {
-          val delegatedValue = thisConstructorInvocationFrame.getOnStack(moduleIdCalleeStackIndex)
-          return evaluateConstantString(delegatedValue, resolver, frames, otherConstructorInstruction)
-        }
+        return CodeAnalysis().evaluateConstantString(otherConstructor, thisConstructorCallIndex, moduleIdCalleeStackIndex)
       }
     }
     return null

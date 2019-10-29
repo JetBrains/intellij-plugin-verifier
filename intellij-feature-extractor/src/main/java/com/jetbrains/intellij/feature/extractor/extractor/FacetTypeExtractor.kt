@@ -4,8 +4,8 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
-import com.jetbrains.pluginverifier.verifiers.evaluateConstantString
 import com.jetbrains.pluginverifier.verifiers.getOnStack
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import org.objectweb.asm.tree.MethodInsnNode
@@ -22,16 +22,16 @@ class FacetTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.FACET_TYPE)
-      .mapNotNull { extractFacetTypes(it, resolver) }
+      .mapNotNull { extractFacetTypes(it) }
   }
 
-  private fun extractFacetTypes(classFile: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
+  private fun extractFacetTypes(classFile: ClassFile): ExtensionPointFeatures? {
     if (classFile.superName != FACET_TYPE) {
       return null
     }
 
     for (constructorMethod in classFile.methods.filter { it.isConstructor }) {
-      val frames = analyzeMethodFrames(constructorMethod)
+      val frames = analyzeMethodFrames(constructorMethod) ?: continue
 
       constructorMethod.instructions.forEachIndexed { index, instruction ->
         if (instruction is MethodInsnNode) {
@@ -46,7 +46,7 @@ class FacetTypeExtractor : Extractor {
               else -> return@forEachIndexed
             }
 
-            val stringValue = evaluateConstantString(value, resolver, frames, constructorMethod.instructions)
+            val stringValue = CodeAnalysis().evaluateConstantString(constructorMethod, frames, value)
             if (stringValue != null) {
               return ExtensionPointFeatures(ExtensionPoint.FACET_TYPE, listOf(stringValue))
             }

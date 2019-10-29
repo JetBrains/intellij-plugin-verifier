@@ -3,6 +3,8 @@ package mock.plugin.codeAnalysis;
 @SuppressWarnings("unused")
 public class ConstantStrings {
 
+  private static final String FINAL_STATIC_INIT_CONSTANT;
+
   public static final String STATIC_CONSTANT = "I_am_constant";
 
   public static final String STATIC_FIELD = "StaticFieldValue";
@@ -10,6 +12,10 @@ public class ConstantStrings {
   public static final String STATIC_FIELD_CONCATENATED = "StaticField" + "Concatenated";
 
   private static final ConstantStrings INSTANCE = new ConstantStrings();
+
+  static {
+    FINAL_STATIC_INIT_CONSTANT = "staticInitConstant";
+  }
 
   public String constantFunctionReturn() {
     return "ConstantFunctionValue";
@@ -30,16 +36,20 @@ public class ConstantStrings {
     return recursiveString(x - 1) + "a";
   }
 
-  public String myFunction() {
+  final public String myFunction() {
     return ".constantValue";
   }
 
-  public String myRefFunction() {
+  private String myRefFunction() {
     return myFunction();
   }
 
   public String staticConstant() {
     return STATIC_CONSTANT;
+  }
+
+  public String finalStaticInitConstant() {
+    return FINAL_STATIC_INIT_CONSTANT;
   }
 
   public String concat() {
@@ -52,6 +62,11 @@ public class ConstantStrings {
 
   public String instance() {
     return INSTANCE.myRefFunction();
+  }
+
+  @SuppressWarnings("InfiniteRecursion")
+  final public String directRecursion() {
+    return directRecursion();
   }
 
 }

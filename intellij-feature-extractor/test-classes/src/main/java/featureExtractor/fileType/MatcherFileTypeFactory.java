@@ -7,9 +7,15 @@ import com.intellij.openapi.fileTypes.FileTypeFactory;
 
 public class MatcherFileTypeFactory extends FileTypeFactory {
 
-  private static String FIRST_EXTENSION = "firstExactName";
-  private static String SECOND_EXTENSION = "secondExactName";
-  private static String THIRD_EXTENSION = "nmextension";
+  private static final String FIRST_EXTENSION;
+  private static final String SECOND_EXTENSION;
+  private static final String THIRD_EXTENSION;
+
+  static {
+    FIRST_EXTENSION = "firstExactName";
+    SECOND_EXTENSION = "secondExactName";
+    THIRD_EXTENSION = "nmextension";
+  }
 
   @Override
   public void createFileTypes(FileTypeConsumer consumer) {

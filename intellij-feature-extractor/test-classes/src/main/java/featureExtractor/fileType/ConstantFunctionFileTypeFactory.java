@@ -9,7 +9,7 @@ public class ConstantFunctionFileTypeFactory extends FileTypeFactory {
     consumer.consume(null, constantFunction());
   }
 
-  public String constantFunction() {
+  final public String constantFunction() {
     return ".constantValue";
   }
 

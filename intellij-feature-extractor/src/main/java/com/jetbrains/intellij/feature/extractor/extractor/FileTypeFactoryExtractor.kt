@@ -6,13 +6,11 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.LabelNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.*
 import org.objectweb.asm.tree.analysis.Frame
 import org.objectweb.asm.tree.analysis.SourceValue
 import org.objectweb.asm.tree.analysis.Value
@@ -58,7 +56,7 @@ class FileTypeFactoryExtractor : Extractor {
       it.name == "createFileTypes" && it.descriptor == "(Lcom/intellij/openapi/fileTypes/FileTypeConsumer;)V" && !it.isAbstract
     } ?: return null
 
-    val frames = analyzeMethodFrames(method)
+    val frames = analyzeMethodFrames(method) ?: return null
 
     val result = arrayListOf<String>()
     val instructions = method.instructions
@@ -69,7 +67,7 @@ class FileTypeFactoryExtractor : Extractor {
 
           if (instruction.desc == EXPLICIT_EXTENSION) {
             val frame = frames[index]
-            val stringValue = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+            val stringValue = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(0))
             if (stringValue != null) {
               result.addAll(parseExtensionsList(stringValue))
             }
@@ -81,7 +79,7 @@ class FileTypeFactoryExtractor : Extractor {
               result.addAll(parseExtensionsList(fromFileType))
             }
           } else if (instruction.desc == FILENAME_MATCHERS) {
-            val extensions = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames, resolver)
+            val extensions = computeExtensionsPassedToFileNameMatcherArray(instructions, index, frames, method)
             if (extensions != null) {
               result.addAll(extensions)
             }
@@ -96,7 +94,7 @@ class FileTypeFactoryExtractor : Extractor {
     methodInstructions: List<AbstractInsnNode>,
     arrayUserInstructionIndex: Int,
     frames: List<Frame<SourceValue>>,
-    resolver: Resolver
+    method: Method
   ): List<String>? {
     val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
     if (arrayProducer.insns.size != 1) {
@@ -114,7 +112,7 @@ class FileTypeFactoryExtractor : Extractor {
         arrayUserInstructionIndex,
         methodInstructions,
         frames,
-        resolver
+        method
       )
     }
     return null
@@ -152,7 +150,7 @@ class FileTypeFactoryExtractor : Extractor {
     arrayUserInstructionIndex: Int,
     methodInstructions: List<AbstractInsnNode>,
     frames: List<Frame<SourceValue>>,
-    resolver: Resolver
+    method: Method
   ): List<String> {
     val dummyValue: AbstractInsnNode = object : AbstractInsnNode(-1) {
       override fun getType(): Int = -1
@@ -189,7 +187,7 @@ class FileTypeFactoryExtractor : Extractor {
               && initInvoke.name == "<init>"
               && initInvoke.owner == EXACT_NAME_MATCHER
               && initInvoke.desc == "(Ljava/lang/String;)V") {
-              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+              val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(0))
               if (string != null) {
                 return string
               }
@@ -227,7 +225,7 @@ class FileTypeFactoryExtractor : Extractor {
                 && initInvoke.owner == EXACT_NAME_MATCHER
                 && initInvoke.desc == "(Ljava/lang/String;Z)V") {
 
-                val string = evaluateConstantString(frame.getOnStack(1), resolver, frames, instructions)
+                val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(1))
                 if (string != null) {
                   return string
                 }
@@ -263,7 +261,7 @@ class FileTypeFactoryExtractor : Extractor {
               && initInvoke.owner == EXTENSIONS_MATCHER
               && initInvoke.desc == "(Ljava/lang/String;)V") {
 
-              val string = evaluateConstantString(frame.getOnStack(0), resolver, frames, instructions)
+              val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(0))
               if (string != null) {
                 return "*.$string"
               }
@@ -310,6 +308,29 @@ class FileTypeFactoryExtractor : Extractor {
     return result
   }
 
+  private fun takeNumberFromIntInstruction(instruction: AbstractInsnNode): Int? {
+    if (instruction is InsnNode) {
+      return when (instruction.opcode) {
+        Opcodes.ICONST_M1 -> -1
+        Opcodes.ICONST_0 -> 0
+        Opcodes.ICONST_1 -> 1
+        Opcodes.ICONST_2 -> 2
+        Opcodes.ICONST_3 -> 3
+        Opcodes.ICONST_4 -> 4
+        Opcodes.ICONST_5 -> 5
+        else -> null
+      }
+    }
+    if (instruction is IntInsnNode) {
+      return when (instruction.opcode) {
+        Opcodes.BIPUSH -> instruction.operand
+        else -> null
+      }
+    }
+    return null
+  }
+
+
   /**
    * Extract value returned by com.intellij.openapi.fileTypes.FileType.getDefaultExtension
    */
@@ -323,7 +344,7 @@ class FileTypeFactoryExtractor : Extractor {
 
     val method = classFile.methods.find { it.name == "getDefaultExtension" && it.methodParameters.isEmpty() }
       ?: return null
-    return extractConstantFunctionValue(method, resolver)
+    return CodeAnalysis().evaluateConstantFunctionValue(method)
   }
 
 

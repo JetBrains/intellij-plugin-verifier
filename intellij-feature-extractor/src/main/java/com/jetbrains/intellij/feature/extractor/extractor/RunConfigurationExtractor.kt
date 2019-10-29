@@ -4,10 +4,7 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
-import com.jetbrains.pluginverifier.verifiers.evaluateConstantString
-import com.jetbrains.pluginverifier.verifiers.extractConstantFunctionValue
-import com.jetbrains.pluginverifier.verifiers.getOnStack
+import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.MethodInsnNode
@@ -26,15 +23,13 @@ class RunConfigurationExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
     return getExtensionPointImplementors(plugin, resolver, ExtensionPoint.CONFIGURATION_TYPE)
-      .mapNotNull { extractConfigurationTypes(it, resolver) }
+      .mapNotNull { extractConfigurationTypes(it) }
   }
 
-  private fun extractConfigurationTypes(classNode: ClassFile, resolver: Resolver): ExtensionPointFeatures? {
+  private fun extractConfigurationTypes(classNode: ClassFile): ExtensionPointFeatures? {
     if (classNode.superName == CONFIGURATION_BASE) {
       val constructor = classNode.methods.find { it.isConstructor } ?: return null
-      val frames = analyzeMethodFrames(constructor)
-      val constructorInstructions = constructor.instructions
-      val superInitIndex = constructorInstructions.indexOfLast {
+      val superInitIndex = constructor.instructions.indexOfLast {
         it is MethodInsnNode
           && it.name == "<init>"
           && it.opcode == Opcodes.INVOKESPECIAL
@@ -44,14 +39,14 @@ class RunConfigurationExtractor : Extractor {
       if (superInitIndex == -1) {
         return null
       }
-      val value = evaluateConstantString(frames[superInitIndex].getOnStack(3), resolver, frames.toList(), constructorInstructions)
+      val value = CodeAnalysis().evaluateConstantString(constructor, superInitIndex, 3)
       return convertToResult(value)
     } else {
       val method = classNode.methods.find { it.name == "getId" && it.methodParameters.isEmpty() } ?: return null
       if (method.isAbstract) {
         return null
       }
-      val value = extractConstantFunctionValue(method, resolver)
+      val value = CodeAnalysis().evaluateConstantFunctionValue(method)
       return convertToResult(value)
     }
   }
