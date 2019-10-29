@@ -136,13 +136,17 @@ class CodeAnalysis {
       val frames = analyzeMethodFrames(classInitializer) ?: return null
 
       val instructions = classInitializer.instructions
-      val putStaticInstructionIndex = instructions.indexOfLast {
+      val predicate: (AbstractInsnNode) -> Boolean = {
         it is FieldInsnNode
           && it.opcode == Opcodes.PUTSTATIC
           && it.owner == classFile.name
           && it.name == field.name
           && it.desc == field.descriptor
       }
+      if (instructions.count(predicate) != 1) {
+        return null
+      }
+      val putStaticInstructionIndex = instructions.indexOfLast(predicate)
       val frame = frames.getOrNull(putStaticInstructionIndex) ?: return null
       return evaluateConstantString(classInitializer, frames, frame.getOnStack(0))
     } finally {
