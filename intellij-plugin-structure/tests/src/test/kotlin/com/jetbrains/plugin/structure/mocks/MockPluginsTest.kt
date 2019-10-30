@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.google.common.collect.HashMultiset
 import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
@@ -12,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
@@ -19,6 +19,7 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescri
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.jdom2.Element
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -472,7 +473,7 @@ class MockPluginsTest {
     checkPluginValues(plugin, isDirectoryBasedPlugin)
     checkIdeCompatibility(plugin)
     checkOptionalDescriptors(plugin)
-    checkExtensionPoints(plugin)
+    checkPluginContents(plugin as IdePluginImpl)
     checkDependenciesAndModules(plugin)
     checkUnderlyingDocument(plugin)
   }
@@ -568,18 +569,67 @@ class MockPluginsTest {
     assertEquals(setOf("one_module"), plugin.definedModules)
   }
 
-  private fun checkExtensionPoints(plugin: IdePlugin) {
-    val extensions = plugin.extensions
-    val expectedExtensionPoints = HashMultiset.create(
-      listOf(
+  private fun checkPluginContents(plugin: IdePluginImpl) {
+    assertEquals(
+      setOf(
         "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
         "com.intellij.compileServer.plugin",
         "org.jetbrains.kotlin.defaultErrorMessages",
         "org.jetbrains.kotlin.diagnosticSuppressor"
-      )
+      ),
+      plugin.extensions.keys().toSet()
     )
 
-    assertEquals(expectedExtensionPoints, extensions.keys())
+    val appContainerDescriptor = plugin.appContainerDescriptor
+    val projectContainerDescriptor = plugin.projectContainerDescriptor
+    val moduleContainerDescriptor = plugin.moduleContainerDescriptor
+
+    assertEquals(
+      setOf(
+        "org.jetbrains.kotlin2.updater",
+        "org.jetbrains.kotlin2.projectConfigurator",
+        "org.jetbrains.kotlin2.defaultErrorMessages",
+        "org.jetbrains.kotlin2.appEP",
+        "org.jetbrains.kotlin2.appEP2",
+        "org.jetbrains.kotlin2.updater"
+      ),
+      appContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+    )
+
+    assertEquals(
+      setOf("SomeApplicationComponent"),
+      appContainerDescriptor.components.map { it.implementationClass }.toSet()
+    )
+
+    assertEquals(
+      setOf("org.jetbrains.kotlin2.projectEP"),
+      projectContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+    )
+
+    assertEquals(
+      setOf("SomeProjectComponent"),
+      projectContainerDescriptor.components.map { it.implementationClass }.toSet()
+    )
+
+    assertEquals(
+      setOf("org.jetbrains.kotlin2.moduleEP"),
+      moduleContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+    )
+
+    assertEquals(
+      setOf("SomeModuleComponent"),
+      moduleContainerDescriptor.components.map { it.implementationClass }.toSet()
+    )
+
+    assertEquals(2, plugin.actions.size)
+    assertNotNull(plugin.actions.find { it.getAttributeValue("class") == "SomeActionClass" })
+    assertNotNull(plugin.actions.find { it.getAttributeValue("id") == "SomeGroupId" })
+  }
+
+  private fun getExtensionPointName(extensionPoint: Element, idePlugin: IdePluginImpl): String? {
+    extensionPoint.getAttributeValue("qualifiedName")?.let { return it }
+    val name = extensionPoint.getAttributeValue("name") ?: return null
+    return idePlugin.pluginId + "." + name
   }
 
   private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations, plugin: IdePlugin) {

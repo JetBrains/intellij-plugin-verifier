@@ -1,10 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import org.jdom2.Document
-import org.jdom2.Element
 import org.jdom2.transform.JDOMSource
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.JAXBException
@@ -28,45 +25,7 @@ object PluginBeanExtractor {
   @Throws(JAXBException::class)
   fun extractPluginBean(document: Document): PluginBean {
     val unmarshaller = jaxbContext.createUnmarshaller()
-
-    val rootElement = document.rootElement
-    val bean = unmarshaller.unmarshal(JDOMSource(document)) as PluginBean
-    bean.extensions = extractExtensions(rootElement)
-    bean.applicationListeners = extractApplicationListeners(rootElement, "applicationListeners")
-    bean.projectListeners = extractApplicationListeners(rootElement, "projectListeners")
-    return bean
-  }
-
-  private fun extractApplicationListeners(rootElement: Element, listenersName: String): List<Element> {
-    val listeners = arrayListOf<Element>()
-    for (listenersRoot in rootElement.getChildren(listenersName)) {
-      listeners += listenersRoot.children
-    }
-    return listeners
-  }
-
-  private fun extractExtensions(rootElement: Element): Multimap<String, Element> {
-    val extensions = ArrayListMultimap.create<String, Element>()
-    for (extensionsRoot in rootElement.getChildren("extensions")) {
-      for (element in extensionsRoot.children) {
-        extensions.put(extractEPName(element), element)
-      }
-    }
-    return extensions
-  }
-
-  private fun extractEPName(extensionElement: Element): String {
-    val point = extensionElement.getAttributeValue("point")
-    if (point != null) {
-      return point
-    }
-
-    val parentNs = extensionElement.parentElement?.getAttributeValue("defaultExtensionNs")
-    return if (parentNs != null) {
-      parentNs + '.' + extensionElement.name
-    } else {
-      extensionElement.namespace.uri + '.' + extensionElement.name
-    }
+    return unmarshaller.unmarshal(JDOMSource(document)) as PluginBean
   }
 
 }

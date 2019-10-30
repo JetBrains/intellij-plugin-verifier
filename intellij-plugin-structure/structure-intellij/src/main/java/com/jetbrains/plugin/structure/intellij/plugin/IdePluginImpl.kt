@@ -8,7 +8,7 @@ import org.jdom2.Document
 import org.jdom2.Element
 import java.io.File
 
-internal class IdePluginImpl : IdePlugin {
+class IdePluginImpl : IdePlugin {
   override var pluginId: String? = null
 
   override var pluginName: String? = null
@@ -47,9 +47,13 @@ internal class IdePluginImpl : IdePlugin {
 
   override val extensions: Multimap<String, Element> = ArrayListMultimap.create()
 
-  val applicationListeners: MutableList<Element> = arrayListOf()
+  val actions: MutableList<Element> = arrayListOf()
 
-  val projectListeners: MutableList<Element> = arrayListOf()
+  val appContainerDescriptor = ContainerDescriptor()
+
+  val projectContainerDescriptor = ContainerDescriptor()
+
+  val moduleContainerDescriptor = ContainerDescriptor()
 
   override val icons: MutableList<PluginIcon> = arrayListOf()
 

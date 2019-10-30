@@ -94,14 +94,24 @@ internal class PluginCreator {
       val optionalPlugin = pluginCreationResult.plugin
       plugin!!.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       plugin.extensions.putAll(optionalPlugin.extensions)
-      plugin.applicationListeners.addAll((optionalPlugin as? IdePluginImpl)?.applicationListeners.orEmpty())
-      plugin.projectListeners.addAll((optionalPlugin as? IdePluginImpl)?.projectListeners.orEmpty())
+      if (optionalPlugin is IdePluginImpl) {
+        plugin.appContainerDescriptor.mergeWith(optionalPlugin.appContainerDescriptor)
+        plugin.projectContainerDescriptor.mergeWith(optionalPlugin.projectContainerDescriptor)
+        plugin.moduleContainerDescriptor.mergeWith(optionalPlugin.moduleContainerDescriptor)
+      }
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
         .errorsAndWarnings
         .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
     }
+  }
+
+  private fun ContainerDescriptor.mergeWith(other: ContainerDescriptor) {
+    services += other.services
+    components += other.components
+    listeners += other.listeners
+    extensionPoints += other.extensionPoints
   }
 
   fun registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFileCycle: List<String>) {
@@ -116,15 +126,12 @@ internal class PluginCreator {
     plugin?.originalFile = originalFile
   }
 
-  private fun IdePluginImpl.setInfoFromBean(bean: PluginBean) {
+  private fun IdePluginImpl.setInfoFromBean(bean: PluginBean, document: Document) {
     pluginName = bean.name?.trim()
     pluginId = bean.id?.trim() ?: pluginName
     url = bean.url?.trim()
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim { it <= ' ' } else null
     definedModules.addAll(bean.modules)
-    extensions.putAll(bean.extensions)
-    applicationListeners.addAll(bean.applicationListeners)
-    projectListeners.addAll(bean.projectListeners)
     useIdeClassLoader = bean.useIdeaClassLoader == true
 
     val ideaVersionBean = bean.ideaVersion
@@ -172,6 +179,103 @@ internal class PluginCreator {
     }
     changeNotes = bean.changeNotes
     description = bean.description
+
+    val rootElement = document.rootElement
+    readActions(rootElement, this)
+
+    readExtensions(rootElement, this)
+    readExtensionPoints(rootElement, this)
+
+    readListeners(rootElement, "applicationListeners", appContainerDescriptor)
+    readListeners(rootElement, "projectListeners", projectContainerDescriptor)
+
+    readComponents(rootElement, "application-components", appContainerDescriptor)
+    readComponents(rootElement, "project-components", projectContainerDescriptor)
+    readComponents(rootElement, "module-components", moduleContainerDescriptor)
+  }
+
+  private fun readActions(rootElement: Element, idePlugin: IdePluginImpl) {
+    for (actionsRoot in rootElement.getChildren("actions")) {
+      idePlugin.actions += actionsRoot.children
+    }
+  }
+
+  private fun readExtensions(rootElement: Element, idePlugin: IdePluginImpl) {
+    for (extensionsRoot in rootElement.getChildren("extensions")) {
+      for (extensionElement in extensionsRoot.children) {
+        when (val epName = extractEPName(extensionElement)) {
+          "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement)
+          "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement)
+          "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement)
+          else -> idePlugin.extensions.put(epName, extensionElement)
+        }
+      }
+    }
+  }
+
+  private fun readExtensionPoints(rootElement: Element, idePlugin: IdePluginImpl) {
+    for (extensionPointsRoot in rootElement.getChildren("extensionPoints")) {
+      for (extensionPoint in extensionPointsRoot.children) {
+        val containerDescriptor = when (extensionPoint.getAttributeValue("area")) {
+          null -> idePlugin.appContainerDescriptor
+          "IDEA_APPLICATION" -> idePlugin.appContainerDescriptor
+          "IDEA_PROJECT" -> idePlugin.projectContainerDescriptor
+          "IDEA_MODULE" -> idePlugin.moduleContainerDescriptor
+          else -> null
+        } ?: continue
+        containerDescriptor.extensionPoints += extensionPoint
+      }
+    }
+  }
+
+  private fun readServiceDescriptor(extensionElement: Element): ServiceDescriptor {
+    val serviceInterface = extensionElement.getAttributeValue("serviceInterface")
+    val serviceImplementation = extensionElement.getAttributeValue("serviceImplementation")
+    return ServiceDescriptor(serviceInterface, serviceImplementation)
+  }
+
+  private fun extractEPName(extensionElement: Element): String {
+    val point = extensionElement.getAttributeValue("point")
+    if (point != null) {
+      return point
+    }
+
+    val parentNs = extensionElement.parentElement?.getAttributeValue("defaultExtensionNs")
+    return if (parentNs != null) {
+      parentNs + '.' + extensionElement.name
+    } else {
+      extensionElement.namespace.uri + '.' + extensionElement.name
+    }
+  }
+
+  private fun readListeners(rootElement: Element, listenersName: String, containerDescriptor: ContainerDescriptor) {
+    for (listenersRoot in rootElement.getChildren(listenersName)) {
+      for (listener in listenersRoot.children) {
+        val className = listener.getAttributeValue("class")
+        val topicName = listener.getAttributeValue("topic")
+        if (className == null) {
+          registerProblem(ElementMissingAttribute("listener", "class"))
+        }
+        if (topicName == null) {
+          registerProblem(ElementMissingAttribute("listener", "topic"))
+        }
+        if (className != null && topicName != null) {
+          containerDescriptor.listeners += ListenerDescriptor(topicName, className)
+        }
+      }
+    }
+  }
+
+  private fun readComponents(rootElement: Element, componentsArea: String, containerDescriptor: ContainerDescriptor) {
+    for (componentsRoot in rootElement.getChildren(componentsArea)) {
+      for (component in componentsRoot.getChildren("component")) {
+        val interfaceClass = component.getChild("interface-class")?.text
+        val implementationClass = component.getChild("implementation-class")?.text
+        if (implementationClass != null) {
+          containerDescriptor.components += ComponentConfig(interfaceClass, implementationClass)
+        }
+      }
+    }
   }
 
   private fun validatePluginBean(bean: PluginBean) {
@@ -284,26 +388,11 @@ internal class PluginCreator {
 
     val listenersAvailableSinceBuild = IdeVersion.createIdeVersion("193")
     if (sinceBuild != null && sinceBuild < listenersAvailableSinceBuild) {
-      if (plugin.applicationListeners.isNotEmpty()) {
+      if (plugin.appContainerDescriptor.listeners.isNotEmpty()) {
         registerProblem(ElementAvailableOnlySinceNewerVersion("applicationListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
       }
-      if (plugin.projectListeners.isNotEmpty()) {
+      if (plugin.projectContainerDescriptor.listeners.isNotEmpty()) {
         registerProblem(ElementAvailableOnlySinceNewerVersion("projectListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
-      }
-    }
-
-    validateListeners(plugin.applicationListeners)
-    validateListeners(plugin.projectListeners)
-  }
-
-  private fun validateListeners(listenersElements: List<Element>) {
-    val mandatoryAttributes = listOf("class", "topic")
-    for (listener in listenersElements) {
-      for (mandatoryAttribute in mandatoryAttributes) {
-        val hasAttribute = listener.getAttributeValue(mandatoryAttribute) != null
-        if (!hasAttribute) {
-          registerProblem(ElementMissingAttribute("listener", mandatoryAttribute))
-        }
       }
     }
   }
@@ -323,7 +412,7 @@ internal class PluginCreator {
     val plugin = IdePluginImpl()
     plugin.underlyingDocument = document
     plugin.icons.addAll(icons)
-    plugin.setInfoFromBean(bean)
+    plugin.setInfoFromBean(bean, document)
 
     val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver) ?: return null
     plugin.declaredThemes.addAll(themeFiles)

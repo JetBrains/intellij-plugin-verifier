@@ -40,6 +40,28 @@
     <depends>duplicatedDependencyId</depends>
     <depends>duplicatedDependencyId</depends>
 
+    <application-components>
+        <component>
+            <implementation-class>SomeApplicationComponent</implementation-class>
+        </component>
+    </application-components>
+
+    <project-components>
+        <component>
+            <implementation-class>SomeProjectComponent</implementation-class>
+        </component>
+    </project-components>
+
+    <module-components>
+        <component>
+            <implementation-class>SomeModuleComponent</implementation-class>
+        </component>
+    </module-components>
+
+    <actions>
+        <action class="SomeActionClass"/>
+        <group id="SomeGroupId"/>
+    </actions>
 
     <!--  Resolve xi:include-s  -->
 
