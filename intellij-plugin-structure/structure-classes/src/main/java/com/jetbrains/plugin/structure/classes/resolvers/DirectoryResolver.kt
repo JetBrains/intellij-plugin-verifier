@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
@@ -112,4 +114,19 @@ class DirectoryResolver(
   }
 
   override fun toString() = root.toAbsolutePath().toString()
+}
+
+fun buildDirectoriesResolvers(
+  directories: Iterable<Path>,
+  readMode: Resolver.ReadMode,
+  parentOrigin: FileOrigin
+): List<Resolver> {
+  val resolvers = arrayListOf<Resolver>()
+  resolvers.closeOnException {
+    directories.mapTo(resolvers) { directory ->
+      val fileOrigin = DirectoryFileOrigin(directory.simpleName, parentOrigin)
+      DirectoryResolver(directory, fileOrigin, readMode)
+    }
+  }
+  return resolvers
 }

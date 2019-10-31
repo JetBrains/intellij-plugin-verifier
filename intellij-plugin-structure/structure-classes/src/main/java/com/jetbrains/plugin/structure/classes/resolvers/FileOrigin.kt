@@ -11,7 +11,9 @@ inline fun <reified T : FileOrigin> FileOrigin.findOriginOfType(): T? =
 
 inline fun <reified T : FileOrigin> FileOrigin.isOriginOfType(): Boolean = findOriginOfType<T>() != null
 
-data class JarFileOrigin(val jarName: String, override val parent: FileOrigin) : FileOrigin
+data class JarOrZipFileOrigin(val fileName: String, override val parent: FileOrigin) : FileOrigin
+
+data class DirectoryFileOrigin(val directoryName: String, override val parent: FileOrigin): FileOrigin
 
 data class JdkFileOrigin(val jdkPath: Path) : FileOrigin {
   override val parent: FileOrigin? = null

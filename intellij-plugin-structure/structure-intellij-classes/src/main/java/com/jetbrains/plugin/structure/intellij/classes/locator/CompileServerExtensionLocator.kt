@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.classes.locator
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.buildJarFileResolvers
+import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.File
 
@@ -26,7 +26,7 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
         .filter { it.endsWith(".jar") }
         .map { File(pluginLib, it) }
         .filter { it.isFile }
-      return buildJarFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
+      return buildJarOrZipFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
     }
     return emptyList()
   }

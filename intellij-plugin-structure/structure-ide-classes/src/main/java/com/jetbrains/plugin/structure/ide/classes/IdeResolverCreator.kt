@@ -41,7 +41,7 @@ object IdeResolverCreator {
     }
 
     val jars = directory.listFiles { file -> file.isJar() }.orEmpty().toList()
-    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, parentOrigin))
+    return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, parentOrigin))
   }
 
   private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode): Resolver {
@@ -65,7 +65,7 @@ object IdeResolverCreator {
 
   private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode): Resolver {
     val jars = getRepositoryLibraries(idePath)
-    return CompositeResolver.create(buildJarFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary))
+    return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary))
   }
 
   private fun getRepositoryLibraries(projectPath: File): List<File> {

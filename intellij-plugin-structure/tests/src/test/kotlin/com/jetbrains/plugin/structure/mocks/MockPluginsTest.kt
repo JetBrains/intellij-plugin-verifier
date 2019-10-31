@@ -129,7 +129,7 @@ class MockPluginsTest {
 
     checkPluginConfiguration(plugin, false)
 
-    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    val pluginJarOrigin = JarOrZipFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
     checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
   }
 
@@ -158,7 +158,7 @@ class MockPluginsTest {
     }
     checkPluginConfiguration(plugin, false)
 
-    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    val pluginJarOrigin = JarOrZipFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
     checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
   }
 
@@ -189,7 +189,7 @@ class MockPluginsTest {
     }
     checkPluginConfiguration(plugin, false)
 
-    val pluginJarOrigin = JarFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    val pluginJarOrigin = JarOrZipFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
     checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
   }
 
@@ -221,7 +221,41 @@ class MockPluginsTest {
     checkPluginConfiguration(plugin, true)
 
     val classesDirOrigin = PluginFileOrigin.ClassesDirectory(plugin)
-    val resourcesJarOrigin = JarFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
+    val resourcesJarOrigin = JarOrZipFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
+  }
+
+  @Test
+  fun `classes and resources directories inside lib`() {
+    val plugin = buildPluginSuccess(expectedWarnings) {
+      buildDirectory(temporaryFolder.newFolder("plugin")) {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("lib") {
+          dir("classes") {
+            dir("somePackage", somePackageDir)
+          }
+
+          dir("resources") {
+            dir("properties", propertiesDir)
+          }
+
+          dir("compile") {
+            zip("compile-library.jar") {
+              dir("META-INF") {
+                dir("services", compileLibraryServices)
+              }
+              dir("com", compileLibraryClassesRoot.resolve("com"))
+            }
+          }
+        }
+      }
+    }
+    checkPluginConfiguration(plugin, true)
+
+    val libDirectory = PluginFileOrigin.LibDirectory(plugin)
+    val classesDirOrigin = DirectoryFileOrigin("classes", libDirectory)
+    val resourcesJarOrigin = DirectoryFileOrigin("resources", libDirectory)
     checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
   }
 
@@ -256,7 +290,7 @@ class MockPluginsTest {
     checkPluginConfiguration(plugin, true)
 
     val classesDirOrigin = PluginFileOrigin.ClassesDirectory(plugin)
-    val resourcesJarOrigin = JarFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
+    val resourcesJarOrigin = JarOrZipFileOrigin("resources.jar", PluginFileOrigin.LibDirectory(plugin))
     checkPluginClassesAndProperties(plugin, classesDirOrigin, resourcesJarOrigin)
   }
 
@@ -561,7 +595,7 @@ class MockPluginsTest {
     assertEquals(setOf(compileLibraryClass), libDirectoryClasses)
 
     val fileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).fileOrigin
-    assertEquals(JarFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)
+    assertEquals(JarOrZipFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)
 
     assertEquals(
       mapOf(

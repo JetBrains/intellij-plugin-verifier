@@ -8,10 +8,10 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.nio.file.Path
 import java.util.*
-import java.util.jar.JarFile
+import java.util.zip.ZipFile
 
 class JarFileResolver(
-  private val ioJarFile: Path,
+  private val path: Path,
   override val readMode: ReadMode,
   private val fileOrigin: FileOrigin
 ) : Resolver() {
@@ -32,17 +32,17 @@ class JarFileResolver(
 
   private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
 
-  private val jarFile: JarFile
+  private val zipFile: ZipFile
 
   init {
-    require(ioJarFile.exists()) { "Jar file $ioJarFile doesn't exist" }
-    require(ioJarFile.simpleName.endsWith(".jar")) { "File $ioJarFile is not a jar archive" }
-    jarFile = JarFile(ioJarFile.toFile())
+    require(path.exists()) { "File does not exist: $path" }
+    require(path.simpleName.endsWith(".jar") || path.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $path" }
+    zipFile = ZipFile(path.toFile())
     readClassNamesAndServiceProviders()
   }
 
   private fun readClassNamesAndServiceProviders() {
-    for (entry in jarFile.entries().iterator()) {
+    for (entry in zipFile.entries().iterator()) {
       val entryName = entry.name.toSystemIndependentName()
       if (entryName.endsWith(CLASS_SUFFIX)) {
         val className = entryName.substringBeforeLast(CLASS_SUFFIX)
@@ -53,15 +53,15 @@ class JarFileResolver(
         bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
       } else if (!entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2) {
         val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
-        serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider, jarFile)
+        serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider, zipFile)
       }
     }
   }
 
-  private fun readServiceImplementationNames(serviceProvider: String, jarFile: JarFile): Set<String> {
+  private fun readServiceImplementationNames(serviceProvider: String, zipFile: ZipFile): Set<String> {
     val entry = SERVICE_PROVIDERS_PREFIX + serviceProvider
-    val jarEntry = jarFile.getJarEntry(entry) ?: return emptySet()
-    val lines = jarFile.getInputStream(jarEntry).reader().readLines()
+    val zipEntry = zipFile.getEntry(entry) ?: return emptySet()
+    val lines = zipFile.getInputStream(zipEntry).reader().readLines()
     return lines.map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
   }
 
@@ -78,11 +78,11 @@ class JarFileResolver(
     get() = classes
 
   override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
-    for (jarEntry in jarFile.entries().iterator()) {
-      val entryName = jarEntry.name
+    for (zipEntry in zipFile.entries().iterator()) {
+      val entryName = zipEntry.name
       if (entryName.endsWith(CLASS_SUFFIX)) {
         val className = entryName.substringBeforeLast(CLASS_SUFFIX)
-        jarFile.getInputStream(jarEntry).use {
+        zipFile.getInputStream(zipEntry).use {
           val classNode = AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
           if (!processor(classNode)) {
             return false
@@ -138,35 +138,35 @@ class JarFileResolver(
   }
 
   private fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    val resourceEntry = jarFile.getEntry(bundleResourceName) ?: return null
-    return jarFile.getInputStream(resourceEntry).use {
+    val resourceEntry = zipFile.getEntry(bundleResourceName) ?: return null
+    return zipFile.getInputStream(resourceEntry).use {
       PropertyResourceBundle(it)
     }
   }
 
   private fun readClassNode(className: String): ClassNode? {
-    val entry = jarFile.getEntry(className + CLASS_SUFFIX) ?: return null
-    return jarFile.getInputStream(entry).use {
+    val entry = zipFile.getEntry(className + CLASS_SUFFIX) ?: return null
+    return zipFile.getInputStream(entry).use {
       AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
     }
   }
 
-  override fun close() = jarFile.close()
+  override fun close() = zipFile.close()
 
-  override fun toString() = ioJarFile.toAbsolutePath().toString()
+  override fun toString() = path.toAbsolutePath().toString()
 
 }
 
-fun buildJarFileResolvers(
-  jars: Iterable<File>,
+fun buildJarOrZipFileResolvers(
+  jarsOrZips: Iterable<File>,
   readMode: Resolver.ReadMode,
   parentOrigin: FileOrigin
 ): List<Resolver> {
   val resolvers = arrayListOf<Resolver>()
   resolvers.closeOnException {
-    jars.mapTo(resolvers) { jarFile ->
-      val jarFileOrigin = JarFileOrigin(jarFile.name, parentOrigin)
-      JarFileResolver(jarFile.toPath(), readMode, jarFileOrigin)
+    jarsOrZips.mapTo(resolvers) { file ->
+      val fileOrigin = JarOrZipFileOrigin(file.name, parentOrigin)
+      JarFileResolver(file.toPath(), readMode, fileOrigin)
     }
   }
   return resolvers
