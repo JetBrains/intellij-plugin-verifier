@@ -55,7 +55,7 @@ class IdePluginImpl : IdePlugin {
 
   val moduleContainerDescriptor = ContainerDescriptor()
 
-  override val icons: MutableList<PluginIcon> = arrayListOf()
+  override var icons: List<PluginIcon> = emptyList()
 
   override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
 

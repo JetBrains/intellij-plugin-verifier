@@ -24,7 +24,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
-internal class PluginCreator {
+internal class PluginCreator private constructor(val pluginFile: File, val descriptorPath: String) {
 
   companion object {
     private val LOG = LoggerFactory.getLogger(PluginCreator::class.java)
@@ -40,39 +40,35 @@ internal class PluginCreator {
 
     private val jsonMapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-    val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+    @JvmStatic
+    fun createPlugin(
+      pluginFile: File,
+      descriptorPath: String,
+      validateDescriptor: Boolean,
+      document: Document,
+      documentUrl: URL,
+      pathResolver: ResourceResolver
+    ): PluginCreator {
+      val pluginCreator = PluginCreator(pluginFile, descriptorPath)
+      pluginCreator.plugin = pluginCreator.resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, validateDescriptor)
+      return pluginCreator
+    }
+
+    @JvmStatic
+    fun createInvalidPlugin(pluginFile: File, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
+      require(singleProblem.level == PluginProblem.Level.ERROR) { "Only ERROR problems are allowed here" }
+      val pluginCreator = PluginCreator(pluginFile, descriptorPath)
+      pluginCreator.registerProblem(singleProblem)
+      return pluginCreator
+    }
   }
 
-  val pluginFile: File
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
-  val descriptorPath: String
-  private val validateDescriptor: Boolean
-  private val plugin: IdePluginImpl?
+
+  private var plugin: IdePluginImpl? = null
   private val problems = arrayListOf<PluginProblem>()
-
-  constructor(
-    descriptorPath: String,
-    validateDescriptor: Boolean,
-    document: Document,
-    documentUrl: URL,
-    pathResolver: ResourceResolver,
-    pluginFile: File,
-    icons: List<PluginIcon>
-  ) {
-    this.descriptorPath = descriptorPath
-    this.pluginFile = pluginFile
-    this.validateDescriptor = validateDescriptor
-    plugin = resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, icons)
-  }
-
-  constructor(descriptorPath: String, singleProblem: PluginProblem, pluginFile: File) {
-    require(singleProblem.level == PluginProblem.Level.ERROR) { "Only severe problems allowed here" }
-    this.descriptorPath = descriptorPath
-    this.pluginFile = pluginFile
-    this.validateDescriptor = true
-    registerProblem(singleProblem)
-    plugin = null
-  }
 
   val isSuccess: Boolean
     get() = !hasErrors()
@@ -89,10 +85,11 @@ internal class PluginCreator {
     configurationFile: String,
     optionalDependencyCreator: PluginCreator
   ) {
+    val plugin = this.plugin ?: throw IllegalStateException()
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val optionalPlugin = pluginCreationResult.plugin
-      plugin!!.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
+      plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       plugin.extensions.putAll(optionalPlugin.extensions)
       if (optionalPlugin is IdePluginImpl) {
         plugin.appContainerDescriptor.mergeWith(optionalPlugin.appContainerDescriptor)
@@ -116,6 +113,10 @@ internal class PluginCreator {
 
   fun registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFileCycle: List<String>) {
     registerProblem(OptionalDependencyDescriptorCycleProblem(descriptorPath, configurationFileCycle))
+  }
+
+  fun setIcons(icons: List<PluginIcon>) {
+    plugin?.icons = icons
   }
 
   fun setPluginVersion(pluginVersion: String) {
@@ -279,24 +280,22 @@ internal class PluginCreator {
   }
 
   private fun validatePluginBean(bean: PluginBean) {
-    if (validateDescriptor) {
-      validateAttributes(bean)
-      validateId(bean.id)
-      validateName(bean.name)
-      validateVersion(bean.pluginVersion)
-      validateDescription(bean.description)
-      validateChangeNotes(bean.changeNotes)
-      validateVendor(bean.vendor)
-      validateIdeaVersion(bean.ideaVersion)
-      validateProductDescriptor(bean.productDescriptor)
+    validateAttributes(bean)
+    validateId(bean.id)
+    validateName(bean.name)
+    validateVersion(bean.pluginVersion)
+    validateDescription(bean.description)
+    validateChangeNotes(bean.changeNotes)
+    validateVendor(bean.vendor)
+    validateIdeaVersion(bean.ideaVersion)
+    validateProductDescriptor(bean.productDescriptor)
 
-      if (bean.dependencies != null) {
-        validateDependencies(bean.dependencies)
-      }
+    if (bean.dependencies != null) {
+      validateDependencies(bean.dependencies)
+    }
 
-      if (bean.modules?.any { it.isEmpty() } == true) {
-        registerProblem(InvalidModuleBean(descriptorPath))
-      }
+    if (bean.modules?.any { it.isEmpty() } == true) {
+      registerProblem(InvalidModuleBean(descriptorPath))
     }
   }
 
@@ -402,16 +401,17 @@ internal class PluginCreator {
     documentUrl: URL,
     documentPath: String,
     pathResolver: ResourceResolver,
-    icons: List<PluginIcon>
+    validateDescriptor: Boolean
   ): IdePluginImpl? {
     val document = resolveXIncludesOfDocument(originalDocument, documentUrl, documentPath, pathResolver) ?: return null
     val bean = readDocumentIntoXmlBean(document) ?: return null
-    validatePluginBean(bean)
+    if (validateDescriptor) {
+      validatePluginBean(bean)
+    }
     if (hasErrors()) return null
 
     val plugin = IdePluginImpl()
     plugin.underlyingDocument = document
-    plugin.icons.addAll(icons)
     plugin.setInfoFromBean(bean, document)
 
     val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver) ?: return null

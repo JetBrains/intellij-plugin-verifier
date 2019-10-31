@@ -82,7 +82,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       zipFile = new ZipFile(jarFile);
     } catch (Exception e) {
       LOG.info("Unable to read jar file " + jarFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadJarFile(), jarFile);
+      return PluginCreator.createInvalidPlugin(jarFile, descriptorPath, new UnableToReadJarFile());
     }
 
     try {
@@ -93,14 +93,16 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
           Document document = JDOMUtil.loadDocument(documentStream);
           List<PluginIcon> icons = getIconsFromJarFile(zipFile);
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
-          return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, resourceResolver, jarFile, icons);
+          PluginCreator plugin = PluginCreator.createPlugin(jarFile, descriptorPath, validateDescriptor, document, documentUrl, resourceResolver);
+          plugin.setIcons(icons);
+          return plugin;
         } catch (Exception e) {
           LOG.info("Unable to read file " + descriptorPath, e);
           String message = e.getLocalizedMessage();
-          return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath, message), jarFile);
+          return PluginCreator.createInvalidPlugin(jarFile, descriptorPath, new UnableToReadDescriptor(descriptorPath, message));
         }
       } else {
-        return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), jarFile);
+        return PluginCreator.createInvalidPlugin(jarFile, descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
       }
     } finally {
       try {
@@ -140,15 +142,17 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
       List<PluginIcon> icons = loadIconsFromDir(pluginDirectory);
-      return new PluginCreator(descriptorPath, validateDescriptor, document, documentUrl, resourceResolver, pluginDirectory, icons);
+      PluginCreator plugin = PluginCreator.createPlugin(pluginDirectory, descriptorPath, validateDescriptor, document, documentUrl, resourceResolver);
+      plugin.setIcons(icons);
+      return plugin;
     } catch (JDOMParseException e) {
       int lineNumber = e.getLineNumber();
       String message = lineNumber != -1 ? "unexpected element on line " + lineNumber : "unexpected elements";
       LOG.info("Unable to parse plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
-      return new PluginCreator(descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath), pluginDirectory);
+      return PluginCreator.createInvalidPlugin(pluginDirectory, descriptorPath, new UnexpectedDescriptorElements(message, descriptorPath));
     } catch (Exception e) {
       LOG.info("Unable to read plugin descriptor " + descriptorPath + " of plugin " + descriptorFile, e);
-      return new PluginCreator(descriptorPath, new UnableToReadDescriptor(descriptorPath, descriptorPath), pluginDirectory);
+      return PluginCreator.createInvalidPlugin(pluginDirectory, descriptorPath, new UnableToReadDescriptor(descriptorPath, descriptorPath));
     }
   }
 
@@ -172,12 +176,12 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
                                                        @NotNull ResourceResolver resourceResolver) {
     File libDir = new File(root, "lib");
     if (!libDir.isDirectory()) {
-      return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
+      return PluginCreator.createInvalidPlugin(root, descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
     }
 
     final File[] files = libDir.listFiles();
     if (files == null || files.length == 0) {
-      return new PluginCreator(descriptorPath, new PluginLibDirectoryIsEmpty(), root);
+      return PluginCreator.createInvalidPlugin(root, descriptorPath, new PluginLibDirectoryIsEmpty());
     }
     putMoreLikelyPluginJarsFirst(root, files);
 
@@ -215,14 +219,14 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
           second.getDescriptorPath(),
           second.getPluginFile().getName()
       );
-      return new PluginCreator(descriptorPath, multipleDescriptorsProblem, root);
+      return PluginCreator.createInvalidPlugin(root, descriptorPath, multipleDescriptorsProblem);
     }
 
     if (possibleResults.size() == 1) {
       return possibleResults.get(0);
     }
 
-    return new PluginCreator(descriptorPath, new PluginDescriptorIsNotFound(descriptorPath), root);
+    return PluginCreator.createInvalidPlugin(root, descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
   }
 
   private static boolean hasOnlyInvalidDescriptorErrors(@NotNull PluginCreator creator) {
@@ -365,7 +369,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       extractorResult = PluginExtractor.INSTANCE.extractPlugin(zipPlugin, myExtractDirectory);
     } catch (Exception e) {
       LOG.info("Unable to extract plugin zip " + zipPlugin, e);
-      return new PluginCreator(descriptorPath, new UnableToExtractZip(), zipPlugin);
+      return PluginCreator.createInvalidPlugin(zipPlugin, descriptorPath, new UnableToExtractZip());
     }
     if (extractorResult instanceof ExtractorResult.Success) {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {
@@ -379,7 +383,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
         return getInvalidPluginFileCreator(zipPlugin, descriptorPath);
       }
     } else {
-      return new PluginCreator(descriptorPath, ((ExtractorResult.Fail) extractorResult).getPluginProblem(), zipPlugin);
+      return PluginCreator.createInvalidPlugin(zipPlugin, descriptorPath, ((ExtractorResult.Fail) extractorResult).getPluginProblem());
     }
   }
 
@@ -432,7 +436,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
 
   @NotNull
   private PluginCreator getInvalidPluginFileCreator(@NotNull File pluginFile, @NotNull String descriptorPath) {
-    return new PluginCreator(descriptorPath, PluginFileErrorsKt.createIncorrectIntellijFileProblem(pluginFile.getName()), pluginFile);
+    return PluginCreator.createInvalidPlugin(pluginFile, descriptorPath, PluginFileErrorsKt.createIncorrectIntellijFileProblem(pluginFile.getName()));
   }
 
   @NotNull
