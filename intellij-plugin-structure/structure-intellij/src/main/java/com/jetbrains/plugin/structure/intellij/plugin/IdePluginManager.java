@@ -76,7 +76,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator loadPluginInfoFromJarFile(@NotNull File jarFile,
                                                   @NotNull final String descriptorPath,
                                                   boolean validateDescriptor,
-                                                  @NotNull final ResourceResolver resourceResolver) {
+                                                  @NotNull final ResourceResolver resourceResolver,
+                                                  @Nullable PluginCreator parentPlugin) {
     ZipFile zipFile;
     try {
       zipFile = new ZipFile(jarFile);
@@ -93,7 +94,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
           Document document = JDOMUtil.loadDocument(documentStream);
           List<PluginIcon> icons = getIconsFromJarFile(zipFile);
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
-          PluginCreator plugin = PluginCreator.createPlugin(jarFile, descriptorPath, validateDescriptor, document, documentUrl, resourceResolver);
+          PluginCreator plugin = PluginCreator.createPlugin(jarFile, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, resourceResolver);
           plugin.setIcons(icons);
           return plugin;
         } catch (Exception e) {
@@ -132,17 +133,18 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator loadPluginInfoFromDirectory(@NotNull File pluginDirectory,
                                                     @NotNull String descriptorPath,
                                                     boolean validateDescriptor,
-                                                    @NotNull ResourceResolver resourceResolver) {
+                                                    @NotNull ResourceResolver resourceResolver,
+                                                    @Nullable PluginCreator parentPlugin) {
     File descriptorFile = new File(new File(pluginDirectory, META_INF), FileUtilKt.toSystemIndependentName(descriptorPath));
     if (!descriptorFile.exists()) {
-      return loadPluginInfoFromLibDirectory(pluginDirectory, descriptorPath, validateDescriptor, resourceResolver);
+      return loadPluginInfoFromLibDirectory(pluginDirectory, descriptorPath, validateDescriptor, resourceResolver, parentPlugin);
     }
 
     try {
       URL documentUrl = URLUtil.fileToUrl(descriptorFile);
       Document document = JDOMUtil.loadDocument(documentUrl);
       List<PluginIcon> icons = loadIconsFromDir(pluginDirectory);
-      PluginCreator plugin = PluginCreator.createPlugin(pluginDirectory, descriptorPath, validateDescriptor, document, documentUrl, resourceResolver);
+      PluginCreator plugin = PluginCreator.createPlugin(pluginDirectory, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, resourceResolver);
       plugin.setIcons(icons);
       return plugin;
     } catch (JDOMParseException e) {
@@ -173,7 +175,8 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator loadPluginInfoFromLibDirectory(@NotNull final File root,
                                                        @NotNull String descriptorPath,
                                                        boolean validateDescriptor,
-                                                       @NotNull ResourceResolver resourceResolver) {
+                                                       @NotNull ResourceResolver resourceResolver,
+                                                       @Nullable PluginCreator parentPlugin) {
     File libDir = new File(root, "lib");
     if (!libDir.isDirectory()) {
       return PluginCreator.createInvalidPlugin(root, descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
@@ -195,10 +198,10 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       PluginCreator innerCreator;
       if (FileUtilKt.isJar(file) || FileUtilKt.isZip(file)) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
-        innerCreator = loadPluginInfoFromJarFile(file, descriptorPath, validateDescriptor, compositeResolver);
+        innerCreator = loadPluginInfoFromJarFile(file, descriptorPath, validateDescriptor, compositeResolver, parentPlugin);
       } else if (file.isDirectory()) {
         //Use the common resource resolver, which is unaware of lib's jar files.
-        innerCreator = loadPluginInfoFromDirectory(file, descriptorPath, validateDescriptor, resourceResolver);
+        innerCreator = loadPluginInfoFromDirectory(file, descriptorPath, validateDescriptor, resourceResolver, parentPlugin);
       } else {
         continue;
       }
@@ -290,12 +293,13 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
   private PluginCreator loadPluginInfoFromJarOrDirectory(@NotNull File pluginFile,
                                                          @NotNull String descriptorPath,
                                                          boolean validateDescriptor,
-                                                         ResourceResolver resourceResolver) {
+                                                         ResourceResolver resourceResolver,
+                                                         @Nullable PluginCreator parentPlugin) {
     descriptorPath = FileUtilKt.toSystemIndependentName(descriptorPath);
     if (pluginFile.isDirectory()) {
-      return loadPluginInfoFromDirectory(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
+      return loadPluginInfoFromDirectory(pluginFile, descriptorPath, validateDescriptor, resourceResolver, parentPlugin);
     } else if (FileUtilKt.isJar(pluginFile)) {
-      return loadPluginInfoFromJarFile(pluginFile, descriptorPath, validateDescriptor, resourceResolver);
+      return loadPluginInfoFromJarFile(pluginFile, descriptorPath, validateDescriptor, resourceResolver, parentPlugin);
     } else {
       throw new IllegalArgumentException();
     }
@@ -327,6 +331,10 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     }
   }
 
+  /**
+   * [mainPlugin] - the root plugin (plugin.xml)
+   * [currentPlugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
+   */
   private void resolveOptionalDependencies(PluginCreator currentPlugin,
                                            Set<String> visitedConfigurationFiles,
                                            LinkedList<String> path,
@@ -350,7 +358,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
         return;
       }
 
-      PluginCreator optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver);
+      PluginCreator optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver, currentPlugin);
       currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator);
 
       resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, mainPlugin);
@@ -375,7 +383,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       try (ExtractedPlugin extractedPlugin = ((ExtractorResult.Success) extractorResult).getExtractedPlugin()) {
         File extractedFile = extractedPlugin.getPluginFile();
         if (FileUtilKt.isJar(extractedFile) || extractedFile.isDirectory()) {
-          PluginCreator pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver);
+          PluginCreator pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null);
           resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver);
           return pluginCreator;
         }
@@ -425,7 +433,7 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
     if (FileUtilKt.isZip(pluginFile)) {
       pluginCreator = extractZipAndCreatePlugin(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
     } else if (FileUtilKt.isJar(pluginFile) || pluginFile.isDirectory()) {
-      pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver);
+      pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null);
       resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver);
     } else {
       pluginCreator = getInvalidPluginFileCreator(pluginFile, descriptorPath);

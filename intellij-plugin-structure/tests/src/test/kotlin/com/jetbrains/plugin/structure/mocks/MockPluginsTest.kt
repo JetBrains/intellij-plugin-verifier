@@ -19,7 +19,6 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescri
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jdom2.Element
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -574,8 +573,7 @@ class MockPluginsTest {
       setOf(
         "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
         "com.intellij.compileServer.plugin",
-        "org.jetbrains.kotlin.defaultErrorMessages",
-        "org.jetbrains.kotlin.diagnosticSuppressor"
+        "EpWithDefaultNs.someEP"
       ),
       plugin.extensions.keys().toSet()
     )
@@ -587,13 +585,11 @@ class MockPluginsTest {
     assertEquals(
       setOf(
         "org.jetbrains.kotlin2.updater",
-        "org.jetbrains.kotlin2.projectConfigurator",
-        "org.jetbrains.kotlin2.defaultErrorMessages",
         "org.jetbrains.kotlin2.appEP",
         "org.jetbrains.kotlin2.appEP2",
-        "org.jetbrains.kotlin2.updater"
+        "org.jetbrains.kotlin2.optionalUpdater"
       ),
-      appContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+      appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
 
     assertEquals(
@@ -603,7 +599,7 @@ class MockPluginsTest {
 
     assertEquals(
       setOf("org.jetbrains.kotlin2.projectEP"),
-      projectContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+      projectContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
 
     assertEquals(
@@ -613,7 +609,7 @@ class MockPluginsTest {
 
     assertEquals(
       setOf("org.jetbrains.kotlin2.moduleEP"),
-      moduleContainerDescriptor.extensionPoints.map { getExtensionPointName(it, plugin) }.toSet()
+      moduleContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
 
     assertEquals(
@@ -624,12 +620,12 @@ class MockPluginsTest {
     assertEquals(2, plugin.actions.size)
     assertNotNull(plugin.actions.find { it.getAttributeValue("class") == "SomeActionClass" })
     assertNotNull(plugin.actions.find { it.getAttributeValue("id") == "SomeGroupId" })
-  }
 
-  private fun getExtensionPointName(extensionPoint: Element, idePlugin: IdePluginImpl): String? {
-    extensionPoint.getAttributeValue("qualifiedName")?.let { return it }
-    val name = extensionPoint.getAttributeValue("name") ?: return null
-    return idePlugin.pluginId + "." + name
+    val optionalPlugin = plugin.optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin as IdePluginImpl
+    assertEquals(
+      setOf("org.jetbrains.kotlin2.optionalUpdater"),
+      optionalPlugin.appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
+    )
   }
 
   private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations, plugin: IdePlugin) {

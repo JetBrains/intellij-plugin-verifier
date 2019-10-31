@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <defaultErrorMessages implementation="org.jetbrains.kotlin.js.resolve.diagnostics.DefaultErrorMessagesJs"/>
-    </extensions>
-</idea-plugin>

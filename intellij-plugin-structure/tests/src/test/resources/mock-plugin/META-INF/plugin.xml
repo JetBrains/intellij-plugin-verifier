@@ -18,10 +18,6 @@
         <compileServer.plugin classpath="compile/compile-library.jar"/>
     </extensions>
 
-    <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <xi:include href="extensions/kotlin2jvm.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
-    </extensions>
-
     <!--  Dependencies configuration files  -->
 
     <depends optional="true" config-file="extension.xml">JUnit</depends>

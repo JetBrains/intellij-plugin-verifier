@@ -1,10 +1,5 @@
 <idea-plugin>
-    <id>org.jetbrains.kotlin</id>
-
     <extensionPoints>
-        <extensionPoint name="defaultErrorMessages"
-                        interface="org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages$Extension"/>
-
         <extensionPoint name="appEP" interface="doesntMatter"/>
         <extensionPoint area="IDEA_APPLICATION" name="appEP2" interface="doesntMatter"/>
         <extensionPoint area="IDEA_PROJECT" name="projectEP" interface="doesntMatter"/>

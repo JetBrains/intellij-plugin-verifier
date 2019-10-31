@@ -2,6 +2,11 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import org.jdom2.Element
 
+data class ExtensionPoint(
+  val extensionPointName: String,
+  val extensionElement: Element
+)
+
 data class ComponentConfig(
   val interfaceClass: String?,
   val implementationClass: String
@@ -21,5 +26,5 @@ data class ContainerDescriptor(
   val services: MutableList<ServiceDescriptor> = arrayListOf(),
   val components: MutableList<ComponentConfig> = arrayListOf(),
   val listeners: MutableList<ListenerDescriptor> = arrayListOf(),
-  val extensionPoints: MutableList<Element> = arrayListOf()
+  val extensionPoints: MutableList<ExtensionPoint> = arrayListOf()
 )
