@@ -232,7 +232,8 @@ internal class PluginCreator private constructor(
           "IDEA_MODULE" -> idePlugin.moduleContainerDescriptor
           else -> null
         } ?: continue
-        containerDescriptor.extensionPoints += ExtensionPoint(extensionPointName, extensionPoint)
+        val isDynamic = extensionPoint.getAttributeValue("dynamic")?.toBoolean() ?: false
+        containerDescriptor.extensionPoints += ExtensionPoint(extensionPointName, isDynamic, extensionPoint)
       }
     }
   }

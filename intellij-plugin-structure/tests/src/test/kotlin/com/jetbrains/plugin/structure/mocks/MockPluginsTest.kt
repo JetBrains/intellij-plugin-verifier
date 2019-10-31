@@ -591,6 +591,7 @@ class MockPluginsTest {
       ),
       appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
+    assertTrue(appContainerDescriptor.extensionPoints.find { it.extensionPointName == "org.jetbrains.kotlin2.optionalUpdater" }!!.isDynamic)
 
     assertEquals(
       setOf("SomeApplicationComponent"),

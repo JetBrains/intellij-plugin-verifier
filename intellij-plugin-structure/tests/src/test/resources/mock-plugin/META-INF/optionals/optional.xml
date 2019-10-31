@@ -1,5 +1,5 @@
 <idea-plugin>
     <extensionPoints>
-        <extensionPoint name="optionalUpdater" beanClass="com.intellij.BeanClass"/>
+        <extensionPoint name="optionalUpdater" beanClass="com.intellij.BeanClass" dynamic="true"/>
     </extensionPoints>
 </idea-plugin>

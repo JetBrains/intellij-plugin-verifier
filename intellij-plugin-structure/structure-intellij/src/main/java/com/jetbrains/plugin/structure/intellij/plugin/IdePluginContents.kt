@@ -4,6 +4,7 @@ import org.jdom2.Element
 
 data class ExtensionPoint(
   val extensionPointName: String,
+  val isDynamic: Boolean,
   val extensionElement: Element
 )
 
