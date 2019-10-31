@@ -31,7 +31,8 @@ data class FullVerificationResultDto(
   val experimentalApiUsages: List<ExperimentalApiUsageDto> = emptyList(),
   val internalApiUsages: List<InternalApiUsageDto> = emptyList(),
   val overrideOnlyApiUsages: List<OverrideOnlyApiUsageDto> = emptyList(),
-  val nonExtendableApiUsages: List<NonExtendableApiUsageDto> = emptyList()
+  val nonExtendableApiUsages: List<NonExtendableApiUsageDto> = emptyList(),
+  val dynamicStatusStatus: DynamicPluginStatusDto = DynamicPluginStatusDto(DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_IMMEDIATELY, emptyList(), emptyList())
 )
 
 data class AvailableIdeDto(
@@ -120,7 +121,7 @@ data class MissingDependenciesSetDto(
   val missingDependencies: Set<DependenciesGraphDto.MissingDependencyDto>
 )
 
-class DependenciesGraphDto(
+data class DependenciesGraphDto(
   val start: DependencyNodeDto,
   val vertices: List<DependencyNodeDto>,
   val edges: List<DependencyEdgeDto>,
@@ -148,4 +149,16 @@ class DependenciesGraphDto(
     val dependency: DependencyDto,
     val missingReason: String
   )
+}
+
+data class DynamicPluginStatusDto(
+  val status: Status,
+  val reasonsNotToLoadUnloadImmediately: List<String>,
+  val reasonsNotToLoadWithoutRestart: List<String>
+) {
+  enum class Status {
+    ALLOW_LOAD_UNLOAD_IMMEDIATELY,
+    ALLOW_LOAD_UNLOAD_WITHOUT_RESTART,
+    NOT_DYNAMIC
+  }
 }

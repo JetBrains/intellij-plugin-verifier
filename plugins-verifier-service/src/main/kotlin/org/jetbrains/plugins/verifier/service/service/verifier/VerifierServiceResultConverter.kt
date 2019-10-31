@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
@@ -71,9 +72,19 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         experimentalApiUsages = experimentalApiUsages.map { it.convert() },
         internalApiUsages = internalApiUsages.map { it.convert() },
         overrideOnlyApiUsages = overrideOnlyMethodUsages.map { it.convert() },
-        nonExtendableApiUsages = nonExtendableApiUsages.map { it.convert() }
+        nonExtendableApiUsages = nonExtendableApiUsages.map { it.convert() },
+        dynamicStatusStatus = dynamicPluginStatus!!.convert()
       )
   }
+}
+
+private fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
+  val status = when (this) {
+    DynamicPluginStatus.AllowLoadUnloadImmediately -> DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_IMMEDIATELY
+    is DynamicPluginStatus.AllowLoadUnloadWithoutRestart -> DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_WITHOUT_RESTART
+    is DynamicPluginStatus.NotDynamic -> DynamicPluginStatusDto.Status.NOT_DYNAMIC
+  }
+  return DynamicPluginStatusDto(status, reasonsNotToLoadUnloadImmediately.toList(), reasonsNotToLoadUnloadWithoutRestart.toList())
 }
 
 private fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =

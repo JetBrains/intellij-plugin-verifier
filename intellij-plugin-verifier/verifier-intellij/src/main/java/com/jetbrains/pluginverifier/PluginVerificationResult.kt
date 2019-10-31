@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
@@ -35,7 +36,9 @@ sealed class PluginVerificationResult(
     val internalApiUsages: Set<InternalApiUsage> = emptySet(),
     val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
     val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet(),
-    val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet()
+    val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet(),
+    //Applicable only for PluginVerificationTarget.IDE
+    val dynamicPluginStatus: DynamicPluginStatus? = null
   ) : PluginVerificationResult(plugin, verificationTarget) {
 
     val hasDirectMissingMandatoryDependencies: Boolean

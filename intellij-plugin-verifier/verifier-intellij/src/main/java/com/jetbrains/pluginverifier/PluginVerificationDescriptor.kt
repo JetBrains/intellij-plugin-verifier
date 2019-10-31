@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -23,6 +24,10 @@ sealed class PluginVerificationDescriptor {
     override val classResolverProvider: DefaultClassResolverProvider,
     override val checkedPlugin: PluginInfo
   ) : PluginVerificationDescriptor() {
+
+    val ide: Ide
+      get() = ideDescriptor.ide
+
     val ideVersion: IdeVersion
       get() = ideDescriptor.ideVersion
 
