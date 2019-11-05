@@ -137,13 +137,6 @@ class ExternalAnnotationsApiReportWriter : ApiReportWriter {
     }
   }
 
-  private val ApiSignature.javaPackageName: String
-    get() = when (this) {
-      is ClassSignature -> className.substringBeforeLast("/", "").replace('/', '.')
-      is MethodSignature -> hostSignature.javaPackageName
-      is FieldSignature -> hostSignature.javaPackageName
-    }
-
 }
 
 sealed class ApiEventAnnotation(val annotationName: String, val valueName: String)
@@ -221,6 +214,13 @@ val ApiSignature.externalPresentation: String
     is ClassSignature -> externalPresentation
     is MethodSignature -> externalPresentation
     is FieldSignature -> externalPresentation
+  }
+
+val ApiSignature.javaPackageName: String
+  get() = when (this) {
+    is ClassSignature -> className.substringBeforeLast("/", "").replace('/', '.')
+    is MethodSignature -> hostSignature.javaPackageName
+    is FieldSignature -> hostSignature.javaPackageName
   }
 
 private val ClassSignature.externalPresentation: String

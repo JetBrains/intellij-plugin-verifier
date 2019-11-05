@@ -23,6 +23,7 @@ import org.jetbrains.ide.diff.builder.api.*
 import org.jetbrains.ide.diff.builder.ide.buildIdeResources
 import org.jetbrains.ide.diff.builder.ide.toSignature
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
+import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.javaPackageName
 import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
@@ -221,13 +222,17 @@ class ApiQualityCheckCommand : Command {
       }
     }
 
-    if (report.stabilizedExperimentalApis.isNotEmpty()) {
+    val stabilizedApis = report.stabilizedExperimentalApis
+    if (stabilizedApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
         appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
         appendln("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2019.html")
         appendln()
-        for ((signature, inVersion) in report.stabilizedExperimentalApis) {
-          appendln("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
+        for ((_, apisOfPackage) in stabilizedApis.sortedBy { it.apiSignature.javaPackageName }.groupBy { it.apiSignature.javaPackageName }) {
+          for ((signature, inVersion) in apisOfPackage) {
+            appendln("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
+          }
+          appendln("")
         }
       }
       Paths.get("stabilized-experimental-apis.txt").writeText(stabilizedMessage)
