@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.misc.safeEquals
 import com.jetbrains.pluginverifier.misc.safeHashCode
@@ -29,7 +30,11 @@ data class AvailableIde(
   /**
    * Date when this IDE was uploaded to repository.
    */
-  val uploadDate: LocalDate
+  val uploadDate: LocalDate,
+  /**
+   * IntelliJ Platform Product descriptor.
+   */
+  val product: IntelliJPlatformProduct
 ) {
 
   override fun toString() = version.toString() + (if (isRelease) " ($releaseVersion)" else "")

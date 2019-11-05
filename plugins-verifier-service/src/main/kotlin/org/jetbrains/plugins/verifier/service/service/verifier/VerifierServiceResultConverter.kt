@@ -91,7 +91,7 @@ private fun PluginVerificationResult.Verified.convertResultType(): VerificationR
   }
 
 private fun AvailableIde.convert() =
-  AvailableIdeDto(version.asString(), releaseVersion)
+  AvailableIdeDto(version.asString(), releaseVersion, product.productName)
 
 private fun DependenciesGraph.convert() =
   DependenciesGraphDto(

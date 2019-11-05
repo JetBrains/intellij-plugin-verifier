@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.ide
 
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.ArtifactJson
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
@@ -34,16 +35,20 @@ internal class IntelliJRepositoryIndexParser {
       }
 
       for (artifactInfo in ideArtifacts) {
+        val productCode = IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId) ?: continue
+
         val ideVersion = IdeVersion.createIdeVersionIfValid(buildNumber)
-          ?.setProductCodeIfAbsent(IntelliJIdeRepository.getProductCodeByArtifactId(artifactInfo.artifactId)!!)
+          ?.setProductCodeIfAbsent(productCode)
           ?: continue
+
+        val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: continue
 
         val downloadUrl = buildDownloadUrl(artifactInfo, channel, groupId, version)
 
         val isRelease = channel == IntelliJIdeRepository.Channel.RELEASE && isReleaseLikeVersion(artifactInfo.version)
         val releasedVersion = version.takeIf { isRelease }
         val uploadDate = Instant.ofEpochMilli(artifactInfo.lastModifiedUnixTimeMs).atZone(ZoneOffset.UTC).toLocalDate()
-        val availableIde = AvailableIde(ideVersion, releasedVersion, downloadUrl, uploadDate)
+        val availableIde = AvailableIde(ideVersion, releasedVersion, downloadUrl, uploadDate, product)
         allAvailableIdes.add(availableIde)
       }
     }

@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.Product
 import org.junit.Assert.assertEquals
@@ -44,7 +45,15 @@ class DataServicesIndexParserTest {
     assertEquals(expectedIdes, actualIdes)
   }
 
-  private fun availableIde(version: String, releaseVersion: String?, url: String, uploadDate: LocalDate) =
-    AvailableIde(createIdeVersion(version), releaseVersion, URL(URL("https://download.jetbrains.com"), url), uploadDate)
+  private fun availableIde(version: String, releaseVersion: String?, url: String, uploadDate: LocalDate): AvailableIde {
+    val ideVersion = createIdeVersion(version)
+    return AvailableIde(
+      ideVersion,
+      releaseVersion,
+      URL(URL("https://download.jetbrains.com"), url),
+      uploadDate,
+      IntelliJPlatformProduct.fromIdeVersion(ideVersion)!!
+    )
+  }
 
 }

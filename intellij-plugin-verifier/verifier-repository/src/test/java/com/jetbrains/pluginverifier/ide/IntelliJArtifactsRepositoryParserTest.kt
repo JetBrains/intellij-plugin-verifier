@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.github.salomonbrys.kotson.fromJson
 import com.google.gson.Gson
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.ArtifactsJson
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
@@ -34,42 +35,48 @@ class IntelliJArtifactsRepositoryParserTest {
         IdeVersion.createIdeVersion("IU-181.3870.7"),
         null,
         URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/181.3870.7/ideaIU-181.3870.7.zip"),
-        LocalDate.of(2018, 2, 20)
+        LocalDate.of(2018, 2, 20),
+        IntelliJPlatformProduct.IDEA
       ),
 
       AvailableIde(
         IdeVersion.createIdeVersion("IC-181.3870.7"),
         null,
         URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/181.3870.7/ideaIC-181.3870.7.zip"),
-        LocalDate.of(2018, 2, 20)
+        LocalDate.of(2018, 2, 20),
+        IntelliJPlatformProduct.IDEA_IC
       ),
 
       AvailableIde(
         IdeVersion.createIdeVersion("IU-173.4548.28"),
         "2017.3.4",
         URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIU/2017.3.4/ideaIU-2017.3.4.zip"),
-        LocalDate.of(2018, 1, 30)
+        LocalDate.of(2018, 1, 30),
+        IntelliJPlatformProduct.IDEA
       ),
 
       AvailableIde(
         IdeVersion.createIdeVersion("IC-173.4548.28"),
         "2017.3.4",
         URL("$REPO_URL/com/jetbrains/intellij/idea/ideaIC/2017.3.4/ideaIC-2017.3.4.zip"),
-        LocalDate.of(2018, 1, 30)
+        LocalDate.of(2018, 1, 30),
+        IntelliJPlatformProduct.IDEA_IC
       ),
 
       AvailableIde(
         IdeVersion.createIdeVersion("RD-173.3994.2442"),
         null,
         URL("$REPO_URL/com/jetbrains/intellij/rider/riderRD/173.3994.2442/riderRD-173.3994.2442.zip"),
-        LocalDate.of(2018, 2, 6)
+        LocalDate.of(2018, 2, 6),
+        IntelliJPlatformProduct.RIDER
       ),
 
       AvailableIde(
         IdeVersion.createIdeVersion("MPS-181.1168"),
         "2018.1",
         URL("$REPO_URL/com/jetbrains/mps/mps/2018.1/mps-2018.1.zip"),
-        LocalDate.of(2018, 4, 6)
+        LocalDate.of(2018, 4, 6),
+        IntelliJPlatformProduct.MPS
       )
     )
 

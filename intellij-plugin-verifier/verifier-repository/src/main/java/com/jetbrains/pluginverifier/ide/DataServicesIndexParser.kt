@@ -25,7 +25,7 @@ internal class DataServicesIndexParser {
               if (ideVersion != null) {
                 val releaseVersion = getReleaseVersion(release)
                 val uploadDate = LocalDate.parse(release.date)
-                val availableIde = AvailableIde(ideVersion, releaseVersion, downloadUrl, uploadDate)
+                val availableIde = AvailableIde(ideVersion, releaseVersion, downloadUrl, uploadDate, intelliJPlatformProduct)
                 availableIdes.add(availableIde)
               }
             }

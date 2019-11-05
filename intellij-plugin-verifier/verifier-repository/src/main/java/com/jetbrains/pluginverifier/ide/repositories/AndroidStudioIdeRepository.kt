@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.utils.xzInputStream
+import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
@@ -51,7 +52,8 @@ class AndroidStudioIdeRepository : IdeRepository {
           ideVersion,
           it.version,
           it.packageInfo.url,
-          uploadDate
+          uploadDate,
+          IntelliJPlatformProduct.ANDROID_STUDIO
         )
       }
   }

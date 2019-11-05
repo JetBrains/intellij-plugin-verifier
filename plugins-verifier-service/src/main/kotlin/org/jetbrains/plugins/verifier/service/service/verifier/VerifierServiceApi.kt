@@ -36,7 +36,8 @@ data class FullVerificationResultDto(
 
 data class AvailableIdeDto(
   val ideVersion: String,
-  val releaseVersion: String?
+  val releaseVersion: String?,
+  val productName: String
 )
 
 data class CompatibilityProblemDto(
