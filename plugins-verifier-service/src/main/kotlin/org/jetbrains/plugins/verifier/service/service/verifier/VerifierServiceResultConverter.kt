@@ -73,7 +73,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
         internalApiUsages = internalApiUsages.map { it.convert() },
         overrideOnlyApiUsages = overrideOnlyMethodUsages.map { it.convert() },
         nonExtendableApiUsages = nonExtendableApiUsages.map { it.convert() },
-        dynamicStatusStatus = dynamicPluginStatus!!.convert()
+        dynamicPluginStatus = dynamicPluginStatus!!.convert()
       )
   }
 }

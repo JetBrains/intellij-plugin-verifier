@@ -32,7 +32,7 @@ data class FullVerificationResultDto(
   val internalApiUsages: List<InternalApiUsageDto> = emptyList(),
   val overrideOnlyApiUsages: List<OverrideOnlyApiUsageDto> = emptyList(),
   val nonExtendableApiUsages: List<NonExtendableApiUsageDto> = emptyList(),
-  val dynamicStatusStatus: DynamicPluginStatusDto = DynamicPluginStatusDto(DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_IMMEDIATELY, emptyList(), emptyList())
+  val dynamicPluginStatus: DynamicPluginStatusDto = DynamicPluginStatusDto(DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_IMMEDIATELY, emptyList(), emptyList())
 )
 
 data class AvailableIdeDto(
