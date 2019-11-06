@@ -178,7 +178,7 @@ class ApiQualityCheckCommand : Command {
                   append(" before ${BuildIdeApiAnnotationsCommand.MIN_BUILD_NUMBER.baselineVersion}")
                 }
                 if (scheduledForRemovalInVersion != null && scheduledForRemovalInVersion.baselineVersion <= removalVersion.branch) {
-                  append(" and scheduled for removal in $scheduledForRemovalInVersion.")
+                  append(" and marked with @ApiStatus.ScheduledForRemoval annotation in $scheduledForRemovalInVersion to be removed in $removalVersion")
                 }
                 appendln()
                 append("Consider removing this API right now or promoting planned removal version a little bit if there are too many plugins still using it.")
