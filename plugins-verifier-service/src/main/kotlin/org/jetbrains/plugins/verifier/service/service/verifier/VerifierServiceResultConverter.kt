@@ -79,12 +79,16 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
 }
 
 private fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
-  val status = when (this) {
-    DynamicPluginStatus.AllowLoadUnloadImmediately -> DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_IMMEDIATELY
-    is DynamicPluginStatus.AllowLoadUnloadWithoutRestart -> DynamicPluginStatusDto.Status.ALLOW_LOAD_UNLOAD_WITHOUT_RESTART
-    is DynamicPluginStatus.NotDynamic -> DynamicPluginStatusDto.Status.NOT_DYNAMIC
+  return when (this) {
+    DynamicPluginStatus.AllowLoadUnloadImmediately -> DynamicPluginStatusDto(true, emptyList())
+    /*
+      Ignore "reasons not to load/unload immediately" because it is unlikely to be possible
+        to move the plugin from the "immediately" category to the "without restart" category,
+        since it requires that plugin's extension points/actions are removed or replaced completely.
+     */
+    is DynamicPluginStatus.AllowLoadUnloadWithoutRestart -> DynamicPluginStatusDto(true, emptyList())
+    is DynamicPluginStatus.NotDynamic -> DynamicPluginStatusDto(false, reasonsNotToLoadUnloadWithoutRestart.toList())
   }
-  return DynamicPluginStatusDto(status, reasonsNotToLoadUnloadImmediately.toList(), reasonsNotToLoadUnloadWithoutRestart.toList())
 }
 
 private fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =
