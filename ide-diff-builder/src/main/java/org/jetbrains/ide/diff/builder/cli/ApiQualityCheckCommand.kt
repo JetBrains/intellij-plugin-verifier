@@ -43,8 +43,8 @@ class ApiQualityCheckCommand : Command {
 
   override val help
     get() = """
-      1) Detect APIs marked experimental for more than N (default: 3) release branches.
-      2) Detect APIs marked to be removed in a branch smaller than the current one
+      1) Detect APIs marked experimental for too long.
+      2) Detect APIs that should already be removed.
       
       api-quality-check <IDE> <metadata.json> -current-branch 193
     """.trimIndent()
@@ -70,8 +70,8 @@ class ApiQualityCheckCommand : Command {
 
     val currentBranch = cliOptions.currentBranch.toInt()
     val maxRemovalBranch = cliOptions.maxRemovalBranch.toInt()
-    val maxExperimentalBranches = cliOptions.maxExperimentalBranches.toInt()
-    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, maxExperimentalBranches)
+    val minExperimentalBranch = cliOptions.minExperimentalBranch.toInt()
+    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, minExperimentalBranch)
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
@@ -117,14 +117,14 @@ class ApiQualityCheckCommand : Command {
             val testName = "($javaPackageName)"
             tc.testStarted(testName).use {
               val message = buildString {
-                appendln("The following APIs belonging to package '$javaPackageName' are marked with @ApiStatus.Experimental for more than ${report.apiQualityOptions.maxExperimentalBranches} branches")
+                appendln("The following APIs belonging to package '$javaPackageName' are marked with @ApiStatus.Experimental for too long")
                 for ((apiSignature, _) in samePackage.sortedBy { it.apiSignature.fullPresentation }) {
                   append("  ").append(apiSignature.fullPresentation).append(" is marked experimental since $sinceVersion")
                   appendln()
                 }
                 appendln("The current branch is ${report.apiQualityOptions.currentBranch}")
                 appendln()
-                appendln(getExperimentalNote(report))
+                appendln(getExperimentalNote())
               }
               failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
@@ -145,7 +145,7 @@ class ApiQualityCheckCommand : Command {
                   }
                 )
                 append(" since $sinceVersion, but the current branch is ${report.apiQualityOptions.currentBranch}. ")
-                append(getExperimentalNote(report))
+                append(getExperimentalNote())
               }
               failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
@@ -268,8 +268,8 @@ class ApiQualityCheckCommand : Command {
     return TeamCityHistory(failedTests)
   }
 
-  private fun getExperimentalNote(report: ApiQualityReport): String = buildString {
-    append("API shouldn't be marked @Experimental for too long (more than ${report.apiQualityOptions.maxExperimentalBranches} releases). ")
+  private fun getExperimentalNote(): String = buildString {
+    append("API shouldn't be marked @Experimental for too long. ")
     append("Please consider clarifying the API status by removing @Experimental and making it usable by external developers without hesitation. ")
     append("Also verify that Javadoc is up to date ")
     append("and consider advertising this API on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable.html.")
@@ -310,7 +310,7 @@ class ApiQualityCheckCommand : Command {
     if (experimentalMemberAnnotation != null) {
       if (experimentalMemberAnnotation !is MemberAnnotation.AnnotatedViaContainingClass) {
         val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
-        if (since != null && since.baselineVersion + qualityOptions.maxExperimentalBranches < qualityOptions.currentBranch) {
+        if (since != null && since.baselineVersion <= qualityOptions.minExperimentalBranch) {
           qualityReport.tooLongExperimental += TooLongExperimental(signature, since, experimentalMemberAnnotation)
         }
       }
@@ -361,16 +361,19 @@ class ApiQualityCheckCommand : Command {
 
   class CliOptions : IdeDiffCommand.CliOptions() {
     @set:Argument("current-branch", description = "Current release IDE branch")
-    var currentBranch: String = "193"
+    var currentBranch: String = "201"
 
     @set:Argument(
       "max-removal-branch", description = "Branch number used to find APIs that must already be removed. " +
       "All @ScheduledForRemoval APIs will be found where 'inVersion' <= 'max-removal-branch'."
     )
-    var maxRemovalBranch: String = "193"
+    var maxRemovalBranch: String = "201"
 
-    @set:Argument("max-experimental-branches", description = "Maximum number of branches in which an API may stay experimental.")
-    var maxExperimentalBranches: String = "3"
+    @set:Argument(
+      "min-experimental-branch", description = "Branch number used to find APIs that are marked experimental foo too long. " +
+      "All @Experimental APIs will be found where 'API introduction version' <= 'min-experimental-branch'."
+    )
+    var minExperimentalBranch: String = "191"
 
     @set:Argument("previous-tc-tests-file", description = "File containing TeamCity tests that were run in the previous build. ")
     var previousTcTestsFile: String? = null
@@ -381,7 +384,7 @@ class ApiQualityCheckCommand : Command {
 private data class ApiQualityOptions(
   val currentBranch: Int,
   val maxRemovalBranch: Int,
-  val maxExperimentalBranches: Int
+  val minExperimentalBranch: Int
 )
 
 private data class ApiQualityReport(
