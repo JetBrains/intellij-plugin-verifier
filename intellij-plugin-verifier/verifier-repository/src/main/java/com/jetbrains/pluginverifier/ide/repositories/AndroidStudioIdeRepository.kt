@@ -35,7 +35,7 @@ class AndroidStudioIdeRepository : IdeRepository {
       .create(FeedConnector::class.java)
   }
 
-  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
+  private val indexCache = Suppliers.memoizeWithExpiration(this::updateIndex, 5, TimeUnit.MINUTES)
 
   private fun updateIndex(): List<AvailableIde> {
     val responseBody = feedConnector.getFeed(feedUrl.toExternalForm()).executeSuccessfully().body()
@@ -44,7 +44,7 @@ class AndroidStudioIdeRepository : IdeRepository {
       jsonParser.fromJson(signedContent.inputStream().xzInputStream().reader(), Feed::class.java)
     }
     return feed.entries
-      .filter { it.packageInfo.type == "zip" }
+      .filter { it.packageInfo.os == "linux" }
       .map {
         val ideVersion = IdeVersion.createIdeVersion(it.build).setProductCodeIfAbsent("AI")
         val uploadDate = getApproximateUploadDate(ideVersion)
@@ -97,9 +97,9 @@ private data class FeedEntry(
 )
 
 private data class PackageInfo(
-  @SerializedName("type")
-  val type: String,
-
   @SerializedName("url")
-  val url: URL
+  val url: URL,
+
+  @SerializedName("os")
+  val os: String
 )
