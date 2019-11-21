@@ -117,11 +117,14 @@ object OptionsParser {
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
-    val documentedProblemsFilter = createDocumentedProblemsFilter()
+    val documentedProblemsFilter = try {
+      createDocumentedProblemsFilter()
+    } catch (e: Exception) {
+      LOG.error("Unable to read documented IntelliJ API incompatible changes. Corresponding API problems won't be ignored.", e)
+      null
+    }
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
-    return listOfNotNull(ignoredProblemsFilter) +
-      listOfNotNull(documentedProblemsFilter) +
-      listOfNotNull(codeProblemsFilter)
+    return listOfNotNull(ignoredProblemsFilter, documentedProblemsFilter, codeProblemsFilter)
   }
 
   private fun createDocumentedProblemsFilter(): DocumentedProblemsFilter {
