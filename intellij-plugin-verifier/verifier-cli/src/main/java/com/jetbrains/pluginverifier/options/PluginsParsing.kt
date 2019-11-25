@@ -68,6 +68,7 @@ class PluginsParsing(
    * Parses lines of [pluginsListFile] and adds specified plugins to the [pluginsSet].
    */
   fun addPluginsListedInFile(pluginsListFile: Path, ideVersions: List<IdeVersion>) {
+    reportage.logVerificationStage("Reading plugins list to check from file ${pluginsListFile.toAbsolutePath()} against IDE versions ${ideVersions.joinToString { it.asString() }}")
     val specs = pluginsListFile.readLines()
       .map { it.trim() }
       .filterNot { it.isEmpty() }
@@ -147,9 +148,11 @@ class PluginsParsing(
    * Adds all versions of the plugin with ID `pluginId` compatible with `ideVersion`.
    */
   private fun addAllCompatibleVersionsOfPlugin(pluginId: String, ideVersion: IdeVersion) {
-    val compatibleVersions = pluginRepository.retry("fetch all compatible versions of plugin $pluginId with $ideVersion") {
+    val stepName = "All versions of plugin '$pluginId' compatible with $ideVersion"
+    val compatibleVersions = pluginRepository.retry(stepName) {
       getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
     }
+    reportage.logVerificationStage("$stepName: " + if (compatibleVersions.isEmpty()) "no compatible versions" else compatibleVersions.joinToString { it.presentableName })
     pluginsSet.schedulePlugins(compatibleVersions)
   }
 
@@ -157,9 +160,12 @@ class PluginsParsing(
    * Adds the last version of plugin with ID `pluginId` compatible with `ideVersion`.
    */
   private fun addLastCompatibleVersionOfPlugin(pluginId: String, ideVersion: IdeVersion) {
-    val lastVersion = pluginRepository.retry("get last version of $pluginId compatible with $ideVersion") {
+    val stepName = "Last version of plugin '$pluginId' compatible with $ideVersion"
+    val lastVersion = pluginRepository.retry(stepName) {
       getLastCompatibleVersionOfPlugin(ideVersion, pluginId)
-    } ?: return
+    }
+    reportage.logVerificationStage("$stepName: ${lastVersion?.presentableName ?: "no compatible version"}")
+    lastVersion ?: return
     pluginsSet.schedulePlugin(lastVersion)
   }
 
