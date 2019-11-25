@@ -89,6 +89,10 @@ class MarketplaceRepository(
       .executeSuccessfully().body()
       .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
+  //https://youtrack.jetbrains.com/issue/MP-2181
+  //Warning: Marketplace does not have an API to get all versions of a plugin compatible with the given IDE,
+  // so the below method might not be 100% precise because "since-until" values may match the [ideVersion]
+  // but actual dependencies of the plugin may be unsatisfied in this IDE.
   override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
     getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
