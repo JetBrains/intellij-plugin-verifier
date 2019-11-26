@@ -35,8 +35,6 @@ class TeamCityResultPrinterTest {
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? =
         second.takeIf { pluginId == it.pluginId }
 
-      override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> =
-        pluginInfos.takeIf { pluginId == "id" }.orEmpty()
     }
 
     val updateInfos = mockRepository.pluginInfos

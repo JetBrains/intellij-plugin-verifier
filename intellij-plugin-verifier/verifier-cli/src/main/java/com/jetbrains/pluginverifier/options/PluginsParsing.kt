@@ -150,7 +150,7 @@ class PluginsParsing(
   private fun addAllCompatibleVersionsOfPlugin(pluginId: String, ideVersion: IdeVersion) {
     val stepName = "All versions of plugin '$pluginId' compatible with $ideVersion"
     val compatibleVersions = pluginRepository.retry(stepName) {
-      getAllCompatibleVersionsOfPlugin(ideVersion, pluginId)
+      getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
     }
     reportage.logVerificationStage("$stepName: " + if (compatibleVersions.isEmpty()) "no compatible versions" else compatibleVersions.joinToString { it.presentableName })
     pluginsSet.schedulePlugins(compatibleVersions)

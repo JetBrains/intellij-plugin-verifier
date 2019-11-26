@@ -22,11 +22,6 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
   }
 
   @Test
-  fun updatesOfPlugin() {
-    assertTrue(repository.getAllCompatibleVersionsOfPlugin(ideVersion, "ActionScript Profiler").isNotEmpty())
-  }
-
-  @Test
   fun `browser url for plugin with id containing spaces must be encoded`() {
     val versions = repository.getAllVersionsOfPlugin("Mongo Plugin")
     assertTrue(versions.isNotEmpty())

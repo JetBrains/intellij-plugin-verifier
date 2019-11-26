@@ -13,12 +13,6 @@ interface PluginRepository {
   fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo>
 
   /**
-   * Returns all versions of the plugin with ID equal to [pluginId]
-   * compatible with [ideVersion].
-   */
-  fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo>
-
-  /**
    * Returns the last version of the plugin with ID equal to [pluginId]
    * compatible with [ideVersion].
    */

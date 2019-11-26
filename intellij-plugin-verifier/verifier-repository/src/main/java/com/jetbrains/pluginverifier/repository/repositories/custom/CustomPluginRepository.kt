@@ -23,9 +23,6 @@ abstract class CustomPluginRepository : PluginRepository {
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
     getAllPlugins()
 
-  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-    getAllPlugins()
-
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
     getAllPlugins().maxWith(VERSION_COMPARATOR)
 

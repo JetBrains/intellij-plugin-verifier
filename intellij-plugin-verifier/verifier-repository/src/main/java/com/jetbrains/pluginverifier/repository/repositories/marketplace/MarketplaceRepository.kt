@@ -71,7 +71,7 @@ class MarketplaceRepository(
     updateInfosRequester.getUpdateInfoById(updateId, DEFAULT_BATCH_REQUEST_SIZE)
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-    getAllCompatibleVersionsOfPlugin(ideVersion, pluginId).maxBy { it.updateId }
+    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }.maxBy { it.updateId }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> =
     try {
@@ -88,13 +88,6 @@ class MarketplaceRepository(
     repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
       .executeSuccessfully().body()
       .map { updateInfosRequester.putJsonUpdateInfo(it) }
-
-  //https://youtrack.jetbrains.com/issue/MP-2181
-  //Warning: Marketplace does not have an API to get all versions of a plugin compatible with the given IDE,
-  // so the below method might not be 100% precise because "since-until" values may match the [ideVersion]
-  // but actual dependencies of the plugin may be unsatisfied in this IDE.
-  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
     INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]

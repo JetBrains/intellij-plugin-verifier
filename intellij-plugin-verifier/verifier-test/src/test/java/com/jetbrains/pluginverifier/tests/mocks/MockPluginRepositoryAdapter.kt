@@ -10,8 +10,6 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? = defaultAction()
 
-  override fun getAllCompatibleVersionsOfPlugin(ideVersion: IdeVersion, pluginId: String): List<PluginInfo> = defaultAction()
-
   override fun getAllVersionsOfPlugin(pluginId: String): List<PluginInfo> = defaultAction()
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? = defaultAction()
