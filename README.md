@@ -151,68 +151,61 @@ Here is the full syntax of the command:
         [-team-city | -tc ]
     
 #### Specific options
-    -major-ide-path (-mip)
-        The path to release (major) IDE build with which to compare API problems of trunk (master) IDE build.
-    
-    -major-ide-version (-miv)
-        The IDE version with which to compare API problems. 
-        This IDE will be downloaded from the IDE Repository: https://www.jetbrains.com/intellij-repository/releases
-    
-    -release-jetbrains-plugins (-rjbp)
-        The root of the local plugin repository containing JetBrains plugins compatible with the release IDE.
-        The local repository is a set of non-bundled JetBrains plugins built from the same sources revision.
-        The verifier will read the plugin descriptors from every plugin-like file under the specified directory.
-        During the verification, the JetBrains plugins will be taken from the local repository, if present, and 
-        from the public repository, otherwise.
-    
-    -trunk-jetbrains-plugins (-tjbp)
-        The same as --release-local-repository but specifies the directory containin plugins built for the trunk IDE.
+* `-major-ide-path (-mip)`
+    The path to release (major) IDE build with which to compare API problems of trunk (master) IDE build.
+* `-major-ide-version (-miv)`
+    The IDE version with which to compare API problems. 
+    This IDE will be downloaded from the IDE Repository: https://www.jetbrains.com/intellij-repository/releases
+* `-release-jetbrains-plugins (-rjbp)`
+    The root of the local plugin repository containing JetBrains plugins compatible with the release IDE.
+    The local repository is a set of non-bundled JetBrains plugins built from the same sources revision.
+    The verifier will read the plugin descriptors from every plugin-like file under the specified directory.
+    During the verification, the JetBrains plugins will be taken from the local repository, if present, and 
+    from the public repository, otherwise.
+* `-trunk-jetbrains-plugins (-tjbp)`
+    The same as `--release-local-repository` but specifies the directory containing plugins built for the trunk IDE.
 
 ### Common Options
 
-    -runtime-dir (-r)
-        The path to directory containing Java runtime jar.
-        If not specified, the JDK from 'JAVA_HOME' will be chosen.
-    
-    -external-prefixes (-ex-prefixes)
-        The prefixes of classes from the external libraries. 
-        The Plugin Verifier will not report 'No such class' for classes of these packages.
-    
-    -plugins-to-check-all-builds (-p-all)
-        The plugin IDs to check with IDE. The plugin verifier will check ALL compatible plugin builds
-    
-    -plugins-to-check-last-builds (-p-last)
-        The plugin IDs to check with IDE. The plugin verifier will check LAST plugin build only
-    
-    -team-city (-tc)
-        Specify this flag if you want to print the TeamCity compatible output on stdout.
-    
-    -tc-grouping (-g)
-        Group the TeamCity presentation of the problems:
-        either 'plugin' to group by each plugin or 'problem_type' to group by problem type.
-    
-    -excluded-plugins-file (-epf) 
-        File with list of excluded plugin builds. 
-        The verifier will not verify such updates even if they are compatible with IDE.
-        File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt')
-    
-    -dump-broken-plugin-list (-d)
-        File to dump broken plugin ids. 
-        The broken plugins are those which contain at least one problem as a result of the verification.
-    
-    -plugins-to-check-file (-ptcf)
-        File that contains list of plugins to check 
-        Each line of the file is either:
-            plugin_id (check ALL builds of the plugin) 
-            $plugin_id' (check only LAST build of the plugin)
-            
-    - subsystems-to-check (-subsystems)
-        Specifies which subsystems of IDE should be checked. 
-        Available options: all (default), android-only, without-android. 
+`-runtime-dir (-r)`
+    The path to directory containing Java runtime jar.
+    If not specified, the JDK from 'JAVA_HOME' will be chosen.
+
+`-external-prefixes (-ex-prefixes)`
+    The prefixes of classes from the external libraries. 
+    The Plugin Verifier will not report 'No such class' for classes of these packages.
+
+`-plugins-to-check-all-builds (-p-all)`
+    The plugin IDs to check with IDE. The plugin verifier will check ALL compatible plugin builds
+
+`-plugins-to-check-last-builds (-p-last)`
+    The plugin IDs to check with IDE. The plugin verifier will check LAST plugin build only
+
+`-team-city (-tc)`
+    Specify this flag if you want to print the TeamCity compatible output on stdout.
+
+`-tc-grouping (-g)`
+    Group the TeamCity presentation of the problems:
+    either 'plugin' to group by each plugin or 'problem_type' to group by problem type.
+
+`-excluded-plugins-file (-epf)` 
+    File with list of excluded plugin builds. 
+    The verifier will not verify such updates even if they are compatible with IDE.
+    File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt')
+
+`-dump-broken-plugin-list (-d)`
+    File to dump broken plugin ids. 
+    The broken plugins are those which contain at least one problem as a result of the verification.
+
+`-plugins-to-check-file (-ptcf)`
+    File that contains list of plugins to check 
+    Each line of the file is either:
+        plugin_id (check ALL builds of the plugin) 
+        $plugin_id' (check only LAST build of the plugin)
         
-        all - verify all code
-        android-only - verify only code related to Android support.
-        without-android - exclude problems related to Android support. 
+`-subsystems-to-check (-subsystems)`
+    Specifies which subsystems of IDE should be checked. 
+    Available options: `all` (default), `android-only`, `without-android`.
         
         
 ## Technical details
