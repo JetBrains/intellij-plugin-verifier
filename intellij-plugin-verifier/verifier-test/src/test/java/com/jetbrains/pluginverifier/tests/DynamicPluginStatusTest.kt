@@ -60,6 +60,24 @@ class DynamicPluginStatusTest {
   }
 
   @Test
+  fun `plugin declaring only its own extension points can be loaded and unloaded without restart`() {
+    checkPlugin(
+      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
+        "Plugin declares extension points other than com.intellij.themeProvider, com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider"
+      )),
+      """
+        <extensionPoints>
+          <extensionPoint name="ownEP" interface="doesntMatter"/>
+        </extensionPoints>
+        
+        <extensions defaultExtensionNs="someId">
+          <ownEP someKey="someValue"/>
+        </extensions>
+      """.trimIndent()
+    )
+  }
+
+  @Test
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(

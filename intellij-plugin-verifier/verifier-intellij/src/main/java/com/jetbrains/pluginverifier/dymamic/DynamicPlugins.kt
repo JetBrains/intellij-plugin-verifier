@@ -45,11 +45,10 @@ object DynamicPlugins {
 
       val nonDynamicExtensions = arrayListOf<String>()
       for (epName in declaredExtensions) {
-        val extensionPoint = (idePlugin.findExtensionPoint(epName)
-          ?: ide.bundledPlugins.asSequence()
+        val extensionPoint = ide.bundledPlugins.asSequence()
             .filterIsInstance<IdePluginImpl>()
             .mapNotNull { it.findExtensionPoint(epName) }
-            .firstOrNull())
+            .firstOrNull()
         if (extensionPoint != null && !extensionPoint.isDynamic) {
           nonDynamicExtensions += extensionPoint.extensionPointName
         }
