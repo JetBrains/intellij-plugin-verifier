@@ -71,7 +71,8 @@ class ApiQualityCheckCommand : Command {
     val currentBranch = cliOptions.currentBranch.toInt()
     val maxRemovalBranch = cliOptions.maxRemovalBranch.toInt()
     val minExperimentalBranch = cliOptions.minExperimentalBranch.toInt()
-    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, minExperimentalBranch)
+    val checkSfrVersionPresence = cliOptions.checkSfrVersionPresence.toBoolean()
+    val qualityOptions = ApiQualityOptions(currentBranch, maxRemovalBranch, minExperimentalBranch, checkSfrVersionPresence)
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
@@ -338,7 +339,8 @@ class ApiQualityCheckCommand : Command {
         markedDeprecated.minBy { it.ideVersion }?.ideVersion
       }
 
-      val removalVersion = deprecationInfo.untilVersion?.let { RemovalVersion.parseRemovalVersion(it) }
+      val untilVersionStr = deprecationInfo.untilVersion
+      val removalVersion = untilVersionStr?.let { RemovalVersion.parseRemovalVersion(it) }
       if (removalVersion != null) {
         if (removalVersion.branch <= qualityOptions.maxRemovalBranch) {
           qualityReport.mustAlreadyBeRemoved += MustAlreadyBeRemoved(
@@ -348,12 +350,12 @@ class ApiQualityCheckCommand : Command {
             removalVersion
           )
         }
-      } else {
+      } else if (untilVersionStr != null || qualityOptions.checkSfrVersionPresence) {
         qualityReport.sfrApisWithWrongPlannedVersion += SfrApiWithWrongPlannedVersion(
           signature,
           deprecatedInVersion,
           scheduledForRemovalInVersion,
-          deprecationInfo.untilVersion
+          untilVersionStr
         )
       }
     }
@@ -377,6 +379,9 @@ class ApiQualityCheckCommand : Command {
 
     @set:Argument("previous-tc-tests-file", description = "File containing TeamCity tests that were run in the previous build. ")
     var previousTcTestsFile: String? = null
+
+    @set:Argument("sfr-check-version-presence", description = "Whether @ApiStatus.ScheduledForRemoval APIs must have 'inVersion' value specified ('true' by default)")
+    var checkSfrVersionPresence: String = "true"
   }
 
 }
@@ -384,7 +389,8 @@ class ApiQualityCheckCommand : Command {
 private data class ApiQualityOptions(
   val currentBranch: Int,
   val maxRemovalBranch: Int,
-  val minExperimentalBranch: Int
+  val minExperimentalBranch: Int,
+  val checkSfrVersionPresence: Boolean
 )
 
 private data class ApiQualityReport(
