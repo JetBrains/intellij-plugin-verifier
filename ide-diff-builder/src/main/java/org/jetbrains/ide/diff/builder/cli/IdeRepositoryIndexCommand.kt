@@ -92,10 +92,10 @@ val releasesIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.
 val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
 val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
-val allIdeRepository = CompositeIdeRepository(
-  listOf(
-    releasesIdeRepository,
-    snapshotsIdeRepository,
-    nightlyIdeRepository
-  )
+val allIdeRepositories = listOf(
+  releasesIdeRepository,
+  snapshotsIdeRepository,
+  nightlyIdeRepository
 )
+
+val allIdeRepository = CompositeIdeRepository(allIdeRepositories)
