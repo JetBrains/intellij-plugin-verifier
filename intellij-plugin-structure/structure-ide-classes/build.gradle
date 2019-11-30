@@ -1,11 +1,4 @@
-def platformVersion = "191.7479.19"
-
 dependencies {
   api project(':structure-ide')
   api project(':structure-classes')
-
-  implementation "com.jetbrains.intellij.platform:util:$platformVersion"
-  implementation "com.jetbrains.intellij.platform:jps-model:$platformVersion"
-  implementation "com.jetbrains.intellij.platform:jps-model-impl:$platformVersion"
-  implementation "com.jetbrains.intellij.platform:jps-model-serialization:$platformVersion"
 }

@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.ide.classes
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.SystemProperties
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.classes.resolvers.*
@@ -11,9 +9,7 @@ import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledCom
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledUltimate
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributionIde
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
-import com.jetbrains.plugin.structure.ide.util.loadProject
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsOrderRootType
+import com.jetbrains.plugin.structure.ide.getRepositoryLibrariesJars
 import java.io.File
 
 object IdeResolverCreator {
@@ -64,25 +60,8 @@ object IdeResolverCreator {
   }
 
   private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode): Resolver {
-    val jars = getRepositoryLibraries(idePath)
+    val jars = getRepositoryLibrariesJars(idePath)
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary))
-  }
-
-  private fun getRepositoryLibraries(projectPath: File): List<File> {
-    val pathVariables = createPathVariables()
-    val project = loadProject(projectPath.absoluteFile, pathVariables)
-    return JpsJavaExtensionService.dependencies(project)
-      .productionOnly()
-      .runtimeOnly()
-      .libraries
-      .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
-      .distinctBy { it.path }
-      .filter { it.isJar() }
-  }
-
-  private fun createPathVariables(): Map<String, String> {
-    val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
-    return mapOf("MAVEN_REPOSITORY" to m2Repo)
   }
 
 }

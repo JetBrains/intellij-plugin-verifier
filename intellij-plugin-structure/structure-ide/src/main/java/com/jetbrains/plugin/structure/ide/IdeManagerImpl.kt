@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.CompiledModulesResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.ThreeState
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
@@ -163,7 +164,11 @@ class IdeManagerImpl : IdeManager() {
   private fun readCompiledBundledPlugins(idePath: File, ideVersion: IdeVersion): List<IdePlugin> {
     val compilationRoot = getCompiledClassesRoot(idePath)!!
     val moduleRoots = compilationRoot.listFiles().orEmpty().toList()
-    val pathResolver = CompiledModulesResourceResolver(moduleRoots)
+    val librariesJars = getRepositoryLibrariesJars(idePath)
+    val pathResolver = CompositeResourceResolver(listOf(
+      CompiledModulesResourceResolver(moduleRoots),
+      JarFilesResourceResolver(librariesJars)
+    ))
     return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver, ideVersion)
   }
 

@@ -95,6 +95,15 @@ class IdeTest {
   }
 
   /**
+   * .m2 (local Maven repository)
+   *   com
+   *     some
+   *       lib-plugin
+   *         1.0
+   *           lib-plugin-1.0.jar
+   *             META-INF
+   *               lib-plugin.xml
+   *
    * idea/
    *   build.txt (IU-163.1.2.3)
    *   .idea/
@@ -104,17 +113,84 @@ class IdeTest {
    *       production/
    *         somePlugin/
    *           META-INF/
-   *             plugin.xml (refers someTheme.theme.json)
+   *             plugin.xml
+   *                references someTheme.theme.json
+   *                x-includes "lib-plugin.xml", which resides in Maven repository dependency (com.some:lib-plugin:1.0)
    *         themeHolder
    *           someTheme.theme.json
    */
   @Test
   fun `create idea from ultimate compiled sources`() {
+    val m2Directory = buildDirectory(temporaryFolder.newFolder(".m2")) {
+      dir("com") {
+        dir("some") {
+          dir("lib-plugin") {
+            dir("1.0") {
+              zip("lib-plugin-1.0.jar") {
+                dir("META-INF") {
+                  file("lib-plugin.xml") {
+                    """
+                      <idea-plugin>
+                         <extensions defaultExtensionNs="com.intellij">
+                            <someExt someKey="someValue"/>
+                          </extensions>
+                      </idea-plugin>
+                    """.trimIndent()
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    val mavenRepository = m2Directory.absolutePath
+    System.setProperty("MAVEN_REPOSITORY", mavenRepository)
+
     val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
       file("build.txt", "IU-163.1.2.3")
-      dir(".idea") { }
+      dir(".idea") {
+        file("modules.xml") {
+          """
+            <project version="4">
+              <component name="ProjectModuleManager">
+                <modules>
+                  <module fileurl="file://${'$'}PROJECT_DIR${'$'}/somePlugin/somePlugin.iml" filepath="${'$'}PROJECT_DIR${'$'}/somePlugin/somePlugin.iml"/>
+                </modules>
+              </component>
+            </project>
+          """.trimIndent()
+        }
+      }
+
       dir("community") {
         dir(".idea") { }
+      }
+
+      dir("somePlugin") {
+        file("somePlugin.iml") {
+          """
+            <module type="JAVA_MODULE" version="4">
+              <component name="NewModuleRootManager" inherit-compiler-output="true">
+                <exclude-output />
+                <content url="file://${'$'}PROJECT_DIR${'$'}/somePlugin">
+                  <sourceFolder url="file://${'$'}PROJECT_DIR${'$'}/somePlugin/src" isTestSource="false" />
+                </content>
+                <orderEntry type="inheritedJdk" />
+                <orderEntry type="sourceFolder" forTests="false" />
+                
+                <orderEntry type="module-library" scope="RUNTIME">
+                  <library name="lib-plugin" type="repository">
+                    <properties maven-id="com.some:lib-plugin:1.0" />
+                    <CLASSES>
+                      <root url="jar://$mavenRepository/com/some/lib-plugin/1.0/lib-plugin-1.0.jar!/" />
+                    </CLASSES>
+                  </library>
+                </orderEntry>
+              </component>
+            </module>
+          """.trimIndent()
+        }
       }
 
       dir("out") {
@@ -125,10 +201,14 @@ class IdeTest {
                 file("plugin.xml") {
                   perfectXmlBuilder
                     .modify {
+                      ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+
                       additionalContent = """
                           <extensions defaultExtensionNs="com.intellij">
                             <themeProvider id="someId" path="/someTheme.theme.json"/>
                           </extensions>
+                          
+                          <xi:include href="/META-INF/lib-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
                         """.trimIndent()
                     }
                 }
