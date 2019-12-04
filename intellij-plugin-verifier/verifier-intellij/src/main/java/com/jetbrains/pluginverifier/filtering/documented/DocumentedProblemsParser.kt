@@ -24,6 +24,7 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
       Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method marked final.*") to { s -> DocMethodMarkedFinal(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER).*(?:class|interface) now (?:extends|implements) ($IDENTIFIER) and inherits its final method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocFinalMethodInherited(toInternalName(s[0]), toInternalName(s[1]), s[2]) },
+      Regex("($IDENTIFIER).*(?:class|interface) now (?:extends|implements) ($IDENTIFIER) and inherits its abstract method ($IDENTIFIER)($METHOD_PARAMS)?.*") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), toInternalName(s[2])) },
       Regex("($IDENTIFIER)($METHOD_PARAMS)? constructor visibility changed.*") to { s -> DocMethodVisibilityChanged(toInternalName(s[0]), "<init>") },
       Regex("($IDENTIFIER)$S($IDENTIFIER) field removed") to { s -> DocFieldRemoved(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(toInternalName(s[0]), s[1]) },

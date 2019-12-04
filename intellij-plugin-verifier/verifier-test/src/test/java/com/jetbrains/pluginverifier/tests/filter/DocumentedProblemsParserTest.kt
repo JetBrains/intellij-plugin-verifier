@@ -69,6 +69,7 @@ class DocumentedProblemsParserTest {
       DocMethodParameterTypeChanged("com/example/Bam", "<init>"),
       DocMethodMarkedFinal("com/example/MethodHolder", "methodMarkedFinal"),
       DocFinalMethodInherited("com/some/Class", "com/some/other/Class", "methodName"),
+      DocAbstractMethodAdded("com/some/Class", "abstractMethod"),
       DocMethodParameterMarkedWithAnnotation("com/some/Class", "someMarkedMethod", "com/some/Parameter", "com/some/Annotation"),
       DocClassTypeParameterAdded("com/some/Class"),
       DocSuperclassChanged("com/some/Class", "com/some/old/Super", "com/some/new/Super"),

@@ -109,6 +109,8 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 `com.some.Class` class now extends `com.some.other.Class` and inherits its final method `methodName(int, String)`
 : It is a comment why
+`com.some.Class` class now implements `com.some.other.Interface` and inherits its abstract method `abstractMethod(int, String)`
+: It is a comment why
 `com.some.Class.someMarkedMethod` method `com.some.Parameter` parameter marked @`com.some.Annotation`
 : It is a comment why
 `com.some.Class` class type parameter T added
