@@ -46,7 +46,10 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
     "added.AddedContent void addedProtectedStaticMethod()",
 
     "added.AddedContent void methodWithGenericParameter(java.lang.Number)",
-    "added.AddedContent java.lang.Number methodWithGenericReturnType()"
+    "added.AddedContent java.lang.Number methodWithGenericReturnType()",
+
+    "modified.MovedUpMembersHelper void movedUpMethod()",
+    "modified.MovedUpMembersHelper movedUpField"
   )
 
   private val removedMethods = listOf(

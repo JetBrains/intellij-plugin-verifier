@@ -2,6 +2,7 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.usages.deprecated.deprecationInfo
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 class DeprecatedProcessor : ApiDiffProcessor {
@@ -13,7 +14,9 @@ class DeprecatedProcessor : ApiDiffProcessor {
   val unmarkedDeprecated: MutableList<ClassFileMember> = arrayListOf()
 
   override fun process(
+    oldClass: ClassFile?,
     oldMember: ClassFileMember?,
+    newClass: ClassFile?,
     newMember: ClassFileMember?,
     oldResolver: Resolver,
     newResolver: Resolver

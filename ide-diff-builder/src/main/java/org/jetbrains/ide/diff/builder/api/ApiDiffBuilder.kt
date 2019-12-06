@@ -1,10 +1,8 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.jetbrains.ide.diff.builder.filter.ClassFilter
-import java.util.concurrent.atomic.AtomicBoolean
 
 class ApiDiffBuilder(
   private val classFilter: ClassFilter,
@@ -29,7 +27,7 @@ class ApiDiffBuilder(
         if (oldMember != null && oldMember.isIgnored || newMember != null && newMember.isIgnored) {
           return@skip
         }
-        processors.forEach { it.process(oldMember, newMember, oldResolver, newResolver) }
+        processors.forEach { it.process(oldClass, oldMember, newClass, newMember, oldResolver, newResolver) }
       }
     }
   }
@@ -64,38 +62,6 @@ class ApiDiffBuilder(
       val twoField = twoFields[nameDescriptor]
       processor(oneField, twoField)
     }
-  }
-
-  private fun isMethodOverriding(method: Method, resolver: Resolver): Boolean {
-    if (method.isConstructor
-      || method.isClassInitializer
-      || method.isStatic
-      || method.isPrivate
-      || method.isPackagePrivate
-    ) {
-      return false
-    }
-
-    val parentsVisitor = ClassParentsVisitor(true) { _, parentClassName ->
-      resolver.resolveClassOrNull(parentClassName)
-    }
-
-    val isOverriding = AtomicBoolean()
-    parentsVisitor.visitClass(method.containingClassFile, false, onEnter = { parentClass ->
-      val hasSameMethod = parentClass.methods.any {
-        it.name == method.name
-          && it.descriptor == method.descriptor
-          && !it.isStatic
-          && !it.isPrivate
-          && !it.isPackagePrivate
-      }
-      if (hasSameMethod) {
-        isOverriding.set(true)
-      }
-      !isOverriding.get()
-    }, onExit = {})
-
-    return isOverriding.get()
   }
 
   private fun isSyntheticLikeName(name: String) = name.contains("$$")
