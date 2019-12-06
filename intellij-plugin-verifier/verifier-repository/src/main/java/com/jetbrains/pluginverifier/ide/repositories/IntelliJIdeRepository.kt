@@ -42,7 +42,8 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
       Triple("ideaIU", "com.jetbrains.intellij.idea", "IU"),
       Triple("riderRD", "com.jetbrains.intellij.rider", "RD"),
       Triple("mps", "com.jetbrains.mps", "MPS"),
-      Triple("clion", "com.jetbrains.intellij.clion", "CL")
+      Triple("clion", "com.jetbrains.intellij.clion", "CL"),
+      Triple("goland", "com.jetbrains.intellij.goland", "GO")
     )
 
     fun getArtifactIdByProductCode(productCode: String): String? =
