@@ -54,7 +54,10 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
 
   private val removedMethods = listOf(
     "removed.RemovedContent void publicMethod()",
-    "removed.RemovedContent void publicStaticMethod()"
+    "removed.RemovedContent void publicStaticMethod()",
+
+    "modified.MovedDownMembersHelper void movedDownMethod()",
+    "modified.MovedDownMembersHelper movedDownField"
   )
 
   private val accessOpenedMethods = listOf(

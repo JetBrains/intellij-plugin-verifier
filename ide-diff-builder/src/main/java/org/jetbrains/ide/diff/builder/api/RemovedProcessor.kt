@@ -10,6 +10,7 @@ class RemovedProcessor : ApiDiffProcessor {
 
   val result: MutableList<ClassFileMember> = arrayListOf()
 
+  @Suppress("DuplicatedCode")
   override fun process(
     oldClass: ClassFile?,
     oldMember: ClassFileMember?,
