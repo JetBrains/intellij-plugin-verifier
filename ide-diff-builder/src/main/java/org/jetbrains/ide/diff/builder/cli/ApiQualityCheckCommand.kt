@@ -1,11 +1,18 @@
 package org.jetbrains.ide.diff.builder.cli
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.plugin.ExtensionPoint
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -20,12 +27,14 @@ import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
 import org.jetbrains.ide.diff.builder.api.*
+import org.jetbrains.ide.diff.builder.filter.ClassFilter
 import org.jetbrains.ide.diff.builder.ide.buildIdeResources
 import org.jetbrains.ide.diff.builder.ide.toSignature
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.externalPresentation
 import org.jetbrains.ide.diff.builder.persistence.externalAnnotations.javaPackageName
 import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.system.exitProcess
 
@@ -65,6 +74,8 @@ class ApiQualityCheckCommand : Command {
     require(metadataPath.exists()) { "Metadata file does not exist: $metadataPath" }
     require(metadataPath.extension == "json") { "Metadata is not a .json file: $metadataPath" }
 
+    val pluginsBuiltFromSources = readPluginsBuiltFromSources(cliOptions)
+
     val classFilter = cliOptions.classFilter()
     LOG.info(classFilter.toString())
 
@@ -77,32 +88,113 @@ class ApiQualityCheckCommand : Command {
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
     val ide = IdeManager.createManager().createIde(idePath.toFile())
-    val report = ApiQualityReport(ide.version, qualityOptions)
-    buildIdeResources(ide, Resolver.ReadMode.SIGNATURES).use { ideResources ->
-      val ideResolver = ideResources.allResolver
-      for (className in ideResolver.allClasses) {
-        if (classFilter.shouldProcessClass(className)) {
-          val classFile = ideResolver.resolveClassOrNull(className) ?: continue
-          checkApi(classFile, metadata, ideResolver, qualityOptions, report)
-
-          for (method in classFile.methods) {
-            checkApi(method, metadata, ideResolver, qualityOptions, report)
-          }
-
-          for (field in classFile.fields) {
-            checkApi(field, metadata, ideResolver, qualityOptions, report)
-          }
-        }
-      }
-    }
+    val qualityReport = ApiQualityReport(ide.version, qualityOptions)
+    checkApi(ide, classFilter, metadata, qualityOptions, qualityReport)
+    findNonDynamicExtensionPoints(ide, pluginsBuiltFromSources, qualityReport)
 
     val tc = TeamCityLog(System.out)
-    val newTcHistory = printReport(report, tc)
+    val newTcHistory = printReport(qualityReport, tc)
     newTcHistory.writeToFile(Paths.get("tc-tests.json"))
 
     val previousTcHistory = cliOptions.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
     if (previousTcHistory != null) {
       newTcHistory.reportOldSkippedTestsSuccessful(previousTcHistory, tc)
+    }
+  }
+
+  private fun readPluginsBuiltFromSources(cliOptions: CliOptions): List<IdePlugin> {
+    val plugins = mutableListOf<IdePlugin>()
+    val pluginsPath = cliOptions.pluginsBuiltFromSourcesPath?.let { Paths.get(it) }
+    if (pluginsPath != null) {
+      val pluginFiles = Files.list(pluginsPath).filter {
+        it.isDirectory || it.extension == "zip" || it.extension == "jar"
+      }
+      for (pluginFile in pluginFiles) {
+        LOG.info("Reading plugin frmo: $pluginFile")
+        val idePlugin = with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
+          when (this) {
+            is PluginCreationSuccess -> plugin
+            is PluginCreationFail -> null
+          }
+        } ?: continue
+        plugins += idePlugin
+      }
+    }
+    return plugins
+  }
+
+  private fun findNonDynamicExtensionPoints(
+    ide: Ide,
+    pluginsBuiltFromSources: List<IdePlugin>,
+    qualityReport: ApiQualityReport
+  ) {
+    val nonDynamicExtensionPoints = hashSetOf<ExtensionPoint>()
+    val extensionPointsUsages = hashMapOf<String, Int>()
+
+    val allPlugins = (ide.bundledPlugins + pluginsBuiltFromSources).filterIsInstance<IdePluginImpl>()
+    for (idePlugin in allPlugins) {
+      traverseOptionalPlugins(idePlugin) { plugin ->
+        if (plugin !is IdePluginImpl) return@traverseOptionalPlugins
+
+        sequenceOf(
+          plugin.appContainerDescriptor,
+          plugin.projectContainerDescriptor,
+          plugin.moduleContainerDescriptor
+        ).asSequence()
+          .flatMap { it.extensionPoints.asSequence() }
+          .filterNotTo(nonDynamicExtensionPoints) { it.isDynamic }
+
+        for ((epName, declarations) in plugin.extensions.asMap()) {
+          extensionPointsUsages.compute(epName) { _, count -> (count ?: 0) + declarations.size }
+        }
+      }
+    }
+
+    qualityReport.nonDynamicExtensionPoints += nonDynamicExtensionPoints.map { (extensionPointName) ->
+      val numberOfUsages = extensionPointsUsages.getOrDefault(extensionPointName, 0)
+      NonDynamicExtensionPoint(extensionPointName, numberOfUsages)
+    }
+  }
+
+  private fun traverseOptionalPlugins(
+    idePlugin: IdePlugin,
+    visitedDescriptors: MutableSet<IdePlugin> = hashSetOf(),
+    processor: (IdePlugin) -> Unit
+  ) {
+    processor(idePlugin)
+    visitedDescriptors += idePlugin
+    for (optionalDescriptor in idePlugin.optionalDescriptors) {
+      val optionalPlugin = optionalDescriptor.optionalPlugin
+      processor(optionalPlugin)
+      if (idePlugin !in visitedDescriptors) {
+        traverseOptionalPlugins(optionalPlugin, visitedDescriptors, processor)
+      }
+    }
+  }
+
+  private fun checkApi(
+    ide: Ide,
+    classFilter: ClassFilter,
+    apiMetadata: ApiReport,
+    qualityOptions: ApiQualityOptions,
+    report: ApiQualityReport
+  ) {
+    buildIdeResources(ide, Resolver.ReadMode.SIGNATURES).use { ideResources ->
+      val ideResolver = ideResources.allResolver
+      for (className in ideResolver.allClasses) {
+        if (classFilter.shouldProcessClass(className)) {
+          val classFile = ideResolver.resolveClassOrNull(className) ?: continue
+          checkApi(classFile, apiMetadata, ideResolver, qualityOptions, report)
+
+          for (method in classFile.methods) {
+            checkApi(method, apiMetadata, ideResolver, qualityOptions, report)
+          }
+
+          for (field in classFile.fields) {
+            checkApi(field, apiMetadata, ideResolver, qualityOptions, report)
+          }
+        }
+      }
     }
   }
 
@@ -266,6 +358,18 @@ class ApiQualityCheckCommand : Command {
       tc.buildStatusFailure(buildMessage)
     }
 
+    val nonDynamicExtensionPoints = report.nonDynamicExtensionPoints
+    if (nonDynamicExtensionPoints.isNotEmpty()) {
+      Paths.get("non-dynamic-extension-points.csv").writeText(
+        buildString {
+          appendln("EP name,Usages")
+          nonDynamicExtensionPoints.sortedByDescending { it.numberOfUsages }.forEach { (extensionPointName, numberOfUsages) ->
+            appendln("$extensionPointName,$numberOfUsages")
+          }
+        }
+      )
+    }
+
     return TeamCityHistory(failedTests)
   }
 
@@ -382,6 +486,9 @@ class ApiQualityCheckCommand : Command {
 
     @set:Argument("sfr-check-version-presence", description = "Whether @ApiStatus.ScheduledForRemoval APIs must have 'inVersion' value specified ('true' by default)")
     var checkSfrVersionPresence: String = "true"
+
+    @set:Argument("plugins-built-from-sources", description = "Directory containing plugins built from the same sources as IDE. ")
+    var pluginsBuiltFromSourcesPath: String? = null
   }
 
 }
@@ -399,7 +506,8 @@ private data class ApiQualityReport(
   val tooLongExperimental: MutableList<TooLongExperimental> = arrayListOf(),
   val mustAlreadyBeRemoved: MutableList<MustAlreadyBeRemoved> = arrayListOf(),
   val stabilizedExperimentalApis: MutableList<StabilizedExperimentalApi> = arrayListOf(),
-  val sfrApisWithWrongPlannedVersion: MutableList<SfrApiWithWrongPlannedVersion> = arrayListOf()
+  val sfrApisWithWrongPlannedVersion: MutableList<SfrApiWithWrongPlannedVersion> = arrayListOf(),
+  val nonDynamicExtensionPoints: MutableList<NonDynamicExtensionPoint> = arrayListOf()
 )
 
 private data class MustAlreadyBeRemoved(
@@ -442,4 +550,9 @@ private data class TooLongExperimental(
 private data class StabilizedExperimentalApi(
   val apiSignature: ApiSignature,
   val unmarkedExperimentalIn: IdeVersion
+)
+
+private data class NonDynamicExtensionPoint(
+  val extensionPointName: String,
+  val numberOfUsages: Int
 )

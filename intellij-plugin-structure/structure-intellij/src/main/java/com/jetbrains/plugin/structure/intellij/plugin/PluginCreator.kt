@@ -233,7 +233,7 @@ internal class PluginCreator private constructor(
           else -> null
         } ?: continue
         val isDynamic = extensionPoint.getAttributeValue("dynamic")?.toBoolean() ?: false
-        containerDescriptor.extensionPoints += ExtensionPoint(extensionPointName, isDynamic, extensionPoint)
+        containerDescriptor.extensionPoints += ExtensionPoint(extensionPointName, isDynamic)
       }
     }
   }

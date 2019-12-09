@@ -1,11 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import org.jdom2.Element
-
 data class ExtensionPoint(
   val extensionPointName: String,
-  val isDynamic: Boolean,
-  val extensionElement: Element
+  val isDynamic: Boolean
 )
 
 data class ComponentConfig(
