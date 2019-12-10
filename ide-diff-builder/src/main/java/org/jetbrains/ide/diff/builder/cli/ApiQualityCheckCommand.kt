@@ -144,8 +144,8 @@ class ApiQualityCheckCommand : Command {
           .flatMap { it.extensionPoints.asSequence() }
           .filterNotTo(nonDynamicExtensionPoints) { it.isDynamic }
 
-        for ((epName, declarations) in plugin.extensions.asMap()) {
-          extensionPointsUsages.compute(epName) { _, count -> (count ?: 0) + declarations.size }
+        for (epName in plugin.extensions.keySet()) {
+          extensionPointsUsages.compute(epName) { _, count -> (count ?: 0) + 1 }
         }
       }
     }
