@@ -83,11 +83,12 @@ class PluginsParsing(
    * Adds all plugins that correspond to one of the following specs:
    *
    * ```
-   * - id:<plugin-id>     // all compatible version of <plugin-id>
-   * - $id or id$         // only the last version of the plugin compatible with IDEs will be checked
-   * - #<update-id>       // update #<update-id>
-   * - path:<plugin-path> // plugin from <plugin-path>, where <plugin-path> may be relative to base path.
-   * - <other>            // treated as a path: or id:
+   * - id:<plugin-id>                    // all compatible version of <plugin-id>
+   * - version:<plugin-id>:<version>     // all compatible version of <plugin-id>
+   * - $id or id$                        // only the last version of the plugin compatible with IDEs will be checked
+   * - #<update-id>                      // update #<update-id>
+   * - path:<plugin-path>                // plugin from <plugin-path>, where <plugin-path> may be relative to base path.
+   * - <other>                           // treated as a path: or id:
    * ```
    */
   fun addPluginBySpec(spec: String, basePath: Path, ideVersions: List<IdeVersion>) {
@@ -107,6 +108,14 @@ class PluginsParsing(
       if (spec.startsWith("id:")) {
         val pluginId = spec.substringAfter("id:")
         addAllCompatibleVersionsOfPlugin(pluginId, ideVersion)
+        continue
+      }
+
+      if (spec.startsWith("version:")) {
+        val idAndVersion = spec.substringAfter("version:")
+        val id = idAndVersion.substringBefore(":").trim()
+        val version = idAndVersion.substringAfter(":").trim()
+        addPluginVersion(id, version)
         continue
       }
 
@@ -154,6 +163,20 @@ class PluginsParsing(
     }
     reportage.logVerificationStage("$stepName: " + if (compatibleVersions.isEmpty()) "no compatible versions" else compatibleVersions.joinToString { it.presentableName })
     pluginsSet.schedulePlugins(compatibleVersions)
+  }
+
+  /**
+   * Adds version [version] of plugin with XML ID [pluginId].
+   */
+  private fun addPluginVersion(pluginId: String, version: String) {
+    val stepName = "Plugin '$pluginId' of version '$version'"
+    val allVersionsOfPlugin = pluginRepository.retry(stepName) {
+      getAllVersionsOfPlugin(pluginId)
+    }
+    val pluginInfo = allVersionsOfPlugin.find { it.version == version }
+    reportage.logVerificationStage(stepName + ": " + (pluginInfo?.presentableName ?: "no version '$version' of plugin '$pluginId' available"))
+    pluginInfo ?: return
+    pluginsSet.schedulePlugin(pluginInfo)
   }
 
   /**
