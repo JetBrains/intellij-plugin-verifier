@@ -7,5 +7,5 @@ dependencies {
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
   implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.1'
   implementation group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.3.0.1'
-  implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9'
+  implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2'
 }
