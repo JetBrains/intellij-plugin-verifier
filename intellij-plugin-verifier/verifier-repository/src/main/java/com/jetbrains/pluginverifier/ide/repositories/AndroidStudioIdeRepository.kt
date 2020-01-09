@@ -40,7 +40,7 @@ class AndroidStudioIdeRepository : IdeRepository {
   private fun updateIndex(): List<AvailableIde> {
     val responseBody = feedConnector.getFeed(feedUrl.toExternalForm()).executeSuccessfully().body()
     val feed = responseBody.use {
-      val signedContent = CMSSignedData(responseBody.byteStream()).signedContent.content as ByteArray
+      val signedContent = CMSSignedData(responseBody!!.byteStream()).signedContent.content as ByteArray
       jsonParser.fromJson(signedContent.inputStream().xzInputStream().reader(), Feed::class.java)
     }
     return feed.entries

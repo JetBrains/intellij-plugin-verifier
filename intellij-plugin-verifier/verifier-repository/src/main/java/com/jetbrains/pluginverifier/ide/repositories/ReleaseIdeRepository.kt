@@ -35,7 +35,7 @@ class ReleaseIdeRepository : IdeRepository {
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
 
   private fun updateIndex(): List<AvailableIde> {
-    val products = dataServiceConnector.getProducts().executeSuccessfully().body()
+    val products = dataServiceConnector.getProducts().executeSuccessfully().body()!!
     return DataServicesIndexParser().parseAvailableIdes(products)
   }
 

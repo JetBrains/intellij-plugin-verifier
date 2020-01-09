@@ -70,7 +70,7 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
   private fun updateIndex(): List<AvailableIde> {
     val index = repositoryIndexConnector.getIndex(channel.getIndexUrl())
     val artifacts = try {
-      index.executeSuccessfully().body().artifacts
+      index.executeSuccessfully().body()!!.artifacts
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       if (channel == Channel.NIGHTLY) {

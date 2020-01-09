@@ -50,7 +50,7 @@ class DefaultAvailableIdeProtocol(
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
-      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL)!!)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()

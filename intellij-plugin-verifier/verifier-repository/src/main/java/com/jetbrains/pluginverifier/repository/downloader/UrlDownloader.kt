@@ -56,7 +56,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     /**
      * Guess by content type.
      */
-    val contentType = body().contentType()
+    val contentType = body()!!.contentType()
     if (contentType == jarContentMediaType || contentType == xJarContentMediaType) {
       return "jar"
     }
@@ -142,7 +142,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   private fun copyResponseTo(response: Response<ResponseBody>, file: Path) {
     checkIfInterrupted()
     response.body().use { responseBody ->
-      val expectedSize = responseBody.contentLength()
+      val expectedSize = responseBody!!.contentLength()
       copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile()) { }
     }
   }

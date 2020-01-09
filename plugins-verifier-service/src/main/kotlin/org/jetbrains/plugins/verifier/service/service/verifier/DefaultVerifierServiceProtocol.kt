@@ -28,7 +28,7 @@ class DefaultVerifierServiceProtocol(
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
     Retrofit.Builder()
-      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL)!!)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
@@ -42,7 +42,7 @@ class DefaultVerifierServiceProtocol(
   override fun requestScheduledVerifications(): List<ScheduledVerification> =
     retrofitConnector
       .getScheduledVerifications(authorizationToken)
-      .executeSuccessfully().body()
+      .executeSuccessfully().body()!!
       .mapNotNull { buildScheduledVerification(it) }
 
   private fun buildScheduledVerification(json: ScheduledVerificationJson): ScheduledVerification? {
@@ -70,7 +70,7 @@ class DefaultVerifierServiceProtocol(
       return
     }
 
-    val uploadUrl = addResponse.body().string()
+    val uploadUrl = addResponse.body()!!.string()
 
     retrofitConnector.uploadVerificationResult(
       uploadUrl,

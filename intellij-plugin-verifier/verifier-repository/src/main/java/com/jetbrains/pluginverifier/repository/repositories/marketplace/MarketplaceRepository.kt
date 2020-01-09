@@ -50,7 +50,7 @@ class MarketplaceRepository(
   }
 
   private val repositoryConnector = Retrofit.Builder()
-    .baseUrl(HttpUrl.get(repositoryURL))
+    .baseUrl(HttpUrl.get(repositoryURL)!!)
     .addConverterFactory(GsonConverterFactory.create(Gson()))
     .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
     .build()
@@ -76,7 +76,7 @@ class MarketplaceRepository(
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> =
     try {
       repositoryConnector
-        .getPluginUpdates(pluginId).executeSuccessfully().body()
+        .getPluginUpdates(pluginId).executeSuccessfully().body()!!
         .updateIds
         .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
     } catch (e: Exception) {
@@ -86,7 +86,7 @@ class MarketplaceRepository(
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
     repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
-      .executeSuccessfully().body()
+      .executeSuccessfully().body()!!
       .map { updateInfosRequester.putJsonUpdateInfo(it) }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
@@ -168,7 +168,7 @@ class MarketplaceRepository(
       return try {
         repositoryConnector
           .getUpdateInfosForIdsBetween(start, end)
-          .executeSuccessfully().body()
+          .executeSuccessfully().body()!!
           .map { it.toUpdateInfo() }
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
@@ -181,7 +181,7 @@ class MarketplaceRepository(
       try {
         repositoryConnector
           .getUpdateInfoById(updateId)
-          .executeSuccessfully().body()
+          .executeSuccessfully().body()!!
           .toUpdateInfo()
       } catch (e: Exception) {
         e.rethrowIfInterrupted()

@@ -44,7 +44,7 @@ fun createOkHttpClient(
     val location = response.header(LOCATION) ?: return@addInterceptor response
     val locationUrl = if (location.startsWith("/")) {
       //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
-      request.url().resolve(location).url()
+      request.url().resolve(location)!!.url()
     } else {
       URL(location)
     }
@@ -63,7 +63,7 @@ fun createOkHttpClient(
       }
     )
   )
-  .build()!!
+  .build()
 
 /**
  * `equals()` for URL that doesn't require internet connection in contrast to [URL.equals]

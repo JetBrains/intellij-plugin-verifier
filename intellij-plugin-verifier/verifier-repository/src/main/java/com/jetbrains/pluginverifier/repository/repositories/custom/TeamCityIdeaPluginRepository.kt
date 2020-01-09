@@ -22,7 +22,7 @@ class TeamCityIdeaPluginRepository(
 ) : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
-    .baseUrl(HttpUrl.get(buildServerUrl))
+    .baseUrl(HttpUrl.get(buildServerUrl)!!)
     .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
     .build()
     .create(TeamCityPluginRepositoryConnector::class.java)
@@ -33,7 +33,7 @@ class TeamCityIdeaPluginRepository(
   override fun requestAllPlugins(): List<CustomPluginInfo> {
     val document = repositoryConnector.getPluginsList()
       .executeSuccessfully()
-      .body().byteStream().use {
+      .body()!!.byteStream().use {
         DocumentBuilderFactory.newInstance()
           .newDocumentBuilder()
           .parse(it)

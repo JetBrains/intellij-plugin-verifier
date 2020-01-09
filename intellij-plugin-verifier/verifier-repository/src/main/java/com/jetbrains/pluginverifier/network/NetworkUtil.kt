@@ -33,7 +33,7 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionChec
     if (problems.code() == 503) {
       throw ServerUnavailable503Exception(serverUrl)
     }
-    val message = problems.message() ?: problems.errorBody().string().take(100)
+    val message = problems.message() ?: problems.errorBody()!!.string().take(100)
     throw NonSuccessfulResponseException(serverUrl, problems.code(), message)
   },
   onFailure = { error -> throw FailedRequestException(serverUrl, error) }

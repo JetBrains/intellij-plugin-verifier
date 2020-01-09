@@ -40,7 +40,7 @@ class DefaultFeatureServiceProtocol(
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
-      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL))
+      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL)!!)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
@@ -50,7 +50,7 @@ class DefaultFeatureServiceProtocol(
   override fun getUpdatesToExtract(): List<UpdateInfo> =
     retrofitConnector
       .getUpdatesToExtractFeatures(authorizationToken)
-      .executeSuccessfully().body()
+      .executeSuccessfully().body()!!
       .sortedDescending()
       .mapNotNull { pluginRepository.getPluginInfoById(it) }
 

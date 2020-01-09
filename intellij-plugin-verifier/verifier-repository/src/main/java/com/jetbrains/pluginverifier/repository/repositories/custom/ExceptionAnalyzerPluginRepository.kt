@@ -31,7 +31,7 @@ class ExceptionAnalyzerPluginRepository(
     val pluginsXmlUrl = repositoryUrl.toExternalForm().trimEnd('/') + "/plugins.xml"
     val document = repositoryConnector.getPluginsList(pluginsXmlUrl)
       .executeSuccessfully()
-      .body().byteStream().use {
+      .body()!!.byteStream().use {
         DocumentBuilderFactory.newInstance()
           .newDocumentBuilder()
           .parse(it)
