@@ -202,13 +202,6 @@ abstract class NoOpValidatingDocumentedProblem : DocumentedProblem {
 }
 
 /**
- * "Constructor injection referring to extension points not supported"
- *
- * Since 2019.2
- */
-object DocConstructorInjectionNotSupported : NoOpValidatingDocumentedProblem()
-
-/**
  * <class name>.<method name> method <class name> parameter marked <class name>
  */
 data class DocMethodParameterMarkedWithAnnotation(

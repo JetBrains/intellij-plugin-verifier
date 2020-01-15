@@ -121,3 +121,5 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 `some.property.name` property removed from resource bundle messages.Bundle
 : It is a comment why
+Java code migrated to use `TYPE_USE` nullability annotations
+: It is a comment why

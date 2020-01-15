@@ -1,5 +1,8 @@
 package com.jetbrains.pluginverifier.filtering.documented
 
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+
 /**
  * Parser of the markdown-formatted [Breaking API Changes page](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
  */
@@ -13,7 +16,11 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
 
     private const val S = "[.|#]"
 
-    private val pattern2Parser = mapOf<Regex, (List<String>) -> DocumentedProblem>(
+    private object NoopDocumentedProblem : DocumentedProblem {
+      override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) = false
+    }
+
+    private val pattern2Parser = listOf<Pair<Regex, (List<String>) -> DocumentedProblem>>(
       Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) removed") to { s -> DocClassRemoved(toInternalName(s[0])) },
       Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) renamed.*") to { s -> DocClassRemoved(toInternalName(s[0])) },
       Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? method removed") to { s -> DocMethodRemoved(toInternalName(s[0]), s[1]) },
@@ -35,7 +42,8 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
       Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
       Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
       Regex("($IDENTIFIER).*(?:superclass|superinterface) changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) },
-      Regex("Constructor injection referring to extension points not supported") to { /*Kotlin compiler bug: can't infer type. */ _ -> DocConstructorInjectionNotSupported },
+      Regex("Constructor injection referring to extension points not supported") to { s -> NoopDocumentedProblem },
+      Regex("Java code migrated to use ($IDENTIFIER) nullability annotations") to { s -> NoopDocumentedProblem },
       Regex("($IDENTIFIER) property removed from resource bundle ($IDENTIFIER)") to { s -> DocPropertyRemoved(s[0], s[1]) }
     )
 
@@ -96,7 +104,9 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
           } else {
             throw createParseException(description, unwrappedDescription)
           }
-        documentedProblems += documentedProblem
+        if (documentedProblem != NoopDocumentedProblem) {
+          documentedProblems += documentedProblem
+        }
       }
     }
     return documentedProblems
@@ -110,7 +120,7 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
         appendln("Description (no Markdown): \"$unwrappedDescription\"")
         appendln("Only the following patterns are supported: ")
         appendln("Where <method-params>='$METHOD_PARAMS' and <identifier>='$IDENTIFIER':")
-        for (regex in pattern2Parser.keys) {
+        for (regex in pattern2Parser.map { it.first }) {
           appendln(
             regex.pattern
               .replace(METHOD_PARAMS, "<method-params>")
