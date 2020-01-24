@@ -42,6 +42,7 @@ class DocumentedProblemsParserTest {
       DocAbstractMethodAdded("com/example/Faz", "newAbstractMethod"),
       DocAbstractMethodAdded("com/example/SomeClass", "abstractMethodWithParams"),
       DocAbstractMethodAdded("com/example/MethodHolder", "abstractMethodSeparatedWithDash"),
+      DocAbstractMethodAdded("com/some/Class", "markedAbstractMethod"),
       DocFieldRemoved("com/example/Baz", "REMOVED_FIELD"),
       DocClassRemoved("com/example/Foo"),
       DocClassRemoved("com/example/SomeInterface"),

@@ -20,6 +20,7 @@ The following problem patterns are supported:
 <class name>.<field name> field visibility changed from <before> to <after>
 
 <class name>.<method name> abstract method added
+<class name>.<method name> marked abstract
 <class name> class moved to package <package name>
 
 where <class name> is a fully-qualified name of the class, e.g. com.intellij.openapi.actionSystem.AnAction$InnerClass.
@@ -123,3 +124,5 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : It is a comment why
 Java code migrated to use `TYPE_USE` nullability annotations
 : It is a comment why
+`com.some.Class.markedAbstractMethod` marked abstract 
+: Implement the method in implementations

@@ -37,7 +37,7 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
       Regex("($IDENTIFIER)$S($IDENTIFIER) field type changed.*") to { s -> DocFieldTypeChanged(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER)$S($IDENTIFIER) field visibility changed.*") to { s -> DocFieldVisibilityChanged(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER) package removed") to { s -> DocPackageRemoved(toInternalName(s[0])) },
-      Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? abstract method added") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), s[1]) },
+      Regex("($IDENTIFIER)$S($IDENTIFIER)($METHOD_PARAMS)? (abstract method added|marked abstract)") to { s -> DocAbstractMethodAdded(toInternalName(s[0]), s[1]) },
       Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) moved to package ($IDENTIFIER)") to { s -> DocClassMovedToPackage(toInternalName(s[0]), toInternalName(s[1])) },
       Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
       Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
