@@ -319,7 +319,7 @@ class ApiQualityCheckCommand : Command {
     if (stabilizedApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
         appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
-        appendln("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2019.html")
+        appendln("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2020.html")
         appendln()
         for ((_, apisOfPackage) in stabilizedApis.sortedBy { it.apiSignature.javaPackageName }.groupBy { it.apiSignature.javaPackageName }) {
           for ((signature, inVersion) in apisOfPackage) {

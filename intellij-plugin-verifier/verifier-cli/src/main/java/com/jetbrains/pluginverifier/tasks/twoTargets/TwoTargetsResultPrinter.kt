@@ -269,7 +269,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
       
       To document the change do the following:
       1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html
-      2) Open a page corresponding to the current year, for example 'Changes in 2019.*'
+      2) Open a page corresponding to the current year, for example 'Changes in 2020.*'
       3) Click 'Edit Page' at the right upper corner to navigate to GitHub.
       4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
       5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct. See supported patterns at the top.
