@@ -21,7 +21,8 @@ class UpdateInfo(
   override val downloadUrl: URL,
   val updateId: Int,
   override val browserUrl: URL,
-  val tags: List<String>
+  val tags: List<String>,
+  val pluginIntId: Int
 ) : Downloadable, Browseable, PluginInfo(
   pluginId,
   pluginName,

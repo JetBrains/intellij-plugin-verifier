@@ -1,39 +1,120 @@
 package com.jetbrains.pluginverifier.repository.repositories.marketplace
 
-import com.google.common.cache.CacheBuilder
 import com.google.common.collect.ImmutableMap
-import com.google.gson.Gson
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.slf4j.LoggerFactory
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
+import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
 import java.net.MalformedURLException
 import java.net.URL
-import java.net.URLEncoder
-import java.util.*
-import java.util.concurrent.TimeUnit
 
-/**
- * The [plugin repository] [PluginRepository] implementation that communicates with
- * [JetBrains Plugins Repository](https://plugins.jetbrains.com/) and requests
- * plugins compatible with [products].
- */
-class MarketplaceRepository(
-  val repositoryURL: URL,
-  val products: List<IntelliJPlatformProduct> = listOf(IntelliJPlatformProduct.IDEA)
-) : PluginRepository {
+class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginRepository {
 
-  companion object {
-    private val LOG = LoggerFactory.getLogger(MarketplaceRepository::class.java)
+  private val pluginRepositoryInstance: org.jetbrains.intellij.pluginRepository.PluginRepository
 
-    private const val DEFAULT_BATCH_REQUEST_SIZE = 1000
+  init {
+    System.setProperty("MARKETPLACE_MAX_PARALLEL_CONNECTIONS", "512")
+    pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
+  }
+
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
+    val pluginManager = pluginRepositoryInstance.pluginManager
+    val result = arrayListOf<UpdateInfo>()
+    val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), 10000, 0)
+    val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString())
+    val updateIdToPluginId = updates.associateBy({ it.id }, { it.pluginId })
+    val updateIdToMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(
+      updates.map { it.pluginId to it.id }
+    )
+    for ((updateId, metadata) in updateIdToMetadata) {
+      result += createUpdateInfo(metadata, updateIdToPluginId.getValue(updateId))
+    }
+    return result
+  }
+
+  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
+    val compatibleUpdates = pluginRepositoryInstance.pluginManager.searchCompatibleUpdates(listOf(pluginId), ideVersion.asString())
+    val compatibleUpdate = compatibleUpdates.firstOrNull() ?: return null
+    return requestAndCreateUpdateInfo(compatibleUpdate.pluginId, compatibleUpdate.id)
+  }
+
+  override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
+    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
+    val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
+    val metadataList = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(
+      pluginVersions.map { pluginBean.id to it.id }
+    ).values
+    return metadataList.map { createUpdateInfo(it, pluginBean.id) }
+  }
+
+  override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
+    INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
+
+  private fun requestAndCreateUpdateInfo(pluginId: Int, updateId: Int): UpdateInfo? {
+    val updateMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadata(pluginId, updateId)
+    return updateMetadata?.let { createUpdateInfo(it, pluginId) }
+  }
+
+  private fun createUpdateInfo(
+    metadata: IntellijUpdateMetadata,
+    pluginId: Int
+  ) = UpdateInfo(
+    metadata.xmlId,
+    metadata.name,
+    metadata.version,
+    metadata.since.prepareIdeVersion(),
+    metadata.until.prepareIdeVersion(),
+    metadata.vendor,
+    parseSourceCodeUrl(metadata.sourceCodeUrl),
+    getDownloadUrl(metadata.id),
+    metadata.id,
+    getBrowserUrl(pluginId),
+    metadata.tags,
+    pluginId
+  )
+
+  fun getPluginInfoById(updateId: Int): UpdateInfo? {
+    val pluginUpdateBean = pluginRepositoryInstance.pluginUpdateManager.getUpdateById(updateId) ?: return null
+    return requestAndCreateUpdateInfo(pluginUpdateBean.pluginId, updateId)
+  }
+
+  fun getPluginInfosForManyIds(pluginAndUpdateIds: List<Pair<Int, Int>>): Map<Int, UpdateInfo> {
+    val updateIdToPluginId = pluginAndUpdateIds.associateBy({ it.second }, { it.first })
+    val result = hashMapOf<Int, UpdateInfo>()
+    for ((updateId, metadata) in pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(pluginAndUpdateIds)) {
+      val pluginId = updateIdToPluginId[updateId] ?: continue
+      result[updateId] = createUpdateInfo(metadata, pluginId)
+    }
+    return result
+  }
+
+  private fun getBrowserUrl(pluginId: Int) =
+    URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/$pluginId")
+
+  private fun getDownloadUrl(updateId: Int) =
+    URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
+
+  private fun String?.prepareIdeVersion(): IdeVersion? =
+    if (this == null || this == "" || this == "0.0") {
+      null
+    } else {
+      IdeVersion.createIdeVersionIfValid(this)
+    }
+
+  private fun parseSourceCodeUrl(url: String?): URL? {
+    if (url.isNullOrBlank()) {
+      return null
+    }
+    return try {
+      URL(url)
+    } catch (e: MalformedURLException) {
+      null
+    }
+  }
+
+  private companion object {
+
+    private val DEFAULT_URL = URL("https://plugins.jetbrains.com")
 
     /**
      * TODO: implement this mapping on the Plugins Repository: MP-1152.
@@ -49,179 +130,4 @@ class MarketplaceRepository(
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
     )
   }
-
-  private val repositoryConnector = Retrofit.Builder()
-    .baseUrl(repositoryURL.toHttpUrlOrNull()!!)
-    .addConverterFactory(GsonConverterFactory.create(Gson()))
-    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-    .build()
-    .create(MarketplaceConnector::class.java)
-
-  private val updateInfosRequester = UpdateInfosRequester()
-
-  private fun getBrowserUrl(pluginId: String) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/index?xmlId=" + URLEncoder.encode(pluginId, "UTF-8"))
-
-  private fun getDownloadUrl(updateId: Int) = URL("${repositoryURL.toExternalForm().trimEnd('/')}/plugin/download/?noStatistic=true&updateId=$updateId")
-
-  /**
-   * Given the [update ID] [updateId], which is a unique identifier
-   * of the plugin version in the Plugins Repository database,
-   * returns its more detailed [UpdateInfo].
-   */
-  fun getPluginInfoById(updateId: Int) =
-    updateInfosRequester.getUpdateInfoById(updateId, DEFAULT_BATCH_REQUEST_SIZE)
-
-  override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }.maxBy { it.updateId }
-
-  override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> =
-    try {
-      repositoryConnector
-        .getPluginUpdates(pluginId).executeSuccessfully().body()!!
-        .updateIds
-        .mapNotNull { updateInfosRequester.getUpdateInfoById(it.updateId, DEFAULT_BATCH_REQUEST_SIZE) }
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      emptyList()
-    }
-
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
-    repositoryConnector.getAllCompatibleUpdates(ideVersion.asString())
-      .executeSuccessfully().body()!!
-      .map { updateInfosRequester.putJsonUpdateInfo(it) }
-
-  override fun getIdOfPluginDeclaringModule(moduleId: String) =
-    INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
-
-  override fun toString() = "Plugin Repository " + repositoryURL.toExternalForm()
-
-  /**
-   * This class is responsible for requesting the [UpdateInfo]s.
-   */
-  private inner class UpdateInfosRequester {
-
-    /**
-     * Because of possible changes of *since, until*
-     * values in the repository's database,
-     * it is necessary to occasionally update the caches.
-     * Thus, the values are invalidated every hour.
-     *
-     * The value of the cache is `Optional` because
-     * the guava's caches don't allow to cache `null` values.
-     */
-    private val updateInfos = CacheBuilder
-      .newBuilder()
-      .expireAfterWrite(1, TimeUnit.HOURS)
-      .build<Int, Optional<UpdateInfo>>()
-
-    //synchronized block is used here to avoid
-    //performing unnecessary interleaving batch requests
-    @Synchronized
-    fun getUpdateInfoById(updateId: Int, batchSize: Int): UpdateInfo? =
-      updateInfos
-        .get(updateId) { requestUpdateInfo(updateId, batchSize) }
-        .orElse(null)
-
-    @Synchronized
-    fun putJsonUpdateInfo(jsonUpdateInfo: JsonUpdateInfo): UpdateInfo {
-      val updateInfo = jsonUpdateInfo.toUpdateInfo()
-      return putUpdateInfo(updateInfo)
-    }
-
-    private fun putUpdateInfo(updateInfo: UpdateInfo): UpdateInfo {
-      updateInfos.put(updateInfo.updateId, Optional.of(updateInfo))
-      return updateInfo
-    }
-
-    private fun requestUpdateInfo(updateId: Int, batchSize: Int): Optional<UpdateInfo> {
-      val batchUpdateInfos = requestBatchOfUpdateInfos(updateId, batchSize)
-      val updateIdToInfo = batchUpdateInfos.associateBy { it.updateId }
-      if (updateIdToInfo.isNotEmpty()) {
-        val min = updateIdToInfo.keys.min()!!
-        val max = updateIdToInfo.keys.max()!!
-        /**
-         * Explicitly save `null` value for those update IDs
-         * that don't have a corresponding UpdateInfo.
-         *
-         * This is done to avoid unnecessary request.
-         */
-        for (id in min..max) {
-          updateInfos.put(id, Optional.ofNullable(updateIdToInfo[id]))
-        }
-      }
-      return Optional.ofNullable(updateIdToInfo[updateId])
-    }
-
-    /**
-     * Returns inclusive endings of a batch of [UpdateInfo]s to be requested in one request.
-     */
-    private fun getBatchEndings(updateId: Int, batchSize: Int): Pair<Int, Int> {
-      val start = (updateId - (batchSize - 1) / 2).coerceAtLeast(1)
-      val end = updateId + batchSize / 2
-      return start to end
-    }
-
-    /**
-     * Requests [UpdateInfo]s for [updateId] and its neighbours.
-     */
-    private fun requestBatchOfUpdateInfos(updateId: Int, batchSize: Int): List<UpdateInfo> {
-      val (start, end) = getBatchEndings(updateId, batchSize)
-      return try {
-        repositoryConnector
-          .getUpdateInfosForIdsBetween(start, end)
-          .executeSuccessfully().body()!!
-          .map { it.toUpdateInfo() }
-      } catch (e: Exception) {
-        e.rethrowIfInterrupted()
-        LOG.info("Unable to request [$start; $end] UpdateInfos", e)
-        listOfNotNull(requestSingleUpdateInfo(updateId))
-      }
-    }
-
-    private fun requestSingleUpdateInfo(updateId: Int): UpdateInfo? =
-      try {
-        repositoryConnector
-          .getUpdateInfoById(updateId)
-          .executeSuccessfully().body()!!
-          .toUpdateInfo()
-      } catch (e: Exception) {
-        e.rethrowIfInterrupted()
-        LOG.error("Unable to request UpdateInfo #$updateId", e)
-        null
-      }
-
-    private fun String?.prepareIdeVersion(): IdeVersion? =
-      if (this == null || this == "" || this == "0.0") {
-        null
-      } else {
-        IdeVersion.createIdeVersionIfValid(this)
-      }
-
-    private fun parseSourceCodeUrl(url: String?): URL? {
-      if (url.isNullOrBlank()) {
-        return null
-      }
-      return try {
-        URL(url)
-      } catch (e: MalformedURLException) {
-        null
-      }
-    }
-
-    private fun JsonUpdateInfo.toUpdateInfo() = UpdateInfo(
-      pluginId,
-      pluginName,
-      version,
-      sinceString.prepareIdeVersion(),
-      untilString.prepareIdeVersion(),
-      vendor,
-      parseSourceCodeUrl(sourceCodeUrl),
-      getDownloadUrl(updateId),
-      updateId,
-      getBrowserUrl(pluginId),
-      tags.orEmpty()
-    )
-
-  }
-
 }

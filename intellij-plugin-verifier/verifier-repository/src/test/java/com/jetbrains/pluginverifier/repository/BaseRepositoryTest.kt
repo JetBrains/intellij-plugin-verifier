@@ -39,7 +39,7 @@ abstract class BaseRepositoryTest<R : PluginRepository> {
       DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE)
     )
     val pluginFileResult = filesBank.getPluginFile(pluginInfo)
-    assert(pluginFileResult is PluginFileProvider.Result.Found)
+    assert(pluginFileResult is PluginFileProvider.Result.Found, { pluginFileResult.toString() })
     pluginFileResult as PluginFileProvider.Result.Found
     pluginFileResult.pluginFileLock.use {
       Assert.assertTrue(it.file.fileSize > SpaceAmount.ZERO_SPACE)

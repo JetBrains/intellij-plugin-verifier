@@ -22,11 +22,11 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
   }
 
   @Test
-  fun `browser url for plugin with id containing spaces must be encoded`() {
+  fun `browser url`() {
     val versions = repository.getAllVersionsOfPlugin("Mongo Plugin")
     assertTrue(versions.isNotEmpty())
     val updateInfo = versions.first()
-    assertEquals(URL(repositoryURL, "/plugin/index?xmlId=Mongo+Plugin"), updateInfo.browserUrl)
+    assertEquals(URL(repositoryURL, "/plugin/7141"), updateInfo.browserUrl)
   }
 
   @Test
@@ -53,12 +53,6 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
     assertTrue(info!!.updateId > 20000)
   }
 
-  @Test
-  fun lastCompatibleUpdates() {
-    val updates = repository.getLastCompatiblePlugins(IdeVersion.createIdeVersion("IU-163.2112"))
-    assertFalse(updates.isEmpty())
-  }
-
   private val ideVersion: IdeVersion
     get() = IdeVersion.createIdeVersion("182.3040")
 
@@ -69,8 +63,20 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
   }
 
   @Test
-  fun downloadExistentPlugin() {
-    val updateInfo = repository.getPluginInfoById(40625)!! //.gitignore 2.3.2
+  fun `request update info`() {
+    //Plugin ".ignore 2.3.2"
+    val updateInfo = repository.getPluginInfoById(40625)!!
+    assertEquals(".ignore", updateInfo.pluginName)
+    assertEquals("2.3.2", updateInfo.version)
+
+    val updateIdToInfo = repository.getPluginInfosForManyIds(listOf(7495 to 40625))
+    assertEquals(mapOf(40625 to updateInfo), updateIdToInfo)
+  }
+
+  @Test
+  fun `download existing plugin`() {
+    //Plugin ".ignore 2.3.2"
+    val updateInfo = repository.getPluginInfoById(40625)!!
     checkDownloadPlugin(updateInfo)
   }
 
