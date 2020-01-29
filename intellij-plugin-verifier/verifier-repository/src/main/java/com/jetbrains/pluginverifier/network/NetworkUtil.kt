@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.network
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import okhttp3.Request
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -40,7 +41,7 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionChec
 )
 
 private val <T> Call<T>.serverUrl: String
-  get() = "${request().url().host()}:${request().url().port()}"
+  get() = "${request().url.host}:${request().url.port}"
 
 @Throws(InterruptedException::class)
 private fun <T, R> Call<T>.executeWithInterruptionCheck(

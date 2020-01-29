@@ -10,8 +10,9 @@ import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.network.jsonMediaType
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -28,7 +29,7 @@ class DefaultVerifierServiceProtocol(
 
   private val retrofitConnector: VerifierRetrofitConnector by lazy {
     Retrofit.Builder()
-      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL)!!)
+      .baseUrl(pluginRepository.repositoryURL.toHttpUrlOrNull()!!)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
@@ -61,9 +62,9 @@ class DefaultVerifierServiceProtocol(
     val addResponse = retrofitConnector.addVerificationResult(
       authorizationToken,
       updateId,
-      RequestBody.create(stringMediaType, ideVersion),
-      RequestBody.create(stringMediaType, verificationResult.verificationVerdict),
-      RequestBody.create(stringMediaType, verificationResultData.resultType.name)
+      ideVersion.toRequestBody(stringMediaType),
+      verificationResult.verificationVerdict.toRequestBody(stringMediaType),
+      verificationResultData.resultType.name.toRequestBody(stringMediaType)
     ).executeSuccessfully()
 
     if (addResponse.code() == HttpURLConnection.HTTP_ACCEPTED) {
@@ -74,13 +75,13 @@ class DefaultVerifierServiceProtocol(
 
     retrofitConnector.uploadVerificationResult(
       uploadUrl,
-      RequestBody.create(jsonMediaType, json.toJson(verificationResultData))
+      json.toJson(verificationResultData).toRequestBody(jsonMediaType)
     ).executeSuccessfully()
 
     retrofitConnector.saveVerificationResult(
       authorizationToken,
       updateId,
-      RequestBody.create(stringMediaType, ideVersion)
+      ideVersion.toRequestBody(stringMediaType)
     ).executeSuccessfully()
   }
 

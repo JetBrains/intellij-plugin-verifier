@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.slf4j.LoggerFactory
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -50,7 +51,7 @@ class MarketplaceRepository(
   }
 
   private val repositoryConnector = Retrofit.Builder()
-    .baseUrl(HttpUrl.get(repositoryURL)!!)
+    .baseUrl(repositoryURL.toHttpUrlOrNull()!!)
     .addConverterFactory(GsonConverterFactory.create(Gson()))
     .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
     .build()

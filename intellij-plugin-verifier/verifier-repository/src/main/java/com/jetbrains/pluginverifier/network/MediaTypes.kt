@@ -1,18 +1,20 @@
 package com.jetbrains.pluginverifier.network
 
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
-val stringMediaType: MediaType = MediaType.parse("text/plain")!!
+val stringMediaType: MediaType = "text/plain".toMediaTypeOrNull()!!
 
-val jsonMediaType: MediaType = MediaType.parse("application/json")!!
+val jsonMediaType: MediaType = "application/json".toMediaTypeOrNull()!!
 
-val octetStreamMediaType: MediaType = MediaType.parse("application/octet-stream")!!
+val octetStreamMediaType: MediaType = "application/octet-stream".toMediaTypeOrNull()!!
 
-val jarContentMediaType: MediaType = MediaType.parse("application/java-archive")!!
+val jarContentMediaType: MediaType = "application/java-archive".toMediaTypeOrNull()!!
 
-val xJarContentMediaType: MediaType = MediaType.parse("application/x-java-archive")!!
+val xJarContentMediaType: MediaType = "application/x-java-archive".toMediaTypeOrNull()!!
 
-fun createStringRequestBody(string: String): RequestBody = RequestBody.create(stringMediaType, string)
+fun createStringRequestBody(string: String): RequestBody = string.toRequestBody(stringMediaType)
 
-fun createJsonRequestBody(json: String): RequestBody = RequestBody.create(jsonMediaType, json)
+fun createJsonRequestBody(json: String): RequestBody = json.toRequestBody(jsonMediaType)

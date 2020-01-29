@@ -38,13 +38,13 @@ fun createOkHttpClient(
     // can be removed when this issue will be fixed https://github.com/square/okhttp/issues/3111
     val request = chain.request()
     val response = chain.proceed(request)
-    if (response.code() != 307 && response.code() != 308) {
+    if (response.code != 307 && response.code != 308) {
       return@addInterceptor response
     }
     val location = response.header(LOCATION) ?: return@addInterceptor response
     val locationUrl = if (location.startsWith("/")) {
       //Relative URL, like /files/a.txt -> http://host.com/files/a.txt
-      request.url().resolve(location)!!.url()
+      request.url.resolve(location)!!.toUrl()
     } else {
       URL(location)
     }

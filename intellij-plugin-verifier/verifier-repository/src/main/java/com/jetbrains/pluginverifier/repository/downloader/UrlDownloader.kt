@@ -67,7 +67,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     /**
      * Guess by URL path extension.
      */
-    val path = raw().request().url().encodedPath()
+    val path = raw().request.url.encodedPath
     val extension = guessExtensionByPath(path)
     if (extension != null) {
       return extension
