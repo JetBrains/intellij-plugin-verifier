@@ -6,7 +6,7 @@ import com.jetbrains.pluginverifier.network.createJsonRequestBody
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -40,7 +40,7 @@ class DefaultFeatureServiceProtocol(
 
   private val retrofitConnector by lazy {
     Retrofit.Builder()
-      .baseUrl(HttpUrl.get(pluginRepository.repositoryURL)!!)
+      .baseUrl(pluginRepository.repositoryURL.toHttpUrlOrNull()!!)
       .addConverterFactory(GsonConverterFactory.create(Gson()))
       .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
       .build()
