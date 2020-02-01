@@ -12,14 +12,14 @@ class CompiledModulesResourceResolver(private val moduleRoots: List<File>) : Res
     }
 
     //Try to resolve path against module roots. [base] is ignored.
-    val adjustedPath = when {
-      relativePath.startsWith("./") -> "/META-INF/" + relativePath.substringAfter("./")
-      relativePath.startsWith("/") -> relativePath.substringAfter("/")
-      else -> relativePath
+    val moduleRootRelativePath = if (relativePath.startsWith("/")) {
+      relativePath.substringAfter("/")
+    } else {
+      "META-INF/" + relativePath.substringAfter("./")
     }
 
     for (moduleRoot in moduleRoots) {
-      val file = moduleRoot.resolve(adjustedPath)
+      val file = moduleRoot.resolve(moduleRootRelativePath)
       if (file.exists()) {
         val url = URLUtil.fileToUrl(file)
         return try {
