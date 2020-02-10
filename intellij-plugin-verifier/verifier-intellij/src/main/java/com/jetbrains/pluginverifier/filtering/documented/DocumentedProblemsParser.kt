@@ -16,10 +16,6 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
 
     private const val S = "[.|#]"
 
-    private object NoopDocumentedProblem : DocumentedProblem {
-      override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) = false
-    }
-
     @Suppress("RedundantLambdaArrow")
     private val pattern2Parser = listOf<Pair<Regex, (List<String>) -> DocumentedProblem>>(
       Regex("($IDENTIFIER).*(?:class|interface|annotation|enum) removed") to { s -> DocClassRemoved(toInternalName(s[0])) },
@@ -43,8 +39,6 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
       Regex("($IDENTIFIER)$S($IDENTIFIER) method ($IDENTIFIER) parameter marked @($IDENTIFIER)") to { s -> DocMethodParameterMarkedWithAnnotation(toInternalName(s[0]), s[1], toInternalName(s[2]), toInternalName(s[3])) },
       Regex("($IDENTIFIER)(.*)type parameter ($IDENTIFIER) added") to { s -> DocClassTypeParameterAdded(toInternalName(s[0])) },
       Regex("($IDENTIFIER).*(?:superclass|superinterface) changed from ($IDENTIFIER) to ($IDENTIFIER)") to { s -> DocSuperclassChanged(toInternalName(s[0]), toInternalName(s[1]), toInternalName(s[2])) },
-      Regex("Constructor injection referring to extension points not supported") to { _ -> NoopDocumentedProblem },
-      Regex("Java code migrated to use ($IDENTIFIER) nullability annotations") to { _ -> NoopDocumentedProblem },
       Regex("($IDENTIFIER) property removed from resource bundle ($IDENTIFIER)") to { s -> DocPropertyRemoved(s[0], s[1]) }
     )
 
@@ -90,6 +84,9 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
 
       return result
     }
+
+    fun startsWithMarkdown(text: String): Boolean =
+      text.startsWith("`") || text.startsWith("[`")
   }
 
   fun parse(pageBody: String): List<DocumentedProblem> {
@@ -98,6 +95,12 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
     for (index in lines.indices) {
       if (lines[index].startsWith(": ") && index > 0) {
         val description = lines[index - 1].trim()
+        if (!startsWithMarkdown(description)) {
+          // Ignore human-readable descriptions of non-code changes, like
+          // "Constructor injection referring to extension points not supported" or
+          // "Java code migrated to use nullability annotations"
+          continue
+        }
         val unwrappedDescription = unwrapMarkdownTags(description)
         val documentedProblem = parseUnwrappedDescription(unwrappedDescription)
           ?: if (ignoreNonParsed) {
@@ -105,9 +108,7 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
           } else {
             throw createParseException(description, unwrappedDescription)
           }
-        if (documentedProblem != NoopDocumentedProblem) {
-          documentedProblems += documentedProblem
-        }
+        documentedProblems += documentedProblem
       }
     }
     return documentedProblems

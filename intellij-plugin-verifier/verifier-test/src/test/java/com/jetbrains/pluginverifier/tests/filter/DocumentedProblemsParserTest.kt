@@ -90,7 +90,7 @@ class DocumentedProblemsParserTest {
   fun `failed to parse`() {
     expectedEx.expect(DocumentedProblemsParseException::class.java)
     val page = """
-  non-parsed description 
+  `SomeClass` non-parsed description 
   : Use classes from `org.apache.commons.imaging` instead
 """.trimIndent()
     DocumentedProblemsParser(false).parse(page)
