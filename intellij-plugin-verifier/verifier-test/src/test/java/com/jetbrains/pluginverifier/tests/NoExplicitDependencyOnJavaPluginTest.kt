@@ -1,9 +1,12 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.jetbrains.plugin.structure.base.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -53,34 +56,64 @@ class NoExplicitDependencyOnJavaPluginTest {
       .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
       .make()
 
-    // Build mock plugin
-
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+    val idePlugin = buildIdePlugin {
       dir("usage") {
         file("Usage.class", usageClass.bytes)
       }
+    }
+
+    val ide = buildIdeWithJavaPlugin {
+      dir("javaPlugin") {
+        file("JavaPluginException.class", javaPluginException.bytes)
+      }
+    }
+
+    // Run verification
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+
+    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
+
+    // Verify expected warning is emitted
+
+    assertEquals(
+      setOf(
+        """
+        Plugin uses classes of Java plugin, for example
+        'javaPlugin.JavaPluginException' is used at 'usage.Usage.method() : void'
+        but the plugin does not declare explicit dependency on the Java plugin, via <depends>com.intellij.modules.java</depends>. 
+        Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. 
+        For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
+        
+      """.trimIndent()
+      ), verificationResult.compatibilityWarnings.map { it.message }.toSet()
+    )
+  }
+
+  private fun buildIdePlugin(pluginClassesContentBuilder: (ContentBuilder).() -> Unit): IdePlugin {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      this.pluginClassesContentBuilder()
 
       dir("META-INF") {
         file("plugin.xml") {
           """
-          <idea-plugin>
-            <id>someId</id>
-            <name>someName</name>
-            <version>someVersion</version>
-            ""<vendor email="vendor.com" url="url">vendor</vendor>""
-            <description>this description is looooooooooong enough</description>
-            <change-notes>these change-notes are looooooooooong enough</change-notes>
-            <idea-version since-build="131.1"/>
-          </idea-plugin>
-          """.trimIndent()
+            <idea-plugin>
+              <id>someId</id>
+              <name>someName</name>
+              <version>someVersion</version>
+              ""<vendor email="vendor.com" url="url">vendor</vendor>""
+              <description>this description is looooooooooong enough</description>
+              <change-notes>these change-notes are looooooooooong enough</change-notes>
+              <idea-version since-build="131.1"/>
+            </idea-plugin>
+            """.trimIndent()
         }
       }
     }
 
-    val idePlugin = (IdePluginManager.createManager().createPlugin(pluginFile) as PluginCreationSuccess).plugin
+    return (IdePluginManager.createManager().createPlugin(pluginFile) as PluginCreationSuccess).plugin
+  }
 
-    // Build mock IDE
-
+  private fun buildIdeWithJavaPlugin(javaPluginClassesBuilder: (ContentBuilder).() -> Unit): Ide {
     val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea")) {
       file("build.txt", "IU-192.1")
       dir("lib") {
@@ -88,13 +121,13 @@ class NoExplicitDependencyOnJavaPluginTest {
           dir("META-INF") {
             file("plugin.xml") {
               """
-              <idea-plugin>
-                <id>com.intellij</id>
-                <name>IDEA CORE</name>
-                <version>1.0</version>
-                <module value="com.intellij.modules.all"/>                
-              </idea-plugin>
-              """.trimIndent()
+                <idea-plugin>
+                  <id>com.intellij</id>
+                  <name>IDEA CORE</name>
+                  <version>1.0</version>
+                  <module value="com.intellij.modules.all"/>                
+                </idea-plugin>
+                """.trimIndent()
             }
           }
         }
@@ -106,17 +139,16 @@ class NoExplicitDependencyOnJavaPluginTest {
               dir("META-INF") {
                 file("plugin.xml") {
                   """
-                  <idea-plugin>
-                    <id>com.intellij.java</id>
-                    <module value="com.intellij.modules.java"/>
-                  </idea-plugin>
-                  """.trimIndent()
+                    <idea-plugin>
+                      <id>com.intellij.java</id>
+                      <module value="com.intellij.modules.java"/>
+                    </idea-plugin>
+                    """.trimIndent()
                 }
               }
 
-              dir("javaPlugin") {
-                file("JavaPluginException.class", javaPluginException.bytes)
-              }
+              //Generate content of Java plugin.
+              this.javaPluginClassesBuilder()
             }
           }
         }
@@ -131,24 +163,6 @@ class NoExplicitDependencyOnJavaPluginTest {
     val javaPlugin = ide.bundledPlugins.find { it.pluginId == "com.intellij.java" }!!
     assertEquals("com.intellij.java", javaPlugin.pluginId)
     assertEquals(setOf("com.intellij.modules.java"), javaPlugin.definedModules)
-
-    // Run verification
-    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
-
-    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
-
-    // Verify expected warning is emitted
-
-    assertEquals(setOf(
-      """
-        Plugin uses classes of Java plugin, for example
-        'javaPlugin.JavaPluginException' is used at 'usage.Usage.method() : void'
-        but the plugin does not declare explicit dependency on the Java plugin, via <depends>com.intellij.modules.java</depends>. 
-        Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. 
-        For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
-        
-      """.trimIndent()
-    ), verificationResult.compatibilityWarnings.map { it.message }.toSet()
-    )
+    return ide
   }
 }
