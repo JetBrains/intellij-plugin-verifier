@@ -20,16 +20,18 @@ import java.util.concurrent.TimeUnit
 
 private interface FeaturesRetrofitConnector {
 
-  @GET("/feature/getUpdatesToExtractFeatures")
-  fun getUpdatesToExtractFeatures(@Header("Authorization") authorization: String): Call<List<Int>>
+  @GET("/api/updates/features-not-extracted")
+  fun getUpdatesToExtractFeatures(@Header("Authorization") authorization: String): Call<List<UpdateAndPluginPair>>
 
-  @POST("/feature/receiveExtractedFeatures")
+  @POST("/api/features/receive-extracted-features")
   fun sendExtractedFeatures(
     @Header("Authorization") authorization: String,
     @Body extractedFeatures: RequestBody
   ): Call<ResponseBody>
 
 }
+
+private data class UpdateAndPluginPair(val updateId: Int, val pluginId: Int)
 
 class DefaultFeatureServiceProtocol(
   token: String,
@@ -51,6 +53,7 @@ class DefaultFeatureServiceProtocol(
     retrofitConnector
       .getUpdatesToExtractFeatures(authorizationToken)
       .executeSuccessfully().body()!!
+      .map { it.updateId }
       .sortedDescending()
       .mapNotNull { pluginRepository.getPluginInfoById(it) }
 
