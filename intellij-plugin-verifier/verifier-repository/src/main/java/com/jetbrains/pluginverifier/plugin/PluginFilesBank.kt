@@ -44,12 +44,11 @@ class PluginFilesBank(
 
       val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, PluginFileNameMapper)
 
-      val fileRepository = FileRepositoryBuilder<PluginInfo>()
-        .sweepPolicy(sweepPolicy)
-        .resourceProvider(downloadProvider)
-        .presentableName("downloaded-plugins")
-        .addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
-        .build()
+      val fileRepository = FileRepository(
+        downloadProvider,
+        sweepPolicy,
+        "downloaded-plugins"
+      ).addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
 
       return PluginFilesBank(fileRepository, urlProvider, downloadProvider)
     }

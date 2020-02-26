@@ -1,9 +1,12 @@
 package com.jetbrains.pluginverifier.repository.files
 
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.pluginverifier.repository.cleanup.IdleSweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
+import com.jetbrains.pluginverifier.repository.provider.EmptyResourceProvider
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepository
 import com.jetbrains.pluginverifier.repository.resources.ResourceRepositoryImpl
@@ -16,10 +19,10 @@ import java.time.Clock
  * [resource repository] [ResourceRepository] for files.
  */
 class FileRepository<K>(
-  sweepPolicy: SweepPolicy<K>,
-  resourceProvider: ResourceProvider<K, Path>,
-  clock: Clock = Clock.systemUTC(),
-  presentableName: String = "FileRepository"
+  resourceProvider: ResourceProvider<K, Path> = EmptyResourceProvider(),
+  sweepPolicy: SweepPolicy<K> = IdleSweepPolicy(),
+  presentableName: String = "FileRepository",
+  clock: Clock = Clock.systemUTC()
 ) {
   private val resourceRepository = ResourceRepositoryImpl(
     sweepPolicy,
@@ -76,4 +79,16 @@ class FileRepository<K>(
     resourceRepository.cleanup()
   }
 
+}
+
+fun <K> FileRepository<K>.addInitialFilesFrom(directory: Path, keyProvider: (Path) -> K?): FileRepository<K> {
+  for (file in directory.listFiles()) {
+    val key = keyProvider(file)
+    if (key != null) {
+      add(key, file)
+    } else {
+      file.deleteLogged()
+    }
+  }
+  return this
 }

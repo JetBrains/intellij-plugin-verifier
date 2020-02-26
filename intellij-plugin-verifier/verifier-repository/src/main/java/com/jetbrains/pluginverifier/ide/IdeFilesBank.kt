@@ -29,12 +29,10 @@ class IdeFilesBank(
   diskSpaceSetting: DiskSpaceSetting
 ) {
 
-  private val ideFilesRepository = FileRepositoryBuilder<IdeVersion>()
-    .sweepPolicy(LruFileSizeSweepPolicy(diskSpaceSetting))
-    .resourceProvider(IdeDownloadProvider(bankDirectory, ideRepository))
-    .presentableName("IDEs bank at $bankDirectory")
-    .addInitialFilesFrom(bankDirectory) { getIdeVersionByPath(it) }
-    .build()
+  private val ideFilesRepository = FileRepository(
+    IdeDownloadProvider(bankDirectory, ideRepository),
+    LruFileSizeSweepPolicy(diskSpaceSetting)
+  ).addInitialFilesFrom(bankDirectory) { getIdeVersionByPath(it) }
 
   private fun getIdeVersionByPath(file: Path) =
     if (file.isDirectory) {
