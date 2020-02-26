@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.plugin
 
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.nameWithoutExtension
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.repository.Downloadable
@@ -13,7 +15,6 @@ import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.FileRepository
 import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
-import com.jetbrains.pluginverifier.repository.files.addInitialFilesFrom
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.apache.commons.io.FileUtils
@@ -35,7 +36,7 @@ class PluginFilesBank(
 
   companion object {
     fun create(
-      repository: PluginRepository,
+      pluginRepository: PluginRepository,
       pluginsDir: Path,
       diskSpaceSetting: DiskSpaceSetting
     ): PluginFilesBank {
@@ -46,7 +47,7 @@ class PluginFilesBank(
 
       val downloadProvider = DownloadProvider(pluginsDir, urlDownloader) { key ->
         when (key) {
-          is UpdateInfo -> key.updateId.toString()
+          is UpdateInfo -> getFileNameForMarketplacePlugin(key)
           else -> (key.pluginId + "-" + key.version).replaceInvalidFileNameCharacters()
         }
       }
@@ -55,22 +56,54 @@ class PluginFilesBank(
         downloadProvider,
         sweepPolicy,
         "downloaded-plugins"
-      ).addInitialFilesFrom(pluginsDir) { getPluginInfoByFile(repository, it) }
+      )
+
+      if (pluginRepository is MarketplaceRepository) {
+        addAlreadyDownloadedPlugins(pluginsDir, pluginRepository, fileRepository)
+      }
 
       return PluginFilesBank(fileRepository, urlProvider, downloadProvider)
     }
 
-    private fun getPluginInfoByFile(repository: PluginRepository, file: Path): PluginInfo? {
-      val name = file.nameWithoutExtension
-      val updateId = name.toIntOrNull()
-      if (updateId != null && repository is MarketplaceRepository) {
-        return repository.getPluginInfoById(updateId)
-      }
-      val pluginId = name.substringBefore("-")
-      val version = name.substringAfter("-")
-      return repository.getAllVersionsOfPlugin(pluginId).find { it.version == version }
+    private fun getFileNameForMarketplacePlugin(pluginInfo: UpdateInfo): String =
+      "${pluginInfo.pluginIntId}_${pluginInfo.updateId}"
+
+    private fun getPluginIdAndUpdateIdByPath(path: Path): Pair<Int, Int>? {
+      val fileName = path.nameWithoutExtension
+      val pluginId = fileName.substringBefore("_", "").toIntOrNull() ?: return null
+      val updateId = fileName.substringAfter("_", "").toIntOrNull() ?: return null
+      return pluginId to updateId
     }
 
+    private fun addAlreadyDownloadedPlugins(
+      pluginsDir: Path,
+      pluginRepository: MarketplaceRepository,
+      fileRepository: FileRepository<PluginInfo>
+    ) {
+      val pathToPluginIdAndUpdateId = hashMapOf<Path, Pair<Int, Int>>()
+      for (path in pluginsDir.listFiles()) {
+        val pluginIdAndUpdateId = getPluginIdAndUpdateIdByPath(path)
+        if (pluginIdAndUpdateId != null) {
+          pathToPluginIdAndUpdateId[path] = pluginIdAndUpdateId
+        } else {
+          path.deleteLogged()
+        }
+      }
+
+      //Batch request many update infos. Much faster than N > 1000 individual requests.
+      val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyIds(
+        pathToPluginIdAndUpdateId.map { it.value }
+      )
+
+      for ((path, pluginIdAndUpdateId) in pathToPluginIdAndUpdateId) {
+        val updateInfo = updateIdToUpdateInfo[pluginIdAndUpdateId.second]
+        if (updateInfo != null) {
+          fileRepository.add(updateInfo, path)
+        } else {
+          path.deleteLogged()
+        }
+      }
+    }
   }
 
   val downloadStatistics: DownloadStatistics
