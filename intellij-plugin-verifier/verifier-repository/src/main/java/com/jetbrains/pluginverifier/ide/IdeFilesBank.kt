@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
-import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.files.*
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -95,12 +94,7 @@ private class IdeDownloadProvider(
   val ideRepository: IdeRepository
 ) : ResourceProvider<IdeVersion, Path> {
 
-  private val ideFileNameMapper = object : FileNameMapper<AvailableIde> {
-    override fun getFileNameWithoutExtension(key: AvailableIde) =
-      key.version.asString()
-  }
-
-  private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader(), ideFileNameMapper)
+  private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader()) { it.version.asString() }
 
   override fun provide(key: IdeVersion): ProvideResult<Path> {
     val availableIde = try {

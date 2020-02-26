@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.repository.downloader
 
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
-import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.apache.commons.io.FileUtils
@@ -13,12 +12,12 @@ import java.nio.file.Path
 /**
  * [ResourceProvider] responsible for downloading files and directories
  * using provided [downloader] and saving them to the [destinationDirectory]
- * using the [fileNameMapper].
+ * using the [fileNameWithoutExtensionMapper].
  */
 class DownloadProvider<in K>(
   private val destinationDirectory: Path,
   private val downloader: Downloader<K>,
-  private val fileNameMapper: FileNameMapper<K>
+  private val fileNameWithoutExtensionMapper: (K) -> String
 ) : ResourceProvider<K, Path> {
   private companion object {
     const val DOWNLOADS_DIRECTORY = ".downloads"
@@ -73,7 +72,7 @@ class DownloadProvider<in K>(
   private fun getDestinationFile(key: K, isDirectory: Boolean, extension: String): Path {
     check(extension == extension.replaceInvalidFileNameCharacters()) { "Extension must not contain invalid characters: $extension" }
 
-    val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key).replaceInvalidFileNameCharacters()
+    val nameWithoutExtension = fileNameWithoutExtensionMapper(key).replaceInvalidFileNameCharacters()
     val extensionSuffix = if (isDirectory || extension.isEmpty()) "" else ".$extension"
 
     var destination = destinationDirectory.resolve(nameWithoutExtension + extensionSuffix)
@@ -94,7 +93,7 @@ class DownloadProvider<in K>(
     try {
       Files.createTempDirectory(
         downloadDirectory.createDir(),
-        "download-" + fileNameMapper.getFileNameWithoutExtension(key).replaceInvalidFileNameCharacters() + "-"
+        "download-" + fileNameWithoutExtensionMapper(key).replaceInvalidFileNameCharacters() + "-"
       )
     } catch (e: IOException) {
       throw RuntimeException(e)

@@ -9,9 +9,11 @@ import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.DownloadStatistics
-import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
-import com.jetbrains.pluginverifier.repository.files.*
+import com.jetbrains.pluginverifier.repository.files.FileRepository
+import com.jetbrains.pluginverifier.repository.files.FileRepositoryResult
+import com.jetbrains.pluginverifier.repository.files.IdleFileLock
+import com.jetbrains.pluginverifier.repository.files.addInitialFilesFrom
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.apache.commons.io.FileUtils
@@ -42,7 +44,12 @@ class PluginFilesBank(
       val urlProvider: (PluginInfo) -> URL? = { (it as? Downloadable)?.downloadUrl }
       val urlDownloader = UrlDownloader(urlProvider)
 
-      val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, PluginFileNameMapper)
+      val downloadProvider = DownloadProvider(pluginsDir, urlDownloader) { key ->
+        when (key) {
+          is UpdateInfo -> key.updateId.toString()
+          else -> (key.pluginId + "-" + key.version).replaceInvalidFileNameCharacters()
+        }
+      }
 
       val fileRepository = FileRepository(
         downloadProvider,
@@ -103,11 +110,4 @@ class PluginFilesBank(
    * Returns a set of plugins available locally at the moment.
    */
   fun getAvailablePluginFiles() = fileRepository.getAvailableFiles()
-}
-
-object PluginFileNameMapper : FileNameMapper<PluginInfo> {
-  override fun getFileNameWithoutExtension(key: PluginInfo) = when (key) {
-    is UpdateInfo -> key.updateId.toString()
-    else -> (key.pluginId + "-" + key.version).replaceInvalidFileNameCharacters()
-  }
 }

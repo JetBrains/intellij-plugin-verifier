@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
-import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.files.*
 import org.junit.Assert.*
 import org.junit.Rule
@@ -30,7 +29,7 @@ class FileRepositoryTest {
 
   private fun TemporaryFolder.newFolderPath(): Path = newFolder().toPath()
 
-  private fun createDownloadingProvider(downloadDir: Path) = DownloadProvider(downloadDir, SimulationDownloader(), IntFileNameMapper())
+  private fun createDownloadingProvider(downloadDir: Path) = DownloadProvider(downloadDir, SimulationDownloader()) { it.toString() }
 
   @Test
   fun `basic operations`() {
@@ -78,7 +77,7 @@ class FileRepositoryTest {
     val downloader = OnlyOneDownloadAtTimeDownloader()
 
     val fileRepository = FileRepository(
-      DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()),
+      DownloadProvider(tempFolder.newFolderPath(), downloader) { it.toString() },
       IdleSweepPolicy()
     )
 
@@ -181,7 +180,7 @@ class FileRepositoryTest {
     }
 
     val fileRepository = FileRepository(
-      DownloadProvider(tempFolder.newFolderPath(), downloader, IntFileNameMapper()),
+      DownloadProvider(tempFolder.newFolderPath(), downloader) { it.toString() },
       IdleSweepPolicy()
     )
 
@@ -269,9 +268,7 @@ class FileRepositoryTest {
         return DownloadResult.Downloaded(result, "txt", false)
       }
     }
-    val downloadProvider = DownloadProvider(downloadDir, downloader, object : FileNameMapper<Unit> {
-      override fun getFileNameWithoutExtension(key: Unit) = "a"
-    })
+    val downloadProvider = DownloadProvider(downloadDir, downloader) { "a" }
 
     downloadProvider.provide(Unit)
     downloadProvider.provide(Unit)
