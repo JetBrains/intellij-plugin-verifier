@@ -49,13 +49,13 @@ class DefaultFeatureServiceProtocol(
       .create(FeaturesRetrofitConnector::class.java)
   }
 
-  override fun getUpdatesToExtract(): List<UpdateInfo> =
-    retrofitConnector
+  override fun getUpdatesToExtract(): List<UpdateInfo> {
+    val pluginAndUpdatePairs = retrofitConnector
       .getUpdatesToExtractFeatures(authorizationToken)
       .executeSuccessfully().body()!!
-      .map { it.updateId }
-      .sortedDescending()
-      .mapNotNull { pluginRepository.getPluginInfoById(it) }
+    val pluginIdAndUpdateIds = pluginAndUpdatePairs.map { it.pluginId to it.updateId }
+    return pluginRepository.getPluginInfosForManyIds(pluginIdAndUpdateIds).values.toList()
+  }
 
 
   override fun sendExtractedFeatures(extractFeaturesResult: ExtractFeaturesTask.Result) {
