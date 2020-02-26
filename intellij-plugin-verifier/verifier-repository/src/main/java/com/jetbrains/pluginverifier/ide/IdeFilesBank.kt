@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
+import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.files.*
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider

@@ -21,7 +21,7 @@ class DownloadProvider<in K>(
   private val fileNameMapper: FileNameMapper<K>
 ) : ResourceProvider<K, Path> {
   private companion object {
-    const val DOWNLOADS_DIRECTORY = "downloads"
+    const val DOWNLOADS_DIRECTORY = ".downloads"
   }
 
   private val downloadDirectory = destinationDirectory.resolve(DOWNLOADS_DIRECTORY)
@@ -60,7 +60,7 @@ class DownloadProvider<in K>(
     extension: String,
     isDirectory: Boolean
   ): ProvideResult<Path> {
-    val destination = createDestinationFileForKey(key, extension, isDirectory)
+    val destination = getDestinationFile(key, isDirectory, extension)
     try {
       moveFileOrDirectory(tempDownloadedFile, destination)
     } catch (e: Exception) {
@@ -70,11 +70,31 @@ class DownloadProvider<in K>(
     return ProvideResult.Provided(destination)
   }
 
+  private fun getDestinationFile(key: K, isDirectory: Boolean, extension: String): Path {
+    check(extension == extension.replaceInvalidFileNameCharacters()) { "Extension must not contain invalid characters: $extension" }
+
+    val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key).replaceInvalidFileNameCharacters()
+    val extensionSuffix = if (isDirectory || extension.isEmpty()) "" else ".$extension"
+
+    var destination = destinationDirectory.resolve(nameWithoutExtension + extensionSuffix)
+    var nextSuffix = 1
+    while (Files.exists(destination)) {
+      val newName = if (extensionSuffix.isEmpty()) {
+        "$nameWithoutExtension ($nextSuffix)"
+      } else {
+        "$nameWithoutExtension ($nextSuffix)$extensionSuffix"
+      }
+      destination = destinationDirectory.resolve(newName)
+      nextSuffix++
+    }
+    return destination
+  }
+
   private fun createTempDirectoryForDownload(key: K) =
     try {
       Files.createTempDirectory(
         downloadDirectory.createDir(),
-        "download-" + getFileNameForKey(key, "", true) + "-"
+        "download-" + fileNameMapper.getFileNameWithoutExtension(key).replaceInvalidFileNameCharacters() + "-"
       )
     } catch (e: IOException) {
       throw RuntimeException(e)
@@ -89,20 +109,6 @@ class DownloadProvider<in K>(
     } else {
       FileUtils.moveFile(fileOrDirectory.toFile(), destination.toFile())
     }
-  }
-
-  private fun createDestinationFileForKey(key: K, extension: String, isDirectory: Boolean): Path {
-    val finalFileName = getFileNameForKey(key, extension, isDirectory)
-    return destinationDirectory.resolve(finalFileName)
-  }
-
-  private fun getFileNameForKey(key: K, extension: String, isDirectory: Boolean): String {
-    val nameWithoutExtension = fileNameMapper.getFileNameWithoutExtension(key)
-    if (nameWithoutExtension == DOWNLOADS_DIRECTORY) {
-      throw IllegalStateException("File or directory named '$DOWNLOADS_DIRECTORY' is prohibited")
-    }
-    val fullName = nameWithoutExtension + if (isDirectory || extension.isEmpty()) "" else ".$extension"
-    return fullName.replaceInvalidFileNameCharacters()
   }
 
 }

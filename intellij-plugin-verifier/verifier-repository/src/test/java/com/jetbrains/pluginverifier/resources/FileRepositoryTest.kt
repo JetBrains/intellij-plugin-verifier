@@ -4,6 +4,9 @@ import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.repository.cleanup.*
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount.Companion.ONE_BYTE
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
+import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
+import com.jetbrains.pluginverifier.repository.downloader.Downloader
+import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.files.*
 import org.junit.Assert.*
 import org.junit.Rule
@@ -249,5 +252,32 @@ class FileRepositoryTest {
       remove(2)
       assertEquals(emptySet<Int>(), getAllExistingKeys())
     }
+  }
+
+  @Test
+  fun `download provider allows to download files with the same name`() {
+    val downloadDir = tempFolder.newFolder().toPath()
+    downloadDir.resolve("a.txt").writeText("0")
+
+    var nextText = 1
+    val downloader = object : Downloader<Unit> {
+      override fun download(key: Unit, tempDirectory: Path): DownloadResult {
+        val result = tempDirectory.resolve("a.txt")
+        result.writeText((nextText++).toString())
+        return DownloadResult.Downloaded(result, "txt", false)
+      }
+    }
+    val downloadProvider = DownloadProvider(downloadDir, downloader, object : FileNameMapper<Unit> {
+      override fun getFileNameWithoutExtension(key: Unit) = "a"
+    })
+
+    downloadProvider.provide(Unit)
+    downloadProvider.provide(Unit)
+    downloadProvider.provide(Unit)
+
+    assertEquals("0", downloadDir.resolve("a.txt").readText())
+    assertEquals("1", downloadDir.resolve("a (1).txt").readText())
+    assertEquals("2", downloadDir.resolve("a (2).txt").readText())
+    assertEquals("3", downloadDir.resolve("a (3).txt").readText())
   }
 }

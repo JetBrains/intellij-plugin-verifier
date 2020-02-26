@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.LruFileSizeSweepPolicy
 import com.jetbrains.pluginverifier.repository.downloader.DownloadProvider
 import com.jetbrains.pluginverifier.repository.downloader.DownloadStatistics
+import com.jetbrains.pluginverifier.repository.files.FileNameMapper
 import com.jetbrains.pluginverifier.repository.downloader.UrlDownloader
 import com.jetbrains.pluginverifier.repository.files.*
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
