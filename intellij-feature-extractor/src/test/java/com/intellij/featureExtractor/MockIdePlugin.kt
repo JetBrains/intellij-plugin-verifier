@@ -1,7 +1,5 @@
 package com.intellij.featureExtractor
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -13,8 +11,7 @@ data class MockIdePlugin(
   override val pluginId: String?,
   override val pluginVersion: String?
 ) : IdePlugin {
-  override val extensions: Multimap<String, Element> = HashMultimap.create()
-
+  override val extensions: MutableMap<String, MutableList<Element>> = hashMapOf()
   override val pluginName: String? = null
   override val description: String? = null
   override val url: String? = null

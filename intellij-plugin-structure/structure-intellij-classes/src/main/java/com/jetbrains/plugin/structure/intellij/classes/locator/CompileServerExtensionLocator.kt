@@ -19,13 +19,13 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
   override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
     val pluginLib = pluginFile.resolve("lib")
     if (pluginLib.isDirectory) {
-      val elements = idePlugin.extensions.get(EXTENSION_POINT_NAME)
+      val elements = idePlugin.extensions[EXTENSION_POINT_NAME] ?: emptyList()
       val allCompileJars = elements
-        .mapNotNull { it.getAttributeValue("classpath") }
-        .flatMap { it.split(";") }
-        .filter { it.endsWith(".jar") }
-        .map { File(pluginLib, it) }
-        .filter { it.isFile }
+          .mapNotNull { it.getAttributeValue("classpath") }
+          .flatMap { it.split(";") }
+          .filter { it.endsWith(".jar") }
+          .map { File(pluginLib, it) }
+          .filter { it.isFile }
       return buildJarOrZipFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
     }
     return emptyList()

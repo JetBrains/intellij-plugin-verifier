@@ -570,12 +570,12 @@ class MockPluginsTest {
 
   private fun checkPluginContents(plugin: IdePluginImpl) {
     assertEquals(
-      setOf(
+        setOf(
         "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
         "com.intellij.compileServer.plugin",
         "EpWithDefaultNs.someEP"
       ),
-      plugin.extensions.keys().toSet()
+        plugin.extensions.keys.toSet()
     )
 
     val appContainerDescriptor = plugin.appContainerDescriptor

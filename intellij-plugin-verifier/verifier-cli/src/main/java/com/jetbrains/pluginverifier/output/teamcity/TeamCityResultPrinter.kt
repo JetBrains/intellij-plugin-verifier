@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.output.teamcity
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
@@ -112,11 +110,11 @@ class TeamCityResultPrinter(
       emptySet()
     }
 
-  private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Multimap<MissingDependency, PluginInfo> {
-    val missingToRequiring = HashMultimap.create<MissingDependency, PluginInfo>()
+  private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Map<MissingDependency, Set<PluginInfo>> {
+    val missingToRequiring = mutableMapOf<MissingDependency, MutableSet<PluginInfo>>()
     results.filterIsInstance<PluginVerificationResult.Verified>().forEach {
       it.directMissingMandatoryDependencies.forEach { missingDependency ->
-        missingToRequiring.put(missingDependency, it.plugin)
+        missingToRequiring.getOrPut(missingDependency) { hashSetOf() } += it.plugin
       }
     }
     return missingToRequiring
@@ -280,7 +278,8 @@ class TeamCityResultPrinter(
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
         LOG.info("Unable to determine the last compatible updates of IDE $target", e)
-        emptyList<PluginInfo>() //Kotlin fails to determine type.
+        @Suppress("RemoveExplicitTypeArguments")
+        emptyList<PluginInfo>()
       }
     }
 
@@ -334,20 +333,20 @@ class TeamCityResultPrinter(
   private fun groupByProblemType(results: List<PluginVerificationResult>): TeamCityHistory {
     val failedTests = arrayListOf<TeamCityTest>()
 
-    val problem2Plugin: Multimap<CompatibilityProblem, PluginInfo> = HashMultimap.create()
+    val problem2Plugin: MutableMap<CompatibilityProblem, MutableSet<PluginInfo>> = hashMapOf()
     for (result in results) {
       for (problem in result.getProblems()) {
-        problem2Plugin.put(problem, result.plugin)
+        problem2Plugin.getOrPut(problem) { hashSetOf() } += result.plugin
       }
     }
 
-    val allProblems = problem2Plugin.keySet()
+    val allProblems = problem2Plugin.keys
     for ((problemClass, problemsOfClass) in allProblems.groupBy { it.javaClass }) {
       val prefix = convertProblemClassNameToSentence(problemClass)
       val testSuiteName = "($prefix)"
       tcLog.testSuiteStarted(testSuiteName).use {
         for (problem in problemsOfClass) {
-          for (plugin in problem2Plugin.get(problem)) {
+          for (plugin in (problem2Plugin[problem] ?: emptySet<PluginInfo>())) {
             tcLog.testSuiteStarted(problem.shortDescription).use {
               val testName = "($plugin)"
               tcLog.testStarted(testName).use {
@@ -361,14 +360,14 @@ class TeamCityResultPrinter(
     }
 
     val missingToRequired = collectMissingDependenciesForRequiringPlugins(results)
-    if (!missingToRequired.isEmpty) {
+    if (missingToRequired.isNotEmpty()) {
       val testSuiteName = "(missing dependencies)"
       tcLog.testSuiteStarted(testSuiteName).use {
-        missingToRequired.asMap().entries.forEach { entry ->
-          val testName = "(${entry.key})"
+        missingToRequired.entries.forEach { (key, values) ->
+          val testName = "($key)"
           tcLog.testStarted(testName).use {
             failedTests += TeamCityTest(testSuiteName, testName)
-            tcLog.testFailed(testName, "Required for ${entry.value.joinToString<PluginInfo?>()}", "")
+            tcLog.testFailed(testName, "Required for ${values.joinToString()}", "")
           }
         }
       }

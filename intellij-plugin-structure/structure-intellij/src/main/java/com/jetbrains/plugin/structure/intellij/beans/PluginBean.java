@@ -1,12 +1,12 @@
 package com.jetbrains.plugin.structure.intellij.beans;
 
-import com.google.common.collect.Multimap;
 import org.jdom2.Element;
 
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @XmlSeeAlso(ListItemBean.class)
 @XmlRootElement(name = "idea-plugin")
@@ -34,7 +34,7 @@ public class PluginBean {
   @XmlJavaTypeAdapter(ListItemAdapter.class)
   public List<String> modules = new ArrayList<>();
 
-  @XmlTransient public Multimap<String, Element> extensions;
+  @XmlTransient public Map<String, List<Element>> extensions;
   @XmlTransient public List<Element> applicationListeners;
   @XmlTransient public List<Element> projectListeners;
 

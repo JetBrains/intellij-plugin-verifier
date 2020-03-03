@@ -1,7 +1,5 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -24,7 +22,7 @@ data class MockIdePlugin(
   override val dependencies: List<PluginDependency> = emptyList(),
   override val underlyingDocument: Document = Document(Element("idea-plugin")),
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList(),
-  override val extensions: Multimap<String, Element> = HashMultimap.create(),
+  override val extensions: Map<String, List<Element>> = hashMapOf(),
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
   override val untilBuild: IdeVersion? = null,
   override val definedModules: Set<String> = emptySet(),

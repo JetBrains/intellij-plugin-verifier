@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -13,7 +12,7 @@ interface IdePlugin : Plugin {
 
   val untilBuild: IdeVersion?
 
-  val extensions: Multimap<String, Element>
+  val extensions: Map<String, List<Element>>
 
   val dependencies: List<PluginDependency>
 

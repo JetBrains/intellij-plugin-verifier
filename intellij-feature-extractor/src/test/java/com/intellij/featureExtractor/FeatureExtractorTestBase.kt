@@ -32,7 +32,7 @@ abstract class FeatureExtractorTestBase {
     plugin.extensions.clear()
     val element = Element(extensionPoint.extensionPointName)
     element.setAttribute("implementation", implementorName)
-    plugin.extensions.put(extensionPoint.extensionPointName, element)
+    plugin.extensions.getOrPut(extensionPoint.extensionPointName) { arrayListOf() } += element
   }
 
 }

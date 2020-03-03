@@ -1,6 +1,5 @@
 package org.jetbrains.ide.diff.builder.cli
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
@@ -23,30 +22,33 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 
 class BuildIdeApiMetadata {
 
   companion object {
     private val LOG = LoggerFactory.getLogger("build-ide-api-metadata")
 
-    private val ioExecutor = Executors.newCachedThreadPool(
-      ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat("io-%d")
-        .build()
-    )
+    private val ioThreadCounter = AtomicInteger()
+    private val ioExecutor = Executors.newCachedThreadPool { runnable ->
+      Thread(runnable).apply {
+        isDaemon = true
+        name = "io-${ioThreadCounter.incrementAndGet()}"
+      }
+    }
 
     /**
      * IDE diff building consumes a lot of file descriptors because many .jar files (IDE libraries, plugins) are being opened.
      * We might get 'IOException: Too many open files' if we ran too many IDE diff buildings in parallel.
      * So let's run IDE diff building in a single application thread to avoid IO errors.
      */
-    private val ideDiffExecutor = Executors.newSingleThreadExecutor(
-      ThreadFactoryBuilder()
-        .setDaemon(true)
-        .setNameFormat("ide-diff-%d")
-        .build()
-    )
+    private val ideDiffThreadCounter = AtomicInteger()
+    private val ideDiffExecutor = Executors.newSingleThreadExecutor { runnable ->
+      Thread(runnable).apply {
+        isDaemon = true
+        name = "ide-diff-${ideDiffThreadCounter.incrementAndGet()}"
+      }
+    }
   }
 
   fun buildMetadata(

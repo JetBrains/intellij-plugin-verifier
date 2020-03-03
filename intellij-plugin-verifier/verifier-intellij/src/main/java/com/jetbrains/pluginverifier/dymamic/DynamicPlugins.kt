@@ -36,7 +36,7 @@ object DynamicPlugins {
         "com.intellij.bundledKeymapProvider"
       )
 
-      val declaredExtensions = idePlugin.extensions.keySet()
+      val declaredExtensions = idePlugin.extensions.keys
       if (declaredExtensions.any { it !in allowedImmediateLoadUnloadAllowedExtensions }) {
         reasonsNotToLoadUnloadImmediately += "Plugin declares extension points other than " + allowedImmediateLoadUnloadAllowedExtensions.joinToString()
       }

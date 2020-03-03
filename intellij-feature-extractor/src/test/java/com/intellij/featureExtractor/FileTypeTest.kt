@@ -12,7 +12,7 @@ class FileTypeTest : FeatureExtractorTestBase() {
   @Test
   fun extensions() {
     val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
-    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
+    plugin.extensions.getOrPut(ExtensionPoint.FILE_TYPE.extensionPointName) { arrayListOf() } += element
     element.setAttribute("extensions", "one;two;three")
 
     val expectedExtensions = listOf("*.one", "*.two", "*.three")
@@ -27,7 +27,7 @@ class FileTypeTest : FeatureExtractorTestBase() {
   fun `file names`() {
     val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
     element.setAttribute("fileNames", ".NameOne;nameTwo.txt;ExAcTNameThree.example")
-    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
+    plugin.extensions.getOrPut(ExtensionPoint.FILE_TYPE.extensionPointName) { arrayListOf() } += element
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
       listOf(ExtensionPointFeatures(ExtensionPoint.FILE_TYPE, listOf(".NameOne", "nameTwo.txt", "ExAcTNameThree.example"))),
@@ -38,7 +38,7 @@ class FileTypeTest : FeatureExtractorTestBase() {
   @Test
   fun `case insensitive file names`() {
     val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
-    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
+    plugin.extensions.getOrPut(ExtensionPoint.FILE_TYPE.extensionPointName) { arrayListOf() } += element
     element.setAttribute("fileNamesCaseInsensitive", ".nameone;nametwo.txt;exactnametree.example")
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(
@@ -50,7 +50,7 @@ class FileTypeTest : FeatureExtractorTestBase() {
   @Test
   fun `file patterns`() {
     val element = Element(ExtensionPoint.FILE_TYPE.extensionPointName)
-    plugin.extensions.put(ExtensionPoint.FILE_TYPE.extensionPointName, element)
+    plugin.extensions.getOrPut(ExtensionPoint.FILE_TYPE.extensionPointName) { arrayListOf() } += element
     element.setAttribute("patterns", "*.js.flow")
     val features = FileTypeExtractor().extract(plugin, resolver)
     assertEquals(

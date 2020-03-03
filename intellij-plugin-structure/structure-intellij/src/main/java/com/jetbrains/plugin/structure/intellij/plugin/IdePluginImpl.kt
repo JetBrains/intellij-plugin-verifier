@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.Multimap
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -45,7 +43,7 @@ class IdePluginImpl : IdePlugin {
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
-  override val extensions: Multimap<String, Element> = ArrayListMultimap.create()
+  override val extensions: MutableMap<String, MutableList<Element>> = HashMap()
 
   val actions: MutableList<Element> = arrayListOf()
 

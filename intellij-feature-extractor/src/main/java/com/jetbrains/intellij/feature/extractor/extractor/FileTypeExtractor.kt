@@ -14,7 +14,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 class FileTypeExtractor : Extractor {
 
   override fun extract(plugin: IdePlugin, resolver: Resolver): List<ExtensionPointFeatures> {
-    val extensionsElements = plugin.extensions[ExtensionPoint.FILE_TYPE.extensionPointName]
+    val extensionsElements = plugin.extensions[ExtensionPoint.FILE_TYPE.extensionPointName] ?: emptyList()
     val features = arrayListOf<ExtensionPointFeatures>()
     for (element in extensionsElements) {
       val featureNames = arrayListOf<String>()

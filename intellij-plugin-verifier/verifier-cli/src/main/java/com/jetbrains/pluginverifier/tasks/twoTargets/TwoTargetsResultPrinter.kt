@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.tasks.twoTargets
 
-import com.google.common.collect.ArrayListMultimap
-import com.google.common.collect.HashMultimap
-import com.google.common.collect.Multimaps
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -64,24 +61,31 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     val baseTarget = twoTargetsVerificationResults.baseTarget
     val newTarget = twoTargetsVerificationResults.newTarget
 
-    val allPlugin2Problems = HashMultimap.create<PluginInfo, CompatibilityProblem>()
+    val allPlugin2Problems = hashMapOf<PluginInfo, MutableSet<CompatibilityProblem>>()
 
     val pluginToTwoResults = twoTargetsVerificationResults.getPluginToTwoResults()
     for ((plugin, twoResults) in pluginToTwoResults) {
-      allPlugin2Problems.putAll(plugin, twoResults.newProblems)
+      allPlugin2Problems.getOrPut(plugin) { hashSetOf() } += twoResults.newProblems
     }
 
-    val allProblem2Plugins = Multimaps.invertFrom(allPlugin2Problems, HashMultimap.create<CompatibilityProblem, PluginInfo>())
-    val allProblems = allProblem2Plugins.keySet()
+    val allProblem2Plugins: MutableMap<CompatibilityProblem, MutableSet<PluginInfo>> = hashMapOf()
 
-    val newPluginIdToVerifications = ArrayListMultimap.create<String, PluginVerificationResult>()
-    if (newTarget is PluginVerificationTarget.IDE) {
-      for (result in twoTargetsVerificationResults.newResults) {
-        newPluginIdToVerifications.put(result.plugin.pluginId, result)
+    for ((plugin, problems) in allPlugin2Problems) {
+      for (problem in problems) {
+        allProblem2Plugins.getOrPut(problem) { hashSetOf() } += plugin
       }
     }
 
-    val oldApiUsages = ArrayListMultimap.create<SymbolicReference, ApiUsage>()
+    val allProblems = allProblem2Plugins.keys
+
+    val newPluginIdToVerifications = hashMapOf<String, MutableList<PluginVerificationResult>>()
+    if (newTarget is PluginVerificationTarget.IDE) {
+      for (result in twoTargetsVerificationResults.newResults) {
+        newPluginIdToVerifications.getOrPut(result.plugin.pluginId) { arrayListOf() } += result
+      }
+    }
+
+    val oldApiUsages = hashMapOf<SymbolicReference, MutableList<ApiUsage>>()
     for (baseResult in twoTargetsVerificationResults.baseResults) {
       if (baseResult is PluginVerificationResult.Verified) {
         val apiUsages = baseResult.deprecatedUsages.asSequence() +
@@ -90,7 +94,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
           baseResult.nonExtendableApiUsages +
           baseResult.overrideOnlyMethodUsages
         for (apiUsage in apiUsages) {
-          oldApiUsages.put(apiUsage.apiReference, apiUsage)
+          oldApiUsages.getOrPut(apiUsage.apiReference) { arrayListOf() } += apiUsage
         }
       }
     }
@@ -103,10 +107,11 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
           val testName = "($shortDescription)"
           tcLog.testStarted(testName).use {
 
-            val plugin2Problems = ArrayListMultimap.create<PluginInfo, CompatibilityProblem>()
+            val plugin2Problems = hashMapOf<PluginInfo, MutableList<CompatibilityProblem>>()
             for (problem in problemsWithShortDescription) {
-              for (plugin in allProblem2Plugins.get(problem)) {
-                plugin2Problems.put(plugin, problem)
+              @Suppress("RemoveExplicitTypeArguments")
+              for (plugin in (allProblem2Plugins[problem] ?: emptyList<PluginInfo>())) {
+                plugin2Problems.getOrPut(plugin) { arrayListOf() } += problem
               }
             }
 
@@ -114,12 +119,12 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
             for (problem in problemsWithShortDescription) {
               val symbolicReference = getProblemSymbolicReference(problem)
               if (symbolicReference != null && oldApiUsages.containsKey(symbolicReference)) {
-                oldProblemApiUsages += oldApiUsages.get(symbolicReference)
+                oldProblemApiUsages += oldApiUsages[symbolicReference] ?: emptyList()
               }
             }
 
             val testDetails = buildString {
-              for ((plugin, problems) in plugin2Problems.asMap()) {
+              for ((plugin, problems) in plugin2Problems) {
                 val (oldResult, newResult) = pluginToTwoResults[plugin] ?: continue
 
                 if (isNotEmpty()) {
@@ -129,7 +134,8 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
                 appendln(plugin.getFullPluginCoordinates())
 
                 val latestPluginVerification = if (newTarget is PluginVerificationTarget.IDE) {
-                  newPluginIdToVerifications.get(plugin.pluginId).find {
+                  @Suppress("RemoveExplicitTypeArguments")
+                  (newPluginIdToVerifications[plugin.pluginId] ?: emptyList<PluginVerificationResult>()).find {
                     it.plugin != plugin && it.plugin.isCompatibleWith(newTarget.ideVersion)
                   }
                 } else {
@@ -183,7 +189,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
 
     val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
-    val affectedPluginsCnt = allPlugin2Problems.keySet().size
+    val affectedPluginsCnt = allPlugin2Problems.keys.size
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $newTarget compared to $baseTarget (affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt) + ")")
     } else {

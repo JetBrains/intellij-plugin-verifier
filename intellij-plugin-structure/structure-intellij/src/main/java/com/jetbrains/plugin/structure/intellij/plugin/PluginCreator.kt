@@ -97,7 +97,9 @@ internal class PluginCreator private constructor(
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val optionalPlugin = pluginCreationResult.plugin
       plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
-      plugin.extensions.putAll(optionalPlugin.extensions)
+      optionalPlugin.extensions.forEach { (extensionPointName, extensionElement) ->
+        plugin.extensions.getOrPut(extensionPointName, { ArrayList() }).addAll(extensionElement)
+      }
       if (optionalPlugin is IdePluginImpl) {
         plugin.appContainerDescriptor.mergeWith(optionalPlugin.appContainerDescriptor)
         plugin.projectContainerDescriptor.mergeWith(optionalPlugin.projectContainerDescriptor)
@@ -215,7 +217,7 @@ internal class PluginCreator private constructor(
           "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement)
           "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement)
           "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement)
-          else -> idePlugin.extensions.put(epName, extensionElement)
+          else -> idePlugin.extensions.getOrPut(epName, { ArrayList() }).add(extensionElement)
         }
       }
     }
@@ -438,7 +440,9 @@ internal class PluginCreator private constructor(
   }
 
   private fun readPluginThemes(plugin: IdePlugin, documentUrl: URL, pathResolver: ResourceResolver): List<IdeTheme>? {
-    val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION].mapNotNull { it.getAttribute("path")?.value }
+    val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION]?.mapNotNull {
+      it.getAttribute("path")?.value
+    } ?: emptyList()
 
     val themes = arrayListOf<IdeTheme>()
 
