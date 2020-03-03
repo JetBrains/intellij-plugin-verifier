@@ -91,6 +91,9 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       ZipEntry entry = getZipEntry(zipFile, toCanonicalPath(entryName));
       if (entry != null) {
         try (InputStream documentStream = zipFile.getInputStream(entry)) {
+          if (documentStream == null) {
+            return PluginCreator.createInvalidPlugin(jarFile, descriptorPath, new PluginDescriptorIsNotFound(descriptorPath));
+          }
           Document document = JDOMUtil.loadDocument(documentStream);
           List<PluginIcon> icons = getIconsFromJarFile(zipFile);
           URL documentUrl = URLUtil.getJarEntryURL(jarFile, entry.getName());
@@ -123,8 +126,17 @@ public final class IdePluginManager implements PluginManager<IdePlugin> {
       if (entry == null) {
         continue;
       }
-      byte[] iconContent = new byte[(int) entry.getSize()];
-      IOUtils.readFully(jarFile.getInputStream(entry), iconContent);
+      InputStream iconStream = jarFile.getInputStream(entry);
+      if (iconStream == null) {
+        continue;
+      }
+      byte[] iconContent;
+      try {
+        iconContent = new byte[(int) entry.getSize()];
+        IOUtils.readFully(iconStream, iconContent);
+      } finally {
+        iconStream.close();
+      }
       icons.add(new PluginIcon(theme, iconContent, iconEntryName));
     }
     return icons;
