@@ -1,34 +1,36 @@
 package com.jetbrains.plugin.structure.hub
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@Serializable
 data class HubPlugin(
-  @JsonProperty("key")
+    @SerialName("key")
   override val pluginId: String? = null,
-  @JsonProperty("name")
+    @SerialName("name")
   override val pluginName: String? = null,
-  @JsonProperty("version")
+    @SerialName("version")
   override val pluginVersion: String? = null,
-  @JsonProperty("homeUrl")
+    @SerialName("homeUrl")
   override val url: String = "",
-  @JsonProperty("description")
+    @SerialName("description")
   override val description: String? = null,
 
-  @JsonProperty("author")
+    @SerialName("author")
   val author: String = "",
-  @JsonProperty("iconUrl")
+    @SerialName("iconUrl")
   val iconUrl: String? = null,
-  @JsonProperty("dependencies")
+    @SerialName("dependencies")
   val dependencies: Map<String, String>? = null,
-  @JsonProperty("products")
+    @SerialName("products")
   val products: Map<String, String>? = null
 
 ) : Plugin {
   var manifestContent: String = ""
+  @Transient
   override val icons: List<PluginIcon> = emptyList()
   override var vendorUrl: String? = null
   override var vendor: String? = null

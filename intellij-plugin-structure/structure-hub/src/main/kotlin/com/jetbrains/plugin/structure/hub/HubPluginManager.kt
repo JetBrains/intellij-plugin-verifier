@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.hub
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -8,6 +7,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -65,7 +66,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   private fun loadDescriptor(descriptorFile: File): PluginCreationResult<HubPlugin> {
     try {
       val manifestContent = descriptorFile.readText()
-      val descriptor = jacksonObjectMapper().readValue(manifestContent, HubPlugin::class.java)
+      val descriptor = Json(JsonConfiguration(strictMode = false)).parse(HubPlugin.serializer(), manifestContent)
       descriptor.manifestContent = manifestContent
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {
