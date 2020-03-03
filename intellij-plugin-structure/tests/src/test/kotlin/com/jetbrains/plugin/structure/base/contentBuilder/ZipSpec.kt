@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.base.contentBuilder
 
-import com.jetbrains.plugin.structure.base.utils.archiveDirectory
+import com.jetbrains.plugin.structure.base.utils.archiveDirectoryTo
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import java.io.File
 
@@ -16,7 +16,7 @@ class ZipSpec : ChildrenOwnerSpec {
     val zipContentDir = createTempDir()
     try {
       directorySpec.generate(zipContentDir)
-      archiveDirectory(zipContentDir, target, includeDirectory = false, includeEmptyDirectories = true)
+      zipContentDir.archiveDirectoryTo(target)
     } finally {
       zipContentDir.forceDeleteIfExists()
     }

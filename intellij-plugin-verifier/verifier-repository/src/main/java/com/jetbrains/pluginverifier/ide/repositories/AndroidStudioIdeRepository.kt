@@ -3,13 +3,13 @@ package com.jetbrains.pluginverifier.ide.repositories
 import com.google.common.base.Suppliers
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import com.jetbrains.plugin.structure.base.utils.xzInputStream
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import okhttp3.ResponseBody
+import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import org.bouncycastle.cms.CMSSignedData
 import retrofit2.Call
 import retrofit2.Retrofit
@@ -41,7 +41,7 @@ class AndroidStudioIdeRepository : IdeRepository {
     val responseBody = feedConnector.getFeed(feedUrl.toExternalForm()).executeSuccessfully().body()
     val feed = responseBody.use {
       val signedContent = CMSSignedData(responseBody!!.byteStream()).signedContent.content as ByteArray
-      jsonParser.fromJson(signedContent.inputStream().xzInputStream().reader(), Feed::class.java)
+      jsonParser.fromJson(XZCompressorInputStream(signedContent.inputStream()).reader(), Feed::class.java)
     }
     return feed.entries
       .filter { it.packageInfo.os == "linux" }
