@@ -1,3 +1,7 @@
+plugins {
+  id "org.jetbrains.kotlin.plugin.serialization"
+}
+
 dependencies {
   api project(":structure-base")
   api group: 'com.google.guava', name: 'guava', version: '27.0.1-jre'
@@ -7,5 +11,5 @@ dependencies {
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
   implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.1'
   implementation group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.3.0.1'
-  implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.10.2'
+  implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0"
 }

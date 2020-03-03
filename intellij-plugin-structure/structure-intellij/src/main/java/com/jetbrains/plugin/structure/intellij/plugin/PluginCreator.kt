@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
 import com.jetbrains.plugin.structure.base.problems.NotNumber
@@ -14,6 +12,8 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
 import org.jdom2.Document
 import org.jdom2.Element
 import org.jsoup.Jsoup
@@ -42,7 +42,7 @@ internal class PluginCreator private constructor(
 
     private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
 
-    private val jsonMapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val json = Json(JsonConfiguration(strictMode = false))
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
@@ -447,7 +447,8 @@ internal class PluginCreator private constructor(
       when (val resolvedTheme = pathResolver.resolveResource(absolutePath, documentUrl)) {
         is ResourceResolver.Result.Found -> {
           val theme = try {
-            jsonMapper.readValue(resolvedTheme.resourceStream, IdeTheme::class.java)
+            val themeJson = resolvedTheme.resourceStream.reader().readText()
+            json.parse(IdeTheme.serializer(), themeJson)
           } catch (e: Exception) {
             registerProblem(UnableToReadTheme(descriptorPath, themePath, e.localizedMessage))
             return null
