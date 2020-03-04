@@ -4,12 +4,12 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.dotnet.beans.extractPluginBean
+import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBeanExtractor
 import com.jetbrains.plugin.structure.dotnet.beans.toPlugin
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import org.apache.commons.io.FileUtils
-import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
+import org.xml.sax.SAXParseException
 import java.io.File
 import java.nio.file.Files
 
@@ -66,13 +66,13 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
 
   private fun loadDescriptor(descriptorFile: File): PluginCreationResult<ReSharperPlugin> {
     try {
-      val bean = descriptorFile.inputStream().buffered().use { extractPluginBean(it) }
+      val bean = descriptorFile.inputStream().buffered().use { ReSharperPluginBeanExtractor.extractPluginBean(it) }
       val beanValidationResult = validateDotNetPluginBean(bean)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
       return PluginCreationSuccess(bean.toPlugin(), beanValidationResult)
-    } catch (e: JDOMParseException) {
+    } catch (e: SAXParseException) {
       val lineNumber = e.lineNumber
       val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))
