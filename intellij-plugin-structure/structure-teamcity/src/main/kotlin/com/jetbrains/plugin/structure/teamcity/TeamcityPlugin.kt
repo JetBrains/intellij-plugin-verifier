@@ -25,18 +25,18 @@ data class TeamcityPlugin(
 
 
 fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(
-  pluginId = "teamcity_" + this.name!!,
-  pluginName = this.displayName!!,
-  pluginVersion = this.version!!,
-  url = null,
-  changeNotes = null,
-  description = this.description,
-  vendor = this.vendor?.name,
-  vendorEmail = this.email,
-  vendorUrl = this.vendor?.url,
-  sinceBuild = this.minBuild?.toLong()?.let { TeamcityVersion(it) },
-  untilBuild = this.maxBuild?.toLong()?.let { TeamcityVersion(it) },
-  downloadUrl = this.downloadUrl,
-  useSeparateClassLoader = this.useSeparateClassLoader?.toBoolean() ?: false,
-  parameters = this.parameters?.associate { it.name!! to it.value!! }
+    pluginId = "teamcity_" + this.info?.name!!,
+    pluginName = this.info?.displayName!!,
+    pluginVersion = this.info?.version!!,
+    url = null,
+    changeNotes = null,
+    description = this.info?.description,
+    vendor = this.info?.vendor?.name,
+    vendorEmail = this.info?.email,
+    vendorUrl = this.info?.vendor?.url,
+    sinceBuild = this.requirements?.minBuild?.toLong()?.let { TeamcityVersion(it) },
+    untilBuild = this.requirements?.maxBuild?.toLong()?.let { TeamcityVersion(it) },
+    downloadUrl = this.info?.downloadUrl,
+    useSeparateClassLoader = this.deployment?.useSeparateClassLoader?.toBoolean() ?: false,
+    parameters = this.parameters?.associate { it.name!! to it.value!! }
 )

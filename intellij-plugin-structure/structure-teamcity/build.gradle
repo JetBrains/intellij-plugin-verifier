@@ -1,6 +1,5 @@
 dependencies {
   implementation project(':structure-base')
-  implementation("org.jonnyzzz.kotlin.xml.bind:jdom:0.2.0") {
-    exclude group: "org.jetbrains.kotlin"
-  }
+  implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
+  runtime "org.glassfish.jaxb:jaxb-runtime:2.3.1"
 }

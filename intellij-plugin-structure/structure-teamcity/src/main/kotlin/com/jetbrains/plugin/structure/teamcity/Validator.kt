@@ -8,11 +8,11 @@ import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginNam
 internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginProblem> {
   val problems = arrayListOf<PluginProblem>()
 
-  if (bean.name.isNullOrBlank()) {
+  if (bean.info?.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   }
 
-  val beanDisplayName = bean.displayName
+  val beanDisplayName = bean.info?.displayName
   if (beanDisplayName == null || beanDisplayName.isBlank()) {
     problems.add(PropertyNotSpecified("display-name"))
   } else {
@@ -22,16 +22,16 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
     }
   }
 
-  if (bean.version.isNullOrBlank()) {
+  if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
-  if (bean.description.isNullOrBlank()) {
+  if (bean.info?.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
   }
-  if (bean.vendor?.name.isNullOrBlank()) {
+  if (bean.info?.vendor?.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor name"))
   }
-  if (bean.vendor?.url.isNullOrBlank()) {
+  if (bean.info?.vendor?.url.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor url"))
   }
   return problems

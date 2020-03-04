@@ -4,11 +4,11 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.teamcity.beans.extractPluginBean
+import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBeanExtractor
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
 import org.apache.commons.io.FileUtils
-import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
+import org.xml.sax.SAXParseException
 import java.io.File
 import java.nio.file.Files
 
@@ -19,7 +19,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
     fun createManager(validateBean: Boolean = true): TeamcityPluginManager =
-      TeamcityPluginManager(validateBean)
+        TeamcityPluginManager(validateBean)
 
   }
 
@@ -61,7 +61,9 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
 
   private fun loadDescriptor(descriptorFile: File): PluginCreationResult<TeamcityPlugin> {
     try {
-      val bean = descriptorFile.inputStream().buffered().use { extractPluginBean(it) }
+      val bean = descriptorFile.inputStream().buffered().use {
+        TeamcityPluginBeanExtractor.extractPluginBean(it)
+      }
 
       if (!validateBean) return PluginCreationSuccess(bean.toPlugin(), emptyList())
 
@@ -70,7 +72,7 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
         return PluginCreationFail(beanValidationResult)
       }
       return PluginCreationSuccess(bean.toPlugin(), beanValidationResult)
-    } catch (e: JDOMParseException) {
+    } catch (e: SAXParseException) {
       val lineNumber = e.lineNumber
       val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       return PluginCreationFail(UnexpectedDescriptorElements(message))

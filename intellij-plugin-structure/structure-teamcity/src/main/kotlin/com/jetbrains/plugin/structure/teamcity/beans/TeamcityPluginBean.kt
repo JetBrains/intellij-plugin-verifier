@@ -1,32 +1,67 @@
 package com.jetbrains.plugin.structure.teamcity.beans
 
-import org.jonnyzzz.kotlin.xml.bind.XAttribute
-import org.jonnyzzz.kotlin.xml.bind.XElements
-import org.jonnyzzz.kotlin.xml.bind.XSub
-import org.jonnyzzz.kotlin.xml.bind.XText
-import org.jonnyzzz.kotlin.xml.bind.jdom.JXML
+import javax.xml.bind.annotation.*
 
+@XmlAccessorType(XmlAccessType.PROPERTY)
+@XmlRootElement(name = "teamcity-plugin")
 class TeamcityPluginBean {
-  val name by JXML / "info" / "name" / XText
-  val displayName by JXML / "info" / "display-name" / XText
-  val version by JXML / "info" / "version" / XText
-  val description by JXML / "info" / "description" / XText
-  val downloadUrl by JXML / "info" / "download-url" / XText
-  val email by JXML / "info" / "email" / XText
-  val vendor by JXML / "info" / "vendor" / XSub(Vendor::class.java)
-  val minBuild by JXML / "requirements" / XAttribute("min-build")
-  val maxBuild by JXML / "requirements" / XAttribute("max-build")
-  val useSeparateClassLoader by JXML / "deployment" / XAttribute("use-separate-classloader")
-  val parameters by JXML / "parameters" / XElements("parameter") / XSub(Parameter::class.java)
+  @get:XmlElement(name = "info")
+  var info: TeamCityPluginInfoBean? = null
+  @get:XmlElement(name = "requirements")
+  var requirements: TeamCityPluginRequirementsBean? = null
+  @get:XmlElement(name = "deployment")
+  var deployment: TeamCityPluginDeploymentBean? = null
+  @get:XmlElementWrapper(name = "parameters")
+  @get:XmlElement(name = "parameter")
+  var parameters: List<Parameter> = ArrayList()
 }
+
+@XmlAccessorType(XmlAccessType.PROPERTY)
+class TeamCityPluginInfoBean {
+  @get:XmlElement(name = "name")
+  var name: String? = null
+  @get:XmlElement(name = "display-name")
+  var displayName: String? = null
+  @get:XmlElement(name = "version")
+  var version: String? = null
+  @get:XmlElement(name = "description")
+  var description: String? = null
+  @get:XmlElement(name = "download-url")
+  var downloadUrl: String? = null
+  @get:XmlElement(name = "email")
+  var email: String? = null
+  @get:XmlElement(name = "vendor")
+  var vendor: Vendor? = null
+}
+
+@XmlAccessorType(XmlAccessType.PROPERTY)
+class TeamCityPluginRequirementsBean {
+  @get:XmlAttribute(name = "min-build")
+  var minBuild: String? = null
+  @get:XmlAttribute(name = "max-build")
+  var maxBuild: String? = null
+}
+
+@XmlAccessorType(XmlAccessType.PROPERTY)
+class TeamCityPluginDeploymentBean {
+  @get:XmlAttribute(name = "use-separate-classloader")
+  var useSeparateClassLoader: String? = null
+}
+
 
 class Parameter {
-  val name by JXML / XAttribute("name")
-  val value by JXML / XText
+  @get:XmlAttribute(name = "name")
+  var name: String? = null
+  @get:XmlValue
+  var value: String? = null
 }
 
+@XmlAccessorType(XmlAccessType.PROPERTY)
 class Vendor {
-  val name by JXML / "name" / XText
-  val url by JXML / "url" / XText
-  val logo by JXML / "logo" / XText
+  @get:XmlElement(name = "name")
+  var name: String? = null
+  @get:XmlElement(name = "url")
+  var url: String? = null
+  @get:XmlElement(name = "logo")
+  var logo: String? = null
 }

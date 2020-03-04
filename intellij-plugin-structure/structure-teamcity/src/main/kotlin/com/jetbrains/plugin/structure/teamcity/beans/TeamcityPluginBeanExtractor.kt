@@ -1,16 +1,19 @@
 package com.jetbrains.plugin.structure.teamcity.beans
 
-import org.jdom2.input.SAXBuilder
-import org.jonnyzzz.kotlin.xml.bind.jdom.JDOM
-import org.xml.sax.InputSource
-import java.io.CharArrayReader
 import java.io.InputStream
+import javax.xml.bind.JAXBContext
+import javax.xml.bind.UnmarshalException
+import javax.xml.parsers.DocumentBuilderFactory
 
-private val EMPTY_CHAR_ARRAY = CharArray(0)
+object TeamcityPluginBeanExtractor {
+  private val jaxbContext = JAXBContext.newInstance(TeamcityPluginBean::class.java)
+  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
 
-fun extractPluginBean(inputStream: InputStream): TeamcityPluginBean {
-  val saxBuilder = SAXBuilder()
-  saxBuilder.setEntityResolver { _, _ -> InputSource(CharArrayReader(EMPTY_CHAR_ARRAY)) }
-  val rootElement = saxBuilder.build(inputStream).rootElement
-  return JDOM.load(rootElement, TeamcityPluginBean::class.java)
+  @Throws(UnmarshalException::class)
+  fun extractPluginBean(inputStream: InputStream): TeamcityPluginBean {
+    val document = documentBuilder.parse(inputStream)
+    val unmarshaller = jaxbContext.createUnmarshaller()
+    return unmarshaller.unmarshal(document, TeamcityPluginBean::class.java).value
+        ?: throw UnmarshalException("Metadata element not found")
+  }
 }
