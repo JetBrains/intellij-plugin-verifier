@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.base.contentBuilder
+package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
 import com.jetbrains.plugin.structure.base.utils.archiveDirectoryTo
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists

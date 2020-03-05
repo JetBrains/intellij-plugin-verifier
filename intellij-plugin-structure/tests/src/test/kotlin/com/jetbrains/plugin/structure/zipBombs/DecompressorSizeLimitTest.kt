@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.zipBombs
 
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.utils.extractTo
 import org.junit.Assert

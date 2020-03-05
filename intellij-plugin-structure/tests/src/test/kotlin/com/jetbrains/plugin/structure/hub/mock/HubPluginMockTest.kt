@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.hub.mock
 
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem

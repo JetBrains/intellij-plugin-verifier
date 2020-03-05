@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.base.utils
 
-import com.jetbrains.plugin.structure.base.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

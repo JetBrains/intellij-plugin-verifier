@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.base.contentBuilder
+package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
 import java.io.File
 

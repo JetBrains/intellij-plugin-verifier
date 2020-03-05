@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.domain
 
-import com.jetbrains.plugin.structure.base.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
