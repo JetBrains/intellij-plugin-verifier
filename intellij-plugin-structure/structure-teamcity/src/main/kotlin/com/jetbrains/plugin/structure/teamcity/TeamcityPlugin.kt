@@ -38,5 +38,5 @@ fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(
     untilBuild = this.requirements?.maxBuild?.toLong()?.let { TeamcityVersion(it) },
     downloadUrl = this.info?.downloadUrl,
     useSeparateClassLoader = this.deployment?.useSeparateClassLoader?.toBoolean() ?: false,
-    parameters = this.parameters?.associate { it.name!! to it.value!! }
+    parameters = this.parameters.associate { it.name!! to it.value!! }
 )

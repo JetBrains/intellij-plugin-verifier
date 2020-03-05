@@ -42,7 +42,7 @@ internal class PluginCreator private constructor(
 
     private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
 
-    private val json = Json(JsonConfiguration(strictMode = false))
+    private val json = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 

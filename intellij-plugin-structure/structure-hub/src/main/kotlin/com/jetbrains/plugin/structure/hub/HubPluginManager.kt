@@ -66,7 +66,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   private fun loadDescriptor(descriptorFile: File): PluginCreationResult<HubPlugin> {
     try {
       val manifestContent = descriptorFile.readText()
-      val descriptor = Json(JsonConfiguration(strictMode = false)).parse(HubPlugin.serializer(), manifestContent)
+      val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)).parse(HubPlugin.serializer(), manifestContent)
       descriptor.manifestContent = manifestContent
       val vendorInfo = parseHubVendorInfo(descriptor.author)
       descriptor.apply {

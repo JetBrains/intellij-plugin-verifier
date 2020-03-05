@@ -1,10 +1,7 @@
 package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.internal.StringDescriptor
+import kotlinx.serialization.*
 
 /**
  * Base class for all events associated with API.
@@ -54,7 +51,7 @@ data class UnmarkedDeprecatedIn(override val ideVersion: IdeVersion) : ApiEvent(
 
 object ApiEventSerializer : KSerializer<ApiEvent> {
   override val descriptor
-    get() = StringDescriptor
+    get() = PrimitiveDescriptor("ApiEventSerializer", PrimitiveKind.STRING)
 
   override fun serialize(encoder: Encoder, obj: ApiEvent) {
     val qualifier = when (obj) {
