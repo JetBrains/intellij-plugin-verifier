@@ -13,7 +13,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   private val pluginRepositoryInstance: org.jetbrains.intellij.pluginRepository.PluginRepository
 
   init {
-    System.setProperty("MARKETPLACE_MAX_PARALLEL_CONNECTIONS", "512")
+    System.setProperty("MARKETPLACE_MAX_PARALLEL_CONNECTIONS", "128")
     pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
   }
 
