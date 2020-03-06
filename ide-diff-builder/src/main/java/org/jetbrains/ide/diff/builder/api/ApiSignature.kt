@@ -29,7 +29,7 @@ data class FieldSignature(
 object ApiSignatureSerializer {
 
   override val descriptor
-    get() = PrimitiveDescriptor("yourSerializerUniqueName", PrimitiveKind.STRING)
+    get() = PrimitiveDescriptor("ApiSignature", PrimitiveKind.STRING)
 
   override fun serialize(encoder: Encoder, obj: ApiSignature) {
     encoder.encodeSerializableValue(String.serializer().list, obj.encodeToList())
