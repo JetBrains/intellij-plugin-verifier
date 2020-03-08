@@ -17,12 +17,7 @@ import java.util.concurrent.TimeUnit
 
 class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginRepository {
 
-  private val pluginRepositoryInstance: org.jetbrains.intellij.pluginRepository.PluginRepository
-
-  init {
-    System.setProperty("MARKETPLACE_MAX_PARALLEL_CONNECTIONS", "128")
-    pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
-  }
+  private val pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
 
   private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = CacheBuilder.newBuilder()
     .expireAfterWrite(5, TimeUnit.MINUTES)
