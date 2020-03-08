@@ -1,12 +1,19 @@
 package com.jetbrains.pluginverifier.repository.repositories.marketplace
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import com.google.common.collect.ImmutableMap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
 import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
+import org.jetbrains.intellij.pluginRepository.model.PluginId
+import org.jetbrains.intellij.pluginRepository.model.UpdateId
 import java.net.MalformedURLException
 import java.net.URL
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginRepository {
 
@@ -17,19 +24,21 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
   }
 
+  private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = CacheBuilder.newBuilder()
+    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .build(object : CacheLoader<Pair<PluginId, UpdateId>, Optional<UpdateInfo>>() {
+      override fun load(key: Pair<PluginId, UpdateId>): Optional<UpdateInfo> {
+        //Loading is required => this key is outdated => will request in batch and put to the cache.
+        return Optional.empty()
+      }
+    })
+
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
-    val result = arrayListOf<UpdateInfo>()
-    val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), 10000, 0)
+    val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
     val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString())
-    val updateIdToPluginId = updates.associateBy({ it.id }, { it.pluginId })
-    val updateIdToMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(
-      updates.map { it.pluginId to it.id }
-    )
-    for ((updateId, metadata) in updateIdToMetadata) {
-      result += createUpdateInfo(metadata, updateIdToPluginId.getValue(updateId))
-    }
-    return result
+    val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }
+    return requestMetadataBatch(pluginIdAndUpdateIds).values.toList()
   }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
@@ -41,14 +50,42 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
     val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
     val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
-    val metadataList = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(
-      pluginVersions.map { pluginBean.id to it.id }
-    ).values
-    return metadataList.map { createUpdateInfo(it, pluginBean.id) }
+    val pluginIdAndUpdateIds = pluginVersions.map { pluginBean.id to it.id }
+    return requestMetadataBatch(pluginIdAndUpdateIds).values.toList()
   }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
     INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
+
+  private fun requestMetadataBatch(pluginIdAndUpdateIds: List<Pair<PluginId, UpdateId>>): Map<UpdateId, UpdateInfo> {
+    val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
+    val result = hashMapOf<UpdateId, UpdateInfo>()
+
+    //Get available metadata from cache.
+    for (pluginIdAndUpdateId in pluginIdAndUpdateIds) {
+      val optionalMetadata = metadataCache[pluginIdAndUpdateId]
+      if (optionalMetadata.isPresent) {
+        result[pluginIdAndUpdateId.second] = optionalMetadata.get()
+      } else {
+        toRequest += pluginIdAndUpdateId
+      }
+    }
+
+    //Request missing metadata in batch request (for performance) and put to the cache.
+    if (toRequest.isNotEmpty()) {
+      val metadataBatch = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(toRequest)
+      val updateIdToPluginId = toRequest.associateBy({ it.second }, { it.first })
+      for ((updateId, metadata) in metadataBatch) {
+        val pluginId = updateIdToPluginId.getValue(updateId)
+        val updateInfo = createUpdateInfo(metadata, pluginId)
+        result[updateId] = updateInfo
+
+        metadataCache.put(pluginId to updateId, Optional.of(updateInfo))
+      }
+    }
+
+    return result
+  }
 
   private fun requestAndCreateUpdateInfo(pluginId: Int, updateId: Int): UpdateInfo? {
     val updateMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadata(pluginId, updateId)
@@ -129,5 +166,10 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       "com.intellij.modules.python", "Pythonid",
       "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
     )
+
+    //In the late future this will need to be updated. Currently, there are ~= 4000 plugins in the repository available.
+    // This magic constant is the limit of the Elastic Search used in the Plugin Search Service.
+    // Contact Marketplace team for details.
+    private const val MAX_AVAILABLE_PLUGINS_IN_REPOSITORY = 10000
   }
 }
