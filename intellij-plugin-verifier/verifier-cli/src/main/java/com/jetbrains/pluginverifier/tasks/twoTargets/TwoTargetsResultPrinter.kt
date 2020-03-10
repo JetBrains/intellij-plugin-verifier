@@ -173,7 +173,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
 
             val testMessage = buildString {
               appendln(shortDescription)
-              appendln("This problem is detected for $newTarget but not for $baseTarget.")
+              appendln("This problem is detected for $newTarget but not for $baseTarget (affects " + "plugin".pluralizeWithNumber(plugin2Problems.size) + ")")
               if (oldProblemApiUsages.isNotEmpty()) {
                 appendln(getOldProblemApiUsagesNote(oldProblemApiUsages))
               } else {
