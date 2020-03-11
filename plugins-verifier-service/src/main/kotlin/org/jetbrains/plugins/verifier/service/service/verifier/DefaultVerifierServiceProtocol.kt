@@ -40,17 +40,16 @@ class DefaultVerifierServiceProtocol(
 
   private val json = Gson()
 
-  override fun requestScheduledVerifications(): List<ScheduledVerification> =
-    retrofitConnector
-      .getScheduledVerifications(authorizationToken)
-      .executeSuccessfully().body()!!
-      .mapNotNull { buildScheduledVerification(it) }
-
-  private fun buildScheduledVerification(json: ScheduledVerificationJson): ScheduledVerification? {
-    val ideVersion = IdeVersion.createIdeVersionIfValid(json.availableIde.ideVersion) ?: return null
-    val availableIde = ideRepository.fetchAvailableIde(ideVersion) ?: return null
-    val updateInfo = pluginRepository.getPluginInfoById(json.updateId) ?: return null
-    return ScheduledVerification(updateInfo, availableIde, json.manually)
+  override fun requestScheduledVerifications(): List<ScheduledVerification> {
+    val scheduledJsons = retrofitConnector.getScheduledVerifications(authorizationToken).executeSuccessfully().body()!!
+    val pluginIdAndUpdateIds = scheduledJsons.map { it.pluginId to it.updateId }
+    val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyIds(pluginIdAndUpdateIds)
+    return scheduledJsons.mapNotNull {
+      val updateInfo = updateIdToUpdateInfo[it.updateId] ?: return@mapNotNull null
+      val ideVersion = IdeVersion.createIdeVersionIfValid(it.availableIde.ideVersion) ?: return@mapNotNull null
+      val availableIde = ideRepository.fetchAvailableIde(ideVersion) ?: return@mapNotNull null
+      ScheduledVerification(updateInfo, availableIde, it.manually)
+    }
   }
 
   override fun sendVerificationResult(scheduledVerification: ScheduledVerification, verificationResult: PluginVerificationResult) {
@@ -124,6 +123,7 @@ data class VerificationResultUploadUrl(
 
 private data class ScheduledVerificationJson(
   @SerializedName("updateId") val updateId: Int,
+  @SerializedName("pluginId") val pluginId: Int,
   @SerializedName("availableIde") val availableIde: AvailableIdeJson,
   @SerializedName("manually") val manually: Boolean
 )
