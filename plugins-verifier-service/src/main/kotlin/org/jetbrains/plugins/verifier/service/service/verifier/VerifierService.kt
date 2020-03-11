@@ -52,11 +52,13 @@ class VerifierService(
     }
 
     val now = Instant.now()
-    val verifications = allScheduledVerifications
-      .filter { it.shouldVerify(now) }
-      .sortedByDescending { it.updateInfo.updateId }
-    logger.info("There are ${verifications.size} pending verifications")
-    verifications.forEach { scheduleVerification(it, now) }
+    synchronized(this) {
+      val verifications = allScheduledVerifications
+        .filter { it.shouldVerify(now) }
+        .sortedByDescending { it.updateInfo.updateId }
+      logger.info("There are ${verifications.size} pending verifications")
+      verifications.forEach { scheduleVerification(it, now) }
+    }
   }
 
   private fun ScheduledVerification.shouldVerify(now: Instant) =

@@ -38,10 +38,12 @@ class FeatureExtractorService(
       return
     }
 
-    logger.info("Extracting features of ${updatesToExtract.size} updates")
-    for (updateInfo in updatesToExtract) {
-      if (updateInfo !in scheduledUpdates) {
-        schedule(updateInfo)
+    synchronized(this) {
+      logger.info("Extracting features of ${updatesToExtract.size} updates")
+      for (updateInfo in updatesToExtract) {
+        if (updateInfo !in scheduledUpdates) {
+          schedule(updateInfo)
+        }
       }
     }
   }
