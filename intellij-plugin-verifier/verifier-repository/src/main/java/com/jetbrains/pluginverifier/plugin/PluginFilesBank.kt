@@ -91,7 +91,7 @@ class PluginFilesBank(
       }
 
       //Batch request many update infos. Much faster than N > 1000 individual requests.
-      val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyIds(
+      val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyPluginIdsAndUpdateIds(
         pathToPluginIdAndUpdateId.map { it.value }
       )
 

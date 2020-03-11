@@ -43,7 +43,7 @@ class DefaultVerifierServiceProtocol(
   override fun requestScheduledVerifications(): List<ScheduledVerification> {
     val scheduledJsons = retrofitConnector.getScheduledVerifications(authorizationToken).executeSuccessfully().body()!!
     val pluginIdAndUpdateIds = scheduledJsons.map { it.pluginId to it.updateId }
-    val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyIds(pluginIdAndUpdateIds)
+    val updateIdToUpdateInfo = pluginRepository.getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds)
     return scheduledJsons.mapNotNull {
       val updateInfo = updateIdToUpdateInfo[it.updateId] ?: return@mapNotNull null
       val ideVersion = IdeVersion.createIdeVersionIfValid(it.availableIde.ideVersion) ?: return@mapNotNull null

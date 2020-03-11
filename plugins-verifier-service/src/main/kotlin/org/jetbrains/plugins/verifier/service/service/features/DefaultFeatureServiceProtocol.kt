@@ -54,7 +54,7 @@ class DefaultFeatureServiceProtocol(
       .getUpdatesToExtractFeatures(authorizationToken)
       .executeSuccessfully().body()!!
     val pluginIdAndUpdateIds = pluginAndUpdatePairs.map { it.pluginId to it.updateId }
-    return pluginRepository.getPluginInfosForManyIds(pluginIdAndUpdateIds).values.toList()
+    return pluginRepository.getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
   }
 
 

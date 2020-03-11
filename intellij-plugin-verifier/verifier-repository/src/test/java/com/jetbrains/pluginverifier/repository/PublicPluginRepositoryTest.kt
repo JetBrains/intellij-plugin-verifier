@@ -58,25 +58,25 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
 
   @Test
   fun `find non existent plugin by update id`() {
-    val updateInfo = repository.getPluginInfoById(-1000)
+    val updateInfo = repository.getPluginInfoByUpdateId(-1000)
     assertNull(updateInfo)
   }
 
   @Test
   fun `request update info`() {
     //Plugin ".ignore 2.3.2"
-    val updateInfo = repository.getPluginInfoById(40625)!!
+    val updateInfo = repository.getPluginInfoByUpdateId(40625)!!
     assertEquals(".ignore", updateInfo.pluginName)
     assertEquals("2.3.2", updateInfo.version)
 
-    val updateIdToInfo = repository.getPluginInfosForManyIds(listOf(7495 to 40625))
+    val updateIdToInfo = repository.getPluginInfosForManyPluginIdsAndUpdateIds(listOf(7495 to 40625))
     assertEquals(mapOf(40625 to updateInfo), updateIdToInfo)
   }
 
   @Test
   fun `download existing plugin`() {
     //Plugin ".ignore 2.3.2"
-    val updateInfo = repository.getPluginInfoById(40625)!!
+    val updateInfo = repository.getPluginInfoByUpdateId(40625)!!
     checkDownloadPlugin(updateInfo)
   }
 

@@ -48,7 +48,7 @@ class PluginsParsing(
    */
   fun addUpdateById(updateId: Int) {
     val updateInfo = pluginRepository.retry("get plugin info for #$updateId") {
-      (pluginRepository as? MarketplaceRepository)?.getPluginInfoById(updateId)
+      (pluginRepository as? MarketplaceRepository)?.getPluginInfoByUpdateId(updateId)
     } ?: throw IllegalArgumentException("Update #$updateId is not found in the Plugin Repository")
     pluginsSet.schedulePlugin(updateInfo)
   }
