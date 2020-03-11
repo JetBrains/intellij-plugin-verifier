@@ -189,7 +189,7 @@ class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskRe
     }
 
     val newProblemsCnt = allProblems.distinctBy { it.shortDescription }.size
-    val affectedPluginsCnt = allPlugin2Problems.keys.size
+    val affectedPluginsCnt = allPlugin2Problems.count { (_, problems) -> problems.isNotEmpty() }
     if (newProblemsCnt > 0) {
       tcLog.buildStatusFailure("$newProblemsCnt new " + "problem".pluralize(newProblemsCnt) + " detected in $newTarget compared to $baseTarget (affecting " + "plugin".pluralizeWithNumber(affectedPluginsCnt) + ")")
     } else {
