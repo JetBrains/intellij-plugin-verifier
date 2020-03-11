@@ -33,7 +33,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
     val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString())
     val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }
-    return requestMetadataBatch(pluginIdAndUpdateIds).values.toList()
+    return getPluginInfosForManyIds(pluginIdAndUpdateIds).values.toList()
   }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
@@ -46,41 +46,11 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
     val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
     val pluginIdAndUpdateIds = pluginVersions.map { pluginBean.id to it.id }
-    return requestMetadataBatch(pluginIdAndUpdateIds).values.toList()
+    return getPluginInfosForManyIds(pluginIdAndUpdateIds).values.toList()
   }
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
     INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
-
-  private fun requestMetadataBatch(pluginIdAndUpdateIds: List<Pair<PluginId, UpdateId>>): Map<UpdateId, UpdateInfo> {
-    val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
-    val result = hashMapOf<UpdateId, UpdateInfo>()
-
-    //Get available metadata from cache.
-    for (pluginIdAndUpdateId in pluginIdAndUpdateIds) {
-      val optionalMetadata = metadataCache[pluginIdAndUpdateId]
-      if (optionalMetadata.isPresent) {
-        result[pluginIdAndUpdateId.second] = optionalMetadata.get()
-      } else {
-        toRequest += pluginIdAndUpdateId
-      }
-    }
-
-    //Request missing metadata in batch request (for performance) and put to the cache.
-    if (toRequest.isNotEmpty()) {
-      val metadataBatch = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(toRequest)
-      val updateIdToPluginId = toRequest.associateBy({ it.second }, { it.first })
-      for ((updateId, metadata) in metadataBatch) {
-        val pluginId = updateIdToPluginId.getValue(updateId)
-        val updateInfo = createUpdateInfo(metadata, pluginId)
-        result[updateId] = updateInfo
-
-        metadataCache.put(pluginId to updateId, Optional.of(updateInfo))
-      }
-    }
-
-    return result
-  }
 
   private fun requestAndCreateUpdateInfo(pluginId: Int, updateId: Int): UpdateInfo? {
     val updateMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadata(pluginId, updateId)
@@ -111,11 +81,26 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   }
 
   fun getPluginInfosForManyIds(pluginAndUpdateIds: List<Pair<Int, Int>>): Map<Int, UpdateInfo> {
-    val updateIdToPluginId = pluginAndUpdateIds.associateBy({ it.second }, { it.first })
-    val result = hashMapOf<Int, UpdateInfo>()
-    for ((updateId, metadata) in pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(pluginAndUpdateIds)) {
-      val pluginId = updateIdToPluginId[updateId] ?: continue
-      result[updateId] = createUpdateInfo(metadata, pluginId)
+    val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
+    val result = hashMapOf<UpdateId, UpdateInfo>()
+    for (pluginIdAndUpdateId in pluginAndUpdateIds) {
+      val optionalMetadata = metadataCache[pluginIdAndUpdateId]
+      if (optionalMetadata.isPresent) {
+        result[pluginIdAndUpdateId.second] = optionalMetadata.get()
+      } else {
+        toRequest += pluginIdAndUpdateId
+      }
+    }
+    if (toRequest.isNotEmpty()) {
+      val metadataBatch = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadataBatch(toRequest)
+      val updateIdToPluginId = toRequest.associateBy({ it.second }, { it.first })
+      for ((updateId, metadata) in metadataBatch) {
+        val pluginId = updateIdToPluginId.getValue(updateId)
+        val updateInfo = createUpdateInfo(metadata, pluginId)
+        result[updateId] = updateInfo
+
+        metadataCache.put(pluginId to updateId, Optional.of(updateInfo))
+      }
     }
     return result
   }
