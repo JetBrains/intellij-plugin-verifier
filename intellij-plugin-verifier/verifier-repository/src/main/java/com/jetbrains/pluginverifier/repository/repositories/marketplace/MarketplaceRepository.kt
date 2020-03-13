@@ -109,6 +109,18 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     return createAndCacheUpdateInfo(updateMetadata, pluginId)
   }
 
+  @Suppress("unused") //Used in API Watcher.
+  fun getPluginInfosForManyUpdateIds(updateIds: List<Int>): Map<Int, UpdateInfo> {
+    val pluginAndUpdateIds = arrayListOf<Pair<PluginId, UpdateId>>()
+    for (updateId in updateIds) {
+      val pluginId = getPluginIntIdByUpdateId(updateId)
+      if (pluginId != null) {
+        pluginAndUpdateIds += pluginId to updateId
+      }
+    }
+    return getPluginInfosForManyPluginIdsAndUpdateIds(pluginAndUpdateIds)
+  }
+
   fun getPluginInfosForManyPluginIdsAndUpdateIds(pluginAndUpdateIds: List<Pair<Int, Int>>): Map<Int, UpdateInfo> {
     val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
     val result = hashMapOf<UpdateId, UpdateInfo>()
