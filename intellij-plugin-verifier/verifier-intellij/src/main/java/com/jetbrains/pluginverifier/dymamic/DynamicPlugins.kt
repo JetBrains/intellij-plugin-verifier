@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
+import org.jdom2.Element
 
 /**
  * Utility methods that determine whether a plugin can be dynamically loaded/unloaded [DynamicPluginStatus].
@@ -58,21 +59,21 @@ object DynamicPlugins {
       }
 
 
-      val allActions = idePlugin.actions
-      if (allActions.isNotEmpty()) {
-        reasonsNotToLoadUnloadImmediately += "Plugin declares actions or groups, which can't be loaded immediately"
+      val allActionsAndGroups = getAllActionsAndGroupsRecursively(idePlugin)
+      if (allActionsAndGroups.isNotEmpty()) {
+        reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
       }
 
-      for (element in allActions) {
+      for (element in allActionsAndGroups) {
         if (element.name == "group" && element.getAttributeValue("id") == null) {
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin declares a group with no ID specified. Groups without ID can't be unloaded"
+          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified"
           break
         }
       }
 
-      for (element in allActions) {
+      for (element in allActionsAndGroups) {
         if (element.name == "action" && element.getAttributeValue("id") == null && element.getAttributeValue("class") == null) {
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin declares an action with neither 'id' nor 'class' specified"
+          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified"
           break
         }
       }
@@ -89,6 +90,20 @@ object DynamicPlugins {
     }
 
     return null
+  }
+
+  private fun getAllActionsAndGroupsRecursively(idePlugin: IdePluginImpl): List<Element> {
+    val result = arrayListOf<Element>()
+    fun recursive(element: Element) {
+      result += element
+      if (element.name == "group") {
+        for (child in element.children) {
+          recursive(child)
+        }
+      }
+    }
+    idePlugin.actions.forEach(::recursive)
+    return result
   }
 
   private fun IdePluginImpl.findExtensionPoint(epName: String): ExtensionPoint? {

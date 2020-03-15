@@ -141,7 +141,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring actions cant be loaded immediately`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin declares actions or groups, which can't be loaded immediately"
+        "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
       )),
       """
         <actions>
@@ -155,8 +155,8 @@ class DynamicPluginStatusTest {
   fun `plugin declaring a group with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin declares actions or groups, which can't be loaded immediately"),
-        setOf("Plugin declares a group with no ID specified. Groups without ID can't be unloaded")
+        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
       ),
       """
         <actions>
@@ -167,11 +167,29 @@ class DynamicPluginStatusTest {
   }
 
   @Test
+  fun `plugin declaring a deep group with no ID specified is not dynamic`() {
+    checkPlugin(
+      DynamicPluginStatus.NotDynamic(
+        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
+      ),
+      """
+        <actions>
+            <group id="a">
+              <group/>
+            </group>
+        </actions>
+      """.trimIndent()
+    )
+  }
+
+
+  @Test
   fun `plugin declaring an action with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin declares actions or groups, which can't be loaded immediately"),
-        setOf("Plugin declares an action with neither 'id' nor 'class' specified")
+        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified")
       ),
       """
         <actions>
