@@ -25,8 +25,8 @@ object DynamicPlugins {
       )
         .filter { it.first.components.isNotEmpty() }
         .forEach { (descriptor, area) ->
-          reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares $area components: " + descriptor.components.map { it.implementationClass }.sorted().joinToString()
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + descriptor.components.map { it.implementationClass }.sorted().joinToString()
+          reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
+          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
         }
 
       val allowedImmediateLoadUnloadAllowedExtensions = listOf(
@@ -39,8 +39,8 @@ object DynamicPlugins {
       val nonImmediateEps = declaredExtensions.filter { it !in allowedImmediateLoadUnloadAllowedExtensions }
       if (nonImmediateEps.isNotEmpty()) {
         reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately. " +
-          "Only extension points " + allowedImmediateLoadUnloadAllowedExtensions.sorted().joinToString() + " support immediate loading/unloading, " +
-          "but the plugin declares " + nonImmediateEps.sorted().joinToString()
+          "Only extension points " + formatListOfNames(allowedImmediateLoadUnloadAllowedExtensions) + " support immediate loading/unloading, " +
+          "but the plugin declares " + formatListOfNames(nonImmediateEps)
       }
 
       val ide = verificationDescriptor.ide
@@ -56,7 +56,7 @@ object DynamicPlugins {
         }
       }
       if (nonDynamicExtensions.isNotEmpty()) {
-        reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: " + nonDynamicExtensions.sorted().joinToString()
+        reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: " + formatListOfNames(nonDynamicExtensions)
       }
 
 
@@ -92,6 +92,9 @@ object DynamicPlugins {
 
     return null
   }
+
+  private fun formatListOfNames(names: List<String>): String =
+    names.sorted().joinToString { "`$it`" }
 
   private fun getAllActionsAndGroupsRecursively(idePlugin: IdePluginImpl): List<Element> {
     val result = arrayListOf<Element>()

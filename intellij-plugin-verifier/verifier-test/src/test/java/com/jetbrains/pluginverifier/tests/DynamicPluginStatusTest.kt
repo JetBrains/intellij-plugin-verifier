@@ -63,7 +63,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring only its own extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares someId.ownEP"
+        "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `someId.ownEP`"
       )),
       """
         <extensionPoints>
@@ -81,7 +81,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares com.intellij.dynamicEP"
+        "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.dynamicEP`"
       )),
       """
         <extensions defaultExtensionNs="com.intellij">
@@ -95,8 +95,8 @@ class DynamicPluginStatusTest {
   fun `plugin declaring non dynamic extension point is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares com.intellij.nonDynamicEP"),
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: com.intellij.nonDynamicEP")
+        setOf("Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.nonDynamicEP`"),
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
       ),
       """
         <extensions defaultExtensionNs="com.intellij">
@@ -111,14 +111,14 @@ class DynamicPluginStatusTest {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
         setOf(
-          "Plugin cannot be loaded/unloaded immediately because it declares project components: SomeProjectComponent",
-          "Plugin cannot be loaded/unloaded immediately because it declares module components: SomeModuleComponent",
-          "Plugin cannot be loaded/unloaded immediately because it declares application components: SomeApplicationComponent"
+          "Plugin cannot be loaded/unloaded immediately because it declares project components: `SomeProjectComponent`",
+          "Plugin cannot be loaded/unloaded immediately because it declares module components: `SomeModuleComponent`",
+          "Plugin cannot be loaded/unloaded immediately because it declares application components: `SomeApplicationComponent`"
         ),
         setOf(
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares project components: SomeProjectComponent",
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares module components: SomeModuleComponent",
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares application components: SomeApplicationComponent"
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares project components: `SomeProjectComponent`",
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares module components: `SomeModuleComponent`",
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares application components: `SomeApplicationComponent`"
         )
       ),
       """
