@@ -92,6 +92,74 @@ class DynamicPluginStatusTest {
   }
 
   @Test
+  fun `plugin declaring non-dynamic extension in optional dependency config file is not dynamic`() {
+    val idePlugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends optional="true" config-file="optional.xml">com.intellij.bundled.plugin.id</depends>
+            </idea-plugin>
+          """
+        }
+
+        file("optional.xml") {
+          """
+            <idea-plugin>
+              <extensions defaultExtensionNs="com.intellij">
+                <nonDynamicEP someKey="someValue"/>
+              </extensions>
+            </idea-plugin>
+          """.trimIndent()
+        }
+      }
+    }
+
+    checkPlugin(
+      DynamicPluginStatus.NotDynamic(
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
+      ),
+      idePlugin
+    )
+  }
+
+  @Test
+  fun `plugin is dynamic if it declars own non-dynamic extension point that is implemented in optional dependency descriptor`() {
+    val idePlugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends optional="true" config-file="optional.xml">com.intellij.bundled.plugin.id</depends>
+              
+              <extensionPoints>
+                <extensionPoint name="ownNonDynamicEP" interface="doesntMatter"/>
+              </extensionPoints>
+            </idea-plugin>
+          """
+        }
+
+        file("optional.xml") {
+          """
+            <idea-plugin>
+              <extensions defaultExtensionNs="someId">
+                <ownNonDynamicEP someKey="someValue"/>
+              </extensions>
+            </idea-plugin>
+          """.trimIndent()
+        }
+      }
+    }
+
+    checkPlugin(
+      DynamicPluginStatus.MaybeDynamic,
+      idePlugin
+    )
+  }
+
+  @Test
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.MaybeDynamic,
@@ -287,6 +355,24 @@ class DynamicPluginStatusTest {
                   </extensionPoints>                
                 </idea-plugin>
                 """.trimIndent()
+            }
+          }
+        }
+      }
+
+      dir("plugins") {
+        dir("bundled") {
+          zip("bundled-plugin.zip") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                <idea-plugin>
+                  <id>com.intellij.bundled.plugin.id</id>
+                  <name>Bundled plugin</name>
+                  <version>1.0</version>            
+                </idea-plugin>
+                """.trimIndent()
+              }
             }
           }
         }
