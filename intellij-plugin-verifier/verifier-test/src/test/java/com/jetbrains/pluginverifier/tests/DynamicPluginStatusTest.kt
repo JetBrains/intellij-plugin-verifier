@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
@@ -24,70 +25,94 @@ class DynamicPluginStatusTest {
 
   companion object {
 
-    private const val PLACE_HOLDER = "<PLACE_HOLDER/>"
+    private const val HEADER = """
+      <id>someId</id>
+      <name>someName</name>
+      <version>someVersion</version>
+      ""<vendor email="vendor.com" url="url">vendor</vendor>""
+      <description>this description is looooooooooong enough</description>
+      <change-notes>these change-notes are looooooooooong enough</change-notes>
+      <idea-version since-build="131.1"/>
+    """
 
-    private val BASE_PLUGIN_XML = """
-          <idea-plugin>
-            <id>someId</id>
-            <name>someName</name>
-            <version>someVersion</version>
-            ""<vendor email="vendor.com" url="url">vendor</vendor>""
-            <description>this description is looooooooooong enough</description>
-            <change-notes>these change-notes are looooooooooong enough</change-notes>
-            <idea-version since-build="131.1"/>
-            $PLACE_HOLDER
-          </idea-plugin>
-          """.trimIndent()
   }
 
   @Test
   fun `empty plugin can be safely loaded and unload immediately`() {
-    checkPlugin(DynamicPluginStatus.AllowLoadUnloadImmediately, "")
+    checkPlugin(
+      DynamicPluginStatus.AllowLoadUnloadImmediately,
+      buildPluginWithXml {
+        """
+          <idea-plugin>
+            $HEADER
+          </idea-plugin>
+        """
+      }
+    )
   }
 
   @Test
   fun `plugin declaring only predefined extension points can be loaded and unloaded immediately`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadImmediately,
-      """
-        <extensions defaultExtensionNs="com.intellij">
-           <themeProvider someParam="someValue"/>
-           <bundledKeymap someParam="someValue"/>
-           <bundledKeymapProvider someParam="someValue"/>
-        </extensions>
-      """.trimIndent()
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <extensions defaultExtensionNs="com.intellij">
+             <themeProvider someParam="someValue"/>
+             <bundledKeymap someParam="someValue"/>
+             <bundledKeymapProvider someParam="someValue"/>
+          </extensions>
+        </idea-plugin>
+        """
+      }
     )
   }
 
   @Test
   fun `plugin declaring only its own extension points can be loaded and unloaded without restart`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `someId.ownEP`"
-      )),
-      """
-        <extensionPoints>
-          <extensionPoint name="ownEP" interface="doesntMatter"/>
-        </extensionPoints>
+      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
+        setOf(
+          "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `someId.ownEP`"
+        )
+      ),
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <extensionPoints>
+            <extensionPoint name="ownEP" interface="doesntMatter"/>
+          </extensionPoints>
         
-        <extensions defaultExtensionNs="someId">
-          <ownEP someKey="someValue"/>
-        </extensions>
-      """.trimIndent()
+          <extensions defaultExtensionNs="someId">
+            <ownEP someKey="someValue"/>
+          </extensions>
+        </idea-plugin>
+      """
+      }
     )
   }
 
   @Test
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.dynamicEP`"
-      )),
-      """
-        <extensions defaultExtensionNs="com.intellij">
-          <dynamicEP someKey="someValue"/>
-        </extensions>
-      """.trimIndent()
+      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
+        setOf(
+          "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.dynamicEP`"
+        )
+      ),
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <extensions defaultExtensionNs="com.intellij">
+            <dynamicEP someKey="someValue"/>
+          </extensions>
+        </idea-plugin>
+        """
+      }
     )
   }
 
@@ -98,12 +123,16 @@ class DynamicPluginStatusTest {
         setOf("Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.nonDynamicEP`"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
       ),
-      """
-        <extensions defaultExtensionNs="com.intellij">
-          <nonDynamicEP someKey="someValue"/>
-        </extensions>
-      """.trimIndent()
-    )
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <extensions defaultExtensionNs="com.intellij">
+            <nonDynamicEP someKey="someValue"/>
+          </extensions>
+        </idea-plugin>
+        """
+      })
   }
 
   @Test
@@ -121,39 +150,51 @@ class DynamicPluginStatusTest {
           "Plugin cannot be loaded/unloaded without IDE restart because it declares application components: `SomeApplicationComponent`"
         )
       ),
-      """
-        <application-components>
-            <component>
-                <implementation-class>SomeApplicationComponent</implementation-class>
-            </component>
-        </application-components>
-
-        <project-components>
-            <component>
-                <implementation-class>SomeProjectComponent</implementation-class>
-            </component>
-        </project-components>
-
-        <module-components>
-            <component>
-                <implementation-class>SomeModuleComponent</implementation-class>
-            </component>
-        </module-components>
-      """.trimIndent()
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <application-components>
+              <component>
+                  <implementation-class>SomeApplicationComponent</implementation-class>
+              </component>
+          </application-components>
+  
+          <project-components>
+              <component>
+                  <implementation-class>SomeProjectComponent</implementation-class>
+              </component>
+          </project-components>
+  
+          <module-components>
+              <component>
+                  <implementation-class>SomeModuleComponent</implementation-class>
+              </component>
+          </module-components>
+        </idea-plugin>
+        """
+      }
     )
   }
 
   @Test
   fun `plugin declaring actions cant be loaded immediately`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
-      )),
-      """
-        <actions>
+      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
+        setOf(
+          "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
+        )
+      ),
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <actions>
             <action class="someClass"/>
-        </actions>
-      """.trimIndent()
+          </actions>
+        </idea-plugin>
+        """
+      }
     )
   }
 
@@ -164,11 +205,16 @@ class DynamicPluginStatusTest {
         setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
       ),
-      """
-        <actions>
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <actions>
             <group/>
-        </actions>
-      """.trimIndent()
+          </actions>
+        </idea-plugin>
+        """
+      }
     )
   }
 
@@ -179,13 +225,18 @@ class DynamicPluginStatusTest {
         setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
       ),
-      """
-        <actions>
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <actions>
             <group id="a">
               <group/>
             </group>
-        </actions>
-      """.trimIndent()
+          </actions>
+        </idea-plugin>
+      """
+      }
     )
   }
 
@@ -197,18 +248,21 @@ class DynamicPluginStatusTest {
         setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified")
       ),
-      """
-        <actions>
+      buildPluginWithXml {
+        """
+        <idea-plugin>
+          $HEADER
+          <actions>
             <action>
             </action>
-        </actions>
-      """.trimIndent()
+          </actions>
+        </idea-plugin>
+      """
+      }
     )
   }
 
-  private fun checkPlugin(dynamicStatus: DynamicPluginStatus, pluginXmlExtension: String) {
-    val pluginXmlContent = BASE_PLUGIN_XML.replace(PLACE_HOLDER, pluginXmlExtension)
-    val idePlugin = buildPlugin(pluginXmlContent)
+  private fun checkPlugin(dynamicStatus: DynamicPluginStatus, idePlugin: IdePlugin) {
     val ide = buildIde()
     val verificationResult = runVerification(ide, idePlugin)
     assertEquals(dynamicStatus, verificationResult.dynamicPluginStatus)
@@ -217,12 +271,16 @@ class DynamicPluginStatusTest {
   private fun runVerification(ide: Ide, idePlugin: IdePlugin) =
     VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
 
-  private fun buildPlugin(pluginXmlContent: String): IdePlugin {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+  private fun buildPluginWithXml(pluginXmlContent: () -> String): IdePlugin {
+    return buildPlugin {
       dir("META-INF") {
-        file("plugin.xml", pluginXmlContent)
+        file("plugin.xml", pluginXmlContent())
       }
     }
+  }
+
+  private fun buildPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): IdePlugin {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar"), pluginContentBuilder)
     val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString { it.message })
