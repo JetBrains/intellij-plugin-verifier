@@ -15,7 +15,6 @@ object DynamicPlugins {
     val verificationDescriptor = context.verificationDescriptor
     val idePlugin = context.idePlugin
     if (verificationDescriptor is PluginVerificationDescriptor.IDE && idePlugin is IdePluginImpl) {
-      val reasonsNotToLoadUnloadImmediately = hashSetOf<String>()
       val reasonsNotToLoadUnloadWithoutRestart = hashSetOf<String>()
 
       listOf(
@@ -24,24 +23,11 @@ object DynamicPlugins {
         idePlugin.moduleContainerDescriptor to "module"
       )
         .filter { it.first.components.isNotEmpty() }
-        .forEach { (descriptor, area) ->
-          reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
+        .mapTo(reasonsNotToLoadUnloadWithoutRestart) { (descriptor, area) ->
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
         }
 
-      val allowedImmediateLoadUnloadAllowedExtensions = listOf(
-        "com.intellij.themeProvider",
-        "com.intellij.bundledKeymap",
-        "com.intellij.bundledKeymapProvider"
-      )
-
       val declaredExtensions = idePlugin.extensions.keys
-      val nonImmediateEps = declaredExtensions.filter { it !in allowedImmediateLoadUnloadAllowedExtensions }
-      if (nonImmediateEps.isNotEmpty()) {
-        reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately. " +
-          "Only extension points " + formatListOfNames(allowedImmediateLoadUnloadAllowedExtensions) + " support immediate loading/unloading, " +
-          "but the plugin declares " + formatListOfNames(nonImmediateEps)
-      }
 
       val ide = verificationDescriptor.ide
 
@@ -61,9 +47,6 @@ object DynamicPlugins {
 
 
       val allActionsAndGroups = getAllActionsAndGroupsRecursively(idePlugin)
-      if (allActionsAndGroups.isNotEmpty()) {
-        reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
-      }
 
       for (element in allActionsAndGroups) {
         if (element.name == "group" && element.getAttributeValue("id") == null) {
@@ -79,15 +62,11 @@ object DynamicPlugins {
         }
       }
 
-      if (reasonsNotToLoadUnloadImmediately.isEmpty()) {
-        return DynamicPluginStatus.AllowLoadUnloadImmediately
-      }
-
       if (reasonsNotToLoadUnloadWithoutRestart.isEmpty()) {
-        return DynamicPluginStatus.AllowLoadUnloadWithoutRestart(reasonsNotToLoadUnloadImmediately)
+        return DynamicPluginStatus.MaybeDynamic
       }
 
-      return DynamicPluginStatus.NotDynamic(reasonsNotToLoadUnloadImmediately, reasonsNotToLoadUnloadWithoutRestart)
+      return DynamicPluginStatus.NotDynamic(reasonsNotToLoadUnloadWithoutRestart)
     }
 
     return null

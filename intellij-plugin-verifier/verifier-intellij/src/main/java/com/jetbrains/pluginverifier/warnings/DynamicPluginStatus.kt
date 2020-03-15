@@ -10,27 +10,12 @@ package com.jetbrains.pluginverifier.warnings
  */
 sealed class DynamicPluginStatus {
 
-  abstract val reasonsNotToLoadUnloadImmediately: Set<String>
-
   abstract val reasonsNotToLoadUnloadWithoutRestart: Set<String>
 
-  object AllowLoadUnloadImmediately : DynamicPluginStatus() {
-    override val reasonsNotToLoadUnloadImmediately
-      get() = emptySet<String>()
-
+  object MaybeDynamic : DynamicPluginStatus() {
     override val reasonsNotToLoadUnloadWithoutRestart
       get() = emptySet<String>()
   }
 
-  data class AllowLoadUnloadWithoutRestart(
-    override val reasonsNotToLoadUnloadImmediately: Set<String>
-  ): DynamicPluginStatus() {
-    override val reasonsNotToLoadUnloadWithoutRestart
-      get() = emptySet<String>()
-  }
-
-  data class NotDynamic(
-    override val reasonsNotToLoadUnloadImmediately: Set<String>,
-    override val reasonsNotToLoadUnloadWithoutRestart: Set<String>
-  ) : DynamicPluginStatus()
+  data class NotDynamic(override val reasonsNotToLoadUnloadWithoutRestart: Set<String>) : DynamicPluginStatus()
 }

@@ -80,13 +80,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
 
 private fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
   return when (this) {
-    DynamicPluginStatus.AllowLoadUnloadImmediately -> DynamicPluginStatusDto(true, emptyList())
-    /*
-      Ignore "reasons not to load/unload immediately" because it is unlikely to be possible
-        to move the plugin from the "immediately" category to the "without restart" category,
-        since it requires that plugin's extension points/actions are removed or replaced completely.
-     */
-    is DynamicPluginStatus.AllowLoadUnloadWithoutRestart -> DynamicPluginStatusDto(true, emptyList())
+    is DynamicPluginStatus.MaybeDynamic -> DynamicPluginStatusDto(true, emptyList())
     is DynamicPluginStatus.NotDynamic -> DynamicPluginStatusDto(false, reasonsNotToLoadUnloadWithoutRestart.toList())
   }
 }

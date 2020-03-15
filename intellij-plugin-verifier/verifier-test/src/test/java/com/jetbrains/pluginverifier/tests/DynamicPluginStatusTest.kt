@@ -38,9 +38,9 @@ class DynamicPluginStatusTest {
   }
 
   @Test
-  fun `empty plugin can be safely loaded and unload immediately`() {
+  fun `empty plugin can be safely loaded and unload without IDE restart`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadImmediately,
+      DynamicPluginStatus.MaybeDynamic,
       buildPluginWithXml {
         """
           <idea-plugin>
@@ -54,7 +54,7 @@ class DynamicPluginStatusTest {
   @Test
   fun `plugin declaring only predefined extension points can be loaded and unloaded immediately`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadImmediately,
+      DynamicPluginStatus.MaybeDynamic,
       buildPluginWithXml {
         """
         <idea-plugin>
@@ -73,11 +73,7 @@ class DynamicPluginStatusTest {
   @Test
   fun `plugin declaring only its own extension points can be loaded and unloaded without restart`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
-        setOf(
-          "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `someId.ownEP`"
-        )
-      ),
+      DynamicPluginStatus.MaybeDynamic,
       buildPluginWithXml {
         """
         <idea-plugin>
@@ -98,11 +94,7 @@ class DynamicPluginStatusTest {
   @Test
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
-        setOf(
-          "Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.dynamicEP`"
-        )
-      ),
+      DynamicPluginStatus.MaybeDynamic,
       buildPluginWithXml {
         """
         <idea-plugin>
@@ -120,7 +112,6 @@ class DynamicPluginStatusTest {
   fun `plugin declaring non dynamic extension point is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded immediately. Only extension points `com.intellij.bundledKeymap`, `com.intellij.bundledKeymapProvider`, `com.intellij.themeProvider` support immediate loading/unloading, but the plugin declares `com.intellij.nonDynamicEP`"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
       ),
       buildPluginWithXml {
@@ -139,11 +130,6 @@ class DynamicPluginStatusTest {
   fun `plugin declaring components is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf(
-          "Plugin cannot be loaded/unloaded immediately because it declares project components: `SomeProjectComponent`",
-          "Plugin cannot be loaded/unloaded immediately because it declares module components: `SomeModuleComponent`",
-          "Plugin cannot be loaded/unloaded immediately because it declares application components: `SomeApplicationComponent`"
-        ),
         setOf(
           "Plugin cannot be loaded/unloaded without IDE restart because it declares project components: `SomeProjectComponent`",
           "Plugin cannot be loaded/unloaded without IDE restart because it declares module components: `SomeModuleComponent`",
@@ -180,11 +166,7 @@ class DynamicPluginStatusTest {
   @Test
   fun `plugin declaring actions cant be loaded immediately`() {
     checkPlugin(
-      DynamicPluginStatus.AllowLoadUnloadWithoutRestart(
-        setOf(
-          "Plugin cannot be loaded/unloaded immediately because it declares actions or groups"
-        )
-      ),
+      DynamicPluginStatus.MaybeDynamic,
       buildPluginWithXml {
         """
         <idea-plugin>
@@ -202,7 +184,6 @@ class DynamicPluginStatusTest {
   fun `plugin declaring a group with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
       ),
       buildPluginWithXml {
@@ -222,7 +203,6 @@ class DynamicPluginStatusTest {
   fun `plugin declaring a deep group with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
       ),
       buildPluginWithXml {
@@ -245,7 +225,6 @@ class DynamicPluginStatusTest {
   fun `plugin declaring an action with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded immediately because it declares actions or groups"),
         setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified")
       ),
       buildPluginWithXml {

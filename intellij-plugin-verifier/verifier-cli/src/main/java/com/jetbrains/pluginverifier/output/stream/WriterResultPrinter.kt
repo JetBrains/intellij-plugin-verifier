@@ -52,8 +52,7 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
 
     when (val dynamicPluginStatus = verificationResult.dynamicPluginStatus) {
-      DynamicPluginStatus.AllowLoadUnloadImmediately -> out.println("        Plugin can be loaded/unloaded immediately inside IDE Plugins window")
-      is DynamicPluginStatus.AllowLoadUnloadWithoutRestart -> out.println("        Plugin can be loaded/unloaded without IDE restart")
+      is DynamicPluginStatus.MaybeDynamic -> out.println("        Plugin can be loaded/unloaded without IDE restart")
       is DynamicPluginStatus.NotDynamic -> out.println("        Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
       null -> Unit
     }
