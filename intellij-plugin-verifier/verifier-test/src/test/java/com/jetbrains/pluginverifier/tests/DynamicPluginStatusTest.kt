@@ -96,7 +96,7 @@ class DynamicPluginStatusTest {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
         setOf("Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares com.intellij.nonDynamicEP"),
-        setOf("Plugin declares non-dynamic extensions: com.intellij.nonDynamicEP")
+        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: com.intellij.nonDynamicEP")
       ),
       """
         <extensions defaultExtensionNs="com.intellij">
@@ -108,13 +108,19 @@ class DynamicPluginStatusTest {
 
   @Test
   fun `plugin declaring components is not dynamic`() {
-    val reasons = setOf(
-      "Plugin declares project components: SomeProjectComponent",
-      "Plugin declares module components: SomeModuleComponent",
-      "Plugin declares application components: SomeApplicationComponent"
-    )
     checkPlugin(
-      DynamicPluginStatus.NotDynamic(reasons, reasons),
+      DynamicPluginStatus.NotDynamic(
+        setOf(
+          "Plugin cannot be loaded/unloaded immediately because it declares project components: SomeProjectComponent",
+          "Plugin cannot be loaded/unloaded immediately because it declares module components: SomeModuleComponent",
+          "Plugin cannot be loaded/unloaded immediately because it declares application components: SomeApplicationComponent"
+        ),
+        setOf(
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares project components: SomeProjectComponent",
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares module components: SomeModuleComponent",
+          "Plugin cannot be loaded/unloaded without IDE restart because it declares application components: SomeApplicationComponent"
+        )
+      ),
       """
         <application-components>
             <component>

@@ -18,18 +18,16 @@ object DynamicPlugins {
       val reasonsNotToLoadUnloadImmediately = hashSetOf<String>()
       val reasonsNotToLoadUnloadWithoutRestart = hashSetOf<String>()
 
-      val componentReasons = listOf(
+      listOf(
         idePlugin.appContainerDescriptor to "application",
         idePlugin.projectContainerDescriptor to "project",
         idePlugin.moduleContainerDescriptor to "module"
       )
         .filter { it.first.components.isNotEmpty() }
-        .map { (descriptor, area) ->
-          "Plugin declares $area components: " + descriptor.components.map { it.implementationClass }.sorted().joinToString()
+        .forEach { (descriptor, area) ->
+          reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately because it declares $area components: " + descriptor.components.map { it.implementationClass }.sorted().joinToString()
+          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + descriptor.components.map { it.implementationClass }.sorted().joinToString()
         }
-
-      reasonsNotToLoadUnloadImmediately += componentReasons
-      reasonsNotToLoadUnloadWithoutRestart += componentReasons
 
       val allowedImmediateLoadUnloadAllowedExtensions = listOf(
         "com.intellij.themeProvider",
@@ -50,15 +48,15 @@ object DynamicPlugins {
       val nonDynamicExtensions = arrayListOf<String>()
       for (epName in declaredExtensions) {
         val extensionPoint = ide.bundledPlugins.asSequence()
-            .filterIsInstance<IdePluginImpl>()
-            .mapNotNull { it.findExtensionPoint(epName) }
-            .firstOrNull()
+          .filterIsInstance<IdePluginImpl>()
+          .mapNotNull { it.findExtensionPoint(epName) }
+          .firstOrNull()
         if (extensionPoint != null && !extensionPoint.isDynamic) {
           nonDynamicExtensions += extensionPoint.extensionPointName
         }
       }
       if (nonDynamicExtensions.isNotEmpty()) {
-        reasonsNotToLoadUnloadWithoutRestart += "Plugin declares non-dynamic extensions: " + nonDynamicExtensions.sorted().joinToString()
+        reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: " + nonDynamicExtensions.sorted().joinToString()
       }
 
 
