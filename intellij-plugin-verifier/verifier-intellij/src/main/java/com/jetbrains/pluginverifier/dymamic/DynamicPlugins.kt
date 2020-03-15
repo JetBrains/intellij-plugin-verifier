@@ -38,8 +38,11 @@ object DynamicPlugins {
       )
 
       val declaredExtensions = idePlugin.extensions.keys
-      if (declaredExtensions.any { it !in allowedImmediateLoadUnloadAllowedExtensions }) {
-        reasonsNotToLoadUnloadImmediately += "Plugin declares extension points other than " + allowedImmediateLoadUnloadAllowedExtensions.joinToString()
+      val nonImmediateEps = declaredExtensions.filter { it !in allowedImmediateLoadUnloadAllowedExtensions }
+      if (nonImmediateEps.isNotEmpty()) {
+        reasonsNotToLoadUnloadImmediately += "Plugin cannot be loaded/unloaded immediately. " +
+          "Only extension points " + allowedImmediateLoadUnloadAllowedExtensions.sorted().joinToString() + " support immediate loading/unloading, " +
+          "but the plugin declares " + nonImmediateEps.sorted().joinToString()
       }
 
       val ide = verificationDescriptor.ide

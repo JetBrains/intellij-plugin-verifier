@@ -63,7 +63,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring only its own extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin declares extension points other than com.intellij.themeProvider, com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider"
+        "Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares someId.ownEP"
       )),
       """
         <extensionPoints>
@@ -81,7 +81,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring only dynamic extension points can be loaded and unloaded without restart`() {
     checkPlugin(
       DynamicPluginStatus.AllowLoadUnloadWithoutRestart(setOf(
-        "Plugin declares extension points other than com.intellij.themeProvider, com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider"
+        "Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares com.intellij.dynamicEP"
       )),
       """
         <extensions defaultExtensionNs="com.intellij">
@@ -95,7 +95,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring non dynamic extension point is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin declares extension points other than com.intellij.themeProvider, com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider"),
+        setOf("Plugin cannot be loaded/unloaded immediately. Only extension points com.intellij.bundledKeymap, com.intellij.bundledKeymapProvider, com.intellij.themeProvider support immediate loading/unloading, but the plugin declares com.intellij.nonDynamicEP"),
         setOf("Plugin declares non-dynamic extensions: com.intellij.nonDynamicEP")
       ),
       """
