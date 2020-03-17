@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.hub.bean.HubPluginManifest
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
@@ -25,39 +26,39 @@ import java.io.File
  */
 private val AUTHOR_REGEX = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex()
 
-internal fun validateHubPluginBean(bean: HubPlugin): List<PluginProblem> {
+internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
 
-  if (bean.pluginId.isNullOrBlank()) {
+  if (manifest.pluginId.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("key"))
   }
 
-  if (bean.pluginName.isNullOrBlank()) {
+  if (manifest.pluginName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   }
 
-  if (bean.vendor == null) {
+  if (manifest.author == null) {
     problems.add(PropertyNotSpecified("author"))
   }
 
-  if (bean.description.isNullOrBlank()) {
+  if (manifest.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
   }
 
-  val version = bean.pluginVersion
+  val version = manifest.pluginVersion
   if (version == null || version.isBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
 
-  if (bean.dependencies == null) {
+  if (manifest.dependencies == null) {
     problems.add(PropertyNotSpecified("dependencies"))
-  } else if (bean.dependencies.isEmpty()) {
+  } else if (manifest.dependencies.isEmpty()) {
     problems.add(HubDependenciesNotSpecified())
   }
 
-  if (bean.products == null) {
+  if (manifest.products == null) {
     problems.add(PropertyNotSpecified("products"))
-  } else if (bean.products.isEmpty()) {
+  } else if (manifest.products.isEmpty()) {
     problems.add(HubProductsNotSpecified())
   }
 

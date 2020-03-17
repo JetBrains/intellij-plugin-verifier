@@ -4,8 +4,11 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.hub.bean.HubPluginManifest
+import com.jetbrains.plugin.structure.hub.problems.HubIconInvalidUrl
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -27,7 +30,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   override fun createPlugin(pluginFile: File): PluginCreationResult<HubPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
-      pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
+      pluginFile.isDirectory -> loadPluginInfoFromDirectory(pluginFile)
       pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
       else -> PluginCreationFail(createIncorrectHubPluginFile(pluginFile.name))
     }
@@ -43,7 +46,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
     return try {
       pluginFile.extractTo(tempDirectory, sizeLimit)
-      loadDescriptorFromDirectory(tempDirectory)
+      loadPluginInfoFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
     } finally {
@@ -51,38 +54,71 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
   }
 
-  private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
+  private fun loadPluginInfoFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
     val errors = validateHubPluginDirectory(pluginDirectory)
     if (errors != null) {
       return errors
     }
-    val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
-    if (descriptorFile.exists()) {
-      return loadDescriptor(descriptorFile)
+    val manifestFile = File(pluginDirectory, DESCRIPTOR_NAME)
+    if (!manifestFile.exists()) {
+      return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
-    return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+    val manifestContent = manifestFile.readText()
+    val manifest = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
+        .parse(HubPluginManifest.serializer(), manifestContent)
+    val iconFile = getIconFile(pluginDirectory, manifest.iconUrl)
+    return when {
+      iconFile == null -> createPlugin(manifest, manifestContent, null)
+      iconFile.exists() -> createPlugin(
+          manifest, manifestContent, PluginIcon(IconTheme.DEFAULT, iconFile.readBytes(), iconFile.name)
+      )
+      else -> PluginCreationFail(HubIconInvalidUrl(manifest.iconUrl))
+    }
   }
 
-  private fun loadDescriptor(descriptorFile: File): PluginCreationResult<HubPlugin> {
+  private fun createPlugin(
+      descriptor: HubPluginManifest, manifestContent: String, icon: PluginIcon?
+  ): PluginCreationResult<HubPlugin> {
     try {
-      val manifestContent = descriptorFile.readText()
-      val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)).parse(HubPlugin.serializer(), manifestContent)
-      descriptor.manifestContent = manifestContent
-      val vendorInfo = parseHubVendorInfo(descriptor.author)
-      descriptor.apply {
-        vendor = vendorInfo.vendor
-        vendorEmail = vendorInfo.vendorEmail
-        vendorUrl = vendorInfo.vendorUrl
-      }
       val beanValidationResult = validateHubPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      return PluginCreationSuccess(descriptor, beanValidationResult)
+
+      val vendorInfo = parseHubVendorInfo(descriptor.author ?: "")
+      if (vendorInfo.vendor == null) return PluginCreationFail(PropertyNotSpecified("author"))
+      val plugin = with(descriptor) {
+        HubPlugin(
+            pluginId = pluginId,
+            pluginName = pluginName,
+            pluginVersion = pluginVersion,
+            url = url,
+            description = description,
+            dependencies = dependencies,
+            products = products,
+            vendor = vendorInfo.vendor,
+            vendorEmail = vendorInfo.vendorEmail,
+            vendorUrl = vendorInfo.vendorUrl,
+            manifestContent = manifestContent,
+            icons = if (icon != null) listOf(icon) else emptyList()
+        )
+      }
+      return PluginCreationSuccess(plugin, beanValidationResult)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
+    }
+  }
+
+  private fun getIconFile(pluginDirectory: File, iconUrl: String?): File? {
+    return when {
+      iconUrl == null -> null
+      iconUrl.contains("://") || iconUrl.startsWith("/") -> {
+        LOG.warn("Unsupported widget iconUrl: '$iconUrl'")
+        null
+      }
+      else -> File(pluginDirectory, iconUrl)
     }
   }
 }
