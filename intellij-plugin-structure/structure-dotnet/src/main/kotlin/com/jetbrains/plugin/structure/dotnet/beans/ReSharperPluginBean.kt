@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.dotnet.beans
 
-import com.jetbrains.plugin.structure.dotnet.DotNetDependency
-import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import javax.xml.bind.annotation.*
 
 @XmlRootElement(name = "package")
@@ -64,22 +62,4 @@ class DotNetDependencyBean {
   lateinit var id: String
   @get:XmlAttribute(name = "version")
   lateinit var version: String
-}
-
-fun ReSharperPluginBean.toPlugin(): ReSharperPlugin {
-  val id = this.id!!
-  val idParts = id.split('.')
-  val vendor = if (idParts.size > 1) idParts[0] else null
-  val authors = authors!!.split(',').map { it.trim() }
-  val pluginName = when {
-    title != null -> title!!
-    idParts.size > 1 -> idParts[1]
-    else -> id
-  }
-  return ReSharperPlugin(
-    pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
-    changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
-    authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
-    dependencies = getAllDependencies().map { DotNetDependency(it.id, it.version) }
-  )
 }
