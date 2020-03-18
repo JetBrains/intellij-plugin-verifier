@@ -6,7 +6,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 object EmptyPluginRepository : PluginRepository {
-
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = emptyList()
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? = null
@@ -15,4 +14,8 @@ object EmptyPluginRepository : PluginRepository {
 
   override fun getIdOfPluginDeclaringModule(moduleId: String): String? = null
 
+  override val presentableName
+    get() = "Empty repository"
+
+  override fun toString() = presentableName
 }

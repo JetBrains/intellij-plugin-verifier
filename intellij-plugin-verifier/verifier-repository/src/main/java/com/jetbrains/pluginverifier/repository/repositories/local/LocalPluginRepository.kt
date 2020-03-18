@@ -31,6 +31,9 @@ class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = 
   override fun getIdOfPluginDeclaringModule(moduleId: String) =
     plugins.find { moduleId in it.definedModules }?.pluginId
 
-  override fun toString() = "Local Plugin Repository"
+  override val presentableName
+    get() = "Local Plugin Repository"
+
+  override fun toString() = presentableName
 
 }

@@ -42,7 +42,10 @@ class TeamCityIdeaPluginRepository(
     return parsePluginsList(document, buildServerUrl, sourceCodeUrl)
   }
 
-  override fun toString() = "JetBrains TeamCity Plugin Repository"
+  override val presentableName
+    get() = "JetBrains TeamCity Plugin Repository"
+
+  override fun toString() = presentableName
 
   private interface TeamCityPluginRepositoryConnector {
     @GET("/update/idea-plugins.xml")

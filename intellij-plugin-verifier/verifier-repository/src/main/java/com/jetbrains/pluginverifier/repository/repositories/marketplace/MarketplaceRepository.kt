@@ -167,6 +167,11 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     }
   }
 
+  override val presentableName
+    get() = "Marketplace ${repositoryURL.toExternalForm()}"
+
+  override fun toString() = presentableName
+
   private companion object {
 
     private val DEFAULT_URL = URL("https://plugins.jetbrains.com")

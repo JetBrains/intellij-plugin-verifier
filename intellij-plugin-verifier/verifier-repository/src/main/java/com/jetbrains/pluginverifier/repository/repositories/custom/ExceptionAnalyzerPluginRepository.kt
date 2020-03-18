@@ -52,7 +52,10 @@ class ExceptionAnalyzerPluginRepository(
       )
     }
 
-  override fun toString() = "ExceptionAnalyzer Plugin Repository: ${repositoryUrl.toExternalForm()}"
+  override val presentableName
+    get() = "ExceptionAnalyzer Plugin Repository: ${repositoryUrl.toExternalForm()}"
+
+  override fun toString() = presentableName
 
   private interface ExceptionAnalyzerRepositoryConnector {
     @GET

@@ -35,7 +35,9 @@ class BundledPluginsRepository(
 
   fun findPluginByModule(moduleId: String) = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
 
-  override fun toString() = "Bundled plugins of ${ide.version}"
+  override val presentableName
+    get() = "Bundled plugins of ${ide.version}"
 
+  override fun toString() = presentableName
 }
 

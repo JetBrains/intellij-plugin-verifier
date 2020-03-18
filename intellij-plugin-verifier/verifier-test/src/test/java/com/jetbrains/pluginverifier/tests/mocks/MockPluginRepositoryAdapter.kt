@@ -16,6 +16,10 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   open fun defaultAction(): Nothing = throw AssertionError("Not required in tests")
 
+  override val presentableName
+    get() = "Mock repository"
+
+  override fun toString() = presentableName
 }
 
 fun createMockPluginInfo(pluginId: String, version: String): PluginInfo =

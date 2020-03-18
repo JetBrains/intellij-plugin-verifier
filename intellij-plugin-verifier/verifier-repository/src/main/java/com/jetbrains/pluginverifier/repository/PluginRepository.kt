@@ -8,6 +8,11 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 interface PluginRepository {
 
   /**
+   * Name of the repository that can be shown to users.
+   */
+  val presentableName: String
+
+  /**
    * Returns the latest plugins' versions compatible with [ideVersion].
    */
   fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo>
