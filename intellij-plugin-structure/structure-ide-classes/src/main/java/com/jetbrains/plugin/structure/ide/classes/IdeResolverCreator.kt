@@ -40,6 +40,12 @@ object IdeResolverCreator {
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, parentOrigin))
   }
 
+  //TODO: Resolver created this way contains all libraries declared in the project,
+  // including those that don't go to IDE distribution. So such a created resolver may
+  // resolve classes differently than they are resolved when running IDE.
+  // IDE sources can generate so-called "project-structure-mapping.json", which contains mapping
+  // between compiled modules and jar files to which these modules are packaged in the final distribution.
+  // We can use this mapping to construct a true resolver without irrelevant libraries.
   private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode): Resolver {
     val resolvers = arrayListOf<Resolver>()
     resolvers.closeOnException {
