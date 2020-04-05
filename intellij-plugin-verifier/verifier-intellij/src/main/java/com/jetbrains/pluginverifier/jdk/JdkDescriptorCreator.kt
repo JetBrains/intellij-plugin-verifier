@@ -42,15 +42,18 @@ object JdkDescriptorCreator {
   }
 
   private fun readFullVersion(jdkPath: Path): String {
-    val releasePath = jdkPath.resolve("release")
-    if (releasePath.exists()) {
-      val properties = releasePath.readLines().associate {
-        val list = it.split("=")
-        list[0] to list[1].trim('"')
+    val linuxOrWindowsRelease = jdkPath.resolve("release")
+    val maxOsRelease = jdkPath.resolve("Contents").resolve("Home").resolve("release")
+    for (releasePath in listOf(linuxOrWindowsRelease, maxOsRelease)) {
+      if (releasePath.exists()) {
+        val properties = releasePath.readLines().associate {
+          val list = it.split("=")
+          list[0] to list[1].trim('"')
+        }
+        val javaVersion = properties["JAVA_VERSION"]
+        checkNotNull(javaVersion) { "JAVA_VERSION is not specified in $releasePath" }
+        return javaVersion
       }
-      val javaVersion = properties["JAVA_VERSION"]
-      checkNotNull(javaVersion) { "JAVA_VERSION is not specified in $releasePath" }
-      return javaVersion
     }
 
     //Amazon Corretto JDK 8 has 'version.txt' instead.
@@ -59,7 +62,7 @@ object JdkDescriptorCreator {
       return versionPath.readText()
     }
 
-    throw IllegalArgumentException("JDK version is not known: neither $releasePath nor $versionPath are available")
+    throw IllegalArgumentException("JDK version is not known: neither $linuxOrWindowsRelease, nor $maxOsRelease, nor $versionPath are available")
   }
 
   private fun createJava9Plus(jdkPath: Path, readMode: Resolver.ReadMode, jdkVersion: JdkVersion): JdkDescriptor {
