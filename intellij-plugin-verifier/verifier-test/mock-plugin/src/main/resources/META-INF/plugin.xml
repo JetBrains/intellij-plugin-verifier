@@ -12,13 +12,11 @@
 
 
     <extensions defaultExtensionNs="com.intellij">
-        <projectService serviceInterface="com.intellij.mockapi.ide.TreeExpander"
-                        serviceImplementation="org.company.xmls.TreeExpanderImpl"/>
+        <projectService serviceInterface="mock.plugin.services.MyPluginProjectService"
+                        serviceImplementation="mock.plugin.services.MyPluginProjectService"/>
 
-        <!--It's okay that warning here-->
-        <!--suppress PluginXmlValidity -->
-        <completion.confidence
-                implementationClass="com.intellij.mockapi.codeInsight.completion.UnfocusedNameIdentifier"/>
+        <projectService serviceInterface="mock.plugin.services.MyPluginProjectService2"
+                        serviceImplementation="mock.plugin.services.MyPluginProjectService2"/>
     </extensions>
 
     <!-- File optionalFeatures.xml declares extension points available only when MissingPlugin is available. -->
