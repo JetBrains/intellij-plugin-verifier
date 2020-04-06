@@ -4,10 +4,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
-import com.jetbrains.pluginverifier.verifiers.resolution.Field
-import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
 
 interface ApiUsageProcessor {
@@ -15,7 +12,8 @@ interface ApiUsageProcessor {
     classReference: ClassReference,
     resolvedClass: ClassFile,
     context: VerificationContext,
-    referrer: ClassFileMember
+    referrer: ClassFileMember,
+    classUsageType: ClassUsageType
   ) = Unit
 
   fun processMethodInvocation(

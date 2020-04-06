@@ -20,7 +20,8 @@ fun Resolver.resolveClassOrNull(className: String): ClassFile? {
 fun Resolver.resolveClassChecked(
   className: String,
   referrer: ClassFileMember,
-  context: VerificationContext
+  context: VerificationContext,
+  classUsageType: ClassUsageType = ClassUsageType.DEFAULT
 ): ClassFile? =
   when (val resolutionResult = resolveClass(className)) {
     ResolutionResult.NotFound -> {
@@ -51,7 +52,13 @@ fun Resolver.resolveClassChecked(
         )
       }
       val classReference = ClassReference(className)
-      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer) }
+      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer, classUsageType) }
       classFile
     }
   }
+
+enum class ClassUsageType {
+  DEFAULT,
+  METHOD_PARAMETER
+  //Add more when necessary.
+}

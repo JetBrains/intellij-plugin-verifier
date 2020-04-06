@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
 import com.jetbrains.pluginverifier.verifiers.resolution.isDiscouragingJdkClass
 
 class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : ApiUsageProcessor {
@@ -16,7 +17,8 @@ class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: Deprec
     classReference: ClassReference,
     resolvedClass: ClassFile,
     context: VerificationContext,
-    referrer: ClassFileMember
+    referrer: ClassFileMember,
+    classUsageType: ClassUsageType
   ) {
     if (resolvedClass.isDiscouragingJdkClass()) {
       val classFileOrigin = resolvedClass.classFileOrigin

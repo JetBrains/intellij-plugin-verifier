@@ -6,10 +6,7 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
-import com.jetbrains.pluginverifier.verifiers.resolution.Field
-import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsageRegistrar) : ApiUsageProcessor {
@@ -25,7 +22,8 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
     classReference: ClassReference,
     resolvedClass: ClassFile,
     context: VerificationContext,
-    referrer: ClassFileMember
+    referrer: ClassFileMember,
+    classUsageType: ClassUsageType
   ) {
     val usageLocation = referrer.location
     if (isInternal(resolvedClass, context, usageLocation)) {
