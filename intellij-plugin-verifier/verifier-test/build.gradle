@@ -30,9 +30,7 @@ task prepareResourcesJar(type: Jar, dependsOn: [project('after-idea').processRes
  * `/`
  * `/build.txt`
  * `lib/resources.jar`
- * `lib/after-idea-1.0.jar`
- * `plugins/devkit/`
- * `plugins/devkit/META-INF/plugin.xml`
+ * `lib/after-idea-1.0.jar` (contains plugin.xml with 'IDEA CORE' plugin)
  */
 task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build', prepareResourcesJar]) {
   into "$buildDir/mocks/after-idea"
@@ -52,12 +50,7 @@ task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build',
     into "."
   }
 
-  def devKitMetaInf = copySpec {
-    from "$afterIdeaBuildDir/resources/main/META-INF"
-    into "plugins/devkit/META-INF"
-  }
-
-  with ideaJar, resourcesJar, buildTxt, devKitMetaInf
+  with ideaJar, resourcesJar, buildTxt
 }
 
 test.dependsOn prepareMockPlugin, prepareAfterIdea
