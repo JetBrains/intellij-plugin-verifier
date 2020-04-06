@@ -145,7 +145,7 @@ private fun CompatibilityProblem.convert() =
   )
 
 private fun CompatibilityWarning.convert() =
-  CompatibilityWarningDto(message)
+  CompatibilityWarningDto(fullDescription)
 
 private fun DeprecatedApiUsage.convert() =
   DeprecatedApiUsageDto(

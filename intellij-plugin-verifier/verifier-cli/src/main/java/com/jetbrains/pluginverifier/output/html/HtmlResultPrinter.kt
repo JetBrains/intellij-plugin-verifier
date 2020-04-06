@@ -138,7 +138,7 @@ class HtmlResultPrinter(
 
   private fun HtmlBuilder.printWarnings(warnings: Set<CompatibilityWarning>) {
     p {
-      warnings.sortedBy { it.message }.forEach {
+      warnings.sortedBy { it.fullDescription }.forEach {
         +it.toString()
         br()
       }

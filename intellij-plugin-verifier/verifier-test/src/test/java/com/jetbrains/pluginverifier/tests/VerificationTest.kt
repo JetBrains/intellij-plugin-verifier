@@ -51,6 +51,15 @@ class VerificationTest {
   }
 
   @Test
+  fun `check that all warnings are found`() {
+    val expectedWarnings = parseExpectedWarnings().toSet()
+    val actualWarnings = verificationResult.compatibilityWarnings.mapTo(hashSetOf()) {
+      DescriptionHolder(it.shortDescription, it.fullDescription, DescriptionType.WARNING)
+    }
+    assertSetsEqual(expectedWarnings, actualWarnings)
+  }
+
+  @Test
   fun `check that all deprecated API usages are found`() {
     val expectedDeprecated = parseExpectedDeprecated().toSet()
     val actualDeprecated = verificationResult.deprecatedUsages.mapTo(hashSetOf()) {

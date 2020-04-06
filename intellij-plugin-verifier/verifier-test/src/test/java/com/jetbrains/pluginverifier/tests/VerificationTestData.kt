@@ -15,6 +15,7 @@ data class DescriptionHolder(val shortDescription: String, val fullDescription: 
 
 enum class DescriptionType {
   PROBLEM,
+  WARNING,
   DEPRECATED,
   EXPERIMENTAL,
   INTERNAL,
@@ -24,6 +25,9 @@ enum class DescriptionType {
 
 fun parseExpectedProblems(): Sequence<DescriptionHolder> =
   parseDescriptions(DescriptionType.PROBLEM)
+
+fun parseExpectedWarnings(): Sequence<DescriptionHolder> =
+  parseDescriptions(DescriptionType.WARNING)
 
 fun parseExpectedDeprecated(): Sequence<DescriptionHolder> =
   parseDescriptions(DescriptionType.DEPRECATED)

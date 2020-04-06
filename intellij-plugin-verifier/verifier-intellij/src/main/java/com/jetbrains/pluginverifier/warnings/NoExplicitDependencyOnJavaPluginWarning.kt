@@ -9,7 +9,11 @@ import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
 data class NoExplicitDependencyOnJavaPluginWarning(
   val javaPluginClassUsages: MutableSet<JavaPluginClassUsage> = hashSetOf()
 ) : CompatibilityWarning() {
-  override val message
+
+  override val shortDescription
+    get() = "Dependency on Java plugin is not specified"
+
+  override val fullDescription
     get() = buildString {
       appendln("Plugin uses classes of Java plugin, for example")
       val deterministicUsages = javaPluginClassUsages.sortedWith(compareBy<JavaPluginClassUsage> { it.usedClass.className }.thenBy { it.usageLocation.presentableLocation })

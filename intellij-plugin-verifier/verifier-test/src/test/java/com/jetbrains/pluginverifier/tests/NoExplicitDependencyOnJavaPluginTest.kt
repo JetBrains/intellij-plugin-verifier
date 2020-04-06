@@ -91,7 +91,7 @@ class NoExplicitDependencyOnJavaPluginTest {
         For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
         
       """.trimIndent()
-      ), verificationResult.compatibilityWarnings.map { it.message }.toSet()
+      ), verificationResult.compatibilityWarnings.map { it.fullDescription }.toSet()
     )
   }
 

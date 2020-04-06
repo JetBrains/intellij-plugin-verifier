@@ -40,8 +40,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
       }
     }
 
-    verificationResult.compatibilityWarnings.sortedBy { it.message }.forEach { warning ->
-      out.println(warning.message.lineSequence().joinToString { "    $it" })
+    verificationResult.compatibilityWarnings.sortedBy { it.fullDescription }.forEach { warning ->
+      out.println(warning.fullDescription.lineSequence().joinToString { "    $it" })
     }
 
     verificationResult.compatibilityProblems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach { (shortDescription, fullDescriptions) ->

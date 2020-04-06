@@ -3,7 +3,11 @@ package com.jetbrains.pluginverifier.warnings
 import com.jetbrains.plugin.structure.base.utils.pluralize
 
 data class MistakenlyBundledIdePackagesWarning(private val idePackages: List<String>) : CompatibilityWarning() {
-  override val message = buildString {
+
+  override val shortDescription
+    get() = "Plugin bundles IDE packages"
+
+  override val fullDescription = buildString {
     append("The plugin distribution bundles IDE ")
     append("package".pluralize(idePackages.size))
     append(" ")
