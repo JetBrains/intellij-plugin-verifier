@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.output.stream
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import java.io.PrintWriter
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {

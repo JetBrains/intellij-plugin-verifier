@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.ExtensionPoint
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
-import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
 import org.jdom2.Element
 
 /**

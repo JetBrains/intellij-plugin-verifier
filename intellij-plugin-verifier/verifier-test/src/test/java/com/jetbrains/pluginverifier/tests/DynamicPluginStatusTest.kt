@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.warnings.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Rule
