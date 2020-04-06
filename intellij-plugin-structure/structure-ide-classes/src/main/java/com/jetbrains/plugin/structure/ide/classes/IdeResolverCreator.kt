@@ -21,8 +21,8 @@ object IdeResolverCreator {
   fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val idePath = ide.idePath
     return when {
-      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory)
-      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode)
+      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory(ide))
+      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode, ide)
       else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
   }
@@ -46,28 +46,28 @@ object IdeResolverCreator {
   // IDE sources can generate so-called "project-structure-mapping.json", which contains mapping
   // between compiled modules and jar files to which these modules are packaged in the final distribution.
   // We can use this mapping to construct a true resolver without irrelevant libraries.
-  private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode): Resolver {
+  private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val resolvers = arrayListOf<Resolver>()
     resolvers.closeOnException {
-      resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory)
-      resolvers += getRepositoryLibrariesResolver(idePath, readMode)
+      resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory(ide))
+      resolvers += getRepositoryLibrariesResolver(idePath, readMode, ide)
 
       val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
       for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
-        val fileOrigin = IdeFileOrigin.CompiledModule(moduleRoot.name)
+        val fileOrigin = IdeFileOrigin.CompiledModule(ide, moduleRoot.name)
         resolvers += DirectoryResolver(moduleRoot.toPath(), fileOrigin, readMode)
       }
 
       if (isCompiledUltimate(idePath)) {
-        resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory)
+        resolvers += getJarsResolver(idePath.resolve("community").resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory(ide))
       }
       return CompositeResolver.create(resolvers)
     }
   }
 
-  private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode): Resolver {
+  private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val jars = getRepositoryLibrariesJars(idePath)
-    return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary))
+    return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary(ide)))
   }
 
 }
