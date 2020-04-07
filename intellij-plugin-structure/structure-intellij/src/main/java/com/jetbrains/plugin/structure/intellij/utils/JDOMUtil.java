@@ -15,7 +15,7 @@
  */
 package com.jetbrains.plugin.structure.intellij.utils;
 
-import kotlin.io.ByteStreamsKt;
+import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
 import org.jdom2.filter.Filter;
@@ -107,10 +107,9 @@ public class JDOMUtil {
     return element.getAttributes().isEmpty() && element.getContent().isEmpty();
   }
 
-  @SuppressWarnings("RedundantThrows")
   @NotNull
   private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
-    return new ByteArrayInputStream(ByteStreamsKt.readBytes(is));
+    return new ByteArrayInputStream(IOUtils.toByteArray(is));
   }
 
   private static class EmptyTextFilter extends AbstractFilter<Content> {
