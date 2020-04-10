@@ -59,7 +59,7 @@ class GroupDependencyBean {
 @XmlAccessorType(XmlAccessType.PROPERTY)
 class DotNetDependencyBean {
   @get:XmlAttribute(name = "id")
-  lateinit var id: String
+  var id: String? = null
   @get:XmlAttribute(name = "version")
-  lateinit var version: String
+  var version: String? = null
 }
