@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>JetBrains.Mock</id>
+    <title>Some title</title>
+    <version>10.2.55</version>
+    <authors>JetBrains</authors>
+    <owners>JetBrains</owners>
+    <licenseUrl>https://raw.githubusercontent.com/JetBrains/ExternalAnnotations/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/JetBrains/ExternalAnnotations</projectUrl>
+    <iconUrl>http://resharper-plugins.jetbrains.com/Content/Images/packageReSharper.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>ReSharper External Annotations for .NET framework and popular libraries.</description>
+    <summary>Some summary</summary>
+    <releaseNotes>ReSharper 8.2 compatibility</releaseNotes>
+    <copyright>Copyright 2014 JetBrains</copyright>
+    <tags>resharper annotations</tags>
+    <dependencies>
+      <dependency id="ReSharper" version="[8.0, 8.3)" />
+      <dependency id="Wave" />
+      <group targetFramework=".NETFramework4.6.1">
+
+          <dependency id="Wave" version="183.0.0" exclude="Build,Analyzers" />
+
+      </group>
+    </dependencies>
+    
+  </metadata>
+</package>

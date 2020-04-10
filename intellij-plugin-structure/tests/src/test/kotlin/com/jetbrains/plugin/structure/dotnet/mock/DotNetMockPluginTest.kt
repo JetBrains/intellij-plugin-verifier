@@ -3,15 +3,21 @@ package com.jetbrains.plugin.structure.dotnet.mock
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.dotnet.DotNetDependency
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import org.junit.Assert
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.io.File
 
 class DotNetMockPluginTest {
+  @Rule
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
+
   private fun testMockConfigs(plugin: ReSharperPlugin) {
     Assert.assertEquals("JetBrains.Mock", plugin.pluginId)
     Assert.assertEquals("Some title", plugin.pluginName)
@@ -25,8 +31,9 @@ class DotNetMockPluginTest {
     Assert.assertEquals("Copyright 2014 JetBrains", plugin.copyright)
     Assert.assertEquals(
       listOf(
-        DotNetDependency("ReSharper", "[8.0, 8.3)"),
-        DotNetDependency("Wave", "183.0.0")
+          DotNetDependency("ReSharper", "[8.0, 8.3)"),
+          DotNetDependency("Wave", null),
+          DotNetDependency("Wave", "183.0.0")
       ),
       plugin.dependencies
     )
@@ -38,8 +45,14 @@ class DotNetMockPluginTest {
 
   @Test
   fun `nupkg plugin`() {
-    val pluginFile = URLUtil.urlToFile(this::class.java.getResource("/dotnet/jetbrains.mock.10.2.55.nupkg"))
+    val pluginFile = buildZipFile(temporaryFolder.newFile("jetbrains.mock.10.2.55.nupkg")) {
+      file("JetBrains.Mock.nuspec", getMockPluginXmlContent())
+    }
     testMockPluginStructureAndConfiguration(pluginFile)
+  }
+
+  private fun getMockPluginXmlContent(): String {
+    return this::class.java.getResource("/dotnet/JetBrains.Mock.nuspec").readText()
   }
 
   private fun testMockPluginStructureAndConfiguration(pluginFile: File) {

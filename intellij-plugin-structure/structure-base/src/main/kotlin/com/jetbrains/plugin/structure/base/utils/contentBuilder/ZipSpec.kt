@@ -12,7 +12,9 @@ class ZipSpec : ChildrenOwnerSpec {
   }
 
   override fun generate(target: File) {
-    check(target.extension == "jar" || target.extension == "zip") { "Must be a jar or zip archive: $target" }
+    check(target.extension == "jar" || target.extension == "zip" || target.extension == "nupkg") {
+      "Must be a jar or zip archive: $target"
+    }
     val zipContentDir = createTempDir()
     try {
       directorySpec.generate(zipContentDir)

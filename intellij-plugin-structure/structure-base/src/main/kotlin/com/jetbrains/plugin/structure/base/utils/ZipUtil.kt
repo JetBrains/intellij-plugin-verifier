@@ -18,7 +18,7 @@ fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
 }
 
 fun File.archiveDirectoryTo(destination: File) {
-  require(destination.extension == "zip" || destination.extension == "jar")
+  require(destination.extension == "zip" || destination.extension == "jar" || destination.extension == "nupkg")
   destination.forceDeleteIfExists()
   ZipCompressor(destination).use { zip ->
     zip.addDirectory(this)
