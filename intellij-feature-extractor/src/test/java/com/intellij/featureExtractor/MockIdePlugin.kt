@@ -29,6 +29,7 @@ data class MockIdePlugin(
   override val definedModules: Set<String> = emptySet()
   override val originalFile: File? = null
   override val useIdeClassLoader = false
+  override val isImplementationDetail = false
   override val declaredThemes = emptyList<IdeTheme>()
   override fun isCompatibleWithIde(ideVersion: IdeVersion) = false
 }

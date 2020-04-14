@@ -143,6 +143,7 @@ internal class PluginCreator private constructor(
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim() else null
     definedModules.addAll(bean.modules)
     useIdeClassLoader = bean.useIdeaClassLoader == true
+    isImplementationDetail = bean.implementationDetail == true
 
     val ideaVersionBean = bean.ideaVersion
     if (ideaVersionBean != null) {

@@ -28,7 +28,8 @@ public class PluginBean {
   @XmlElement(name = "resource-bundle") public String resourceBundle;
   @XmlAttribute(name = "url") public String url = "";
   @XmlAttribute(name = "use-idea-classloader") public Boolean useIdeaClassLoader;
-  @XmlAttribute(name = "allow-bundled-update") public boolean allowBundledUpdate;
+  @XmlAttribute(name = "allow-bundled-update") public Boolean allowBundledUpdate;
+  @XmlAttribute(name = "implementation-detail") public Boolean implementationDetail;
 
   @XmlElement(name = "module")
   @XmlJavaTypeAdapter(ListItemAdapter.class)

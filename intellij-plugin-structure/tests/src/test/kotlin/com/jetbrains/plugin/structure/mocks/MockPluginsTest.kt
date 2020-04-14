@@ -387,6 +387,23 @@ class MockPluginsTest {
   }
 
   @Test
+  fun `implementation detail plugin`() {
+    val jarFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            ideaPluginTagOpen = "<idea-plugin implementation-detail=\"true\">"
+          }
+        }
+      }
+    }
+    val creationSuccess = InvalidPluginsTest.getSuccessResult(jarFile)
+    val idePlugin = creationSuccess.plugin
+    assertTrue(creationSuccess.warnings.joinToString { it.message }, creationSuccess.warnings.isEmpty())
+    assertTrue(idePlugin.isImplementationDetail)
+  }
+
+  @Test
   fun `invalid plugin with classes packed in a root of a zip`() {
     //Plugin .jar that was renamed to .zip is not allowed.
 
@@ -434,6 +451,7 @@ class MockPluginsTest {
       assertNull(plugin.changeNotes)
     }
     assertTrue(plugin.useIdeClassLoader)
+    assertFalse(plugin.isImplementationDetail)
 
     assertEquals("PABC", plugin.productDescriptor?.code)
     assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)

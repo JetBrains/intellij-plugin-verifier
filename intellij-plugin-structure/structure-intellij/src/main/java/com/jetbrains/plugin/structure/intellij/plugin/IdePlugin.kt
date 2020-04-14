@@ -30,5 +30,7 @@ interface IdePlugin : Plugin {
 
   val useIdeClassLoader: Boolean
 
+  val isImplementationDetail: Boolean
+
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }

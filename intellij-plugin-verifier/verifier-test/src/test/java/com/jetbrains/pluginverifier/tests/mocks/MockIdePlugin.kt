@@ -30,6 +30,7 @@ data class MockIdePlugin(
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
+  override val isImplementationDetail = false
 
   override val declaredThemes = emptyList<IdeTheme>()
 
