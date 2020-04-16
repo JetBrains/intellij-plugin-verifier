@@ -240,3 +240,17 @@ The Plugin Verifier will remove the least recently used plugins from the cache a
 
 Plugins packaged in `.zip` archives are extracted into `<extracted-directory>/<temp-dir>` before the verification of
 these plugins starts. This is necessary to speedup the verification, which needs to do a lot of searches of class-files.
+
+## Integration
+
+#### GitHub Actions
+
+[GitHub Actions](https://help.github.com/en/actions) allow introducing automation to the GitHub repository and create
+workflows to test, build and deploy the project.
+
+There are 3rd party predefined actions available in the GitHub Actions Marketplace that allow automating the plugin
+verification process. Such actions are wrappers for the IntelliJ Plugin Verifier and provide various ways of the
+configuration:
+
+- [IntelliJ Platform Plugin Verifier](https://github.com/marketplace/actions/intellij-platform-plugin-verifier)
+- [IntelliJ Plugin Verifier](https://github.com/marketplace/actions/intellij-plugin-verifier)
