@@ -108,6 +108,7 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
           reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
+          reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }

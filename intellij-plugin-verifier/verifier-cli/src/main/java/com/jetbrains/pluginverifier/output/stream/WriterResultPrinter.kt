@@ -8,13 +8,17 @@ import java.io.PrintWriter
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
+  private companion object {
+    private const val INDENT = "    "
+  }
+
   override fun printResults(results: List<PluginVerificationResult>) {
     results.forEach { result ->
       val plugin = result.plugin
       val verificationTarget = result.verificationTarget
       out.println("Plugin $plugin against $verificationTarget: ${result.verificationVerdict}")
       if (result is PluginVerificationResult.Verified) {
-        printVerificationResult(result)
+        out.println(result.printVerificationResult())
       }
     }
   }
@@ -31,32 +35,75 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
   }
 
-  private fun printVerificationResult(verificationResult: PluginVerificationResult.Verified) {
-    val directMissingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
+  private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
+    if (pluginStructureWarnings.isNotEmpty()) {
+      appendln("Plugin structure warnings (${pluginStructureWarnings.size}): ")
+      for (warning in pluginStructureWarnings) {
+        appendln("$INDENT${warning.message}")
+      }
+    }
+
+    val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
     if (directMissingDependencies.isNotEmpty()) {
-      out.println("    Missing dependencies:")
+      appendln("Missing dependencies: ")
       for (missingDependency in directMissingDependencies) {
-        out.println("        ${missingDependency.dependency}: ${missingDependency.missingReason}")
+        appendln("$INDENT${missingDependency.dependency}: ${missingDependency.missingReason}")
       }
     }
 
-    verificationResult.compatibilityWarnings.sortedBy { it.fullDescription }.forEach { warning ->
-      out.println(warning.fullDescription.lineSequence().joinToString { "    $it" })
+    if (compatibilityWarnings.isNotEmpty()) {
+      appendln("Compatibility warnings (${compatibilityWarnings.size}): ")
+      appendShortAndFullDescriptions(compatibilityWarnings.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
-    verificationResult.compatibilityProblems.groupBy({ it.shortDescription }, { it.fullDescription }).forEach { (shortDescription, fullDescriptions) ->
-      out.println("    #$shortDescription")
-      for (fullDescription in fullDescriptions) {
-        out.println("        $fullDescription")
-      }
+    if (compatibilityProblems.isNotEmpty()) {
+      appendln("Compatibility problems (${compatibilityProblems.size}): ")
+      appendShortAndFullDescriptions(compatibilityProblems.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
-    when (val dynamicPluginStatus = verificationResult.dynamicPluginStatus) {
-      is DynamicPluginStatus.MaybeDynamic -> out.println("        Plugin can be loaded/unloaded without IDE restart")
-      is DynamicPluginStatus.NotDynamic -> out.println("        Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+    if (deprecatedUsages.isNotEmpty()) {
+      appendln("Deprecated API usages (${deprecatedUsages.size}): ")
+      appendShortAndFullDescriptions(deprecatedUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+    }
+
+    if (experimentalApiUsages.isNotEmpty()) {
+      appendln("Experimental API usages (${experimentalApiUsages.size}): ")
+      appendShortAndFullDescriptions(experimentalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+    }
+
+    if (internalApiUsages.isNotEmpty()) {
+      appendln("Internal API usages (${internalApiUsages.size}): ")
+      appendShortAndFullDescriptions(internalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+    }
+
+    if (overrideOnlyMethodUsages.isNotEmpty()) {
+      appendln("Override-only API usages (${overrideOnlyMethodUsages.size}): ")
+      appendShortAndFullDescriptions(overrideOnlyMethodUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+    }
+
+    if (nonExtendableApiUsages.isNotEmpty()) {
+      appendln("Non-extendable API usages (${nonExtendableApiUsages.size}): ")
+      appendShortAndFullDescriptions(nonExtendableApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+    }
+
+    when (val dynamicPluginStatus = dynamicPluginStatus) {
+      is DynamicPluginStatus.MaybeDynamic -> appendln("${INDENT}Plugin can be loaded/unloaded without IDE restart")
+      is DynamicPluginStatus.NotDynamic -> appendln("${INDENT}Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
       null -> Unit
     }
 
+  }
+
+  private fun StringBuilder.appendShortAndFullDescriptions(shortToFullDescriptions: Map<String, List<String>>) {
+    val indent = "    "
+    shortToFullDescriptions.forEach { (shortDescription, fullDescriptions) ->
+      appendln("$indent#$shortDescription")
+      for (fullDescription in fullDescriptions) {
+        fullDescription.lines().forEach { line ->
+          appendln("$indent$indent$line")
+        }
+      }
+    }
   }
 
 }
