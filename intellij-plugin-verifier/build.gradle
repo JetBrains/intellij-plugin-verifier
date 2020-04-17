@@ -77,7 +77,7 @@ configure(childProjects.values()) {
 
   jar {
     manifest {
-      attributes 'Verifier-Version': version
+      attributes 'Verifier-Version': projectVersion
     }
   }
 

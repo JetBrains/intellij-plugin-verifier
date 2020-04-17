@@ -29,6 +29,7 @@ import org.apache.commons.io.FileUtils
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import kotlin.system.exitProcess
 
 /**
@@ -43,6 +44,13 @@ object PluginVerifierMain {
     CheckTrunkApiRunner(),
     CheckPluginApiRunner()
   )
+
+  private val pluginVerifierVersion: String by lazy {
+    val manifestUrl = PluginVerifierMain::class.java.getResource("/META-INF/MANIFEST.MF")
+    val properties = Properties()
+    properties.load(manifestUrl.openStream())
+    properties.getProperty("Verifier-Version")
+  }
 
   private val verifierHomeDirectory: Path by lazy {
     val verifierHomeDir = System.getProperty("plugin.verifier.home.dir")
@@ -75,6 +83,7 @@ object PluginVerifierMain {
 
   @JvmStatic
   fun main(args: Array<String>) {
+    println("Starting the IntelliJ Plugin Verifier $pluginVerifierVersion")
     val opts = CmdOpts()
     var freeArgs = Args.parse(opts, args, false)
 
