@@ -92,46 +92,43 @@ class PluginsParsing(
    * ```
    */
   fun addPluginBySpec(spec: String, basePath: Path, ideVersions: List<IdeVersion>) {
-    for (ideVersion in ideVersions) {
-      if (spec.startsWith('$') || spec.endsWith('$')) {
-        val pluginId = spec.trim('$').trim()
-        addLastCompatibleVersionOfPlugin(pluginId, ideVersion)
-        continue
-      }
+    if (spec.startsWith('$') || spec.endsWith('$')) {
+      val pluginId = spec.trim('$').trim()
+      ideVersions.forEach { addLastCompatibleVersionOfPlugin(pluginId, it) }
+      return
+    }
 
-      if (spec.startsWith("#")) {
-        val updateId = spec.substringAfter("#").toIntOrNull() ?: continue
-        addUpdateById(updateId)
-        continue
-      }
+    if (spec.startsWith("#")) {
+      val updateId = spec.substringAfter("#").toIntOrNull() ?: return
+      addUpdateById(updateId)
+      return
+    }
 
-      if (spec.startsWith("id:")) {
-        val pluginId = spec.substringAfter("id:")
-        addAllCompatibleVersionsOfPlugin(pluginId, ideVersion)
-        continue
-      }
+    if (spec.startsWith("id:")) {
+      val pluginId = spec.substringAfter("id:")
+      ideVersions.forEach { addAllCompatibleVersionsOfPlugin(pluginId, it) }
+      return
+    }
 
-      if (spec.startsWith("version:")) {
-        val idAndVersion = spec.substringAfter("version:")
-        val id = idAndVersion.substringBefore(":").trim()
-        val version = idAndVersion.substringAfter(":").trim()
-        addPluginVersion(id, version)
-        continue
-      }
+    if (spec.startsWith("version:")) {
+      val idAndVersion = spec.substringAfter("version:")
+      val id = idAndVersion.substringBefore(":").trim()
+      val version = idAndVersion.substringAfter(":").trim()
+      addPluginVersion(id, version)
+      return
+    }
 
-      val pluginFile = if (spec.startsWith("path:")) {
-        val linePath = spec.substringAfter("path:")
-        tryFindPluginByPath(basePath, linePath)
-          ?: throw IllegalArgumentException("Invalid path: $linePath")
-      } else {
-        tryFindPluginByPath(basePath, spec)
-      }
+    val pluginFile = if (spec.startsWith("path:")) {
+      val linePath = spec.substringAfter("path:")
+      tryFindPluginByPath(basePath, linePath) ?: throw IllegalArgumentException("Invalid path: $linePath")
+    } else {
+      tryFindPluginByPath(basePath, spec)
+    }
 
-      if (pluginFile != null) {
-        addPluginFile(pluginFile, true)
-      } else {
-        addAllCompatibleVersionsOfPlugin(spec, ideVersion)
-      }
+    if (pluginFile != null) {
+      addPluginFile(pluginFile, true)
+    } else {
+      ideVersions.forEach { addAllCompatibleVersionsOfPlugin(spec, it) }
     }
   }
 
@@ -174,7 +171,9 @@ class PluginsParsing(
       getAllVersionsOfPlugin(pluginId)
     }
     val pluginInfo = allVersionsOfPlugin.find { it.version == version }
-    reportage.logVerificationStage(stepName + ": " + (pluginInfo?.presentableName ?: "no version '$version' of plugin '$pluginId' available"))
+    reportage.logVerificationStage(
+      stepName + ": " + (pluginInfo?.presentableName ?: "no version '$version' of plugin '$pluginId' available")
+    )
     pluginInfo ?: return
     pluginsSet.schedulePlugin(pluginInfo)
   }
