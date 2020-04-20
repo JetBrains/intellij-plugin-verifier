@@ -1,9 +1,9 @@
 package com.jetbrains.pluginverifier.repository
 
 import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
+import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.ExceptionAnalyzerPluginRepository
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assume
 import org.junit.Test
@@ -26,17 +26,26 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
 
   @Test
   fun `verify plugin info`() {
-    val allPlugins = repository.getAllVersionsOfPlugin("com.intellij.sisyphus")
-    assertFalse(allPlugins.isEmpty())
-    val pluginInfo = allPlugins[0]
-    assertEquals("com.intellij.sisyphus", pluginInfo.pluginId)
-    assertEquals("ExceptionAnalyzer", pluginInfo.pluginName)
-    assertEquals("JetBrains", pluginInfo.vendor)
-    assertEquals(null, pluginInfo.sinceBuild)
-    assertEquals(null, pluginInfo.untilBuild)
-    val url = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_REPOSITORY_URL.getUrl()
-    assertEquals(URL(url, "/ExceptionAnalyzer.zip"), pluginInfo.downloadUrl)
-    assertEquals(url, pluginInfo.browserUrl)
+    val url = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_REPOSITORY_URL.getUrl()!!
+    val sourceCodeUrl = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_SOURCE_CODE_URL.getUrl()!!
+
+    val expectedInfos = listOf(
+      CustomPluginInfo(
+        "com.intellij.sisyphus",
+        "ExceptionAnalyzer",
+        "IGNORED",
+        "JetBrains",
+        url,
+        URL(url, "/ExceptionAnalyzer.zip"),
+        url,
+        sourceCodeUrl,
+        null,
+        null
+      )
+    )
+
+    CustomPluginRepositoryListingParserTest.assertCustomPluginInfoListsAreTheSame(expectedInfos, repository.getAllVersionsOfPlugin("com.intellij.sisyphus"), checkVersions = false)
+    CustomPluginRepositoryListingParserTest.assertCustomPluginInfoListsAreTheSame(expectedInfos, repository.getAllPlugins(), checkVersions = false)
   }
 
   @Test

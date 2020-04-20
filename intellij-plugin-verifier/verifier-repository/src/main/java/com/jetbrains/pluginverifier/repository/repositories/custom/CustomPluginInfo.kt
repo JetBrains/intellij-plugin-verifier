@@ -20,12 +20,13 @@ class CustomPluginInfo(
   pluginId: String,
   pluginName: String,
   version: String,
-  vendor: String,
+  vendor: String?,
+  val repositoryUrl: URL,
   override val downloadUrl: URL,
   override val browserUrl: URL,
   val sourceCodeUrl: URL?,
-  sinceBuild: IdeVersion? = null,
-  untilBuild: IdeVersion? = null
+  sinceBuild: IdeVersion?,
+  untilBuild: IdeVersion?
 ) : Downloadable, Browseable, PluginInfo(
   pluginId,
   pluginName,

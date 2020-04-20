@@ -22,7 +22,7 @@ abstract class CustomPluginRepository : PluginRepository {
 
   abstract val repositoryUrl: URL
 
-  private fun getAllPlugins(): List<CustomPluginInfo> = allPluginsCache.get()
+  fun getAllPlugins(): List<CustomPluginInfo> = allPluginsCache.get()
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
     getAllPlugins()

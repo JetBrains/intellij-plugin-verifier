@@ -4,66 +4,44 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.PluginRepository
-import okhttp3.ResponseBody
-import org.w3c.dom.Document
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Url
 import java.net.URL
-import java.util.concurrent.TimeUnit
-import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * [PluginRepository] of Exception Analyzer plugin for IntelliJ IDEA.
  */
 class ExceptionAnalyzerPluginRepository(
   override val repositoryUrl: URL,
-  private val sourceCodeUrl: URL
+  private val eaSourceCodeUrl: URL
 ) : CustomPluginRepository() {
 
-  private val repositoryConnector = Retrofit.Builder()
-    .baseUrl("https://unused.com")
-    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-    .build()
-    .create(ExceptionAnalyzerRepositoryConnector::class.java)
+  private val defaultRepository = DefaultCustomPluginRepository(
+    repositoryUrl,
+    URL(repositoryUrl.toExternalForm().trimEnd('/') + "/plugins.xml"),
+    CustomPluginRepositoryListingType.SIMPLE,
+    "ExceptionAnalyzer Plugin Repository: ${repositoryUrl.toExternalForm()}"
+  )
 
-  override fun requestAllPlugins(): List<CustomPluginInfo> {
-    val pluginsXmlUrl = repositoryUrl.toExternalForm().trimEnd('/') + "/plugins.xml"
-    val document = repositoryConnector.getPluginsList(pluginsXmlUrl)
-      .executeSuccessfully()
-      .body()!!.byteStream().use {
-        DocumentBuilderFactory.newInstance()
-          .newDocumentBuilder()
-          .parse(it)
+  // Replace some values because they are not specified in /plugins.xml.
+  override fun requestAllPlugins(): List<CustomPluginInfo> =
+    defaultRepository.requestAllPlugins()
+      .filter { it.pluginId == "com.intellij.sisyphus" }
+      .map { pluginInfo ->
+        CustomPluginInfo(
+          pluginInfo.pluginId,
+          "ExceptionAnalyzer",
+          pluginInfo.version,
+          "JetBrains",
+          repositoryUrl,
+          pluginInfo.downloadUrl,
+          pluginInfo.browserUrl,
+          eaSourceCodeUrl,
+          pluginInfo.sinceBuild,
+          pluginInfo.untilBuild
+        )
       }
-    return parsePluginsList(document)
-  }
-
-  private fun parsePluginsList(document: Document) =
-    parsePluginsListXml(document).map {
-      CustomPluginInfo(
-        it.id,
-        "ExceptionAnalyzer",
-        it.version,
-        "JetBrains",
-        URL(repositoryUrl.toExternalForm().trimEnd('/') + "/" + it.url),
-        repositoryUrl,
-        sourceCodeUrl
-      )
-    }
 
   override val presentableName
-    get() = "ExceptionAnalyzer Plugin Repository: ${repositoryUrl.toExternalForm()}"
-
-  override fun toString() = presentableName
-
-  private interface ExceptionAnalyzerRepositoryConnector {
-    @GET
-    fun getPluginsList(@Url url: String): Call<ResponseBody>
-  }
+    get() = defaultRepository.presentableName
 
 }

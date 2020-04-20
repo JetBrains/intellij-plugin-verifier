@@ -33,15 +33,18 @@ abstract class BaseRepositoryTest<R : PluginRepository> {
   abstract fun createRepository(): R
 
   fun checkDownloadPlugin(pluginInfo: PluginInfo) {
+    val pluginsDir = temporaryFolder.newFolder().toPath()
+    println("Downloading $pluginInfo to $pluginsDir")
     val filesBank = PluginFilesBank.create(
       repository,
-      temporaryFolder.newFolder().toPath(),
+      pluginsDir,
       DiskSpaceSetting(SpaceAmount.ONE_GIGO_BYTE)
     )
     val pluginFileResult = filesBank.getPluginFile(pluginInfo)
-    assert(pluginFileResult is PluginFileProvider.Result.Found, { pluginFileResult.toString() })
+    assert(pluginFileResult is PluginFileProvider.Result.Found) { pluginFileResult.toString() }
     pluginFileResult as PluginFileProvider.Result.Found
     pluginFileResult.pluginFileLock.use {
+      println("Downloaded $pluginInfo (${it.file.fileSize})")
       Assert.assertTrue(it.file.fileSize > SpaceAmount.ZERO_SPACE)
     }
   }
