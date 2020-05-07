@@ -72,9 +72,9 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
     when (val resourceResult = resourceResolver.resolveResource(href, baseUrl)) {
-      is ResourceResolver.Result.Found -> {
+      is ResourceResolver.Result.Found -> resourceResult.use {
         val remoteDocument = try {
-          JDOMUtil.loadDocument(resourceResult.resourceStream)
+          JDOMUtil.loadDocument(it.resourceStream)
         } catch (e: Exception) {
           throw XIncluderException(bases, "Invalid document '$href' referenced in $presentableXInclude", e)
         }

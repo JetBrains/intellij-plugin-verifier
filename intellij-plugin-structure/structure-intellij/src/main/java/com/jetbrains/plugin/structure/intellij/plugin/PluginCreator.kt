@@ -454,9 +454,9 @@ internal class PluginCreator private constructor(
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
       when (val resolvedTheme = pathResolver.resolveResource(absolutePath, documentUrl)) {
-        is ResourceResolver.Result.Found -> {
+        is ResourceResolver.Result.Found -> resolvedTheme.use {
           val theme = try {
-            val themeJson = resolvedTheme.resourceStream.reader().readText()
+            val themeJson = it.resourceStream.reader().readText()
             json.parse(IdeTheme.serializer(), themeJson)
           } catch (e: Exception) {
             registerProblem(UnableToReadTheme(descriptorPath, themePath, e.localizedMessage))
