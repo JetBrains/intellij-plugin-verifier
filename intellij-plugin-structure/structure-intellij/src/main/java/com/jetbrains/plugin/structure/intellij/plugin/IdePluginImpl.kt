@@ -49,6 +49,8 @@ class IdePluginImpl : IdePlugin {
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
+  override val incompatibleModules: MutableList<String> = arrayListOf()
+
   override val extensions: MutableMap<String, MutableList<Element>> = HashMap()
 
   val actions: MutableList<Element> = arrayListOf()

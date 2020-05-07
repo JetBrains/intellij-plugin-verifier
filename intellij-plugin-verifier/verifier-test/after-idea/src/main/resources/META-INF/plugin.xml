@@ -10,6 +10,8 @@
 
     <idea-version since-build="131"/>
 
+    <module value="com.intellij.modules.arbitrary.module"/>
+
     <extensionPoints>
         <extensionPoint name="projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor" dynamic="true">
             <with attribute="serviceInterface" implements="java.lang.Object"/>

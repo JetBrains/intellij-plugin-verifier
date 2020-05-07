@@ -20,6 +20,8 @@ interface IdePlugin : Plugin {
 
   val dependencies: List<PluginDependency>
 
+  val incompatibleModules: List<String>
+
   val definedModules: Set<String>
 
   val optionalDescriptors: List<OptionalPluginDescriptor>

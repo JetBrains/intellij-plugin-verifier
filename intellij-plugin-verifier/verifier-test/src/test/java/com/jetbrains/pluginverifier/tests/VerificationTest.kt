@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import org.hamcrest.CoreMatchers.hasItem
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -37,8 +38,15 @@ class VerificationTest {
     val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
-    val expectedDep = setOf(MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500"))
-    Assert.assertEquals(expectedDep, missingDependencies.toSet())
+    val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500")
+    Assert.assertThat(missingDependencies.toSet(), hasItem(expectedDep))
+  }
+
+  @Test
+  fun `check that module incompatibility is detected`() {
+    val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
+    val expectedDep = MissingDependency(PluginDependencyImpl("com.intellij.modules.arbitrary.module", false, true), "The plugin is incompatible with module 'com.intellij.modules.arbitrary.module'")
+    Assert.assertThat(missingDependencies.toSet(), hasItem(expectedDep))
   }
 
   @Test
