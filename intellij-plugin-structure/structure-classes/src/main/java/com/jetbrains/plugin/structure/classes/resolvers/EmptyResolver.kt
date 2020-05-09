@@ -11,7 +11,7 @@ object EmptyResolver : Resolver() {
   override val readMode
     get() = ReadMode.FULL
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean) = true
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) = true
 
   override fun resolveClass(className: String) = ResolutionResult.NotFound
 

@@ -63,16 +63,19 @@ class DirectoryResolver(
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classFile = classNameToFile[className] ?: return ResolutionResult.NotFound
-    val classNode = try {
-      AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
+    return readClass(className, classFile)
+  }
+
+  private fun readClass(className: String, classFile: File): ResolutionResult<ClassNode> =
+    try {
+      val classNode = AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
+      ResolutionResult.Found(classNode, fileOrigin)
     } catch (e: InvalidClassFileException) {
-      return ResolutionResult.Invalid(e.message)
+      ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
+      ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
-    return ResolutionResult.Found(classNode, fileOrigin)
-  }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
     val control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES)
@@ -107,10 +110,10 @@ class DirectoryResolver(
 
   override fun close() = Unit
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     for ((className, classFile) in classNameToFile) {
-      val classNode = AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
-      if (!processor(classNode)) {
+      val result = readClass(className, classFile)
+      if (!processor(result)) {
         return false
       }
     }

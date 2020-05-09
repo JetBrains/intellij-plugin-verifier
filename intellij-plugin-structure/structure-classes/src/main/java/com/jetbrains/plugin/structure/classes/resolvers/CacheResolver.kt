@@ -68,7 +68,7 @@ class CacheResolver(
     delegate.close()
   }
 
-  override fun processAllClasses(processor: Function1<ClassNode, Boolean>) =
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
     delegate.processAllClasses(processor)
 
   private companion object {

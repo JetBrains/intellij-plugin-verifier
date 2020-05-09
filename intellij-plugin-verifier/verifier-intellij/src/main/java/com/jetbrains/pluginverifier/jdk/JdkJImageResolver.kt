@@ -109,18 +109,21 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
       val classPath = modulesPath.resolve(moduleName).resolve(className.replace("/", nameSeparator) + ".class")
-      val classNode = try {
-        readClassNode(className, classPath)
-      } catch (e: InvalidClassFileException) {
-        return ResolutionResult.Invalid(e.message)
-      } catch (e: Exception) {
-        e.rethrowIfInterrupted()
-        return ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
-      }
-      return ResolutionResult.Found(classNode, fileOrigin)
+      return readClass(className, classPath)
     }
     return ResolutionResult.NotFound
   }
+
+  private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> =
+    try {
+      val classNode = readClassNode(className, classPath)
+      ResolutionResult.Found(classNode, fileOrigin)
+    } catch (e: InvalidClassFileException) {
+      ResolutionResult.Invalid(e.message)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      ResolutionResult.FailedToRead(e.localizedMessage ?: e.javaClass.name)
+    }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) = ResolutionResult.NotFound
 
@@ -133,11 +136,11 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     for (classPath in Files.walk(modulesPath).filter { it.fileName.toString().endsWith(".class") }) {
       val className = getClassName(classPath)
-      val classNode = readClassNode(className, classPath)
-      if (!processor(classNode)) {
+      val result = readClass(className, classPath)
+      if (!processor(result)) {
         return false
       }
     }

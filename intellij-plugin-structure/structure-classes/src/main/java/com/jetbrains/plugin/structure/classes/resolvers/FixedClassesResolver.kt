@@ -38,9 +38,10 @@ class FixedClassesResolver private constructor(
     }
   }
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
     classes.values
       .asSequence()
+      .map { ResolutionResult.Found(it, fileOrigin) }
       .all(processor)
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {

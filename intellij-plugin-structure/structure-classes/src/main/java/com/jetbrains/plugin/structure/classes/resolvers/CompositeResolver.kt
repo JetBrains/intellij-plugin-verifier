@@ -53,7 +53,7 @@ class CompositeResolver private constructor(
   override val allPackages
     get() = packageToResolvers.keys
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean) =
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
     resolvers.asSequence().all { it.processAllClasses(processor) }
 
   private fun getPackageName(className: String) = className.substringBeforeLast('/', "")

@@ -12,6 +12,7 @@ import org.objectweb.asm.tree.ClassNode
 import java.io.File
 import java.nio.file.Path
 import java.util.*
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 class JarFileResolver(
@@ -81,16 +82,14 @@ class JarFileResolver(
   override val allClasses
     get() = classes
 
-  override fun processAllClasses(processor: (ClassNode) -> Boolean): Boolean {
+  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     for (zipEntry in zipFile.entries().iterator()) {
       val entryName = zipEntry.name
       if (entryName.endsWith(CLASS_SUFFIX)) {
-        val className = entryName.substringBeforeLast(CLASS_SUFFIX)
-        zipFile.getInputStream(zipEntry).use {
-          val classNode = AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
-          if (!processor(classNode)) {
-            return false
-          }
+        val className = entryName.removeSuffix(CLASS_SUFFIX)
+        val result = readClass(className, zipEntry)
+        if (!processor(result)) {
+          return false
         }
       }
     }
@@ -105,15 +104,12 @@ class JarFileResolver(
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
-    try {
-      val classNode = readClassNode(className) ?: return ResolutionResult.NotFound
-      return ResolutionResult.Found(classNode, fileOrigin)
-    } catch (e: InvalidClassFileException) {
-      return ResolutionResult.Invalid(e.message)
+    val zipEntry = try {
+      zipFile.getEntry(className + CLASS_SUFFIX) ?: return ResolutionResult.NotFound
     } catch (e: Exception) {
-      e.rethrowIfInterrupted()
       return ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
+    return readClass(className, zipEntry)
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
@@ -148,12 +144,18 @@ class JarFileResolver(
     }
   }
 
-  private fun readClassNode(className: String): ClassNode? {
-    val entry = zipFile.getEntry(className + CLASS_SUFFIX) ?: return null
-    return zipFile.getInputStream(entry).use {
-      AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
+  private fun readClass(className: String, entry: ZipEntry): ResolutionResult<ClassNode> =
+    try {
+      val classNode = zipFile.getInputStream(entry).use {
+        AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
+      }
+      ResolutionResult.Found(classNode, fileOrigin)
+    } catch (e: InvalidClassFileException) {
+      ResolutionResult.Invalid(e.message)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
-  }
 
   override fun close() = zipFile.close()
 

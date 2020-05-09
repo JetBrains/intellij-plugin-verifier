@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.analysis
 
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -105,7 +106,12 @@ fun buildClassReachabilityGraph(
 private fun buildTypeGraph(pluginResolver: Resolver): TypeGraph {
   val graph = TypeGraph()
 
-  pluginResolver.processAllClasses { classNode ->
+  pluginResolver.processAllClasses { resolutionResult ->
+    if (resolutionResult !is ResolutionResult.Found) {
+      return@processAllClasses true
+    }
+    val classNode = resolutionResult.value
+
     val references = TypeReferences()
     classNode.accept(TypeReferencesClassVisitor(references))
     val typeReferences = references.typeReferences
