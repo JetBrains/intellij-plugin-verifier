@@ -23,6 +23,7 @@
 
     <!-- File optionalFeatures.xml declares extension points available only when MissingPlugin is available. -->
     <depends optional="true" config-file="optionalFeatures.xml">MissingPlugin</depends>
+    <incompatible-with>com.intellij.modules.arbitrary.module</incompatible-with>
 
     <application-components>
     </application-components>

@@ -162,10 +162,12 @@ internal class PluginCreator private constructor(
       }
     }
 
+    val modulePrefix = "com.intellij.modules."
+
     if (bean.dependencies != null) {
       for (dependencyBean in bean.dependencies) {
         if (dependencyBean.dependencyId != null) {
-          val isModule = dependencyBean.dependencyId.startsWith("com.intellij.modules.")
+          val isModule = dependencyBean.dependencyId.startsWith(modulePrefix)
           val isOptional = java.lang.Boolean.TRUE == dependencyBean.optional
           val dependency = PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule)
           dependencies += dependency
@@ -175,6 +177,10 @@ internal class PluginCreator private constructor(
           }
         }
       }
+    }
+
+    bean.incompatibleModules?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
+      incompatibleModules += it
     }
 
     val vendorBean = bean.vendor

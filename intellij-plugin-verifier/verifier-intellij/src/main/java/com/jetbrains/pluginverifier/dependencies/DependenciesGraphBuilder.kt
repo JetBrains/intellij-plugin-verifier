@@ -49,6 +49,16 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     if (!graph.containsVertex(vertex)) {
       graph.addVertex(vertex)
 
+      for (moduleId in vertex.plugin.incompatibleModules) {
+        val result = dependencyFinder.findPluginDependency(moduleId, true)
+        if (result is DependencyFinder.Result.DetailsProvided && result.pluginDetailsCacheResult is PluginDetailsCache.Result.Provided ||
+                result is DependencyFinder.Result.FoundPlugin) {
+          val depMissingVertex = DepMissingVertex(vertex, PluginDependencyImpl(moduleId, false, true),
+                  "The plugin is incompatible with module '$moduleId'")
+          missingDependencies.getOrPut(DepId(moduleId, true)) { hashSetOf() } += depMissingVertex
+        }
+      }
+
       val dependencies = arrayListOf<PluginDependency>()
       dependencies += vertex.plugin.dependencies
       dependencies += getRecursiveOptionalDependencies(vertex.plugin).map { PluginDependencyImpl(it.id, true, it.isModule) }
