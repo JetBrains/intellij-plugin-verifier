@@ -5,12 +5,12 @@
 package com.jetbrains.pluginverifier.network
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import okhttp3.Request
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 import java.io.InputStream
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -26,7 +26,10 @@ import java.util.concurrent.atomic.AtomicReference
   NonSuccessfulResponseException::class,
   FailedRequestException::class
 )
-fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionCheck(
+fun <T> Call<T>.executeSuccessfully(
+  timeOut: Long = 1,
+  timeOutUnit: TimeUnit = TimeUnit.HOURS
+): Response<T> = executeWithInterruptionCheck(
   onSuccess = { success -> success },
   onProblems = { problems ->
     if (problems.code() == 404) {
@@ -41,7 +44,9 @@ fun <T> Call<T>.executeSuccessfully(): Response<T> = executeWithInterruptionChec
     val message = problems.message() ?: problems.errorBody()!!.string().take(100)
     throw NonSuccessfulResponseException(serverUrl, problems.code(), message)
   },
-  onFailure = { error -> throw FailedRequestException(serverUrl, error) }
+  onFailure = { error -> throw FailedRequestException(serverUrl, error) },
+  timeOut = timeOut,
+  timeOutUnit = timeOutUnit
 )
 
 private val <T> Call<T>.serverUrl: String
@@ -51,7 +56,9 @@ private val <T> Call<T>.serverUrl: String
 private fun <T, R> Call<T>.executeWithInterruptionCheck(
   onSuccess: (Response<T>) -> R,
   onProblems: (Response<T>) -> R,
-  onFailure: (Throwable) -> R
+  onFailure: (Throwable) -> R,
+  timeOut: Long,
+  timeOutUnit: TimeUnit
 ): R {
   val responseRef = AtomicReference<Response<T>?>()
   val errorRef = AtomicReference<Throwable?>()
@@ -69,6 +76,7 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
     }
   })
 
+  val startTime = System.nanoTime()
   while (!finished.get()) {
     checkIfInterrupted { cancel() }
 
@@ -79,6 +87,11 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
       //Cancel this Call<T> if the thread has been interrupted
       cancel()
       throw ie
+    }
+
+    if (System.nanoTime() - startTime > TimeUnit.HOURS.toNanos(1)) {
+      cancel()
+      throw TimeOutException(serverUrl, timeOut, timeOutUnit)
     }
   }
 

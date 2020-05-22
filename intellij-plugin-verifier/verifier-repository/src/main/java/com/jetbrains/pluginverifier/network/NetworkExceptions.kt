@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.network
 
+import java.util.concurrent.TimeUnit
+
 abstract class BaseNetworkException : RuntimeException {
 
   val serverUrl: String
@@ -32,7 +34,7 @@ class ServerUnavailable503Exception(serverUrl: String) : BaseNetworkException(se
     get() = "Server $serverUrl is currently unavailable: HTTP Response 503"
 }
 
-class NonSuccessfulResponseException(serverUrl: String, val responseCode: Int, val errorMessage: String) : BaseNetworkException(serverUrl) {
+class NonSuccessfulResponseException(serverUrl: String, val responseCode: Int, private val errorMessage: String) : BaseNetworkException(serverUrl) {
   override val message
     get() = "Server $serverUrl HTTP Response $responseCode: $errorMessage"
 }
@@ -40,4 +42,13 @@ class NonSuccessfulResponseException(serverUrl: String, val responseCode: Int, v
 class FailedRequestException(serverUrl: String, cause: Throwable) : BaseNetworkException(serverUrl, cause) {
   override val message
     get() = "Unable to communicate with $serverUrl" + (cause?.message?.let { ": $it" } ?: "")
+}
+
+class TimeOutException(
+  serverUrl: String,
+  private val timeOut: Long,
+  private val timeOutUnit: TimeUnit
+) : BaseNetworkException(serverUrl) {
+  override val message
+    get() = "Request to $serverUrl hasn't been completed in $timeOut ${timeOutUnit.toString().toLowerCase()}"
 }
