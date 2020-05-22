@@ -22,6 +22,7 @@ data class MockIdePlugin(
   override val icons: List<PluginIcon> = emptyList()
   override val productDescriptor: ProductDescriptor? = null
   override val dependencies: List<PluginDependency> = emptyList()
+  override val incompatibleModules: List<String> = emptyList()
   override val underlyingDocument: Document = Document(Element("idea-plugin"))
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
