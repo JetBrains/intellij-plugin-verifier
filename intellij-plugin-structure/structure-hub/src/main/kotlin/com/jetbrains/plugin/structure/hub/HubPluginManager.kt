@@ -21,6 +21,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 
 class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   companion object {
@@ -70,11 +71,13 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     val manifestContent = manifestFile.readText()
     val manifest = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
         .parse(HubPluginManifest.serializer(), manifestContent)
-    val iconFile = getIconFile(pluginDirectory, manifest.iconUrl)
+    val iconFilePath = getIconFile(pluginDirectory.toPath(), manifest.iconUrl)
     return when {
-      iconFile == null -> createPlugin(manifest, manifestContent, null)
-      iconFile.exists() -> createPlugin(
-          manifest, manifestContent, PluginIcon(IconTheme.DEFAULT, iconFile.readBytes(), iconFile.name)
+      iconFilePath == null -> createPlugin(manifest, manifestContent, null)
+      Files.exists(iconFilePath) -> createPlugin(
+          manifest, manifestContent, PluginIcon(
+          IconTheme.DEFAULT, Files.readAllBytes(iconFilePath), iconFilePath.fileName.toString()
+      )
       )
       else -> PluginCreationFail(HubIconInvalidUrl(manifest.iconUrl))
     }
@@ -115,14 +118,17 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
   }
 
-  private fun getIconFile(pluginDirectory: File, iconUrl: String?): File? {
+  private fun getIconFile(pluginDirectory: Path, iconUrl: String?): Path? {
     return when {
       iconUrl == null -> null
       iconUrl.contains("://") || iconUrl.startsWith("/") -> {
         LOG.warn("Unsupported widget iconUrl: '$iconUrl'")
         null
       }
-      else -> File(pluginDirectory, iconUrl)
+      else -> {
+        val iconPath = pluginDirectory.resolve(iconUrl).normalize()
+        return if (iconPath.startsWith(pluginDirectory)) iconPath else null
+      }
     }
   }
 }
