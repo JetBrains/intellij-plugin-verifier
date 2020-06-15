@@ -29,9 +29,9 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 internal class PluginCreator private constructor(
-    val pluginFile: File,
-    val descriptorPath: String,
-    private val parentPlugin: PluginCreator?
+  val pluginFile: File,
+  val descriptorPath: String,
+  private val parentPlugin: PluginCreator?
 ) {
 
   companion object {
@@ -52,13 +52,13 @@ internal class PluginCreator private constructor(
 
     @JvmStatic
     fun createPlugin(
-        pluginFile: File,
-        descriptorPath: String,
-        parentPlugin: PluginCreator?,
-        validateDescriptor: Boolean,
-        document: Document,
-        documentUrl: URL,
-        pathResolver: ResourceResolver
+      pluginFile: File,
+      descriptorPath: String,
+      parentPlugin: PluginCreator?,
+      validateDescriptor: Boolean,
+      document: Document,
+      documentUrl: URL,
+      pathResolver: ResourceResolver
     ): PluginCreator {
       val pluginCreator = PluginCreator(pluginFile, descriptorPath, parentPlugin)
       pluginCreator.resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, validateDescriptor)
@@ -93,9 +93,9 @@ internal class PluginCreator private constructor(
     }
 
   fun addOptionalDescriptor(
-      pluginDependency: PluginDependency,
-      configurationFile: String,
-      optionalDependencyCreator: PluginCreator
+    pluginDependency: PluginDependency,
+    configurationFile: String,
+    optionalDependencyCreator: PluginCreator
   ) {
     val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
@@ -111,8 +111,8 @@ internal class PluginCreator private constructor(
       }
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
-          .errorsAndWarnings
-          .filter { e -> e.level === PluginProblem.Level.ERROR }
+        .errorsAndWarnings
+        .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
     }
   }
@@ -193,9 +193,9 @@ internal class PluginCreator private constructor(
     if (productDescriptorBean != null) {
 
       productDescriptor = ProductDescriptor(
-          productDescriptorBean.code,
-          LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
-          Integer.parseInt(productDescriptorBean.releaseVersion)
+        productDescriptorBean.code,
+        LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
+        Integer.parseInt(productDescriptorBean.releaseVersion)
       )
     }
     changeNotes = bean.changeNotes
@@ -398,11 +398,11 @@ internal class PluginCreator private constructor(
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
     dependencies.map { it.id }
-        .groupingBy { it }
-        .eachCount()
-        .filterValues { it > 1 }
-        .map { it.key }
-        .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
+      .groupingBy { it }
+      .eachCount()
+      .filterValues { it > 1 }
+      .map { it.key }
+      .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
 
     if (dependencies.count { it.isModule } == 0) {
       registerProblem(NoModuleDependencies(descriptorPath))
@@ -426,11 +426,11 @@ internal class PluginCreator private constructor(
   }
 
   private fun resolveDocumentAndValidateBean(
-      originalDocument: Document,
-      documentUrl: URL,
-      documentPath: String,
-      pathResolver: ResourceResolver,
-      validateDescriptor: Boolean
+    originalDocument: Document,
+    documentUrl: URL,
+    documentPath: String,
+    pathResolver: ResourceResolver,
+    validateDescriptor: Boolean
   ) {
     val document = resolveXIncludesOfDocument(originalDocument, documentUrl, documentPath, pathResolver) ?: return
     val bean = readDocumentIntoXmlBean(document) ?: return
@@ -482,10 +482,10 @@ internal class PluginCreator private constructor(
   }
 
   private fun resolveXIncludesOfDocument(
-      document: Document,
-      documentUrl: URL,
-      documentPath: String,
-      pathResolver: ResourceResolver
+    document: Document,
+    documentUrl: URL,
+    documentPath: String,
+    pathResolver: ResourceResolver
   ): Document? = try {
     XIncluder.resolveXIncludes(document, documentUrl, documentPath, pathResolver)
   } catch (e: XIncluderException) {
