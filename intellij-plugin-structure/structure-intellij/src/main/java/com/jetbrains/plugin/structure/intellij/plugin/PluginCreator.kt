@@ -632,7 +632,7 @@ internal class PluginCreator private constructor(
           registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
         }
         if (sinceBuildParsed.productCode.isNotEmpty()) {
-          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
+          registerProblem(ProductCodePrefixInBuild(descriptorPath))
         }
       }
     }
@@ -647,7 +647,7 @@ internal class PluginCreator private constructor(
         registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
       }
       if (untilBuildParsed.productCode.isNotEmpty()) {
-        registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
+        registerProblem(ProductCodePrefixInBuild(descriptorPath))
       }
     }
   }

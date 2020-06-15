@@ -478,15 +478,15 @@ class InvalidPluginsTest {
   @Test
   fun `since or until build with productCode`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          ideaVersion = """<idea-version since-build="IU-183.0"/>"""
-        }, listOf(ErroneousSinceBuild("plugin.xml", IdeVersion.createIdeVersion("IU-183.0")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="IU-183.0"/>"""
+      }, listOf(ProductCodePrefixInBuild("plugin.xml"))
     )
 
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          ideaVersion = """<idea-version since-build="171.1" until-build="IU-183.*"/>"""
-        }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("IU-183.*")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="171.1" until-build="IU-183.*"/>"""
+      }, listOf(ProductCodePrefixInBuild("plugin.xml"))
     )
   }
 

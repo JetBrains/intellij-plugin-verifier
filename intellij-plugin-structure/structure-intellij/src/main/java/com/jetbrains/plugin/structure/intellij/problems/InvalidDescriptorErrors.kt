@@ -110,6 +110,14 @@ class ErroneousUntilBuild(
     get() = Level.ERROR
 }
 
+class ProductCodePrefixInBuild(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage: String
+    get() = "'since-build' and 'until-build' shouldn't contain product code prefix"
+
+  override val level: Level
+    get() = Level.ERROR
+}
+
 class XIncludeResolutionErrors(descriptorPath: String, private val details: String) : InvalidDescriptorProblem(descriptorPath) {
   override val detailedMessage: String
     get() = "failed to resolve <xi:include>. ${details.capitalize()}"
