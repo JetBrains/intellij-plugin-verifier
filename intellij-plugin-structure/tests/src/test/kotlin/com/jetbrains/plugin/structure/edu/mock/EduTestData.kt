@@ -1,0 +1,161 @@
+package com.jetbrains.plugin.structure.edu.mock
+
+
+data class EduPluginJsonBuilder(
+  var summary: String? = "key",
+  var language: String? = "name"
+) {
+
+  fun asString(): String {
+    val nonEmptyKeyValues = mapOf(
+      "summary" to summary,
+      "language" to language
+    ).filterValues { value -> value != null }
+    return nonEmptyKeyValues.asJson()
+  }
+
+  private fun Map<*, *>.asJson(indent: String = ""): String =
+    entries.joinToString(prefix = "$indent{\n", postfix = "\n$indent}", separator = ",\n") { (key, value) ->
+      "$indent  " + when (value) {
+        is String -> """"$key": "$value""""
+        is Map<*, *> -> """"$key": ${value.asJson("$indent  ")}"""
+        else -> ""
+      }
+    }
+}
+
+val perfectEduPluginBuilder: EduPluginJsonBuilder
+  get() = EduPluginJsonBuilder()
+
+fun EduPluginJsonBuilder.modify(block: EduPluginJsonBuilder.() -> Unit): String {
+  val copy = copy()
+  copy.block()
+  return copy.asString()
+}
+
+
+val testJsonFileForBaseFields = """
+{
+  "environment" : "unittest",
+  "summary" : "Python course.\nCreated: May 6, 2020, 11:21:51 AM.",
+  "title" : "Python Course",
+  "programming_language" : "Python",
+  "language" : "en",
+  "course_type" : "PyCharm",
+  "items" : [
+    {
+      "title" : "lesson1",
+      "task_list" : [
+        {
+          "name" : "task1",
+          "files" : {
+            "__init__.py" : {
+              "name" : "__init__.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : ""
+            },
+            "tests/test_task.py" : {
+              "name" : "tests/test_task.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : "import unittest\n\nfrom ..task import sum\n\n\n# todo: replace this with an actual test\nclass TestCase(unittest.TestCase):\n    def test_add(self):\n        self.assertEqual(sum(1, 4), 3, msg=\"adds 1 + 2 to equal 3\")\n"
+            },
+            "tests/__init__.py" : {
+              "name" : "tests/__init__.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : ""
+            },
+            "task.py" : {
+              "name" : "task.py",
+              "placeholders" : [
+                {
+                  "offset" : 49,
+                  "length" : 9,
+                  "possible_answer" : "a",
+                  "placeholder_text" : "type here"
+                },
+                {
+                  "offset" : 75,
+                  "length" : 9,
+                  "possible_answer" : "a + b",
+                  "placeholder_text" : "type here"
+                }
+              ],
+              "is_visible" : true,
+              "text" : "# todo: replace this with an actual task\ndef sum(type here, b):\n    return type here\n"
+            }
+          },
+          "description_text" : "<html>\n<p>This is a task description file. Its content will be displayed to a learner in the <strong>Task Description</strong> window.</p>\n\n<p>It supports both Markdown and HTML.\nTo toggle the format, you can rename <strong>task.md</strong> to <strong>task.html</strong>, or vice versa.\nThe default task description format can be changed in <strong>Preferences | Tools | Education</strong>, but this will not affect any existing task description files.</p>\n\n<p>The following features are available in <strong>task.md/task.html</strong> which are specific to the EduTools plugin:</p>\n\n<ul>\n<li>Hints can be added anywhere in the task text. Type \"hint\" and press Tab. <div class=\"hint\">Text of your hint</div></li>\n\n<li>You can insert shortcuts in the task description.\nWhile <strong>task.html/task.md</strong> is open, right-click anywhere on the <strong>Editor</strong> tab and choose the <strong>Insert shortcut</strong> option from the context menu.\nFor example: &amp;shortcut:FileStructurePopup;.</li><br>\n\n<li>Insert the &percnt;<code>IDE_NAME</code>&percnt; macro, which will be replaced by the actual IDE name.\nFor example, <strong>%IDE_NAME%</strong>.</li><br>\n\n<li>Insert PSI elements, by using links like <code>&lt;a href=\"psi_element://link.to.element\"&gt;element description&lt;/a&gt;</code>.\nTo get such a link, right-click the class or method and select <strong>Copy Reference</strong>. Then press &amp;shortcut:EditorPaste; to insert the link where appropriate.\nFor example, a <a href=\"psi_element://java.lang.String#contains\">link to the \"contains\" method</a>.</li>\n</ul>\n</html>",
+          "description_format" : "HTML",
+          "feedback_link" : {
+            "link_type" : "STEPIK"
+          },
+          "task_type" : "edu"
+        },
+        {
+          "name" : "task2",
+          "files" : {
+            "tests/test_task.py" : {
+              "name" : "tests/test_task.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : "import unittest\n\nfrom ..task import sum\n\n\n# todo: replace this with an actual test\nclass TestCase(unittest.TestCase):\n    def test_add(self):\n        self.assertEqual(sum(1, 2), 3, msg=\"adds 1 + 2 to equal 3\")\n"
+            },
+            "__init__.py" : {
+              "name" : "__init__.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : ""
+            },
+            "tests/__init__.py" : {
+              "name" : "tests/__init__.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : ""
+            },
+            "task.py" : {
+              "name" : "task.py",
+              "placeholders" : [ ],
+              "is_visible" : true,
+              "text" : "# todo: replace this with an actual task\ndef sum(a, b):\n    return a + b\n#"
+            }
+          },
+          "description_text" : "This is a task description file. Its content will be displayed to a learner in the **Task Description** window.\n\nIt supports both Markdown and HTML.\nTo toggle the format, you can rename **task.md** to **task.html**, or vice versa.\nThe default task description format can be changed in **Preferences | Tools | Education**, but this will not affect any existing task description files.\n\nThe following features are available in **task.md/task.html** which are specific to the EduTools plugin:\n\n- Hints can be added anywhere in the task text. Type \"hint\" and press Tab. <div class=\"hint\">Text of your hint</div>\n\n- You can insert shortcuts in the task description.\nWhile **task.html/task.md** is open, right-click anywhere on the **Editor** tab and choose the **Insert shortcut** option from the context menu.\nFor example: &shortcut:FileStructurePopup;.\n\n- Insert the &percnt;`IDE_NAME`&percnt; macro, which will be replaced by the actual IDE name.\nFor example, **%IDE_NAME%**.\n\n- Insert PSI elements, by using links like `<a href=\"psi_element://link.to.element\">element description</a>`.\nTo get such a link, right-click the class or method and select **Copy Reference**. Then press &shortcut:EditorPaste; to insert the link where appropriate.\nFor example, a <a href=\"psi_element://java.lang.String#contains\">link to the \"contains\" method</a>.",
+          "description_format" : "MD",
+          "feedback_link" : {
+            "link_type" : "STEPIK"
+          },
+          "task_type" : "edu"
+        },
+        {
+          "name" : "task3",
+          "files" : {
+            "main.py" : {
+              "name" : "main.py",
+              "placeholders" : [ ],
+              "is_visible" : true,
+              "text" : "if __name__== \"__main__\":\n    # Write your solution here\n    pass\n"
+            },
+            "__init__.py" : {
+              "name" : "__init__.py",
+              "placeholders" : [ ],
+              "is_visible" : false,
+              "text" : ""
+            }
+          },
+          "description_text" : "This is a task description file. Its content will be displayed to a learner in the **Task Description** window.\n\nIt supports both Markdown and HTML.\nTo toggle the format, you can rename **task.md** to **task.html**, or vice versa.\nThe default task description format can be changed in **Preferences | Tools | Education**, but this will not affect any existing task description files.\n\nThe following features are available in **task.md/task.html** which are specific to the EduTools plugin:\n\n- Hints can be added anywhere in the task text. Type \"hint\" and press Tab. <div class=\"hint\">Text of your hint</div>\n\n- You can insert shortcuts in the task description.\nWhile **task.html/task.md** is open, right-click anywhere on the **Editor** tab and choose the **Insert shortcut** option from the context menu.\nFor example: &shortcut:FileStructurePopup;.\n\n- Insert the &percnt;`IDE_NAME`&percnt; macro, which will be replaced by the actual IDE name.\nFor example, **%IDE_NAME%**.\n\n- Insert PSI elements, by using links like `<a href=\"psi_element://link.to.element\">element description</a>`.\nTo get such a link, right-click the class or method and select **Copy Reference**. Then press &shortcut:EditorPaste; to insert the link where appropriate.\nFor example, a <a href=\"psi_element://java.lang.String#contains\">link to the \"contains\" method</a>.",
+          "description_format" : "MD",
+          "feedback_link" : {
+            "link_type" : "STEPIK"
+          },
+          "task_type" : "ide"
+        }
+      ],
+      "type" : "lesson"
+    }
+  ],
+  "version" : 11
+}
+""".trimIndent()
