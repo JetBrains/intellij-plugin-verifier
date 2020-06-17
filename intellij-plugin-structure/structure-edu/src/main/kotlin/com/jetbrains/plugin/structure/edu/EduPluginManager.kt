@@ -76,13 +76,13 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
       }
       val plugin = with(descriptor) {
         EduPlugin(
-          pluginId = "pluginId",
           pluginName = this.title,
-          pluginVersion = this.courseVersion,
-          url = "url",
           description = this.summary,
           language = this.language,
-          programmingLanguage = this.programmingLanguage
+          programmingLanguage = this.programmingLanguage,
+          pluginVersion = this.courseVersion,
+          eduPluginVersion = this.eduPluginVersion,
+          items = this.items ?: emptyList()
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)

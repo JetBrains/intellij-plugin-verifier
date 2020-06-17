@@ -14,12 +14,14 @@ data class EduPluginDescriptor(
     val title: String? = null,
     @SerialName(SUMMARY)
     val summary: String? = null,
-    @SerialName(VERSION)
-    val courseVersion: String? = null,
     @SerialName(LANGUAGE)
     val language: String? = null,
     @SerialName(PROGRAMMING_LANGUAGE)
     val programmingLanguage: String? = null,
     @SerialName(ITEMS)
-    val items: List<String>? = null
+    val items: List<String>? = null,
+    @SerialName(VERSION)
+    val courseVersion: String? = null,
+    @SerialName(EDU_PLUGIN_VERSION)
+    val eduPluginVersion: String? = null
 )
