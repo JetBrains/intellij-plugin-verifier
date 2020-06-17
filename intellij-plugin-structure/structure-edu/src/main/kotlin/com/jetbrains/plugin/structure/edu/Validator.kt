@@ -16,19 +16,10 @@ import java.io.File
 internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
   if (descriptor.language.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("language"))
+    problems.add(PropertyNotSpecified(LANGUAGE))
   }
   if (descriptor.summary.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("summary"))
-  }
-  if (descriptor.title.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("title"))
-  }
-  if (descriptor.programmingLanguage.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("programming_language"))
-  }
-  if (descriptor.courseVersion.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("version"))
+    problems.add(PropertyNotSpecified(SUMMARY))
   }
   return problems
 }
