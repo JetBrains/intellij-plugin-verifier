@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
+import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import org.apache.commons.io.FileUtils
@@ -24,24 +25,42 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(SUMMARY))
   }
-  if (descriptor.language.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified(LANGUAGE))
+  if (descriptor.items == null || descriptor.items.isEmpty()) {
+    problems.add(PropertyNotSpecified(ITEMS))
   }
+  validateLanguage(descriptor, problems)
+  validateProgrammingLanguage(descriptor, problems)
+  validatePluginVersion(descriptor, problems)
+  return problems
+}
+
+private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
   if (descriptor.programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
-  }
-  if (Locale.getISOLanguages().find { displayLanguageByCode(it) == descriptor.language } == null) {
-    problems.add(UnsupportedLanguage)
   }
   if (descriptor.programmingLanguage !in UnsupportedProgrammingLanguage.supportedLanguages) {
     problems.add(UnsupportedProgrammingLanguage)
   }
-  if (descriptor.items == null || descriptor.items.isEmpty()) {
-    problems.add(PropertyNotSpecified(ITEMS))
-  }
+}
 
-  // TODO: plugin version format
-  return problems
+private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
+  if (descriptor.language.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(LANGUAGE))
+  }
+  if (Locale.getISOLanguages().find { displayLanguageByCode(it) == descriptor.language } == null) {
+    problems.add(UnsupportedLanguage(descriptor.language))
+  }
+}
+
+private fun validatePluginVersion(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
+  if (descriptor.eduPluginVersion.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(EDU_PLUGIN_VERSION))
+    return
+  }
+  val versionComponents = descriptor.eduPluginVersion.split("-")
+  if (versionComponents.size != 3) {
+    problems.add(InvalidVersionError(descriptor.eduPluginVersion))
+  }
 }
 
 private fun displayLanguageByCode(languageCode: String) = Locale(languageCode).getDisplayLanguage(Locale.ENGLISH)
