@@ -22,6 +22,8 @@ data class EduPluginDescriptor(
     val items: List<String>? = null,
     @SerialName(VERSION)
     val courseVersion: String? = null,
+
+    // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
     @SerialName(EDU_PLUGIN_VERSION)
     val eduPluginVersion: String? = null
 )
