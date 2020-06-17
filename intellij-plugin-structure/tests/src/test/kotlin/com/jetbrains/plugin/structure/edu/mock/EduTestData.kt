@@ -1,27 +1,19 @@
 package com.jetbrains.plugin.structure.edu.mock
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class EduPluginJsonBuilder(
-  var summary: String? = "key",
-  var language: String? = "name"
+  var summary: String? = "summary",
+  var language: String? = "language",
+  var title: String? = "title",
+  var version: String? = "version",
+  var programming_language: String? = "programming_language"
 ) {
 
-  fun asString(): String {
-    val nonEmptyKeyValues = mapOf(
-      "summary" to summary,
-      "language" to language
-    ).filterValues { value -> value != null }
-    return nonEmptyKeyValues.asJson()
-  }
-
-  private fun Map<*, *>.asJson(indent: String = ""): String =
-    entries.joinToString(prefix = "$indent{\n", postfix = "\n$indent}", separator = ",\n") { (key, value) ->
-      "$indent  " + when (value) {
-        is String -> """"$key": "$value""""
-        is Map<*, *> -> """"$key": ${value.asJson("$indent  ")}"""
-        else -> ""
-      }
-    }
+  fun asString(): String = jacksonObjectMapper().writeValueAsString(this)
 }
 
 val perfectEduPluginBuilder: EduPluginJsonBuilder
