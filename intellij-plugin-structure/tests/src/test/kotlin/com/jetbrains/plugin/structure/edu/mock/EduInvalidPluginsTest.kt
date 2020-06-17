@@ -6,10 +6,10 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
-import com.jetbrains.plugin.structure.edu.EduPlugin
-import com.jetbrains.plugin.structure.edu.EduPluginManager
-import com.jetbrains.plugin.structure.edu.LANGUAGE
-import com.jetbrains.plugin.structure.edu.TITLE
+import com.jetbrains.plugin.structure.edu.*
+import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
+import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
+import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
 import org.junit.Assert
 import org.junit.Rule
@@ -62,6 +62,25 @@ class EduInvalidPluginsTest {
   }
 
   @Test
+  fun `incorrect language specified`() {
+    val incorrectLanguage = "en"
+    checkInvalidPlugin(UnsupportedLanguage(incorrectLanguage)) { language = incorrectLanguage }
+  }
+
+  @Test
+  fun `incorrect programming language specified`() {
+    val incorrectLanguage = "Kotlin"
+    checkInvalidPlugin(UnsupportedProgrammingLanguage) { programmingLanguage = incorrectLanguage }
+  }
+
+  @Test
+  fun `programming language is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = null }
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = "" }
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = "\n" }
+  }
+
+  @Test
   fun `title is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("title")) { title = null }
     checkInvalidPlugin(PropertyNotSpecified("title")) { title = "" }
@@ -87,6 +106,36 @@ class EduInvalidPluginsTest {
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "" }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "\n" }
+  }
+
+  @Test
+  fun `summary is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(SUMMARY)) { summary = null }
+    checkInvalidPlugin(PropertyNotSpecified(SUMMARY)) { summary = "" }
+    checkInvalidPlugin(PropertyNotSpecified(SUMMARY)) { summary = "\n" }
+  }
+
+  @Test
+  fun `no items provided`() {
+    checkInvalidPlugin(PropertyNotSpecified(ITEMS)) { items = null }
+    checkInvalidPlugin(PropertyNotSpecified(ITEMS)) { items = emptyList() }
+  }
+
+  @Test
+  fun `broken edu plugin version`() {
+    var badVersion = "3.7-2019.3"
+    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
+    badVersion = "3.7"
+    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
+    badVersion = "3.7-2019.3-5266-3.7"
+    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
+  }
+
+  @Test
+  fun `edu plugin version is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = "" }
+    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = null }
+    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = "\n" }
   }
 
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: EduPluginJsonBuilder.() -> Unit) {
