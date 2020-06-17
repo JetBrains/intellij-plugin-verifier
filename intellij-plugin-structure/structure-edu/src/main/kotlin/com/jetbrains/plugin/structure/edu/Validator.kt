@@ -10,8 +10,11 @@ import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
+import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
+import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.util.*
 
 internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -27,12 +30,21 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
   }
-  // TODO: set of supported programming languages
-  // TODO: set of supported languages
-  // TODO: at least one item
+  if (Locale.getISOLanguages().find { displayLanguageByCode(it) == descriptor.language } == null) {
+    problems.add(UnsupportedLanguage)
+  }
+  if (descriptor.programmingLanguage !in UnsupportedProgrammingLanguage.supportedLanguages) {
+    problems.add(UnsupportedProgrammingLanguage)
+  }
+  if (descriptor.items == null || descriptor.items.isEmpty()) {
+    problems.add(PropertyNotSpecified(ITEMS))
+  }
+
   // TODO: plugin version format
   return problems
 }
+
+private fun displayLanguageByCode(languageCode: String) = Locale(languageCode).getDisplayLanguage(Locale.ENGLISH)
 
 fun validateEduPluginDirectory(pluginDirectory: File): PluginCreationFail<EduPlugin>? {
   val sizeLimit = Settings.EDU_PLUGIN_SIZE_LIMIT.getAsLong()
