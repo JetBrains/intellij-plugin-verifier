@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.edu.*
 data class EduPluginJsonBuilder(
   var title: String? = "key",
   var summary: String? = "summary",
-  var language: String? = "English",
+  var language: String? = "en",
   var programmingLanguage: String? = "kotlin",
   var items: List<String>? = listOf("lesson1", "lesson2"),
   var version: String? = "3.7-2019.3-5266"
