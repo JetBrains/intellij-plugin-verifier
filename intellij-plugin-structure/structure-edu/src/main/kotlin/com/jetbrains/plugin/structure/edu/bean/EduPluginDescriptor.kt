@@ -4,19 +4,22 @@
 
 package com.jetbrains.plugin.structure.edu.bean
 
+import com.jetbrains.plugin.structure.edu.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class EduPluginDescriptor(
-    @SerialName("title")
+    @SerialName(TITLE)
     val title: String? = null,
-    @SerialName("summary")
+    @SerialName(SUMMARY)
     val summary: String? = null,
-    @SerialName("version")
+    @SerialName(VERSION)
     val courseVersion: String? = null,
-    @SerialName("language")
+    @SerialName(LANGUAGE)
     val language: String? = null,
-    @SerialName("programming_language")
-    val programmingLanguage: String? = null
+    @SerialName(PROGRAMMING_LANGUAGE)
+    val programmingLanguage: String? = null,
+    @SerialName(ITEMS)
+    val items: List<String>? = null
 )
