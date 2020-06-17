@@ -62,6 +62,13 @@ class EduInvalidPluginsTest {
   }
 
   @Test
+  fun `vendor is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = null }
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = "" }
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = "\n" }
+  }
+
+  @Test
   fun `incorrect language specified`() {
     val incorrectLanguage = "english"
     checkInvalidPlugin(UnsupportedLanguage(incorrectLanguage)) { language = incorrectLanguage }
