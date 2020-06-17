@@ -9,13 +9,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class EduPluginDescriptor(
-    @SerialName("name")
-    val name: String? = null,
+    @SerialName("title")
+    val title: String? = null,
     @SerialName("summary")
     val summary: String? = null,
     @SerialName("version")
-    val courseVerison: String? = null,
+    val courseVersion: String? = null,
     @SerialName("language")
-    val language: String? = null
-
+    val language: String? = null,
+    @SerialName("programming_language")
+    val programmingLanguage: String? = null
 )
