@@ -49,7 +49,7 @@ private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableL
     problems.add(PropertyNotSpecified(LANGUAGE))
     return
   }
-  if (Locale.getISOLanguages().find { displayLanguageByCode(it) == descriptor.language } == null) {
+  if (Locale.getISOLanguages().find { it == descriptor.language } == null) {
     problems.add(UnsupportedLanguage(descriptor.language))
   }
 }
@@ -64,8 +64,6 @@ private fun validatePluginVersion(descriptor: EduPluginDescriptor, problems: Mut
     problems.add(InvalidVersionError(descriptor.eduPluginVersion))
   }
 }
-
-private fun displayLanguageByCode(languageCode: String) = Locale(languageCode).getDisplayLanguage(Locale.ENGLISH)
 
 fun validateEduPluginDirectory(pluginDirectory: File): PluginCreationFail<EduPlugin>? {
   val sizeLimit = Settings.EDU_PLUGIN_SIZE_LIMIT.getAsLong()

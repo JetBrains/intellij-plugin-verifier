@@ -63,7 +63,7 @@ class EduInvalidPluginsTest {
 
   @Test
   fun `incorrect language specified`() {
-    val incorrectLanguage = "en"
+    val incorrectLanguage = "english"
     checkInvalidPlugin(UnsupportedLanguage(incorrectLanguage)) { language = incorrectLanguage }
   }
 
