@@ -21,6 +21,15 @@ internal fun validateEduPluginBean(manifest: EduPluginDescriptor): List<PluginPr
   if (manifest.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("summary"))
   }
+  if (manifest.title.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("title"))
+  }
+  if (manifest.programmingLanguage.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("programming_language"))
+  }
+  if (manifest.courseVersion.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("version"))
+  }
   return problems
 }
 
