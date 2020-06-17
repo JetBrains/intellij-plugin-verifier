@@ -37,6 +37,7 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
 private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
   if (descriptor.programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
+    return
   }
   if (descriptor.programmingLanguage !in UnsupportedProgrammingLanguage.supportedLanguages) {
     problems.add(UnsupportedProgrammingLanguage)
@@ -46,6 +47,7 @@ private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problem
 private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
   if (descriptor.language.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(LANGUAGE))
+    return
   }
   if (Locale.getISOLanguages().find { displayLanguageByCode(it) == descriptor.language } == null) {
     problems.add(UnsupportedLanguage(descriptor.language))
