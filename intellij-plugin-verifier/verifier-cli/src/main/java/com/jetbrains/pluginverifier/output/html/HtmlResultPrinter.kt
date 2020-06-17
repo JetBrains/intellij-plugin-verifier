@@ -8,10 +8,9 @@ import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import java.io.PrintWriter
 import java.nio.file.Files
 
@@ -39,10 +38,6 @@ class HtmlResultPrinter(
       }
       body {
         h2 { +verificationTarget.toString() }
-        label {
-          unsafe("""<input id="problematicOnlyCB" type="checkbox" onchange="if ($('#problematicOnlyCB').is(':checked')) {$('body').addClass('problematicOnly')} else {$('body').removeClass('problematicOnly')}">""")
-          +"Show problematic plugins only"
-        }
         if (results.isEmpty()) {
           +"No plugins checked"
         } else {
@@ -122,29 +117,36 @@ class HtmlResultPrinter(
         is PluginVerificationResult.InvalidPlugin -> printShortAndFullDescription(pluginStructureErrors.joinToString(), result.plugin.pluginId)
         is PluginVerificationResult.NotFound -> printShortAndFullDescription("Plugin ${result.plugin} is not found in the Repository", notFoundReason)
         is PluginVerificationResult.FailedToDownload -> printShortAndFullDescription("Plugin ${result.plugin} is not downloaded from the Repository", failedToDownloadReason)
-        is PluginVerificationResult.Verified -> when {
-          hasCompatibilityWarnings -> printWarnings(compatibilityWarnings)
-          hasCompatibilityProblems -> printProblems(compatibilityProblems)
-          hasDirectMissingMandatoryDependencies -> printMissingDependenciesResult(this)
-          else -> +"No problems."
+        is PluginVerificationResult.Verified -> {
+          printShortAndFullDescriptionItems("Compatibility problems", compatibilityProblems) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Compatibility warnings", compatibilityWarnings) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Deprecated API usages", deprecatedUsages) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Experimental API usages", experimentalApiUsages) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Internal API usages", internalApiUsages) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Non-extendable API usages", nonExtendableApiUsages) { it.shortDescription to it.fullDescription }
+          printShortAndFullDescriptionItems("Override-only API usages", overrideOnlyMethodUsages) { it.shortDescription to it.fullDescription }
+          if (pluginStructureWarnings.isNotEmpty()) {
+            printShortAndFullDescription("Plugin structure defects") {
+              pluginStructureWarnings.forEach {
+                +it.message
+              }
+            }
+          }
+          if (directMissingMandatoryDependencies.isNotEmpty()) {
+            printShortAndFullDescription("Missing dependencies") {
+              directMissingMandatoryDependencies.forEach {
+                +it.missingReason
+              }
+            }
+          }
+          printShortAndFullDescription("Dependencies used on verification") {
+            val graphPresentation = DependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
+            graphPresentation.lines().forEach { line ->
+              +line
+              br()
+            }
+          }
         }
-      }
-    }
-  }
-
-  private fun HtmlBuilder.printMissingDependenciesResult(verificationResult: PluginVerificationResult.Verified) {
-    printProblems(verificationResult.compatibilityProblems)
-    val missingDependencies = verificationResult.directMissingMandatoryDependencies
-    for (missingDependency in missingDependencies) {
-      printShortAndFullDescription("missing dependency: $missingDependency", missingDependency.missingReason)
-    }
-  }
-
-  private fun HtmlBuilder.printWarnings(warnings: Set<CompatibilityWarning>) {
-    p {
-      warnings.sortedBy { it.fullDescription }.forEach {
-        +it.toString()
-        br()
       }
     }
   }
@@ -153,15 +155,28 @@ class HtmlResultPrinter(
 
   private fun loadReportCss() = HtmlResultPrinter::class.java.getResource("/reportCss.css").readText()
 
-  private fun HtmlBuilder.printProblems(problems: Set<CompatibilityProblem>) {
-    problems
-      .sortedBy { it.shortDescription }
-      .groupBy { it.shortDescription }
-      .forEach { (shortDesc, problems) ->
-        val allProblems = problems.joinToString(separator = "\n") { it.fullDescription }
-        printShortAndFullDescription(shortDesc, allProblems)
+  private fun <T> HtmlBuilder.printShortAndFullDescriptionItems(
+    title: String,
+    items: Set<T>,
+    mapper: (T) -> Pair<String, String>
+  ) {
+    if (items.isEmpty()) {
+      return
+    }
+    p {
+      printShortAndFullDescription(title) {
+        items
+          .map(mapper)
+          .sortedBy { it.first }
+          .groupBy { it.first }
+          .forEach { (shortDesc, fullDescriptions) ->
+            val allProblems = fullDescriptions.joinToString(separator = "\n")
+            printShortAndFullDescription(shortDesc, allProblems)
+          }
       }
+    }
   }
+
 
   private fun HtmlBuilder.printShortAndFullDescription(shortDescription: String, fullDescription: String) {
     printShortAndFullDescription(shortDescription) {
