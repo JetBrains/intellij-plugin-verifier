@@ -15,12 +15,22 @@ import java.io.File
 
 internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (descriptor.language.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified(LANGUAGE))
+  if (descriptor.title.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(TITLE))
   }
   if (descriptor.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(SUMMARY))
   }
+  if (descriptor.language.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(LANGUAGE))
+  }
+  if (descriptor.programmingLanguage.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
+  }
+  // TODO: set of supported programming languages
+  // TODO: set of supported languages
+  // TODO: at least one item
+  // TODO: plugin version format
   return problems
 }
 
