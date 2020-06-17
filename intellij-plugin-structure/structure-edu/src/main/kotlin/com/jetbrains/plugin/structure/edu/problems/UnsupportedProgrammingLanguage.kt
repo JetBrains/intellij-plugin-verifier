@@ -6,10 +6,6 @@ object UnsupportedProgrammingLanguage : PluginProblem() {
   // Important: Language name here should be the same as in Language.getID()
   val supportedLanguages = listOf("ObjectiveC", "go", "JAVA", "JavaScript", "kotlin", "Python", "Rust", "Scala")
 
-  override val level
-    get() = Level.ERROR
-
-  override val message
-    get() = "Only ${supportedLanguages.joinToString()} languages are supported"
-
+  override val level = Level.ERROR
+  override val message = "Only ${supportedLanguages.joinToString()} languages are supported"
 }
