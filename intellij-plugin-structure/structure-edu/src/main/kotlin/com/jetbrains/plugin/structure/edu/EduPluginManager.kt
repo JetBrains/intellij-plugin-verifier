@@ -78,10 +78,10 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
         EduPlugin(
           pluginName = this.title,
           description = this.summary,
+          vendor = this.vendor,
           language = this.language,
           programmingLanguage = this.programmingLanguage,
           eduPluginVersion = this.eduPluginVersion,
-          vendor = this.vendor,
           items = this.items?.map { it.title } ?: emptyList()
         )
       }
