@@ -80,7 +80,6 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
           description = this.summary,
           language = this.language,
           programmingLanguage = this.programmingLanguage,
-          pluginVersion = this.courseVersion,
           eduPluginVersion = this.eduPluginVersion,
           items = this.items ?: emptyList()
         )
