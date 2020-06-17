@@ -20,7 +20,7 @@ data class EduPlugin(
 
     val language: String? = null,
     val programmingLanguage: String? = null,
-    val eduPluginVersion: String,
+    val eduPluginVersion: String?,
     val items: List<String> = emptyList()
 ) : Plugin {
   val parsedEduVersion = EduPluginVersion.parse(eduPluginVersion)
