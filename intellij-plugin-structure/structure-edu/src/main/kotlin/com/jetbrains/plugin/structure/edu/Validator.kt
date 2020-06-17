@@ -28,6 +28,9 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.items == null || descriptor.items.isEmpty()) {
     problems.add(PropertyNotSpecified(ITEMS))
   }
+  if (descriptor.vendor.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(VENDOR))
+  }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
   validatePluginVersion(descriptor, problems)
