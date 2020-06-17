@@ -92,7 +92,7 @@ class EduInvalidPluginsTest {
   fun `too big hub zip file`() {
     val tooBigSize = 301 * 1024 * 1024
     val pluginFile = buildZipFile(temporaryFolder.newFile("course.zip")) {
-      file(EduPluginManager.DESCRIPTOR_NAME) { testJsonFileForBaseFields }
+      file(EduPluginManager.DESCRIPTOR_NAME) { getMockPluginJsonContent("course") }
       file("bigFile.bin", ByteArray(tooBigSize))
     }
     assertExpectedProblems(pluginFile, listOf(PluginFileSizeIsTooLarge(300 * 1024 * 1024)))

@@ -18,12 +18,11 @@ class EduPluginMockTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
-
   @Test
   fun `parse base fields edu plugin test`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file(EduPluginManager.DESCRIPTOR_NAME) {
-        testJsonFileForBaseFields
+        getMockPluginJsonContent("course")
       }
     }
     testMockPluginStructureAndConfiguration(pluginFile)
