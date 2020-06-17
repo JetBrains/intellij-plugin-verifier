@@ -13,21 +13,21 @@ import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import org.apache.commons.io.FileUtils
 import java.io.File
 
-internal fun validateEduPluginBean(manifest: EduPluginDescriptor): List<PluginProblem> {
+internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (manifest.language.isNullOrBlank()) {
+  if (descriptor.language.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("language"))
   }
-  if (manifest.summary.isNullOrBlank()) {
+  if (descriptor.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("summary"))
   }
-  if (manifest.title.isNullOrBlank()) {
+  if (descriptor.title.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("title"))
   }
-  if (manifest.programmingLanguage.isNullOrBlank()) {
+  if (descriptor.programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("programming_language"))
   }
-  if (manifest.courseVersion.isNullOrBlank()) {
+  if (descriptor.courseVersion.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
   return problems
