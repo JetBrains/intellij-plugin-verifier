@@ -81,7 +81,7 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
           language = this.language,
           programmingLanguage = this.programmingLanguage,
           eduPluginVersion = this.eduPluginVersion,
-          items = this.items ?: emptyList()
+          items = this.items?.map { it.title } ?: emptyList()
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
