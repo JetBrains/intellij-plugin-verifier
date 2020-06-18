@@ -10,26 +10,26 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class EduItem(
-    @SerialName(TITLE)
-    val title: String = ""
+  @SerialName(TITLE)
+  val title: String = ""
 )
 
 @Serializable
 data class EduPluginDescriptor(
-    @SerialName(TITLE)
-    val title: String? = null,
-    @SerialName(SUMMARY)
-    val summary: String? = null,
-    @SerialName(LANGUAGE)
-    val language: String? = null,
-    @SerialName(PROGRAMMING_LANGUAGE)
-    val programmingLanguage: String? = null,
-    @SerialName(ITEMS)
-    val items: List<EduItem>? = null,
-    @SerialName(VENDOR)
-    val vendor: String? = null,
+  @SerialName(TITLE)
+  val title: String? = null,
+  @SerialName(SUMMARY)
+  val summary: String? = null,
+  @SerialName(LANGUAGE)
+  val language: String? = null,
+  @SerialName(PROGRAMMING_LANGUAGE)
+  val programmingLanguage: String? = null,
+  @SerialName(ITEMS)
+  val items: List<EduItem>? = null,
+  @SerialName(VENDOR)
+  val vendor: String? = null,
 
-    // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
-    @SerialName(EDU_PLUGIN_VERSION)
-    val eduPluginVersion: String? = null
+  // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
+  @SerialName(EDU_PLUGIN_VERSION)
+  val eduPluginVersion: String? = null
 )
