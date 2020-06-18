@@ -89,27 +89,6 @@ class EduInvalidPluginsTest {
 
   @Test
   fun `title is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("title")) { title = null }
-    checkInvalidPlugin(PropertyNotSpecified("title")) { title = "" }
-    checkInvalidPlugin(PropertyNotSpecified("title")) { title = "\n" }
-  }
-
-  @Test
-  fun `programming_language is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("programming_language")) { programming_language = null }
-    checkInvalidPlugin(PropertyNotSpecified("programming_language")) { programming_language = "" }
-    checkInvalidPlugin(PropertyNotSpecified("programming_language")) { programming_language = "\n" }
-  }
-
-  @Test
-  fun `version is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("version")) { version = null }
-    checkInvalidPlugin(PropertyNotSpecified("version")) { version = "" }
-    checkInvalidPlugin(PropertyNotSpecified("version")) { version = "\n" }
-  }
-
-  @Test
-  fun `title is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "" }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "\n" }
