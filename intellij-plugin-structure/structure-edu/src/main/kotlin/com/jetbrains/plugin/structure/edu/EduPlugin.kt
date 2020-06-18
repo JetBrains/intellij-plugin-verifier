@@ -17,6 +17,7 @@ data class EduPlugin(
     override var vendorUrl: String? = null,
     override var vendorEmail: String? = null,
     override val icons: List<PluginIcon> = emptyList(),
+    override val changeNotes: String? = null,
 
     val language: String? = null,
     val programmingLanguage: String? = null,
@@ -24,5 +25,4 @@ data class EduPlugin(
     val items: List<String> = emptyList()
 ) : Plugin {
   val parsedEduVersion = EduPluginVersion.parse(eduPluginVersion)
-  override val changeNotes: String? = null
 }

@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.edu.EduPlugin
 import com.jetbrains.plugin.structure.edu.EduPluginManager
+import com.jetbrains.plugin.structure.edu.EduPluginVersion
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -45,8 +46,17 @@ class EduPluginMockTest {
   }
 
   private fun testMockConfigs(plugin: EduPlugin) {
+    Assert.assertEquals("Python Course", plugin.pluginName)
+    Assert.assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
+    Assert.assertEquals("JetBrains s.r.o.", plugin.vendor)
     Assert.assertEquals("en", plugin.language)
-    // TODO add more
+    Assert.assertEquals("Python", plugin.programmingLanguage)
+    Assert.assertEquals("3.7-2019.3-5266", plugin.eduPluginVersion)
+    Assert.assertEquals(EduPluginVersion("3.7", "2019.3", "5266"),
+                        plugin.parsedEduVersion)
+    Assert.assertEquals(1, plugin.items.size)
+    Assert.assertEquals("lesson1", plugin.items[0])
+
   }
 }
 
