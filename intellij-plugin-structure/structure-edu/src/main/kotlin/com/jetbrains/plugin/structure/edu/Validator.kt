@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
+import com.jetbrains.plugin.structure.edu.problems.Language
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import org.apache.commons.io.FileUtils
@@ -42,7 +43,7 @@ private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problem
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
     return
   }
-  if (descriptor.programmingLanguage !in UnsupportedProgrammingLanguage.supportedLanguages) {
+  if (descriptor.programmingLanguage !in Language.values().map { it.id }) {
     problems.add(UnsupportedProgrammingLanguage)
   }
 }
