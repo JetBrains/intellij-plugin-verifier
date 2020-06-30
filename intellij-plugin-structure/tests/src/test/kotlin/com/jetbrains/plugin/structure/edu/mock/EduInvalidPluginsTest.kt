@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.edu.*
+import com.jetbrains.plugin.structure.edu.bean.Vendor
 import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
@@ -64,8 +65,9 @@ class EduInvalidPluginsTest {
   @Test
   fun `vendor is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = null }
-    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = "" }
-    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = "\n" }
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = Vendor() }
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = Vendor("") }
+    checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = Vendor("\n") }
   }
 
   @Test

@@ -78,7 +78,9 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
         EduPlugin(
           pluginName = this.title,
           description = this.summary,
-          vendor = this.vendor,
+          vendor = this.vendor?.name,
+          vendorUrl = this.vendor?.vendorUrl,
+          vendorEmail = this.vendor?.vendorEmail,
           language = this.language,
           programmingLanguage = this.programmingLanguage,
           eduPluginVersion = this.eduPluginVersion,

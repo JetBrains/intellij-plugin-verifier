@@ -6,7 +6,10 @@
   "language" : "en",
   "course_type" : "PyCharm",
   "edu_plugin_version": "3.7-2019.3-5266",
-  "vendor": "JetBrains s.r.o.",
+  "vendor": {
+    "name": "JetBrains s.r.o.",
+    "url": "http://jetbrains.com/"
+  },
   "items" : [
     {
       "title" : "lesson1",

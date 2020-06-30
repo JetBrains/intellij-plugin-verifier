@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.edu.EDU_PLUGIN_VERSION
 import com.jetbrains.plugin.structure.edu.PROGRAMMING_LANGUAGE
+import com.jetbrains.plugin.structure.edu.bean.Vendor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class EduItem(
@@ -16,7 +17,7 @@ data class EduPluginJsonBuilder(
   var title: String? = "key",
   var summary: String? = "summary",
   var language: String? = "en",
-  var vendor: String? = "JetBrains s.r.o.",
+  var vendor: Vendor? = Vendor("JetBrains s.r.o.", "", "http://jetbrains.com/"),
   @JsonProperty(PROGRAMMING_LANGUAGE)
   var programmingLanguage: String? = "kotlin",
   var items: List<EduItem>? = listOf(EduItem("lesson1"), EduItem("lesson2")),

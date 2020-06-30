@@ -29,7 +29,8 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.items == null || descriptor.items.isEmpty()) {
     problems.add(PropertyNotSpecified(ITEMS))
   }
-  if (descriptor.vendor.isNullOrBlank()) {
+  val vendor = descriptor.vendor
+  if (vendor == null || vendor.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(VENDOR))
   }
   validateLanguage(descriptor, problems)
