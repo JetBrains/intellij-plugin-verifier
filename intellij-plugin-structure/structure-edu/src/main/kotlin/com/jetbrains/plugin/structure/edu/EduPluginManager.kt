@@ -23,6 +23,7 @@ import java.nio.file.Files
 class EduPluginManager private constructor() : PluginManager<EduPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "course.json"
+    const val COURSE_ICON_NAME = "courseIcon.svg"
 
     private val LOG: Logger = LoggerFactory.getLogger(EduPluginManager::class.java)
 
@@ -65,10 +66,20 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
     val descriptorContent = descriptorFile.readText()
     val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
       .parse(EduPluginDescriptor.serializer(), descriptorContent)
-    return createPlugin(descriptor)
+    val icon = loadIconFromDir(pluginDirectory)
+    return createPlugin(descriptor, icon)
   }
 
-  private fun createPlugin(descriptor: EduPluginDescriptor): PluginCreationResult<EduPlugin> {
+  private fun loadIconFromDir(pluginDirectory: File): PluginIcon? {
+    val iconFile = File(pluginDirectory, COURSE_ICON_NAME)
+    if (iconFile.exists()) {
+      val iconContent = Files.readAllBytes(iconFile.toPath())
+      return PluginIcon(IconTheme.DEFAULT, iconContent, iconFile.name)
+    }
+    return null
+  }
+
+  private fun createPlugin(descriptor: EduPluginDescriptor, icon: PluginIcon?): PluginCreationResult<EduPlugin> {
     try {
       val beanValidationResult = validateEduPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
@@ -84,7 +95,8 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
           language = this.language,
           programmingLanguage = this.programmingLanguage,
           eduPluginVersion = this.eduPluginVersion,
-          items = this.items?.map { it.title } ?: emptyList()
+          items = this.items?.map { it.title } ?: emptyList(),
+          icons = if (icon != null) listOf(icon) else emptyList()
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)

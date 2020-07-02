@@ -18,6 +18,7 @@ class EduPluginMockTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
+  private val iconTestContent = "<svg></svg>"
 
   @Test
   fun `parse base fields edu plugin test`() {
@@ -25,6 +26,7 @@ class EduPluginMockTest {
       file(EduPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("course")
       }
+      file("courseIcon.svg", iconTestContent)
     }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
@@ -56,7 +58,7 @@ class EduPluginMockTest {
                         plugin.parsedEduVersion)
     Assert.assertEquals(1, plugin.items.size)
     Assert.assertEquals("lesson1", plugin.items[0])
-
+    Assert.assertEquals(iconTestContent, String(plugin.icons.single().content))
   }
 }
 

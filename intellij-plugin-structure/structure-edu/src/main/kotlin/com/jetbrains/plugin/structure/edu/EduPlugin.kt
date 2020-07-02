@@ -13,6 +13,7 @@ data class EduPlugin(
   override var vendor: String? = null,
   override var vendorEmail: String? = null,
   override var vendorUrl: String? = null,
+  override val icons: List<PluginIcon> = emptyList(),
 
   val language: String? = null,
   val programmingLanguage: String? = null,
@@ -23,7 +24,6 @@ data class EduPlugin(
   override val pluginId: String? = null
   override val pluginVersion: String? = null
   override val url: String = ""
-  override val icons: List<PluginIcon> = emptyList()
   override val changeNotes: String? = null
 
   val parsedEduVersion = EduPluginVersion.parse(eduPluginVersion)
