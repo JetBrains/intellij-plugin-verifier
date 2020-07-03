@@ -62,7 +62,9 @@ class PluginsParsing(
    */
   fun addLastPluginVersion(pluginId: String) {
     val selector = LastVersionSelector()
-    val selectResult = selector.selectPluginVersion(pluginId, pluginRepository)
+    val selectResult = retry("Latest version of $pluginId") {
+      selector.selectPluginVersion(pluginId, pluginRepository)
+    }
     if (selectResult is PluginVersionSelector.Result.Selected) {
       pluginsSet.schedulePlugin(selectResult.pluginInfo)
     }

@@ -288,7 +288,7 @@ class TeamCityResultPrinter(
     }
 
   private fun requestLastVersionsOfEachCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> {
-    val plugins = repository.getLastCompatiblePlugins(ideVersion)
+    val plugins = runCatching { repository.getLastCompatiblePlugins(ideVersion) }.getOrDefault(emptyList())
     return plugins.groupBy { it.pluginId }.mapValues { (_, sameIdPlugins) ->
       if (repository is MarketplaceRepository) {
         sameIdPlugins.maxBy { (it as UpdateInfo).updateId }

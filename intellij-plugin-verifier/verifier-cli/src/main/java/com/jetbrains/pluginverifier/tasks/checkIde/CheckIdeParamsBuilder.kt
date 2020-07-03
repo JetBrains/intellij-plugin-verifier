@@ -86,7 +86,9 @@ class CheckIdeParamsBuilder(
    */
   private fun findMissingCompatibleVersionsProblems(ideVersion: IdeVersion, pluginsSet: PluginsSet): List<MissingCompatibleVersionProblem> {
     val pluginIds = pluginsSet.pluginsToCheck.map { it.pluginId }.distinct()
-    val existingPluginIds = pluginRepository.getLastCompatiblePlugins(ideVersion).map { it.pluginId }
+    val existingPluginIds = runCatching {
+      pluginRepository.getLastCompatiblePlugins(ideVersion).map { it.pluginId }
+    }.getOrDefault(emptyList())
 
     return (pluginIds - existingPluginIds)
       .map {

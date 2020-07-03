@@ -142,7 +142,9 @@ class CheckTrunkApiParamsBuilder(
     val latestCompatibleVersions = arrayListOf<PluginInfo>()
     for (pluginInfo in releaseCompatibleVersions) {
       if (!pluginInfo.isCompatibleWith(trunkIdeDescriptor.ideVersion)) {
-        val lastCompatibleVersion = pluginRepository.getLastCompatibleVersionOfPlugin(trunkIdeDescriptor.ideVersion, pluginInfo.pluginId)
+        val lastCompatibleVersion = runCatching {
+          pluginRepository.getLastCompatibleVersionOfPlugin(trunkIdeDescriptor.ideVersion, pluginInfo.pluginId)
+        }.getOrNull()
         if (lastCompatibleVersion != null && lastCompatibleVersion != pluginInfo) {
           latestCompatibleVersions += lastCompatibleVersion
         }
