@@ -44,7 +44,7 @@ class IdePluginClassesFinder private constructor(
   }
 
   private fun findInZip(pluginZip: File): IdePluginClassesLocations {
-    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZip, extractDirectory)) {
+    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZip.inputStream(), extractDirectory)) {
       is ExtractorResult.Success -> {
         extractorResult.extractedPlugin.closeOnException {
           val locations = findLocations(it.pluginFile)

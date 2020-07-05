@@ -8,25 +8,23 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.utils.extractTo
-import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.extractZip
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 
 object PluginExtractor {
 
-  fun extractPlugin(pluginZip: File, extractDirectory: File): ExtractorResult {
-    require(pluginZip.isZip()) { "Must be a zip archive: $pluginZip" }
-
+  fun extractPlugin(pluginContent: InputStream, extractDirectory: File): ExtractorResult {
     Files.createDirectories(extractDirectory.toPath())
-    val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_${pluginZip.nameWithoutExtension}_").toFile()
+    val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_").toFile()
 
     try {
-      pluginZip.extractTo(extractedPlugin, Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
+      extractZip(pluginContent, extractedPlugin, Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
     } catch (e: DecompressorSizeLimitExceededException) {
       return fail(PluginFileSizeIsTooLarge(e.sizeLimit), extractedPlugin)
     } catch (e: Throwable) {
