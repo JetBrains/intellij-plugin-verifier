@@ -16,10 +16,10 @@ import com.jetbrains.plugin.structure.hub.problems.HubIconInvalidUrl
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -36,21 +36,25 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
       pluginFile.isDirectory -> loadPluginInfoFromDirectory(pluginFile)
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile.inputStream())
       else -> PluginCreationFail(createIncorrectHubPluginFile(pluginFile.name))
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<HubPlugin> {
+  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String) =
+    loadDescriptorFromZip(pluginFileContent)
+
+
+  private fun loadDescriptorFromZip(pluginFileContent: InputStream): PluginCreationResult<HubPlugin> {
     val sizeLimit = Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
+    if (pluginFileContent.available() > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
     val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
     return try {
-      pluginFile.extractTo(tempDirectory, sizeLimit)
+      extractZip(pluginFileContent, tempDirectory, sizeLimit)
       loadPluginInfoFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -70,13 +74,13 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
     val manifestContent = manifestFile.readText()
     val manifest = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
-        .parse(HubPluginManifest.serializer(), manifestContent)
+      .parse(HubPluginManifest.serializer(), manifestContent)
     val iconFilePath = getIconFile(pluginDirectory.toPath(), manifest.iconUrl)
     return when {
       iconFilePath == null -> createPlugin(manifest, manifestContent, null)
       Files.exists(iconFilePath) -> createPlugin(
-          manifest, manifestContent, PluginIcon(
-          IconTheme.DEFAULT, Files.readAllBytes(iconFilePath), iconFilePath.fileName.toString()
+        manifest, manifestContent, PluginIcon(
+        IconTheme.DEFAULT, Files.readAllBytes(iconFilePath), iconFilePath.fileName.toString()
       )
       )
       else -> PluginCreationFail(HubIconInvalidUrl(manifest.iconUrl))
@@ -84,7 +88,7 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
   }
 
   private fun createPlugin(
-      descriptor: HubPluginManifest, manifestContent: String, icon: PluginIcon?
+    descriptor: HubPluginManifest, manifestContent: String, icon: PluginIcon?
   ): PluginCreationResult<HubPlugin> {
     try {
       val beanValidationResult = validateHubPluginBean(descriptor)
@@ -96,18 +100,18 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
       if (vendorInfo.vendor == null) return PluginCreationFail(PropertyNotSpecified("author"))
       val plugin = with(descriptor) {
         HubPlugin(
-            pluginId = pluginId,
-            pluginName = pluginName,
-            pluginVersion = pluginVersion,
-            url = url,
-            description = description,
-            dependencies = dependencies,
-            products = products,
-            vendor = vendorInfo.vendor,
-            vendorEmail = vendorInfo.vendorEmail,
-            vendorUrl = vendorInfo.vendorUrl,
-            manifestContent = manifestContent,
-            icons = if (icon != null) listOf(icon) else emptyList()
+          pluginId = pluginId,
+          pluginName = pluginName,
+          pluginVersion = pluginVersion,
+          url = url,
+          description = description,
+          dependencies = dependencies,
+          products = products,
+          vendor = vendorInfo.vendor,
+          vendorEmail = vendorInfo.vendorEmail,
+          vendorUrl = vendorInfo.vendorUrl,
+          manifestContent = manifestContent,
+          icons = if (icon != null) listOf(icon) else emptyList()
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)

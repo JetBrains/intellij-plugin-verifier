@@ -11,10 +11,10 @@ import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBeanExtractor
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import org.xml.sax.SAXParseException
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 
 @Suppress("unused")
@@ -25,23 +25,25 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
   override fun createPlugin(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when (pluginFile.extension) {
-      "nupkg" -> loadDescriptorFromNuPkg(pluginFile)
+      "nupkg" -> loadDescriptorFromNuPkg(pluginFile.inputStream())
       else -> PluginCreationFail(createIncorrectDotNetPluginFileProblem(pluginFile.name))
     }
   }
 
-  private fun loadDescriptorFromNuPkg(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
+  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String) =
+    loadDescriptorFromNuPkg(pluginFileContent)
+
+  private fun loadDescriptorFromNuPkg(pluginFileContent: InputStream): PluginCreationResult<ReSharperPlugin> {
     val sizeLimit = Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
+    if (pluginFileContent.available() > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
     val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
     return try {
       val extractedDirectory = tempDirectory.resolve("content")
-      val withZipExtension = pluginFile.copyTo(tempDirectory.resolve("plugin.zip"))
-      withZipExtension.extractTo(extractedDirectory, sizeLimit)
+      extractZip(pluginFileContent, extractedDirectory, sizeLimit)
       loadDescriptorFromDirectory(extractedDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -60,12 +62,12 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     val descriptorFile = candidateDescriptors.next()
     if (candidateDescriptors.hasNext()) {
       return PluginCreationFail(
-          MultiplePluginDescriptors(
-              descriptorFile.name,
-              "plugin.nupkg",
-              candidateDescriptors.next().name,
-              "plugin.nupkg"
-          )
+        MultiplePluginDescriptors(
+          descriptorFile.name,
+          "plugin.nupkg",
+          candidateDescriptors.next().name,
+          "plugin.nupkg"
+        )
       )
     }
 
@@ -104,11 +106,11 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       else -> id
     }
     ReSharperPlugin(
-        pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
-        changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
-        authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
-        dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version) },
-        nuspecFileContent = nuspecFileContent
+      pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
+      changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
+      authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
+      dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version) },
+      nuspecFileContent = nuspecFileContent
     )
   }
 }

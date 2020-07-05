@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.io.InputStream
 import java.util.*
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
@@ -182,9 +183,9 @@ class IdePluginManager private constructor(
       val second = possibleResults[1]
       val multipleDescriptorsProblem: PluginProblem = MultiplePluginDescriptors(
         first.descriptorPath,
-        first.pluginFile.name,
+        first.pluginFileName,
         second.descriptorPath,
-        second.pluginFile.name
+        second.pluginFileName
       )
       return createInvalidPlugin(root, descriptorPath, multipleDescriptorsProblem)
     }
@@ -252,16 +253,17 @@ class IdePluginManager private constructor(
   }
 
   private fun extractZipAndCreatePlugin(
-    zipPlugin: File,
+    pluginContent: InputStream,
+    pluginFileName: String,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver
   ): PluginCreator {
     val extractorResult = try {
-      extractPlugin(zipPlugin.inputStream(), myExtractDirectory)
+      extractPlugin(pluginContent, myExtractDirectory)
     } catch (e: Exception) {
-      LOG.info("Unable to extract plugin zip $zipPlugin", e)
-      return createInvalidPlugin(zipPlugin, descriptorPath, UnableToExtractZip())
+      LOG.info("Unable to extract plugin zip $pluginFileName", e)
+      return createInvalidPlugin(pluginFileName, descriptorPath, UnableToExtractZip())
     }
     return when (extractorResult) {
       is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
@@ -270,10 +272,10 @@ class IdePluginManager private constructor(
           resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver)
           pluginCreator
         } else {
-          getInvalidPluginFileCreator(zipPlugin, descriptorPath)
+          getInvalidPluginFileCreator(pluginFileName, descriptorPath)
         }
       }
-      is ExtractorResult.Fail -> createInvalidPlugin(zipPlugin, descriptorPath, extractorResult.pluginProblem)
+      is ExtractorResult.Fail -> createInvalidPlugin(pluginFileName, descriptorPath, extractorResult.pluginProblem)
     }
   }
 
@@ -290,6 +292,13 @@ class IdePluginManager private constructor(
     val pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath)
     return pluginCreator.pluginCreationResult
   }
+
+  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<IdePlugin> {
+    return extractZipAndCreatePlugin(
+      pluginFileContent, pluginFileName, PLUGIN_XML, true, myResourceResolver
+    ).pluginCreationResult
+  }
+
 
   fun createBundledPlugin(
     pluginFile: File,
@@ -309,19 +318,25 @@ class IdePluginManager private constructor(
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     val pluginCreator: PluginCreator
     if (pluginFile.isZip()) {
-      pluginCreator = extractZipAndCreatePlugin(pluginFile, descriptorPath, validateDescriptor, myResourceResolver)
+      pluginCreator = extractZipAndCreatePlugin(
+        pluginFile.inputStream(),
+        pluginFile.name,
+        descriptorPath,
+        validateDescriptor,
+        myResourceResolver
+      )
     } else if (pluginFile.isJar() || pluginFile.isDirectory) {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null)
       resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver)
     } else {
-      pluginCreator = getInvalidPluginFileCreator(pluginFile, descriptorPath)
+      pluginCreator = getInvalidPluginFileCreator(pluginFile.name, descriptorPath)
     }
     pluginCreator.setOriginalFile(pluginFile)
     return pluginCreator
   }
 
-  private fun getInvalidPluginFileCreator(pluginFile: File, descriptorPath: String): PluginCreator {
-    return createInvalidPlugin(pluginFile, descriptorPath, createIncorrectIntellijFileProblem(pluginFile.name))
+  private fun getInvalidPluginFileCreator(pluginFileName: String, descriptorPath: String): PluginCreator {
+    return createInvalidPlugin(pluginFileName, descriptorPath, createIncorrectIntellijFileProblem(pluginFileName))
   }
 
   companion object {
@@ -407,5 +422,4 @@ class IdePluginManager private constructor(
 
     private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
   }
-
 }
