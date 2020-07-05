@@ -257,24 +257,23 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver
   ): PluginCreator {
-    val extractorResult: ExtractorResult
-    extractorResult = try {
-      extractPlugin(zipPlugin, myExtractDirectory)
+    val extractorResult = try {
+      extractPlugin(zipPlugin.inputStream(), myExtractDirectory)
     } catch (e: Exception) {
       LOG.info("Unable to extract plugin zip $zipPlugin", e)
       return createInvalidPlugin(zipPlugin, descriptorPath, UnableToExtractZip())
     }
-    if (extractorResult is ExtractorResult.Success) {
-      extractorResult.extractedPlugin.use { (extractedFile) ->
+    return when (extractorResult) {
+      is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
         if (extractedFile.isJar() || extractedFile.isDirectory) {
           val pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null)
           resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver)
-          return pluginCreator
+          pluginCreator
+        } else {
+          getInvalidPluginFileCreator(zipPlugin, descriptorPath)
         }
-        return getInvalidPluginFileCreator(zipPlugin, descriptorPath)
       }
-    } else {
-      return createInvalidPlugin(zipPlugin, descriptorPath, (extractorResult as ExtractorResult.Fail).pluginProblem)
+      is ExtractorResult.Fail -> createInvalidPlugin(zipPlugin, descriptorPath, extractorResult.pluginProblem)
     }
   }
 

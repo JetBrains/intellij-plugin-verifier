@@ -8,6 +8,13 @@ import com.jetbrains.plugin.structure.base.decompress.TarDecompressor
 import com.jetbrains.plugin.structure.base.decompress.ZipCompressor
 import com.jetbrains.plugin.structure.base.decompress.ZipDecompressor
 import java.io.File
+import java.io.InputStream
+
+fun extractZip(inputStream: InputStream, destination: File, outputSizeLimit: Long? = null): File {
+  destination.createDir()
+  ZipDecompressor(inputStream, outputSizeLimit).extract(destination)
+  return destination
+}
 
 fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
   val decompressor = when {
