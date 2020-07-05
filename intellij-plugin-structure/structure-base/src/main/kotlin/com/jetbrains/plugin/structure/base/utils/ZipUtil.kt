@@ -11,8 +11,8 @@ import java.io.File
 
 fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
   val decompressor = when {
-    name.endsWith(".zip") -> ZipDecompressor(this, outputSizeLimit)
-    name.endsWith(".tar.gz") -> TarDecompressor(this, outputSizeLimit)
+    name.endsWith(".zip") -> ZipDecompressor(this.inputStream(), outputSizeLimit)
+    name.endsWith(".tar.gz") -> TarDecompressor(this.inputStream(), outputSizeLimit)
     else -> throw IllegalArgumentException("Unknown type archive type: ${destination.name}")
   }
 
