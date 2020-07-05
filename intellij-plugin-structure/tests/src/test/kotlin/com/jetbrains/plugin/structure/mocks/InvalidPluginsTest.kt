@@ -75,7 +75,7 @@ class InvalidPluginsTest {
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.zip")
-    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip()))
+    assertExpectedProblems(brokenZipArchive, listOf(PluginZipIsEmpty()))
   }
 
   @Test

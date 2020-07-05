@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
@@ -47,7 +46,7 @@ class DotNetInvalidPluginTest {
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.nupkg")
-    assertExpectedProblems(brokenZipArchive, listOf(UnableToExtractZip()))
+    assertExpectedProblems(brokenZipArchive, listOf(PluginDescriptorIsNotFound("*.nuspec")))
   }
 
   @Test

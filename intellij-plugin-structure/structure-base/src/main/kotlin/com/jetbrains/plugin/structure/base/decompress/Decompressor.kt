@@ -14,9 +14,7 @@ import org.apache.commons.io.input.CountingInputStream
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
-import java.util.*
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 
 internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
@@ -89,25 +87,15 @@ private fun getEntryFile(outputDir: File, entry: Decompressor.Entry): File {
   return outputDir.resolve(independentEntryName)
 }
 
-internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Decompressor(sizeLimit) {
-  private lateinit var zipFile: ZipFile
-
-  private lateinit var entries: Enumeration<out ZipEntry>
-
-  private var entry: ZipEntry? = null
+internal class ZipDecompressor(private val inputStream: InputStream, sizeLimit: Long?) : Decompressor(sizeLimit) {
+  private lateinit var stream: ZipInputStream
 
   override fun openStream() {
-    zipFile = ZipFile(source)
-    entries = zipFile.entries()
+    stream = ZipInputStream(inputStream.buffered())
   }
 
   override fun nextEntry(): Entry? {
-    val nextEntry = when {
-      entries.hasMoreElements() -> entries.nextElement()
-      else -> null
-    }
-    entry = nextEntry
-    nextEntry ?: return null
+    val nextEntry = stream.nextEntry ?: return null
     val type = when {
       nextEntry.isDirectory -> Type.DIR
       else -> Type.FILE
@@ -116,23 +104,21 @@ internal class ZipDecompressor(private val source: File, sizeLimit: Long?) : Dec
   }
 
   override fun closeNextEntryStream(entryStream: InputStream) {
-    entryStream.close()
   }
 
-  override fun nextEntryStream(): InputStream? =
-    zipFile.getInputStream(this.entry)
+  override fun nextEntryStream(): InputStream? = stream
 
   override fun closeStream() {
-    zipFile.close()
+    stream.close()
   }
 }
 
-internal class TarDecompressor(private val source: File, sizeLimit: Long?) : Decompressor(sizeLimit) {
+internal class TarDecompressor(private val inputStream: InputStream, sizeLimit: Long?) : Decompressor(sizeLimit) {
   private var stream: TarArchiveInputStream? = null
 
   override fun openStream() {
     stream = try {
-      val inputStream = source.inputStream().buffered()
+      val inputStream = inputStream.buffered()
       val compressorStream = CompressorStreamFactory().createCompressorInputStream(inputStream)
       TarArchiveInputStream(compressorStream)
     } catch (e: CompressorException) {
