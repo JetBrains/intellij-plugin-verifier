@@ -10,10 +10,10 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBeanExtractor
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import org.xml.sax.SAXParseException
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 
 class TeamcityPluginManager private constructor(private val validateBean: Boolean) : PluginManager<TeamcityPlugin> {
@@ -31,20 +31,23 @@ class TeamcityPluginManager private constructor(private val validateBean: Boolea
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
       pluginFile.isDirectory -> loadDescriptorFromDirectory(pluginFile)
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile.inputStream())
       else -> PluginCreationFail(createIncorrectTeamCityPluginFile(pluginFile.name))
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<TeamcityPlugin> {
+  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String) =
+    loadDescriptorFromZip(pluginFileContent)
+
+  private fun loadDescriptorFromZip(pluginFileContent: InputStream): PluginCreationResult<TeamcityPlugin> {
     val sizeLimit = Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
+    if (pluginFileContent.available() > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
     val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
     return try {
-      pluginFile.extractTo(tempDirectory, sizeLimit)
+      extractZip(pluginFileContent, tempDirectory, sizeLimit)
       loadDescriptorFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))

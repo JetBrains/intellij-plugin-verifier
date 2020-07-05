@@ -29,7 +29,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
 internal class PluginCreator private constructor(
-  val pluginFile: File,
+  val pluginFileName: String,
   val descriptorPath: String,
   private val parentPlugin: PluginCreator?
 ) {
@@ -59,16 +59,33 @@ internal class PluginCreator private constructor(
       document: Document,
       documentUrl: URL,
       pathResolver: ResourceResolver
+    ) = createPlugin(
+      pluginFile.name, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, pathResolver
+    )
+
+    @JvmStatic
+    fun createPlugin(
+      pluginFileName: String,
+      descriptorPath: String,
+      parentPlugin: PluginCreator?,
+      validateDescriptor: Boolean,
+      document: Document,
+      documentUrl: URL,
+      pathResolver: ResourceResolver
     ): PluginCreator {
-      val pluginCreator = PluginCreator(pluginFile, descriptorPath, parentPlugin)
+      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin)
       pluginCreator.resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, validateDescriptor)
       return pluginCreator
     }
 
     @JvmStatic
-    fun createInvalidPlugin(pluginFile: File, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
+    fun createInvalidPlugin(pluginFile: File, descriptorPath: String, singleProblem: PluginProblem) =
+      createInvalidPlugin(pluginFile.name, descriptorPath, singleProblem)
+
+    @JvmStatic
+    fun createInvalidPlugin(pluginFileName: String, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
       require(singleProblem.level == PluginProblem.Level.ERROR) { "Only ERROR problems are allowed here" }
-      val pluginCreator = PluginCreator(pluginFile, descriptorPath, null)
+      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, null)
       pluginCreator.registerProblem(singleProblem)
       return pluginCreator
     }
@@ -489,7 +506,7 @@ internal class PluginCreator private constructor(
   ): Document? = try {
     XIncluder.resolveXIncludes(document, documentUrl, documentPath, pathResolver)
   } catch (e: XIncluderException) {
-    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFile'", e)
+    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
     registerProblem(XIncludeResolutionErrors(descriptorPath, e.message))
     null
   }
@@ -499,7 +516,7 @@ internal class PluginCreator private constructor(
       PluginBeanExtractor.extractPluginBean(document)
     } catch (e: Exception) {
       registerProblem(UnableToReadDescriptor(descriptorPath, e.localizedMessage))
-      LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFile", e)
+      LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName", e)
       null
     }
 

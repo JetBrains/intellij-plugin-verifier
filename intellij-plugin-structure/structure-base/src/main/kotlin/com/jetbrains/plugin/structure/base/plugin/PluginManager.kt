@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.base.plugin
 
 import java.io.File
+import java.io.InputStream
 
 interface PluginManager<out PluginType : Plugin> {
   fun createPlugin(pluginFile: File): PluginCreationResult<PluginType>
+
+  fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<PluginType>
 }
