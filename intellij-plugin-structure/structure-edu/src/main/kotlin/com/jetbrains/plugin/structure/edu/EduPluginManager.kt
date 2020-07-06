@@ -14,10 +14,10 @@ import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
-import org.apache.commons.io.FileUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 
 class EduPluginManager private constructor() : PluginManager<EduPlugin> {
@@ -33,21 +33,25 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
   override fun createPlugin(pluginFile: File): PluginCreationResult<EduPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile.inputStream())
       else -> PluginCreationFail(createIncorrectEduPluginFile(pluginFile.name))
     }
   }
 
-  private fun loadDescriptorFromZip(pluginFile: File): PluginCreationResult<EduPlugin> {
+  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<EduPlugin> {
+    return loadDescriptorFromZip(pluginFileContent)
+  }
+
+  private fun loadDescriptorFromZip(pluginFileContent: InputStream): PluginCreationResult<EduPlugin> {
     val sizeLimit = Settings.EDU_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (FileUtils.sizeOf(pluginFile) > sizeLimit) {
+    if (pluginFileContent.available() > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
     val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, pluginFile.nameWithoutExtension).toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
     return try {
-      pluginFile.extractTo(tempDirectory, sizeLimit)
+      extractZip(pluginFileContent, tempDirectory, sizeLimit)
       loadPluginInfoFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -106,5 +110,4 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
     }
   }
-
 }
