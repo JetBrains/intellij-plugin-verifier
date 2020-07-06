@@ -21,13 +21,12 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.apache.commons.io.IOUtils
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Paths
 import java.util.*
 import java.util.stream.Collectors
 import java.util.zip.ZipEntry
@@ -86,18 +85,13 @@ class IdePluginManager private constructor(
 
   @Throws(IOException::class)
   private fun getIconsFromJarFile(jarFile: ZipFile): List<PluginIcon> {
-    val icons: MutableList<PluginIcon> = ArrayList()
-    for (theme in IconTheme.values()) {
-      val iconEntryName = META_INF + "/" + getIconFileName(theme)
-      val entry = getZipEntry(jarFile, toCanonicalPath(iconEntryName)) ?: continue
-      val iconStream = jarFile.getInputStream(entry) ?: continue
-      iconStream.use {
-        val iconContent = ByteArray(entry.size.toInt())
-        IOUtils.readFully(it, iconContent)
-        icons.add(PluginIcon(theme, iconContent, iconEntryName))
+    return IconTheme.values().mapNotNull { theme ->
+      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+      val entry = getZipEntry(jarFile, toCanonicalPath(iconEntryName)) ?: return@mapNotNull null
+      jarFile.getInputStream(entry)?.use {
+        PluginIcon(theme, it.readBytes(), iconEntryName)
       }
     }
-    return icons
   }
 
   private fun loadPluginInfoFromDirectory(
@@ -130,17 +124,14 @@ class IdePluginManager private constructor(
 
   @Throws(IOException::class)
   private fun loadIconsFromDir(pluginDirectory: File): List<PluginIcon> {
-    val icons: MutableList<PluginIcon> = ArrayList()
-    for (theme in IconTheme.values()) {
+    return IconTheme.values().mapNotNull { theme ->
       val iconFile = File(File(pluginDirectory, META_INF), getIconFileName(theme).toSystemIndependentName())
-      if (!iconFile.exists()) {
-        continue
+      if (iconFile.exists()) {
+        PluginIcon(theme, iconFile.readBytes(), iconFile.name)
+      } else {
+        null
       }
-      val iconContent = ByteArray(iconFile.length().toInt())
-      IOUtils.readFully(FileInputStream(iconFile), iconContent)
-      icons.add(PluginIcon(theme, iconContent, iconFile.name))
     }
-    return icons
   }
 
   private fun loadPluginInfoFromLibDirectory(
@@ -209,9 +200,7 @@ class IdePluginManager private constructor(
       pluginFile.isJar() -> {
         loadPluginInfoFromJarFile(pluginFile, systemIndependentDescriptorPath, validateDescriptor, resourceResolver, parentPlugin)
       }
-      else -> {
-        throw IllegalArgumentException()
-      }
+      else -> throw IllegalArgumentException()
     }
   }
 
@@ -405,7 +394,7 @@ class IdePluginManager private constructor(
     }
 
     private fun toCanonicalPath(descriptorPath: String): String {
-      return File(descriptorPath.toSystemIndependentName()).normalize().path
+      return Paths.get(descriptorPath.toSystemIndependentName()).normalize().toString()
     }
 
     private fun getZipEntry(zipFile: ZipFile, entryPath: String): ZipEntry? {
