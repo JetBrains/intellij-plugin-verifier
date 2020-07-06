@@ -332,12 +332,21 @@ class IdePluginManager private constructor(
     private val LOG = LoggerFactory.getLogger(IdePluginManager::class.java)
     const val PLUGIN_XML = "plugin.xml"
     const val META_INF = "META-INF"
-    fun createManager(extractDirectory: File): IdePluginManager {
-      return createManager(DefaultResourceResolver, extractDirectory)
-    }
 
-    @JvmOverloads
-    fun createManager(resourceResolver: ResourceResolver = DefaultResourceResolver, extractDirectory: File = Settings.EXTRACT_DIRECTORY.getAsFile()): IdePluginManager {
+    @JvmStatic
+    fun createManager(): IdePluginManager =
+      createManager(DefaultResourceResolver, Settings.EXTRACT_DIRECTORY.getAsFile())
+
+    @JvmStatic
+    fun createManager(extractDirectory: File): IdePluginManager =
+      createManager(DefaultResourceResolver, extractDirectory)
+
+    @JvmStatic
+    fun createManager(resourceResolver: ResourceResolver): IdePluginManager =
+      createManager(resourceResolver, Settings.EXTRACT_DIRECTORY.getAsFile())
+
+    @JvmStatic
+    fun createManager(resourceResolver: ResourceResolver, extractDirectory: File): IdePluginManager {
       return IdePluginManager(resourceResolver, extractDirectory)
     }
 
