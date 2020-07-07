@@ -22,11 +22,14 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
   }
 
   val tasks = verifiers.map { verifier ->
-    Callable {
-      val verificationResult = verifier.loadPluginAndVerify()
-      reportage.reportVerificationResult(verificationResult)
-      verificationResult
-    }
+    ExecutorWithProgress.Task(
+      verifier.verificationDescriptor.toString(),
+      Callable {
+        val verificationResult = verifier.loadPluginAndVerify()
+        reportage.reportVerificationResult(verificationResult)
+        verificationResult
+      }
+    )
   }
   return executor.executeTasks(tasks)
 }

@@ -50,7 +50,7 @@ class IdeDownloader : Downloader<AvailableIde> {
   private fun extractIdeToTempDir(archivedIde: Path, tempDirectory: Path): DownloadResult {
     val destinationDir = Files.createTempDirectory(tempDirectory, "")
     return try {
-      archivedIde.toFile().extractTo(destinationDir.toFile())
+      archivedIde.extractTo(destinationDir)
       /**
        * Some IDE builds (like MPS) are distributed in form
        * of `<build>.zip/<single>/...`

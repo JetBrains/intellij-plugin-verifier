@@ -7,14 +7,14 @@ package com.jetbrains.plugin.structure.intellij.classes.locator
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 
 class ClassesDirectoryLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = ClassesDirectoryKey
 
-  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
-    val classesDir = pluginFile.toPath().resolve("classes")
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
+    val classesDir = pluginFile.resolve("classes")
     if (Files.isDirectory(classesDir)) {
       val classFileOrigin = PluginFileOrigin.ClassesDirectory(idePlugin)
       return listOf(DirectoryResolver(classesDir, classFileOrigin, readMode))

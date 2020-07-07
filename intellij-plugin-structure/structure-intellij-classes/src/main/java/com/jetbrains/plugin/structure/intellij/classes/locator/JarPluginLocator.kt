@@ -8,14 +8,14 @@ import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import java.io.File
+import java.nio.file.Path
 
 class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = JarPluginKey
 
-  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
     if (pluginFile.isJar()) {
-      return listOf(JarFileResolver(pluginFile.toPath(), readMode, PluginFileOrigin.SingleJar(idePlugin)))
+      return listOf(JarFileResolver(pluginFile, readMode, PluginFileOrigin.SingleJar(idePlugin)))
     }
     return emptyList()
   }

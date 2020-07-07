@@ -5,110 +5,96 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extractPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
-import com.jetbrains.plugin.structure.intellij.problems.UnableToReadJarFile
 import com.jetbrains.plugin.structure.intellij.problems.createIncorrectIntellijFileProblem
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
-import java.nio.file.Paths
+import java.nio.file.*
 import java.util.*
 import java.util.stream.Collectors
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
 
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
-  private val myExtractDirectory: File
+  private val extractDirectory: Path
 ) : PluginManager<IdePlugin> {
   private fun loadPluginInfoFromJarFile(
-    jarFile: File,
+    jarFile: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?
   ): PluginCreator {
-    val zipFile: ZipFile
-    zipFile = try {
-      ZipFile(jarFile)
-    } catch (e: Exception) {
-      LOG.info("Unable to read jar file $jarFile", e)
-      return createInvalidPlugin(jarFile, descriptorPath, UnableToReadJarFile())
+    val zipFs = try {
+      FileSystems.newFileSystem(jarFile, IdePluginManager::class.java.classLoader)
+    } catch (e: Throwable) {
+      LOG.warn("Unable to extract $jarFile (searching for $descriptorPath): ${e.getShortExceptionMessage()}")
+      return createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
     }
     try {
-      val entryName = "$META_INF/$descriptorPath"
-      val entry = getZipEntry(zipFile, toCanonicalPath(entryName))
-      if (entry != null) {
-        try {
-          zipFile.getInputStream(entry).use { documentStream ->
-            if (documentStream == null) {
-              return createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
-            }
-            val document = JDOMUtil.loadDocument(documentStream)
-            val icons = getIconsFromJarFile(zipFile)
-            val documentUrl = URLUtil.getJarEntryURL(jarFile, entry.name)
-            val plugin = createPlugin(jarFile, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, resourceResolver)
+      zipFs.use { jarFileSystem ->
+        val entryName = "$META_INF/$descriptorPath"
+        val entry = jarFileSystem.getPath(toCanonicalPath(entryName))
+        return if (Files.exists(entry)) {
+          try {
+            val document = Files.newInputStream(entry).use { JDOMUtil.loadDocument(it) }
+            val icons = getIconsFromJarFile(jarFileSystem)
+            val plugin = createPlugin(jarFile, descriptorPath, parentPlugin, validateDescriptor, document, entry, resourceResolver)
             plugin.setIcons(icons)
-            return plugin
+            plugin
+          } catch (e: Exception) {
+            LOG.info("Unable to read file $descriptorPath", e)
+            val message = e.localizedMessage
+            createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
           }
-        } catch (e: Exception) {
-          LOG.info("Unable to read file $descriptorPath", e)
-          val message = e.localizedMessage
-          return createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
+        } else {
+          createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
         }
-      } else {
-        return createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
       }
-    } finally {
-      try {
-        zipFile.close()
-      } catch (e: IOException) {
-        LOG.error("Unable to close jar file $jarFile", e)
-      }
+    } catch (e: Exception) {
+      LOG.warn("Unable to read $jarFile in search of $descriptorPath: ${e.message}")
+      return createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
     }
   }
 
-  @Throws(IOException::class)
-  private fun getIconsFromJarFile(jarFile: ZipFile): List<PluginIcon> {
-    return IconTheme.values().mapNotNull { theme ->
+  private fun getIconsFromJarFile(jarFileSystem: FileSystem): List<PluginIcon> =
+    IconTheme.values().mapNotNull { theme ->
       val iconEntryName = "$META_INF/${getIconFileName(theme)}"
-      val entry = getZipEntry(jarFile, toCanonicalPath(iconEntryName)) ?: return@mapNotNull null
-      jarFile.getInputStream(entry)?.use {
-        PluginIcon(theme, it.readBytes(), iconEntryName)
+      val iconPath = jarFileSystem.getPath(META_INF, getIconFileName(theme))
+      if (iconPath.exists()) {
+        PluginIcon(theme, iconPath.readBytes(), iconEntryName)
+      } else {
+        null
       }
     }
-  }
 
   private fun loadPluginInfoFromDirectory(
-    pluginDirectory: File,
+    pluginDirectory: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?
   ): PluginCreator {
-    val descriptorFile = File(File(pluginDirectory, META_INF), descriptorPath.toSystemIndependentName())
+    val descriptorFile = pluginDirectory.resolve(META_INF).resolve(descriptorPath.withPathSeparatorOf(pluginDirectory))
     return if (!descriptorFile.exists()) {
       loadPluginInfoFromLibDirectory(pluginDirectory, descriptorPath, validateDescriptor, resourceResolver, parentPlugin)
     } else try {
-      val documentUrl = URLUtil.fileToUrl(descriptorFile)
-      val document = JDOMUtil.loadDocument(documentUrl)
+      val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
       val icons = loadIconsFromDir(pluginDirectory)
-      val plugin = createPlugin(pluginDirectory, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, resourceResolver)
+      val plugin = createPlugin(
+        pluginDirectory, descriptorPath, parentPlugin, validateDescriptor, document, descriptorFile, resourceResolver
+      )
       plugin.setIcons(icons)
       plugin
     } catch (e: JDOMParseException) {
@@ -123,11 +109,11 @@ class IdePluginManager private constructor(
   }
 
   @Throws(IOException::class)
-  private fun loadIconsFromDir(pluginDirectory: File): List<PluginIcon> {
+  private fun loadIconsFromDir(pluginDirectory: Path): List<PluginIcon> {
     return IconTheme.values().mapNotNull { theme ->
-      val iconFile = File(File(pluginDirectory, META_INF), getIconFileName(theme).toSystemIndependentName())
+      val iconFile = pluginDirectory.resolve(META_INF).resolve(getIconFileName(theme))
       if (iconFile.exists()) {
-        PluginIcon(theme, iconFile.readBytes(), iconFile.name)
+        PluginIcon(theme, Files.readAllBytes(iconFile), iconFile.simpleName)
       } else {
         null
       }
@@ -135,21 +121,20 @@ class IdePluginManager private constructor(
   }
 
   private fun loadPluginInfoFromLibDirectory(
-    root: File,
+    root: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?
   ): PluginCreator {
-    val libDir = File(root, "lib")
+    val libDir = root.resolve("lib")
     if (!libDir.isDirectory) {
       return createInvalidPlugin(root, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
     }
     val files = libDir.listFiles()
-    if (files == null || files.isEmpty()) {
+    if (files.isEmpty()) {
       return createInvalidPlugin(root, descriptorPath, PluginLibDirectoryIsEmpty())
     }
-    putMoreLikelyPluginJarsFirst(root, files)
     val jarFiles = files.filter { it.isJar() }
     val libResourceResolver: ResourceResolver = JarFilesResourceResolver(jarFiles)
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
@@ -186,7 +171,7 @@ class IdePluginManager private constructor(
   }
 
   private fun loadPluginInfoFromJarOrDirectory(
-    pluginFile: File,
+    pluginFile: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
@@ -204,7 +189,7 @@ class IdePluginManager private constructor(
     }
   }
 
-  private fun resolveOptionalDependencies(pluginFile: File, pluginCreator: PluginCreator, resourceResolver: ResourceResolver) {
+  private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver) {
     if (pluginCreator.isSuccess) {
       resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, pluginCreator)
     }
@@ -218,7 +203,7 @@ class IdePluginManager private constructor(
     currentPlugin: PluginCreator,
     visitedConfigurationFiles: MutableSet<String>,
     path: LinkedList<String>,
-    pluginFile: File,
+    pluginFile: Path,
     resourceResolver: ResourceResolver,
     mainPlugin: PluginCreator
   ) {
@@ -242,17 +227,16 @@ class IdePluginManager private constructor(
   }
 
   private fun extractZipAndCreatePlugin(
-    pluginContent: InputStream,
-    pluginFileName: String,
+    pluginFile: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver
   ): PluginCreator {
     val extractorResult = try {
-      extractPlugin(pluginContent, myExtractDirectory)
+      extractPlugin(pluginFile, extractDirectory)
     } catch (e: Exception) {
-      LOG.info("Unable to extract plugin zip $pluginFileName", e)
-      return createInvalidPlugin(pluginFileName, descriptorPath, UnableToExtractZip())
+      LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", e)
+      return createInvalidPlugin(pluginFile.simpleName, descriptorPath, UnableToExtractZip())
     }
     return when (extractorResult) {
       is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
@@ -261,20 +245,17 @@ class IdePluginManager private constructor(
           resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver)
           pluginCreator
         } else {
-          getInvalidPluginFileCreator(pluginFileName, descriptorPath)
+          getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
         }
       }
-      is ExtractorResult.Fail -> createInvalidPlugin(pluginFileName, descriptorPath, extractorResult.pluginProblem)
+      is ExtractorResult.Fail -> createInvalidPlugin(pluginFile.simpleName, descriptorPath, extractorResult.pluginProblem)
     }
   }
 
-  override fun createPlugin(pluginFile: File): PluginCreationResult<IdePlugin> {
-    return createPlugin(pluginFile, true)
-  }
+  override fun createPlugin(pluginFile: Path) = createPlugin(pluginFile, true)
 
-  @JvmOverloads
   fun createPlugin(
-    pluginFile: File,
+    pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String = PLUGIN_XML
   ): PluginCreationResult<IdePlugin> {
@@ -282,15 +263,8 @@ class IdePluginManager private constructor(
     return pluginCreator.pluginCreationResult
   }
 
-  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<IdePlugin> {
-    return extractZipAndCreatePlugin(
-      pluginFileContent, pluginFileName, PLUGIN_XML, true, myResourceResolver
-    ).pluginCreationResult
-  }
-
-
   fun createBundledPlugin(
-    pluginFile: File,
+    pluginFile: Path,
     ideVersion: IdeVersion,
     descriptorPath: String
   ): PluginCreationResult<IdePlugin> {
@@ -300,7 +274,7 @@ class IdePluginManager private constructor(
   }
 
   private fun getPluginCreatorWithResult(
-    pluginFile: File,
+    pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String
   ): PluginCreator {
@@ -308,8 +282,7 @@ class IdePluginManager private constructor(
     val pluginCreator: PluginCreator
     if (pluginFile.isZip()) {
       pluginCreator = extractZipAndCreatePlugin(
-        pluginFile.inputStream(),
-        pluginFile.name,
+        pluginFile,
         descriptorPath,
         validateDescriptor,
         myResourceResolver
@@ -318,7 +291,7 @@ class IdePluginManager private constructor(
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null)
       resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver)
     } else {
-      pluginCreator = getInvalidPluginFileCreator(pluginFile.name, descriptorPath)
+      pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
     }
     pluginCreator.setOriginalFile(pluginFile)
     return pluginCreator
@@ -335,20 +308,35 @@ class IdePluginManager private constructor(
 
     @JvmStatic
     fun createManager(): IdePluginManager =
-      createManager(DefaultResourceResolver, Settings.EXTRACT_DIRECTORY.getAsFile())
-
-    @JvmStatic
-    fun createManager(extractDirectory: File): IdePluginManager =
-      createManager(DefaultResourceResolver, extractDirectory)
+      createManager(DefaultResourceResolver, Settings.EXTRACT_DIRECTORY.getAsPath())
 
     @JvmStatic
     fun createManager(resourceResolver: ResourceResolver): IdePluginManager =
-      createManager(resourceResolver, Settings.EXTRACT_DIRECTORY.getAsFile())
+      createManager(resourceResolver, Settings.EXTRACT_DIRECTORY.getAsPath())
 
     @JvmStatic
-    fun createManager(resourceResolver: ResourceResolver, extractDirectory: File): IdePluginManager {
-      return IdePluginManager(resourceResolver, extractDirectory)
-    }
+    fun createManager(extractDirectory: Path): IdePluginManager =
+      createManager(DefaultResourceResolver, extractDirectory)
+
+    @JvmStatic
+    fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path): IdePluginManager =
+      IdePluginManager(resourceResolver, extractDirectory)
+
+    @Deprecated(
+      message = "Use factory method with java.nio.Path",
+      replaceWith = ReplaceWith("createManager(extractDirectory.toPath())")
+    )
+    @JvmStatic
+    fun createManager(extractDirectory: File): IdePluginManager =
+      createManager(DefaultResourceResolver, extractDirectory.toPath())
+
+    @Deprecated(
+      message = "Use factory method with java.nio.Path",
+      replaceWith = ReplaceWith("createManager(resourceResolver, extractDirectory.toPath())")
+    )
+    @JvmStatic
+    fun createManager(resourceResolver: ResourceResolver, extractDirectory: File): IdePluginManager =
+      createManager(resourceResolver, extractDirectory.toPath())
 
     private fun hasOnlyInvalidDescriptorErrors(creator: PluginCreator): Boolean {
       return when (val pluginCreationResult = creator.pluginCreationResult) {
@@ -360,62 +348,8 @@ class IdePluginManager private constructor(
       }
     }
 
-    /*
-   * Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses
-   * File name preference:
-   * a) last order for files with resources in name, like resources_en.jar
-   * b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before json-2.8.0.jar or junit-m5.jar
-   * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before all-open-XXX.jar
-   * d) shorter name, e.g. android.jar is before android-base-common.jar
-   */
-    private fun putMoreLikelyPluginJarsFirst(pluginDir: File, filesInLibUnderPluginDir: Array<File>) {
-      val pluginDirName = pluginDir.name
-      Arrays.parallelSort(filesInLibUnderPluginDir) { o1: File, o2: File ->
-        val o2Name = o2.name
-        val o1Name = o1.name
-        val o2StartsWithResources = o2Name.startsWith("resources")
-        val o1StartsWithResources = o1Name.startsWith("resources")
-        if (o2StartsWithResources != o1StartsWithResources) {
-          return@parallelSort if (o2StartsWithResources) -1 else 1
-        }
-        val o2IsVersioned = fileNameIsLikeVersionedLibraryName(o2Name)
-        val o1IsVersioned = fileNameIsLikeVersionedLibraryName(o1Name)
-        if (o2IsVersioned != o1IsVersioned) {
-          return@parallelSort if (o2IsVersioned) -1 else 1
-        }
-        val o2StartsWithNeededName = o2Name.startsWith(pluginDirName, true)
-        val o1StartsWithNeededName = o1Name.startsWith(pluginDirName, true)
-        if (o2StartsWithNeededName != o1StartsWithNeededName) {
-          return@parallelSort if (o2StartsWithNeededName) 1 else -1
-        }
-        o1Name.length - o2Name.length
-      }
-    }
-
-    private fun fileNameIsLikeVersionedLibraryName(name: String): Boolean {
-      val i = name.lastIndexOf('-')
-      if (i == -1) return false
-      if (i + 1 < name.length) {
-        val c = name[i + 1]
-        return if (Character.isDigit(c)) true else (c == 'm' || c == 'M') && i + 2 < name.length && Character.isDigit(name[i + 2])
-      }
-      return false
-    }
-
     private fun toCanonicalPath(descriptorPath: String): String {
       return Paths.get(descriptorPath.toSystemIndependentName()).normalize().toString()
-    }
-
-    private fun getZipEntry(zipFile: ZipFile, entryPath: String): ZipEntry? {
-      val independentPath = entryPath.toSystemIndependentName()
-      val independentEntry = zipFile.getEntry(independentPath)
-      if (independentEntry != null) {
-        return independentEntry
-      }
-      val dependentPath = entryPath.replace('/', File.separatorChar)
-      return if (dependentPath != independentPath) {
-        zipFile.getEntry(dependentPath)
-      } else null
     }
 
     private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"

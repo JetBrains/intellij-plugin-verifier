@@ -1,23 +1,21 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
-import org.junit.Assert.*
-import org.junit.Rule
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 
-class TeamcityMockPluginsTest {
+class TeamcityMockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<TeamcityPlugin, TeamcityPluginManager>(fileSystemType) {
 
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
+  override fun createManager(extractDirectory: Path): TeamcityPluginManager =
+    TeamcityPluginManager.createManager(extractDirectory)
 
   private fun testMockConfigs(plugin: TeamcityPlugin) {
     assertEquals(null, plugin.url)
@@ -66,13 +64,8 @@ class TeamcityMockPluginsTest {
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
-    val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
     val plugin = pluginCreationSuccess.plugin
 
     testMockConfigs(plugin)

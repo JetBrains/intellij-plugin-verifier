@@ -63,7 +63,7 @@ class ExternalAnnotationsApiReportWriter : ApiReportWriter {
 
     if (saveZip) {
       try {
-        rootDirectory.toFile().archiveDirectoryTo(reportPath.toFile())
+        rootDirectory.archiveDirectoryTo(reportPath)
       } finally {
         rootDirectory.deleteLogged()
       }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  * Factory class which creates the {@link Ide} instances.
@@ -22,6 +23,15 @@ public abstract class IdeManager {
   }
 
   /**
+   * @deprecated use {@link #createIde(Path)}
+   */
+  @NotNull
+  @Deprecated
+  public final Ide createIde(@NotNull File idePath) throws IOException, InvalidIdeException {
+    return createIde(idePath.toPath());
+  }
+
+  /**
    * Creates the {@code IDE} instance from the specified directory. IDE may be in the distribution form (a set of .jar
    * files) or in the source code form with the compiled classes.
    *
@@ -31,11 +41,20 @@ public abstract class IdeManager {
    * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull
-  public abstract Ide createIde(@NotNull File idePath) throws IOException, InvalidIdeException;
+  public abstract Ide createIde(@NotNull Path idePath) throws IOException, InvalidIdeException;
 
 
   /**
-   * Similar to the {@link #createIde(File)} but updates a version of the created IDE to the specified one. By default
+   * @deprecated use {@link #createIde(Path, IdeVersion)}
+   */
+  @Deprecated
+  @NotNull
+  public final Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException, InvalidIdeException {
+    return createIde(idePath.toPath(), version);
+  }
+
+  /**
+   * Similar to the {@link #createIde(Path)} but updates a version of the created IDE to the specified one. By default
    * the version of the IDE is read from the 'build.txt'.
    *
    * @param idePath IDE home directory
@@ -45,6 +64,6 @@ public abstract class IdeManager {
    * @throws InvalidIdeException if IDE by specified path is invalid
    */
   @NotNull
-  public abstract Ide createIde(@NotNull File idePath, @Nullable IdeVersion version) throws IOException, InvalidIdeException;
+  public abstract Ide createIde(@NotNull Path idePath, @Nullable IdeVersion version) throws IOException, InvalidIdeException;
 
 }

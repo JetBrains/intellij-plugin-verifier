@@ -50,15 +50,17 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
     modulesPath = fileSystem.getPath("/modules")
 
-    classNameToModuleName = Files.walk(modulesPath)
-      .filter { p -> p.fileName.toString().endsWith(".class") }
-      .collect(
-        Collectors.toMap(
-          { p -> getClassName(p) },
-          { p -> getModuleName(p) },
-          { one, _ -> one }
+    classNameToModuleName = Files.walk(modulesPath).use { stream ->
+      stream
+        .filter { p -> p.fileName.toString().endsWith(".class") }
+        .collect(
+          Collectors.toMap(
+            { p -> getClassName(p) },
+            { p -> getModuleName(p) },
+            { one, _ -> one }
+          )
         )
-      )
+    }
 
     for (className in classNameToModuleName.keys) {
       packageSet.addPackagesOfClass(className)
@@ -137,11 +139,13 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
-    for (classPath in Files.walk(modulesPath).filter { it.fileName.toString().endsWith(".class") }) {
-      val className = getClassName(classPath)
-      val result = readClass(className, classPath)
-      if (!processor(result)) {
-        return false
+    Files.walk(modulesPath).use { stream ->
+      for (classPath in stream.filter { it.fileName.toString().endsWith(".class") }) {
+        val className = getClassName(classPath)
+        val result = readClass(className, classPath)
+        if (!processor(result)) {
+          return false
+        }
       }
     }
     return true

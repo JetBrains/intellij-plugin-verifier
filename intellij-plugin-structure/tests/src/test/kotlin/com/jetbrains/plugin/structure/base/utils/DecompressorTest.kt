@@ -7,6 +7,7 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.IOException
+import java.nio.file.Files
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -22,11 +23,11 @@ class DecompressorTest {
 
   @Test
   fun simple() {
-    val zipFile = buildZipFile(tempFolder.newFile("some.zip")) {
+    val zipFile = buildZipFile(tempFolder.newFile("some.zip").toPath()) {
       file("some.txt", "content")
     }
     val destination = tempFolder.newFolder()
-    zipFile.extractTo(destination)
+    zipFile.extractTo(destination.toPath())
     val someTxt = destination.resolve("some.txt")
     assertEquals(listOf(someTxt), destination.listFiles().orEmpty().toList())
     assertEquals("content", someTxt.readText())
@@ -39,14 +40,14 @@ class DecompressorTest {
     expectedEx.expect(IOException::class.java)
     expectedEx.expectMessage("Invalid relative entry name: some/../relative.txt")
 
-    val zipFile = tempFolder.newFile("broken.zip")
-    ZipOutputStream(zipFile.outputStream()).use {
+    val zipFile = tempFolder.newFile("broken.zip").toPath()
+    ZipOutputStream(Files.newOutputStream(zipFile)).use {
       it.putNextEntry(ZipEntry(relativeName))
       it.write("42".toByteArray())
       it.closeEntry()
     }
 
-    zipFile.extractTo(tempFolder.newFolder())
+    zipFile.extractTo(tempFolder.newFolder().toPath())
   }
 
   @Test
@@ -56,13 +57,13 @@ class DecompressorTest {
     expectedEx.expect(IOException::class.java)
     expectedEx.expectMessage("Entry name is too long: $tooLongName")
 
-    val zipFile = tempFolder.newFile("broken.zip")
-    ZipOutputStream(zipFile.outputStream()).use {
+    val zipFile = tempFolder.newFile("broken.zip").toPath()
+    ZipOutputStream(Files.newOutputStream(zipFile)).use {
       it.putNextEntry(ZipEntry(tooLongName))
       it.write("42".toByteArray())
       it.closeEntry()
     }
 
-    zipFile.extractTo(tempFolder.newFolder())
+    zipFile.extractTo(tempFolder.newFolder().toPath())
   }
 }

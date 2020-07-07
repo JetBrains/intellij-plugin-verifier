@@ -13,31 +13,34 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
-fun getRepositoryLibrariesJars(projectPath: File): List<File> {
+fun getRepositoryLibrariesJars(projectPath: Path): List<Path> {
   val pathVariables = createPathVariables()
-  val project = loadProject(projectPath.absoluteFile, pathVariables)
+  val project = loadProject(projectPath, pathVariables)
   return JpsJavaExtensionService.dependencies(project)
     .productionOnly()
     .runtimeOnly()
     .libraries
     .flatMap { it.getFiles(JpsOrderRootType.COMPILED) }
-    .distinctBy { it.path }
+    .map { it.toPath() }
+    .distinctBy { it.toString() }
     .filter { it.isJar() }
 }
 
-private fun loadProject(projectPath: File, pathVariables: Map<String, String>): JpsProject {
+private fun loadProject(projectPath: Path, pathVariables: Map<String, String>): JpsProject {
   //It must be set to avoid initialization exceptions from com.intellij.openapi.application.PathManager.getHomePath()
-  System.setProperty("idea.home.path", projectPath.absolutePath)
+  System.setProperty("idea.home.path", projectPath.toAbsolutePath().toString())
 
   val model = JpsElementFactory.getInstance().createModel()
-  JpsProjectLoader.loadProject(model.project, pathVariables, projectPath.absolutePath)
+  JpsProjectLoader.loadProject(model.project, pathVariables, projectPath.toAbsolutePath().toString())
   return model.project
 }
 
 private fun createPathVariables(): Map<String, String> {
-  val mavenRepoFile = System.getProperty("MAVEN_REPOSITORY")?.let { File(it) }
-    ?: File(SystemProperties.getUserHome(), ".m2/repository")
-  val m2Repo = FileUtil.toSystemIndependentName(mavenRepoFile.absolutePath)
+  val mavenRepoFile = System.getProperty("MAVEN_REPOSITORY")?.let { Paths.get(it) }
+    ?: Paths.get(SystemProperties.getUserHome()).resolve(".m2").resolve("repository")
+  val m2Repo = FileUtil.toSystemIndependentName(mavenRepoFile.toAbsolutePath().toString())
   return mapOf("MAVEN_REPOSITORY" to m2Repo)
 }

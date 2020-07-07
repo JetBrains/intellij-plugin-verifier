@@ -4,26 +4,28 @@
 
 package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
+import com.jetbrains.plugin.structure.base.utils.*
 import java.io.File
+import java.nio.file.Path
 
 interface ContentBuilder {
   fun file(name: String)
   fun file(name: String, text: String)
   fun file(name: String, textProvider: () -> String)
   fun file(name: String, content: ByteArray)
-  fun file(name: String, localFile: File)
-  fun dir(name: String, localDirectory: File)
+  fun file(name: String, localFile: Path)
+  fun dir(name: String, localDirectory: Path)
   fun dir(name: String, content: ContentBuilder.() -> Unit)
   fun zip(name: String, content: ContentBuilder.() -> Unit)
 }
 
-fun buildDirectory(directory: File, content: ContentBuilder.() -> Unit): File {
+fun buildDirectory(directory: Path, content: ContentBuilder.() -> Unit): Path {
   val spec = buildDirectoryContent(content)
   spec.generate(directory)
   return directory
 }
 
-fun buildZipFile(zipFile: File, content: ContentBuilder.() -> Unit): File {
+fun buildZipFile(zipFile: Path, content: ContentBuilder.() -> Unit): Path {
   val spec = buildZipFileContent(content)
   spec.generate(zipFile)
   return zipFile
@@ -58,7 +60,7 @@ private class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : Conten
     addChild(name, FileSpec(content))
   }
 
-  override fun file(name: String, localFile: File) {
+  override fun file(name: String, localFile: Path) {
     file(name, localFile.readBytes())
   }
 
@@ -67,14 +69,14 @@ private class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : Conten
     addChild(name, directorySpec)
   }
 
-  override fun dir(name: String, localDirectory: File) {
+  override fun dir(name: String, localDirectory: Path) {
     check(localDirectory.isDirectory) { "Not a directory: $localDirectory" }
     dir(name) {
       for (child in localDirectory.listFiles().orEmpty()) {
         when {
-          child.isFile -> file(child.name, child)
-          child.isDirectory -> dir(child.name, child)
-          else -> throw IllegalArgumentException("Unknown file type: ${child.absoluteFile}")
+          child.isFile -> file(child.simpleName, child)
+          child.isDirectory -> dir(child.simpleName, child)
+          else -> throw IllegalArgumentException("Unknown file type: ${child.toAbsolutePath()}")
         }
       }
     }

@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
@@ -12,28 +12,23 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFi
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.*
 
-class MockPluginsTest {
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
-  private val mockPluginRoot = URLUtil.urlToFile(this::class.java.getResource("/mock-plugin"))
+class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+  private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
 
   private val optionalsDir = mockPluginRoot.resolve("optionalsDir")
@@ -58,14 +53,17 @@ class MockPluginsTest {
     DuplicatedDependencyWarning("duplicatedDependencyId")
   )
 
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> File): IdePlugin {
+  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> Path): IdePlugin {
     val pluginFile = pluginFileBuilder()
-    val successResult = InvalidPluginsTest.getSuccessResult(pluginFile)
+    val successResult = createPluginSuccessfully(pluginFile)
     val (plugin, warnings) = successResult
     assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
     assertEquals(pluginFile, plugin.originalFile)
     return plugin
   }
+
+  override fun createManager(extractDirectory: Path): IdePluginManager =
+    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `single jar file`() {
@@ -373,7 +371,7 @@ class MockPluginsTest {
       }
     }
 
-    val creationSuccess = InvalidPluginsTest.getSuccessResult(pluginDirectory)
+    val creationSuccess = createPluginSuccessfully(pluginDirectory)
     assertEquals(
       creationSuccess.warnings,
       listOf(
@@ -397,7 +395,7 @@ class MockPluginsTest {
         }
       }
     }
-    val creationSuccess = InvalidPluginsTest.getSuccessResult(jarFile)
+    val creationSuccess = createPluginSuccessfully(jarFile)
     val idePlugin = creationSuccess.plugin
     assertTrue(creationSuccess.warnings.joinToString { it.message }, creationSuccess.warnings.isEmpty())
     assertTrue(idePlugin.isImplementationDetail)
@@ -414,7 +412,7 @@ class MockPluginsTest {
       dir("properties", propertiesDir)
     }
 
-    InvalidPluginsTest.assertExpectedProblems(
+    assertProblematicPlugin(
       pluginFile,
       listOf(PluginZipContainsMultipleFiles(listOf("META-INF", "optionalsDir", "properties", "somePackage")))
     )
@@ -588,12 +586,12 @@ class MockPluginsTest {
 
   private fun checkPluginContents(plugin: IdePluginImpl) {
     assertEquals(
-        setOf(
+      setOf(
         "org.intellij.scala.scalaTestDefaultWorkingDirectoryProvider",
         "com.intellij.compileServer.plugin",
         "EpWithDefaultNs.someEP"
       ),
-        plugin.extensions.keys.toSet()
+      plugin.extensions.keys.toSet()
     )
 
     val appContainerDescriptor = plugin.appContainerDescriptor

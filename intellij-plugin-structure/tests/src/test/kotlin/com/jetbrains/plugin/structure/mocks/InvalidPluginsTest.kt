@@ -1,87 +1,61 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.junit.Assert
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
-class InvalidPluginsTest {
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
   @Rule
   @JvmField
   val expectedEx: ExpectedException = ExpectedException.none()
 
-  companion object {
-    fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-      val creationFail = getFailedResult(pluginFile)
-      val actualProblems = creationFail.errorsAndWarnings
-      assertEquals(expectedProblems.toSet(), actualProblems.toSet())
-    }
-
-    fun getFailedResult(pluginFile: File): PluginCreationFail<IdePlugin> {
-      val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-      if (pluginCreationResult is PluginCreationSuccess) {
-        Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
-      }
-      return pluginCreationResult as PluginCreationFail
-    }
-
-    fun getSuccessResult(pluginFile: File): PluginCreationSuccess<IdePlugin> {
-      val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
-      if (pluginCreationResult is PluginCreationFail) {
-        Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString())
-      }
-      return pluginCreationResult as PluginCreationSuccess<IdePlugin>
-    }
-  }
+  override fun createManager(extractDirectory: Path): IdePluginManager =
+    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(createIncorrectIntellijFileProblem(incorrect.name)))
+    assertProblematicPlugin(incorrect, listOf(createIncorrectIntellijFileProblem(incorrect.simpleName)))
   }
 
   @Test
   fun `failed to read jar file`() {
     val incorrect = temporaryFolder.newFile("incorrect.jar")
-    assertExpectedProblems(incorrect, listOf(UnableToReadJarFile()))
+    assertProblematicPlugin(incorrect, listOf(UnableToExtractZip()))
   }
 
   @Test
   fun `plugin file does not exist`() {
-    val nonExistentFile = File("non-existent-file")
+    val nonExistentFile = Paths.get("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    IdePluginManager.createManager().createPlugin(nonExistentFile)
+    createPluginSuccessfully(nonExistentFile)
   }
 
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.zip")
-    assertExpectedProblems(brokenZipArchive, listOf(PluginZipIsEmpty()))
+    assertProblematicPlugin(brokenZipArchive, listOf(PluginZipIsEmpty()))
   }
 
   @Test
   fun `no meta-inf plugin xml found`() {
     val folder = temporaryFolder.newFolder()
-    assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound("plugin.xml")))
+    assertProblematicPlugin(folder, listOf(PluginDescriptorIsNotFound("plugin.xml")))
   }
 
   @Test
@@ -152,7 +126,7 @@ class InvalidPluginsTest {
       id = ""
     }
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    val successResult = getSuccessResult(pluginFolder)
+    val successResult = createPluginSuccessfully(pluginFolder)
     val plugin = successResult.plugin
     assertEquals(plugin.pluginName, plugin.pluginId)
   }
@@ -375,21 +349,21 @@ class InvalidPluginsTest {
 
   private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    val successResult = getSuccessResult(pluginFolder)
+    val successResult = createPluginSuccessfully(pluginFolder)
     assertEquals(expectedWarnings, successResult.warnings)
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    assertExpectedProblems(pluginFolder, expectedProblems)
+    assertProblematicPlugin(pluginFolder, expectedProblems)
   }
 
   private fun `test valid plugin xml`(pluginXmlContent: String): PluginCreationSuccess<IdePlugin> {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    return getSuccessResult(pluginFolder)
+    return createPluginSuccessfully(pluginFolder)
   }
 
-  private fun getTempPluginFolder(pluginXmlContent: String): File {
+  private fun getTempPluginFolder(pluginXmlContent: String): Path {
     return buildDirectory(temporaryFolder.newFolder()) {
       dir("META-INF") {
         file("plugin.xml", pluginXmlContent)
@@ -426,7 +400,7 @@ class InvalidPluginsTest {
       }
     }
 
-    assertExpectedProblems(pluginDirectory, listOf(MultiplePluginDescriptors("plugin.xml", "one.jar", "plugin.xml", "two.jar")))
+    assertProblematicPlugin(pluginDirectory, listOf(MultiplePluginDescriptors("plugin.xml", "one.jar", "plugin.xml", "two.jar")))
   }
 
   @Test
@@ -655,7 +629,7 @@ class InvalidPluginsTest {
         )
       }
     }
-    assertExpectedProblems(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
+    assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
   }
 
 }

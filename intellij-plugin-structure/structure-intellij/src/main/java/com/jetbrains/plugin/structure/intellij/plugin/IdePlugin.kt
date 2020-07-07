@@ -8,8 +8,7 @@ import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
-
-import java.io.File
+import java.nio.file.Path
 
 interface IdePlugin : Plugin {
   val sinceBuild: IdeVersion?
@@ -28,7 +27,7 @@ interface IdePlugin : Plugin {
 
   val underlyingDocument: Document
 
-  val originalFile: File?
+  val originalFile: Path?
 
   val productDescriptor: ProductDescriptor?
 

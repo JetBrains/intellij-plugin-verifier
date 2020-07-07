@@ -23,6 +23,8 @@ sealed class PluginVerificationDescriptor {
 
   abstract val classResolverProvider: ClassResolverProvider
 
+  abstract val presentableName: String
+
   class IDE(
     private val ideDescriptor: IdeDescriptor,
     override val classResolverProvider: DefaultClassResolverProvider,
@@ -41,7 +43,7 @@ sealed class PluginVerificationDescriptor {
     val jdkVersion: JdkVersion
       get() = ideDescriptor.jdkDescriptor.jdkVersion
 
-    override fun toString() = "$checkedPlugin against $ideVersion"
+    override val presentableName get() = "$checkedPlugin against $ideVersion"
   }
 
   class Plugin(
@@ -51,8 +53,10 @@ sealed class PluginVerificationDescriptor {
     val jdkVersion: JdkVersion
   ) : PluginVerificationDescriptor() {
 
-    override fun toString() = "$checkedPlugin against API of $apiPlugin"
+    override val presentableName get() = "$checkedPlugin against API of $apiPlugin"
   }
+
+  final override fun toString() = presentableName
 
 }
 

@@ -1,23 +1,17 @@
 package com.jetbrains.plugin.structure.dotnet.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.dotnet.DotNetDependency
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 
-class DotNetMockPluginTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class DotNetMockPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ReSharperPlugin, ReSharperPluginManager>(fileSystemType) {
   private fun testMockConfigs(plugin: ReSharperPlugin) {
     Assert.assertEquals("JetBrains.Mock", plugin.pluginId)
     Assert.assertEquals("Some title", plugin.pluginName)
@@ -31,9 +25,9 @@ class DotNetMockPluginTest {
     Assert.assertEquals("Copyright 2014 JetBrains", plugin.copyright)
     Assert.assertEquals(
       listOf(
-          DotNetDependency("ReSharper", "[8.0, 8.3)"),
-          DotNetDependency("Wave", null),
-          DotNetDependency("Wave", "183.0.0")
+        DotNetDependency("ReSharper", "[8.0, 8.3)"),
+        DotNetDependency("Wave", null),
+        DotNetDependency("Wave", "183.0.0")
       ),
       plugin.dependencies
     )
@@ -42,6 +36,9 @@ class DotNetMockPluginTest {
   private fun testMockWarnings(problems: List<PluginProblem>) {
     Assert.assertTrue(problems.isEmpty())
   }
+
+  override fun createManager(extractDirectory: Path): ReSharperPluginManager =
+    ReSharperPluginManager.createManager(extractDirectory)
 
   @Test
   fun `nupkg plugin`() {
@@ -55,13 +52,8 @@ class DotNetMockPluginTest {
     return this::class.java.getResource("/dotnet/JetBrains.Mock.nuspec").readText()
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
-    val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      Assert.fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
     val plugin = pluginCreationSuccess.plugin
 
     testMockConfigs(plugin)

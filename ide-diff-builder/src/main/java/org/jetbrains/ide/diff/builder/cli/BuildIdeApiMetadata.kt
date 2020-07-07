@@ -106,7 +106,10 @@ class BuildIdeApiMetadata {
     val tasks = (1 until idesToProcess.size).map { index ->
       val previousIde = idesToProcess[index - 1]
       val currentIde = idesToProcess[index]
-      BuildIdeDiffTask(diffsPath, ideFilesBank, previousIde, currentIde, ideDiffBuilder)
+      ExecutorWithProgress.Task(
+        "IDE diff between ${previousIde.version} and ${currentIde.version}",
+        BuildIdeDiffTask(diffsPath, ideFilesBank, previousIde, currentIde, ideDiffBuilder)
+      )
     }
     val executor = ExecutorWithProgress<IdeDiff>("ide-diff-builder", 8, false) { progressData ->
       val message = buildString {

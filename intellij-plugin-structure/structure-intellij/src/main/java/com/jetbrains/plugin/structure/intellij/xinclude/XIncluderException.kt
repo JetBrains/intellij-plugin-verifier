@@ -15,6 +15,6 @@ class XIncluderException : RuntimeException {
 
   private companion object {
     fun buildMessage(message: String, path: List<XIncludeEntry>): String =
-      message + " (at " + path.joinToString(separator = " -> ") { it.documentPath } + ")"
+      message + " (at " + path.joinToString(separator = " -> ") { it.presentablePath } + ")"
   }
 }

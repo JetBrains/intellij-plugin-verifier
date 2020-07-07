@@ -4,16 +4,12 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
-import org.apache.commons.io.FileUtils
 import org.objectweb.asm.tree.ClassNode
-import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -23,40 +19,40 @@ class DirectoryResolver(
   override val readMode: ReadMode = ReadMode.FULL
 ) : Resolver() {
 
-  private val classNameToFile = hashMapOf<String, File>()
+  private val classNameToFile = hashMapOf<String, Path>()
 
-  private val bundlePathToFile = hashMapOf<String, File>()
+  private val bundlePathToFile = hashMapOf<String, Path>()
 
   private val bundleNames = hashMapOf<String, MutableSet<String>>()
 
   private val packageSet = PackageSet()
 
   init {
-    val canonicalRoot = root.toFile().canonicalFile
-    val files = FileUtils.listFiles(canonicalRoot, arrayOf("class", "properties"), true)
-    for (file in files) {
-      if (file.extension == "class") {
-        val className = AsmUtil.readClassName(file)
-        val classRoot = getClassRoot(file, className)
-        if (classRoot != null) {
-          classNameToFile[className] = file
-          packageSet.addPackagesOfClass(className)
+    Files.walk(root).use { fileStream ->
+      fileStream.forEach { file ->
+        if (file.extension == "class") {
+          val className = AsmUtil.readClassName(file)
+          val classRoot = getClassRoot(file, className)
+          if (classRoot != null) {
+            classNameToFile[className] = file
+            packageSet.addPackagesOfClass(className)
+          }
         }
-      }
-      if (file.extension == "properties") {
-        val bundlePath = file.relativeTo(canonicalRoot).path.toSystemIndependentName()
-        bundlePathToFile[bundlePath] = file
-        val fullBundleName = getBundleNameByBundlePath(bundlePath)
-        bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
+        if (file.extension == "properties") {
+          val bundlePath = root.relativize(file).toString().toSystemIndependentName()
+          bundlePathToFile[bundlePath] = file
+          val fullBundleName = getBundleNameByBundlePath(bundlePath)
+          bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
+        }
       }
     }
   }
 
-  private fun getClassRoot(classFile: File, className: String): File? {
+  private fun getClassRoot(classFile: Path, className: String): Path? {
     val levelsUp = className.count { it == '/' }
-    var root: File? = classFile
+    var root: Path? = classFile
     for (i in 0 until levelsUp + 1) {
-      root = root?.parentFile
+      root = root?.parent
     }
     return root
   }
@@ -66,7 +62,7 @@ class DirectoryResolver(
     return readClass(className, classFile)
   }
 
-  private fun readClass(className: String, classFile: File): ResolutionResult<ClassNode> =
+  private fun readClass(className: String, classFile: Path): ResolutionResult<ClassNode> =
     try {
       val classNode = AsmUtil.readClassFromFile(className, classFile, readMode == ReadMode.FULL)
       ResolutionResult.Found(classNode, fileOrigin)
@@ -84,7 +80,7 @@ class DirectoryResolver(
     val bundleFile = bundlePathToFile[bundlePath]
     if (bundleFile != null) {
       val propertyResourceBundle: PropertyResourceBundle = try {
-        PropertyResourceBundle(bundleFile.bufferedReader())
+        PropertyResourceBundle(Files.newInputStream(bundleFile).bufferedReader())
       } catch (e: IllegalArgumentException) {
         return ResolutionResult.Invalid(e.message ?: e.javaClass.name)
       } catch (e: Exception) {

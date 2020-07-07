@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
-import java.io.File
+import java.nio.file.Path
 
 class IdePluginImpl : IdePlugin {
   override var pluginId: String? = null
@@ -21,7 +21,7 @@ class IdePluginImpl : IdePlugin {
 
   override var untilBuild: IdeVersion? = null
 
-  override var originalFile: File? = null
+  override var originalFile: Path? = null
 
   override var productDescriptor: ProductDescriptor? = null
 

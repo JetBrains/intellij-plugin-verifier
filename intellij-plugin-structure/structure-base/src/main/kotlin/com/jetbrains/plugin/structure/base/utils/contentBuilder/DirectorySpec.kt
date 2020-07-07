@@ -6,7 +6,7 @@ package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
-import java.io.File
+import java.nio.file.Path
 
 class DirectorySpec : ChildrenOwnerSpec {
 
@@ -18,7 +18,7 @@ class DirectorySpec : ChildrenOwnerSpec {
     children[name] = spec
   }
 
-  override fun generate(target: File) {
+  override fun generate(target: Path) {
     target.createDir()
     for ((name, spec) in children) {
       val childFile = target.resolve(name)

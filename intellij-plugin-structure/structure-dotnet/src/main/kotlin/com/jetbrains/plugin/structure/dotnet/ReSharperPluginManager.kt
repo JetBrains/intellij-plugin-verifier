@@ -13,37 +13,40 @@ import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBeanExtractor
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import org.slf4j.LoggerFactory
 import org.xml.sax.SAXParseException
-import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 @Suppress("unused")
-object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
+class ReSharperPluginManager private constructor(private val extractDirectory: Path) : PluginManager<ReSharperPlugin> {
+  companion object {
+    private val LOG = LoggerFactory.getLogger(ReSharperPluginManager::class.java)
 
-  private val LOG = LoggerFactory.getLogger(ReSharperPluginManager::class.java)
-
-  override fun createPlugin(pluginFile: File): PluginCreationResult<ReSharperPlugin> {
-    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
-    return when (pluginFile.extension) {
-      "nupkg" -> loadDescriptorFromNuPkg(pluginFile.inputStream())
-      else -> PluginCreationFail(createIncorrectDotNetPluginFileProblem(pluginFile.name))
+    fun createManager(
+      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
+    ): ReSharperPluginManager {
+      extractDirectory.createDir()
+      return ReSharperPluginManager(extractDirectory)
     }
   }
 
-  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String) =
-    loadDescriptorFromNuPkg(pluginFileContent)
+  override fun createPlugin(pluginFile: Path): PluginCreationResult<ReSharperPlugin> {
+    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
+    return when (pluginFile.extension) {
+      "nupkg" -> loadDescriptorFromNuPkg(pluginFile)
+      else -> PluginCreationFail(createIncorrectDotNetPluginFileProblem(pluginFile.simpleName))
+    }
+  }
 
-  private fun loadDescriptorFromNuPkg(pluginFileContent: InputStream): PluginCreationResult<ReSharperPlugin> {
+  private fun loadDescriptorFromNuPkg(pluginFile: Path): PluginCreationResult<ReSharperPlugin> {
     val sizeLimit = Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (pluginFileContent.available() > sizeLimit) {
+    if (Files.size(pluginFile) > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
-
-    val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_")
     return try {
       val extractedDirectory = tempDirectory.resolve("content")
-      extractZip(pluginFileContent, extractedDirectory, sizeLimit)
+      extractZip(pluginFile, extractedDirectory, sizeLimit)
       loadDescriptorFromDirectory(extractedDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -54,18 +57,18 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     }
   }
 
-  private fun loadDescriptorFromDirectory(pluginDirectory: File): PluginCreationResult<ReSharperPlugin> {
-    val candidateDescriptors: Iterator<File> = pluginDirectory.listRecursivelyAllFilesWithExtension("nuspec").iterator()
-    if (!candidateDescriptors.hasNext()) {
+  private fun loadDescriptorFromDirectory(pluginDirectory: Path): PluginCreationResult<ReSharperPlugin> {
+    val candidateDescriptors = pluginDirectory.listRecursivelyAllFilesWithExtension("nuspec")
+    if (candidateDescriptors.isEmpty()) {
       return PluginCreationFail(PluginDescriptorIsNotFound("*.nuspec"))
     }
-    val descriptorFile = candidateDescriptors.next()
-    if (candidateDescriptors.hasNext()) {
+    val descriptorFile = candidateDescriptors.first()
+    if (candidateDescriptors.size > 1) {
       return PluginCreationFail(
         MultiplePluginDescriptors(
-          descriptorFile.name,
+          descriptorFile.fileName.toString(),
           "plugin.nupkg",
-          candidateDescriptors.next().name,
+          candidateDescriptors[1].fileName.toString(),
           "plugin.nupkg"
         )
       )
@@ -74,9 +77,9 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
     return loadDescriptor(descriptorFile)
   }
 
-  private fun loadDescriptor(descriptorFile: File): PluginCreationResult<ReSharperPlugin> {
+  private fun loadDescriptor(descriptorFile: Path): PluginCreationResult<ReSharperPlugin> {
     try {
-      val descriptorContent = descriptorFile.readBytes()
+      val descriptorContent = Files.readAllBytes(descriptorFile)
       val bean = ReSharperPluginBeanExtractor.extractPluginBean(descriptorContent.inputStream())
       val beanValidationResult = validateDotNetPluginBean(bean)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
@@ -90,8 +93,8 @@ object ReSharperPluginManager : PluginManager<ReSharperPlugin> {
       return PluginCreationFail(UnexpectedDescriptorElements(message))
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      LOG.info("Unable to read plugin descriptor: ${descriptorFile.name}", e)
-      return PluginCreationFail(UnableToReadDescriptor(descriptorFile.name, e.localizedMessage))
+      LOG.info("Unable to read plugin descriptor: ${descriptorFile.fileName}", e)
+      return PluginCreationFail(UnableToReadDescriptor(descriptorFile.fileName.toString(), e.localizedMessage))
     }
   }
 

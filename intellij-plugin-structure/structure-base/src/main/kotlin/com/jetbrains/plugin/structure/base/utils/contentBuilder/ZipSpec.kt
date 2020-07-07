@@ -5,8 +5,10 @@
 package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
 import com.jetbrains.plugin.structure.base.utils.archiveDirectoryTo
+import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
 class ZipSpec : ChildrenOwnerSpec {
   private val directorySpec = DirectorySpec()
@@ -15,11 +17,11 @@ class ZipSpec : ChildrenOwnerSpec {
     directorySpec.addChild(name, spec)
   }
 
-  override fun generate(target: File) {
+  override fun generate(target: Path) {
     check(target.extension == "jar" || target.extension == "zip" || target.extension == "nupkg") {
       "Must be a jar or zip archive: $target"
     }
-    val zipContentDir = createTempDir()
+    val zipContentDir = Files.createTempDirectory(target.parent, "archive-content-")
     try {
       directorySpec.generate(zipContentDir)
       zipContentDir.archiveDirectoryTo(target)

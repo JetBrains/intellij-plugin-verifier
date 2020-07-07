@@ -4,15 +4,15 @@
 
 package com.jetbrains.plugin.structure.intellij.extractor
 
-import org.apache.commons.io.FileUtils
+import com.jetbrains.plugin.structure.base.utils.deleteQuietly
 import java.io.Closeable
-import java.io.File
+import java.nio.file.Path
 
 data class ExtractedPlugin(
-  val pluginFile: File,
-  private val fileToDelete: File
+  val pluginFile: Path,
+  private val fileToDelete: Path
 ) : Closeable {
   override fun close() {
-    FileUtils.deleteQuietly(fileToDelete)
+    fileToDelete.deleteQuietly()
   }
 }

@@ -8,63 +8,61 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.utils.extractZip
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipIsEmpty
-import org.apache.commons.io.FileUtils
-import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.Path
 
 object PluginExtractor {
 
-  fun extractPlugin(pluginContent: InputStream, extractDirectory: File): ExtractorResult {
-    Files.createDirectories(extractDirectory.toPath())
-    val extractedPlugin = Files.createTempDirectory(extractDirectory.toPath(), "plugin_").toFile()
+  fun extractPlugin(pluginFile: Path, extractDirectory: Path): ExtractorResult {
+    Files.createDirectories(extractDirectory)
+    val extractedPlugin = Files.createTempDirectory(extractDirectory, "plugin_")
 
     try {
-      extractZip(pluginContent, extractedPlugin, Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
+      extractZip(pluginFile, extractedPlugin, Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
     } catch (e: DecompressorSizeLimitExceededException) {
       return fail(PluginFileSizeIsTooLarge(e.sizeLimit), extractedPlugin)
     } catch (e: Throwable) {
-      FileUtils.deleteQuietly(extractedPlugin)
+      extractedPlugin.deleteQuietly()
       throw e
     }
 
     return getExtractorResult(extractedPlugin)
   }
 
-  private fun success(actualFile: File, fileToDelete: File): ExtractorResult =
+  private fun success(actualFile: Path, fileToDelete: Path): ExtractorResult =
     ExtractorResult.Success(ExtractedPlugin(actualFile, fileToDelete))
 
-  private fun fail(problem: PluginProblem, extractedPlugin: File): ExtractorResult {
+  private fun fail(problem: PluginProblem, extractedPlugin: Path): ExtractorResult {
     try {
       return ExtractorResult.Fail(problem)
     } finally {
-      FileUtils.deleteQuietly(extractedPlugin)
+      extractedPlugin.deleteQuietly()
     }
   }
 
-  private fun getExtractorResult(extractedPlugin: File): ExtractorResult {
-    val rootFiles = extractedPlugin.listFiles() ?: return fail(PluginZipIsEmpty(), extractedPlugin)
-    when {
-      rootFiles.isEmpty() -> return fail(PluginZipIsEmpty(), extractedPlugin)
-      rootFiles.size == 1 -> {
+  private fun getExtractorResult(extractedPlugin: Path): ExtractorResult {
+    val rootFiles = extractedPlugin.listFiles()
+    when (rootFiles.size) {
+      0 -> return fail(PluginZipIsEmpty(), extractedPlugin)
+      1 -> {
         val singleFile = rootFiles[0]
-        return if (singleFile.name.endsWith(".jar")) {
+        return if (singleFile.isJar()) {
           success(singleFile, extractedPlugin)
         } else if (singleFile.isDirectory) {
-          if (singleFile.name == "lib") {
+          if (singleFile.simpleName == "lib") {
             success(extractedPlugin, extractedPlugin)
           } else {
             success(singleFile, extractedPlugin)
           }
         } else {
-          fail(PluginZipContainsUnknownFile(singleFile.name), extractedPlugin)
+          fail(PluginZipContainsUnknownFile(singleFile.simpleName), extractedPlugin)
         }
       }
-      else -> return fail(PluginZipContainsMultipleFiles(rootFiles.map { it.name }.sorted()), extractedPlugin)
+      else -> return fail(PluginZipContainsMultipleFiles(rootFiles.map { it.simpleName }.sorted()), extractedPlugin)
     }
   }
 

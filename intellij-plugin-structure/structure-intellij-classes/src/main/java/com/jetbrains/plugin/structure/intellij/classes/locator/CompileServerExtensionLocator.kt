@@ -4,10 +4,12 @@
 
 package com.jetbrains.plugin.structure.intellij.classes.locator
 
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import java.io.File
+import java.nio.file.Path
 
 /**
  * Classes that added to external build process' classpath.
@@ -20,7 +22,7 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
 
   override val locationKey = CompileServerExtensionKey
 
-  override fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver> {
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
     val pluginLib = pluginFile.resolve("lib")
     if (pluginLib.isDirectory) {
       val elements = idePlugin.extensions[EXTENSION_POINT_NAME] ?: emptyList()
@@ -28,7 +30,7 @@ class CompileServerExtensionLocator(private val readMode: Resolver.ReadMode) : C
           .mapNotNull { it.getAttributeValue("classpath") }
           .flatMap { it.split(";") }
           .filter { it.endsWith(".jar") }
-          .map { File(pluginLib, it) }
+          .map { pluginLib.resolve(it) }
           .filter { it.isFile }
       return buildJarOrZipFileResolvers(allCompileJars, readMode, PluginFileOrigin.CompileServer(idePlugin))
     }

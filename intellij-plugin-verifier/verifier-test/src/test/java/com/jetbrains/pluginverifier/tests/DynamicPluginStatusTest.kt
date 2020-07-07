@@ -327,7 +327,7 @@ class DynamicPluginStatusTest {
   }
 
   private fun buildPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): IdePlugin {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar"), pluginContentBuilder)
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
     val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
     if (pluginCreationResult is PluginCreationFail) {
       Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString { it.message })
@@ -336,7 +336,7 @@ class DynamicPluginStatusTest {
   }
 
   private fun buildIde(): Ide {
-    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       file("build.txt", "IU-192.1")
       dir("lib") {
         zip("idea.jar") {

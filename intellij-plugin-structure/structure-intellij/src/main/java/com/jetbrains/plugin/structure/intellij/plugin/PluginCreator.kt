@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
 import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -22,8 +23,7 @@ import org.jdom2.Document
 import org.jdom2.Element
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.net.URL
+import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -52,15 +52,15 @@ internal class PluginCreator private constructor(
 
     @JvmStatic
     fun createPlugin(
-      pluginFile: File,
+      pluginFile: Path,
       descriptorPath: String,
       parentPlugin: PluginCreator?,
       validateDescriptor: Boolean,
       document: Document,
-      documentUrl: URL,
+      documentPath: Path,
       pathResolver: ResourceResolver
     ) = createPlugin(
-      pluginFile.name, descriptorPath, parentPlugin, validateDescriptor, document, documentUrl, pathResolver
+      pluginFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, document, documentPath, pathResolver
     )
 
     @JvmStatic
@@ -70,17 +70,19 @@ internal class PluginCreator private constructor(
       parentPlugin: PluginCreator?,
       validateDescriptor: Boolean,
       document: Document,
-      documentUrl: URL,
+      documentPath: Path,
       pathResolver: ResourceResolver
     ): PluginCreator {
       val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin)
-      pluginCreator.resolveDocumentAndValidateBean(document, documentUrl, descriptorPath, pathResolver, validateDescriptor)
+      pluginCreator.resolveDocumentAndValidateBean(
+        document, documentPath, descriptorPath, pathResolver, validateDescriptor
+      )
       return pluginCreator
     }
 
     @JvmStatic
-    fun createInvalidPlugin(pluginFile: File, descriptorPath: String, singleProblem: PluginProblem) =
-      createInvalidPlugin(pluginFile.name, descriptorPath, singleProblem)
+    fun createInvalidPlugin(pluginFile: Path, descriptorPath: String, singleProblem: PluginProblem) =
+      createInvalidPlugin(pluginFile.simpleName, descriptorPath, singleProblem)
 
     @JvmStatic
     fun createInvalidPlugin(pluginFileName: String, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
@@ -153,7 +155,7 @@ internal class PluginCreator private constructor(
     plugin.pluginVersion = pluginVersion
   }
 
-  fun setOriginalFile(originalFile: File) {
+  fun setOriginalFile(originalFile: Path) {
     plugin.originalFile = originalFile
   }
 
@@ -444,12 +446,12 @@ internal class PluginCreator private constructor(
 
   private fun resolveDocumentAndValidateBean(
     originalDocument: Document,
-    documentUrl: URL,
-    documentPath: String,
+    documentPath: Path,
+    documentName: String,
     pathResolver: ResourceResolver,
     validateDescriptor: Boolean
   ) {
-    val document = resolveXIncludesOfDocument(originalDocument, documentUrl, documentPath, pathResolver) ?: return
+    val document = resolveXIncludesOfDocument(originalDocument, documentName, pathResolver, documentPath) ?: return
     val bean = readDocumentIntoXmlBean(document) ?: return
     if (validateDescriptor) {
       validatePluginBean(bean)
@@ -461,13 +463,13 @@ internal class PluginCreator private constructor(
     plugin.underlyingDocument = document
     plugin.setInfoFromBean(bean, document)
 
-    val themeFiles = readPluginThemes(plugin, documentUrl, pathResolver) ?: return
+    val themeFiles = readPluginThemes(plugin, documentPath, pathResolver) ?: return
     plugin.declaredThemes.addAll(themeFiles)
 
     validatePlugin(plugin)
   }
 
-  private fun readPluginThemes(plugin: IdePlugin, documentUrl: URL, pathResolver: ResourceResolver): List<IdeTheme>? {
+  private fun readPluginThemes(plugin: IdePlugin, document: Path, pathResolver: ResourceResolver): List<IdeTheme>? {
     val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION]?.mapNotNull {
       it.getAttribute("path")?.value
     } ?: emptyList()
@@ -476,7 +478,7 @@ internal class PluginCreator private constructor(
 
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
-      when (val resolvedTheme = pathResolver.resolveResource(absolutePath, documentUrl)) {
+      when (val resolvedTheme = pathResolver.resolveResource(absolutePath, document)) {
         is ResourceResolver.Result.Found -> resolvedTheme.use {
           val theme = try {
             val themeJson = it.resourceStream.reader().readText()
@@ -500,11 +502,11 @@ internal class PluginCreator private constructor(
 
   private fun resolveXIncludesOfDocument(
     document: Document,
-    documentUrl: URL,
-    documentPath: String,
-    pathResolver: ResourceResolver
+    presentablePath: String,
+    pathResolver: ResourceResolver,
+    documentPath: Path
   ): Document? = try {
-    XIncluder.resolveXIncludes(document, documentUrl, documentPath, pathResolver)
+    XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
   } catch (e: XIncluderException) {
     LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
     registerProblem(XIncludeResolutionErrors(descriptorPath, e.message))

@@ -4,46 +4,51 @@
 
 package com.jetbrains.plugin.structure.base.decompress
 
-import java.io.*
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import java.io.BufferedOutputStream
+import java.io.Closeable
+import java.io.IOException
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class ZipCompressor(outputFile: File) : Closeable {
+class ZipCompressor(outputFile: Path) : Closeable {
 
-  private val outStream = ZipOutputStream(BufferedOutputStream(FileOutputStream(outputFile)))
+  private val outStream = ZipOutputStream(BufferedOutputStream(Files.newOutputStream(outputFile)))
 
   @Throws(IOException::class)
-  fun addDirectory(directory: File) {
-    val children = directory.listFiles()
-    if (children != null) {
-      for (child in children) {
-        val name = child.name
-        if (child.isDirectory) {
-          addRecursively(name, child)
-        } else {
-          addFile(name, child)
-        }
+  fun addDirectory(directory: Path) {
+    directory.listFiles().forEach { child ->
+      val name = child.simpleName
+      if (child.isDirectory) {
+        addRecursively(name, child)
+      } else {
+        addFile(name, child)
       }
     }
   }
 
-  private fun addFile(entryName: String, file: File) {
-    FileInputStream(file).use { source -> writeFileEntry(entryName, source, file.length(), file.lastModified()) }
+  private fun addFile(entryName: String, file: Path) {
+    Files.newInputStream(file).use { source ->
+      writeFileEntry(entryName, source, Files.size(file), Files.getLastModifiedTime(file).toMillis())
+    }
   }
 
-  private fun addRecursively(prefix: String, directory: File) {
+  private fun addRecursively(prefix: String, directory: Path) {
     if (prefix.isNotEmpty()) {
-      writeDirectoryEntry(prefix, directory.lastModified())
+      writeDirectoryEntry(prefix, Files.getLastModifiedTime(directory).toMillis())
     }
     val children = directory.listFiles()
-    if (children != null) {
-      for (child in children) {
-        val name = if (prefix.isEmpty()) child.name else prefix + '/' + child.name
-        if (child.isDirectory) {
-          addRecursively(name, child)
-        } else {
-          addFile(name, child)
-        }
+    children.forEach { child ->
+      val name = if (prefix.isEmpty()) child.simpleName else "$prefix/${child.simpleName}"
+      if (child.isDirectory) {
+        addRecursively(name, child)
+      } else {
+        addFile(name, child)
       }
     }
   }

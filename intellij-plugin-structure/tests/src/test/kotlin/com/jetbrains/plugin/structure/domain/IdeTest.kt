@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.nio.file.Paths
 
 class IdeTest {
 
@@ -27,15 +28,14 @@ class IdeTest {
 
   @Test
   fun `version is not specified in distributed IDE`() {
-    val idePath = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val idePath = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       dir("lib") { }
     }
 
-    val separator = File.separator
     expectedEx.expect(InvalidIdeException::class.java)
     expectedEx.expectMessage(
       "IDE by path '$idePath' is invalid: Build number is not found in the following files relative to $idePath: " +
-        "'build.txt', 'Resources${separator}build.txt', 'community${separator}build.txt', 'ultimate${separator}community${separator}build.txt'"
+        "'build.txt', '${Paths.get("Resources").resolve("build.txt")}', '${Paths.get("community").resolve("build.txt")}', '${Paths.get("ultimate").resolve("community").resolve("build.txt")}'"
     )
 
     IdeManager.createManager().createIde(idePath)
@@ -55,7 +55,7 @@ class IdeTest {
    */
   @Test
   fun `create idea from binaries`() {
-    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       file("build.txt", "IU-163.1.2.3")
       dir("plugins") {
         dir("somePlugin") {
@@ -121,7 +121,7 @@ class IdeTest {
    */
   @Test
   fun `create idea from ultimate compiled sources`() {
-    val m2Directory = buildDirectory(temporaryFolder.newFolder(".m2")) {
+    val m2Directory = buildDirectory(temporaryFolder.newFolder(".m2").toPath()) {
       dir("com") {
         dir("some") {
           dir("lib-plugin") {
@@ -144,10 +144,10 @@ class IdeTest {
         }
       }
     }
-    val mavenRepository = m2Directory.absolutePath
-    System.setProperty("MAVEN_REPOSITORY", mavenRepository)
+    val mavenRepository = m2Directory.toAbsolutePath()
+    System.setProperty("MAVEN_REPOSITORY", mavenRepository.toString())
 
-    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       file("build.txt", "IU-163.1.2.3")
       dir(".idea") {
         file("modules.xml") {
@@ -242,7 +242,7 @@ class IdeTest {
 
   @Test
   fun `plugins bundled to idea may not have versions in descriptors`() {
-    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       file("build.txt", "IU-163.1.2.3")
       dir(".idea") { }
       dir("out") {

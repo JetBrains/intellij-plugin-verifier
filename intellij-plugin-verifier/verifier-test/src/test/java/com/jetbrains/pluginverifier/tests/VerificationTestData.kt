@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.utils.listRecursivelyAllFilesWithExtension
+import com.jetbrains.plugin.structure.base.utils.readText
 import org.junit.Assert
 
 data class DescriptionHolder(val shortDescription: String, val fullDescription: String, val type: DescriptionType) {
@@ -58,7 +59,7 @@ private fun parseDescription(block: String, type: DescriptionType): DescriptionH
 }
 
 private fun sourceFiles(): Sequence<String> =
-  findMockPluginSourcePath().toFile()
+  findMockPluginSourcePath()
     .listRecursivelyAllFilesWithExtension("java")
     .asSequence()
     .map { it.readText() }

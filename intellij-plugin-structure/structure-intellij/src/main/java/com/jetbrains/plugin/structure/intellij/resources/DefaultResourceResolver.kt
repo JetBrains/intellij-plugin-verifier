@@ -4,24 +4,18 @@
 
 package com.jetbrains.plugin.structure.intellij.resources
 
-import com.jetbrains.plugin.structure.intellij.utils.ThreeState
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
-import java.net.MalformedURLException
-import java.net.URL
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.inputStream
+import java.nio.file.Path
 
 object DefaultResourceResolver : ResourceResolver {
-  override fun resolveResource(relativePath: String, base: URL): ResourceResolver.Result {
-    val url = try {
-      URL(base, relativePath)
-    } catch (e: MalformedURLException) {
-      return ResourceResolver.Result.NotFound
-    }
-    if (URLUtil.resourceExists(url) == ThreeState.YES) {
+  override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
+    val path = basePath.resolveSibling(relativePath)
+    if (path.exists()) {
       return try {
-        val stream = URLUtil.openStream(url)
-        ResourceResolver.Result.Found(url, stream)
+        ResourceResolver.Result.Found(path, path.inputStream())
       } catch (e: Exception) {
-        ResourceResolver.Result.Failed(url, e)
+        ResourceResolver.Result.Failed(path, e)
       }
     }
     return ResourceResolver.Result.NotFound

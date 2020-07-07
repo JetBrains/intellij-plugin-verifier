@@ -6,14 +6,16 @@ package com.jetbrains.plugin.structure.base.decompress
 
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.inputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.CompressorException
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.input.BoundedInputStream
 import org.apache.commons.io.input.CountingInputStream
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.zip.ZipInputStream
 
 internal sealed class Decompressor(private val outputSizeLimit: Long?) {
@@ -22,7 +24,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
     const val FILE_NAME_LENGTH_LIMIT = 255
   }
 
-  fun extract(outputDir: File) {
+  fun extract(outputDir: Path) {
     openStream()
     try {
       val actualSizeLimit = outputSizeLimit ?: Long.MAX_VALUE
@@ -41,7 +43,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
               val countingStream = CountingInputStream(boundedStream)
 
               outputFile.createParentDirs()
-              outputFile.outputStream().buffered().use { countingStream.copyTo(it) }
+              Files.newOutputStream(outputFile).buffered().use { countingStream.copyTo(it) }
 
               remainingSize -= countingStream.byteCount
               if (remainingSize < 0) {
@@ -75,7 +77,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
 }
 
-private fun getEntryFile(outputDir: File, entry: Decompressor.Entry): File {
+private fun getEntryFile(outputDir: Path, entry: Decompressor.Entry): Path {
   val independentEntryName = entry.name.replace("\\", "/")
   val parts = independentEntryName.split("/")
   if (parts.any { it.contains("..") }) {
@@ -87,11 +89,11 @@ private fun getEntryFile(outputDir: File, entry: Decompressor.Entry): File {
   return outputDir.resolve(independentEntryName)
 }
 
-internal class ZipDecompressor(private val inputStream: InputStream, sizeLimit: Long?) : Decompressor(sizeLimit) {
+internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : Decompressor(sizeLimit) {
   private lateinit var stream: ZipInputStream
 
   override fun openStream() {
-    stream = ZipInputStream(inputStream.buffered())
+    stream = ZipInputStream(zipFile.inputStream().buffered())
   }
 
   override fun nextEntry(): Entry? {
@@ -113,13 +115,12 @@ internal class ZipDecompressor(private val inputStream: InputStream, sizeLimit: 
   }
 }
 
-internal class TarDecompressor(private val inputStream: InputStream, sizeLimit: Long?) : Decompressor(sizeLimit) {
+internal class TarDecompressor(private val tarFile: Path, sizeLimit: Long?) : Decompressor(sizeLimit) {
   private var stream: TarArchiveInputStream? = null
 
   override fun openStream() {
     stream = try {
-      val inputStream = inputStream.buffered()
-      val compressorStream = CompressorStreamFactory().createCompressorInputStream(inputStream)
+      val compressorStream = CompressorStreamFactory().createCompressorInputStream(tarFile.inputStream().buffered())
       TarArchiveInputStream(compressorStream)
     } catch (e: CompressorException) {
       val cause = e.cause

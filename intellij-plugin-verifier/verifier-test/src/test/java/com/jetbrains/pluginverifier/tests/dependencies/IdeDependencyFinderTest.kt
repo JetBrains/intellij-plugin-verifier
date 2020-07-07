@@ -72,7 +72,7 @@ class IdeDependencyFinderTest {
         MockIdePlugin(
           pluginId = "com.intellij",
           pluginName = "IDEA CORE",
-          originalFile = tempFolder.newFolder("idea.core"),
+          originalFile = tempFolder.newFolder("idea.core").toPath(),
           definedModules = setOf(
             "com.intellij.modules.platform",
             "com.intellij.modules.lang",

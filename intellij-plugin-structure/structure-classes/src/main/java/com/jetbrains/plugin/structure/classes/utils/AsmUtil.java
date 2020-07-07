@@ -4,17 +4,17 @@
 
 package com.jetbrains.plugin.structure.classes.utils;
 
+import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException;
-import kotlin.io.FilesKt;
-import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class AsmUtil {
 
@@ -45,16 +45,16 @@ public class AsmUtil {
   }
 
   @NotNull
-  public static String readClassName(@NotNull File classFile) throws InvalidClassFileException, IOException {
-    try (InputStream is = FileUtils.openInputStream(classFile)) {
+  public static String readClassName(@NotNull Path classFile) throws InvalidClassFileException, IOException {
+    try (InputStream is = Files.newInputStream(classFile)) {
       String className;
       try {
         className = new ClassReader(is).getClassName();
       } catch (RuntimeException e) {
-        throw new InvalidClassFileException(FilesKt.getNameWithoutExtension(classFile), getAsmErrorMessage(e));
+        throw new InvalidClassFileException(FileUtilKt.getNameWithoutExtension(classFile), getAsmErrorMessage(e));
       }
       if (className == null) {
-        throw new InvalidClassFileException(FilesKt.getNameWithoutExtension(classFile), "class name is not available in byte-code.");
+        throw new InvalidClassFileException(FileUtilKt.getNameWithoutExtension(classFile), "class name is not available in byte-code.");
       }
       return className;
     }
@@ -62,15 +62,15 @@ public class AsmUtil {
 
   @NotNull
   public static ClassNode readClassFromFile(@NotNull String className,
-                                            @NotNull File classFile,
+                                            @NotNull Path classFile,
                                             boolean fully) throws IOException, InvalidClassFileException {
-    try (InputStream is = FileUtils.openInputStream(classFile)) {
+    try (InputStream is = Files.newInputStream(classFile)) {
       return readClassNode(className, is, fully);
     }
   }
 
   @NotNull
-  public static ClassNode readClassFromFile(@NotNull String className, @NotNull File classFile) throws IOException, InvalidClassFileException {
+  public static ClassNode readClassFromFile(@NotNull String className, @NotNull Path classFile) throws IOException, InvalidClassFileException {
     return readClassFromFile(className, classFile, true);
   }
 }

@@ -42,7 +42,7 @@ configure(allprojects) {
 
   dependencies {
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'com.github.salomonbrys.kotson:kotson:2.4.0'
 
     implementation "org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion"

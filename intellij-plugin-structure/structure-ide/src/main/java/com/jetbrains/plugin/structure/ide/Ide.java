@@ -10,17 +10,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
- * IDE can be created via {@link IdeManager#createIde(File)}.
+ * IDE can be created via {@link IdeManager#createIde(java.nio.file.Path)}.
  */
 public abstract class Ide {
   /**
-   * Returns the IDE version either from 'build.txt' or specified with {@link IdeManager#createIde(File, IdeVersion)}
+   * Returns the IDE version either from 'build.txt' or specified with {@link IdeManager#createIde(java.nio.file.Path, IdeVersion)}
    *
    * @return ide version of {@code this} instance
    */
@@ -73,7 +74,7 @@ public abstract class Ide {
    * @return the path to the Ide instance
    */
   @NotNull
-  public abstract File getIdePath();
+  public abstract Path getIdePath();
 
   /**
    * Plugins versions marked as incompatible with this IDE.

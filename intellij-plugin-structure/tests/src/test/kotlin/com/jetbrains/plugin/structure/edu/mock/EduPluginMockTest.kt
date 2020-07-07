@@ -1,24 +1,22 @@
 package com.jetbrains.plugin.structure.edu.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.edu.EduPlugin
 import com.jetbrains.plugin.structure.edu.EduPluginManager
 import com.jetbrains.plugin.structure.edu.EduPluginVersion
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 
+class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<EduPlugin, EduPluginManager>(fileSystemType) {
 
-class EduPluginMockTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
   private val iconTestContent = "<svg></svg>"
+
+  override fun createManager(extractDirectory: Path): EduPluginManager =
+    EduPluginManager.createManager(extractDirectory)
 
   @Test
   fun `parse base fields edu plugin test`() {
@@ -31,13 +29,8 @@ class EduPluginMockTest {
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
-    val pluginCreationResult = EduPluginManager.createManager().createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      Assert.fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
 
     testMockConfigs(pluginCreationSuccess.plugin)
     testMockWarnings(pluginCreationSuccess.warnings)

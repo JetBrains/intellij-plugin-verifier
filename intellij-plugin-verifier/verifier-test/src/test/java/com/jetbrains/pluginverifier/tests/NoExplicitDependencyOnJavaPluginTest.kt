@@ -171,7 +171,7 @@ class NoExplicitDependencyOnJavaPluginTest {
   private fun buildIdePlugin(
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
       this.pluginClassesContentBuilder()
 
       dir("META-INF") {
@@ -199,7 +199,7 @@ class NoExplicitDependencyOnJavaPluginTest {
     javaPluginClassesBuilder: (ContentBuilder).() -> Unit,
     groovyPluginClassesBuilder: (ContentBuilder).() -> Unit
   ): Ide {
-    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea")) {
+    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       file("build.txt", "IU-192.1")
       dir("lib") {
         zip("idea.jar") {

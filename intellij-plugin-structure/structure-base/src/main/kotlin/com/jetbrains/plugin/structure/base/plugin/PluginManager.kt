@@ -5,10 +5,15 @@
 package com.jetbrains.plugin.structure.base.plugin
 
 import java.io.File
-import java.io.InputStream
+import java.nio.file.Path
 
 interface PluginManager<out PluginType : Plugin> {
-  fun createPlugin(pluginFile: File): PluginCreationResult<PluginType>
+  @Deprecated(
+    message = "Use method with java.nio.Path instead of java.io.File",
+    replaceWith = ReplaceWith("createPlugin(pluginFile.toPath())")
+  )
+  fun createPlugin(pluginFile: File): PluginCreationResult<PluginType> =
+    createPlugin(pluginFile.toPath())
 
-  fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<PluginType>
+  fun createPlugin(pluginFile: Path): PluginCreationResult<PluginType>
 }

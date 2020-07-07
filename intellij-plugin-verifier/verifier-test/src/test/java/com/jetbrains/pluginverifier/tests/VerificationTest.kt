@@ -23,8 +23,8 @@ class VerificationTest {
       val idePath = findMockIdePath()
       val pluginFile = findMockPluginJarPath()
 
-      val ide = IdeManager.createManager().createIde(idePath.toFile())
-      val plugin = (IdePluginManager.createManager().createPlugin(pluginFile.toFile()) as PluginCreationSuccess).plugin
+      val ide = IdeManager.createManager().createIde(idePath)
+      val plugin = (IdePluginManager.createManager().createPlugin(pluginFile) as PluginCreationSuccess).plugin
       verificationResult = VerificationRunner().runPluginVerification(ide, plugin) as PluginVerificationResult.Verified
     }
 

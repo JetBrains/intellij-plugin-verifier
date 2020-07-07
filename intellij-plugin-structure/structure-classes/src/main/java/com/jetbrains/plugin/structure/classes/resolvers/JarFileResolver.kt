@@ -9,14 +9,16 @@ import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
-import java.io.File
+import java.io.IOException
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
+import java.util.zip.ZipInputStream
 
 class JarFileResolver(
-  private val path: Path,
+  private val jarPath: Path,
   override val readMode: ReadMode,
   private val fileOrigin: FileOrigin
 ) : Resolver() {
@@ -37,37 +39,74 @@ class JarFileResolver(
 
   private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
 
-  private val zipFile: ZipFile
+  private val zipFs: FileSystem
+
+  private val zipRoot: Path
 
   init {
-    require(path.exists()) { "File does not exist: $path" }
-    require(path.simpleName.endsWith(".jar") || path.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $path" }
-    zipFile = ZipFile(path.toFile())
+    require(jarPath.exists()) { "File does not exist: $jarPath" }
+    require(jarPath.simpleName.endsWith(".jar") || jarPath.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $jarPath" }
+    validateZipArchiveOnJavaPriorTo11(jarPath)
+    zipFs = FileSystems.newFileSystem(jarPath, JarFileResolver::class.java.classLoader)
+    zipRoot = zipFs.rootDirectories.single()
     readClassNamesAndServiceProviders()
   }
 
-  private fun readClassNamesAndServiceProviders() {
-    for (entry in zipFile.entries().iterator()) {
-      val entryName = entry.name.toSystemIndependentName()
-      if (entryName.endsWith(CLASS_SUFFIX)) {
-        val className = entryName.substringBeforeLast(CLASS_SUFFIX)
-        classes.add(className)
-        packageSet.addPackagesOfClass(className)
-      } else if (entryName.endsWith(PROPERTIES_SUFFIX)) {
-        val fullBundleName = getBundleNameByBundlePath(entryName)
-        bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
-      } else if (!entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2) {
-        val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
-        serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider, zipFile)
+  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8197398:
+  // File walker in Java before 11 infinitely walks some zip files
+  // that have invalid zip entries, for example:
+  // <zip root>
+  //   /some
+  //     /
+  //     /entry.txt
+  //   /some2
+  //     ...
+  // Zip entry "/some//" will make the file walker re-visit the "/some" directory over and over again.
+  // This can lead to OutOfMemory in stack of the visited entries.
+  private fun validateZipArchiveOnJavaPriorTo11(zipFile: Path) {
+    ZipInputStream(zipFile.inputStream()).use { zis ->
+      var entry = zis.nextEntry
+      while (entry != null) {
+        if (entry.name.endsWith("//")) {
+          throw IOException("Zip archive $zipFile contains invalid cyclic entry ${entry.name}")
+        }
+        entry = zis.nextEntry
       }
     }
   }
 
-  private fun readServiceImplementationNames(serviceProvider: String, zipFile: ZipFile): Set<String> {
+  private fun readClassNamesAndServiceProviders() {
+    Files.walk(zipRoot).use { stream ->
+      stream.forEach { entry ->
+        val entryName = getPathInJar(entry)
+        when {
+          entryName.endsWith(CLASS_SUFFIX) -> {
+            val className = entryName.substringBeforeLast(CLASS_SUFFIX)
+            classes.add(className)
+            packageSet.addPackagesOfClass(className)
+          }
+          entryName.endsWith(PROPERTIES_SUFFIX) -> {
+            val fullBundleName = getBundleNameByBundlePath(entryName)
+            bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
+          }
+          !entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2 -> {
+            val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
+            serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider)
+          }
+        }
+      }
+    }
+  }
+
+  private fun getPathInJar(entry: Path): String = zipRoot.relativize(entry).toString().toSystemIndependentName()
+
+  private fun readServiceImplementationNames(serviceProvider: String): Set<String> {
     val entry = SERVICE_PROVIDERS_PREFIX + serviceProvider
-    val zipEntry = zipFile.getEntry(entry) ?: return emptySet()
-    val lines = zipFile.getInputStream(zipEntry).reader().readLines()
-    return lines.map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
+    val entryPath = zipFs.getPath(entry)
+    if (!entryPath.exists()) {
+      return emptySet()
+    }
+    return entryPath.readLines().map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
   }
 
   val implementedServiceProviders: Map<String, Set<String>>
@@ -83,10 +122,9 @@ class JarFileResolver(
     get() = classes
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
-    for (zipEntry in zipFile.entries().iterator()) {
-      val entryName = zipEntry.name
-      if (entryName.endsWith(CLASS_SUFFIX)) {
-        val className = entryName.removeSuffix(CLASS_SUFFIX)
+    Files.walk(zipRoot).use { stream ->
+      for (zipEntry in stream.filter { it.simpleName.endsWith(CLASS_SUFFIX) }) {
+        val className = getPathInJar(zipEntry).removeSuffix(CLASS_SUFFIX)
         val result = readClass(className, zipEntry)
         if (!processor(result)) {
           return false
@@ -104,12 +142,11 @@ class JarFileResolver(
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
-    val zipEntry = try {
-      zipFile.getEntry(className + CLASS_SUFFIX) ?: return ResolutionResult.NotFound
-    } catch (e: Exception) {
-      return ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
+    val classPath = zipRoot.resolve(className + CLASS_SUFFIX)
+    if (!classPath.exists()) {
+      ResolutionResult.NotFound
     }
-    return readClass(className, zipEntry)
+    return readClass(className, classPath)
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
@@ -138,15 +175,16 @@ class JarFileResolver(
   }
 
   private fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    val resourceEntry = zipFile.getEntry(bundleResourceName) ?: return null
-    return zipFile.getInputStream(resourceEntry).use {
-      PropertyResourceBundle(it)
+    val path = zipRoot.resolve(bundleResourceName)
+    if (!path.exists()) {
+      return null
     }
+    return path.inputStream().use { PropertyResourceBundle(it) }
   }
 
-  private fun readClass(className: String, entry: ZipEntry): ResolutionResult<ClassNode> =
+  private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> =
     try {
-      val classNode = zipFile.getInputStream(entry).use {
+      val classNode = classPath.inputStream().use {
         AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
       }
       ResolutionResult.Found(classNode, fileOrigin)
@@ -157,22 +195,24 @@ class JarFileResolver(
       ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
 
-  override fun close() = zipFile.close()
+  override fun close() {
+    zipFs.close()
+  }
 
-  override fun toString() = path.toAbsolutePath().toString()
+  override fun toString() = jarPath.toAbsolutePath().toString()
 
 }
 
 fun buildJarOrZipFileResolvers(
-  jarsOrZips: Iterable<File>,
+  jarsOrZips: Iterable<Path>,
   readMode: Resolver.ReadMode,
   parentOrigin: FileOrigin
 ): List<Resolver> {
   val resolvers = arrayListOf<Resolver>()
   resolvers.closeOnException {
     jarsOrZips.mapTo(resolvers) { file ->
-      val fileOrigin = JarOrZipFileOrigin(file.name, parentOrigin)
-      JarFileResolver(file.toPath(), readMode, fileOrigin)
+      val fileOrigin = JarOrZipFileOrigin(file.simpleName, parentOrigin)
+      JarFileResolver(file, readMode, fileOrigin)
     }
   }
   return resolvers

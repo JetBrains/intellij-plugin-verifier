@@ -1,58 +1,34 @@
 package com.jetbrains.plugin.structure.edu.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.edu.bean.Vendor
 import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
-import org.junit.Assert
-import org.junit.Rule
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
-
-class EduInvalidPluginsTest {
-  companion object {
-    fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-      try {
-        val creationFail = getFailedResult(pluginFile)
-        val actualProblems = creationFail.errorsAndWarnings
-        Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
-      } finally {
-        pluginFile.deleteLogged()
-      }
-    }
-
-    private fun getFailedResult(pluginFile: File): PluginCreationFail<EduPlugin> {
-      val pluginCreationResult = EduPluginManager.createManager().createPlugin(pluginFile)
-      if (pluginCreationResult is PluginCreationSuccess) {
-        Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
-      }
-      return pluginCreationResult as PluginCreationFail
-    }
-  }
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
+class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<EduPlugin, EduPluginManager>(fileSystemType) {
+  override fun createManager(extractDirectory: Path): EduPluginManager =
+    EduPluginManager.createManager(extractDirectory)
 
   @Test(expected = IllegalArgumentException::class)
   fun `file does not exist`() {
-    assertExpectedProblems(File("does-not-exist.zip"), emptyList())
+    assertProblematicPlugin(Paths.get("does-not-exist.zip"), emptyList())
   }
 
   @Test
   fun `invalid file extension`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(createIncorrectEduPluginFile(incorrect.name)))
+    assertProblematicPlugin(incorrect, listOf(createIncorrectEduPluginFile(incorrect.simpleName)))
   }
 
   @Test
@@ -127,13 +103,13 @@ class EduInvalidPluginsTest {
   }
 
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: EduPluginJsonBuilder.() -> Unit) {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("course.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("course.zip")) {
       file(EduPluginManager.DESCRIPTOR_NAME) {
         val builder = perfectEduPluginBuilder
         builder.descriptor()
         builder.asString()
       }
     }
-    assertExpectedProblems(pluginFile, listOf(problem))
+    assertProblematicPlugin(pluginFile, listOf(problem))
   }
 }

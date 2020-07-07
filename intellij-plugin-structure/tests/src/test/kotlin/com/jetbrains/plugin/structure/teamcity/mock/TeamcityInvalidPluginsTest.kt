@@ -1,86 +1,65 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.writeText
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
-class TeamcityInvalidPluginsTest {
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<TeamcityPlugin, TeamcityPluginManager>(fileSystemType) {
   @Rule
   @JvmField
   val expectedEx: ExpectedException = ExpectedException.none()
 
+  override fun createManager(extractDirectory: Path): TeamcityPluginManager =
+    TeamcityPluginManager.createManager(extractDirectory)
+
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(createIncorrectTeamCityPluginFile(incorrect.name)))
+    assertProblematicPlugin(incorrect, listOf(createIncorrectTeamCityPluginFile(incorrect.simpleName)))
   }
 
   @Test
   fun `plugin file does not exist`() {
-    val nonExistentFile = File("non-existent-file")
+    val nonExistentFile = Paths.get("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    TeamcityPluginManager.createManager().createPlugin(nonExistentFile)
+    createPluginSuccessfully(nonExistentFile)
   }
 
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.zip")
-    assertExpectedProblems(brokenZipArchive, listOf(PluginDescriptorIsNotFound("teamcity-plugin.xml")))
+    assertProblematicPlugin(brokenZipArchive, listOf(PluginDescriptorIsNotFound("teamcity-plugin.xml")))
   }
 
   @Test
   fun `no meta-inf plugin xml found`() {
     val folder = temporaryFolder.newFolder()
-    assertExpectedProblems(folder, listOf(PluginDescriptorIsNotFound("teamcity-plugin.xml")))
+    assertProblematicPlugin(folder, listOf(PluginDescriptorIsNotFound("teamcity-plugin.xml")))
   }
-
-  private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-    val creationFail = getFailedResult(pluginFile)
-    assertEquals(expectedProblems, creationFail.errorsAndWarnings)
-  }
-
-  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<TeamcityPlugin> {
-    val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
-    assertTrue(pluginCreationResult is PluginCreationSuccess)
-    return pluginCreationResult as PluginCreationSuccess
-  }
-
-  private fun getFailedResult(pluginFile: File): PluginCreationFail<TeamcityPlugin> {
-    val pluginCreationResult = TeamcityPluginManager.createManager().createPlugin(pluginFile)
-    assertTrue(pluginCreationResult is PluginCreationFail)
-    return pluginCreationResult as PluginCreationFail
-  }
-
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
-    assertExpectedProblems(pluginFolder, expectedProblems)
+    assertProblematicPlugin(pluginFolder, expectedProblems)
   }
 
-  private fun getTempPluginFolder(pluginXmlContent: String): File {
+  private fun getTempPluginFolder(pluginXmlContent: String): Path {
     val pluginFolder = temporaryFolder.newFolder()
-    pluginFolder.mkdirs()
-    File(pluginFolder, "teamcity-plugin.xml").writeText(pluginXmlContent)
+    pluginFolder.resolve("teamcity-plugin.xml").writeText(pluginXmlContent)
     return pluginFolder
   }
 

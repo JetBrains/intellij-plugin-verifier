@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -17,10 +18,10 @@ class IdeImpl extends Ide {
   private final List<IdePlugin> myBundledPlugins;
 
   private final IdeVersion myVersion;
-  private final File myIdePath;
+  private final Path myIdePath;
   private final Set<PluginIdAndVersion> myIncompatiblePlugins;
 
-  IdeImpl(@NotNull File idePath,
+  IdeImpl(@NotNull Path idePath,
           @NotNull IdeVersion version,
           @NotNull List<IdePlugin> bundledPlugins,
           @NotNull Set<PluginIdAndVersion> incompatiblePlugins) {
@@ -44,7 +45,7 @@ class IdeImpl extends Ide {
 
   @NotNull
   @Override
-  public File getIdePath() {
+  public Path getIdePath() {
     return myIdePath;
   }
 

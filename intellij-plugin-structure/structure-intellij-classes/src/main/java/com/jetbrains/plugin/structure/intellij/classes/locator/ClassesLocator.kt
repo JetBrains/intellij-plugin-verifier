@@ -6,10 +6,10 @@ package com.jetbrains.plugin.structure.intellij.classes.locator
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import java.io.File
+import java.nio.file.Path
 
 interface ClassesLocator {
   val locationKey: LocationKey
 
-  fun findClasses(idePlugin: IdePlugin, pluginFile: File): List<Resolver>
+  fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver>
 }

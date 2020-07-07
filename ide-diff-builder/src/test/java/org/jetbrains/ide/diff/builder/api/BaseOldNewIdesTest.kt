@@ -1,10 +1,14 @@
 package org.jetbrains.ide.diff.builder.api
 
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.ide.IdeManager
 import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
 import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.junit.Assert
-import java.io.File
+import java.lang.IllegalArgumentException
+import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class BaseOldNewIdesTest {
@@ -14,12 +18,12 @@ abstract class BaseOldNewIdesTest {
 
     fun getNewIdeFile() = getMockIdesRoot().resolve("new-ide")
 
-    private fun getMockIdesRoot(): File {
-      val testDataRoot = File("build").resolve("mock-ides")
+    private fun getMockIdesRoot(): Path {
+      val testDataRoot = Paths.get("build").resolve("mock-ides")
       if (testDataRoot.isDirectory) {
         return testDataRoot
       }
-      return File("ide-diff-builder").resolve(testDataRoot).also {
+      return Paths.get("ide-diff-builder").resolve(testDataRoot).also {
         check(it.isDirectory)
       }
     }
@@ -32,11 +36,27 @@ abstract class BaseOldNewIdesTest {
     val oldIde = IdeManager.createManager().createIde(oldIdeFile)
     val newIde = IdeManager.createManager().createIde(newIdeFile)
 
-    val javaHome = System.getenv("JAVA_HOME")
-    requireNotNull(javaHome) { "JAVA_HOME is not specified" }
-    val jdkPath = Paths.get(javaHome)
+    val jdkHome = getJdkPathForTests()
 
-    return IdeDiffBuilder(PackagesClassFilter(emptyList()), jdkPath).buildIdeDiff(oldIde, newIde)
+    return IdeDiffBuilder(PackagesClassFilter(emptyList()), jdkHome).buildIdeDiff(oldIde, newIde)
+  }
+
+  private fun getJdkPathForTests(): Path {
+    val javaHome = System.getenv("JAVA_HOME")?.let { Paths.get(it) }
+    if (javaHome != null && javaHome.exists()) {
+      return javaHome
+    }
+
+    val jvmHomeDir = Paths.get("/usr/lib/jvm")
+    if (jvmHomeDir.exists()) {
+      val someJdk = jvmHomeDir.listFiles().firstOrNull { it.isDirectory }
+      if (someJdk != null) {
+        println("Using $someJdk as JDK in tests")
+        return someJdk
+      }
+    }
+
+    throw IllegalArgumentException("No suitable JDK is found for the test")
   }
 
   fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {

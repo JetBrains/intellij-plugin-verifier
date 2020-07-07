@@ -141,7 +141,7 @@ class FileRepositoryTest {
     for (i in 1..10) {
       val file = repositoryDir.resolve(i.toString())
       file.toFile().writeBytes(byteArrayOf(0))
-      assertTrue(file.toFile().fileSize == ONE_BYTE)
+      assertTrue(file.fileSize == ONE_BYTE)
     }
     assertTrue(repositoryDir.fileSize == ONE_BYTE * 10)
 

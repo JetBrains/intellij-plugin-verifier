@@ -119,6 +119,24 @@ fun Throwable.getStackTraceAsString(): String {
   return sw.buffer.toString()
 }
 
+fun Throwable.getShortExceptionMessage(): String =
+  buildString {
+    append(this@getShortExceptionMessage.javaClass.name)
+    val eMessage = message
+    if (eMessage != null) {
+      append(" ($eMessage)")
+    }
+    var cause = this@getShortExceptionMessage.cause
+    while (cause != null) {
+      append(" caused by ").append(cause.javaClass.name)
+      val causeMessage = cause.message
+      if (causeMessage != null) {
+        append(" ($causeMessage)")
+      }
+      cause = cause.cause
+    }
+  }
+
 fun ExecutorService.shutdownAndAwaitTermination(timeout: Long, timeUnit: TimeUnit) {
   // Disable new tasks from being submitted
   shutdown()

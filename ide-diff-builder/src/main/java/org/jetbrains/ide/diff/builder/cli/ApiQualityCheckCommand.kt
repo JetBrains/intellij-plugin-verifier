@@ -40,6 +40,7 @@ import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.streams.toList
 import kotlin.system.exitProcess
 
 /**
@@ -110,12 +111,14 @@ class ApiQualityCheckCommand : Command {
     val plugins = mutableListOf<IdePlugin>()
     val pluginsPath = cliOptions.pluginsBuiltFromSourcesPath?.let { Paths.get(it) }
     if (pluginsPath != null) {
-      val pluginFiles = Files.list(pluginsPath).filter {
-        it.isDirectory || it.extension == "zip" || it.extension == "jar"
+      val pluginFiles = Files.list(pluginsPath).use { stream ->
+        stream
+          .filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
+          .toList()
       }
       for (pluginFile in pluginFiles) {
         LOG.info("Reading plugin frmo: $pluginFile")
-        val idePlugin = with(IdePluginManager.createManager().createPlugin(pluginFile.toFile())) {
+        val idePlugin = with(IdePluginManager.createManager().createPlugin(pluginFile.toFile().toPath())) {
           when (this) {
             is PluginCreationSuccess -> plugin
             is PluginCreationFail -> null

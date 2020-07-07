@@ -7,8 +7,7 @@ package com.jetbrains.plugin.structure.intellij.xinclude
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
-import java.net.MalformedURLException
-import java.net.URL
+import java.nio.file.Path
 import java.util.*
 import java.util.regex.Pattern
 
@@ -24,14 +23,14 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     @Throws(XIncluderException::class)
     fun resolveXIncludes(
       document: Document,
-      documentUrl: URL,
-      documentPath: String,
-      resourceResolver: ResourceResolver
-    ): Document = XIncluder(resourceResolver).resolveXIncludes(document, documentUrl, documentPath)
+      presentablePath: String,
+      resourceResolver: ResourceResolver,
+      documentPath: Path
+    ): Document = XIncluder(resourceResolver).resolveXIncludes(document, presentablePath, documentPath)
   }
 
-  private fun resolveXIncludes(document: Document, documentUrl: URL, documentPath: String): Document {
-    val startEntry = XIncludeEntry(documentPath, documentUrl)
+  private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {
+    val startEntry = XIncludeEntry(presentablePath, documentPath)
     if (isIncludeElement(document.rootElement)) {
       throw XIncluderException(listOf(startEntry), "Invalid root element ${document.rootElement.getElementNameAndAttributes()}")
     }
@@ -61,25 +60,21 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
     val baseAttribute = xincludeElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE)
-    val baseUrl = if (baseAttribute != null) {
-      try {
-        URL(baseAttribute)
-      } catch (e: MalformedURLException) {
-        throw XIncluderException(bases, "Invalid 'base' attribute: '$baseAttribute' in $presentableXInclude")
-      }
-    } else {
-      bases.peek()!!.documentUrl
+    if (baseAttribute != null) {
+      throw XIncluderException(bases, "'base' attribute of xi:include is not supported!")
     }
 
-    when (val resourceResult = resourceResolver.resolveResource(href, baseUrl)) {
+    val basePath = bases.peek()!!.documentPath
+
+    when (val resourceResult = resourceResolver.resolveResource(href, basePath)) {
       is ResourceResolver.Result.Found -> resourceResult.use {
         val remoteDocument = try {
-          JDOMUtil.loadDocument(it.resourceStream)
+          JDOMUtil.loadDocument(it.resourceStream.buffered())
         } catch (e: Exception) {
           throw XIncluderException(bases, "Invalid document '$href' referenced in $presentableXInclude", e)
         }
 
-        val xincludeEntry = XIncludeEntry(href, resourceResult.url)
+        val xincludeEntry = XIncludeEntry(href, resourceResult.path)
         val xIncludeElements = resolveXIncludesOfRemoteDocument(remoteDocument, xincludeElement, xincludeEntry, bases)
         val startComment = Comment("Start $presentableXInclude")
         val endComment = Comment("End $presentableXInclude")
@@ -141,7 +136,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     if (index >= 0) {
       val cycle = bases.drop(index) + listOf(xincludeEntry)
       val prefix = bases.take(index + 1)
-      throw XIncluderException(prefix, "Circular includes: " + cycle.joinToString(separator = " -> ") { it.documentPath })
+      throw XIncluderException(prefix, "Circular includes: " + cycle.joinToString(separator = " -> ") { it.presentablePath })
     }
   }
 
@@ -200,7 +195,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     val subTagName = selectorMatcher.group(2)?.drop(1)
     val selectedChildren = if (subTagName != null) {
       val child = remoteRootElement.getChild(subTagName)
-        ?: throw XIncluderException(bases, "No elements are selected in document '${xincludeEntry.documentPath}' referenced in ${xincludeElement.getElementNameAndAttributes()}")
+        ?: throw XIncluderException(bases, "No elements are selected in document '${xincludeEntry.presentablePath}' referenced in ${xincludeElement.getElementNameAndAttributes()}")
       child.content
     } else {
       remoteRootElement.content

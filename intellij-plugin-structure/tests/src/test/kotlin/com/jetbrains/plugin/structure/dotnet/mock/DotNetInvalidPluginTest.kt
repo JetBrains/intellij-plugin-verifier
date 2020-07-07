@@ -1,59 +1,57 @@
 package com.jetbrains.plugin.structure.dotnet.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
-import org.junit.Assert
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
-import org.junit.rules.TemporaryFolder
-import java.io.File
-import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-
-class DotNetInvalidPluginTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ReSharperPlugin, ReSharperPluginManager>(fileSystemType) {
   @Rule
   @JvmField
   val expectedEx: ExpectedException = ExpectedException.none()
 
+  override fun createManager(extractDirectory: Path) =
+    ReSharperPluginManager.createManager(extractDirectory)
+
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(createIncorrectDotNetPluginFileProblem(incorrect.name)))
+    assertProblematicPlugin(incorrect, listOf(createIncorrectDotNetPluginFileProblem(incorrect.simpleName)))
   }
 
   @Test
   fun `plugin file does not exist`() {
-    val nonExistentFile = File("non-existent-file")
+    val nonExistentFile = Paths.get("non-existent-file")
     expectedEx.expect(IllegalArgumentException::class.java)
     expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    ReSharperPluginManager.createPlugin(nonExistentFile)
+    createPluginSuccessfully(nonExistentFile)
   }
 
   @Test
   fun `unable to extract plugin`() {
     val brokenZipArchive = temporaryFolder.newFile("broken.nupkg")
-    assertExpectedProblems(brokenZipArchive, listOf(PluginDescriptorIsNotFound("*.nuspec")))
+    assertProblematicPlugin(brokenZipArchive, listOf(PluginDescriptorIsNotFound("*.nuspec")))
   }
 
   @Test
   fun `no meta-inf plugin xml found`() {
     val file = temporaryFolder.newFile("withoutDescriptor.nupkg")
-    ZipOutputStream(FileOutputStream(file)).use { it.putNextEntry(ZipEntry("randomEntry.txt")) }
-    assertExpectedProblems(file, listOf(PluginDescriptorIsNotFound("*.nuspec")))
+    ZipOutputStream(Files.newOutputStream(file)).use { it.putNextEntry(ZipEntry("randomEntry.txt")) }
+    assertProblematicPlugin(file, listOf(PluginDescriptorIsNotFound("*.nuspec")))
   }
 
   @Test
@@ -106,30 +104,12 @@ class DotNetInvalidPluginTest {
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginArchive(pluginXmlContent)
-    assertExpectedProblems(pluginFolder, expectedProblems)
+    assertProblematicPlugin(pluginFolder, expectedProblems)
   }
 
-
-  private fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-    val creationFail = getFailedResult(pluginFile)
-    Assert.assertEquals(expectedProblems, creationFail.errorsAndWarnings)
-  }
-
-  private fun getSuccessResult(pluginFile: File): PluginCreationSuccess<ReSharperPlugin> {
-    val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
-    Assert.assertTrue(pluginCreationResult is PluginCreationSuccess)
-    return pluginCreationResult as PluginCreationSuccess
-  }
-
-  private fun getFailedResult(pluginFile: File): PluginCreationFail<ReSharperPlugin> {
-    val pluginCreationResult = ReSharperPluginManager.createPlugin(pluginFile)
-    Assert.assertTrue(pluginCreationResult is PluginCreationFail)
-    return pluginCreationResult as PluginCreationFail
-  }
-
-  private fun getTempPluginArchive(pluginXmlContent: String): File {
+  private fun getTempPluginArchive(pluginXmlContent: String): Path {
     val pluginFile = temporaryFolder.newFile("archive.nupkg")
-    ZipOutputStream(FileOutputStream(pluginFile)).use {
+    ZipOutputStream(Files.newOutputStream(pluginFile)).use {
       it.putNextEntry(ZipEntry("Vendor.PluginName.nuspec"))
       it.write(pluginXmlContent.toByteArray())
       it.closeEntry()

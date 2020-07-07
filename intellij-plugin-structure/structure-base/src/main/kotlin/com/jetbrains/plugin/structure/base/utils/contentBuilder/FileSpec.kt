@@ -5,11 +5,12 @@
 package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
 import com.jetbrains.plugin.structure.base.utils.createDir
-import java.io.File
+import com.jetbrains.plugin.structure.base.utils.writeBytes
+import java.nio.file.Path
 
 class FileSpec(private val content: ByteArray) : ContentSpec {
-  override fun generate(target: File) {
-    target.parentFile?.createDir()
+  override fun generate(target: Path) {
+    target.parent?.createDir()
     target.writeBytes(content)
   }
 }

@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import java.io.File
+import java.nio.file.Paths
 
 /**
  * Command-line entry point of feature extractor.
@@ -18,8 +18,8 @@ import java.io.File
 fun main(args: Array<String>) {
   require(args.size == 2) { "Usage: <plugin> <ide>" }
   val jsonSerializer = Gson()
-  val pluginFile = File(args[0])
-  val ideaFile = File(args[1])
+  val pluginFile = Paths.get(args[0])
+  val ideaFile = Paths.get(args[1])
   when (val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)) {
     is PluginCreationSuccess -> {
       val ide = IdeManager.createManager().createIde(ideaFile)

@@ -1,11 +1,16 @@
 package com.jetbrains.pluginverifier.misc
 
 import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.readText
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.pluginverifier.ide.IdeDownloader.Companion.stripTopLevelDirectory
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.Path
 
 class StripTopLevelDirectoryTest {
 
@@ -18,9 +23,9 @@ class StripTopLevelDirectoryTest {
    */
   @Test
   fun `empty directory`() {
-    val f = tempFolder.newFolder()
-    stripTopLevelDirectory(f.toPath())
-    assertArrayEquals(emptyArray(), f.list())
+    val f = tempFolder.newFolder().toPath()
+    stripTopLevelDirectory(f)
+    assertEquals(emptyList<Path>(), f.listFiles())
   }
 
   /**
@@ -29,10 +34,10 @@ class StripTopLevelDirectoryTest {
    */
   @Test
   fun singleEmptyDirectory() {
-    val f = tempFolder.newFolder()
+    val f = tempFolder.newFolder().toPath()
     f.resolve("empty").createDir()
-    stripTopLevelDirectory(f.toPath())
-    assertTrue(f.listFiles().orEmpty().isEmpty())
+    stripTopLevelDirectory(f)
+    assertTrue(f.listFiles().isEmpty())
   }
 
   /**
@@ -42,10 +47,10 @@ class StripTopLevelDirectoryTest {
    */
   @Test
   fun `more than one file means no change`() {
-    val f = tempFolder.newFolder()
+    val f = tempFolder.newFolder().toPath()
     f.resolve("a").createDir()
     f.resolve("b").createDir()
-    stripTopLevelDirectory(f.toPath())
+    stripTopLevelDirectory(f)
     assertEquals(
       listOf(f.resolve("a"), f.resolve("b")),
       f.listFiles().orEmpty().sorted()
@@ -65,14 +70,14 @@ class StripTopLevelDirectoryTest {
    */
   @Test
   fun stripped() {
-    val f = tempFolder.newFolder()
+    val f = tempFolder.newFolder().toPath()
     val s = f.resolve("s").createDir()
     s.resolve("a").createDir()
     s.resolve("b").writeText("42")
-    stripTopLevelDirectory(f.toPath())
+    stripTopLevelDirectory(f)
     assertEquals(
       listOf(f.resolve("a"), f.resolve("b")),
-      f.listFiles().orEmpty().sorted()
+      f.listFiles().sorted()
     )
     assertEquals("42", f.resolve("b").readText())
   }
@@ -91,17 +96,17 @@ class StripTopLevelDirectoryTest {
    */
   @Test
   fun conflict() {
-    val f = tempFolder.newFolder()
+    val f = tempFolder.newFolder().toPath()
     val s = f.resolve("s").createDir()
     s.resolve("a").createDir()
 
     val ss = s.resolve("s").createDir()
     ss.resolve("b.txt").writeText("42")
 
-    stripTopLevelDirectory(f.toPath())
+    stripTopLevelDirectory(f)
     assertEquals(
       listOf(f.resolve("a"), f.resolve("s")),
-      f.listFiles().orEmpty().sorted()
+      f.listFiles().sorted()
     )
 
     assertEquals("42", f.resolve("s").resolve("b.txt").readText())

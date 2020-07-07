@@ -1,28 +1,40 @@
 package com.jetbrains.plugin.structure.xinclude
 
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.readText
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
+import org.jdom2.Document
+import org.jdom2.JDOMException
 import org.jdom2.output.Format
 import org.jdom2.output.XMLOutputter
 import org.junit.Assert
 import org.junit.Test
-import java.io.File
+import java.io.IOException
+import java.net.URISyntaxException
+import java.net.URL
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class XIncluderTest {
 
-  private val testDataDirectory = URLUtil.urlToFile(XIncluderTest::class.java.getResource("/xinclude"))
+  private val testDataDirectory = Paths.get(XIncluderTest::class.java.getResource("/xinclude").toURI())
 
   private val resourceResolver = DefaultResourceResolver
 
-  private fun checkSuccessfullyResolved(testXml: File, expectedXml: File) {
-    val testUrl = testXml.toURI().toURL()
-    val testDocument = JDOMUtil.loadDocument(testUrl)
-    val expectedDocument = JDOMUtil.loadDocument(expectedXml.toURI().toURL())
+  @Throws(JDOMException::class, IOException::class, URISyntaxException::class)
+  private fun loadDocument(url: URL): Document =
+    url.openStream().use { stream -> JDOMUtil.loadDocument(stream) }
+  
+  private fun checkSuccessfullyResolved(testXml: Path, expectedXml: Path) {
+    val testUrl = testXml.toUri().toURL()
+    val testDocument = loadDocument(testUrl)
+    val expectedDocument = loadDocument(expectedXml.toUri().toURL())
 
-    val resolvedDocument = XIncluder.resolveXIncludes(testDocument, testUrl, testXml.name, resourceResolver)
+    val resolvedDocument = XIncluder.resolveXIncludes(testDocument, testXml.simpleName, resourceResolver, testXml)
 
     val xmlOutputter = XMLOutputter(Format.getPrettyFormat())
     val expectedString = xmlOutputter.outputString(expectedDocument)
@@ -41,10 +53,10 @@ class XIncluderTest {
     val testXml = testBase.resolve("test.xml")
     val errorText = testBase.resolve("expectedError.txt").readText()
 
-    val testUrl = testXml.toURI().toURL()
-    val testDocument = JDOMUtil.loadDocument(testUrl)
+    val testUrl = testXml.toUri().toURL()
+    val testDocument = loadDocument(testUrl)
     try {
-      XIncluder.resolveXIncludes(testDocument, testUrl, testXml.name, resourceResolver)
+      XIncluder.resolveXIncludes(testDocument, testXml.simpleName, resourceResolver, testXml)
     } catch (e: XIncluderException) {
       Assert.assertEquals(errorText, e.message)
       return
@@ -52,7 +64,7 @@ class XIncluderTest {
     Assert.fail("XIncluderException is not thrown as expected")
   }
 
-  private fun resolveTestBase(testName: String, success: Boolean): File {
+  private fun resolveTestBase(testName: String, success: Boolean): Path {
     val testBase = testDataDirectory.resolve(if (success) "success" else "error").resolve(testName)
     check(testBase.isDirectory) { "$testBase does not exist" }
     return testBase

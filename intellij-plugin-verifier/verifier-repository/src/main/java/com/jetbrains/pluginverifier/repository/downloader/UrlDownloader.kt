@@ -147,7 +147,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     checkIfInterrupted()
     response.body().use { responseBody ->
       val expectedSize = responseBody!!.contentLength()
-      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file.toFile()) { }
+      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file) { }
     }
   }
 

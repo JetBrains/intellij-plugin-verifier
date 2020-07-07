@@ -7,20 +7,19 @@ package com.jetbrains.plugin.structure.base.utils
 import com.jetbrains.plugin.structure.base.decompress.TarDecompressor
 import com.jetbrains.plugin.structure.base.decompress.ZipCompressor
 import com.jetbrains.plugin.structure.base.decompress.ZipDecompressor
-import java.io.File
-import java.io.InputStream
+import java.nio.file.Path
 
-fun extractZip(inputStream: InputStream, destination: File, outputSizeLimit: Long? = null): File {
+fun extractZip(pluginFile: Path, destination: Path, outputSizeLimit: Long? = null): Path {
   destination.createDir()
-  ZipDecompressor(inputStream, outputSizeLimit).extract(destination)
+  ZipDecompressor(pluginFile, outputSizeLimit).extract(destination)
   return destination
 }
 
-fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
+fun Path.extractTo(destination: Path, outputSizeLimit: Long? = null): Path {
   val decompressor = when {
-    name.endsWith(".zip") -> ZipDecompressor(this.inputStream(), outputSizeLimit)
-    name.endsWith(".tar.gz") -> TarDecompressor(this.inputStream(), outputSizeLimit)
-    else -> throw IllegalArgumentException("Unknown type archive type: ${destination.name}")
+    simpleName.endsWith(".zip") -> ZipDecompressor(this, outputSizeLimit)
+    simpleName.endsWith(".tar.gz") -> TarDecompressor(this, outputSizeLimit)
+    else -> throw IllegalArgumentException("Unknown type archive type: ${destination.fileName}")
   }
 
   destination.createDir()
@@ -28,7 +27,7 @@ fun File.extractTo(destination: File, outputSizeLimit: Long? = null): File {
   return destination
 }
 
-fun File.archiveDirectoryTo(destination: File) {
+fun Path.archiveDirectoryTo(destination: Path) {
   require(destination.extension == "zip" || destination.extension == "jar" || destination.extension == "nupkg")
   destination.forceDeleteIfExists()
   ZipCompressor(destination).use { zip ->

@@ -206,7 +206,7 @@ class PluginsParsing(
     }
 
     reportage.logVerificationStage("Reading plugin to check from $pluginFile")
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile.toFile(), validateDescriptor)
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile, validateDescriptor)
     with(pluginCreationResult) {
       when (this) {
         is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)

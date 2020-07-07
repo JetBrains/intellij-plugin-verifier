@@ -2,17 +2,17 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.assertEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 
-class MockThemePluginsTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
+class MockThemePluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType)  {
+
+  override fun createManager(extractDirectory: Path): IdePluginManager =
+    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `jar file packed in zip`() {
@@ -61,8 +61,8 @@ class MockThemePluginsTest {
   }
 
   @Suppress("SameParameterValue")
-  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
-    val pluginCreationSuccess = InvalidPluginsTest.getSuccessResult(pluginFile)
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
     testPluginThemes(pluginCreationSuccess.plugin)
   }
 

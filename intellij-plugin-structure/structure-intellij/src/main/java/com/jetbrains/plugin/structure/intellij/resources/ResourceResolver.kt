@@ -6,22 +6,27 @@ package com.jetbrains.plugin.structure.intellij.resources
 
 import java.io.Closeable
 import java.io.InputStream
-import java.net.URL
+import java.nio.file.Path
 
 interface ResourceResolver {
 
-  fun resolveResource(relativePath: String, base: URL): Result
+  fun resolveResource(relativePath: String, basePath: Path): Result
 
   sealed class Result {
-    data class Found(val url: URL, val resourceStream: InputStream) : Result(), Closeable {
+    data class Found(
+      val path: Path,
+      val resourceStream: InputStream,
+      private val resourceToClose: Closeable = Closeable {  }
+    ) : Result(), Closeable {
       override fun close() {
         resourceStream.close()
+        resourceToClose.close()
       }
     }
 
     object NotFound : Result()
 
-    data class Failed(val url: URL, val exception: Exception) : Result()
+    data class Failed(val path: Path, val exception: Exception) : Result()
   }
 
 }

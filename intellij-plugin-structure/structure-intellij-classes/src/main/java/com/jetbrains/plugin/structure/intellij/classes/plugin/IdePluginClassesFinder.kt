@@ -15,12 +15,13 @@ import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.Closeable
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
 class IdePluginClassesFinder private constructor(
   private val idePlugin: IdePlugin,
-  private val extractDirectory: File,
+  private val extractDirectory: Path,
   private val readMode: Resolver.ReadMode,
   private val locatorKeys: List<LocationKey>
 ) {
@@ -43,8 +44,8 @@ class IdePluginClassesFinder private constructor(
     }
   }
 
-  private fun findInZip(pluginZip: File): IdePluginClassesLocations {
-    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZip.inputStream(), extractDirectory)) {
+  private fun findInZip(pluginZip: Path): IdePluginClassesLocations {
+    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZip, extractDirectory)) {
       is ExtractorResult.Success -> {
         extractorResult.extractedPlugin.closeOnException {
           val locations = findLocations(it.pluginFile)
@@ -55,7 +56,7 @@ class IdePluginClassesFinder private constructor(
     }
   }
 
-  private fun findLocations(pluginFile: File): Map<LocationKey, List<Resolver>> {
+  private fun findLocations(pluginFile: Path): Map<LocationKey, List<Resolver>> {
     val locations = hashMapOf<LocationKey, List<Resolver>>()
     try {
       for (locatorKey in locatorKeys) {
@@ -87,13 +88,13 @@ class IdePluginClassesFinder private constructor(
       readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
       additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations {
-      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().createDir()
+      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir()
       return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
     fun findPluginClasses(
       idePlugin: IdePlugin,
-      extractDirectory: File,
+      extractDirectory: Path,
       readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
       additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations = IdePluginClassesFinder(

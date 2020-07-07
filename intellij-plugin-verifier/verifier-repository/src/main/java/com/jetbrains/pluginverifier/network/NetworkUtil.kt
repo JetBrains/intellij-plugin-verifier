@@ -5,11 +5,14 @@
 package com.jetbrains.pluginverifier.network
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.io.File
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -131,14 +134,20 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
 fun copyInputStreamToFileWithProgress(
   inputStream: InputStream,
   expectedSize: Long,
-  destinationFile: File,
+  destinationFile: Path,
   progress: (Double) -> Unit
 ) {
   val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+  destinationFile.createParentDirs()
 
   progress(0.0)
   inputStream.use { input ->
-    destinationFile.outputStream().buffered().use { output ->
+    Files.newOutputStream(
+      destinationFile,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.WRITE,
+      StandardOpenOption.TRUNCATE_EXISTING
+    ).buffered().use { output ->
       checkIfInterrupted()
       var count: Long = 0
       while (true) {

@@ -20,7 +20,6 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -98,7 +97,7 @@ object OptionsParser {
 
   private fun createIgnoredProblemsFilter(opts: CmdOpts): ProblemsFilter? {
     if (opts.ignoreProblemsFile != null) {
-      val file = File(opts.ignoreProblemsFile!!)
+      val file = Paths.get(opts.ignoreProblemsFile!!)
       require(file.exists()) { "Ignored problems file doesn't exist $file" }
       return getIgnoreFilter(file)
     }
@@ -138,18 +137,16 @@ object OptionsParser {
     return DocumentedProblemsFilter(documentedProblems)
   }
 
-  private fun getIgnoreFilter(ignoreProblemsFile: File): IgnoredProblemsFilter {
+  private fun getIgnoreFilter(ignoreProblemsFile: Path): IgnoredProblemsFilter {
     val ignoreConditions = arrayListOf<IgnoreCondition>()
     try {
-      ignoreProblemsFile.useLines { lines ->
-        for (line in lines.map { it.trim() }) {
-          if (line.isBlank() || line.startsWith("//")) {
-            //it is a comment
-            continue
-          }
-
-          ignoreConditions.add(IgnoreCondition.parseCondition(line))
+      ignoreProblemsFile.forEachLine { lineT ->
+        val line = lineT.trim()
+        if (line.isBlank() || line.startsWith("//")) {
+          //it is a comment
+          return@forEachLine
         }
+        ignoreConditions.add(IgnoreCondition.parseCondition(line))
       }
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
@@ -165,7 +162,7 @@ object OptionsParser {
    */
   fun parseExcludedPlugins(opts: CmdOpts): Set<PluginIdAndVersion> {
     val epf = opts.excludedPluginsFile ?: return emptySet()
-    return parseIncompatiblePluginsByLines(File(epf).readLines())
+    return parseIncompatiblePluginsByLines(Paths.get(epf).readLines())
   }
 
 }

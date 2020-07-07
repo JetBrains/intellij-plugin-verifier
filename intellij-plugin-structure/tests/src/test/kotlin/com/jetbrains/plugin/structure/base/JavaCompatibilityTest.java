@@ -7,12 +7,13 @@ import org.junit.Test;
 import java.io.File;
 
 public class JavaCompatibilityTest {
+  @SuppressWarnings("deprecation")
   @Test
   public void sourceCompatibility() {
     // The following "createManager" signatures must not be changed.
     IdePluginManager.createManager();
     IdePluginManager.createManager(new File(""));
-    ResourceResolver resourceResolver = (relativePath, base) -> {
+    ResourceResolver resourceResolver = (relativePath, basePath) -> {
       throw new UnsupportedOperationException("");
     };
     IdePluginManager.createManager(resourceResolver);

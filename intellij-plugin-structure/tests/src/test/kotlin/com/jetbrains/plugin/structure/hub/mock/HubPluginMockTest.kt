@@ -1,24 +1,17 @@
 package com.jetbrains.plugin.structure.hub.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
 
-class HubPluginMockTest {
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class HubPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<HubPlugin, HubPluginManager>(fileSystemType) {
   private val mockHubPluginManifestContent = perfectHubPluginBuilder.modify {
     key = "cat-widget"
     name = "Pets"
@@ -33,6 +26,9 @@ class HubPluginMockTest {
 
   private val iconTestContent = "<svg></svg>"
 
+  override fun createManager(extractDirectory: Path) =
+    HubPluginManager.createManager(extractDirectory)
+
   @Test
   fun `hub plugin`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
@@ -46,13 +42,8 @@ class HubPluginMockTest {
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
-  private fun testMockPluginStructureAndConfiguration(pluginFile: File) {
-    val pluginCreationResult = HubPluginManager.createManager().createPlugin(pluginFile)
-    if (pluginCreationResult is PluginCreationFail) {
-      val message = pluginCreationResult.errorsAndWarnings.joinToString(separator = "\n") { it.message }
-      Assert.fail(message)
-    }
-    val pluginCreationSuccess = pluginCreationResult as PluginCreationSuccess
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
 
     testMockConfigs(pluginCreationSuccess.plugin)
     testMockWarnings(pluginCreationSuccess.warnings)

@@ -19,42 +19,43 @@ import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
-class HubPluginManager private constructor() : PluginManager<HubPlugin> {
+class HubPluginManager private constructor(private val extractDirectory: Path) : PluginManager<HubPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "manifest.json"
 
     private val LOG: Logger = LoggerFactory.getLogger(HubPluginManager::class.java)
 
-    fun createManager(): HubPluginManager = HubPluginManager()
+    fun createManager(
+      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
+    ): HubPluginManager {
+      extractDirectory.createDir()
+      return HubPluginManager(extractDirectory)
+    }
   }
 
-  override fun createPlugin(pluginFile: File): PluginCreationResult<HubPlugin> {
+  override fun createPlugin(pluginFile: Path): PluginCreationResult<HubPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
       pluginFile.isDirectory -> loadPluginInfoFromDirectory(pluginFile)
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile.inputStream())
-      else -> PluginCreationFail(createIncorrectHubPluginFile(pluginFile.name))
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+      else -> PluginCreationFail(createIncorrectHubPluginFile(pluginFile.simpleName))
     }
   }
 
-  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String) =
-    loadDescriptorFromZip(pluginFileContent)
 
-
-  private fun loadDescriptorFromZip(pluginFileContent: InputStream): PluginCreationResult<HubPlugin> {
+  private fun loadDescriptorFromZip(pluginFile: Path): PluginCreationResult<HubPlugin> {
     val sizeLimit = Settings.HUB_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (pluginFileContent.available() > sizeLimit) {
+    if (Files.size(pluginFile) > sizeLimit) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
     }
 
-    val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_")
     return try {
-      extractZip(pluginFileContent, tempDirectory, sizeLimit)
+      extractZip(pluginFile, tempDirectory, sizeLimit)
       loadPluginInfoFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -63,19 +64,19 @@ class HubPluginManager private constructor() : PluginManager<HubPlugin> {
     }
   }
 
-  private fun loadPluginInfoFromDirectory(pluginDirectory: File): PluginCreationResult<HubPlugin> {
+  private fun loadPluginInfoFromDirectory(pluginDirectory: Path): PluginCreationResult<HubPlugin> {
     val errors = validateHubPluginDirectory(pluginDirectory)
     if (errors != null) {
       return errors
     }
-    val manifestFile = File(pluginDirectory, DESCRIPTOR_NAME)
+    val manifestFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
     if (!manifestFile.exists()) {
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
     val manifestContent = manifestFile.readText()
     val manifest = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
       .parse(HubPluginManifest.serializer(), manifestContent)
-    val iconFilePath = getIconFile(pluginDirectory.toPath(), manifest.iconUrl)
+    val iconFilePath = getIconFile(pluginDirectory, manifest.iconUrl)
     return when {
       iconFilePath == null -> createPlugin(manifest, manifestContent, null)
       Files.exists(iconFilePath) -> createPlugin(

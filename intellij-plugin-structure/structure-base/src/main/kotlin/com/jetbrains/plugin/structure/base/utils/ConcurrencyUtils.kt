@@ -23,6 +23,11 @@ class ExecutorWithProgress<T>(
     val elapsedTime: Long
   )
 
+  data class Task<T>(
+    val presentableName: String,
+    val callable: Callable<T>
+  )
+
   private val nameCounter = AtomicInteger()
 
   private val executor = Executors.newFixedThreadPool(concurrentWorkers) { r ->
@@ -37,7 +42,7 @@ class ExecutorWithProgress<T>(
   }
 
   @Throws(InterruptedException::class)
-  fun executeTasks(tasks: List<Callable<T>>): List<T> {
+  fun executeTasks(tasks: List<Task<T>>): List<T> {
     val completionService = ExecutorCompletionService<TimedResult<T>>(executor)
     val futures = arrayListOf<Future<TimedResult<T>>>()
     try {
@@ -49,7 +54,7 @@ class ExecutorWithProgress<T>(
           if (executor.isShutdown) {
             throw InterruptedException()
           }
-          throw RuntimeException("Failed to schedule task", e)
+          throw RuntimeException("Failed to schedule task ${task.presentableName}", e)
         }
         futures.add(future)
       }
@@ -87,7 +92,7 @@ class ExecutorWithProgress<T>(
           val exception = timedResult.exception
           if (exception != null) {
             if (failFastOnException) {
-              throw RuntimeException("Worker finished with error", exception)
+              throw RuntimeException("Worker '${timedResult.presentableTaskName}' finished with error", exception)
             } else {
               exceptions += exception
               progress(ProgressData(finished, futuresNumber, null, exception, timedResult.elapsedTime))
@@ -113,21 +118,22 @@ class ExecutorWithProgress<T>(
   private data class TimedResult<T>(
     val result: T?,
     val exception: Throwable?,
-    val elapsedTime: Long
+    val elapsedTime: Long,
+    val presentableTaskName: String
   )
 
-  private class TimedCallable<T>(private val delegate: Callable<T>) : Callable<TimedResult<T>> {
+  private class TimedCallable<T>(private val task: Task<T>) : Callable<TimedResult<T>> {
     override fun call(): TimedResult<T> {
-      val start = System.currentTimeMillis()
+      val start = System.nanoTime()
       var result: T? = null
       var exception: Throwable? = null
       try {
-        result = delegate.call()
+        result = task.callable.call()
       } catch (e: Throwable) {
         exception = e
       }
-      val elapsedTime = System.currentTimeMillis() - start
-      return TimedResult(result, exception, elapsedTime)
+      val elapsedTime = System.nanoTime() - start
+      return TimedResult(result, exception, elapsedTime / 1_000_000, task.presentableName)
     }
   }
 

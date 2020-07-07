@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
@@ -16,42 +17,42 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
-class EduPluginManager private constructor() : PluginManager<EduPlugin> {
+class EduPluginManager private constructor(private val extractDirectory: Path) : PluginManager<EduPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "course.json"
     const val COURSE_ICON_NAME = "courseIcon.svg"
 
     private val LOG: Logger = LoggerFactory.getLogger(EduPluginManager::class.java)
 
-    fun createManager(): EduPluginManager = EduPluginManager()
+    fun createManager(
+      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
+    ): EduPluginManager {
+      extractDirectory.createDir()
+      return EduPluginManager(extractDirectory)
+    }
   }
 
-  override fun createPlugin(pluginFile: File): PluginCreationResult<EduPlugin> {
+  override fun createPlugin(pluginFile: Path): PluginCreationResult<EduPlugin> {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     return when {
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile.inputStream())
-      else -> PluginCreationFail(createIncorrectEduPluginFile(pluginFile.name))
+      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+      else -> PluginCreationFail(createIncorrectEduPluginFile(pluginFile.simpleName))
     }
   }
 
-  override fun createPlugin(pluginFileContent: InputStream, pluginFileName: String): PluginCreationResult<EduPlugin> {
-    return loadDescriptorFromZip(pluginFileContent)
-  }
-
-  private fun loadDescriptorFromZip(pluginFileContent: InputStream): PluginCreationResult<EduPlugin> {
+  private fun loadDescriptorFromZip(pluginFile: Path): PluginCreationResult<EduPlugin> {
     val sizeLimit = Settings.EDU_PLUGIN_SIZE_LIMIT.getAsLong()
-    if (pluginFileContent.available() > sizeLimit) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(sizeLimit))
+    if (Files.size(pluginFile) > sizeLimit) {
+      return PluginCreationFail(UnableToExtractZip())
     }
 
-    val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsFile().toPath().createDir()
-    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_").toFile()
+    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_")
     return try {
-      extractZip(pluginFileContent, tempDirectory, sizeLimit)
+      extractZip(pluginFile, tempDirectory, sizeLimit)
       loadPluginInfoFromDirectory(tempDirectory)
     } catch (e: DecompressorSizeLimitExceededException) {
       return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
@@ -60,10 +61,8 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
     }
   }
 
-  private fun loadPluginInfoFromDirectory(pluginDirectory: File): PluginCreationResult<EduPlugin> {
-    val errors = validateEduPluginDirectory(pluginDirectory)
-    if (errors != null) return errors
-    val descriptorFile = File(pluginDirectory, DESCRIPTOR_NAME)
+  private fun loadPluginInfoFromDirectory(pluginDirectory: Path): PluginCreationResult<EduPlugin> {
+    val descriptorFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
     if (!descriptorFile.exists()) {
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
@@ -74,11 +73,11 @@ class EduPluginManager private constructor() : PluginManager<EduPlugin> {
     return createPlugin(descriptor, icon)
   }
 
-  private fun loadIconFromDir(pluginDirectory: File): PluginIcon? {
-    val iconFile = File(pluginDirectory, COURSE_ICON_NAME)
+  private fun loadIconFromDir(pluginDirectory: Path): PluginIcon? {
+    val iconFile = pluginDirectory.resolve(COURSE_ICON_NAME)
     if (iconFile.exists()) {
-      val iconContent = Files.readAllBytes(iconFile.toPath())
-      return PluginIcon(IconTheme.DEFAULT, iconContent, iconFile.name)
+      val iconContent = Files.readAllBytes(iconFile)
+      return PluginIcon(IconTheme.DEFAULT, iconContent, iconFile.fileName.toString())
     }
     return null
   }

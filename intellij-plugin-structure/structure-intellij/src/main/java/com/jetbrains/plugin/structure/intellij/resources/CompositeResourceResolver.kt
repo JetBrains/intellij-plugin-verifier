@@ -5,11 +5,12 @@
 package com.jetbrains.plugin.structure.intellij.resources
 
 import java.net.URL
+import java.nio.file.Path
 
 class CompositeResourceResolver(private val resolvers: List<ResourceResolver>) : ResourceResolver {
-  override fun resolveResource(relativePath: String, base: URL): ResourceResolver.Result {
+  override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
     for (resolver in resolvers) {
-      val resourceResult = resolver.resolveResource(relativePath, base)
+      val resourceResult = resolver.resolveResource(relativePath, basePath)
       if (resourceResult !is ResourceResolver.Result.NotFound) {
         return resourceResult
       }

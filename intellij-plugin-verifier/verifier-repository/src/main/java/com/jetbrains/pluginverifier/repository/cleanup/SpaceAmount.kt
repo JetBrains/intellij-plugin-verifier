@@ -72,8 +72,5 @@ data class SpaceAmount(private val bytes: Long) : Comparable<SpaceAmount> {
 
 fun Long.bytesToSpaceAmount() = SpaceAmount.ofBytes(this)
 
-val File.fileSize: SpaceAmount
-  get() = FileUtils.sizeOf(this).bytesToSpaceAmount()
-
 val Path.fileSize: SpaceAmount
   get() = FileUtils.sizeOf(toFile()).bytesToSpaceAmount()

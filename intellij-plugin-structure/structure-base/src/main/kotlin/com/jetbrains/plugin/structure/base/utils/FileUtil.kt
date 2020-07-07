@@ -4,39 +4,88 @@
 
 package com.jetbrains.plugin.structure.base.utils
 
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.filefilter.NameFileFilter
-import org.apache.commons.io.filefilter.TrueFileFilter
-import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
+import java.io.*
+import java.nio.charset.Charset
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
+import java.util.*
 import java.util.stream.Collectors
+import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
-fun File.isZip(): Boolean = this.hasExtension("zip")
+fun Path.isZip(): Boolean = this.hasExtension("zip")
 
-fun File.isJar(): Boolean = this.hasExtension("jar")
+fun Path.isJar(): Boolean = this.hasExtension("jar")
 
-fun File.hasExtension(expected: String) =
-  isFile && expected == extension
+fun Path.hasExtension(expected: String) =
+  Files.isRegularFile(this) && expected == extension
 
-fun File.forceDeleteIfExists() {
-  if (exists()) {
-    FileUtils.forceDelete(this)
+fun Path.listRecursivelyAllFilesWithExtension(extension: String) =
+  Files.walk(this).use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
+
+fun String.withPathSeparatorOf(path: Path) = replace('\\', '/').replace("/", path.fileSystem.separator)
+fun String.withZipFsSeparator() = replace('\\', '/')
+
+fun String.toSystemIndependentName() = replace('\\', '/')
+fun String.toSystemDependentName() = replace("/", FileSystems.getDefault().separator)
+
+fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0-9.#\\-() ]"), "_")
+
+fun Path.inputStream(): InputStream = Files.newInputStream(this)
+
+fun Path.outputStream(): OutputStream = Files.newOutputStream(this)
+
+fun Path.writeText(text: String, charset: Charset = Charsets.UTF_8) = this.writeBytes(text.toByteArray(charset))
+
+fun Path.readText(charset: Charset = Charsets.UTF_8) = String(Files.readAllBytes(this), charset)
+
+fun Path.readLines(charset: Charset = Charsets.UTF_8): List<String> {
+  val result = ArrayList<String>()
+  forEachLine(charset) { result.add(it); }
+  return result
+}
+
+fun Path.forEachLine(charset: Charset = Charsets.UTF_8, action: (line: String) -> Unit) {
+  // Note: close is called at forEachLine
+  BufferedReader(InputStreamReader(Files.newInputStream(this), charset)).forEachLine(action)
+}
+
+fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
+
+fun Path.writeBytes(bytes: ByteArray) {
+  Files.write(this, bytes)
+}
+
+fun Path.createDir(): Path {
+  Files.createDirectories(this)
+  return this
+}
+
+fun Path.create(): Path {
+  if (this.parent != null) {
+    Files.createDirectories(this.parent)
+  }
+  Files.createFile(this)
+  return this
+}
+
+fun Path.createParentDirs() {
+  parent?.createDir()
+}
+
+fun Path.forceDeleteIfExists() {
+  if (Files.exists(this)) {
+    if (Files.isDirectory(this)) {
+      this.forceRemoveDirectory()
+    } else {
+      Files.delete(this)
+    }
   }
 }
 
-fun File.listRecursivelyAllFilesWithName(name: String): Collection<File> =
-  FileUtils.listFiles(this, NameFileFilter(name), TrueFileFilter.TRUE)
-
-fun File.listRecursivelyAllFilesWithExtension(extension: String): Collection<File> =
-  FileUtils.listFiles(this, WildcardFileFilter("*.$extension"), TrueFileFilter.TRUE)
-
-fun File.deleteLogged(): Boolean = try {
+fun Path.deleteLogged() = try {
   forceDeleteIfExists()
   true
 } catch (ie: InterruptedException) {
@@ -48,71 +97,52 @@ fun File.deleteLogged(): Boolean = try {
   false
 }
 
-fun String.toSystemIndependentName() = replace('\\', '/')
-
-fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0-9.#\\-() ]"), "_")
-
-fun File.createDir(): File {
-  if (!isDirectory) {
-    FileUtils.forceMkdir(this)
-    if (!isDirectory) {
-      throw IOException("Failed to create directory $this")
-    }
-  }
-  return this
-}
-
-fun File.createParentDirs() {
-  parentFile?.createDir()
-}
-
-fun File.create(): File {
-  if (this.parentFile != null) {
-    FileUtils.forceMkdir(this.parentFile)
-  }
-  this.createNewFile()
-  return this
-}
-
-fun Path.writeText(text: String) {
-  toFile().create().writeText(text)
-}
-
-fun Path.readText() = toFile().readText()
-
-fun Path.readLines() = toFile().readLines()
-
-fun Path.writeBytes(bytes: ByteArray) {
-  toFile().writeBytes(bytes)
-}
-
-fun Path.createDir(): Path {
-  toFile().createDir()
-  return this
-}
-
-fun Path.create(): Path {
-  toFile().create()
-  return this
-}
-
-fun Path.forceDeleteIfExists() {
-  toFile().forceDeleteIfExists()
-}
-
-fun Path.deleteLogged() {
-  toFile().deleteLogged()
-}
-
 fun Path.exists(): Boolean = Files.exists(this)
 
-fun Path.listFiles(): List<Path> = Files.list(this).collect(Collectors.toList())
+fun Path.listFiles(): List<Path> {
+  if (!this.isDirectory) {
+    return emptyList()
+  }
+  return Files.list(this).use { it.collect(Collectors.toList()) }
+}
+
+fun Path.deleteQuietly(): Boolean {
+  return try {
+    if (this.isDirectory) {
+      this.forceRemoveDirectory()
+    } else {
+      Files.delete(this)
+    }
+    true
+  } catch (ignored: Exception) {
+    false
+  }
+}
+
+fun Path.forceRemoveDirectory() {
+  Files.walkFileTree(this, object : SimpleFileVisitor<Path>() {
+    @Throws(IOException::class)
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      Files.delete(file)
+      return FileVisitResult.CONTINUE
+    }
+
+    @Throws(IOException::class)
+    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+      Files.delete(dir)
+      return FileVisitResult.CONTINUE
+    }
+  })
+}
 
 val Path.isDirectory: Boolean
   get() = Files.isDirectory(this)
 
+val Path.isFile: Boolean
+  get() = Files.isRegularFile(this)
+
 val Path.simpleName: String
-  get() = fileName.toString()
+  get() = (fileName ?: "").toString()
 
 val Path.nameWithoutExtension: String
   get() = simpleName.substringBeforeLast(".")

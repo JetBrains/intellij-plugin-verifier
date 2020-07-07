@@ -4,8 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.classes
 
-import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl
@@ -14,7 +13,7 @@ import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledUlt
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributionIde
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.getRepositoryLibrariesJars
-import java.io.File
+import java.nio.file.Path
 
 object IdeResolverCreator {
 
@@ -32,7 +31,7 @@ object IdeResolverCreator {
   }
 
   private fun getJarsResolver(
-    directory: File,
+    directory: Path,
     readMode: Resolver.ReadMode,
     parentOrigin: FileOrigin
   ): Resolver {
@@ -40,7 +39,7 @@ object IdeResolverCreator {
       return EmptyResolver
     }
 
-    val jars = directory.listFiles { file -> file.isJar() }.orEmpty().toList()
+    val jars = directory.listFiles().filter { file -> file.isJar() }
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, parentOrigin))
   }
 
@@ -50,16 +49,16 @@ object IdeResolverCreator {
   // IDE sources can generate so-called "project-structure-mapping.json", which contains mapping
   // between compiled modules and jar files to which these modules are packaged in the final distribution.
   // We can use this mapping to construct a true resolver without irrelevant libraries.
-  private fun getIdeResolverFromCompiledSources(idePath: File, readMode: Resolver.ReadMode, ide: Ide): Resolver {
+  private fun getIdeResolverFromCompiledSources(idePath: Path, readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val resolvers = arrayListOf<Resolver>()
     resolvers.closeOnException {
       resolvers += getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.SourceLibDirectory(ide))
       resolvers += getRepositoryLibrariesResolver(idePath, readMode, ide)
 
       val compiledClassesRoot = IdeManagerImpl.getCompiledClassesRoot(idePath)!!
-      for (moduleRoot in compiledClassesRoot.listFiles().orEmpty()) {
-        val fileOrigin = IdeFileOrigin.CompiledModule(ide, moduleRoot.name)
-        resolvers += DirectoryResolver(moduleRoot.toPath(), fileOrigin, readMode)
+      compiledClassesRoot.listFiles().forEach { moduleRoot ->
+        val fileOrigin = IdeFileOrigin.CompiledModule(ide, moduleRoot.simpleName)
+        resolvers += DirectoryResolver(moduleRoot, fileOrigin, readMode)
       }
 
       if (isCompiledUltimate(idePath)) {
@@ -69,7 +68,7 @@ object IdeResolverCreator {
     }
   }
 
-  private fun getRepositoryLibrariesResolver(idePath: File, readMode: Resolver.ReadMode, ide: Ide): Resolver {
+  private fun getRepositoryLibrariesResolver(idePath: Path, readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val jars = getRepositoryLibrariesJars(idePath)
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, IdeFileOrigin.RepositoryLibrary(ide)))
   }

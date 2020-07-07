@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
@@ -72,13 +73,6 @@ public class JDOMUtil {
 
   private static boolean attEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
-  }
-
-  @NotNull
-  public static Document loadDocument(URL url) throws JDOMException, IOException {
-    try (InputStream stream = URLUtil.openStream(url)) {
-      return loadDocument(stream);
-    }
   }
 
   @NotNull

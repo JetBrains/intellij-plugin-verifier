@@ -52,7 +52,7 @@ data class IdeDescriptor(
      * [ideFileLock] will be released when this [IdeDescriptor] is closed.
      */
     fun create(idePath: Path, defaultJdkPath: Path, ideVersion: IdeVersion?, ideFileLock: FileLock?): IdeDescriptor {
-      val ide = IdeManager.createManager().createIde(idePath.toFile(), ideVersion)
+      val ide = IdeManager.createManager().createIde(idePath, ideVersion)
       val ideResolver = IdeResolverCreator.createIdeResolver(ide)
       ideResolver.closeOnException {
         val jdkDescriptor = JdkDescriptorCreator.createBundledJdkDescriptor(ide)

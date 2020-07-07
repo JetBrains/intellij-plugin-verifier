@@ -1,86 +1,63 @@
 package com.jetbrains.plugin.structure.hub.mock
 
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
-import org.junit.Assert
-import org.junit.Rule
+import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 
-class HubInvalidPluginsTest {
+class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<HubPlugin, HubPluginManager>(fileSystemType) {
 
-  companion object {
-    fun assertExpectedProblems(pluginFile: File, expectedProblems: List<PluginProblem>) {
-      try {
-        val creationFail = getFailedResult(pluginFile)
-        val actualProblems = creationFail.errorsAndWarnings
-        Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
-      } finally {
-        pluginFile.deleteLogged()
-      }
-    }
-
-    private fun getFailedResult(pluginFile: File): PluginCreationFail<HubPlugin> {
-      val pluginCreationResult = HubPluginManager.createManager().createPlugin(pluginFile)
-      if (pluginCreationResult is PluginCreationSuccess) {
-        Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
-      }
-      return pluginCreationResult as PluginCreationFail
-    }
-  }
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
+  override fun createManager(extractDirectory: Path): HubPluginManager =
+    HubPluginManager.createManager(extractDirectory)
 
   @Test(expected = IllegalArgumentException::class)
   fun `file does not exist`() {
-    assertExpectedProblems(File("does-not-exist.zip"), emptyList())
+    assertProblematicPlugin(Paths.get("does-not-exist.zip"), emptyList())
   }
 
   @Test
   fun `invalid file extension`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertExpectedProblems(incorrect, listOf(createIncorrectHubPluginFile(incorrect.name)))
+    assertProblematicPlugin(incorrect, listOf(createIncorrectHubPluginFile(incorrect.simpleName)))
   }
 
   @Test
   fun `manifest json not found in directory`() {
     val pluginFile = buildDirectory(temporaryFolder.newFolder("plugin")) {
     }
-    assertExpectedProblems(pluginFile, listOf(PluginDescriptorIsNotFound(HubPluginManager.DESCRIPTOR_NAME)))
+    assertProblematicPlugin(pluginFile, listOf(PluginDescriptorIsNotFound(HubPluginManager.DESCRIPTOR_NAME)))
   }
 
   @Test
   fun `manifest json not found in zip`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("plugin.zip")) {
     }
-    assertExpectedProblems(pluginFile, listOf(PluginDescriptorIsNotFound(HubPluginManager.DESCRIPTOR_NAME)))
+    assertProblematicPlugin(pluginFile, listOf(PluginDescriptorIsNotFound(HubPluginManager.DESCRIPTOR_NAME)))
   }
 
   private fun checkInvalidPlugin(problem: PluginProblem, destructor: HubPluginJsonBuilder.() -> Unit) {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("plugin.zip")) {
       file(HubPluginManager.DESCRIPTOR_NAME) {
         val builder = perfectHubPluginBuilder
         builder.destructor()
         builder.asString()
       }
     }
-    assertExpectedProblems(pluginFile, listOf(problem))
+    assertProblematicPlugin(pluginFile, listOf(problem))
   }
 
   @Test
@@ -123,7 +100,7 @@ class HubInvalidPluginsTest {
   fun `too many files in hub plugin`() {
     val tooManyNumber = 1001
 
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("plugin.zip")) {
       file(HubPluginManager.DESCRIPTOR_NAME) {
         perfectHubPluginBuilder.modify { }
       }
@@ -131,14 +108,14 @@ class HubInvalidPluginsTest {
         file("file_$i.txt", "$i")
       }
     }
-    assertExpectedProblems(pluginFile, listOf(HubZipFileTooManyFilesError()))
+    assertProblematicPlugin(pluginFile, listOf(HubZipFileTooManyFilesError()))
   }
 
   @Test
   fun `too big hub zip file`() {
     val tooBigSize = 31 * 1024 * 1024
 
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("plugin.zip")) {
       file(HubPluginManager.DESCRIPTOR_NAME) {
         perfectHubPluginBuilder.modify { }
       }
@@ -146,7 +123,7 @@ class HubInvalidPluginsTest {
       file("bigFile.bin", ByteArray(tooBigSize))
     }
 
-    assertExpectedProblems(pluginFile, listOf(PluginFileSizeIsTooLarge(30 * 1024 * 1024)))
+    assertProblematicPlugin(pluginFile, listOf(PluginFileSizeIsTooLarge(30 * 1024 * 1024)))
   }
 
 }

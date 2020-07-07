@@ -5,22 +5,19 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.mocks.BaseFileSystemAwareTest
+import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.zipBombs.DecompressorSizeLimitTest.Companion.generateZipFileOfSizeAtLeast
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 
-class ZipBombsTest {
-
-  @Rule
-  @JvmField
-  val tempFolder = TemporaryFolder()
+class ZipBombsTest(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fileSystemType) {
 
   private val properties = listOf(
     Settings.INTELLIJ_PLUGIN_SIZE_LIMIT,
@@ -50,19 +47,23 @@ class ZipBombsTest {
 
   @Test
   fun `all managers are protected against zip bombs`() {
-    val tempFolder = tempFolder.newFolder()
-    val zipBomb = generateZipFileOfSizeAtLeast(tempFolder.resolve("bomb.zip"), maxSize)
-    val nuPkgBomb = zipBomb.copyTo(tempFolder.resolve("bomb.nupkg"))
+    val testFolder = temporaryFolder.newFolder()
+    val zipBomb = generateZipFileOfSizeAtLeast(testFolder.resolve("bomb.zip"), maxSize)
+    val nuPkgBomb = Files.copy(zipBomb, testFolder.resolve("bomb.nupkg"))
 
-    assertTrue(nuPkgBomb.length() > maxSize)
+    assertTrue(Files.size(nuPkgBomb) > maxSize)
 
     checkTooLargeProblem(IdePluginManager.createManager(), zipBomb)
+    checkTooLargeProblem(IdePluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
     checkTooLargeProblem(TeamcityPluginManager.createManager(), zipBomb)
+    checkTooLargeProblem(TeamcityPluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
     checkTooLargeProblem(HubPluginManager.createManager(), zipBomb)
-    checkTooLargeProblem(ReSharperPluginManager, nuPkgBomb)
+    checkTooLargeProblem(HubPluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
+    checkTooLargeProblem(ReSharperPluginManager.createManager(), nuPkgBomb)
+    checkTooLargeProblem(ReSharperPluginManager.createManager(temporaryFolder.newFolder()), nuPkgBomb)
   }
 
-  private fun checkTooLargeProblem(manager: PluginManager<Plugin>, zipBomb: File) {
+  private fun checkTooLargeProblem(manager: PluginManager<Plugin>, zipBomb: Path) {
     val expectedProblem = PluginFileSizeIsTooLarge(maxSize)
     val creationResult = manager.createPlugin(zipBomb)
     assertTrue("$creationResult", creationResult is PluginCreationFail)

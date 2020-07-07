@@ -4,33 +4,32 @@
 
 package com.jetbrains.plugin.structure.intellij.resources
 
-import com.jetbrains.plugin.structure.intellij.utils.URLUtil
-import java.io.File
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.inputStream
 import java.net.URL
+import java.nio.file.Path
 
-class CompiledModulesResourceResolver(private val moduleRoots: List<File>) : ResourceResolver {
-  override fun resolveResource(relativePath: String, base: URL): ResourceResolver.Result {
-    val defaultResolve = DefaultResourceResolver.resolveResource(relativePath, base)
+class CompiledModulesResourceResolver(private val moduleRoots: List<Path>) : ResourceResolver {
+  override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
+    val defaultResolve = DefaultResourceResolver.resolveResource(relativePath, basePath)
     if (defaultResolve !is ResourceResolver.Result.NotFound) {
       return defaultResolve
     }
 
     //Try to resolve path against module roots. [base] is ignored.
     val moduleRootRelativePath = if (relativePath.startsWith("/")) {
-      relativePath.substringAfter("/")
+      relativePath.trimStart('/')
     } else {
-      "META-INF/" + relativePath.substringAfter("./")
+      "META-INF/" + if (relativePath.startsWith("./")) relativePath.substringAfter("./") else relativePath
     }
 
     for (moduleRoot in moduleRoots) {
       val file = moduleRoot.resolve(moduleRootRelativePath)
       if (file.exists()) {
-        val url = URLUtil.fileToUrl(file)
         return try {
-          val stream = file.inputStream().buffered()
-          ResourceResolver.Result.Found(url, stream)
+          ResourceResolver.Result.Found(file, file.inputStream())
         } catch (e: Exception) {
-          ResourceResolver.Result.Failed(url, e)
+          ResourceResolver.Result.Failed(file, e)
         }
       }
     }

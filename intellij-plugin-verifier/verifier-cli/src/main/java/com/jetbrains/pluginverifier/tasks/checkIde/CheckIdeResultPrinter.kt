@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -21,6 +22,7 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.File
 import java.io.PrintWriter
+import java.nio.file.Paths
 
 class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
 
@@ -41,7 +43,7 @@ class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginReposito
           .map { it.plugin }
           .distinct()
 
-        File(outputOptions.dumpBrokenPluginsFile).writeText(
+        Paths.get(outputOptions.dumpBrokenPluginsFile).writeText(
           IdeIncompatiblePluginsUtil
             .dumpIncompatiblePluginsLines(brokenPlugins.map { PluginIdAndVersion(it.pluginId, it.version) })
             .joinToString(separator = "\n")

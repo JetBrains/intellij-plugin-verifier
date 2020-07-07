@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
 import java.io.File
+import java.nio.file.Path
 
 data class MockIdePlugin(
   override val pluginId: String?,
@@ -28,7 +29,7 @@ data class MockIdePlugin(
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
   override val untilBuild: IdeVersion? = null
   override val definedModules: Set<String> = emptySet()
-  override val originalFile: File? = null
+  override val originalFile: Path? = null
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val declaredThemes = emptyList<IdeTheme>()
