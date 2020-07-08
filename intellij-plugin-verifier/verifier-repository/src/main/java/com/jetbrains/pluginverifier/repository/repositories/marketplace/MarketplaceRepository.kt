@@ -36,10 +36,13 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       }
     })
 
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> =
+    getLastCompatiblePlugins(ideVersion, "")
+
+  fun getLastCompatiblePlugins(ideVersion: IdeVersion, channel: String): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
     val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
-    val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString())
+    val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString(), channel)
     val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
   }
