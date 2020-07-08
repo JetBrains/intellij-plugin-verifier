@@ -125,6 +125,11 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginAndUpdateIds)
   }
 
+  fun getPluginChannels(pluginId: String): List<String> {
+    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
+    return pluginRepositoryInstance.pluginManager.getPluginChannels(pluginBean.id)
+  }
+
   fun getPluginInfosForManyPluginIdsAndUpdateIds(pluginAndUpdateIds: List<Pair<Int, Int>>): Map<Int, UpdateInfo> {
     val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
     val result = hashMapOf<UpdateId, UpdateInfo>()
