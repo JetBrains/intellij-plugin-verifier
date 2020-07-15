@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.dependencies.resolution
 
+import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
@@ -21,12 +22,14 @@ class RepositoryDependencyFinder(
   override val presentableName
     get() = pluginRepository.toString()
 
-  override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
-    if (isModule) {
-      return resolveModuleDependency(dependencyId)
+  override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result =
+    retry("Resolve dependency $dependencyId") {
+      if (isModule) {
+        resolveModuleDependency(dependencyId)
+      } else {
+        selectPluginVersion(dependencyId)
+      }
     }
-    return selectPluginVersion(dependencyId)
-  }
 
   private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
     val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId)
