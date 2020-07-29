@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.net.URL
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.jar.JarFile
@@ -203,7 +202,7 @@ class IdeManagerImpl : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
     val platformPlugins = arrayListOf<IdePlugin>()
-    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
+    val descriptorPaths = listOf(product.platformPrefix + "Plugin.xml", IdePluginManager.PLUGIN_XML)
 
     for (jarFile in jarFiles) {
       val descriptorPath = FileSystems.newFileSystem(jarFile, IdeManagerImpl::class.java.classLoader).use { jarFs ->
