@@ -22,7 +22,7 @@ class FailedToReadClassFileProblem(
     get() = "Failed to read class {0}".formatMessage(failedClass)
 
   override val fullDescription
-    get() = ("Class {0} referenced in {1} cannot be read. " +
+    get() = ("Class {0} referenced in {1} cannot be read: {2}. " +
       "Invalid classes can lead to **ClassFormatError** exception at runtime.").formatMessage(failedClass, usage, reason)
 
   override fun equals(other: Any?) = other is FailedToReadClassFileProblem
