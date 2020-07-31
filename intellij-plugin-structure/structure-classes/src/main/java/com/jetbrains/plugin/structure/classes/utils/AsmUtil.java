@@ -54,7 +54,7 @@ public class AsmUtil {
         throw new InvalidClassFileException(FileUtilKt.getNameWithoutExtension(classFile), getAsmErrorMessage(e));
       }
       if (className == null) {
-        throw new InvalidClassFileException(FileUtilKt.getNameWithoutExtension(classFile), "class name is not available in byte-code.");
+        throw new InvalidClassFileException(FileUtilKt.getNameWithoutExtension(classFile), "class name is not available in byte-code of " + classFile.toAbsolutePath());
       }
       return className;
     }
