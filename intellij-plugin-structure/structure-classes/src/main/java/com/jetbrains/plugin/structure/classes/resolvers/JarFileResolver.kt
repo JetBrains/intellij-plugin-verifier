@@ -122,6 +122,7 @@ class JarFileResolver(
     get() = classes
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
+    checkIsOpen()
     Files.walk(zipRoot).use { stream ->
       for (zipEntry in stream.filter { it.simpleName.endsWith(CLASS_SUFFIX) }) {
         val className = getPathInJar(zipEntry).removeSuffix(CLASS_SUFFIX)
@@ -139,6 +140,7 @@ class JarFileResolver(
   override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+    checkIsOpen()
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
@@ -175,6 +177,7 @@ class JarFileResolver(
   }
 
   private fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
+    checkIsOpen()
     val path = zipRoot.resolve(bundleResourceName)
     if (!path.exists()) {
       return null
@@ -194,6 +197,10 @@ class JarFileResolver(
       e.rethrowIfInterrupted()
       ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
+
+  private fun checkIsOpen() {
+    check(zipFs.isOpen) { "Jar file system must be open for $this" }
+  }
 
   override fun close() {
     zipFs.close()
