@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.KtorFeatureDescriptor
 import com.jetbrains.plugin.structure.edu.bean.VENDOR
 
-internal fun validateEduPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
+internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
   val vendor = descriptor.vendor
   if (vendor == null || vendor.name.isNullOrBlank()) {

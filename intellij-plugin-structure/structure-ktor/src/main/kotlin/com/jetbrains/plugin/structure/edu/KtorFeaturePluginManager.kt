@@ -84,7 +84,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
 
   private fun createPlugin(descriptor: KtorFeatureDescriptor, icon: PluginIcon?): PluginCreationResult<KtorFeature> {
     try {
-      val beanValidationResult = validateEduPluginBean(descriptor)
+      val beanValidationResult = validateKtorPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
