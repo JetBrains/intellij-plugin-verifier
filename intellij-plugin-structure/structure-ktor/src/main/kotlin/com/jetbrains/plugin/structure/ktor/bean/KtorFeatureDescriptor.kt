@@ -8,7 +8,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Vendor(
+data class KtorVendor(
   @SerialName(VENDOR_NAME)
   val name: String? = null,
   @SerialName(VENDOR_EMAIL)
@@ -30,5 +30,5 @@ data class KtorFeatureDescriptor(
   @SerialName(COPYRIGHT)
   val copyright: String? = null,
   @SerialName(VENDOR)
-  val vendor: Vendor? = null
+  val vendor: KtorVendor? = null
 )
