@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.edu.bean
+package com.jetbrains.plugin.structure.ktor.bean
 
 const val NAME = "name"
 const val COPYRIGHT = "copyright"

@@ -2,7 +2,7 @@
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package com.jetbrains.plugin.structure.edu
+package com.jetbrains.plugin.structure.ktor
 
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
@@ -11,8 +11,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.edu.bean.KtorFeatureDescriptor
-import com.jetbrains.plugin.structure.edu.problems.createIncorrectKtorFeatureFile
+import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureDescriptor
+import com.jetbrains.plugin.structure.ktor.problems.createIncorrectKtorFeatureFile
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
