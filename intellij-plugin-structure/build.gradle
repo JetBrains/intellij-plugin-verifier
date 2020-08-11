@@ -77,6 +77,7 @@ publishing {
     DotNetPublication(MavenPublication) { configurePublication(it, ':structure-dotnet') }
     HubPublication(MavenPublication) { configurePublication(it, ':structure-hub') }
     EduPublication(MavenPublication) { configurePublication(it, ':structure-edu') }
+    KtorPublication(MavenPublication) { configurePublication(it, ':structure-ktor') }
   }
 }
 
@@ -88,7 +89,7 @@ bintray {
   publish = true
   publications = [
       'BasePublication', 'ClassesPublication', 'IntellijPublication', 'IntellijClassesPublication',
-      'IdePublication', 'IdeClassesPublication', 'TeamCityPublication', 'HubPublication', 'EduPublication', 'DotNetPublication'
+      'IdePublication', 'IdeClassesPublication', 'TeamCityPublication', 'HubPublication', 'KtorPublication', 'EduPublication', 'DotNetPublication'
   ]
 
   pkg {
