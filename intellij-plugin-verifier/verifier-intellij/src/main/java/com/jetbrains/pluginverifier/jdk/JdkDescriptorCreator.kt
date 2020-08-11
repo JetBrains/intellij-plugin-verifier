@@ -33,7 +33,13 @@ object JdkDescriptorCreator {
     readMode: Resolver.ReadMode,
     bundledTo: IdeVersion?
   ): JdkDescriptor {
-    val fullJavaVersion = readFullVersion(jdkPath)
+    val fullJavaVersion =
+      readFullVersion(jdkPath)
+        ?: guessJdkVersionFromFileName(jdkPath.simpleName)
+        ?: throw IllegalArgumentException(
+          "JDK at $jdkPath does not have any indication of the JDK build number. " +
+            "Please create a file <JDK home>/version.txt that contains a string of JDK version such as 1.8.0 or 11"
+        )
     val jdkVersion = JdkVersion(fullJavaVersion, bundledTo)
     return if (jdkVersion.majorVersion < 9) {
       createPreJava9(jdkPath, readMode, jdkVersion)
@@ -42,7 +48,14 @@ object JdkDescriptorCreator {
     }
   }
 
-  private fun readFullVersion(jdkPath: Path): String {
+  private fun guessJdkVersionFromFileName(jdkHomeName: String): String? {
+    if (jdkHomeName.startsWith("java-") && jdkHomeName.contains("-openjdk-")) {
+      return jdkHomeName.substringAfter("java-", "").substringBefore("-", "").takeIf { it.isNotEmpty() }
+    }
+    return null
+  }
+
+  private fun readFullVersion(jdkPath: Path): String? {
     val linuxOrWindowsRelease = jdkPath.resolve("release")
     val maxOsRelease = jdkPath.resolve("Contents").resolve("Home").resolve("release")
     for (releasePath in listOf(linuxOrWindowsRelease, maxOsRelease)) {
@@ -63,7 +76,7 @@ object JdkDescriptorCreator {
       return versionPath.readText()
     }
 
-    throw IllegalArgumentException("JDK version is not known: neither $linuxOrWindowsRelease, nor $maxOsRelease, nor $versionPath are available")
+    return null
   }
 
   private fun createJava9Plus(jdkPath: Path, readMode: Resolver.ReadMode, jdkVersion: JdkVersion): JdkDescriptor {
