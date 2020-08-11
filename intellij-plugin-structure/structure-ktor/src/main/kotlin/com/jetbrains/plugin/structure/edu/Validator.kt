@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.edu
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.KtorFeatureDescriptor
+import com.jetbrains.plugin.structure.edu.bean.NAME
 import com.jetbrains.plugin.structure.edu.bean.VENDOR
 
 internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
@@ -14,6 +15,9 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
   val vendor = descriptor.vendor
   if (vendor == null || vendor.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(VENDOR))
+  }
+  if (descriptor.pluginName.isNullOrBlank()){
+    problems.add(PropertyNotSpecified(NAME))
   }
   // TODO add field validation
   return problems
