@@ -15,7 +15,7 @@ data class EduItem(
 )
 
 @Serializable
-data class Vendor(
+data class EduVendor(
   @SerialName(VENDOR_NAME)
   val name: String? = null,
   @SerialName(VENDOR_EMAIL)
@@ -37,7 +37,7 @@ data class EduPluginDescriptor(
   @SerialName(ITEMS)
   val items: List<EduItem>? = null,
   @SerialName(VENDOR)
-  val vendor: Vendor? = null,
+  val vendor: EduVendor? = null,
 
   // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
   @SerialName(EDU_PLUGIN_VERSION)
