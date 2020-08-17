@@ -5,7 +5,6 @@
 package org.jetbrains.plugins.verifier.service.server.views
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -102,34 +101,26 @@ class StatusPage(
             }
           }
 
-          val failedFetchAttempts = serverContext.verificationResultsFilter.failedFetchAttempts
-          if (failedFetchAttempts.isNotEmpty()) {
+          val failedAttempts = serverContext.verificationResultsFilter.failedAttempts
+          if (failedAttempts.isNotEmpty()) {
             h2 {
-              +"Non-downloadable plugins"
+              +"Failed verifications"
             }
             table("width: 100%") {
               tr {
                 th(style = "width: 30%") { +"Plugin" }
                 th(style = "width: 70%") { +"Reason" }
               }
-              for ((updateInfo, attempts) in failedFetchAttempts) {
+              for ((updateInfo, attempts) in failedAttempts) {
                 tr {
                   td { +updateInfo.toString() }
                   td {
                     pre {
                       +buildString {
-                        appendln("We have tried to verify $updateInfo " + "time".pluralizeWithNumber(attempts.size) + " but it couldn't be fetched from the Marketplace")
-                        val limitTimes = minOf(5, attempts.size)
-                        appendln("Here are the logs of the last " + "attempt".pluralizeWithNumber(limitTimes))
-                        for (attempt in attempts.sortedByDescending { it.verificationEndTime }.take(limitTimes)) {
-                          val verificationResult = attempt.verificationResult
-                          appendln("    ${verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
-                          val reason = when (verificationResult) {
-                            is PluginVerificationResult.FailedToDownload -> verificationResult.failedToDownloadReason
-                            is PluginVerificationResult.NotFound -> verificationResult.notFoundReason
-                            else -> null
-                          } ?: continue
-                          appendln("        $reason")
+                        appendln("We have tried to verify $updateInfo " + "time".pluralizeWithNumber(attempts.size))
+                        for (attempt in attempts.sortedByDescending { it.verificationEndTime }) {
+                          appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
+                          appendln("        ${attempt.failureReason}")
                         }
                       }
                     }

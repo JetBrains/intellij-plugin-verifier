@@ -25,14 +25,14 @@ class VerificationResultFilter {
 
   private var lastCleanupTime = Instant.EPOCH
 
-  private val _failedFetchAttempts = hashMapOf<UpdateInfo, MutableList<VerificationAttempt>>()
+  private val _failedAttempts = hashMapOf<UpdateInfo, MutableList<VerificationAttempt>>()
 
-  val failedFetchAttempts: Map<UpdateInfo, List<VerificationAttempt>>
+  val failedAttempts: Map<UpdateInfo, List<VerificationAttempt>>
     @Synchronized
     get() {
       doCleanup()
       //Make a deep copy
-      return _failedFetchAttempts.mapValues { it.value.toList() }
+      return _failedAttempts.mapValues { it.value.toList() }
     }
 
   @Synchronized
@@ -40,7 +40,7 @@ class VerificationResultFilter {
     val nowInstant = Instant.now()
     if (lastCleanupTime.plus(CLEANUP_TIMEOUT) < nowInstant) {
       lastCleanupTime = nowInstant
-      val iterator = _failedFetchAttempts.iterator()
+      val iterator = _failedAttempts.iterator()
       while (iterator.hasNext()) {
         val attempts = iterator.next().value
         if (attempts.isNotEmpty()) {
@@ -56,7 +56,7 @@ class VerificationResultFilter {
   @Synchronized
   fun shouldStartVerification(scheduledVerification: ScheduledVerification, nowTime: Instant): Boolean {
     doCleanup()
-    val failedAttempts = _failedFetchAttempts[scheduledVerification.updateInfo]
+    val failedAttempts = _failedAttempts[scheduledVerification.updateInfo]
     if (failedAttempts == null || failedAttempts.isEmpty()) {
       return true
     }
@@ -75,11 +75,13 @@ class VerificationResultFilter {
     val updateInfo = scheduledVerification.updateInfo
     if (verificationResult !is PluginVerificationResult.NotFound && verificationResult !is PluginVerificationResult.FailedToDownload) {
       //Clear failed attempts for plugins that were successfully downloaded and verified.
-      _failedFetchAttempts.remove(updateInfo)
+      _failedAttempts.remove(updateInfo)
       return true
     }
-    val attempts = _failedFetchAttempts.getOrPut(updateInfo) { arrayListOf() }
-    attempts += VerificationAttempt(verificationResult, scheduledVerification, verificationEndTime)
+    val failureReason = (verificationResult as? PluginVerificationResult.NotFound)?.notFoundReason
+      ?: (verificationResult as PluginVerificationResult.FailedToDownload).failedToDownloadReason
+    val attempts = _failedAttempts.getOrPut(updateInfo) { arrayListOf() }
+    attempts += VerificationAttempt(verificationResult, scheduledVerification, verificationEndTime, failureReason)
 
     val times = attempts.map { it.verificationEndTime }
     val firstTime = times.min()!!
@@ -90,7 +92,7 @@ class VerificationResultFilter {
 
     if (triedEnough) {
       //Clear failed attempts for already sent results.
-      _failedFetchAttempts.remove(updateInfo)
+      _failedAttempts.remove(updateInfo)
     }
     return triedEnough
   }
@@ -98,7 +100,8 @@ class VerificationResultFilter {
   data class VerificationAttempt(
     val verificationResult: PluginVerificationResult,
     val scheduledVerification: ScheduledVerification,
-    val verificationEndTime: Instant
+    val verificationEndTime: Instant,
+    val failureReason: String
   )
 
 }
