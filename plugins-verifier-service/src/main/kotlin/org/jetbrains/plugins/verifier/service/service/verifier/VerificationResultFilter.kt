@@ -6,6 +6,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
+import com.jetbrains.pluginverifier.results.problems.FailedToReadClassFileProblem
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -56,13 +57,10 @@ class VerificationResultFilter {
   @Synchronized
   fun shouldStartVerification(scheduledVerification: ScheduledVerification, nowTime: Instant): Boolean {
     doCleanup()
-    val failedAttempts = _failedAttempts[scheduledVerification.updateInfo]
-    if (failedAttempts == null || failedAttempts.isEmpty()) {
-      return true
-    }
-
-    val lastFailedTime = failedAttempts.map { it.verificationEndTime }.max()!!
-    return nowTime > lastFailedTime.plus(RECHECK_ATTEMPT_TIMEOUT)
+    val failedAttempts = _failedAttempts[scheduledVerification.updateInfo].orEmpty()
+    val lastFailedAttempt = failedAttempts.maxBy { it.verificationEndTime } ?: return true
+    return lastFailedAttempt.failureReason.shouldRecheck
+      && nowTime > lastFailedAttempt.verificationEndTime.plus(RECHECK_ATTEMPT_TIMEOUT)
   }
 
   @Synchronized
@@ -73,13 +71,12 @@ class VerificationResultFilter {
   ): Boolean {
     doCleanup()
     val updateInfo = scheduledVerification.updateInfo
-    if (verificationResult !is PluginVerificationResult.NotFound && verificationResult !is PluginVerificationResult.FailedToDownload) {
+    val failureReason = getFailureReason(verificationResult)
+    if (failureReason == null) {
       //Clear failed attempts for plugins that were successfully downloaded and verified.
       _failedAttempts.remove(updateInfo)
       return true
     }
-    val failureReason = (verificationResult as? PluginVerificationResult.NotFound)?.notFoundReason
-      ?: (verificationResult as PluginVerificationResult.FailedToDownload).failedToDownloadReason
     val attempts = _failedAttempts.getOrPut(updateInfo) { arrayListOf() }
     attempts += VerificationAttempt(verificationResult, scheduledVerification, verificationEndTime, failureReason)
 
@@ -97,11 +94,38 @@ class VerificationResultFilter {
     return triedEnough
   }
 
+  private fun getFailureReason(verificationResult: PluginVerificationResult): FailureReason? = when (verificationResult) {
+    is PluginVerificationResult.NotFound -> {
+      FailureReason(verificationResult.notFoundReason, true)
+    }
+    is PluginVerificationResult.FailedToDownload -> {
+      FailureReason(verificationResult.failedToDownloadReason, true)
+    }
+    is PluginVerificationResult.Verified -> {
+      if (verificationResult.compatibilityProblems.any { it is FailedToReadClassFileProblem }) {
+        val message = "MP-3191: Plugin Verifier service sporadically produces 'Failed to read class file: ChannelClosed'. " +
+          "Temporary ignore verifications containing such problems to detect the root cause. " +
+          "There were the following such problems detected:\n" +
+          verificationResult.compatibilityProblems.filterIsInstance<FailedToReadClassFileProblem>()
+            .joinToString("\n") { it.fullDescription }
+        FailureReason(message, false)
+      } else {
+        null
+      }
+    }
+    else -> null
+  }
+
+  data class FailureReason(
+    val reason: String,
+    val shouldRecheck: Boolean
+  )
+
   data class VerificationAttempt(
     val verificationResult: PluginVerificationResult,
     val scheduledVerification: ScheduledVerification,
     val verificationEndTime: Instant,
-    val failureReason: String
+    val failureReason: FailureReason
   )
 
 }
