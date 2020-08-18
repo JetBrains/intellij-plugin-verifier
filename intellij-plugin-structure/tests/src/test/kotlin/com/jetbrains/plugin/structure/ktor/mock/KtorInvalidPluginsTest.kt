@@ -6,10 +6,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ktor.KtorFeature
 import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
-import com.jetbrains.plugin.structure.ktor.bean.ID
-import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
-import com.jetbrains.plugin.structure.ktor.bean.NAME
-import com.jetbrains.plugin.structure.ktor.bean.VENDOR
+import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.ktor.problems.createIncorrectKtorFeatureFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -44,6 +41,13 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     checkInvalidPlugin(PropertyNotSpecified(ID)) { id = null }
     checkInvalidPlugin(PropertyNotSpecified(ID)) { id = "" }
     checkInvalidPlugin(PropertyNotSpecified(ID)) { id = "\n" }
+  }
+
+  @Test
+  fun `version is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = null }
+    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = "" }
+    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = "\n" }
   }
 
   @Test

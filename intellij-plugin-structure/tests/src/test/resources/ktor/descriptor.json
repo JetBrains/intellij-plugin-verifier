@@ -2,6 +2,7 @@
   "description" : "Amazing feature",
   "name" : "Configuration feature",
   "id" : "ktor.feature.configuration",
+  "version" : "1.0.0",
   "copyright": "http://plugins.jetbrains.com/",
   "vendor": {
     "name": "JetBrains s.r.o.",

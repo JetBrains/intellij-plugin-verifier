@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
 data class KtorPluginJsonBuilder(
   var id: String? = "feature.ktor",
   var name: String? = "Ktor feature",
+  var version: String? = "1.0.0",
   var description: String? = "description",
   var copyright: String? = "copyright",
   var vendor: KtorVendor? = KtorVendor("JetBrains s.r.o.", "", "http://jetbrains.com/")
