@@ -10,11 +10,13 @@ import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
 import java.io.IOException
+import java.nio.channels.ClosedChannelException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipInputStream
 
 class JarFileResolver(
@@ -42,6 +44,11 @@ class JarFileResolver(
   private val zipFs: FileSystem
 
   private val zipRoot: Path
+
+  @Volatile
+  private var closeStacktrace: Throwable? = null
+
+  private val isClosed = AtomicBoolean()
 
   init {
     require(jarPath.exists()) { "File does not exist: $jarPath" }
@@ -195,6 +202,9 @@ class JarFileResolver(
       ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
+      if (e is ClosedChannelException) {
+        throw IllegalStateException("Channel has been closed for $this (FS is open = ${zipFs.isOpen})", closeStacktrace)
+      }
       ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
 
@@ -203,7 +213,11 @@ class JarFileResolver(
   }
 
   override fun close() {
+    if (!isClosed.compareAndSet(false, true)) {
+      throw IllegalStateException("This resolver is already closed: $this")
+    }
     zipFs.close()
+    closeStacktrace = RuntimeException()
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
