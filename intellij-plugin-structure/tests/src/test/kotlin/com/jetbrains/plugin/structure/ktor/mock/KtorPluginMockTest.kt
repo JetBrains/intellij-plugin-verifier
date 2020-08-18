@@ -44,6 +44,7 @@ class KtorPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     Assert.assertEquals("Amazing feature", plugin.description)
     Assert.assertEquals("http://plugins.jetbrains.com/", plugin.copyright)
     Assert.assertEquals("JetBrains s.r.o.", plugin.vendor)
+    Assert.assertEquals("ktor.feature.configuration", plugin.pluginId)
     Assert.assertEquals(iconTestContent, String(plugin.icons.single().content))
   }
 }

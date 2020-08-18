@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class KtorPluginJsonBuilder(
+  var id: String? = "feature.ktor",
   var name: String? = "Ktor feature",
   var description: String? = "description",
   var copyright: String? = "copyright",

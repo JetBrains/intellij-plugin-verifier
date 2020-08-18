@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ktor.KtorFeature
 import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
+import com.jetbrains.plugin.structure.ktor.bean.ID
 import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
 import com.jetbrains.plugin.structure.ktor.bean.NAME
 import com.jetbrains.plugin.structure.ktor.bean.VENDOR
@@ -36,6 +37,13 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = null }
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = "" }
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = "\n" }
+  }
+
+  @Test
+  fun `id is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(ID)) { id = null }
+    checkInvalidPlugin(PropertyNotSpecified(ID)) { id = "" }
+    checkInvalidPlugin(PropertyNotSpecified(ID)) { id = "\n" }
   }
 
   @Test
