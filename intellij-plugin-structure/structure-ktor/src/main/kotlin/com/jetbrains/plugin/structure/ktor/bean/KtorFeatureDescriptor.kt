@@ -19,7 +19,7 @@ data class KtorVendor(
 
 @Serializable
 data class KtorFeatureDescriptor(
-  @SerialName("id")
+  @SerialName(ID)
   val pluginId: String? = null,
   @SerialName(NAME)
   val pluginName: String? = null,

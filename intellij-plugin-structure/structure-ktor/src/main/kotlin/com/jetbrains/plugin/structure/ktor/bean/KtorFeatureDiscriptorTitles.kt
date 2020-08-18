@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.ktor.bean
 
+const val ID = "id"
 const val NAME = "name"
 const val COPYRIGHT = "copyright"
 const val DESCRIPTION = "description"
