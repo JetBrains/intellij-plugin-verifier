@@ -91,6 +91,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
       val plugin = with(descriptor) {
         KtorFeature(
           pluginId = this.pluginId,
+          pluginVersion = pluginVersion,
           pluginName = this.pluginName,
           description = this.description,
           copyright = this.copyright,

@@ -14,11 +14,11 @@ data class KtorFeature(
   override var vendorEmail: String? = null,
   override var vendorUrl: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
+  override val pluginVersion: String? = null,
   override val pluginId: String? = null,
   val copyright: String? = null,
   val documentation: String? = null
 ) : Plugin {
-  override val pluginVersion: String? = null
   override val url: String = ""
   override val changeNotes: String? = null
 }
