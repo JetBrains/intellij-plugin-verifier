@@ -32,6 +32,8 @@ class JarFileResolver(
     private const val PROPERTIES_SUFFIX = ".properties"
 
     private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
+
+    private val openJarFiles = Collections.synchronizedSet(hashSetOf<Path>())
   }
 
   private val classes: MutableSet<String> = hashSetOf()
@@ -54,6 +56,7 @@ class JarFileResolver(
   init {
     require(jarPath.exists()) { "File does not exist: $jarPath" }
     require(jarPath.simpleName.endsWith(".jar") || jarPath.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $jarPath" }
+    check(openJarFiles.add(jarPath)) { "Attempt to open the second jar file system for $jarPath" }
     validateZipArchiveOnJavaPriorTo11(jarPath)
     zipFs = FileSystems.newFileSystem(jarPath, JarFileResolver::class.java.classLoader)
     zipRoot = zipFs.rootDirectories.single()
@@ -231,6 +234,7 @@ class JarFileResolver(
     }
     zipFs.close()
     closeStacktrace = RuntimeException()
+    openJarFiles.remove(jarPath)
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
