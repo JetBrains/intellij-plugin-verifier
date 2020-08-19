@@ -23,6 +23,12 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
   if (descriptor.pluginVersion.isNullOrBlank()){
     problems.add(PropertyNotSpecified(VERSION))
   }
+  if (descriptor.installSnippet.isNullOrBlank()){
+    problems.add(PropertyNotSpecified(INSTALL_SNIPPET))
+  }
+  if (descriptor.dependency.isNullOrBlank()){
+    problems.add(PropertyNotSpecified(DEPENDENCY))
+  }
   // TODO add field validation
   return problems
 }
