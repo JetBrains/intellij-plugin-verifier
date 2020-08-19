@@ -1,7 +1,9 @@
 package com.jetbrains.plugin.structure.ktor.mock
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -10,6 +12,9 @@ data class KtorPluginJsonBuilder(
   var name: String? = "Ktor feature",
   var version: String? = "1.0.0",
   var description: String? = "description",
+  var dependency: String? = "dep",
+  @JsonProperty("install_snippet")
+  var installSnippet: String? = "install {}",
   var copyright: String? = "copyright",
   var vendor: KtorVendor? = KtorVendor("JetBrains s.r.o.", "", "http://jetbrains.com/")
 ) {

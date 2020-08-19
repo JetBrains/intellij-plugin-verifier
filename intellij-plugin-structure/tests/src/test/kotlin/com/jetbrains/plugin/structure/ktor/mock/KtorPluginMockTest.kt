@@ -43,6 +43,8 @@ class KtorPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     Assert.assertEquals("Configuration feature", plugin.pluginName)
     Assert.assertEquals("Amazing feature", plugin.description)
     Assert.assertEquals("http://plugins.jetbrains.com/", plugin.copyright)
+    Assert.assertEquals("api(adss.adfs.sdfsdf)", plugin.dependency)
+    Assert.assertEquals("install(Compression) { }", plugin.installSnippet)
     Assert.assertEquals("JetBrains s.r.o.", plugin.vendor)
     Assert.assertEquals("ktor.feature.configuration", plugin.pluginId)
     Assert.assertEquals(iconTestContent, String(plugin.icons.single().content))
