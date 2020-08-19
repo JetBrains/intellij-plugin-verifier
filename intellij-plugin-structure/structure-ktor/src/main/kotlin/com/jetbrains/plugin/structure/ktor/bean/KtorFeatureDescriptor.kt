@@ -29,6 +29,10 @@ data class KtorFeatureDescriptor(
   val description: String? = null,
   @SerialName(DOCUMENTATION)
   val documentation: String? = null,
+  @SerialName(INSTALL_SNIPPET)
+  val installSnippet: String? = null,
+  @SerialName(DEPENDENCY)
+  val dependency: String? = null,
   @SerialName(COPYRIGHT)
   val copyright: String? = null,
   @SerialName(VENDOR)

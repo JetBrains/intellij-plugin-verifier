@@ -96,6 +96,8 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
           description = this.description,
           copyright = this.copyright,
           documentation = this.documentation,
+          dependency = this.dependency,
+          installSnippet = this.installSnippet,
           vendor = this.vendor?.name,
           vendorUrl = this.vendor?.vendorUrl,
           vendorEmail = this.vendor?.vendorEmail,
