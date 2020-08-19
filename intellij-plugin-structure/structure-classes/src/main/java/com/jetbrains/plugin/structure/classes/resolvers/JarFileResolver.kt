@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
 import java.io.IOException
+import java.nio.channels.Channels
 import java.nio.channels.ClosedChannelException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -192,10 +193,11 @@ class JarFileResolver(
     return path.inputStream().use { PropertyResourceBundle(it) }
   }
 
-  private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> =
-    try {
-      val classNode = classPath.inputStream().use {
-        AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
+  private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> {
+    val byteChannel = Files.newByteChannel(classPath)
+    return try {
+      val classNode = Channels.newInputStream(byteChannel).use { stream ->
+        AsmUtil.readClassNode(className, stream, readMode == ReadMode.FULL)
       }
       ResolutionResult.Found(classNode, fileOrigin)
     } catch (e: InvalidClassFileException) {
@@ -203,10 +205,21 @@ class JarFileResolver(
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       if (e is ClosedChannelException) {
-        throw IllegalStateException("Channel has been closed for $this (FS is open = ${zipFs.isOpen})", closeStacktrace)
+        val exception = IllegalStateException(
+          buildString {
+            appendln("ClosedChannelException for $className of $this from $classPath")
+            appendln("FS is open = ${zipFs.isOpen}")
+            appendln("Channel is open = ${byteChannel.isOpen}")
+          }, e
+        )
+        closeStacktrace?.let { exception.addSuppressed(it) }
+        throw exception
       }
       ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
+    } finally {
+      byteChannel.close()
     }
+  }
 
   private fun checkIsOpen() {
     check(zipFs.isOpen) { "Jar file system must be open for $this" }
