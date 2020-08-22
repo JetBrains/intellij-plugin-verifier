@@ -10,7 +10,10 @@ import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 import java.util.*
@@ -55,17 +58,6 @@ class PropertyUsageProcessor : ApiUsageProcessor {
   ) {
     if (resourceBundleName != getBundleBaseName(resourceBundleName)) {
       //In general, we can't resolve non-base bundles, like "some.Bundle_en" because we don't know the locale to use.
-      return
-    }
-
-    val bundleNameSet = context.classResolver.allBundleNameSet
-    val fullBundleNames = bundleNameSet[resourceBundleName]
-    if (fullBundleNames.isEmpty() || fullBundleNames.size > 1 || fullBundleNames.single() != resourceBundleName) {
-      /*
-      In general, we don't know the locale to use when there are multiple bundles, like "some.Bundle" and "some.Bundle_en".
-      If we always use the Locale.ROOT, it may lead a false positive if a property is declared only in the "_en" bundle.
-      So we don't try to check such properties.
-       */
       return
     }
 
