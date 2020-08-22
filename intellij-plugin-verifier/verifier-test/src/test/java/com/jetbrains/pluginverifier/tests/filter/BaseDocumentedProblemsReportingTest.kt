@@ -11,6 +11,8 @@ import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 import org.junit.Assert
 
 /**
@@ -54,9 +56,12 @@ abstract class BaseDocumentedProblemsReportingTest {
 
       override val problemRegistrar: ProblemRegistrar
         get() = object : ProblemRegistrar {
-
           override fun registerProblem(problem: CompatibilityProblem) = Unit
+        }
 
+      override val warningRegistrar: WarningRegistrar
+        get() = object : WarningRegistrar {
+          override fun registerCompatibilityWarning(warning: CompatibilityWarning) = Unit
         }
 
       override val apiUsageProcessors: List<ApiUsageProcessor>

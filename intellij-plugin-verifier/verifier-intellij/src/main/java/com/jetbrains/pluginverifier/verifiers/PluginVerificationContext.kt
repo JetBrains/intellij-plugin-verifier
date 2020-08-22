@@ -43,6 +43,7 @@ import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
+import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
 data class PluginVerificationContext(
   val idePlugin: IdePlugin,
@@ -53,6 +54,7 @@ data class PluginVerificationContext(
   val dependenciesGraph: DependenciesGraph
 ) : VerificationContext,
   ProblemRegistrar,
+  WarningRegistrar,
   DeprecatedApiRegistrar,
   ExperimentalApiRegistrar,
   OverrideOnlyRegistrar,
@@ -89,6 +91,9 @@ data class PluginVerificationContext(
   val pluginStructureWarnings = hashSetOf<PluginStructureWarning>()
 
   override val problemRegistrar
+    get() = this
+
+  override val warningRegistrar
     get() = this
 
   override fun registerProblem(problem: CompatibilityProblem) {
@@ -131,7 +136,7 @@ data class PluginVerificationContext(
     }
   }
 
-  fun registerCompatibilityWarning(warning: CompatibilityWarning) {
+  override fun registerCompatibilityWarning(warning: CompatibilityWarning) {
     compatibilityWarnings += warning
   }
 

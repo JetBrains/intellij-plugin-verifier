@@ -67,7 +67,23 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     }
 
     val resourceBundle = resolutionResult.value
-    if (propertyKey !in resourceBundle.keySet()) {
+    if (!resourceBundle.containsKey(propertyKey)) {
+      // MP-3201: Don't report warnings about properties which were moved to *DeprecatedMessagesBundle files
+      val deprecatedBundleNames = context.classResolver.allBundleNameSet.baseBundleNames
+        .filter { it.endsWith("DeprecatedMessagesBundle") }
+      for (deprecatedBundleName in deprecatedBundleNames) {
+        val resolution = context.classResolver.resolveExactPropertyResourceBundle(deprecatedBundleName, Locale.ROOT)
+        if (resolution is ResolutionResult.Found) {
+          val deprecatedBundle = resolution.value
+          if (deprecatedBundle.containsKey(propertyKey)) {
+            context.warningRegistrar.registerCompatibilityWarning(
+              DeprecatedPropertyUsageWarning(propertyKey, resourceBundleName, deprecatedBundleName, usageLocation)
+            )
+            return
+          }
+        }
+      }
+
       context.problemRegistrar.registerProblem(MissingPropertyReferenceProblem(propertyKey, resourceBundleName, usageLocation))
     }
   }

@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
+import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
 interface VerificationContext {
   val classResolver: Resolver
@@ -14,6 +15,8 @@ interface VerificationContext {
   val externalClassesPackageFilter: PackageFilter
 
   val problemRegistrar: ProblemRegistrar
+
+  val warningRegistrar: WarningRegistrar
 
   val apiUsageProcessors: List<ApiUsageProcessor>
 }

@@ -17,4 +17,18 @@ public class BundleUser {
     IdeBundle.getMessage("removed.property");
   }
 
+  public void deprecatedProp() {
+    // The "deprecated.property" used to be declared in the
+    // IdeBundle.properties but now it is moved to the CoreDeprecatedMessagesBundle.properties
+
+    /*expected(WARNING)
+    Reference to a deprecated property deprecated.property of resource bundle messages.IdeBundle, which was moved to messages.CoreDeprecatedMessagesBundle
+
+    Method mock.plugin.bundle.BundleUser.deprecatedProp() : void references deprecated property deprecated.property that was moved from the resource bundle messages.IdeBundle to messages.CoreDeprecatedMessagesBundle. The clients will continue to get the correct value of the property but they are encouraged to place the property to their own resource bundle
+    */
+
+    //noinspection UnresolvedPropertyKey
+    IdeBundle.getMessage("deprecated.property");
+  }
+
 }
