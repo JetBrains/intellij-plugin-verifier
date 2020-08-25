@@ -46,6 +46,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     Assert.assertEquals("JetBrains s.r.o.", plugin.vendor)
     Assert.assertEquals("en", plugin.language)
     Assert.assertEquals("Python", plugin.programmingLanguage)
+    Assert.assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
     Assert.assertEquals("3.7-2019.3-5266", plugin.eduPluginVersion)
     Assert.assertEquals(EduPluginVersion("3.7", "2019.3", "5266"),
                         plugin.parsedEduVersion)
