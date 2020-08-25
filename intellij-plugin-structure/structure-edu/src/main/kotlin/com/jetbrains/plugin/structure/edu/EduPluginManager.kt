@@ -99,7 +99,8 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           programmingLanguage = this.programmingLanguage,
           eduPluginVersion = this.eduPluginVersion,
           items = this.items?.map { it.title } ?: emptyList(),
-          icons = if (icon != null) listOf(icon) else emptyList()
+          icons = if (icon != null) listOf(icon) else emptyList(),
+          pluginId = "${this.title}_${this.vendor?.name}_${this.programmingLanguage}"
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
