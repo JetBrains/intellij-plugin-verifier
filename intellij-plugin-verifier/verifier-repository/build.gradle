@@ -13,7 +13,7 @@ dependencies {
   implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
   implementation 'com.squareup.okhttp3:logging-interceptor:4.3.1'
 
-  implementation 'org.jetbrains.intellij:plugin-repository-rest-client:2.0.13'
+  implementation 'org.jetbrains.intellij:plugin-repository-rest-client:2.0.14'
   testImplementation group: 'junit', name: 'junit', version: '4.11'
 }
 
