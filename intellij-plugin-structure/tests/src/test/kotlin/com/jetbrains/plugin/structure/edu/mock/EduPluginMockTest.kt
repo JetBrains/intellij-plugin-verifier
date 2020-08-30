@@ -5,9 +5,10 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.edu.EduPlugin
 import com.jetbrains.plugin.structure.edu.EduPluginManager
 import com.jetbrains.plugin.structure.edu.EduPluginVersion
+import com.jetbrains.plugin.structure.edu.TaskType
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Path
 
@@ -29,6 +30,34 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
+  @Test
+  fun `parse edu plugin stat test`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(EduPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("course_stat")
+      }
+      file("courseIcon.svg", iconTestContent)
+    }
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
+    val plugin = pluginCreationSuccess.plugin
+
+    assertEquals("Python Course", plugin.pluginName)
+    val eduStat = plugin.eduStat
+    assertNotNull(eduStat)
+    assertEquals(3, eduStat!!.lessons.size)
+    assertEquals(1, eduStat.sections.size)
+    assertEquals(4, eduStat.tasks.size)
+    assertEquals(2, eduStat.tasks[TaskType.EDU.id])
+    assertEquals(5, eduStat.tasks[TaskType.CHOICE.id])
+    assertEquals(2, eduStat.tasks[TaskType.THEORY.id])
+    assertEquals(1, eduStat.tasks[TaskType.IDE.id])
+    assertEquals(0, eduStat.tasks[TaskType.OUTPUT.id] ?: 0)
+
+    assertEquals(3, eduStat.countInteractiveChallenges())
+    assertEquals(5, eduStat.countQuizzes())
+    assertEquals(2, eduStat.countTheoryTasks())
+  }
+
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
     val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
 
@@ -37,22 +66,22 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
   }
 
   private fun testMockWarnings(problems: List<PluginProblem>) {
-    Assert.assertTrue(problems.isEmpty())
+    assertTrue(problems.isEmpty())
   }
 
   private fun testMockConfigs(plugin: EduPlugin) {
-    Assert.assertEquals("Python Course", plugin.pluginName)
-    Assert.assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
-    Assert.assertEquals("JetBrains s.r.o.", plugin.vendor)
-    Assert.assertEquals("en", plugin.language)
-    Assert.assertEquals("Python", plugin.programmingLanguage)
-    Assert.assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
-    Assert.assertEquals("3.7-2019.3-5266", plugin.eduPluginVersion)
-    Assert.assertEquals(EduPluginVersion("3.7", "2019.3", "5266"),
-                        plugin.parsedEduVersion)
-    Assert.assertEquals(1, plugin.items.size)
-    Assert.assertEquals("lesson1", plugin.items[0])
-    Assert.assertEquals(iconTestContent, String(plugin.icons.single().content))
+    assertEquals("Python Course", plugin.pluginName)
+    assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
+    assertEquals("JetBrains s.r.o.", plugin.vendor)
+    assertEquals("en", plugin.language)
+    assertEquals("Python", plugin.programmingLanguage)
+    assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
+    assertEquals("3.7-2019.3-5266", plugin.eduPluginVersion)
+    assertEquals(EduPluginVersion("3.7", "2019.3", "5266"),
+                 plugin.parsedEduVersion)
+    assertEquals(1, plugin.eduStat!!.lessons.size)
+    assertEquals("lesson1", plugin.eduStat!!.lessons[0])
+    assertEquals(iconTestContent, String(plugin.icons.single().content))
   }
 }
 
