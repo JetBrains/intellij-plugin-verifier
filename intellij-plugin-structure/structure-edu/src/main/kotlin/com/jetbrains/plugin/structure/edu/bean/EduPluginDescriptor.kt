@@ -9,9 +9,23 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class EduTask(
+  @SerialName(NAME)
+  val name: String = "",
+  @SerialName(TASK_TYPE)
+  var taskType: String = ""
+)
+
+@Serializable
 data class EduItem(
   @SerialName(TITLE)
-  val title: String = ""
+  val title: String = "",
+  @SerialName(TYPE)
+  val type: String = "",
+  @SerialName(ITEMS)
+  val items: List<EduItem> = mutableListOf(),
+  @SerialName(TASK_LIST)
+  var taskList: List<EduTask> = mutableListOf()
 )
 
 @Serializable
@@ -35,7 +49,7 @@ data class EduPluginDescriptor(
   @SerialName(PROGRAMMING_LANGUAGE)
   val programmingLanguage: String? = null,
   @SerialName(ITEMS)
-  val items: List<EduItem>? = null,
+  val items: List<EduItem> = mutableListOf(),
   @SerialName(VENDOR)
   val vendor: EduVendor? = null,
 
