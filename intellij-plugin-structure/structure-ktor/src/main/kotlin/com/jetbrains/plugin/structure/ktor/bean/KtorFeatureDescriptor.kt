@@ -18,6 +18,16 @@ data class KtorVendor(
 )
 
 @Serializable
+data class KtorFeatureDocumentation(
+  @SerialName(DOCUMENTATION_DESCRIPTION)
+  val description: String? = null,
+  @SerialName(DOCUMENTATION_USAGE)
+  val usage: String? = null,
+  @SerialName(DOCUMENTATION_OPTIONS)
+  val options: String? = null,
+)
+
+@Serializable
 data class KtorFeatureDescriptor(
   @SerialName(ID)
   val pluginId: String? = null,
@@ -29,12 +39,20 @@ data class KtorFeatureDescriptor(
   val description: String? = null,
   @SerialName(DOCUMENTATION)
   val documentation: String? = null,
-  @SerialName(INSTALL_SNIPPET)
-  val installSnippet: String? = null,
-  @SerialName(DEPENDENCY)
-  val dependency: String? = null,
   @SerialName(COPYRIGHT)
   val copyright: String? = null,
   @SerialName(VENDOR)
-  val vendor: KtorVendor? = null
+  val vendor: KtorVendor? = null,
+  @SerialName(REQUIRED_FEATURES)
+  val requiredFeatures: List<String> = emptyList(), // Feature IDs.
+  @SerialName(INSTALL_RECEIPT)
+  val installReceipt: FeatureInstallReceipt? = null,
+  @SerialName(TEST_INSTALL_RECEIPT)
+  val testInstallReceipt: FeatureInstallReceipt? = null,
+  @SerialName(GRADLE_INSTALL)
+  val gradleInstall: GradleInstallReceipt? = null,
+  @SerialName(MAVEN_INSTALL)
+  val mavenInstall: MavenInstallReceipt? = null,
+  @SerialName(DOCUMENTATION)
+  val documentation: KtorFeatureDocumentation? = null
 )
