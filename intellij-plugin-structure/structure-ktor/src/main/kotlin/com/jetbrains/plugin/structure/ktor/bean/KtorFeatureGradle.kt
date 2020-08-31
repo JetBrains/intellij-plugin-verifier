@@ -9,36 +9,37 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GradleInstallReceipt(
-  @SerialName(GRADLE_DEPENDENCIES)
-  val dependencies: List<BuildSystemDependency> = emptyList(),
-  @SerialName(GRADLE_REPOSITORIES)
-  val repositories: List<MavenRepository> = emptyList(),
-  @SerialName(GRADLE_PLUGINS)
-  val plugins: List<GradlePlugin> = emptyList(),
+        @SerialName(GRADLE_DEPENDENCIES)
+        val dependencies: List<BuildSystemDependency> = emptyList(),
+        @SerialName(GRADLE_REPOSITORIES)
+        val repositories: List<GradleRepository> = emptyList(),
+        @SerialName(GRADLE_PLUGINS)
+        val plugins: List<GradlePlugin> = emptyList()
 )
 
 @Serializable
 data class GradleRepository(
-  @SerialName(GRADLE_REP_TYPE)
-  val type: GradleRepositoryType? = null,
-  @SerialName(GRADLE_REP_FUNCTION)
-  val functionName: String? = null,
-  @SerialName(GRADLE_REP_URL)
-  val url: String? = null
+        @SerialName(GRADLE_REP_TYPE)
+        val type: GradleRepositoryType? = null,
+        @SerialName(GRADLE_REP_FUNCTION)
+        val functionName: String? = null,
+        @SerialName(GRADLE_REP_URL)
+        val url: String? = null
 )
 
 @Serializable
-enum class GradleRepositoryType(
-  @SerialName(GRADLE_REP_TYPE_FUNCTION)
-  FUNCTION,
-  @SerialName(GRADLE_REP_TYPE_URL)
-  URL
-)
+enum class GradleRepositoryType {
+    @SerialName(GRADLE_REP_TYPE_FUNCTION)
+    FUNCTION,
+
+    @SerialName(GRADLE_REP_TYPE_URL)
+    URL
+}
 
 @Serializable
 data class GradlePlugin(
-  @SerialName(PLUGIN_ID)
-  val id: String? = null,
-  @SerialName(PLUGIN_VERSION)
-  val version: String? = null
+        @SerialName(PLUGIN_ID)
+        val id: String? = null,
+        @SerialName(PLUGIN_VERSION)
+        val version: String? = null
 )

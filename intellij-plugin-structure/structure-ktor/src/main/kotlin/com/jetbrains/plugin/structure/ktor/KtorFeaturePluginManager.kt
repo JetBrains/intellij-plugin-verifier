@@ -22,93 +22,97 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class KtorFeaturePluginManager private constructor(private val extractDirectory: Path) : PluginManager<KtorFeature> {
-  companion object {
-    const val DESCRIPTOR_NAME = "descriptor.json"
-    const val COURSE_ICON_NAME = "featureIcon.svg"
+    companion object {
+        const val DESCRIPTOR_NAME = "descriptor.json"
+        const val COURSE_ICON_NAME = "featureIcon.svg"
 
-    private val LOG: Logger = LoggerFactory.getLogger(KtorFeaturePluginManager::class.java)
+        private val LOG: Logger = LoggerFactory.getLogger(KtorFeaturePluginManager::class.java)
 
-    fun createManager(
-      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
-    ): KtorFeaturePluginManager {
-      extractDirectory.createDir()
-      return KtorFeaturePluginManager(extractDirectory)
-    }
-  }
-
-  override fun createPlugin(pluginFile: Path): PluginCreationResult<KtorFeature> {
-    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
-    return when {
-      pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
-      else -> PluginCreationFail(createIncorrectKtorFeatureFile(pluginFile.simpleName))
-    }
-  }
-
-  private fun loadDescriptorFromZip(pluginFile: Path): PluginCreationResult<KtorFeature> {
-    val sizeLimit = Settings.KTOR_FEATURE_SIZE_LIMIT.getAsLong()
-    if (Files.size(pluginFile) > sizeLimit) {
-      return PluginCreationFail(UnableToExtractZip())
+        fun createManager(
+                extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
+        ): KtorFeaturePluginManager {
+            extractDirectory.createDir()
+            return KtorFeaturePluginManager(extractDirectory)
+        }
     }
 
-    val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_")
-    return try {
-      extractZip(pluginFile, tempDirectory, sizeLimit)
-      loadPluginInfoFromDirectory(tempDirectory)
-    } catch (e: DecompressorSizeLimitExceededException) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
-    } finally {
-      tempDirectory.deleteLogged()
+    override fun createPlugin(pluginFile: Path): PluginCreationResult<KtorFeature> {
+        require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
+        return when {
+            pluginFile.isZip() -> loadDescriptorFromZip(pluginFile)
+            else -> PluginCreationFail(createIncorrectKtorFeatureFile(pluginFile.simpleName))
+        }
     }
-  }
 
-  private fun loadPluginInfoFromDirectory(pluginDirectory: Path): PluginCreationResult<KtorFeature> {
-    val descriptorFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
-    if (!descriptorFile.exists()) {
-      return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
-    }
-    val descriptorContent = descriptorFile.readText()
-    val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
-      .parse(KtorFeatureDescriptor.serializer(), descriptorContent)
-    val icon = loadIconFromDir(pluginDirectory)
-    return createPlugin(descriptor, icon)
-  }
+    private fun loadDescriptorFromZip(pluginFile: Path): PluginCreationResult<KtorFeature> {
+        val sizeLimit = Settings.KTOR_FEATURE_SIZE_LIMIT.getAsLong()
+        if (Files.size(pluginFile) > sizeLimit) {
+            return PluginCreationFail(UnableToExtractZip())
+        }
 
-  private fun loadIconFromDir(pluginDirectory: Path): PluginIcon? {
-    val iconFile = pluginDirectory.resolve(COURSE_ICON_NAME)
-    if (iconFile.exists()) {
-      val iconContent = Files.readAllBytes(iconFile)
-      return PluginIcon(IconTheme.DEFAULT, iconContent, iconFile.fileName.toString())
+        val tempDirectory = Files.createTempDirectory(extractDirectory, "plugin_")
+        return try {
+            extractZip(pluginFile, tempDirectory, sizeLimit)
+            loadPluginInfoFromDirectory(tempDirectory)
+        } catch (e: DecompressorSizeLimitExceededException) {
+            return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
+        } finally {
+            tempDirectory.deleteLogged()
+        }
     }
-    return null
-  }
 
-  private fun createPlugin(descriptor: KtorFeatureDescriptor, icon: PluginIcon?): PluginCreationResult<KtorFeature> {
-    try {
-      val beanValidationResult = validateKtorPluginBean(descriptor)
-      if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
-        return PluginCreationFail(beanValidationResult)
-      }
-      val plugin = with(descriptor) {
-        KtorFeature(
-          pluginId = this.pluginId,
-          pluginVersion = pluginVersion,
-          pluginName = this.pluginName,
-          description = this.description,
-          copyright = this.copyright,
-          documentation = this.documentation,
-          dependency = this.dependency,
-          installSnippet = this.installSnippet,
-          vendor = this.vendor?.name,
-          vendorUrl = this.vendor?.vendorUrl,
-          vendorEmail = this.vendor?.vendorEmail,
-          icons = if (icon != null) listOf(icon) else emptyList()
-        )
-      }
-      return PluginCreationSuccess(plugin, beanValidationResult)
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
-      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
+    private fun loadPluginInfoFromDirectory(pluginDirectory: Path): PluginCreationResult<KtorFeature> {
+        val descriptorFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
+        if (!descriptorFile.exists()) {
+            return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+        }
+        val descriptorContent = descriptorFile.readText()
+        val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
+                .parse(KtorFeatureDescriptor.serializer(), descriptorContent)
+        val icon = loadIconFromDir(pluginDirectory)
+        return createPlugin(descriptor, icon)
     }
-  }
+
+    private fun loadIconFromDir(pluginDirectory: Path): PluginIcon? {
+        val iconFile = pluginDirectory.resolve(COURSE_ICON_NAME)
+        if (iconFile.exists()) {
+            val iconContent = Files.readAllBytes(iconFile)
+            return PluginIcon(IconTheme.DEFAULT, iconContent, iconFile.fileName.toString())
+        }
+        return null
+    }
+
+    private fun createPlugin(descriptor: KtorFeatureDescriptor, icon: PluginIcon?): PluginCreationResult<KtorFeature> {
+        try {
+            val beanValidationResult = validateKtorPluginBean(descriptor)
+            if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
+                return PluginCreationFail(beanValidationResult)
+            }
+            val plugin = with(descriptor) {
+                KtorFeature(
+                        pluginId = this.pluginId,
+                        pluginVersion = pluginVersion,
+                        pluginName = this.pluginName,
+                        description = this.description,
+                        vendor = this.vendor?.name,
+                        vendorUrl = this.vendor?.vendorUrl,
+                        vendorEmail = this.vendor?.vendorEmail,
+                        icons = if (icon != null) listOf(icon) else emptyList(),
+                        documentation = this.documentation?.let { doc ->
+                            KtorFeatureDocumentation(
+                                    description = doc.description!!,
+                                    usage = doc.usage!!,
+                                    options = doc.options!!
+                            )
+                        }
+
+                )
+            }
+            return PluginCreationSuccess(plugin, beanValidationResult)
+        } catch (e: Exception) {
+            e.rethrowIfInterrupted()
+            LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
+            return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
+        }
+    }
 }

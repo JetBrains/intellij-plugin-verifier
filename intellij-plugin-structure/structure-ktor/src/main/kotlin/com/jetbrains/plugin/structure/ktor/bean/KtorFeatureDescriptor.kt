@@ -24,7 +24,7 @@ data class KtorFeatureDocumentation(
   @SerialName(DOCUMENTATION_USAGE)
   val usage: String? = null,
   @SerialName(DOCUMENTATION_OPTIONS)
-  val options: String? = null,
+  val options: String? = null
 )
 
 @Serializable
@@ -37,8 +37,6 @@ data class KtorFeatureDescriptor(
   val pluginVersion: String? = null,
   @SerialName(DESCRIPTION)
   val description: String? = null,
-  @SerialName(DOCUMENTATION)
-  val documentation: String? = null,
   @SerialName(COPYRIGHT)
   val copyright: String? = null,
   @SerialName(VENDOR)

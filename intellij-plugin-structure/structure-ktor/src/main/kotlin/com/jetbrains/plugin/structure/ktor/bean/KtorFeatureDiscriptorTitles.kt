@@ -38,7 +38,7 @@ const val MAVEN_PLUGONS = "plugins"
 // Gradle Install
 const val GRADLE_DEPENDENCIES = "dependencies"
 const val GRADLE_REPOSITORIES = "repositories"
-const val GRADLE_PLUGONS = "plugins"
+const val GRADLE_PLUGINS = "plugins"
 
 // Dependency
 const val DEPENDENCY_GROUP = "group"
