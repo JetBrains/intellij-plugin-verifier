@@ -16,10 +16,12 @@ data class KtorFeature(
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginVersion: String? = null,
   override val pluginId: String? = null,
-  val copyright: String? = null,
-  val documentation: String? = null,
-  val installSnippet: String? = null,
-  val dependency: String? = null
+  val requiredFeatures: List<String> = emptyList(), // Feature IDs.
+  val installReceipt: KtorFeatureInstallReceipt? = null,
+  val testInstallReceipt: FeatureInstallReceipt? = null,
+  val mavenInstallReceipt: MavenInstallReceipt? = null,
+  val gradleInstallReceipt: GradleInstallReceipt? = null,
+  val documentation: KtorFeatureDocumentation? = null,
 ) : Plugin {
   override val url: String = ""
   override val changeNotes: String? = null
