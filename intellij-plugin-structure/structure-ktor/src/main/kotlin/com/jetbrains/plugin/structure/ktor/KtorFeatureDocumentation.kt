@@ -4,9 +4,6 @@
 
 package com.jetbrains.plugin.structure.ktor
 
-import com.jetbrains.plugin.structure.base.plugin.Plugin
-import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-
 data class KtorFeatureDocumentation(
   val description: String,
   val usage: String,
