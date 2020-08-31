@@ -2,10 +2,7 @@ package com.jetbrains.plugin.structure.edu.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.edu.EduPlugin
-import com.jetbrains.plugin.structure.edu.EduPluginManager
-import com.jetbrains.plugin.structure.edu.EduPluginVersion
-import com.jetbrains.plugin.structure.edu.TaskType
+import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -85,4 +82,17 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
   }
 }
 
+private fun EduStat.countInteractiveChallenges(): Int {
+  val ideTasks = tasks[TaskType.IDE.id] ?: 0
+  val outputTasks = tasks[TaskType.OUTPUT.id] ?: 0
+  val eduTasks = tasks[TaskType.EDU.id] ?: 0
+  return ideTasks + outputTasks + eduTasks
+}
 
+private fun EduStat.countQuizzes(): Int {
+  return tasks[TaskType.CHOICE.id] ?: 0
+}
+
+private fun EduStat.countTheoryTasks(): Int {
+  return tasks[TaskType.THEORY.id] ?: 0
+}
