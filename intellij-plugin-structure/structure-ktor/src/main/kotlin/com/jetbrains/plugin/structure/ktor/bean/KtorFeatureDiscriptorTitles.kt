@@ -33,7 +33,7 @@ const val INSTALL_TEMPLATES = "extraTemplates"
 // Maven Install
 const val MAVEN_DEPENDENCIES = "dependencies"
 const val MAVEN_REPOSITORIES = "repositories"
-const val MAVEN_PLUGONS = "plugins"
+const val MAVEN_PLUGINS = "plugins"
 
 // Gradle Install
 const val GRADLE_DEPENDENCIES = "dependencies"
