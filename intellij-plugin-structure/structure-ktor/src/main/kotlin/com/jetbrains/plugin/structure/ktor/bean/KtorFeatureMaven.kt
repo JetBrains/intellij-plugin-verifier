@@ -14,7 +14,7 @@ data class MavenInstallReceipt(
   @SerialName(MAVEN_REPOSITORIES)
   val repositories: List<MavenRepository> = emptyList(),
   @SerialName(MAVEN_PLUGINS)
-  val plugins: List<MavenPlugin> = emptyList(),
+  val plugins: List<MavenPlugin> = emptyList()
 )
 
 @Serializable
@@ -24,7 +24,7 @@ data class BuildSystemDependency(
   @SerialName(DEPENDENCY_ARTIFACT)
   val artifact: String? = null,
   @SerialName(DEPENDENCY_VERSION)
-  val version: String? = null,
+  val version: String? = null
 )
 
 @Serializable
