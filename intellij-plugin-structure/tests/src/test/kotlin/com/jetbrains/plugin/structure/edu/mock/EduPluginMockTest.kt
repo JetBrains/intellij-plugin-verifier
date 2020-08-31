@@ -81,18 +81,3 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(iconTestContent, String(plugin.icons.single().content))
   }
 }
-
-private fun EduStat.countInteractiveChallenges(): Int {
-  val ideTasks = tasks[TaskType.IDE.id] ?: 0
-  val outputTasks = tasks[TaskType.OUTPUT.id] ?: 0
-  val eduTasks = tasks[TaskType.EDU.id] ?: 0
-  return ideTasks + outputTasks + eduTasks
-}
-
-private fun EduStat.countQuizzes(): Int {
-  return tasks[TaskType.CHOICE.id] ?: 0
-}
-
-private fun EduStat.countTheoryTasks(): Int {
-  return tasks[TaskType.THEORY.id] ?: 0
-}

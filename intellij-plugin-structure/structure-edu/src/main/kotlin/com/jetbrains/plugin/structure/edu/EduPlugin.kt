@@ -37,6 +37,21 @@ data class EduStat(
   val tasks: Map<String, Int>
 ) {
 
+  fun countInteractiveChallenges(): Int {
+    val ideTasks = tasks[TaskType.IDE.id] ?: 0
+    val outputTasks = tasks[TaskType.OUTPUT.id] ?: 0
+    val eduTasks = tasks[TaskType.EDU.id] ?: 0
+    return ideTasks + outputTasks + eduTasks
+  }
+
+  fun countQuizzes(): Int {
+    return tasks[TaskType.CHOICE.id] ?: 0
+  }
+
+  fun countTheoryTasks(): Int {
+    return tasks[TaskType.THEORY.id] ?: 0
+  }
+  
   companion object {
     fun fromDescriptor(descriptor: EduPluginDescriptor): EduStat {
       val allItems = descriptor.items.flatMap { it.items } + descriptor.items
