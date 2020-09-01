@@ -1,4 +1,4 @@
-package kotlin.com.jetbrains.plugin.structure.ktor.problems
+package com.jetbrains.plugin.structure.ktor.problems
 
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 
