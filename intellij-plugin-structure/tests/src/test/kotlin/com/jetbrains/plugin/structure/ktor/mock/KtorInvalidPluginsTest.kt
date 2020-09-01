@@ -58,13 +58,6 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
   }
 
   @Test
-  fun `install snippet is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(INSTALL_SNIPPET)) { installSnippet = null }
-    checkInvalidPlugin(PropertyNotSpecified(INSTALL_SNIPPET)) { installSnippet = "" }
-    checkInvalidPlugin(PropertyNotSpecified(INSTALL_SNIPPET)) { installSnippet = "\n" }
-  }
-
-  @Test
   fun `vendor is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = null }
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = KtorVendor() }
