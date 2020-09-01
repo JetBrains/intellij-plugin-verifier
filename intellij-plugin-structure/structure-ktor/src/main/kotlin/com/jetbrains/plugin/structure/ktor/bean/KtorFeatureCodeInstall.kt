@@ -9,33 +9,33 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FeatureInstallReceipt(
-        @SerialName(INSTALL_IMPORTS)
-        val imports: List<String> = emptyList(),
-        @SerialName(INSTALL_BLOCK)
-        val installBlock: String? = null,
-        @SerialName(INSTALL_TEMPLATES)
-        val extraTemplates: List<CodeTemplate> = emptyList()
+  @SerialName(INSTALL_IMPORTS)
+  val imports: List<String> = emptyList(),
+  @SerialName(INSTALL_BLOCK)
+  val installBlock: String? = null,
+  @SerialName(INSTALL_TEMPLATES)
+  val extraTemplates: List<CodeTemplate> = emptyList()
 )
 
 @Serializable
 enum class Position {
-    @SerialName(POSITION_INSIDE)
-    INSIDE_APPLICATION_MODULE,
+  @SerialName(POSITION_INSIDE)
+  INSIDE_APPLICATION_MODULE,
 
-    @SerialName(POSITION_OUTSIDE)
-    OUTSIDE_APPLICATION_MODULE,
+  @SerialName(POSITION_OUTSIDE)
+  OUTSIDE_APPLICATION_MODULE,
 
-    @SerialName(POSITION_FILE)
-    SEPARATE_FILE,
+  @SerialName(POSITION_FILE)
+  SEPARATE_FILE,
 
-    @SerialName(POSITION_TESTFUN)
-    TEST_FUNCTION
+  @SerialName(POSITION_TESTFUN)
+  TEST_FUNCTION
 }
 
 @Serializable
 data class CodeTemplate(
-        @SerialName(TEMPLATE_POSITION)
-        val position: Position? = null,
-        @SerialName(TEMPLATE_TEXT)
-        val text: String? = null
+  @SerialName(TEMPLATE_POSITION)
+  val position: Position? = null,
+  @SerialName(TEMPLATE_TEXT)
+  val text: String? = null
 )

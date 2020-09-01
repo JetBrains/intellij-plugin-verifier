@@ -12,131 +12,131 @@ import kotlin.com.jetbrains.plugin.structure.ktor.problems.DocumentationContains
 import kotlin.com.jetbrains.plugin.structure.ktor.problems.GradleRepoIncorrectDescription
 
 internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
-    val problems = mutableListOf<PluginProblem>()
-    val vendor = descriptor.vendor
-    if (vendor == null || vendor.name.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(VENDOR))
+  val problems = mutableListOf<PluginProblem>()
+  val vendor = descriptor.vendor
+  if (vendor == null || vendor.name.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(VENDOR))
+  }
+  if (descriptor.pluginName.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(NAME))
+  }
+  if (descriptor.pluginId.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(ID))
+  }
+  if (descriptor.pluginVersion.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(VERSION))
+  }
+
+  descriptor.documentation?.let { documentation ->
+    if (documentation.description.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(DOCUMENTATION_DESCRIPTION))
     }
-    if (descriptor.pluginName.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(NAME))
+    if (documentation.usage.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(DOCUMENTATION_USAGE))
     }
-    if (descriptor.pluginId.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(ID))
-    }
-    if (descriptor.pluginVersion.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(VERSION))
+    if (documentation.options.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(DOCUMENTATION_OPTIONS))
     }
 
-    descriptor.documentation?.let { documentation ->
-        if (documentation.description.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(DOCUMENTATION_DESCRIPTION))
-        }
-        if (documentation.usage.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(DOCUMENTATION_USAGE))
-        }
-        if (documentation.options.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(DOCUMENTATION_OPTIONS))
-        }
-
-        if (documentation.description!!.contains("\\!\\[.*\\]\\(".toRegex())) {
-            problems.add(DocumentationContainsResource("description"))
-        }
-        if (documentation.usage!!.contains("\\!\\[.*\\]\\(".toRegex())) {
-            problems.add(DocumentationContainsResource("usage"))
-        }
-        if (documentation.options!!.contains("\\!\\[.*\\]\\(".toRegex())) {
-            problems.add(DocumentationContainsResource("options"))
-        }
+    if (documentation.description!!.contains("\\!\\[.*\\]\\(".toRegex())) {
+      problems.add(DocumentationContainsResource("description"))
     }
-
-    descriptor.installReceipt?.extraTemplates?.forEach { codeTemplate ->
-        if (codeTemplate.position == null) {
-            problems.add(PropertyNotSpecified(TEMPLATE_POSITION))
-        }
-        if (codeTemplate.text.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(TEMPLATE_TEXT))
-        }
+    if (documentation.usage!!.contains("\\!\\[.*\\]\\(".toRegex())) {
+      problems.add(DocumentationContainsResource("usage"))
     }
-
-    descriptor.testInstallReceipt?.extraTemplates?.forEach { codeTemplate ->
-        if (codeTemplate.position == null) {
-            problems.add(PropertyNotSpecified(TEMPLATE_POSITION))
-        }
-        if (codeTemplate.text.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(TEMPLATE_TEXT))
-        }
+    if (documentation.options!!.contains("\\!\\[.*\\]\\(".toRegex())) {
+      problems.add(DocumentationContainsResource("options"))
     }
+  }
 
-    (descriptor.gradleInstall?.dependencies.orEmpty()
-            + descriptor.mavenInstall?.dependencies.orEmpty()).forEach { dependency ->
-        if (dependency.group.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(DEPENDENCY_GROUP))
-        }
-        if (dependency.artifact.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(DEPENDENCY_ARTIFACT))
-        }
-        if (dependency.version == "") {
-            problems.add(PropertyNotSpecified(DEPENDENCY_VERSION))
-        }
+  descriptor.installReceipt?.extraTemplates?.forEach { codeTemplate ->
+    if (codeTemplate.position == null) {
+      problems.add(PropertyNotSpecified(TEMPLATE_POSITION))
     }
-
-    descriptor.mavenInstall?.repositories?.forEach { repo ->
-        if (repo.id.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(MAVEN_REP_ID))
-        }
-        if (repo.url.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(MAVEN_REP_URL))
-        }
+    if (codeTemplate.text.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(TEMPLATE_TEXT))
     }
+  }
 
-    descriptor.gradleInstall?.repositories?.forEach { repo ->
-        if (repo.type == GradleRepositoryType.FUNCTION && repo.functionName.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(GRADLE_REP_FUNCTION))
-        }
-        if (repo.type == GradleRepositoryType.FUNCTION && !repo.url.isNullOrBlank()) {
-            problems.add(
-                    GradleRepoIncorrectDescription(
-                            expectedField = GRADLE_REP_FUNCTION,
-                            unexpectedField = GRADLE_REP_URL
-                    )
-            )
-        }
-        if (repo.type == GradleRepositoryType.URL && repo.url.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(GRADLE_REP_URL))
-        }
-        if (repo.type == GradleRepositoryType.FUNCTION && !repo.functionName.isNullOrBlank()) {
-            problems.add(
-                    GradleRepoIncorrectDescription(
-                            expectedField = GRADLE_REP_URL,
-                            unexpectedField = GRADLE_REP_FUNCTION
-                    )
-            )
-        }
+  descriptor.testInstallReceipt?.extraTemplates?.forEach { codeTemplate ->
+    if (codeTemplate.position == null) {
+      problems.add(PropertyNotSpecified(TEMPLATE_POSITION))
     }
-
-    descriptor.mavenInstall?.repositories?.forEach { repo ->
-        if (repo.id.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(MAVEN_REP_ID))
-        }
-        if (repo.url.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(MAVEN_REP_URL))
-        }
+    if (codeTemplate.text.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(TEMPLATE_TEXT))
     }
+  }
 
-    descriptor.gradleInstall?.plugins?.forEach { plugin ->
-        if (plugin.id.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(PLUGIN_ID))
-        }
+  (descriptor.gradleInstall?.dependencies.orEmpty()
+    + descriptor.mavenInstall?.dependencies.orEmpty()).forEach { dependency ->
+    if (dependency.group.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(DEPENDENCY_GROUP))
     }
-
-    descriptor.mavenInstall?.plugins?.forEach { plugin ->
-        if (plugin.group.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(PLUGIN_GROUP))
-        }
-        if (plugin.artifact.isNullOrBlank()) {
-            problems.add(PropertyNotSpecified(PLUGIN_ARTIFACT))
-        }
+    if (dependency.artifact.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(DEPENDENCY_ARTIFACT))
     }
+    if (dependency.version == "") {
+      problems.add(PropertyNotSpecified(DEPENDENCY_VERSION))
+    }
+  }
 
-    return problems
+  descriptor.mavenInstall?.repositories?.forEach { repo ->
+    if (repo.id.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(MAVEN_REP_ID))
+    }
+    if (repo.url.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(MAVEN_REP_URL))
+    }
+  }
+
+  descriptor.gradleInstall?.repositories?.forEach { repo ->
+    if (repo.type == GradleRepositoryType.FUNCTION && repo.functionName.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(GRADLE_REP_FUNCTION))
+    }
+    if (repo.type == GradleRepositoryType.FUNCTION && !repo.url.isNullOrBlank()) {
+      problems.add(
+        GradleRepoIncorrectDescription(
+          expectedField = GRADLE_REP_FUNCTION,
+          unexpectedField = GRADLE_REP_URL
+        )
+      )
+    }
+    if (repo.type == GradleRepositoryType.URL && repo.url.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(GRADLE_REP_URL))
+    }
+    if (repo.type == GradleRepositoryType.FUNCTION && !repo.functionName.isNullOrBlank()) {
+      problems.add(
+        GradleRepoIncorrectDescription(
+          expectedField = GRADLE_REP_URL,
+          unexpectedField = GRADLE_REP_FUNCTION
+        )
+      )
+    }
+  }
+
+  descriptor.mavenInstall?.repositories?.forEach { repo ->
+    if (repo.id.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(MAVEN_REP_ID))
+    }
+    if (repo.url.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(MAVEN_REP_URL))
+    }
+  }
+
+  descriptor.gradleInstall?.plugins?.forEach { plugin ->
+    if (plugin.id.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(PLUGIN_ID))
+    }
+  }
+
+  descriptor.mavenInstall?.plugins?.forEach { plugin ->
+    if (plugin.group.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(PLUGIN_GROUP))
+    }
+    if (plugin.artifact.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified(PLUGIN_ARTIFACT))
+    }
+  }
+
+  return problems
 }
