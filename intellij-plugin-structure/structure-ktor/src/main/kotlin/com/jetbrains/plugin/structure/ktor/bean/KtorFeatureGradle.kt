@@ -8,13 +8,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class GradleInstallReceipt(
-  @SerialName(GRADLE_DEPENDENCIES)
-  val dependencies: List<BuildSystemDependency> = emptyList(),
+data class GradleInstallRecipe(
   @SerialName(GRADLE_REPOSITORIES)
   val repositories: List<GradleRepository> = emptyList(),
   @SerialName(GRADLE_PLUGINS)
-  val plugins: List<GradlePlugin> = emptyList()
+  val plugins: List<GradlePlugin> = emptyList(),
+  @SerialName(GRADLE_DEPENDENCIES)
+  val dependencies: List<BuildSystemDependency> = emptyList(),
+  @SerialName(GRADLE_TEST_DEPENDENCIES)
+  val testDependencies: List<BuildSystemDependency> = emptyList()
 )
 
 @Serializable

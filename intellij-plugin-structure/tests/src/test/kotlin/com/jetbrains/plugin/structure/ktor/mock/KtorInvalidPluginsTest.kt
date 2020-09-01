@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
+import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 
 class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<KtorFeature, KtorFeaturePluginManager>(fileSystemType) {
   override fun createManager(extractDirectory: Path): KtorFeaturePluginManager =
@@ -44,20 +45,6 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
   }
 
   @Test
-  fun `version is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = null }
-    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = "" }
-    checkInvalidPlugin(PropertyNotSpecified(VERSION)) { version = "\n" }
-  }
-
-  @Test
-  fun `deps is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY)) { dependency = null }
-    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY)) { dependency = "" }
-    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY)) { dependency = "\n" }
-  }
-
-  @Test
   fun `vendor is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = null }
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = KtorVendor() }
@@ -65,10 +52,54 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     checkInvalidPlugin(PropertyNotSpecified(VENDOR)) { vendor = KtorVendor("\n") }
   }
 
-  private fun checkInvalidPlugin(problem: PluginProblem, descriptor: KtorPluginJsonBuilder.() -> Unit) {
+  @Test
+  fun `description is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = null }
+    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = "" }
+    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = "\n" }
+  }
+
+  @Test
+  fun `documentation is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION)) { documentation = null }
+    checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION_DESCRIPTION)) {
+      documentation!!.description = null
+    }
+    checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION_USAGE)) {
+      documentation!!.usage = null
+    }
+    checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION_OPTIONS)) {
+      documentation!!.options = null
+    }
+  }
+
+  @Test
+  fun `resource in documentation`() {
+    checkInvalidPlugin(DocumentationContainsResource("description")) {
+      documentation!!.description = "Image: ![image](http://google.com/blah-blah)"
+    }
+    checkInvalidPlugin(DocumentationContainsResource("usage")) {
+      documentation!!.usage = "Image: ![image](http://google.com/blah-blah)"
+    }
+    checkInvalidPlugin(DocumentationContainsResource("options")) {
+      documentation!!.options = "Image: ![image](http://google.com/blah-blah)"
+    }
+  }
+
+  @Test
+  fun `gradle recipe without maven and vice versa`() {
+    checkInvalidPlugin(PropertyNotSpecified(MAVEN_INSTALL)) {
+      gradleInstall {}
+    }
+    checkInvalidPlugin(PropertyNotSpecified(GRADLE_INSTALL)) {
+      mavenInstall {}
+    }
+  }
+
+  private fun checkInvalidPlugin(problem: PluginProblem, descriptor: KtorFeatureJsonBuilder.() -> Unit) {
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("feature.zip")) {
       file(KtorFeaturePluginManager.DESCRIPTOR_NAME) {
-        val builder = perfectEduPluginBuilder
+        val builder = perfectKtorFeatureBuilder
         builder.descriptor()
         builder.asString()
       }

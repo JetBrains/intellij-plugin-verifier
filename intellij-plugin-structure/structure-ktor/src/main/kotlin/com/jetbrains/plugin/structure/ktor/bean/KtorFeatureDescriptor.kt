@@ -44,13 +44,11 @@ data class KtorFeatureDescriptor(
   @SerialName(REQUIRED_FEATURES)
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
   @SerialName(INSTALL_RECEIPT)
-  val installReceipt: FeatureInstallReceipt? = null,
-  @SerialName(TEST_INSTALL_RECEIPT)
-  val testInstallReceipt: FeatureInstallReceipt? = null,
+  val installRecipe: FeatureInstallRecipe? = null,
   @SerialName(GRADLE_INSTALL)
-  val gradleInstall: GradleInstallReceipt? = null,
+  val gradleInstall: GradleInstallRecipe? = null,
   @SerialName(MAVEN_INSTALL)
-  val mavenInstall: MavenInstallReceipt? = null,
+  val mavenInstall: MavenInstallRecipe? = null,
   @SerialName(DOCUMENTATION)
   val documentation: KtorFeatureDocumentation? = null
 )

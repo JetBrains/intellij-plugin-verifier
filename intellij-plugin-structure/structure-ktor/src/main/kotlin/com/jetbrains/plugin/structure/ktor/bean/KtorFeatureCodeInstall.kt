@@ -8,13 +8,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FeatureInstallReceipt(
+data class FeatureInstallRecipe(
   @SerialName(INSTALL_IMPORTS)
   val imports: List<String> = emptyList(),
+  @SerialName(INSTALL_TEST_IMPORTS)
+  val testImports: List<String> = emptyList(),
   @SerialName(INSTALL_BLOCK)
   val installBlock: String? = null,
   @SerialName(INSTALL_TEMPLATES)
-  val extraTemplates: List<CodeTemplate> = emptyList()
+  val templates: List<CodeTemplate> = emptyList()
 )
 
 @Serializable

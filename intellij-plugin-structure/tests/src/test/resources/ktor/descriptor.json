@@ -1,13 +1,72 @@
 {
-  "description" : "Amazing feature",
-  "name" : "Configuration feature",
-  "id" : "ktor.feature.configuration",
-  "version" : "1.0.0",
-  "install_snippet" : "install(Compression) { }",
-  "dependency" : "api(adss.adfs.sdfsdf)",
+  "name": "Configuration feature",
+  "id": "ktor.feature.configuration",
   "copyright": "http://plugins.jetbrains.com/",
+  "version": "1.0.0",
   "vendor": {
     "name": "JetBrains s.r.o.",
     "url": "http://jetbrains.com/"
+  },
+  "required_feature_ids": [
+    "ktor.locations"
+  ],
+  "description": "Amazing feature",
+  "documentation": {
+    "description": "This is the most amazing feature you've ever seen",
+    "usage": "To use run this:\n```\nfun main() {\n\tprintln(\"Hello world\")\n}\n```",
+    "options": "No options"
+  },
+  "install_recipe": {
+    "install_block": "install(Configuration) {\n\n}",
+    "imports": [
+      "io.ktor.configuration.*"
+    ],
+    "test_imports": [
+      "kotlin.test.*"
+    ],
+    "templates": [
+      {
+        "position": "inside_app",
+        "text": "val x = 0\nval y = x + 1"
+      },
+      {
+        "position": "test_function",
+        "text": "@Test\nfun testF() {\n\tassertEquals(1, 1)\n}"
+      }
+    ]
+  },
+  "gradle_install": {
+    "repositories": [
+      {
+        "type": "function_call_based",
+        "function_name": "jcenter"
+      },
+      {
+        "type": "url_based",
+        "url": "https://bintray.com/kotlin/ktor/ktor"
+      }
+    ],
+    "plugins": [
+      {
+        "id": "application",
+        "version": "1.0.0"
+      }
+    ],
+    "dependencies": [
+      {
+        "group": "io.ktor",
+        "artifact": "ktor-configuration",
+        "version": "$ktor_version"
+      }
+    ]
+  },
+  "maven_install": {
+    "dependencies": [
+      {
+        "group": "io.ktor",
+        "artifact": "ktor-configuration",
+        "version": "$ktor_version"
+      }
+    ]
   }
 }

@@ -5,13 +5,11 @@ const val ID = "id"
 const val NAME = "name"
 const val COPYRIGHT = "copyright"
 const val DESCRIPTION = "description"
-const val DEPENDENCY = "dependency"
 const val VERSION = "version"
 const val VENDOR = "vendor"
 const val REQUIRED_FEATURES = "required_feature_ids"
 const val DOCUMENTATION = "documentation"
-const val INSTALL_RECEIPT = "app_install_receipt"
-const val TEST_INSTALL_RECEIPT = "test_install_receipt"
+const val INSTALL_RECEIPT = "install_recipe"
 const val GRADLE_INSTALL = "gradle_install"
 const val MAVEN_INSTALL = "maven_install"
 
@@ -21,22 +19,25 @@ const val VENDOR_EMAIL = "email"
 const val VENDOR_URL = "url"
 
 // Documentation
-const val DOCUMENTATION_DESCRIPTION = "text"
+const val DOCUMENTATION_DESCRIPTION = "description"
 const val DOCUMENTATION_USAGE = "usage"
 const val DOCUMENTATION_OPTIONS = "options"
 
 // Install
+const val INSTALL_BLOCK = "install_block"
 const val INSTALL_IMPORTS = "imports"
-const val INSTALL_BLOCK = "installBlock"
-const val INSTALL_TEMPLATES = "extraTemplates"
+const val INSTALL_TEST_IMPORTS = "test_imports"
+const val INSTALL_TEMPLATES = "templates"
 
 // Maven Install
 const val MAVEN_DEPENDENCIES = "dependencies"
+const val MAVEN_TEST_DEPENDENCIES = "test_dependencies"
 const val MAVEN_REPOSITORIES = "repositories"
 const val MAVEN_PLUGINS = "plugins"
 
 // Gradle Install
 const val GRADLE_DEPENDENCIES = "dependencies"
+const val GRADLE_TEST_DEPENDENCIES = "test_dependencies"
 const val GRADLE_REPOSITORIES = "repositories"
 const val GRADLE_PLUGINS = "plugins"
 

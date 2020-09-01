@@ -8,13 +8,15 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MavenInstallReceipt(
-  @SerialName(MAVEN_DEPENDENCIES)
-  val dependencies: List<BuildSystemDependency> = emptyList(),
+data class MavenInstallRecipe(
   @SerialName(MAVEN_REPOSITORIES)
   val repositories: List<MavenRepository> = emptyList(),
   @SerialName(MAVEN_PLUGINS)
-  val plugins: List<MavenPlugin> = emptyList()
+  val plugins: List<MavenPlugin> = emptyList(),
+  @SerialName(MAVEN_DEPENDENCIES)
+  val dependencies: List<BuildSystemDependency> = emptyList(),
+  @SerialName(MAVEN_TEST_DEPENDENCIES)
+  val testDependencies: List<BuildSystemDependency> = emptyList()
 )
 
 @Serializable
