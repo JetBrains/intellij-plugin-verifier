@@ -22,3 +22,9 @@ data class KtorFeature(
   override val url: String = ""
   override val changeNotes: String? = null
 }
+
+data class KtorFeatureDocumentation(
+  val description: String,
+  val usage: String,
+  val options: String
+)
