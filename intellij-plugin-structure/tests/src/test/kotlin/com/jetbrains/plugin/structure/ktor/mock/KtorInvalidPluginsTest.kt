@@ -54,9 +54,9 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = null }
-    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = "" }
-    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTION)) { description = "\n" }
+    checkInvalidPlugin(PropertyNotSpecified(SHORT_DESCRIPTION)) { shortDescription = null }
+    checkInvalidPlugin(PropertyNotSpecified(SHORT_DESCRIPTION)) { shortDescription = "" }
+    checkInvalidPlugin(PropertyNotSpecified(SHORT_DESCRIPTION)) { shortDescription = "\n" }
   }
 
   @Test

@@ -26,8 +26,8 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
   if (descriptor.pluginVersion.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(VERSION))
   }
-  if (descriptor.description.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified(DESCRIPTION))
+  if (descriptor.shortDescription.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(SHORT_DESCRIPTION))
   }
   if (descriptor.documentation == null) {
     problems.add(PropertyNotSpecified(DOCUMENTATION))

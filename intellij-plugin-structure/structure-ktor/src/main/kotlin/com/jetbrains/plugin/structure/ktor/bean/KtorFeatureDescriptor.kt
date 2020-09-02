@@ -35,8 +35,8 @@ data class KtorFeatureDescriptor(
   val pluginName: String? = null,
   @SerialName(VERSION)
   val pluginVersion: String? = null,
-  @SerialName(DESCRIPTION)
-  val description: String? = null,
+  @SerialName(SHORT_DESCRIPTION)
+  val shortDescription: String? = null,
   @SerialName(COPYRIGHT)
   val copyright: String? = null,
   @SerialName(VENDOR)
