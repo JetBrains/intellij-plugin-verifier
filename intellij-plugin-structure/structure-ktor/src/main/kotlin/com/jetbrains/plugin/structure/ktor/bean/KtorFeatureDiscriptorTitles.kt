@@ -4,7 +4,7 @@ package com.jetbrains.plugin.structure.ktor.bean
 const val ID = "id"
 const val NAME = "name"
 const val COPYRIGHT = "copyright"
-const val DESCRIPTION = "description"
+const val SHORT_DESCRIPTION = "short_description"
 const val VERSION = "version"
 const val VENDOR = "vendor"
 const val REQUIRED_FEATURES = "required_feature_ids"

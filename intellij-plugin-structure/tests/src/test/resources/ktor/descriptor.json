@@ -10,7 +10,7 @@
   "required_feature_ids": [
     "ktor.locations"
   ],
-  "description": "Amazing feature",
+  "short_description": "Amazing feature",
   "documentation": {
     "description": "This is the most amazing feature you've ever seen",
     "usage": "To use run this:\n```\nfun main() {\n\tprintln(\"Hello world\")\n}\n```",
