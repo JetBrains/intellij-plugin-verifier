@@ -23,7 +23,7 @@ fun Path.hasExtension(expected: String) =
   Files.isRegularFile(this) && expected == extension
 
 fun Path.listRecursivelyAllFilesWithExtension(extension: String) =
-  Files.walk(this).use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
+  Files.walk(this, FileVisitOption.FOLLOW_LINKS).use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
 
 fun String.withPathSeparatorOf(path: Path) = replace('\\', '/').replace("/", path.fileSystem.separator)
 fun String.withZipFsSeparator() = replace('\\', '/')
