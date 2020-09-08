@@ -104,8 +104,8 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
               usage = doc.usage!!,
               options = doc.options!!
             )
-          }
-
+          },
+          fullDescriptorJson = Json.stringify(KtorFeatureDescriptor.serializer(), descriptor)
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
