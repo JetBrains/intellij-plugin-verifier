@@ -88,6 +88,8 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
+      val jsonConfig = JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)
+
       val plugin = with(descriptor) {
         KtorFeature(
           pluginId = this.pluginId,
@@ -105,7 +107,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
               options = doc.options!!
             )
           },
-          fullDescriptorJson = Json.stringify(KtorFeatureDescriptor.serializer(), descriptor)
+          fullDescriptorJson = Json(jsonConfig).stringify(KtorFeatureDescriptor.serializer(), descriptor)
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
