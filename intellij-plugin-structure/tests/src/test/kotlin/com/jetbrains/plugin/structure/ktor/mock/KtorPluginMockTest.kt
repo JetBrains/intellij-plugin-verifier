@@ -4,10 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ktor.KtorFeature
 import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
-import com.jetbrains.plugin.structure.ktor.bean.CodeTemplate
-import com.jetbrains.plugin.structure.ktor.bean.FeatureInstallRecipe
-import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureDescriptor
-import com.jetbrains.plugin.structure.ktor.bean.Position
+import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import kotlinx.serialization.json.Json
@@ -59,7 +56,13 @@ class KtorPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
     Assert.assertEquals("Configuration feature", deserializedDescriptor.pluginName)
     Assert.assertEquals("Amazing feature", deserializedDescriptor.shortDescription)
-    Assert.assertEquals("JetBrains s.r.o.", deserializedDescriptor.vendor)
+    Assert.assertEquals(
+      KtorVendor(
+        name = "JetBrains s.r.o.",
+        vendorUrl = "http://jetbrains.com/"
+      ),
+      deserializedDescriptor.vendor
+    )
     Assert.assertEquals("ktor.feature.configuration", deserializedDescriptor.pluginId)
     Assert.assertEquals(
       FeatureInstallRecipe(
