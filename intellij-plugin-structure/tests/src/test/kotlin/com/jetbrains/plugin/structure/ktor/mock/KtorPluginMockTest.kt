@@ -22,10 +22,10 @@ class KtorPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `parse base fields ktor plugin test`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-    file(KtorFeaturePluginManager.DESCRIPTOR_NAME) {
-    getMockPluginJsonContent("descriptor")
-    }
-    file("featureIcon.svg", iconTestContent)
+      file(KtorFeaturePluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("descriptor")
+      }
+      file("featureIcon.svg", iconTestContent)
     }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
