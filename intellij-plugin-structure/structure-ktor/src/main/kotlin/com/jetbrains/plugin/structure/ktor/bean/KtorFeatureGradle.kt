@@ -12,11 +12,7 @@ data class GradleInstallRecipe(
   @SerialName(GRADLE_REPOSITORIES)
   val repositories: List<GradleRepository> = emptyList(),
   @SerialName(GRADLE_PLUGINS)
-  val plugins: List<GradlePlugin> = emptyList(),
-  @SerialName(GRADLE_DEPENDENCIES)
-  val dependencies: List<BuildSystemDependency> = emptyList(),
-  @SerialName(GRADLE_TEST_DEPENDENCIES)
-  val testDependencies: List<BuildSystemDependency> = emptyList()
+  val plugins: List<GradlePlugin> = emptyList()
 )
 
 @Serializable

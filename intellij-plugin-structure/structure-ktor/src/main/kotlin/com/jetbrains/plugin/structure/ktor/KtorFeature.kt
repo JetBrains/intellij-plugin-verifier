@@ -19,6 +19,10 @@ data class KtorFeature(
   val ktorVersion: String? = null,
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
   val documentation: KtorFeatureDocumentation? = null,
+  val gradleInstall: GradleInstallRecipe? = null,
+  val mavenInstall: MavenInstallRecipe? = null,
+  val dependencies: List<Dependency> = emptyList(),
+  val testDependencies: List<Dependency> = emptyList(),
   val fullDescriptorJson: String = ""
 ) : Plugin {
   override val url: String = ""
@@ -29,4 +33,10 @@ data class KtorFeatureDocumentation(
   val description: String,
   val usage: String,
   val options: String
+)
+
+data class Dependency(
+  val group: String,
+  val artifact: String,
+  val version: String? = null
 )

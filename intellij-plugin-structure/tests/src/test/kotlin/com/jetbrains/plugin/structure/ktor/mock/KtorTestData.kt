@@ -43,10 +43,7 @@ data class FeatureInstallRecipeJsonBuilder(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class GradleInstallRecipeJsonBuilder(
   var repositories: List<String> = emptyList(),
-  val plugins: List<String> = emptyList(),
-  val dependencies: List<String> = emptyList(),
-  @JsonProperty("String")
-  val testDependencies: List<String> = emptyList()
+  val plugins: List<String> = emptyList()
 ) {
   fun asString(): String = jacksonObjectMapper().writeValueAsString(this)
 }
@@ -54,10 +51,7 @@ data class GradleInstallRecipeJsonBuilder(
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class MavenInstallRecipeJsonBuilder(
   var repositories: List<String> = emptyList(),
-  val plugins: List<String> = emptyList(),
-  val dependencies: List<BuildSystemDependency> = emptyList(),
-  @JsonProperty("String")
-  val testDependencies: List<String> = emptyList()
+  val plugins: List<String> = emptyList()
 ) {
   fun asString(): String = jacksonObjectMapper().writeValueAsString(this)
 }
@@ -68,6 +62,14 @@ data class KtorFeatureDocumentationJsonBuilder(
   var usage: String? = "No, I mean it's reeeeally awesome\na\nw\ne\ns\no\nm\ne",
   var options: String? = "But without options :("
 )
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class DependencyJsonBuilder(
+  var group: String? = "io.ktor",
+  var artifact: String? = "ktor-locations",
+  var version: String? = "\$ktor"
+)
+
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class KtorFeatureJsonBuilder(
@@ -88,6 +90,9 @@ data class KtorFeatureJsonBuilder(
   var gradleInstallValue: GradleInstallRecipeJsonBuilder? = null,
   @JsonProperty("maven_install")
   var mavenInstallValue: MavenInstallRecipeJsonBuilder? = null,
+  var dependencies: List<DependencyJsonBuilder> = emptyList(),
+  @JsonProperty("test_dependencies")
+  var testDependencies: List<DependencyJsonBuilder> = emptyList(),
   var documentation: KtorFeatureDocumentationJsonBuilder? = KtorFeatureDocumentationJsonBuilder()
 ) {
   fun asString(): String = jacksonObjectMapper().writeValueAsString(this)

@@ -52,22 +52,28 @@
         "id": "application",
         "version": "1.0.0"
       }
-    ],
-    "dependencies": [
-      {
-        "group": "io.ktor",
-        "artifact": "ktor-configuration",
-        "version": "$ktor_version"
-      }
     ]
   },
   "maven_install": {
-    "dependencies": [
+    "repositories": [
       {
-        "group": "io.ktor",
-        "artifact": "ktor-configuration",
-        "version": "$ktor_version"
+        "id": "ktor",
+        "url": "https://bintray.com/kotlin/ktor/ktor"
       }
     ]
-  }
+  },
+  "dependencies": [
+    {
+      "group": "io.ktor",
+      "artifact": "ktor-configuration",
+      "version": "$ktor_version"
+    }
+  ],
+  "test_dependencies": [
+    {
+      "group": "io.ktor",
+      "artifact": "ktor-server-tests",
+      "version": "$ktor_version"
+    }
+  ]
 }
