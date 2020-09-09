@@ -10,6 +10,8 @@ import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.ktor.bean.GradleRepositoryType
 import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 import com.jetbrains.plugin.structure.ktor.problems.GradleRepoIncorrectDescription
+import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionFormat
+import com.jetbrains.plugin.structure.ktor.problems.KtorVersionDoesNotExist
 
 internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -146,5 +148,24 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
     }
   }
 
+  if (descriptor.ktorVersion.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified(KTOR_VERSION))
+  } else {
+    val parts = descriptor.ktorVersion
+            .split("-")
+            .first()
+            .split(".")
+
+    if (parts.size != 3 || parts.any { it.toIntOrNull() == null }) {
+      problems.add(IncorrectKtorVersionFormat(descriptor.ktorVersion))
+    } else {
+
+      val baseVersion = parts.map(String::toInt).joinToString(".") // x.y.z
+
+      if (baseVersion !in KTOR_VERSIONS) {
+        problems.add(KtorVersionDoesNotExist(descriptor.ktorVersion))
+      }
+    }
+  }
   return problems
 }

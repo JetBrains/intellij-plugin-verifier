@@ -76,6 +76,8 @@ data class KtorFeatureJsonBuilder(
   @JsonProperty("short_description")
   var shortDescription: String? = "description",
   var version: String? = "1.0.0",
+  @JsonProperty("ktor_version")
+  var ktorVersion: String? = "1.4.0",
   var copyright: String? = "copyright",
   var vendor: KtorVendor? = KtorVendor("JetBrains s.r.o.", "", "http://jetbrains.com/"),
   @JsonProperty("required_feature_ids")

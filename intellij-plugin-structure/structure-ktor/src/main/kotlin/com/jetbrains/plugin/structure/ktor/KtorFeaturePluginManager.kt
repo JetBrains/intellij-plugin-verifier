@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.ktor.bean.GradleRepositoryType
 import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureDescriptor
 import com.jetbrains.plugin.structure.ktor.problems.createIncorrectKtorFeatureFile
 import kotlinx.serialization.json.Json
@@ -93,7 +94,8 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
       val plugin = with(descriptor) {
         KtorFeature(
           pluginId = this.pluginId,
-          pluginVersion = pluginVersion,
+          pluginVersion = this.pluginVersion,
+          ktorVersion = this.ktorVersion,
           pluginName = this.pluginName,
           description = this.shortDescription,
           vendor = this.vendor?.name,
