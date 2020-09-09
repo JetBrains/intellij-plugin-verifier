@@ -12,11 +12,7 @@ data class MavenInstallRecipe(
   @SerialName(MAVEN_REPOSITORIES)
   val repositories: List<MavenRepository> = emptyList(),
   @SerialName(MAVEN_PLUGINS)
-  val plugins: List<MavenPlugin> = emptyList(),
-  @SerialName(MAVEN_DEPENDENCIES)
-  val dependencies: List<BuildSystemDependency> = emptyList(),
-  @SerialName(MAVEN_TEST_DEPENDENCIES)
-  val testDependencies: List<BuildSystemDependency> = emptyList()
+  val plugins: List<MavenPlugin> = emptyList()
 )
 
 @Serializable

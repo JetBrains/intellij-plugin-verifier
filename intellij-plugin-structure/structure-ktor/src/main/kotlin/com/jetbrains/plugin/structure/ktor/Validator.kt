@@ -66,8 +66,8 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
     }
   }
 
-  (descriptor.gradleInstall?.dependencies.orEmpty()
-    + descriptor.mavenInstall?.dependencies.orEmpty()).forEach { dependency ->
+  (descriptor.dependencies.orEmpty()
+    + descriptor.testDependencies.orEmpty()).forEach { dependency ->
     if (dependency.group.isNullOrBlank()) {
       problems.add(PropertyNotSpecified(DEPENDENCY_GROUP))
     }

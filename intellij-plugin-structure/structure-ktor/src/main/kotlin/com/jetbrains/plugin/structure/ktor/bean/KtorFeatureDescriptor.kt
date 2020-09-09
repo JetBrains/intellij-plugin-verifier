@@ -51,6 +51,10 @@ data class KtorFeatureDescriptor(
   val gradleInstall: GradleInstallRecipe? = null,
   @SerialName(MAVEN_INSTALL)
   val mavenInstall: MavenInstallRecipe? = null,
+  @SerialName(DEPENDENCIES)
+  val dependencies: List<BuildSystemDependency> = emptyList(),
+  @SerialName(TEST_DEPENDENCIES)
+  val testDependencies: List<BuildSystemDependency> = emptyList(),
   @SerialName(DOCUMENTATION)
   val documentation: KtorFeatureDocumentation? = null
 )

@@ -13,6 +13,8 @@ const val DOCUMENTATION = "documentation"
 const val INSTALL_RECEIPT = "install_recipe"
 const val GRADLE_INSTALL = "gradle_install"
 const val MAVEN_INSTALL = "maven_install"
+const val DEPENDENCIES = "dependencies"
+const val TEST_DEPENDENCIES = "test_dependencies"
 
 // Vendor
 const val VENDOR_NAME = "name"
@@ -31,14 +33,10 @@ const val INSTALL_TEST_IMPORTS = "test_imports"
 const val INSTALL_TEMPLATES = "templates"
 
 // Maven Install
-const val MAVEN_DEPENDENCIES = "dependencies"
-const val MAVEN_TEST_DEPENDENCIES = "test_dependencies"
 const val MAVEN_REPOSITORIES = "repositories"
 const val MAVEN_PLUGINS = "plugins"
 
 // Gradle Install
-const val GRADLE_DEPENDENCIES = "dependencies"
-const val GRADLE_TEST_DEPENDENCIES = "test_dependencies"
 const val GRADLE_REPOSITORIES = "repositories"
 const val GRADLE_PLUGINS = "plugins"
 

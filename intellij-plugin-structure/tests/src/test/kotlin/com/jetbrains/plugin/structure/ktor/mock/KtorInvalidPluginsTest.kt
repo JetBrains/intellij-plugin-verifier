@@ -111,6 +111,25 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     }
   }
 
+  @Test
+  fun `bad dependencies`() {
+    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY_GROUP)) {
+      dependencies = listOf(DependencyJsonBuilder(
+        group = null
+      ))
+    }
+    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY_ARTIFACT)) {
+      dependencies = listOf(DependencyJsonBuilder(
+        artifact = null
+      ))
+    }
+    checkInvalidPlugin(PropertyNotSpecified(DEPENDENCY_VERSION)) {
+      dependencies = listOf(DependencyJsonBuilder(
+        version = ""
+      ))
+    }
+  }
+
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: KtorFeatureJsonBuilder.() -> Unit) {
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("feature.zip")) {
       file(KtorFeaturePluginManager.DESCRIPTOR_NAME) {

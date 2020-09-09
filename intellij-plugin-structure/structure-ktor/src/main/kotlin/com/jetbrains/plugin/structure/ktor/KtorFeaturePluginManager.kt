@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -109,6 +110,25 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
               options = doc.options!!
             )
           },
+          gradleInstall = this.gradleInstall?.let { install ->
+            GradleInstallRecipe(
+              repositories = install.repositories.map { rep ->
+                when (rep.type!!) {
+                  GradleRepositoryType.URL -> GradleRepository.UrlDefinedRepository(url = rep.url!!)
+                  GradleRepositoryType.FUNCTION -> GradleRepository.FunctionDefinedRepository(functionName = rep.functionName!!)
+                }
+              },
+              plugins = install.plugins.map { GradlePlugin(it.id!!, it.version) }
+            )
+          },
+          mavenInstall = this.mavenInstall?.let { install ->
+            MavenInstallRecipe(
+              repositories = install.repositories.map { MavenRepository(it.id!!, it.url!!)},
+              plugins = install.plugins.map { MavenPlugin(it.group!!, it.artifact!!, it.version) }
+            )
+          },
+          dependencies = this.dependencies.map { Dependency(it.group!!, it.artifact!!, it.version) },
+          testDependencies = this.testDependencies.map { Dependency(it.group!!, it.artifact!!, it.version) },
           fullDescriptorJson = Json(jsonConfig).stringify(KtorFeatureDescriptor.serializer(), descriptor)
         )
       }
