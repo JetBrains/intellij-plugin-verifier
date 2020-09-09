@@ -16,6 +16,7 @@ data class KtorFeature(
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginVersion: String? = null,
   override val pluginId: String? = null,
+  val ktorVersion: String? = null,
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
   val documentation: KtorFeatureDocumentation? = null,
   val fullDescriptorJson: String = ""

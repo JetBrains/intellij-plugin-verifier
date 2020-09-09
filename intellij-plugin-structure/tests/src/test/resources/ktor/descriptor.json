@@ -3,6 +3,7 @@
   "id": "ktor.feature.configuration",
   "copyright": "http://plugins.jetbrains.com/",
   "version": "1.0.0",
+  "ktor_version": "1.4.0",
   "vendor": {
     "name": "JetBrains s.r.o.",
     "url": "http://jetbrains.com/"
