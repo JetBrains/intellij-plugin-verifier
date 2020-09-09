@@ -18,7 +18,7 @@ data class KtorFeature(
   override val pluginId: String? = null,
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
   val documentation: KtorFeatureDocumentation? = null,
-  val fullDescriptorJson: String? = null
+  val fullDescriptorJson: String = ""
 ) : Plugin {
   override val url: String = ""
   override val changeNotes: String? = null
