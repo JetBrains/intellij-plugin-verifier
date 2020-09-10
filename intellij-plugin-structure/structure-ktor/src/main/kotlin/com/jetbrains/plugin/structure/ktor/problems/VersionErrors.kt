@@ -16,14 +16,3 @@ class IncorrectKtorVersionFormat(val ktorVersion: String) : InvalidDescriptorPro
     get() = Level.ERROR
 
 }
-
-class KtorVersionDoesNotExist(val ktorVersion: String) : InvalidDescriptorProblem(null) {
-
-  override val detailedMessage
-    get() = "Provided ktor version (\"$ktorVersion\") does not exist. " +
-        "Please, visit https://mvnrepository.com/artifact/io.ktor/ktor-server-core to see possible ktor versions"
-
-  override val level
-    get() = Level.ERROR
-
-}
