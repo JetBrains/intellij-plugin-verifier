@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.ktor
 
-val KTOR_VERSIONS = listOf(
+val KTOR_VERSIONS = setOf(
   "1.4.0",
   "1.3.2", "1.3.1", "1.3.0",
   "1.2.6", "1.2.5", "1.2.4", "1.2.3", "1.2.2", "1.2.1", "1.2.0",
