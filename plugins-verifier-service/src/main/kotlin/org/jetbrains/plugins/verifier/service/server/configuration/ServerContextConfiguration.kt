@@ -101,7 +101,6 @@ class ServerContextConfiguration(
     verifierServiceProtocol: VerifierServiceProtocol,
     taskManager: TaskManager,
     taskManagerProperties: TaskManagerProperties,
-    @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
     @Value("\${verifier.service.enable.plugin.verifier.service}") enableService: Boolean,
     @Value("\${verifier.service.scheduler.period.seconds}") period: Long,
     @Value("\${verifier.service.verifier.min.ide}") verifierMinIdeVersion: String
