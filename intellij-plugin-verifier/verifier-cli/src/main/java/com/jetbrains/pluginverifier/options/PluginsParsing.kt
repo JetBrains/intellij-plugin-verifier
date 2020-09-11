@@ -120,6 +120,7 @@ class PluginsParsing(
       val idAndVersion = spec.substringAfter("version:")
       val id = idAndVersion.substringBefore(":").trim()
       val version = idAndVersion.substringAfter(":").trim()
+      require(version.isNotEmpty()) { "Empty version specified for a plugin to be checked: {$spec}" }
       addPluginVersion(id, version)
       return
     }
