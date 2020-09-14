@@ -50,14 +50,19 @@ All the verification results are printed and saved in the following ways:
                 <ID of plugin #1/
                     <Version of plugin #1>/
                         <... report files ...>
+                <ID of plugin #2>/
+                    ...
+        <IDE version #2>/
+            plugins/
+                ...
 
 
 | **File** | **Description** | **Exists if** |
 | -------- | --------------- | --------- |
 | `verification-verdict.txt` | Human-readable verification verdict. | Always |
 | `dependencies.txt` | Dependencies of the plugin used during verification. | Plugin is valid | 
-| `compatibility-warnings.txt` | Compatibility warnings of this plugin with the IDE #1. | `> 0` |
-| `compatibility-problems.txt` | Compatibility problems of this plugin with the IDE #2. | `> 0` |
+| `compatibility-warnings.txt` | Compatibility warnings of this plugin with the IDE. | `> 0` |
+| `compatibility-problems.txt` | Compatibility problems of this plugin with the IDE. | `> 0` |
 | `deprecated-usages.txt` | Descriptions of "Deprecated API is used" cases. | `> 0` |
 | `experimental-api-usages.txt` | Descriptions of "Experimental API is used" cases. | `> 0` |
 | `internal-api-usages.txt` | Descriptions of "Internal API is used" cases. | `> 0` |
