@@ -104,7 +104,7 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
 
       return when (this) {
         is PluginVerificationResult.Verified -> {
-          reportVerificationDetails(directory, "warnings.txt", compatibilityWarnings)
+          reportVerificationDetails(directory, "compatibility-warnings.txt", compatibilityWarnings)
           reportVerificationDetails(directory, "compatibility-problems.txt", compatibilityProblems)
           reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { DependenciesGraphPrettyPrinter(it).prettyPresentation() }
           reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
