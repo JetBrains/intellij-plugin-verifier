@@ -26,8 +26,7 @@ class CheckPluginRunner : CommandRunner() {
     reportage: PluginVerificationReportage
   ) = CheckPluginParamsBuilder(pluginRepository, reportage, pluginDetailsCache)
 
-  override fun createTask(parameters: TaskParameters, pluginRepository: PluginRepository) =
-    CheckPluginTask(parameters as CheckPluginParams)
+  override fun createTask(parameters: TaskParameters) = CheckPluginTask(parameters as CheckPluginParams)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
     CheckPluginResultPrinter(outputOptions, pluginRepository)

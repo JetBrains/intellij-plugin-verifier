@@ -125,7 +125,7 @@ object PluginVerifierMain {
           reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
           runner
-            .createTask(parameters, pluginRepository)
+            .createTask(parameters)
             .execute(reportage, pluginDetailsCache)
         }
       }

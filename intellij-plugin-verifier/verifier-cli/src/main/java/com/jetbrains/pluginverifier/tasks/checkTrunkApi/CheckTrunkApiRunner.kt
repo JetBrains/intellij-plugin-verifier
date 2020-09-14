@@ -24,10 +24,7 @@ class CheckTrunkApiRunner : CommandRunner() {
     reportage: PluginVerificationReportage
   ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank, reportage, pluginDetailsCache)
 
-  override fun createTask(
-    parameters: TaskParameters,
-    pluginRepository: PluginRepository
-  ) = CheckTrunkApiTask(parameters as CheckTrunkApiParams)
+  override fun createTask(parameters: TaskParameters) = CheckTrunkApiTask(parameters as CheckTrunkApiParams)
 
   override fun createTaskResultsPrinter(outputOptions: OutputOptions, pluginRepository: PluginRepository): TaskResultPrinter =
     TwoTargetsResultPrinter(outputOptions)
