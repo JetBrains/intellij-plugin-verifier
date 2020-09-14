@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.tasks.twoTargets
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.TaskResult
 
 data class TwoTargetsVerificationResults(
@@ -13,4 +14,6 @@ data class TwoTargetsVerificationResults(
   val baseResults: List<PluginVerificationResult>,
   val newTarget: PluginVerificationTarget,
   val newResults: List<PluginVerificationResult>
-) : TaskResult()
+) : TaskResult {
+  override fun createTaskResultsPrinter(pluginRepository: PluginRepository) = TwoTargetsResultPrinter()
+}

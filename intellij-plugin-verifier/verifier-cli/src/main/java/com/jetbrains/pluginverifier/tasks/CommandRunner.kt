@@ -22,6 +22,4 @@ abstract class CommandRunner {
 
   abstract fun createTask(parameters: TaskParameters): Task
 
-  abstract fun createTaskResultsPrinter(pluginRepository: PluginRepository): TaskResultPrinter
-
 }

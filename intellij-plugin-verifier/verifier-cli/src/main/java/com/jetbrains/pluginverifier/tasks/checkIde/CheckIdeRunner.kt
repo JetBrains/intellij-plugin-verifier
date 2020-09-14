@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.TaskParameters
-import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 
 /**
  * Runner of the ['check-ide'] [CheckIdeTask] command.
@@ -26,8 +25,5 @@ class CheckIdeRunner : CommandRunner() {
   ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
 
   override fun createTask(parameters: TaskParameters) = CheckIdeTask(parameters as CheckIdeParams)
-
-  override fun createTaskResultsPrinter(pluginRepository: PluginRepository): TaskResultPrinter =
-    CheckIdeResultPrinter(pluginRepository)
 
 }

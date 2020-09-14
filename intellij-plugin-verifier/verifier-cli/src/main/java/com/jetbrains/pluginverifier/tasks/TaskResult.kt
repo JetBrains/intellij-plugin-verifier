@@ -4,7 +4,11 @@
 
 package com.jetbrains.pluginverifier.tasks
 
+import com.jetbrains.pluginverifier.repository.PluginRepository
+
 /**
  * Base class of all the verification [tasks] [Task]' results.
  */
-abstract class TaskResult
+interface TaskResult {
+  fun createTaskResultsPrinter(pluginRepository: PluginRepository): TaskResultPrinter
+}
