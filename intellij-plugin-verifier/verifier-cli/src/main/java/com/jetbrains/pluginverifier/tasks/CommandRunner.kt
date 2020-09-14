@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier.tasks
 
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -23,9 +22,6 @@ abstract class CommandRunner {
 
   abstract fun createTask(parameters: TaskParameters): Task
 
-  abstract fun createTaskResultsPrinter(
-    outputOptions: OutputOptions,
-    pluginRepository: PluginRepository
-  ): TaskResultPrinter
+  abstract fun createTaskResultsPrinter(pluginRepository: PluginRepository): TaskResultPrinter
 
 }

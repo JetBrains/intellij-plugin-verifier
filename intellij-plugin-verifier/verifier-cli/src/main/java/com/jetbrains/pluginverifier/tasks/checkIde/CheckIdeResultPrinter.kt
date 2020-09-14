@@ -20,13 +20,12 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
-import java.io.File
 import java.io.PrintWriter
 import java.nio.file.Paths
 
-class CheckIdeResultPrinter(val outputOptions: OutputOptions, val pluginRepository: PluginRepository) : TaskResultPrinter {
+class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResultPrinter {
 
-  override fun printResults(taskResult: TaskResult) {
+  override fun printResults(taskResult: TaskResult, outputOptions: OutputOptions) {
     with(taskResult as CheckIdeResult) {
       if (outputOptions.teamCityLog != null) {
         val teamCityHistory = printTcLog(outputOptions.teamCityGroupType, this, outputOptions.teamCityLog)

@@ -16,15 +16,12 @@ import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
 
-class CheckPluginResultPrinter(
-  private val outputOptions: OutputOptions,
-  private val pluginRepository: PluginRepository
-) : TaskResultPrinter {
+class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) : TaskResultPrinter {
 
-  override fun printResults(taskResult: TaskResult) {
+  override fun printResults(taskResult: TaskResult, outputOptions: OutputOptions) {
     with(taskResult as CheckPluginResult) {
       if (outputOptions.teamCityLog != null) {
-        val teamCityHistory = printTcLog(true, outputOptions.teamCityLog)
+        val teamCityHistory = printTcLog(true, outputOptions.teamCityLog, outputOptions.teamCityGroupType)
         outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
         printOnStdout(this)
@@ -36,10 +33,10 @@ class CheckPluginResultPrinter(
     }
   }
 
-  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog): TeamCityHistory {
+  private fun CheckPluginResult.printTcLog(setBuildStatus: Boolean, tcLog: TeamCityLog, groupBy: TeamCityResultPrinter.GroupBy): TeamCityHistory {
     val teamCityHistory = TeamCityResultPrinter(
       tcLog,
-      outputOptions.teamCityGroupType,
+      groupBy,
       pluginRepository
     ).printResults(results)
 

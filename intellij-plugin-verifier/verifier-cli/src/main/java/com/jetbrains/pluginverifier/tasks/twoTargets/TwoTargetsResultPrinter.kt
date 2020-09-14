@@ -29,9 +29,9 @@ import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 
-class TwoTargetsResultPrinter(private val outputOptions: OutputOptions) : TaskResultPrinter {
+class TwoTargetsResultPrinter : TaskResultPrinter {
 
-  override fun printResults(taskResult: TaskResult) {
+  override fun printResults(taskResult: TaskResult, outputOptions: OutputOptions) {
     with(taskResult as TwoTargetsVerificationResults) {
       if (outputOptions.teamCityLog != null) {
         val newTcHistory = printResultsOnTeamCity(this, outputOptions.teamCityLog)

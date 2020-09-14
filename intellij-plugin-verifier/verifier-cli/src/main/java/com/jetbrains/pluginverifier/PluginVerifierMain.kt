@@ -130,8 +130,8 @@ object PluginVerifierMain {
         }
       }
 
-      val taskResultsPrinter = runner.createTaskResultsPrinter(outputOptions, pluginRepository)
-      taskResultsPrinter.printResults(taskResult)
+      val taskResultsPrinter = runner.createTaskResultsPrinter(pluginRepository)
+      taskResultsPrinter.printResults(taskResult, outputOptions)
       reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
     }
   }
