@@ -41,7 +41,34 @@ Command is one of `check-plugin`, `check-ide` or `check-trunk-api`.
 ## Results
 
 All the verification results are printed and saved in the following ways:
-  1) The results are saved to `<verification-$timestamp>` directory.
+  1) The results are saved to `<verification-$timestamp>` directory (can be changed with `-verification-reports-dir` [option](#common-options)).
+     The layout of files beneath this directory is as follows. Format of individual files is not specified. Basically, the files contain human-readable sentences.
+
+    <verification reports dir>/
+        <IDE version #1>/
+            plugins/
+                <ID of plugin #1/
+                    <Version of plugin #1>/
+                        <... report files ...>
+
+
+| **File** | **Description** | **Exists if** |
+| -------- | --------------- | --------- |
+| `verification-verdict.txt` | Human-readable verification verdict. | Always |
+| `dependencies.txt` | Dependencies of the plugin used during verification. | Plugin is valid | 
+| `compatibility-warnings.txt` | Compatibility warnings of this plugin with the IDE #1. | `> 0` |
+| `compatibility-problems.txt` | Compatibility problems of this plugin with the IDE #2. | `> 0` |
+| `deprecated-usages.txt` | Descriptions of "Deprecated API is used" cases. | `> 0` |
+| `experimental-api-usages.txt` | Descriptions of "Experimental API is used" cases. | `> 0` |
+| `internal-api-usages.txt` | Descriptions of "Internal API is used" cases. | `> 0` |
+| `override-only-usages.txt` | Descriptions of "Override-only API is used incorrectly" cases. | `> 0` |
+| `non-extendable-api-usages.txt` | Descriptions of "Non-extendable API is used incorrectly" cases. | `> 0` |
+| `plugin-structure-warnings.txt` | Descriptions of plugin's own problems, which are not related to IDE compatibility. | `> 0` |
+| `invalid-plugin.txt` | Description of the invalid plugin error, in case the plugin is invalid. | Plugin is invalid |
+
+**Note!** If you are implementing an integration with the Plugin Verifier, you may check the presence of corresponding files
+to distinguish "successful" and "failed" verifications. 
+
   2) If `-teamcity (-tc)` option is specified, the results are printed in [TeamCity Tests Format](https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingTests).
   To choose a presentation type specify the `-tc-grouping (-g)` option to either `plugin`, to group by each 
   plugin, or `problem_type`, to group by problem.
@@ -166,6 +193,10 @@ Here is the full syntax of the command:
     The same as `--release-local-repository` but specifies the directory containing plugins built for the trunk IDE.
 
 ### Common Options
+
+`-verification-reports-dir (-vrd)`
+    The path to directory where verification reports will be saved. 
+    By default, it is equal to `<current working dir>/verification-<timestamp>`.
 
 `-runtime-dir (-r)`
     The path to directory containing Java runtime jar.
