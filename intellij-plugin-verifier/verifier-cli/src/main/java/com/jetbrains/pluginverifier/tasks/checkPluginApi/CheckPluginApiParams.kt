@@ -36,6 +36,8 @@ class CheckPluginApiParams(
       }
     }
 
+  override fun createTask() = CheckPluginApiTask(this)
+
   override fun close() {
     basePluginDetails.closeLogged()
     newPluginDetails.closeLogged()

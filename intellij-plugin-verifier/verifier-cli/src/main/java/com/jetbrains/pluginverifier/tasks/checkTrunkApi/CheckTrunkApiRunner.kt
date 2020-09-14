@@ -9,9 +9,8 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
-import com.jetbrains.pluginverifier.tasks.TaskParameters
 
-class CheckTrunkApiRunner : CommandRunner() {
+class CheckTrunkApiRunner : CommandRunner {
   override val commandName: String = "check-trunk-api"
 
   override fun getParametersBuilder(
@@ -20,7 +19,5 @@ class CheckTrunkApiRunner : CommandRunner() {
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
   ) = CheckTrunkApiParamsBuilder(pluginRepository, ideFilesBank, reportage, pluginDetailsCache)
-
-  override fun createTask(parameters: TaskParameters) = CheckTrunkApiTask(parameters as CheckTrunkApiParams)
 
 }

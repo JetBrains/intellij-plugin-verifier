@@ -9,17 +9,15 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
-abstract class CommandRunner {
+interface CommandRunner {
 
-  abstract val commandName: String
+  val commandName: String
 
-  abstract fun getParametersBuilder(
+  fun getParametersBuilder(
     pluginRepository: PluginRepository,
     ideFilesBank: IdeFilesBank,
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
   ): TaskParametersBuilder
-
-  abstract fun createTask(parameters: TaskParameters): Task
 
 }

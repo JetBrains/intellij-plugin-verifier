@@ -24,6 +24,8 @@ class CheckPluginParams(
       appendln(verificationDescriptors.joinToString())
     }
 
+  override fun createTask() = CheckPluginTask(this)
+
   override fun close() {
     ideDescriptors.forEach { it.closeLogged() }
   }

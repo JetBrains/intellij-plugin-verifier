@@ -9,12 +9,11 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
-import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 /**
  * Runner of the ['check-plugin-api'] [CheckPluginApiTask] command.
  */
-class CheckPluginApiRunner : CommandRunner() {
+class CheckPluginApiRunner : CommandRunner {
   override val commandName: String = "check-plugin-api"
 
   override fun getParametersBuilder(
@@ -24,5 +23,4 @@ class CheckPluginApiRunner : CommandRunner() {
     reportage: PluginVerificationReportage
   ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider, reportage)
 
-  override fun createTask(parameters: TaskParameters) = CheckPluginApiTask(parameters as CheckPluginApiParams)
 }

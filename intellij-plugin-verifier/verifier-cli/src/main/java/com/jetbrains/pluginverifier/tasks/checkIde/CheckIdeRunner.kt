@@ -9,12 +9,11 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
-import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 /**
  * Runner of the ['check-ide'] [CheckIdeTask] command.
  */
-class CheckIdeRunner : CommandRunner() {
+class CheckIdeRunner : CommandRunner {
   override val commandName: String = "check-ide"
 
   override fun getParametersBuilder(
@@ -23,7 +22,5 @@ class CheckIdeRunner : CommandRunner() {
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
   ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
-
-  override fun createTask(parameters: TaskParameters) = CheckIdeTask(parameters as CheckIdeParams)
 
 }

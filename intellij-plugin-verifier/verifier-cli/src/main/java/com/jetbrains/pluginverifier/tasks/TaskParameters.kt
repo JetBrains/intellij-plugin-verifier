@@ -19,4 +19,6 @@ interface TaskParameters : Closeable {
 
   val presentableText: String
 
+  fun createTask(): Task
+
 }

@@ -124,8 +124,8 @@ object PluginVerifierMain {
         ).build(opts, freeArgs).use { parameters ->
           reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-          runner
-            .createTask(parameters)
+          parameters
+            .createTask()
             .execute(reportage, pluginDetailsCache)
         }
       }

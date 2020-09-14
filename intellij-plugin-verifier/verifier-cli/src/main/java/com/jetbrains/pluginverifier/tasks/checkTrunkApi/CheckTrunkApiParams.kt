@@ -41,6 +41,8 @@ class CheckTrunkApiParams(
       }
     }
 
+  override fun createTask() = CheckTrunkApiTask(this)
+
   override fun close() {
     trunkIde.closeLogged()
     releaseIde.closeLogged()

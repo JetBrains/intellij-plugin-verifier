@@ -26,6 +26,8 @@ class CheckIdeParams(
       appendln(verificationDescriptors.joinToString { it.checkedPlugin.presentableName })
     }
 
+  override fun createTask() = CheckIdeTask(this)
+
   override fun close() {
     ideDescriptor.closeLogged()
   }
