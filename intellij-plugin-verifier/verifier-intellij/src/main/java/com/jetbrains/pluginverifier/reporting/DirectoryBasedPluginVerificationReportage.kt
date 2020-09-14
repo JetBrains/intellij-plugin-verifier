@@ -27,11 +27,16 @@ import java.nio.file.Paths
  *         plugins/
  *             com.plugin.one/
  *                 1.0/
- *                     warnings.txt
- *                     problems.txt
- *                     verification-result.txt
+ *                     verification-verdict.txt
+ *                     compatibility-warnings.txt
+ *                     compatibility-problems.txt
  *                     dependencies.txt
- *                     ignored-problems.txt
+ *                     deprecated-usages.txt
+ *                     experimental-api-usages.txt
+ *                     internal-api-usages.txt
+ *                     override-only-usages.txt
+ *                     non-extendable-api-usages.txt
+ *                     plugin-structure-warnings.txt
  *                 2.0/
  *                     ...
  *             com.another.plugin/
@@ -119,7 +124,7 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
           IgnoredProblemsReporter(directory, verificationTarget).useReporter(problemIgnoredEvents)
         }
         is PluginVerificationResult.InvalidPlugin -> {
-          reportVerificationDetails(directory, "plugin-structure-errors.txt", pluginStructureErrors)
+          reportVerificationDetails(directory, "invalid-plugin.txt", pluginStructureErrors)
         }
         is PluginVerificationResult.NotFound -> Unit
         is PluginVerificationResult.FailedToDownload -> Unit
