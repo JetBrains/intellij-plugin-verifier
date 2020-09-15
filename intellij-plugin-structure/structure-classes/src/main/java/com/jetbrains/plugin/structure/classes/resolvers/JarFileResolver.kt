@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
-import java.io.IOException
 import java.nio.channels.ClosedChannelException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -17,7 +16,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.zip.ZipInputStream
 
 class JarFileResolver(
   private val jarPath: Path,
@@ -53,33 +51,9 @@ class JarFileResolver(
   init {
     require(jarPath.exists()) { "File does not exist: $jarPath" }
     require(jarPath.simpleName.endsWith(".jar") || jarPath.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $jarPath" }
-    validateZipArchiveOnJavaPriorTo11(jarPath)
     zipFs = FileSystems.newFileSystem(jarPath, JarFileResolver::class.java.classLoader)
     zipRoot = zipFs.rootDirectories.single()
     readClassNamesAndServiceProviders()
-  }
-
-  // Workaround for https://bugs.openjdk.java.net/browse/JDK-8197398:
-  // File walker in Java before 11 infinitely walks some zip files
-  // that have invalid zip entries, for example:
-  // <zip root>
-  //   /some
-  //     /
-  //     /entry.txt
-  //   /some2
-  //     ...
-  // Zip entry "/some//" will make the file walker re-visit the "/some" directory over and over again.
-  // This can lead to OutOfMemory in stack of the visited entries.
-  private fun validateZipArchiveOnJavaPriorTo11(zipFile: Path) {
-    ZipInputStream(zipFile.inputStream()).use { zis ->
-      var entry = zis.nextEntry
-      while (entry != null) {
-        if (entry.name.endsWith("//")) {
-          throw IOException("Zip archive $zipFile contains invalid cyclic entry ${entry.name}")
-        }
-        entry = zis.nextEntry
-      }
-    }
   }
 
   private fun readClassNamesAndServiceProviders() {
