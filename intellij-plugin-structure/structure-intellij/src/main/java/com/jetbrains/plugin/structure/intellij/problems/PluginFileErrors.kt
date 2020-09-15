@@ -34,10 +34,10 @@ class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : Plug
 
 }
 
-class UnableToReadJarFile : PluginFileError() {
+class UnableToReadPluginFile(private val reason: String) : PluginFileError() {
 
   override val message
-    get() = "Invalid jar file"
+    get() = "Invalid jar file: $reason"
 
 }
 

@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
@@ -15,7 +16,6 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
-import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
@@ -134,7 +134,7 @@ sealed class PluginVerificationResult(
     val pluginStructureErrors: Set<PluginStructureError>
   ) : PluginVerificationResult(plugin, verificationTarget) {
     override val verificationVerdict
-      get() = "Plugin is invalid"
+      get() = "Plugin is invalid: " + pluginStructureErrors.joinToString { it.message }
   }
 
   class NotFound(

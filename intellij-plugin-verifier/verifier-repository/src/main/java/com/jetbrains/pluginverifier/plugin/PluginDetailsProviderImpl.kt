@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.problems.UnableToReadPluginFile
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
@@ -77,7 +78,8 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
       IdePluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      return PluginDetailsProvider.Result.Failed("Unable to read class files of plugin $pluginInfo: ${e.message}", e)
+      val message = e.message ?: e.javaClass.simpleName
+      return PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
     }
 
     return PluginDetailsProvider.Result.Provided(
