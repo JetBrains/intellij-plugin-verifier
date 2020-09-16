@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.edu
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -13,8 +14,6 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -67,8 +66,8 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
     val descriptorContent = descriptorFile.readText()
-    val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
-      .parse(EduPluginDescriptor.serializer(), descriptorContent)
+    val mapper = jacksonObjectMapper()
+    val descriptor = mapper.readValue(descriptorContent, EduPluginDescriptor::class.java)
     val icon = loadIconFromDir(pluginDirectory)
     return createPlugin(descriptor, icon)
   }

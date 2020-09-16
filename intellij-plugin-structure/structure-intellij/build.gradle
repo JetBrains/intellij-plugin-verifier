@@ -1,13 +1,8 @@
-plugins {
-  id "org.jetbrains.kotlin.plugin.serialization"
-}
-
 dependencies {
   api project(":structure-base")
   api group: 'org.jdom', name: 'jdom', version: '2.0.2'
 
   implementation 'org.jsoup:jsoup:1.9.2'
-  implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
   runtime "org.glassfish.jaxb:jaxb-runtime:2.3.1"
 }

@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ktor
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -14,11 +15,8 @@ import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.ktor.bean.GradleRepositoryType
 import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureDescriptor
 import com.jetbrains.plugin.structure.ktor.problems.createIncorrectKtorFeatureFile
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.IllegalStateException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -69,8 +67,8 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
     val descriptorContent = descriptorFile.readText()
-    val descriptor = Json(JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true))
-      .parse(KtorFeatureDescriptor.serializer(), descriptorContent)
+    val mapper = jacksonObjectMapper()
+    val descriptor = mapper.readValue(descriptorContent, KtorFeatureDescriptor::class.java)
     val icon = loadIconFromDir(pluginDirectory)
     return createPlugin(descriptor, icon)
   }
@@ -90,7 +88,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      val jsonConfig = JsonConfiguration.Stable.copy(isLenient = true, ignoreUnknownKeys = true)
+      val mapper = jacksonObjectMapper()
 
       val plugin = with(descriptor) {
         KtorFeature(
@@ -129,7 +127,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
           },
           dependencies = this.dependencies.map { Dependency(it.group!!, it.artifact!!, it.version) },
           testDependencies = this.testDependencies.map { Dependency(it.group!!, it.artifact!!, it.version) },
-          fullDescriptorJson = Json(jsonConfig).stringify(KtorFeatureDescriptor.serializer(), descriptor)
+          fullDescriptorJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(descriptor)
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)

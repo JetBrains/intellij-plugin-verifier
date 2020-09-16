@@ -4,40 +4,40 @@
 
 package com.jetbrains.plugin.structure.ktor.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class GradleInstallRecipe(
-  @SerialName(GRADLE_REPOSITORIES)
+  @JsonProperty(GRADLE_REPOSITORIES)
   val repositories: List<GradleRepository> = emptyList(),
-  @SerialName(GRADLE_PLUGINS)
+  @JsonProperty(GRADLE_PLUGINS)
   val plugins: List<GradlePlugin> = emptyList()
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class GradleRepository(
-  @SerialName(GRADLE_REP_TYPE)
+  @JsonProperty(GRADLE_REP_TYPE)
   val type: GradleRepositoryType? = null,
-  @SerialName(GRADLE_REP_FUNCTION)
+  @JsonProperty(GRADLE_REP_FUNCTION)
   val functionName: String? = null,
-  @SerialName(GRADLE_REP_URL)
+  @JsonProperty(GRADLE_REP_URL)
   val url: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 enum class GradleRepositoryType {
-  @SerialName(GRADLE_REP_TYPE_FUNCTION)
+  @JsonProperty(GRADLE_REP_TYPE_FUNCTION)
   FUNCTION,
 
-  @SerialName(GRADLE_REP_TYPE_URL)
+  @JsonProperty(GRADLE_REP_TYPE_URL)
   URL
 }
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class GradlePlugin(
-  @SerialName(PLUGIN_ID)
+  @JsonProperty(PLUGIN_ID)
   val id: String? = null,
-  @SerialName(PLUGIN_VERSION)
+  @JsonProperty(PLUGIN_VERSION)
   val version: String? = null
 )

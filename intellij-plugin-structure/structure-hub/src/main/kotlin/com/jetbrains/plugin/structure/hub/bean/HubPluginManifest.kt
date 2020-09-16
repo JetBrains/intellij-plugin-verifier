@@ -4,27 +4,27 @@
 
 package com.jetbrains.plugin.structure.hub.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class HubPluginManifest(
-    @SerialName("key")
+    @JsonProperty("key")
     val pluginId: String? = null,
-    @SerialName("name")
+    @JsonProperty("name")
     val pluginName: String? = null,
-    @SerialName("version")
+    @JsonProperty("version")
     val pluginVersion: String? = null,
-    @SerialName("homeUrl")
+    @JsonProperty("homeUrl")
     val url: String = "",
-    @SerialName("description")
+    @JsonProperty("description")
     val description: String? = null,
-    @SerialName("author")
+    @JsonProperty("author")
     val author: String? = null,
-    @SerialName("iconUrl")
+    @JsonProperty("iconUrl")
     val iconUrl: String? = null,
-    @SerialName("dependencies")
+    @JsonProperty("dependencies")
     val dependencies: Map<String, String>? = null,
-    @SerialName("products")
+    @JsonProperty("products")
     val products: Map<String, String>? = null
 )

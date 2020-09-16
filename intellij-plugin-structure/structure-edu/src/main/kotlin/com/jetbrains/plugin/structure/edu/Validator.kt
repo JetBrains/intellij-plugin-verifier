@@ -21,7 +21,7 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(SUMMARY))
   }
-  if (descriptor.items == null || descriptor.items.isEmpty()) {
+  if (descriptor.items.isEmpty()) {
     problems.add(PropertyNotSpecified(ITEMS))
   }
   val vendor = descriptor.vendor

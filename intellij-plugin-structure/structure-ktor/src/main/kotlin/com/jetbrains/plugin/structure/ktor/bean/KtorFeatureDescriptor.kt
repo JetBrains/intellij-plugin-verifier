@@ -4,57 +4,57 @@
 
 package com.jetbrains.plugin.structure.ktor.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class KtorVendor(
-  @SerialName(VENDOR_NAME)
+  @JsonProperty(VENDOR_NAME)
   val name: String? = null,
-  @SerialName(VENDOR_EMAIL)
+  @JsonProperty(VENDOR_EMAIL)
   val vendorEmail: String? = null,
-  @SerialName(VENDOR_URL)
+  @JsonProperty(VENDOR_URL)
   val vendorUrl: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class KtorFeatureDocumentation(
-  @SerialName(DOCUMENTATION_DESCRIPTION)
+  @JsonProperty(DOCUMENTATION_DESCRIPTION)
   val description: String? = null,
-  @SerialName(DOCUMENTATION_USAGE)
+  @JsonProperty(DOCUMENTATION_USAGE)
   val usage: String? = null,
-  @SerialName(DOCUMENTATION_OPTIONS)
+  @JsonProperty(DOCUMENTATION_OPTIONS)
   val options: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class KtorFeatureDescriptor(
-  @SerialName(ID)
+  @JsonProperty(ID)
   val pluginId: String? = null,
-  @SerialName(NAME)
+  @JsonProperty(NAME)
   val pluginName: String? = null,
-  @SerialName(VERSION)
+  @JsonProperty(VERSION)
   val pluginVersion: String? = null,
-  @SerialName(KTOR_VERSION)
+  @JsonProperty(KTOR_VERSION)
   val ktorVersion: String? = null,
-  @SerialName(SHORT_DESCRIPTION)
+  @JsonProperty(SHORT_DESCRIPTION)
   val shortDescription: String? = null,
-  @SerialName(COPYRIGHT)
+  @JsonProperty(COPYRIGHT)
   val copyright: String? = null,
-  @SerialName(VENDOR)
+  @JsonProperty(VENDOR)
   val vendor: KtorVendor? = null,
-  @SerialName(REQUIRED_FEATURES)
+  @JsonProperty(REQUIRED_FEATURES)
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
-  @SerialName(INSTALL_RECEIPT)
+  @JsonProperty(INSTALL_RECEIPT)
   val installRecipe: FeatureInstallRecipe? = null,
-  @SerialName(GRADLE_INSTALL)
+  @JsonProperty(GRADLE_INSTALL)
   val gradleInstall: GradleInstallRecipe? = null,
-  @SerialName(MAVEN_INSTALL)
+  @JsonProperty(MAVEN_INSTALL)
   val mavenInstall: MavenInstallRecipe? = null,
-  @SerialName(DEPENDENCIES)
+  @JsonProperty(DEPENDENCIES)
   val dependencies: List<BuildSystemDependency> = emptyList(),
-  @SerialName(TEST_DEPENDENCIES)
+  @JsonProperty(TEST_DEPENDENCIES)
   val testDependencies: List<BuildSystemDependency> = emptyList(),
-  @SerialName(DOCUMENTATION)
+  @JsonProperty(DOCUMENTATION)
   val documentation: KtorFeatureDocumentation? = null
 )

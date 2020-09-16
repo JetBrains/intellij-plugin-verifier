@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IdeTheme(val name: String, val dark: Boolean)

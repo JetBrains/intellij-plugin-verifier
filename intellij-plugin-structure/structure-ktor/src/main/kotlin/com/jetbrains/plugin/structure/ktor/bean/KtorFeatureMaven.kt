@@ -4,41 +4,41 @@
 
 package com.jetbrains.plugin.structure.ktor.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class MavenInstallRecipe(
-  @SerialName(MAVEN_REPOSITORIES)
+  @JsonProperty(MAVEN_REPOSITORIES)
   val repositories: List<MavenRepository> = emptyList(),
-  @SerialName(MAVEN_PLUGINS)
+  @JsonProperty(MAVEN_PLUGINS)
   val plugins: List<MavenPlugin> = emptyList()
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class BuildSystemDependency(
-  @SerialName(DEPENDENCY_GROUP)
+  @JsonProperty(DEPENDENCY_GROUP)
   val group: String? = null,
-  @SerialName(DEPENDENCY_ARTIFACT)
+  @JsonProperty(DEPENDENCY_ARTIFACT)
   val artifact: String? = null,
-  @SerialName(DEPENDENCY_VERSION)
+  @JsonProperty(DEPENDENCY_VERSION)
   val version: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class MavenRepository(
-  @SerialName(MAVEN_REP_ID)
+  @JsonProperty(MAVEN_REP_ID)
   val id: String? = null,
-  @SerialName(MAVEN_REP_URL)
+  @JsonProperty(MAVEN_REP_URL)
   val url: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class MavenPlugin(
-  @SerialName(PLUGIN_GROUP)
+  @JsonProperty(PLUGIN_GROUP)
   val group: String? = null,
-  @SerialName(PLUGIN_ARTIFACT)
+  @JsonProperty(PLUGIN_ARTIFACT)
   val artifact: String? = null,
-  @SerialName(PLUGIN_VERSION)
+  @JsonProperty(PLUGIN_VERSION)
   val version: String? = null
 )

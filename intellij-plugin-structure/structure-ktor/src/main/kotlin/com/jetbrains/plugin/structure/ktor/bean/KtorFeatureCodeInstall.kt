@@ -4,40 +4,40 @@
 
 package com.jetbrains.plugin.structure.ktor.bean
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class FeatureInstallRecipe(
-  @SerialName(INSTALL_IMPORTS)
+  @JsonProperty(INSTALL_IMPORTS)
   val imports: List<String> = emptyList(),
-  @SerialName(INSTALL_TEST_IMPORTS)
+  @JsonProperty(INSTALL_TEST_IMPORTS)
   val testImports: List<String> = emptyList(),
-  @SerialName(INSTALL_BLOCK)
+  @JsonProperty(INSTALL_BLOCK)
   val installBlock: String? = null,
-  @SerialName(INSTALL_TEMPLATES)
+  @JsonProperty(INSTALL_TEMPLATES)
   val templates: List<CodeTemplate> = emptyList()
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 enum class Position {
-  @SerialName(POSITION_INSIDE)
+  @JsonProperty(POSITION_INSIDE)
   INSIDE_APPLICATION_MODULE,
 
-  @SerialName(POSITION_OUTSIDE)
+  @JsonProperty(POSITION_OUTSIDE)
   OUTSIDE_APPLICATION_MODULE,
 
-  @SerialName(POSITION_FILE)
+  @JsonProperty(POSITION_FILE)
   SEPARATE_FILE,
 
-  @SerialName(POSITION_TESTFUN)
+  @JsonProperty(POSITION_TESTFUN)
   TEST_FUNCTION
 }
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class CodeTemplate(
-  @SerialName(TEMPLATE_POSITION)
+  @JsonProperty(TEMPLATE_POSITION)
   val position: Position? = null,
-  @SerialName(TEMPLATE_TEXT)
+  @JsonProperty(TEMPLATE_TEXT)
   val text: String? = null
 )

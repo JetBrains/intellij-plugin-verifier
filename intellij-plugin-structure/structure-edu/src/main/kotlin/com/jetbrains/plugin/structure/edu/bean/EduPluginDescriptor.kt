@@ -4,56 +4,56 @@
 
 package com.jetbrains.plugin.structure.edu.bean
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.jetbrains.plugin.structure.edu.*
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class EduTask(
-  @SerialName(NAME)
+  @JsonProperty(NAME)
   val name: String = "",
-  @SerialName(TASK_TYPE)
+  @JsonProperty(TASK_TYPE)
   var taskType: String = ""
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class EduItem(
-  @SerialName(TITLE)
+  @JsonProperty(TITLE)
   val title: String = "",
-  @SerialName(TYPE)
+  @JsonProperty(TYPE)
   val type: String = "",
-  @SerialName(ITEMS)
+  @JsonProperty(ITEMS)
   val items: List<EduItem> = mutableListOf(),
-  @SerialName(TASK_LIST)
+  @JsonProperty(TASK_LIST)
   var taskList: List<EduTask> = mutableListOf()
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class EduVendor(
-  @SerialName(VENDOR_NAME)
+  @JsonProperty(VENDOR_NAME)
   val name: String? = null,
-  @SerialName(VENDOR_EMAIL)
+  @JsonProperty(VENDOR_EMAIL)
   val vendorEmail: String? = null,
-  @SerialName(VENDOR_URL)
+  @JsonProperty(VENDOR_URL)
   val vendorUrl: String? = null
 )
 
-@Serializable
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class EduPluginDescriptor(
-  @SerialName(TITLE)
+  @JsonProperty(TITLE)
   val title: String? = null,
-  @SerialName(SUMMARY)
+  @JsonProperty(SUMMARY)
   val summary: String? = null,
-  @SerialName(LANGUAGE)
+  @JsonProperty(LANGUAGE)
   val language: String? = null,
-  @SerialName(PROGRAMMING_LANGUAGE)
+  @JsonProperty(PROGRAMMING_LANGUAGE)
   val programmingLanguage: String? = null,
-  @SerialName(ITEMS)
+  @JsonProperty(ITEMS)
   val items: List<EduItem> = mutableListOf(),
-  @SerialName(VENDOR)
+  @JsonProperty(VENDOR)
   val vendor: EduVendor? = null,
 
   // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
-  @SerialName(EDU_PLUGIN_VERSION)
+  @JsonProperty(EDU_PLUGIN_VERSION)
   val eduPluginVersion: String? = null
 )
