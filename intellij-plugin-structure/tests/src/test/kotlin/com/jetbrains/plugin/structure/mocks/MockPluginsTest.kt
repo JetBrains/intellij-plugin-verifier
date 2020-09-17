@@ -332,19 +332,6 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
   @Test
   fun `plugin has optional dependency where configuration file is ambiguous in two jar files`() {
-    /*
-      plugin/
-        lib/
-          plugin.jar!/
-            META-INF/
-              plugin.xml (references <depends optional="true" config-file="optionalDependency.xml">someId</depends>)
-          one.jar!/
-            META-INF/
-              optionalDependency.xml  <--- duplicated
-          two.jar!/
-            META-INF/
-              optionalDependency.xml  <--- duplicated
-    */
     val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
       dir("lib") {
         zip("plugin.jar") {
@@ -359,13 +346,13 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
         zip("one.jar") {
           dir("META-INF") {
-            file("optionalDependency.xml", "<idea-plugin></idea-plugin>")
+            file("optionalDependency.xml", "<idea-plugin></idea-plugin>") //<--- duplicated
           }
         }
 
         zip("two.jar") {
           dir("META-INF") {
-            file("optionalDependency.xml", "<idea-plugin></idea-plugin>")
+            file("optionalDependency.xml", "<idea-plugin></idea-plugin>") //<--- duplicated
           }
         }
       }
@@ -381,6 +368,42 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
           listOf(MultiplePluginDescriptors("optionalDependency.xml", "one.jar", "optionalDependency.xml", "two.jar"))
         )
       )
+    )
+  }
+
+  @Test
+  fun `xi-include pointing to relative path in another jar file`() {
+    val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("lib") {
+        zip("plugin.jar") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+                changeNotes = """<xi:include href="extensions/other.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
+              }
+            }
+          }
+        }
+
+        zip("other.jar") {
+          dir("META-INF") {
+            dir("extensions") {
+              file("other.xml", """
+                <idea-plugin>
+                  <change-notes>Change notes included from xml file residing in another jar file</change-notes> 
+                </idea-plugin>
+              """.trimIndent())
+            }
+          }
+        }
+      }
+    }
+
+    val creationSuccess = createPluginSuccessfully(pluginDirectory)
+    assertEquals(
+      "Change notes included from xml file residing in another jar file",
+      creationSuccess.plugin.changeNotes
     )
   }
 
