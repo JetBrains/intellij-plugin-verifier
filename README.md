@@ -19,7 +19,19 @@ Examples of problems that the Plugin Verifier can detect:
 4) The missing plugin's dependencies problems: a plugin `A` depends on another plugin `B` that doesn't have a build compatible with this IDE.
    It means that the user cannot install the plugin `A` at all, as the IDE requires all dependent plugins to be installed.
 
-# Usage
+## Table of Contents
+
+- [Installation](#installation)
+- [Options](#options)
+- [Results](#results)
+- [Commands](#commands)
+    - [check-ide](#check-ide)
+    - [check-plugin](#check-plugin)
+    - [check-trunk-api](#check-trunk-api)
+    - [Common Options](#common-options)
+- [Technical details](#technical-details)
+- [Integration](#integration)
+- [GitHub Actions](#github-actions)
 
 ## Installation
 
@@ -96,7 +108,7 @@ This command is used to check IDE build against a set of plugins.
 
 If no plugins are explicitly specified then all compatible plugins in the [Plugin Repository](https://plugins.jetbrains.com) will be verified ([options](#common-options)).
 
-##### Examples
+#### Examples
 
 Check IDEA Ultimate #162.1121.32 against all plugins listed in `pluginsToCheck.txt`:
 
@@ -120,7 +132,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugins paths to verify, separated by a newline.
 
-##### Examples
+#### Examples
 
 Check `Kotlin` plugin against IDEA Ultimate 162.2032.8, 163.1024, and 163.7277:
 
@@ -268,7 +280,7 @@ Plugin Verifier uses the following paths for operational purposes:
 * `<plugins-directory> = <home-directory>/loaded-plugins` - cache directory for downloaded plugins,
 * `<extracted-directory> = <home-directory>/extracted-plugins` - temporary directory used for extracting plugins that are distributed as `.zip` archives.
 
-###### Downloading plugins
+**Downloading plugins**
 
 Plugins to be verified and plugins' dependencies are downloaded into `<plugins-directory>`.
 It can be reused between multiple runs of the Plugin Verifier: on the first run, all the necessary plugins will be downloaded, and on the subsequent runs, they will be taken from the cache.
@@ -278,20 +290,20 @@ Plugins are downloaded from the [Plugin Repository](https://plugins.jetbrains.co
 `<update-ID>` is the unique ID of the plugin's version in the Plugin Repository's database.
 For example, [Kotlin 1.2.30-release-IJ2018.1-1](https://plugins.jetbrains.com/plugin/6954-kotlin/update/43775) has `update-ID` equal to `43775`.
 
-###### Limit size of `<plugins-directory>`
+**Limit size of `<plugins-directory>`**
 
 That's possible to limit the size of the `<plugins-directory>`, which is 5 GB by default.
 To do this, specify JVM option `-Dplugin.verifier.cache.dir.max.space=<max-space-MB>`.
 The Plugin Verifier will remove the least recently used plugins from the cache as soon as the occupied space reaches the limit.
 
-###### Extracting .zip-ed plugins
+**Extracting .zip-ed plugins**
 
 Plugins packaged in `.zip` archives are extracted into `<extracted-directory>/<temp-dir>` before verifying these plugins starts.
 This is necessary to speed up the verification, which needs to do many searches of class-files.
 
 ## Integration
 
-#### GitHub Actions
+### GitHub Actions
 
 [GitHub Actions](https://help.github.com/en/actions) allow introducing automation to the GitHub repository and create workflows to test, build, and deploy the project.
 
