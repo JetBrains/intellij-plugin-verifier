@@ -12,6 +12,7 @@ This tool is useful because plugins authors' often specify wide [[since; until] 
 IntelliJ API may occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
 
 Examples of problems that the Plugin Verifier can detect:
+
 1) Plugin references a class `com.example.Foo`, which is not available in the IDE.
    It may happen if the plugin had been compiled against IDE 1.0, and the class `com.example.Foo` was removed in IDE 2.0.
 2) Plugin references a missing method of IDE's class, which leads to `NoSuchMethodError` at runtime.
@@ -39,7 +40,7 @@ Download self-contained *verifier-all.jar* from [Bintray](https://bintray.com/je
 
     curl -L --output verifier-all.jar https://dl.bintray.com/jetbrains/intellij-plugin-service/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
 
-where \<version\> is the latest released version (see at the top).
+Where `<version>` is the latest released version (see at the top).
 
 ## Options
 
@@ -52,6 +53,7 @@ Command is one of `check-plugin`, `check-ide` or `check-trunk-api`.
 ## Results
 
 All the verification results are printed and saved in the following ways:
+
 1) The results are saved to `<verification-$timestamp>` directory (can be changed with `-verification-reports-dir` [option](#common-options)).
    The layout of files beneath this directory is as follows. The format of individual files is not specified.
    Basically, the files contain human-readable sentences.
@@ -149,14 +151,14 @@ Given the release IDE build, all plugins' versions for release IDE will be verif
 For clarity, here is an example of the command:
 
     check-trunk-api
-       -r /usr/lib/jvm/java-8-oracle
-       -subsystems-to-check without-android
-       -team-city
-       -jetbrains-plugins-file all-jetbrains-plugins.txt
-       -release-jetbrains-plugins release-plugins
-       -trunk-jetbrains-plugins trunk-plugins
-       -major-ide-path IU-173.4548.28
-       IU-181.3741.2
+        -r /usr/lib/jvm/java-8-oracle
+        -subsystems-to-check without-android
+        -team-city
+        -jetbrains-plugins-file all-jetbrains-plugins.txt
+        -release-jetbrains-plugins release-plugins
+        -trunk-jetbrains-plugins trunk-plugins
+        -major-ide-path IU-173.4548.28
+        IU-181.3741.2
 
 The `IU-173.4548.28` is IDEA Ultimate 2017.3.4 build, and `IU-181.3741.2` is some IDE built from the master.
 This command will do the following:
@@ -176,7 +178,6 @@ There are the following points to mention:
    * `-trunk-jetbrains-plugins trunk-plugins` points to a directory containing all the plugins built along with the **trunk** IDE.
 2) `-subsystems-to-check without-android` specifies that the Plugin Verifier should not show problems related to Android support.
 
-
 Here is the full syntax of the command:
 
     check-trunk-api <trunk IDE>
@@ -190,6 +191,7 @@ Here is the full syntax of the command:
         [-team-city | -tc ]
 
 #### Specific options
+
 * `-major-ide-path (-mip)`
 
     The path to the major IDE release build to compare API problems of the trunk (master) IDE build.
