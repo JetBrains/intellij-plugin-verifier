@@ -6,19 +6,17 @@
 [![Download](https://api.bintray.com/packages/jetbrains/intellij-plugin-service/intellij-plugin-verifier/images/download.svg)](https://bintray.com/jetbrains/intellij-plugin-service/intellij-plugin-verifier/_latestVersion)
 
 
-IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ IDE builds and IntelliJ Platform plugins.
+IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.
 
-This tool is useful because plugins authors' often specify wide [[since; until] compatibility range](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html) but compile a plugin against only a specific IDE from the range.
-IntelliJ API may occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
+This tool is useful because plugin authors often specify a wide [[since; until] compatibility range](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html) but compile a plugin against only a specific IDE from the range.
+The IntelliJ Platform API can occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
 
-Examples of problems that the Plugin Verifier can detect:
+Example problems the Plugin Verifier can detect:
 
-1) Plugin references a class `com.example.Foo`, which is not available in the IDE.
-   It may happen if the plugin had been compiled against IDE 1.0, and the class `com.example.Foo` was removed in IDE 2.0.
-2) Plugin references a missing method of IDE's class, which leads to `NoSuchMethodError` at runtime.
-3) Many other binary incompatibilities listed in [Java Specification, Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html).
-4) The missing plugin's dependencies problems: a plugin `A` depends on another plugin `B` that doesn't have a build compatible with this IDE.
-   It means that the user cannot install the plugin `A` at all, as the IDE requires all dependent plugins to be installed.
+1) Plugin references a class `com.example.Foo`, which is not available in the IDE. This can happen if the plugin was compiled against IDE v1.0, and the class `com.example.Foo` was removed in IDE v2.0.
+2) Plugin references a missing method of the IDE's class, which leads to `NoSuchMethodError` at runtime.
+3) Many other binary incompatibilities listed in the [Java Specification | Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html).
+4) Missing plugin dependencies, for example when plugin `A` depends on plugin `B`, but plugin `B` doesn't have a build that’s compatible with this IDE. It means that the user cannot install plugin `A` as the IDE requires all dependent plugins to be installed.
 
 ## Table of Contents
 
