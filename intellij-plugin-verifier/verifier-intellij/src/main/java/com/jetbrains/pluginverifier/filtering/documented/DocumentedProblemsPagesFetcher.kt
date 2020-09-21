@@ -13,18 +13,19 @@ class DocumentedProblemsPagesFetcher {
 
   private companion object {
     private val subPagePathRegex = Regex("(api_changes/api_changes_list_20..)\\.md")
-    const val MAIN_SOURCE_PAGE_URL = "https://raw.githubusercontent.com/JetBrains/intellij-sdk-docs/master/reference_guide/api_changes_list.md"
-    const val MAIN_WEB_PAGE_URL = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
-    const val MAIN_EDIT_PAGE_URL = "https://github.com/JetBrains/intellij-sdk-docs/edit/master/reference_guide/api_changes_list.md"
   }
 
-  fun fetchPages(): List<DocumentedProblemsPage> {
-    val mainPageBody = fetchPageBody(MAIN_SOURCE_PAGE_URL)
+  fun fetchPages(repository: String, branch: String): List<DocumentedProblemsPage> {
+    val mainSourcePageUrl = "https://raw.githubusercontent.com/$repository/$branch/reference_guide/api_changes_list.md"
+    val mainWebPageUrl = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
+    val mainEditPageUrl = "https://github.com/$repository/edit/$branch/reference_guide/api_changes_list.md"
+
+    val mainPageBody = fetchPageBody(mainSourcePageUrl)
     val subPagesPaths = subPagePathRegex.findAll(mainPageBody).map { it.groups[1]!!.value }.toList()
     return subPagesPaths.map { path ->
-      val sourcePageUrl = MAIN_SOURCE_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
-      val webPageUrl = MAIN_WEB_PAGE_URL.substringBeforeLast("/") + "/" + path + ".html"
-      val editPageUrl = MAIN_EDIT_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
+      val sourcePageUrl = mainSourcePageUrl.substringBeforeLast("/") + "/" + path + ".md"
+      val webPageUrl = mainWebPageUrl.substringBeforeLast("/") + "/" + path + ".html"
+      val editPageUrl = mainEditPageUrl.substringBeforeLast("/") + "/" + path + ".md"
       val pageBody = fetchPageBody(sourcePageUrl)
       DocumentedProblemsPage(URL(webPageUrl), URL(sourcePageUrl), URL(editPageUrl), pageBody)
     }
