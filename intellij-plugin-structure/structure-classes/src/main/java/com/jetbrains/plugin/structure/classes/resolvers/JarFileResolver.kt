@@ -10,10 +10,8 @@ import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
 import java.nio.channels.ClosedChannelException
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -57,9 +55,17 @@ class JarFileResolver(
   }
 
   private fun readClassNamesAndServiceProviders() {
-    Files.walk(zipRoot).use { stream ->
-      stream.forEach { entry ->
-        val entryName = getPathInJar(entry)
+    val visitedDirs = hashSetOf<Path>()
+    Files.walkFileTree(zipRoot, object : SimpleFileVisitor<Path>() {
+      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {
+        if (!visitedDirs.add(dir)) {
+          return FileVisitResult.SKIP_SUBTREE
+        }
+        return FileVisitResult.CONTINUE
+      }
+
+      override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+        val entryName = getPathInJar(file)
         when {
           entryName.endsWith(CLASS_SUFFIX) -> {
             val className = entryName.substringBeforeLast(CLASS_SUFFIX)
@@ -70,13 +76,14 @@ class JarFileResolver(
             val fullBundleName = getBundleNameByBundlePath(entryName)
             bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { hashSetOf() } += fullBundleName
           }
-          !entry.isDirectory && entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2 -> {
+          entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2 -> {
             val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
             serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider)
           }
         }
+        return FileVisitResult.CONTINUE
       }
-    }
+    })
   }
 
   private fun getPathInJar(entry: Path): String = zipRoot.relativize(entry).toString().toSystemIndependentName()
