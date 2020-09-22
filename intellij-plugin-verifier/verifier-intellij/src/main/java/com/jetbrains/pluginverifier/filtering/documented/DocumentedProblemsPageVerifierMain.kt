@@ -12,8 +12,8 @@ package com.jetbrains.pluginverifier.filtering.documented
 object DocumentedProblemsPageVerifierMain {
   @JvmStatic
   fun main(args: Array<String>) {
-    val repository = args[0].ifEmpty { "JetBrains/intellij-sdk-docs" }
-    val branch = args[1].ifEmpty { "master" }
+    val repository = args.elementAtOrNull(0)
+    val branch = args.elementAtOrNull(1)
 
     val documentedPages = DocumentedProblemsPagesFetcher().fetchPages(repository, branch)
     val documentedProblemsParser = DocumentedProblemsParser(false)

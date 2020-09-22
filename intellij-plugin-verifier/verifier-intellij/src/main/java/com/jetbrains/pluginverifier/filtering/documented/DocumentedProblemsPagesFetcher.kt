@@ -13,12 +13,16 @@ class DocumentedProblemsPagesFetcher {
 
   private companion object {
     private val subPagePathRegex = Regex("(api_changes/api_changes_list_20..)\\.md")
+    const val DEFAULT_REPOSITORY = "JetBrains/intellij-sdk-docs"
+    const val DEFAULT_BRANCH = "master"
   }
 
-  fun fetchPages(repository: String, branch: String): List<DocumentedProblemsPage> {
-    val mainSourcePageUrl = "https://raw.githubusercontent.com/$repository/$branch/reference_guide/api_changes_list.md"
+  fun fetchPages(repository: String? = null, branch: String? = null): List<DocumentedProblemsPage> {
+    val repositoryName = repository.orEmpty().ifEmpty { DEFAULT_REPOSITORY }
+    val branchName = branch.orEmpty().ifEmpty { DEFAULT_BRANCH }
+    val mainSourcePageUrl = "https://raw.githubusercontent.com/$repositoryName/$branchName/reference_guide/api_changes_list.md"
     val mainWebPageUrl = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
-    val mainEditPageUrl = "https://github.com/$repository/edit/$branch/reference_guide/api_changes_list.md"
+    val mainEditPageUrl = "https://github.com/$repositoryName/edit/$branchName/reference_guide/api_changes_list.md"
 
     val mainPageBody = fetchPageBody(mainSourcePageUrl)
     val subPagesPaths = subPagePathRegex.findAll(mainPageBody).map { it.groups[1]!!.value }.toList()
