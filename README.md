@@ -31,6 +31,7 @@ Example problems the Plugin Verifier can detect:
 - [Technical details](#technical-details)
 - [Integration](#integration)
 - [GitHub Actions](#github-actions)
+- [Feedback](#feedback)
 
 ## Installation
 
@@ -317,9 +318,10 @@ Such actions are wrappers for the IntelliJ Plugin Verifier and provide various w
 
 Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP stands for `Marketplace aka Plugins`)
 
-- Create a New Issue
-- Type the issue summary and description
-- Select `Subsystem` to be `Plugin Verifier`. The YouTrack will automatically assign a responsible developer
-- If the issue is a feature request you may select `Type` to be `Feature`
+- Check if there is already a similar ticket present.
+- If not, create a [<kbd>New Issue</kbd>](https://youtrack.jetbrains.com/newIssue?project=MP&c=Subsystem%20Plugin%20Verifier).
+- Type the issue **Summary** and **Description**.
+- Select **Subsystem** to be **Plugin Verifier**` - YouTrack will automatically assign a responsible developer.
+- If the issue is a feature request, you may select **Type** to be **Feature**.
 
-Thank you in advance for reporting issues, providing feedback and making the Plugin Verifier better!
+Thank you in advance for reporting issues, providing feedback, and making the Plugin Verifier better!
