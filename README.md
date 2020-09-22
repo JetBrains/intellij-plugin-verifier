@@ -312,3 +312,14 @@ Such actions are wrappers for the IntelliJ Plugin Verifier and provide various w
 
 - [IntelliJ Platform Plugin Verifier](https://github.com/marketplace/actions/intellij-platform-plugin-verifier)
 - [IntelliJ Plugin Verifier](https://github.com/marketplace/actions/intellij-plugin-verifier)
+
+## Feedback
+
+Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP stands for `Marketplace aka Plugins`)
+
+- Create a New Issue
+- Type the issue summary and description
+- Select `Subsystem` to be `Plugin Verifier`. The YouTrack will automatically assign a responsible developer
+- If the issue is a feature request you may select `Type` to be `Feature`
+
+Thank you in advance for reporting issues, providing feedback and making the Plugin Verifier better!
