@@ -330,4 +330,4 @@ Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP s
 
 There is also a dedicated Slack channel available: [#intellij-plugin-verifier](https://plugins.jetbrains.com/slack).
 
-The (JetBrains Platform Slack)(https://plugins.jetbrains.com/slack) community is a place where you can talk with other plugin developers and JetBrains employees about plugin and extension development.
+The [JetBrains Platform Slack](https://plugins.jetbrains.com/slack) community is a place where you can talk with other plugin developers and JetBrains employees about plugin and extension development.
