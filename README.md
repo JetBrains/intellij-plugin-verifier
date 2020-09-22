@@ -321,7 +321,13 @@ Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP s
 - Check if there is already a similar ticket present.
 - If not, create a [<kbd>New Issue</kbd>](https://youtrack.jetbrains.com/newIssue?project=MP&c=Subsystem%20Plugin%20Verifier).
 - Type the issue **Summary** and **Description**.
-- Select **Subsystem** to be **Plugin Verifier**` - YouTrack will automatically assign a responsible developer.
+- Select **Subsystem** to be **Plugin Verifier** - YouTrack will automatically assign a responsible developer.
 - If the issue is a feature request, you may select **Type** to be **Feature**.
 
-Thank you in advance for reporting issues, providing feedback, and making the Plugin Verifier better!
+*Thank you in advance for reporting issues, providing feedback, and making the Plugin Verifier better!*
+
+### Slack
+
+There is also a dedicated Slack channel available: [#intellij-plugin-verifier](https://plugins.jetbrains.com/slack).
+
+The (JetBrains Platform Slack)(https://plugins.jetbrains.com/slack) community is a place where you can talk with other plugin developers and JetBrains employees about plugin and extension development.
