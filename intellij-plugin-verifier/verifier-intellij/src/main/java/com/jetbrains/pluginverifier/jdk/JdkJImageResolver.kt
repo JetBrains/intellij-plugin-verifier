@@ -71,8 +71,13 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     try {
       return FileSystems.getFileSystem(JRT_SCHEME_URI)
     } catch (e: Exception) {
-      val jrtJar = jdkPath.resolve("lib").resolve("jrt-fs.jar")
-      require(jrtJar.exists()) { "Invalid JDK: $jrtJar does not exist" }
+      val jrtFsJars = listOf(
+        jdkPath.resolve("lib").resolve("jrt-fs.jar"),
+        jdkPath.resolve("Contents").resolve("Home").resolve("lib").resolve("jrt-fs.jar")
+      )
+      val jrtJar = jrtFsJars.find { it.exists() }
+
+      requireNotNull(jrtJar) { "Invalid JDK. Neither of .jars exist: " + jrtFsJars.joinToString() }
 
       val classLoader = URLClassLoader(arrayOf(jrtJar.toUri().toURL()))
       return try {
