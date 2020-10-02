@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -29,6 +30,8 @@ public class AsmUtil {
       int parsingOptions = fully ? 0 : (ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
       new ClassReader(inputStream).accept(node, parsingOptions);
       return node;
+    } catch (ClosedFileSystemException e) {
+      throw e;
     } catch (RuntimeException e) {
       throw new InvalidClassFileException(className, getAsmErrorMessage(e));
     }

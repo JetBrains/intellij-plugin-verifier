@@ -183,8 +183,22 @@ class JarFileResolver(
       ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      if (e is ClosedChannelException) {
-        val exception = IllegalStateException("ClosedChannelException for $className of $this from $classPath", e)
+      if (e is ClosedChannelException || e is ClosedFileSystemException) {
+        val message = buildString {
+          appendln("Unexpected ${e.javaClass.simpleName}!")
+          appendln("Class: $className")
+          fun safeCheckExists(path: Path): String = try {
+            Files.exists(path).toString()
+          } catch (e: Throwable) {
+            "Can't check: ${e.javaClass.simpleName}: ${e.message}"
+          }
+          appendln("Class path: $classPath, exists: ${safeCheckExists(classPath)}")
+          appendln("Jar path: ${jarPath.toAbsolutePath()}, exists: ${safeCheckExists(jarPath)}")
+          appendln("Is closed: ${isClosed.get()}")
+          appendln("FS is open: ${zipFs.isOpen}")
+          appendln("Close stacktrace is present: ${closeStacktrace != null}")
+        }
+        val exception = IllegalStateException(message, e)
         closeStacktrace?.let { exception.addSuppressed(it) }
         throw exception
       }
@@ -200,8 +214,8 @@ class JarFileResolver(
     if (!isClosed.compareAndSet(false, true)) {
       throw IllegalStateException("This resolver is already closed: $this")
     }
-    zipFs.close()
     closeStacktrace = RuntimeException()
+    zipFs.close()
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
