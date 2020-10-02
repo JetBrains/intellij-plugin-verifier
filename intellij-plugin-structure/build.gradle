@@ -45,9 +45,7 @@ configure(allprojects) {
 
   compileKotlin {
     kotlinOptions {
-      // intellij-plugin-structure is used in gradle-intellij-plugin, where only Kotlin 1.2 is available,
-      // so we must preserve the compatibility.
-      apiVersion = '1.2'
+      apiVersion = '1.3'
     }
   }
 }
