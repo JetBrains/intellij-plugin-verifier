@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetails
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFileProvider
+import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
@@ -149,7 +149,7 @@ class IdeDependencyFinderTest {
       )
     }
 
-    val pluginDetailsCache = PluginDetailsCache(10, pluginFileProvider, pluginDetailsProvider)
+    val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFileProvider, pluginDetailsProvider)
     return createIdeBundledOrPluginRepositoryDependencyFinder(ide, pluginRepository, pluginDetailsCache)
   }
 

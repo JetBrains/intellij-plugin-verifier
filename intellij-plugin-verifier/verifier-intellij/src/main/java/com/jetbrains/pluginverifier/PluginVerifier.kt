@@ -10,8 +10,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
-import com.jetbrains.plugin.structure.intellij.plugin.ExtensionPoint
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector

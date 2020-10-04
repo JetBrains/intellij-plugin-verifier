@@ -9,9 +9,9 @@ import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDepende
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
+import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
@@ -33,7 +33,7 @@ class VerificationRunner {
     tempFolder.toFile().deleteOnExit()
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
-    val pluginDetailsCache = PluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
+    val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
     return IdeDescriptor.create(ide.idePath, jdkPath, null, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 

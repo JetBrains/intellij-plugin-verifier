@@ -11,9 +11,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
+import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -73,7 +73,7 @@ class ServerContextConfiguration(
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
-    val pluginDetailsCache = PluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
+    val pluginDetailsCache = SizeLimitedPluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
     val ideDownloadDirDiskSpaceSetting = getIdeDownloadDirDiskSpaceSetting()
     val serviceDAO = openServiceDAO(applicationHomeDirPath, clearDatabaseOnCorruption)

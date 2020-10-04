@@ -14,9 +14,9 @@ import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
+import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -115,7 +115,7 @@ object PluginVerifierMain {
 
     DirectoryBasedPluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
-      val taskResult = PluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
+      val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
         runner.getParametersBuilder(
           pluginRepository,
           ideFilesBank,
