@@ -7,7 +7,6 @@ package org.jetbrains.plugins.verifier.service.server.views
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
-import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.jetbrains.plugins.verifier.service.server.ServerContext
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
@@ -63,7 +62,7 @@ class StatusPage(
               .map { it.fileInfo.fileSize }
               .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
 
-            val totalPluginsSize = (serverContext.pluginDetailsCache.pluginFileProvider as PluginFilesBank).getAvailablePluginFiles()
+            val totalPluginsSize = serverContext.pluginFilesBank.getAvailablePluginFiles()
               .map { it.fileInfo.fileSize }
               .fold(SpaceAmount.ZERO_SPACE) { acc, v -> acc + v }
 

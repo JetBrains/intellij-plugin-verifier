@@ -24,7 +24,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.Closeable
-import java.nio.file.Path
 
 class IdeDependencyFinderTest {
 
@@ -130,8 +129,6 @@ class IdeDependencyFinderTest {
     }
 
     val pluginDetailsProvider = object : PluginDetailsProvider {
-      override fun providePluginDetails(pluginFile: Path) = throw IllegalArgumentException()
-
       override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) = throw IllegalArgumentException()
 
       override fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin) = PluginDetailsProvider.Result.Provided(

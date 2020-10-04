@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import org.jetbrains.plugins.verifier.service.service.BaseService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
@@ -29,6 +30,7 @@ class ServerContext(
   val pluginRepository: MarketplaceRepository,
   val serviceDAO: ServiceDAO,
   val ideDescriptorsCache: IdeDescriptorsCache,
+  val pluginFilesBank: PluginFilesBank,
   val pluginDetailsCache: PluginDetailsCache,
   val verificationResultsFilter: VerificationResultFilter
 ) {

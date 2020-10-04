@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadPluginFile
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import java.nio.file.Path
 
 /**
@@ -27,45 +26,31 @@ import java.nio.file.Path
 class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDetailsProvider {
   private val idePluginManager = IdePluginManager.createManager(extractDirectory)
 
-  @Throws(IllegalArgumentException::class)
-  override fun providePluginDetails(pluginFile: Path) = createPluginDetails(pluginFile, null, null)
+  override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
+    pluginFileLock.closeOnException {
+      with(idePluginManager.createPlugin(pluginFileLock.file)) {
+        when (this) {
+          is PluginCreationSuccess -> {
+            readPluginClasses(
+              pluginInfo,
+              plugin,
+              warnings,
+              pluginFileLock
+            )
+          }
 
-  override fun providePluginDetails(
-    pluginInfo: PluginInfo,
-    pluginFileLock: FileLock
-  ) = pluginFileLock.closeOnException {
-    createPluginDetails(pluginFileLock.file, pluginFileLock, pluginInfo)
-  }
+          is PluginCreationFail -> {
+            pluginFileLock.closeLogged<FileLock?>()
+            PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, errorsAndWarnings)
+          }
+        }
+      }
+    }
 
   override fun providePluginDetails(
     pluginInfo: PluginInfo,
     idePlugin: IdePlugin
   ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null)
-
-  private fun createPluginDetails(
-    pluginFile: Path,
-    pluginFileLock: FileLock?,
-    pluginInfo: PluginInfo?
-  ) = with(idePluginManager.createPlugin(pluginFile)) {
-    when (this) {
-      is PluginCreationSuccess -> {
-        readPluginClasses(
-          pluginInfo ?: LocalPluginInfo(plugin),
-          plugin,
-          warnings,
-          pluginFileLock
-        )
-      }
-
-      is PluginCreationFail -> {
-        if (pluginInfo == null) {
-          throw IllegalArgumentException("Invalid plugin from file $pluginFile: ${errorsAndWarnings.joinToString()}")
-        }
-        pluginFileLock.closeLogged()
-        PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, errorsAndWarnings)
-      }
-    }
-  }
 
   private fun readPluginClasses(
     pluginInfo: PluginInfo,

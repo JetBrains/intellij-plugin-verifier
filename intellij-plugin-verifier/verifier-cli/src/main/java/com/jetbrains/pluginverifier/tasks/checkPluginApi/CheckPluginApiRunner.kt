@@ -21,6 +21,6 @@ class CheckPluginApiRunner : CommandRunner {
     ideFilesBank: IdeFilesBank,
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
-  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache.pluginDetailsProvider, reportage)
+  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
 
 }

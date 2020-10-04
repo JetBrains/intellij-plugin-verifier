@@ -4,9 +4,11 @@
 
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
@@ -14,9 +16,11 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
+import com.jetbrains.pluginverifier.plugin.PluginDetails
+import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.resolution.PluginApiClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
@@ -29,7 +33,7 @@ import java.nio.file.Paths
 
 class CheckPluginApiParamsBuilder(
   private val pluginRepository: PluginRepository,
-  private val pluginDetailsProvider: PluginDetailsProvider,
+  private val pluginDetailsCache: PluginDetailsCache,
   private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   private companion object {
@@ -113,16 +117,14 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
     )
 
 
-  private fun providePluginDetails(pluginFile: Path) =
-    with(pluginDetailsProvider.providePluginDetails(pluginFile)) {
-      when (this) {
-        is PluginDetailsProvider.Result.Provided -> pluginDetails
-        is PluginDetailsProvider.Result.InvalidPlugin ->
-          throw IllegalArgumentException("Plugin $pluginFile is invalid: \n" + pluginErrors.joinToString(separator = "\n") { it.message })
-        is PluginDetailsProvider.Result.Failed ->
-          throw IllegalArgumentException("Couldn't read plugin $pluginFile: $reason", error)
-      }
-    }
+  private fun providePluginDetails(pluginFile: Path): PluginDetails {
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    check(pluginCreationResult is PluginCreationSuccess) { pluginCreationResult.toString() }
+    val localPluginInfo = LocalPluginInfo(pluginCreationResult.plugin)
+    val cacheEntry = pluginDetailsCache.getPluginDetailsCacheEntry(localPluginInfo)
+    check(cacheEntry is PluginDetailsCache.Result.Provided)
+    return cacheEntry.pluginDetails
+  }
 
   /**
    * Parses [pluginsToCheckFile] for a [PluginsSet].

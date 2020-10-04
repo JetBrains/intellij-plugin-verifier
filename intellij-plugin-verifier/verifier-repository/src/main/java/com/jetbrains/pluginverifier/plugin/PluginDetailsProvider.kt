@@ -10,19 +10,12 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider.Result
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
-import java.nio.file.Path
 
 /**
  * [Provides] [providePluginDetails] the [PluginDetails] of the plugins.
  * Possible results are represented as instances of [Result].
  */
 interface PluginDetailsProvider {
-
-  /**
-   * Creates [PluginDetails] for a plugin from [pluginFile].
-   */
-  @Throws(IllegalArgumentException::class)
-  fun providePluginDetails(pluginFile: Path): Result
 
   /**
    * Creates [PluginDetails] for existing plugin.

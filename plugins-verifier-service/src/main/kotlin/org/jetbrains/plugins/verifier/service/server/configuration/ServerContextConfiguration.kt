@@ -90,6 +90,7 @@ class ServerContextConfiguration(
       pluginRepository,
       serviceDAO,
       ideDescriptorsCache,
+      pluginFilesBank,
       pluginDetailsCache,
       verificationResultsFilter
     )
