@@ -14,6 +14,7 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 class JarFileResolver(
   private val jarPath: Path,
@@ -27,6 +28,9 @@ class JarFileResolver(
     private const val PROPERTIES_SUFFIX = ".properties"
 
     private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
+
+    private val statsTotalJarsOpen = AtomicInteger()
+    private val statsTotalJarsClosed = AtomicInteger()
   }
 
   private val classes: MutableSet<String> = hashSetOf()
@@ -52,6 +56,7 @@ class JarFileResolver(
     zipFs = FileSystems.newFileSystem(jarPath, JarFileResolver::class.java.classLoader)
     zipRoot = zipFs.rootDirectories.single()
     readClassNamesAndServiceProviders()
+    statsTotalJarsOpen.incrementAndGet()
   }
 
   private fun readClassNamesAndServiceProviders() {
@@ -197,6 +202,7 @@ class JarFileResolver(
           appendln("Is closed: ${isClosed.get()}")
           appendln("FS is open: ${zipFs.isOpen}")
           appendln("Close stacktrace is present: ${closeStacktrace != null}")
+          appendln("Stats: total jars open: ${statsTotalJarsOpen.get()}, closed: ${statsTotalJarsClosed.get()}")
         }
         val exception = IllegalStateException(message, e)
         closeStacktrace?.let { exception.addSuppressed(it) }
@@ -216,6 +222,7 @@ class JarFileResolver(
     }
     closeStacktrace = RuntimeException()
     zipFs.close()
+    statsTotalJarsClosed.incrementAndGet()
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
