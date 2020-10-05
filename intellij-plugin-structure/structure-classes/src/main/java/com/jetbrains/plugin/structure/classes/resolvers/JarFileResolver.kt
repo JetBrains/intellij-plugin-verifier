@@ -14,7 +14,6 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 class JarFileResolver(
   private val jarPath: Path,
@@ -28,9 +27,6 @@ class JarFileResolver(
     private const val PROPERTIES_SUFFIX = ".properties"
 
     private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
-
-    private val statsTotalJarsOpen = AtomicInteger()
-    private val statsTotalJarsClosed = AtomicInteger()
   }
 
   private val classes: MutableSet<String> = hashSetOf()
@@ -41,27 +37,22 @@ class JarFileResolver(
 
   private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
 
-  private val zipFs: FileSystem
-
-  private val zipRoot: Path
-
   @Volatile
   private var closeStacktrace: Throwable? = null
 
   private val isClosed = AtomicBoolean()
 
   init {
-    require(jarPath.exists()) { "File does not exist: $jarPath" }
-    require(jarPath.simpleName.endsWith(".jar") || jarPath.simpleName.endsWith(".zip")) { "File is neither a .jar nor .zip archive: $jarPath" }
-    zipFs = FileSystems.newFileSystem(jarPath, JarFileResolver::class.java.classLoader)
-    zipRoot = zipFs.rootDirectories.single()
-    readClassNamesAndServiceProviders()
-    statsTotalJarsOpen.incrementAndGet()
+    JarFileSystemsPool.checkIsJar(jarPath)
+    JarFileSystemsPool.perform(jarPath) { jarFs ->
+      readClassNamesAndServiceProviders(jarFs)
+    }
   }
 
-  private fun readClassNamesAndServiceProviders() {
+  private fun readClassNamesAndServiceProviders(jarFs: FileSystem) {
+    val jarRoot = jarFs.rootDirectories.single()
     val visitedDirs = hashSetOf<Path>()
-    Files.walkFileTree(zipRoot, object : SimpleFileVisitor<Path>() {
+    Files.walkFileTree(jarRoot, object : SimpleFileVisitor<Path>() {
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {
         if (!visitedDirs.add(dir)) {
           return FileVisitResult.SKIP_SUBTREE
@@ -83,7 +74,7 @@ class JarFileResolver(
           }
           entryName.startsWith(SERVICE_PROVIDERS_PREFIX) && entryName.count { it == '/' } == 2 -> {
             val serviceProvider = entryName.substringAfter(SERVICE_PROVIDERS_PREFIX)
-            serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider)
+            serviceProviders[serviceProvider] = readServiceImplementationNames(serviceProvider, jarFs)
           }
         }
         return FileVisitResult.CONTINUE
@@ -91,11 +82,12 @@ class JarFileResolver(
     })
   }
 
-  private fun getPathInJar(entry: Path): String = zipRoot.relativize(entry).toString().toSystemIndependentName()
+  private fun getPathInJar(entry: Path): String =
+    entry.toString().trimStart('/').toSystemIndependentName()
 
-  private fun readServiceImplementationNames(serviceProvider: String): Set<String> {
+  private fun readServiceImplementationNames(serviceProvider: String, jarFs: FileSystem): Set<String> {
     val entry = SERVICE_PROVIDERS_PREFIX + serviceProvider
-    val entryPath = zipFs.getPath(entry)
+    val entryPath = jarFs.getPath(entry)
     if (!entryPath.exists()) {
       return emptySet()
     }
@@ -116,16 +108,18 @@ class JarFileResolver(
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     checkIsOpen()
-    Files.walk(zipRoot).use { stream ->
-      for (zipEntry in stream.filter { it.simpleName.endsWith(CLASS_SUFFIX) }) {
-        val className = getPathInJar(zipEntry).removeSuffix(CLASS_SUFFIX)
-        val result = readClass(className, zipEntry)
-        if (!processor(result)) {
-          return false
+    return JarFileSystemsPool.perform(jarPath) { jarFs ->
+      Files.walk(jarFs.rootDirectories.single()).use { stream ->
+        for (jarEntry in stream.filter { it.simpleName.endsWith(CLASS_SUFFIX) }) {
+          val className = getPathInJar(jarEntry).removeSuffix(CLASS_SUFFIX)
+          val result = readClass(className, jarEntry)
+          if (!processor(result)) {
+            return@use false
+          }
         }
+        return@use true
       }
     }
-    return true
   }
 
   override fun containsClass(className: String) = className in classes
@@ -137,11 +131,14 @@ class JarFileResolver(
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
-    val classPath = zipRoot.resolve(className + CLASS_SUFFIX)
-    if (!classPath.exists()) {
-      ResolutionResult.NotFound
+    return JarFileSystemsPool.perform(jarPath) { jarFs ->
+      val classPath = jarFs.getPath(className + CLASS_SUFFIX)
+      if (classPath.exists()) {
+        readClass(className, classPath)
+      } else {
+        ResolutionResult.NotFound
+      }
     }
-    return readClass(className, classPath)
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
@@ -171,11 +168,14 @@ class JarFileResolver(
 
   private fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
     checkIsOpen()
-    val path = zipRoot.resolve(bundleResourceName)
-    if (!path.exists()) {
-      return null
+    return JarFileSystemsPool.perform(jarPath) { jarFs ->
+      val path = jarFs.getPath(bundleResourceName)
+      if (path.exists()) {
+        path.inputStream().use { PropertyResourceBundle(it) }
+      } else {
+        null
+      }
     }
-    return path.inputStream().use { PropertyResourceBundle(it) }
   }
 
   private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> {
@@ -200,9 +200,6 @@ class JarFileResolver(
           appendln("Class path: $classPath, exists: ${safeCheckExists(classPath)}")
           appendln("Jar path: ${jarPath.toAbsolutePath()}, exists: ${safeCheckExists(jarPath)}")
           appendln("Is closed: ${isClosed.get()}")
-          appendln("FS is open: ${zipFs.isOpen}")
-          appendln("Close stacktrace is present: ${closeStacktrace != null}")
-          appendln("Stats: total jars open: ${statsTotalJarsOpen.get()}, closed: ${statsTotalJarsClosed.get()}")
         }
         val exception = IllegalStateException(message, e)
         closeStacktrace?.let { exception.addSuppressed(it) }
@@ -213,7 +210,7 @@ class JarFileResolver(
   }
 
   private fun checkIsOpen() {
-    check(zipFs.isOpen) { "Jar file system must be open for $this" }
+    check(!isClosed.get()) { "Jar file system must be open for $this" }
   }
 
   override fun close() {
@@ -221,8 +218,7 @@ class JarFileResolver(
       throw IllegalStateException("This resolver is already closed: $this")
     }
     closeStacktrace = RuntimeException()
-    zipFs.close()
-    statsTotalJarsClosed.incrementAndGet()
+    JarFileSystemsPool.close(jarPath)
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
