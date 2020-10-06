@@ -36,9 +36,7 @@ internal object JarFileSystemsPool {
     try {
       return action(fsHandler.jarFs)
     } finally {
-      synchronized(this) {
-        fsHandler.users--
-      }
+      release(fsHandler)
     }
   }
 
@@ -70,12 +68,18 @@ internal object JarFileSystemsPool {
   fun close(jarPath: Path) {
     val fsHandler = openJarFileSystems[jarPath] ?: return
     check(fsHandler.users >= 0)
+    if (fsHandler.users > 0) {
+      fsHandler.users--
+    }
     if (fsHandler.users == 0) {
       fsHandler.jarFs.closeLogged()
       openJarFileSystems.remove(jarPath)
-    } else {
-      fsHandler.users--
     }
+  }
+
+  @Synchronized
+  private fun release(fsHandler: FSHandler) {
+    fsHandler.users--
   }
 
   private data class FSHandler(
