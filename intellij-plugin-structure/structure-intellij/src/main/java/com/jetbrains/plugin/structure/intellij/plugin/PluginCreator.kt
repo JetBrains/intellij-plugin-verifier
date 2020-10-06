@@ -6,10 +6,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
-import com.jetbrains.plugin.structure.base.problems.NotNumber
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
@@ -213,7 +210,8 @@ internal class PluginCreator private constructor(
       productDescriptor = ProductDescriptor(
         productDescriptorBean.code,
         LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
-        Integer.parseInt(productDescriptorBean.releaseVersion)
+        Integer.parseInt(productDescriptorBean.releaseVersion),
+        productDescriptorBean.eap == "true"
       )
     }
     changeNotes = bean.changeNotes
@@ -363,6 +361,7 @@ internal class PluginCreator private constructor(
       validateProductCode(productDescriptor.code)
       validateReleaseDate(productDescriptor.releaseDate)
       validateReleaseVersion(productDescriptor.releaseVersion)
+      productDescriptor.eap?.let { validateEapFlag(it) }
     }
   }
 
@@ -395,6 +394,12 @@ internal class PluginCreator private constructor(
       } catch (e: NumberFormatException) {
         registerProblem(NotNumber("release-version", descriptorPath))
       }
+    }
+  }
+
+  private fun validateEapFlag(eapFlag: String) {
+    if (eapFlag != "true" && eapFlag != "false") {
+      registerProblem(NotBoolean("eap", descriptorPath))
     }
   }
 

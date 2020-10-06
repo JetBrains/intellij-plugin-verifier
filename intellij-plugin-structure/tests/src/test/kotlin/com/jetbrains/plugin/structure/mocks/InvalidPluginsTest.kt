@@ -467,12 +467,12 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `invalid product descriptor`() {
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          productDescriptor = """<product-descriptor/>"""
-        },
-        listOf(
-            PropertyNotSpecified("code", "plugin.xml"),
-            PropertyNotSpecified("release-date", "plugin.xml"),
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor/>"""
+      },
+      listOf(
+        PropertyNotSpecified("code", "plugin.xml"),
+        PropertyNotSpecified("release-date", "plugin.xml"),
         PropertyNotSpecified("release-version", "plugin.xml")
       )
     )
@@ -484,6 +484,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       listOf(
         ReleaseDateWrongFormat,
         NotNumber("release-version", "plugin.xml")
+      )
+    )
+
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" eap="aaaa"/>"""
+      },
+      listOf(
+        NotBoolean("eap", "plugin.xml")
       )
     )
   }

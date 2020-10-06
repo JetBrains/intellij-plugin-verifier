@@ -35,6 +35,18 @@ class PropertyNotSpecified(
     get() = Level.ERROR
 }
 
+class NotBoolean(
+  private val propertyName: String,
+  descriptorPath: String? = null
+) : InvalidDescriptorProblem(descriptorPath) {
+
+  override val detailedMessage: String
+    get() = "<$propertyName> must be boolean"
+
+  override val level
+    get() = Level.ERROR
+}
+
 class NotNumber(
   private val propertyName: String,
   descriptorPath: String? = null
