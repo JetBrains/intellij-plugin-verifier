@@ -43,6 +43,7 @@ internal object JarFileSystemsPool {
   @Synchronized
   private fun getOrOpenFsHandler(jarPath: Path): FSHandler {
     val fsHandler = openJarFileSystems.getOrPut(jarPath) {
+      JarFileSystemDebug.debugMessage("FS: create FS for $jarPath")
       val jarFs = FileSystems.newFileSystem(jarPath, JarFileSystemsPool::class.java.classLoader)
       FSHandler(jarFs, clock.instant(), 0)
     }
@@ -59,6 +60,7 @@ internal object JarFileSystemsPool {
         fsHandler.jarFs.closeLogged()
         openJarFileSystems.remove(path)
       }
+      JarFileSystemDebug.debugMessage("FS: evict and close [${toCloseEntries.joinToString { it.key.toString() }}]")
     }
 
     return fsHandler
@@ -66,12 +68,18 @@ internal object JarFileSystemsPool {
 
   @Synchronized
   fun close(jarPath: Path) {
-    val fsHandler = openJarFileSystems[jarPath] ?: return
+    val fsHandler = openJarFileSystems[jarPath]
+    if (fsHandler == null) {
+      JarFileSystemDebug.debugMessage("FS: nothing to close for $jarPath")
+      return
+    }
+    JarFileSystemDebug.debugMessage("FS: on close $jarPath; users: ${fsHandler.users}")
     check(fsHandler.users >= 0)
     if (fsHandler.users > 0) {
       fsHandler.users--
     }
     if (fsHandler.users == 0) {
+      JarFileSystemDebug.debugMessage("FS: close $jarPath")
       fsHandler.jarFs.closeLogged()
       openJarFileSystems.remove(jarPath)
     }

@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.misc.MemoryInfo
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import org.jetbrains.plugins.verifier.service.server.ServerContext
+import org.jetbrains.plugins.verifier.service.setting.DebugModeToggle
 import org.jetbrains.plugins.verifier.service.tasks.TaskDescriptor
 import org.jetbrains.plugins.verifier.service.tasks.TaskManager
 import org.springframework.web.servlet.View
@@ -89,6 +90,23 @@ class StatusPage(
               }
             }
           }
+
+          h2 {
+            +"Toggles:"
+          }
+          ul {
+            li {
+              +"Debug mode: ${DebugModeToggle.isDebug}"
+              form("control-toggle", "display: inline;", "/control-toggle", method = "post") {
+                input("submit", "command", "enable")
+                input("submit", "command", "disable")
+                input("hidden", "toggle-name", "debugMode")
+                +"Admin password: "
+                input("password", "admin-password")
+              }
+            }
+          }
+
           h2 {
             +"Available IDEs: "
           }

@@ -43,6 +43,7 @@ class JarFileResolver(
   private val isClosed = AtomicBoolean()
 
   init {
+    JarFileSystemDebug.debugMessage("Opening $jarPath")
     JarFileSystemsPool.checkIsJar(jarPath)
     JarFileSystemsPool.perform(jarPath) { jarFs ->
       readClassNamesAndServiceProviders(jarFs)
@@ -217,6 +218,7 @@ class JarFileResolver(
     if (!isClosed.compareAndSet(false, true)) {
       throw IllegalStateException("This resolver is already closed: $this")
     }
+    JarFileSystemDebug.debugMessage("Closing $jarPath")
     closeStacktrace = RuntimeException()
     JarFileSystemsPool.close(jarPath)
   }
