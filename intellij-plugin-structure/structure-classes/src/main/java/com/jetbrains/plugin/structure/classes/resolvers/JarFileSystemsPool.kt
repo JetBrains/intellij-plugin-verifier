@@ -74,10 +74,6 @@ internal object JarFileSystemsPool {
       return
     }
     JarFileSystemDebug.debugMessage("FS: on close $jarPath; users: ${fsHandler.users}")
-    check(fsHandler.users >= 0)
-    if (fsHandler.users > 0) {
-      fsHandler.users--
-    }
     if (fsHandler.users == 0) {
       JarFileSystemDebug.debugMessage("FS: close $jarPath")
       fsHandler.jarFs.closeLogged()
