@@ -36,7 +36,7 @@ data class KtorFeatureDescriptor(
   @JsonProperty(VERSION)
   val pluginVersion: String? = null,
   @JsonProperty(KTOR_VERSION)
-  val ktorVersion: String? = null,
+  val ktorVersion: KtorFeatureVersionDescriptor? = null,
   @JsonProperty(SHORT_DESCRIPTION)
   val shortDescription: String? = null,
   @JsonProperty(COPYRIGHT)
@@ -57,4 +57,12 @@ data class KtorFeatureDescriptor(
   val testDependencies: List<BuildSystemDependency> = emptyList(),
   @JsonProperty(DOCUMENTATION)
   val documentation: KtorFeatureDocumentation? = null
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class KtorFeatureVersionDescriptor(
+  @JsonProperty(SINCE)
+  val since: String,
+  @JsonProperty(UNTIL)
+  val until: String
 )
