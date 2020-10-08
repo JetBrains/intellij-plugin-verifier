@@ -61,6 +61,20 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
   }
 
   @Test
+  fun `ktor version is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = null }
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor(null, "1.4.9") }
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor(null, "1.4.9") }
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor("1.4.0", null) }
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor("1.4.0", "\n") }
+    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor("\n", "1.4.0") }
+    checkInvalidPlugin(IncorrectKtorVersionFormat("1.3.3.1")) {
+      ktorVersion = KtorFeatureVersionDescriptor("1.3.3.1", "1.3.3.1")
+    }
+  }
+
+
+  @Test
   fun `documentation is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION)) { documentation = null }
     checkInvalidPlugin(PropertyNotSpecified(DOCUMENTATION_DESCRIPTION)) {
@@ -94,16 +108,6 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     }
     checkInvalidPlugin(PropertyNotSpecified(GRADLE_INSTALL)) {
       mavenInstall {}
-    }
-  }
-
-  @Test
-  fun `bad version`() {
-    checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) {
-      ktorVersion = null
-    }
-    checkInvalidPlugin(IncorrectKtorVersionFormat("1.3.3.1")) {
-      ktorVersion = "1.3.3.1"
     }
   }
 

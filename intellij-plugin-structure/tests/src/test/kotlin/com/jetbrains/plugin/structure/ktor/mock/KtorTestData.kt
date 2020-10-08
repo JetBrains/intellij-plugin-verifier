@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.ktor.bean.BuildSystemDependency
 import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureDocumentation
+import com.jetbrains.plugin.structure.ktor.bean.KtorFeatureVersionDescriptor
 import com.jetbrains.plugin.structure.ktor.bean.KtorVendor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -79,7 +80,7 @@ data class KtorFeatureJsonBuilder(
   var shortDescription: String? = "description",
   var version: String? = "1.0.0",
   @JsonProperty("ktor_version")
-  var ktorVersion: String? = "1.4.0",
+  var ktorVersion: KtorFeatureVersionDescriptor? = KtorFeatureVersionDescriptor("1.4.0", "1.4.1"),
   var copyright: String? = "copyright",
   var vendor: KtorVendor? = KtorVendor("JetBrains s.r.o.", "", "http://jetbrains.com/"),
   @JsonProperty("required_feature_ids")
