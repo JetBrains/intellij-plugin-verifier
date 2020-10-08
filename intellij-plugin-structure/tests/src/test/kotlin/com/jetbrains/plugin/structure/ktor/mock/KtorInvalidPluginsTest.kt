@@ -15,6 +15,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionFormat
+import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionRange
 
 class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<KtorFeature, KtorFeaturePluginManager>(fileSystemType) {
   override fun createManager(extractDirectory: Path): KtorFeaturePluginManager =
@@ -70,6 +71,10 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     checkInvalidPlugin(PropertyNotSpecified(KTOR_VERSION)) { ktorVersion = KtorFeatureVersionDescriptor("\n", "1.4.0") }
     checkInvalidPlugin(IncorrectKtorVersionFormat("1.3.3.1")) {
       ktorVersion = KtorFeatureVersionDescriptor("1.3.3.1", "1.3.3.1")
+    }
+
+    checkInvalidPlugin(IncorrectKtorVersionRange("1.4.0", "1.3.9")) {
+      ktorVersion = KtorFeatureVersionDescriptor("1.4.0-aba", "1.3.9-koko")
     }
   }
 
