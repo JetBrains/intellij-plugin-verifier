@@ -16,3 +16,13 @@ class IncorrectKtorVersionFormat(val ktorVersion: String) : InvalidDescriptorPro
     get() = Level.ERROR
 
 }
+
+class IncorrectKtorVersionRange(val since: String, val until: String) : InvalidDescriptorProblem(null) {
+
+  override val detailedMessage
+    get() = "Provided ktor version range ($since : $until) is invalid."
+
+  override val level
+    get() = Level.ERROR
+
+}
