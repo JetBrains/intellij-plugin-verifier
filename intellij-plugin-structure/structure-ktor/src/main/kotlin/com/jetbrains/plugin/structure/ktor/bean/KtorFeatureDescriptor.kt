@@ -62,7 +62,7 @@ data class KtorFeatureDescriptor(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class KtorFeatureVersionDescriptor(
   @JsonProperty(SINCE)
-  val since: String,
+  val since: String?,
   @JsonProperty(UNTIL)
-  val until: String
+  val until: String?
 )
