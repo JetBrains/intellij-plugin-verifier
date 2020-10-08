@@ -15,6 +15,8 @@ const val GRADLE_INSTALL = "gradle_install"
 const val MAVEN_INSTALL = "maven_install"
 const val DEPENDENCIES = "dependencies"
 const val TEST_DEPENDENCIES = "test_dependencies"
+const val SINCE = "since"
+const val UNTIL = "until"
 
 // Vendor
 const val VENDOR_NAME = "name"

@@ -146,18 +146,23 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
       problems.add(PropertyNotSpecified(PLUGIN_ARTIFACT))
     }
   }
+  validateKtorVersion(descriptor.ktorVersion?.since, problems)
+  validateKtorVersion(descriptor.ktorVersion?.until, problems)
+  return problems
+}
 
-  if (descriptor.ktorVersion.isNullOrBlank()) {
+
+private fun validateKtorVersion(version: String?, problems: MutableList<PluginProblem>) {
+  if (version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(KTOR_VERSION))
   } else {
-    val parts = descriptor.ktorVersion
-            .split("-")
-            .first()
-            .split(".")
+    val parts = version
+      .split("-")
+      .first()
+      .split(".")
 
     if (parts.size != 3 || parts.any { it.toIntOrNull() == null }) {
-      problems.add(IncorrectKtorVersionFormat(descriptor.ktorVersion))
+      problems.add(IncorrectKtorVersionFormat(version))
     }
   }
-  return problems
 }

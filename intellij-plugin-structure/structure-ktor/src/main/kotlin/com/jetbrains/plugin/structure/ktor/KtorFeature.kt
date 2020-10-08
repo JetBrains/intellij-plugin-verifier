@@ -16,7 +16,7 @@ data class KtorFeature(
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginVersion: String? = null,
   override val pluginId: String? = null,
-  val ktorVersion: String? = null,
+  val ktorVersion: KtorVersion? = null,
   val requiredFeatures: List<String> = emptyList(), // Feature IDs.
   val documentation: KtorFeatureDocumentation? = null,
   val gradleInstall: GradleInstallRecipe? = null,
@@ -28,6 +28,11 @@ data class KtorFeature(
   override val url: String = ""
   override val changeNotes: String? = null
 }
+
+data class KtorVersion(
+  val since: String,
+  val until: String
+)
 
 data class KtorFeatureDocumentation(
   val description: String,
