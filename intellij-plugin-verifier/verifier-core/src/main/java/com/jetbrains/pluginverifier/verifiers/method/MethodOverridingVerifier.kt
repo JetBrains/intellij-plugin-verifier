@@ -12,6 +12,8 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
 class MethodOverridingVerifier(private val methodOverridingProcessors: List<MethodOverridingProcessor>) : MethodVerifier {
 
@@ -44,5 +46,9 @@ private class VerificationContextWithSilentProblemRegistrar(
 ) : VerificationContext by delegate {
   override val problemRegistrar: ProblemRegistrar = object : ProblemRegistrar {
     override fun registerProblem(problem: CompatibilityProblem) = Unit
+  }
+
+  override val warningRegistrar: WarningRegistrar = object : WarningRegistrar {
+    override fun registerCompatibilityWarning(warning: CompatibilityWarning) = Unit
   }
 }
