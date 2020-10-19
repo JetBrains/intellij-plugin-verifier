@@ -79,6 +79,4 @@ class KtorVersionTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Kt
     Assert.assertEquals(withSnapshot.asString(), withoutSnapshot.asString())
     Assert.assertEquals(withSnapshotAsLong, withoutSnapshotAsLong)
   }
-
-
 }

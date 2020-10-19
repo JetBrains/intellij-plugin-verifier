@@ -48,14 +48,7 @@ class CompatibilityUtils {
         numbersOfNines.add(i)
       }
 
-      val result = IntArray(numbersOfNines.size)
-      i = 0
-      while (i < numbersOfNines.size) {
-        result[i] = numbersOfNines[i]
-        i++
-      }
-
-      return result
+      return numbersOfNines.toIntArray()
     }
   }
 }
