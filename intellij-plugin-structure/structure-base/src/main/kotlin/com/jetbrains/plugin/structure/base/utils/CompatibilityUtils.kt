@@ -37,12 +37,7 @@ class CompatibilityUtils {
       return branch.toLong() * MAX_COMPONENT_VALUE * MAX_BUILD_VALUE + result.toLong() * MAX_COMPONENT_VALUE
     }
 
-    private fun isNumberOfNines(p: Int): Boolean {
-      for (i in NUMBERS_OF_NINES) {
-        if (i == p) return true
-      }
-      return false
-    }
+    private fun isNumberOfNines(p: Int) = NUMBERS_OF_NINES.any { it == p }
 
     private fun initNumberOfNines(): IntArray {
       val numbersOfNines = ArrayList<Int>()
