@@ -10,8 +10,8 @@ import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.ktor.bean.GradleRepositoryType
 import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 import com.jetbrains.plugin.structure.ktor.problems.GradleRepoIncorrectDescription
-import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionFormat
 import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionRange
+import com.jetbrains.plugin.structure.ktor.version.KtorVersion
 
 internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -147,53 +147,19 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
       problems.add(PropertyNotSpecified(PLUGIN_ARTIFACT))
     }
   }
-  val sinceParsed = parseKtorVersion(descriptor.ktorVersion?.since, problems)
-  val untilParsed = parseKtorVersion(descriptor.ktorVersion?.until, problems)
+  val sinceParsed = KtorVersion.createIfValid(descriptor.ktorVersion?.since, problems)
+  val untilParsed = KtorVersion.createIfValid(descriptor.ktorVersion?.until, problems)
 
   if (sinceParsed != null && untilParsed != null) {
-    validateKtorVersioRange(sinceParsed, untilParsed, problems)
+    validateKtorVersionRange(sinceParsed, untilParsed, problems)
   }
 
   return problems
 }
 
-
-// Ktor version is represented in a format of x.y.z-*
-private data class KtorVersionParsed(val x: Int, val y: Int, val z: Int): Comparable<KtorVersionParsed> {
-  fun asString(): String = "$x.$y.$z"
-
-  override fun compareTo(other: KtorVersionParsed): Int = when {
-    x < other.x -> -1
-    x > other.x -> 1
-    y < other.y -> -1
-    y > other.y -> 1
-    z < other.z -> -1
-    z > other.z -> 1
-    else -> 0
-  }
-}
-
-private fun parseKtorVersion(version: String?, problems: MutableList<PluginProblem>) : KtorVersionParsed? {
-    return if (version.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(KTOR_VERSION))
-        null
-    } else {
-        val parts = version
-                .split("-")
-                .first()
-                .split(".")
-
-        if (parts.size != 3 || parts.any { it.toIntOrNull() == null }) {
-            problems.add(IncorrectKtorVersionFormat(version))
-        }
-
-        KtorVersionParsed(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
-    }
-}
-
-private fun validateKtorVersioRange(
-  since: KtorVersionParsed,
-  until: KtorVersionParsed,
+private fun validateKtorVersionRange(
+  since: KtorVersion,
+  until: KtorVersion,
   problems: MutableList<PluginProblem>
 ) {
   if (since > until) {
