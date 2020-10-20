@@ -102,6 +102,8 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
 
   public abstract int[] getComponents();
 
+  public abstract long asLong();
+
   @Override
   final public int hashCode() {
     return Arrays.hashCode(getComponents()) + Objects.hash(getProductCode(), isSnapshot());

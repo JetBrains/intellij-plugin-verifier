@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.ktor.version
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import com.jetbrains.plugin.structure.ktor.bean.KTOR_VERSION
 import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionFormat
 
@@ -42,6 +43,8 @@ data class KtorVersion(val x: Int, val y: Int, val z: Int): Comparable<KtorVersi
   }
 
   fun asString(): String = "$x.$y.$z"
+
+  fun asLong(): Long = CompatibilityUtils.versionAsLong(x, y, z)
 
   override fun compareTo(other: KtorVersion): Int = when {
     x < other.x -> -1

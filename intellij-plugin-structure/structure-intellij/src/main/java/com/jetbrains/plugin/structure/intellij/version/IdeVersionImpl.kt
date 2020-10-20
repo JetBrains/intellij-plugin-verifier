@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.version
 
+import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import java.util.*
 
 class IdeVersionImpl(
@@ -31,8 +32,9 @@ class IdeVersionImpl(
     return builder.toString()
   }
 
-
   override fun getComponents() = components.clone()
+
+  override fun asLong(): Long = CompatibilityUtils.versionAsLong(*components)
 
   override fun getBaselineVersion() = components[0]
 
