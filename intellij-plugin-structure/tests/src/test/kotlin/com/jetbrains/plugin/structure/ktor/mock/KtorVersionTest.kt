@@ -1,21 +1,12 @@
 package com.jetbrains.plugin.structure.ktor.mock
 
-import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
-import com.jetbrains.plugin.structure.ktor.KtorFeature
-import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
 import com.jetbrains.plugin.structure.ktor.version.KtorVersion
-import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
-import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.hamcrest.core.IsNull
 import org.junit.Assert
 import org.junit.Test
-import java.nio.file.Path
 
 
-class KtorVersionTest(fileSystemType: FileSystemType) : BasePluginManagerTest<KtorFeature, KtorFeaturePluginManager>(fileSystemType) {
-  override fun createManager(extractDirectory: Path): KtorFeaturePluginManager
-    = KtorFeaturePluginManager.createManager(extractDirectory)
-
+class KtorVersionTest {
   @Test
   fun `correct ktor versions`() {
     KtorVersion.fromString("1.4.0")
@@ -61,9 +52,8 @@ class KtorVersionTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Kt
 
     data.forEach { (k, v) ->
       val version = KtorVersion.fromString(k)
-      val asLong = CompatibilityUtils.versionAsLong(version.x, version.y, version.z)
 
-      Assert.assertEquals("Ktor version (as long) is not as expected", v, asLong)
+      Assert.assertEquals("Ktor version (as long) is not as expected", v, version.asLong())
     }
   }
 
@@ -72,11 +62,7 @@ class KtorVersionTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Kt
     val withSnapshot = KtorVersion.fromString("1.4.0-Snapshot")
     val withoutSnapshot = KtorVersion.fromString("1.4.0")
 
-    val withSnapshotAsLong = CompatibilityUtils.versionAsLong(withSnapshot.x, withSnapshot.y, withSnapshot.z)
-    val withoutSnapshotAsLong = CompatibilityUtils.versionAsLong(withoutSnapshot.x, withoutSnapshot.y, withoutSnapshot.z)
-
-
     Assert.assertEquals(withSnapshot.asString(), withoutSnapshot.asString())
-    Assert.assertEquals(withSnapshotAsLong, withoutSnapshotAsLong)
+    Assert.assertEquals(withSnapshot.asLong(), withoutSnapshot.asLong())
   }
 }
