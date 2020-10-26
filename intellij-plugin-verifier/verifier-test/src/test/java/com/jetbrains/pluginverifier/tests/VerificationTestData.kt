@@ -58,11 +58,11 @@ private fun parseDescription(block: String, type: DescriptionType): DescriptionH
   return DescriptionHolder(matchResult!!.groupValues[1], matchResult.groupValues[2], type)
 }
 
-private fun sourceFiles(): Sequence<String> =
-  findMockPluginSourcePath()
-    .listRecursivelyAllFilesWithExtension("java")
-    .asSequence()
-    .map { it.readText() }
+private fun sourceFiles(): Sequence<String> {
+  val javaFiles = findMockPluginSourcePath().listRecursivelyAllFilesWithExtension("java").asSequence()
+  val kotlinFiles = findMockPluginSourcePath().listRecursivelyAllFilesWithExtension("kt").asSequence()
+  return (javaFiles + kotlinFiles).map { it.readText() }
+}
 
 private fun expectedBlocks(sourceCode: String, expectedType: DescriptionType): Sequence<String> {
   val regex = Regex("/\\*expected\\(${expectedType.name}\\)(.*?)\\*/", RegexOption.DOT_MATCHES_ALL)
