@@ -1,0 +1,108 @@
+{
+  "summary" : "my summary",
+  "title" : "Python Course",
+  "programming_language" : "Python",
+  "language" : "en",
+  "course_type" : "PyCharm",
+  "edu_plugin_version": "3.7-2019.3-5266",
+  "vendor": {
+    "name": "JetBrains s.r.o.",
+    "url": "http://jetbrains.com/"
+  },
+  "items": [
+    {
+      "title": "section1",
+      "items": [
+        {
+          "title": "lesson1 in section1",
+          "task_list": [
+            {
+              "name": "task1 in lesson1 in section1",
+              "task_type": "edu",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            },
+            {
+              "name": "task2 in lesson1 in section1",
+              "task_type": "theory",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            },
+            {
+              "name": "task3 in lesson1 in section1",
+              "task_type": "ide",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            },
+            {
+              "name": "task4 in lesson1 in section1",
+              "task_type": "choice",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "section"
+    },
+    {
+      "title": "section2",
+      "items": [
+        {
+          "title": "lesson1 in section2",
+          "task_list": [
+            {
+              "name": "task1 in lesson1 in section2",
+              "task_type": "edu",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "title": "lesson2 in section2",
+          "task_list": [
+            {
+              "name": "task1 in lesson2 in section2",
+              "task_type": "edu",
+              "files": {
+                "tmp.py": {
+                  "name": "tmp.py",
+                  "text": "",
+                  "placeholders": []
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "section"
+    }
+  ],
+  "version" : 11
+}
