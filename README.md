@@ -304,15 +304,11 @@ This is necessary to speed up the verification, which needs to do many searches 
 
 ## Integration
 
-### GitHub Actions
+The most straightforward way of integrating the Plugin Verifier with your project is using the [Gradle IntelliJ Plugin](https://github.com/JetBrains/gradle-intellij-plugin), which provides `runPluginVerifier` configurable task.
 
-[GitHub Actions](https://help.github.com/en/actions) allow introducing automation to the GitHub repository and create workflows to test, build, and deploy the project.
+If you're not using Gradle within your project, there are predefined third-party actions available in the GitHub Actions Marketplace that automate the plugin verification process.
 
-There are 3rd party predefined actions available in the GitHub Actions Marketplace that automate the plugin verification process.
-Such actions are wrappers for the IntelliJ Plugin Verifier and provide various ways of the configuration:
-
-- [IntelliJ Platform Plugin Verifier](https://github.com/marketplace/actions/intellij-platform-plugin-verifier)
-- [IntelliJ Plugin Verifier](https://github.com/marketplace/actions/intellij-plugin-verifier)
+Read more about possible integration options in the [Incompatible Changes in IntelliJ Platform and Plugins API](https://jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html) article.
 
 ## Feedback
 
