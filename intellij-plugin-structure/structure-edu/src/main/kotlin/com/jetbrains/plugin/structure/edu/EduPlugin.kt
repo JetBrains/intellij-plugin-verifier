@@ -28,7 +28,7 @@ data class EduPlugin(
   override val url: String = ""
   override val changeNotes: String? = null
 
-  val parsedEduVersion = EduPluginVersion.fromString(eduPluginVersion)
+  val parsedEduVersion = EduFullPluginVersion.fromString(eduPluginVersion)
 }
 
 data class EduStat(

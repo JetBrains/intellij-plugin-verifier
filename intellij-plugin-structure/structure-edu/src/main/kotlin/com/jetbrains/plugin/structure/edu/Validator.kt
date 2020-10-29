@@ -58,5 +58,5 @@ private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableL
 }
 
 private fun validatePluginVersion(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
-  EduPluginVersion.createIfValid(descriptor.eduPluginVersion, problems)
+  EduFullPluginVersion.createIfValid(descriptor.eduPluginVersion, problems)
 }
