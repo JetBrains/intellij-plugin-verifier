@@ -17,18 +17,18 @@ data class EduPlugin(
   override var vendorUrl: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginId: String? = null,
-
+  override val pluginVersion: String? = null,
   val language: String? = null,
   val programmingLanguage: String? = null,
   val eduPluginVersion: String?,
   val eduStat: EduStat? = null
 
 ) : Plugin {
-  override val pluginVersion: String? = null
+
   override val url: String = ""
   override val changeNotes: String? = null
 
-  val parsedEduVersion = EduPluginVersion.parse(eduPluginVersion)
+  val parsedEduVersion = EduPluginVersion.fromString(eduPluginVersion)
 }
 
 data class EduStat(

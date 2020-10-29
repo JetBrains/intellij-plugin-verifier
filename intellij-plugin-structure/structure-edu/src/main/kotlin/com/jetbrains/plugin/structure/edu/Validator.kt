@@ -7,7 +7,6 @@ package com.jetbrains.plugin.structure.edu
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
-import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.edu.problems.Language
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
@@ -27,6 +26,10 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   val vendor = descriptor.vendor
   if (vendor == null || vendor.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(VENDOR))
+  }
+  val version = descriptor.pluginVersion
+  if (version.isNullOrEmpty()) {
+    problems.add(PropertyNotSpecified(VERSION))
   }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
@@ -55,12 +58,5 @@ private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableL
 }
 
 private fun validatePluginVersion(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
-  if (descriptor.eduPluginVersion.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified(EDU_PLUGIN_VERSION))
-    return
-  }
-  val versionComponents = descriptor.eduPluginVersion.split("-")
-  if (versionComponents.size != 3) {
-    problems.add(InvalidVersionError(descriptor.eduPluginVersion))
-  }
+  EduPluginVersion.createIfValid(descriptor.eduPluginVersion, problems)
 }

@@ -52,6 +52,8 @@ data class EduPluginDescriptor(
   val items: List<EduItem> = mutableListOf(),
   @JsonProperty(VENDOR)
   val vendor: EduVendor? = null,
+  @JsonProperty(VERSION)
+  val pluginVersion: String? = null,
 
   // format example: 3.7-2019.3-5266  -- plugin version-ide version-build number
   @JsonProperty(EDU_PLUGIN_VERSION)
