@@ -21,7 +21,7 @@ data class EduFullPluginVersion(
 
     fun createIfValid(version: String?, problems: MutableList<PluginProblem>): EduFullPluginVersion? {
       if (version.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified(VERSION))
+        problems.add(PropertyNotSpecified(EDU_PLUGIN_VERSION))
         return null
       }
 
