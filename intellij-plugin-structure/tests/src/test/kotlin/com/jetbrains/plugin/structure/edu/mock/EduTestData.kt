@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.edu.EDU_PLUGIN_VERSION
 import com.jetbrains.plugin.structure.edu.PROGRAMMING_LANGUAGE
+import com.jetbrains.plugin.structure.edu.VERSION
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -21,6 +22,8 @@ data class EduPluginJsonBuilder(
   @JsonProperty(PROGRAMMING_LANGUAGE)
   var programmingLanguage: String? = "kotlin",
   var items: List<EduItem>? = listOf(EduItem("lesson1"), EduItem("lesson2")),
+  @JsonProperty(VERSION)
+  val pluginVersion: String? = "1.1",
   @JsonProperty(EDU_PLUGIN_VERSION)
   var version: String? = "3.7-2019.3-5266"
 ) {

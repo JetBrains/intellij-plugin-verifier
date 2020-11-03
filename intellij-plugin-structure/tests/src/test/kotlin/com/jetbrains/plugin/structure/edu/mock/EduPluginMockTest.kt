@@ -108,12 +108,13 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
   private fun testMockConfigs(plugin: EduPlugin) {
     assertEquals("Python Course", plugin.pluginName)
     assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
+    assertEquals("1.1", plugin.pluginVersion)
     assertEquals("JetBrains s.r.o.", plugin.vendor)
     assertEquals("en", plugin.language)
     assertEquals("Python", plugin.programmingLanguage)
     assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
     assertEquals("3.7-2019.3-5266", plugin.eduPluginVersion)
-    assertEquals(EduPluginVersion("3.7", "2019.3", "5266"),
+    assertEquals(EduFullPluginVersion(EduPluginVersion(3, 7), "2019.3", "5266"),
                  plugin.parsedEduVersion)
     assertEquals(1, plugin.eduStat!!.lessons.size)
     assertEquals("lesson1", plugin.eduStat!!.lessons[0])
