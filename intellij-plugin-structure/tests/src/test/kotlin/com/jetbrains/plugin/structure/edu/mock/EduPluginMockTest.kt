@@ -2,10 +2,7 @@ package com.jetbrains.plugin.structure.edu.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.edu.EduPlugin
-import com.jetbrains.plugin.structure.edu.EduPluginManager
-import com.jetbrains.plugin.structure.edu.EduPluginVersion
-import com.jetbrains.plugin.structure.edu.TaskType
+import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
