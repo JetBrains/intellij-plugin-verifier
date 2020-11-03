@@ -91,7 +91,7 @@ data class KtorFeatureJsonBuilder(
   var gradleInstallValue: GradleInstallRecipeJsonBuilder? = null,
   @JsonProperty("maven_install")
   var mavenInstallValue: MavenInstallRecipeJsonBuilder? = null,
-  var dependencies: List<DependencyJsonBuilder> = emptyList(),
+  var dependencies: List<DependencyJsonBuilder> = listOf(DependencyJsonBuilder(group = "aba", artifact = "caba", version = "daba")),
   @JsonProperty("test_dependencies")
   var testDependencies: List<DependencyJsonBuilder> = emptyList(),
   var documentation: KtorFeatureDocumentationJsonBuilder? = KtorFeatureDocumentationJsonBuilder()

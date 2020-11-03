@@ -12,3 +12,13 @@ class GradleRepoIncorrectDescription(val expectedField: String, val unexpectedFi
     get() = Level.ERROR
 
 }
+
+class EmptyDependencies : InvalidDescriptorProblem(null) {
+
+  override val detailedMessage
+    get() = "Ktor feature should have at least one dependency. Please, specify dependencies or test_dependencies"
+
+  override val level
+    get() = Level.ERROR
+
+}
