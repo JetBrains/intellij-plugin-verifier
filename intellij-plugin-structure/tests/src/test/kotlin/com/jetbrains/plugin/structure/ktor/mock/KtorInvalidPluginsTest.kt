@@ -7,15 +7,12 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ktor.KtorFeature
 import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
 import com.jetbrains.plugin.structure.ktor.bean.*
-import com.jetbrains.plugin.structure.ktor.problems.createIncorrectKtorFeatureFile
+import com.jetbrains.plugin.structure.ktor.problems.*
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
-import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
-import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionFormat
-import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionRange
 
 class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<KtorFeature, KtorFeaturePluginManager>(fileSystemType) {
   override fun createManager(extractDirectory: Path): KtorFeaturePluginManager =
@@ -132,6 +129,10 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
       dependencies = listOf(DependencyJsonBuilder(
         version = ""
       ))
+    }
+    checkInvalidPlugin(EmptyDependencies()) {
+      dependencies = listOf()
+      testDependencies = listOf()
     }
   }
 

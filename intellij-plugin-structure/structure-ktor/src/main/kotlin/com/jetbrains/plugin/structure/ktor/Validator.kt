@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.ktor.bean.GradleRepositoryType
+import com.jetbrains.plugin.structure.ktor.problems.*
 import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 import com.jetbrains.plugin.structure.ktor.problems.GradleRepoIncorrectDescription
 import com.jetbrains.plugin.structure.ktor.problems.IncorrectKtorVersionRange
@@ -66,8 +67,11 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
     }
   }
 
-  (descriptor.dependencies.orEmpty()
-    + descriptor.testDependencies.orEmpty()).forEach { dependency ->
+  if (descriptor.dependencies.isEmpty() && descriptor.testDependencies.isEmpty()) {
+    problems.add(EmptyDependencies())
+  }
+
+  (descriptor.dependencies + descriptor.testDependencies).forEach { dependency ->
     if (dependency.group.isNullOrBlank()) {
       problems.add(PropertyNotSpecified(DEPENDENCY_GROUP))
     }
