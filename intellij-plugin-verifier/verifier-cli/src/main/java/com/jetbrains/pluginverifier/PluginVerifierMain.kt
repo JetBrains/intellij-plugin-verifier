@@ -22,6 +22,7 @@ import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
@@ -104,7 +105,12 @@ object PluginVerifierMain {
     val runner = findTaskRunner(command)
     val outputOptions = OptionsParser.parseOutputOptions(opts)
 
-    val pluginRepository = MarketplaceRepository(URL(pluginRepositoryUrl))
+    val pluginRepository = if (opts.offlineMode) {
+      LocalPluginRepositoryFactory.createLocalPluginRepository(downloadDirectory)
+    } else {
+      MarketplaceRepository(URL(pluginRepositoryUrl))
+    }
+
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5 * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
