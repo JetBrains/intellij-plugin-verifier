@@ -121,7 +121,7 @@ object OptionsParser {
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = try {
-      createDocumentedProblemsFilter()
+      if (opts.offlineMode) null else createDocumentedProblemsFilter()
     } catch (e: Exception) {
       LOG.error("Unable to read documented IntelliJ API incompatible changes. Corresponding API problems won't be ignored.", e)
       null
