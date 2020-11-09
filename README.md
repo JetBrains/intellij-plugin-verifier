@@ -253,6 +253,10 @@ Here is the full syntax of the command:
     The verifier will not verify such updates even if they are compatible with the IDE.
     File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt').
 
+* `-offline`
+
+    Specify this flag if the Plugin Verifier must use only locally downloaded dependencies of plugins and must avoid making HTTP requests. 
+
 * `-dump-broken-plugin-list (-d)`
 
     File to dump broken plugin ids.
