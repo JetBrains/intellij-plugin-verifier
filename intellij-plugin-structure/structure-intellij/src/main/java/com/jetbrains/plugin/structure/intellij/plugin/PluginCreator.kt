@@ -589,11 +589,6 @@ internal class PluginCreator private constructor(
       return
     }
 
-    if (changeNotes.length < 40) {
-      registerProblem(ShortChangeNotes(descriptorPath))
-      return
-    }
-
     if (changeNotes.contains("Add change notes here") || changeNotes.contains("most HTML tags may be used")) {
       registerProblem(DefaultChangeNotes(descriptorPath))
     }

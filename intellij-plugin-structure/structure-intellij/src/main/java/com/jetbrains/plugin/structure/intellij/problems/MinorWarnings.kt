@@ -46,15 +46,6 @@ class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
     get() = "Default value in plugin descriptor $descriptorPath: <change-notes> shouldn't have 'Add change notes here' or 'most HTML tags may be used'"
 }
 
-class ShortChangeNotes(private val descriptorPath: String) : PluginProblem() {
-
-  override val level
-    get() = Level.WARNING
-
-  override val message
-    get() = "Too short <change-notes> in plugin descriptor $descriptorPath"
-}
-
 class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem() {
 
   override val level
