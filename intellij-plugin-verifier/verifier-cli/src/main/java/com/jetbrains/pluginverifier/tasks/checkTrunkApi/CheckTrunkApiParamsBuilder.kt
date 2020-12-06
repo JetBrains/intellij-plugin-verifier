@@ -18,7 +18,6 @@ import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
@@ -114,23 +113,19 @@ class CheckTrunkApiParamsBuilder(
       getLastCompatiblePlugins(releaseIdeDescriptor.ideVersion)
     }
 
-    val releaseExcludedPluginsFilter = ExcludedPluginFilter(releaseIdeDescriptor.ide.incompatiblePlugins)
     val releaseIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(releaseLocalRepository)
     val releaseBundledFilter = IgnoreBundledPluginsFilter(releaseIdeDescriptor.ide)
 
     val releasePluginsSet = PluginsSet()
-    releasePluginsSet.addPluginFilter(releaseExcludedPluginsFilter)
     releasePluginsSet.addPluginFilter(releaseIgnoreInLocalRepositoryFilter)
     releasePluginsSet.addPluginFilter(releaseBundledFilter)
 
     releasePluginsSet.schedulePlugins(releaseCompatibleVersions)
 
-    val trunkExcludedPluginsFilter = ExcludedPluginFilter(trunkIdeDescriptor.ide.incompatiblePlugins)
     val trunkIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(trunkLocalRepository)
     val trunkBundledFilter = IgnoreBundledPluginsFilter(trunkIdeDescriptor.ide)
 
     val trunkPluginsSet = PluginsSet()
-    trunkPluginsSet.addPluginFilter(trunkExcludedPluginsFilter)
     trunkPluginsSet.addPluginFilter(trunkIgnoreInLocalRepositoryFilter)
     trunkPluginsSet.addPluginFilter(trunkBundledFilter)
 

@@ -5,9 +5,6 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.plugin.structure.base.utils.writeText
-import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil
-import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
@@ -21,7 +18,6 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tasks.TaskResult
 import com.jetbrains.pluginverifier.tasks.TaskResultPrinter
 import java.io.PrintWriter
-import java.nio.file.Paths
 
 class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResultPrinter {
 
@@ -35,19 +31,6 @@ class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResult
       }
 
       HtmlResultPrinter(ide, outputOptions).printResults(results)
-
-      if (outputOptions.dumpBrokenPluginsFile != null) {
-        val brokenPlugins = results
-          .filterNot { it is PluginVerificationResult.Verified && (it.isOk || it.hasCompatibilityWarnings) }
-          .map { it.plugin }
-          .distinct()
-
-        Paths.get(outputOptions.dumpBrokenPluginsFile).writeText(
-          IdeIncompatiblePluginsUtil
-            .dumpIncompatiblePluginsLines(brokenPlugins.map { PluginIdAndVersion(it.pluginId, it.version) })
-            .joinToString(separator = "\n")
-        )
-      }
     }
   }
 

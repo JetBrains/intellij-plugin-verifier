@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.JdkVersion
@@ -36,9 +35,6 @@ sealed class PluginVerificationDescriptor {
 
     val ideVersion: IdeVersion
       get() = ideDescriptor.ideVersion
-
-    val incompatiblePlugins: Set<PluginIdAndVersion>
-      get() = ideDescriptor.ide.incompatiblePlugins
 
     val jdkVersion: JdkVersion
       get() = ideDescriptor.jdkDescriptor.jdkVersion

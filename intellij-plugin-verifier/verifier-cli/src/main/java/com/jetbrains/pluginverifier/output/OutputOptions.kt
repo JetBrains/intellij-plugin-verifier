@@ -15,8 +15,7 @@ data class OutputOptions(
   private val verificationReportsDirectory: Path,
   val teamCityLog: TeamCityLog?,
   val teamCityGroupType: TeamCityResultPrinter.GroupBy,
-  val previousTcHistory: TeamCityHistory?,
-  val dumpBrokenPluginsFile: String?
+  val previousTcHistory: TeamCityHistory?
 ) {
 
   fun getTargetReportDirectory(verificationTarget: PluginVerificationTarget): Path = when (verificationTarget) {

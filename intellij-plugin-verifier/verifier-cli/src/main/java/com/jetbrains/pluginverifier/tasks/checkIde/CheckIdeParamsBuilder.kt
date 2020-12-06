@@ -16,7 +16,6 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsParsing
 import com.jetbrains.pluginverifier.options.PluginsSet
-import com.jetbrains.pluginverifier.options.filter.ExcludedPluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -43,10 +42,6 @@ class CheckIdeParamsBuilder(
 
       val pluginsSet = PluginsSet()
       PluginsParsing(pluginRepository, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideDescriptor.ideVersion)
-
-      val excludedPlugins = OptionsParser.parseExcludedPlugins(opts)
-      val excludedFilter = ExcludedPluginFilter(excludedPlugins)
-      pluginsSet.addPluginFilter(excludedFilter)
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
 

@@ -7,7 +7,6 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -28,7 +27,10 @@ import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
 import com.jetbrains.pluginverifier.verifiers.method.MethodOverridingVerifier
-import com.jetbrains.pluginverifier.warnings.*
+import com.jetbrains.pluginverifier.warnings.DependenciesCycleWarning
+import com.jetbrains.pluginverifier.warnings.MistakenlyBundledIdePackagesWarning
+import com.jetbrains.pluginverifier.warnings.PluginStructureError
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
 /**
  * Performs verification specified by [verificationDescriptor] and returns [PluginVerificationResult].
@@ -80,7 +82,6 @@ class PluginVerifier(
       )
 
       pluginDetails.pluginWarnings.forEach { context.registerPluginStructureWarning(PluginStructureWarning(it)) }
-      context.checkIfPluginIsMarkedIncompatibleWithThisIde()
       context.findMistakenlyBundledIdeClasses(pluginResolver)
       context.findDependenciesCycles(dependenciesGraph)
 
@@ -147,14 +148,6 @@ class PluginVerifier(
     }
 
     return reportProblems to ignoredProblems
-  }
-
-  private fun PluginVerificationContext.checkIfPluginIsMarkedIncompatibleWithThisIde() {
-    if (verificationDescriptor is PluginVerificationDescriptor.IDE) {
-      if (PluginIdAndVersion(verificationDescriptor.checkedPlugin.pluginId, verificationDescriptor.checkedPlugin.version) in verificationDescriptor.incompatiblePlugins) {
-        registerProblem(PluginIsMarkedIncompatibleProblem(verificationDescriptor.checkedPlugin, verificationDescriptor.ideVersion))
-      }
-    }
   }
 
   private fun PluginVerificationContext.findDependenciesCycles(dependenciesGraph: DependenciesGraph) {

@@ -37,12 +37,6 @@ open class CmdOpts(
   @set:Argument("plugins-to-check-last-builds", alias = "p-last", delimiter = ":", description = "The plugin IDs to check with IDE. The plugin verifier will check LAST plugin build only")
   var pluginToCheckLastBuild: Array<String> = arrayOf(),
 
-  @set:Argument("excluded-plugins-file", alias = "epf", description = "File with list of excluded plugin builds (e.g. '<IDE-home>/lib/resources.jar/brokenPlugins.txt'). The verifier will not verify such updates even if they are compatible with IDE.")
-  var excludedPluginsFile: String? = null,
-
-  @set:Argument("dump-broken-plugin-list", alias = "d", description = "File to dump broken plugin ids. The broken plugins are those which contain at least one problem as a result of the verification")
-  var dumpBrokenPluginsFile: String? = null,
-
   @set:Argument(
     "plugins-to-check-file", alias = "ptcf", description = "File that contains list of plugins to check" +
     "Each line of the file is either '<plugin_id>' (check ALL builds of the plugin) or '@<plugin_id>' (check only LAST build of the plugin)."

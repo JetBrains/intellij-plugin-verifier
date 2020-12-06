@@ -5,8 +5,6 @@
 package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.ide.IdeIncompatiblePluginsUtil.parseIncompatiblePluginsByLines
-import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.filtering.*
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
@@ -55,8 +53,7 @@ object OptionsParser {
       verificationReportsDirectory,
       teamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-      previousTcHistory,
-      opts.dumpBrokenPluginsFile
+      previousTcHistory
     )
   }
 
@@ -155,14 +152,4 @@ object OptionsParser {
 
     return IgnoredProblemsFilter(ignoreConditions)
   }
-
-  /**
-   * Parses set of excluded plugins from [CmdOpts.excludedPluginsFile] file,
-   * which is a set of pairs of `(<plugin-id>, <version>)`.
-   */
-  fun parseExcludedPlugins(opts: CmdOpts): Set<PluginIdAndVersion> {
-    val epf = opts.excludedPluginsFile ?: return emptySet()
-    return parseIncompatiblePluginsByLines(Paths.get(epf).readLines())
-  }
-
 }
