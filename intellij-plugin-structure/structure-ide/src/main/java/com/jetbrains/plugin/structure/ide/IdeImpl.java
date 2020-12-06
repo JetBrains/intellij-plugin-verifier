@@ -8,27 +8,22 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 class IdeImpl extends Ide {
   private final List<IdePlugin> myBundledPlugins;
 
   private final IdeVersion myVersion;
   private final Path myIdePath;
-  private final Set<PluginIdAndVersion> myIncompatiblePlugins;
 
   IdeImpl(@NotNull Path idePath,
           @NotNull IdeVersion version,
-          @NotNull List<IdePlugin> bundledPlugins,
-          @NotNull Set<PluginIdAndVersion> incompatiblePlugins) {
+          @NotNull List<IdePlugin> bundledPlugins) {
     myIdePath = idePath;
     myBundledPlugins = bundledPlugins;
     myVersion = version;
-    myIncompatiblePlugins = incompatiblePlugins;
   }
 
   @NotNull
@@ -54,9 +49,4 @@ class IdeImpl extends Ide {
     return myVersion.asString();
   }
 
-  @NotNull
-  @Override
-  public Set<PluginIdAndVersion> getIncompatiblePlugins() {
-    return Collections.unmodifiableSet(myIncompatiblePlugins);
-  }
 }

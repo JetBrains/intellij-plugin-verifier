@@ -56,7 +56,7 @@ class IdeManagerImpl : IdeManager() {
       readDistributionBundledPlugins(idePath, product, ideVersion)
     }
 
-    return IdeImpl(idePath, ideVersion, bundledPlugins, emptySet())
+    return IdeImpl(idePath, ideVersion, bundledPlugins)
   }
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {

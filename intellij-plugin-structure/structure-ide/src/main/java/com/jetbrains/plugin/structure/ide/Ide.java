@@ -9,11 +9,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
@@ -75,11 +73,4 @@ public abstract class Ide {
    */
   @NotNull
   public abstract Path getIdePath();
-
-  /**
-   * Plugins versions marked as incompatible with this IDE.
-   */
-  @NotNull
-  public abstract Set<PluginIdAndVersion> getIncompatiblePlugins();
-
 }
