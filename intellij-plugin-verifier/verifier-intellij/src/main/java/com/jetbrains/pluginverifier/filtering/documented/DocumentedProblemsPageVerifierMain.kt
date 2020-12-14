@@ -12,10 +12,9 @@ package com.jetbrains.pluginverifier.filtering.documented
 object DocumentedProblemsPageVerifierMain {
   @JvmStatic
   fun main(args: Array<String>) {
-    val repository = args.elementAtOrNull(0)
-    val branch = args.elementAtOrNull(1)
+    println("WARN: CLI arguments are ignored. You can avoid passing them.")
 
-    val documentedPages = DocumentedProblemsPagesFetcher().fetchPages(repository, branch)
+    val documentedPages = DocumentedProblemsPagesFetcher().fetchPages()
     val documentedProblemsParser = DocumentedProblemsParser(false)
     for (page in documentedPages) {
       val pageDescriptor = buildString {
