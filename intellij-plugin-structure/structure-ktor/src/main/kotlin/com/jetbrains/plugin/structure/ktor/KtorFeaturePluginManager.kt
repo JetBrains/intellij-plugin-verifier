@@ -108,6 +108,7 @@ class KtorFeaturePluginManager private constructor(private val extractDirectory:
               options = doc.options!!
             )
           },
+          requiredFeatures = this.requiredFeatures,
           gradleInstall = this.gradleInstall?.let { install ->
             GradleInstallRecipe(
               repositories = install.repositories.map { rep ->
