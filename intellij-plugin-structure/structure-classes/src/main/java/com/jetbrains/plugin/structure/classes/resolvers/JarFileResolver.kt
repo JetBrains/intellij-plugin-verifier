@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
-import java.nio.channels.ClosedChannelException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
@@ -36,9 +35,6 @@ class JarFileResolver(
   private val bundleNames = hashMapOf<String, MutableSet<String>>()
 
   private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
-
-  @Volatile
-  private var closeStacktrace: Throwable? = null
 
   private val isClosed = AtomicBoolean()
 
@@ -188,23 +184,6 @@ class JarFileResolver(
       ResolutionResult.Invalid(e.message)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      if (e is ClosedChannelException || e is ClosedFileSystemException) {
-        val message = buildString {
-          appendln("Unexpected ${e.javaClass.simpleName}!")
-          appendln("Class: $className")
-          fun safeCheckExists(path: Path): String = try {
-            Files.exists(path).toString()
-          } catch (e: Throwable) {
-            "Can't check: ${e.javaClass.simpleName}: ${e.message}"
-          }
-          appendln("Class path: $classPath, exists: ${safeCheckExists(classPath)}")
-          appendln("Jar path: ${jarPath.toAbsolutePath()}, exists: ${safeCheckExists(jarPath)}")
-          appendln("Is closed: ${isClosed.get()}")
-        }
-        val exception = IllegalStateException(message, e)
-        closeStacktrace?.let { exception.addSuppressed(it) }
-        throw exception
-      }
       ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
   }
@@ -214,11 +193,9 @@ class JarFileResolver(
   }
 
   override fun close() {
-    if (!isClosed.compareAndSet(false, true)) {
-      throw IllegalStateException("This resolver is already closed: $this", closeStacktrace)
+    if (isClosed.compareAndSet(false, true)) {
+      JarFileSystemsPool.close(jarPath)
     }
-    closeStacktrace = RuntimeException()
-    JarFileSystemsPool.close(jarPath)
   }
 
   override fun toString() = jarPath.toAbsolutePath().toString()
