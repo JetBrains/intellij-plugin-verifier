@@ -215,7 +215,7 @@ class JarFileResolver(
 
   override fun close() {
     if (!isClosed.compareAndSet(false, true)) {
-      throw IllegalStateException("This resolver is already closed: $this")
+      throw IllegalStateException("This resolver is already closed: $this", closeStacktrace)
     }
     closeStacktrace = RuntimeException()
     JarFileSystemsPool.close(jarPath)
