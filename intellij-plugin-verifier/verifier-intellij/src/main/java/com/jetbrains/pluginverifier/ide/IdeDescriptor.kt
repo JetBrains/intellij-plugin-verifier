@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
@@ -16,6 +17,7 @@ import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
 import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * Holds IDE objects necessary for verification.
@@ -51,14 +53,30 @@ data class IdeDescriptor(
      * [ideVersion] is used to override the default version.
      * [ideFileLock] will be released when this [IdeDescriptor] is closed.
      */
-    fun create(idePath: Path, defaultJdkPath: Path, ideVersion: IdeVersion?, ideFileLock: FileLock?): IdeDescriptor {
+    fun create(
+      idePath: Path,
+      defaultJdkPath: Path?,
+      ideVersion: IdeVersion?,
+      ideFileLock: FileLock?
+    ): IdeDescriptor {
       val ide = IdeManager.createManager().createIde(idePath, ideVersion)
       val ideResolver = IdeResolverCreator.createIdeResolver(ide)
       ideResolver.closeOnException {
         val jdkDescriptor = JdkDescriptorCreator.createBundledJdkDescriptor(ide)
-          ?: JdkDescriptorCreator.createJdkDescriptor(defaultJdkPath)
+          ?: createDefaultJdkDescriptor(defaultJdkPath)
         return IdeDescriptor(ide, ideResolver, jdkDescriptor, ideFileLock)
       }
+    }
+
+    private fun createDefaultJdkDescriptor(defaultJdkPath: Path?): JdkDescriptor {
+      val jdkPath = defaultJdkPath ?: run {
+        val javaHome = System.getenv("JAVA_HOME")
+        requireNotNull(javaHome) { "JAVA_HOME is not specified" }
+        println("Using Java from JAVA_HOME: $javaHome")
+        Paths.get(javaHome)
+      }
+      require(jdkPath.isDirectory) { "Invalid JDK path: $jdkPath" }
+      return JdkDescriptorCreator.createJdkDescriptor(jdkPath)
     }
 
   }

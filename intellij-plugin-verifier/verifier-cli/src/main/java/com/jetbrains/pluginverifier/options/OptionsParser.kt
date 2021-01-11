@@ -59,21 +59,8 @@ object OptionsParser {
 
   fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
     val ideVersion = takeVersionFromCmd(opts)
-    val defaultJdkPath = getJdkPath(opts)
+    val defaultJdkPath = opts.runtimeDir?.let { Paths.get(it) }
     return IdeDescriptor.create(idePath, defaultJdkPath, ideVersion, null)
-  }
-
-  fun getJdkPath(opts: CmdOpts): Path {
-    val runtimeDirectory = opts.runtimeDir
-    val jdkPath = if (runtimeDirectory != null) {
-      Paths.get(runtimeDirectory)
-    } else {
-      val javaHome = System.getenv("JAVA_HOME")
-      requireNotNull(javaHome) { "JAVA_HOME is not specified" }
-      Paths.get(javaHome)
-    }
-    require(jdkPath.isDirectory) { "Invalid JDK path: $jdkPath" }
-    return jdkPath
   }
 
   private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {

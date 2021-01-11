@@ -63,7 +63,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 
     val pluginPackageFilter = parsePackageFilter(apiOpts.pluginPackages)
 
-    val jdkPath = OptionsParser.getJdkPath(opts)
+    val jdkPath = requireNotNull(opts.runtimeDir?.let { Paths.get(it) }) { "JDK runtime is not specified" }
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val basePluginDetails = providePluginDetails(basePluginFile)
