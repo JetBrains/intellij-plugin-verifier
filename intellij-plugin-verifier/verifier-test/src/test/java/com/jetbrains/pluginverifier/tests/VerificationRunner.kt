@@ -34,7 +34,7 @@ class VerificationRunner {
 
     val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
     val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-    return IdeDescriptor.create(ide.idePath, jdkPath, null, null).use { ideDescriptor ->
+    return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
       val classResolverProvider = DefaultClassResolverProvider(

@@ -33,7 +33,7 @@ class CheckPluginParamsBuilder(
         "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963"
     }
 
-    val ideDescriptors = freeArgs.drop(1).map { Paths.get(it) }.map {
+    val ideDescriptors = freeArgs.drop(1).map {
       reportage.logVerificationStage("Reading IDE $it")
       OptionsParser.createIdeDescriptor(it, opts)
     }

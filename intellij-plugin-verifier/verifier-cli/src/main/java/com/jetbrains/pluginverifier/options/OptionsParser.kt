@@ -5,19 +5,24 @@
 package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.filtering.*
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.ide.IdeDownloader
+import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
+import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -57,19 +62,73 @@ object OptionsParser {
     )
   }
 
-  fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
-    val ideVersion = takeVersionFromCmd(opts)
-    val defaultJdkPath = opts.runtimeDir?.let { Paths.get(it) }
-    return IdeDescriptor.create(idePath, defaultJdkPath, ideVersion, null)
+  fun createIdeDescriptor(ide: String, opts: CmdOpts): IdeDescriptor {
+    val ideFile = if (ide.startsWith("[") && ide.endsWith("]")) {
+      downloadIde(ide)
+    } else {
+      Paths.get(ide)
+    }
+    require(ideFile.isDirectory) { "IDE must reside in a directory: $ideFile" }
+    LOG.info("Preparing IDE $ideFile")
+    return createIdeDescriptor(ideFile, opts)
   }
 
-  private fun takeVersionFromCmd(opts: CmdOpts): IdeVersion? {
-    val build = opts.actualIdeVersion
-    if (!build.isNullOrBlank()) {
-      return IdeVersion.createIdeVersionIfValid(build)
-        ?: throw IllegalArgumentException("Incorrect update IDE-version has been specified $build")
+  fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
+    val defaultJdkPath = opts.runtimeDir?.let { Paths.get(it) }
+    return IdeDescriptor.create(idePath, defaultJdkPath, null)
+  }
+
+  private val ideLatestRegexp = Regex("\\[latest(-([A-Z]+))?]")
+  private val ideLatestReleaseRegexp = Regex("\\[latest-release(-([A-Z]+))?]")
+
+  private fun downloadIde(ide: String): Path {
+    val latestMatch = ideLatestRegexp.matchEntire(ide)
+    if (latestMatch != null) {
+      val productCode = latestMatch.groups[2]?.value ?: "IU"
+      val repository = if (productCode == "IU") {
+        IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
+      } else {
+        ReleaseIdeRepository()
+      }
+      return downloadIde(productCode, repository, true)
     }
-    return null
+
+    val latestReleaseMatch = ideLatestReleaseRegexp.matchEntire(ide)
+    if (latestReleaseMatch != null) {
+      val productCode = latestReleaseMatch.groups[2]?.value ?: "IU"
+      return downloadIde(productCode, ReleaseIdeRepository(), false)
+    }
+    throw IllegalArgumentException("IDE pattern does not match any of: ${ideLatestRegexp.pattern}, ${ideLatestReleaseRegexp.pattern}")
+  }
+
+  private fun downloadIde(
+    productCode: String,
+    ideRepository: IdeRepository,
+    latestOrLatestRelease: Boolean
+  ): Path {
+    val releaseModifier = (if (latestOrLatestRelease) "latest" else "latest release") + " of $productCode"
+    LOG.info("Requesting the index of available IDE builds for the $releaseModifier from $ideRepository")
+    val availableIde = ideRepository.fetchIndex()
+      .filter { it.product.productCode == productCode }
+      .filter { if (latestOrLatestRelease) true else it.isRelease }
+      .maxBy { it.version }
+    availableIde ?: throw IllegalArgumentException("No IDE found for $productCode in $ideRepository")
+
+    val idesTempDirectory = System.getProperty("intellij.plugin.verifier.download.ide.temp.dir")?.let { Paths.get(it) }
+      ?: Files.createTempDirectory("downloaded-ides")
+
+    val ideDirectory = idesTempDirectory.resolve(availableIde.version.asString())
+    if (Files.isDirectory(ideDirectory)) {
+      LOG.info("IDE $releaseModifier is already downloaded to $ideDirectory")
+      return ideDirectory
+    }
+
+    LOG.info("Downloading $releaseModifier ${availableIde.version} from $ideRepository to a temp directory $ideDirectory")
+    return when (val downloadResult = IdeDownloader().download(availableIde, ideDirectory)) {
+      is DownloadResult.Downloaded -> downloadResult.downloadedFileOrDirectory
+      is DownloadResult.NotFound -> throw IllegalArgumentException("No IDE found for $productCode in $ideRepository")
+      is DownloadResult.FailedToDownload -> throw RuntimeException("Failed to download IDE $productCode", downloadResult.error)
+    }
   }
 
   fun getExternalClassesPackageFilter(opts: CmdOpts): PackageFilter =

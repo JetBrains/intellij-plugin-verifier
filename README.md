@@ -96,7 +96,7 @@ All the verification results are printed and saved in the following ways:
 This command is used to check IDE build against a set of plugins.
 
     check-ide
-        <IDE path>
+        <IDE>
         [-runtime-dir | -r <file>]
         [-plugins-to-check-file | -ptcf <file>]
         [-plugins-to-check-all-builds | -p-all < ':'-separated list>]
@@ -106,6 +106,8 @@ This command is used to check IDE build against a set of plugins.
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
         [-dump-broken-plugin-list | -d]
+
+`<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
 If no plugins are explicitly specified then all compatible plugins in the [Plugin Repository](https://plugins.jetbrains.com) will be verified ([options](#common-options)).
 
@@ -125,13 +127,15 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 
     check-plugin
         <plugins>
-        <IDE path> [<IDE path>]*
+        <IDE> [<IDE>]*
         [-runtime-dir | -r <file>]
         [-team-city | -tc ]
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugins paths to verify, separated by a newline.
+
+`<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
 #### Examples
 
@@ -212,6 +216,13 @@ Here is the full syntax of the command:
     The same as `--release-local-repository` but specifies the directory containing plugins built for the trunk IDE.
 
 ### Common Options
+
+* `<IDE>`
+  
+    The path to a local IDE installation or a pattern in form `[latest-release-IU]` or `[latest-IU]` (latest EAP).
+    
+    In the latter case the IDE will be downloaded to a temp directory `<temp dir>/<IDE version>`. You can change the
+    `<temp dir>` part with `-Dintellij.plugin.verifier.download.ide.temp.dir=<custom path>` system property.
 
 * `-verification-reports-dir (-vrd)`
 

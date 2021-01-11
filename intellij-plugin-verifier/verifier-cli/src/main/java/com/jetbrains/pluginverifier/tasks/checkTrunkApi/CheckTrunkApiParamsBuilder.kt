@@ -46,8 +46,8 @@ class CheckTrunkApiParamsBuilder(
     val args = Args.parse(apiOpts, freeArgs.toTypedArray(), false)
     require(args.isNotEmpty()) { "The IDE to be checked is not specified" }
 
-    reportage.logVerificationStage("Reading classes of the trunk IDE ${args[0]}")
-    val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(Paths.get(args[0]), opts)
+    reportage.logVerificationStage("Preparing the trunk IDE ${args[0]}")
+    val trunkIdeDescriptor = OptionsParser.createIdeDescriptor(args[0], opts)
     return trunkIdeDescriptor.closeOnException {
       buildParameters(opts, apiOpts, trunkIdeDescriptor)
     }

@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
@@ -23,7 +22,6 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import java.nio.file.Paths
 
 class CheckIdeParamsBuilder(
   val pluginRepository: PluginRepository,
@@ -33,10 +31,7 @@ class CheckIdeParamsBuilder(
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckIdeParams {
     require(freeArgs.isNotEmpty()) { "You have to specify IDE to check. For example: \"java -jar verifier.jar check-ide ~/EAPs/idea-IU-133.439\"" }
-    val ideFile = Paths.get(freeArgs[0])
-    require(ideFile.isDirectory) { "IDE path must be a directory: $ideFile" }
-    reportage.logVerificationStage("Reading classes of IDE $ideFile")
-    OptionsParser.createIdeDescriptor(ideFile, opts).closeOnException { ideDescriptor: IdeDescriptor ->
+    OptionsParser.createIdeDescriptor(freeArgs[0], opts).closeOnException { ideDescriptor: IdeDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 

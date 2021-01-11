@@ -74,7 +74,7 @@ class IdeDescriptorsCache(cacheSize: Int, ideFilesBank: IdeFilesBank, defaultJdk
         is IdeFilesBank.Result.Found -> {
           val ideLock = result.ideFileLock
           val ideDescriptor = try {
-            IdeDescriptor.create(ideLock.file, defaultJdkPath, key, ideLock)
+            IdeDescriptor.create(ideLock.file, defaultJdkPath, ideLock)
           } catch (e: Exception) {
             ideLock.closeLogged()
             e.rethrowIfInterrupted()
