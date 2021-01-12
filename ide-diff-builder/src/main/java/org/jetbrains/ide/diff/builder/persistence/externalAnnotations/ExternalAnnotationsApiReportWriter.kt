@@ -19,7 +19,6 @@ import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.*
 
 /**
  * Utility class used to save [ApiReport] to external annotations roots.
@@ -149,6 +148,8 @@ object AvailableSinceAnnotation : ApiEventAnnotation("org.jetbrains.annotations.
 
 object ScheduledForRemovalAnnotation : ApiEventAnnotation("org.jetbrains.annotations.ApiStatus.ScheduledForRemoval", "inVersion")
 
+object DeprecatedSinceAnnotation : ApiEventAnnotation("org.jetbrains.idea.devkit.inspections.missingApi.DeprecatedSince", "sinceVersion")
+
 const val ANNOTATIONS_XML_FILE_NAME = "annotations.xml"
 
 const val BUILD_TXT_FILE_NAME = "build.txt"
@@ -167,12 +168,14 @@ private class ExternalAnnotationsXmlWriter(private val writer: Writer) : Closeab
     val apiEventAnnotation = when (apiEvent) {
       is IntroducedIn -> AvailableSinceAnnotation
       is RemovedIn -> ScheduledForRemovalAnnotation
+      is MarkedDeprecatedIn -> DeprecatedSinceAnnotation
       else -> return
     }
 
     val ideVersion = when (apiEvent) {
       is IntroducedIn -> apiEvent.ideVersion
       is RemovedIn -> apiEvent.ideVersion
+      is MarkedDeprecatedIn -> apiEvent.ideVersion
       else -> return
     }
 

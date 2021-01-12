@@ -16,11 +16,10 @@ class PackagesClassFilter(private val interestingPackages: List<String>) : Class
 
   override fun toString(): String =
     if (interestingPackages.any { it.isEmpty() }) {
-      "All packages will be processed"
+      "All packages"
     } else {
-      "The following packages will be processed: " + interestingPackages.joinToString()
+      "The following packages: [" + interestingPackages.joinToString() + "]"
     }
-
 
   companion object {
     private val knownObfuscatedPackages = listOf(

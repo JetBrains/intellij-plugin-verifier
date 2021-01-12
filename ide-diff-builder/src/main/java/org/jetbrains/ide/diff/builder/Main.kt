@@ -6,10 +6,7 @@ package org.jetbrains.ide.diff.builder
 
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import org.jetbrains.ide.diff.builder.cli.ApiQualityCheckCommand
-import org.jetbrains.ide.diff.builder.cli.BuildIdeApiAnnotationsCommand
-import org.jetbrains.ide.diff.builder.cli.IdeDiffCommand
-import org.jetbrains.ide.diff.builder.cli.IdeRepositoryIndexCommand
+import org.jetbrains.ide.diff.builder.cli.*
 import kotlin.system.exitProcess
 
 private fun usage(): Nothing {
@@ -27,7 +24,8 @@ private val AVAILABLE_COMMANDS = listOf(
   IdeDiffCommand(),
   IdeRepositoryIndexCommand(),
   BuildIdeApiAnnotationsCommand(),
-  ApiQualityCheckCommand()
+  ApiQualityCheckCommand(),
+  BuildDeprecationInfoAnnotationsCommand()
 )
 
 fun main(args: Array<String>) {

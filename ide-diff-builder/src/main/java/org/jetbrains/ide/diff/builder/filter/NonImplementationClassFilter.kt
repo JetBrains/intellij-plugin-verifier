@@ -24,4 +24,6 @@ object NonImplementationClassFilter : ClassFilter {
 
   override fun shouldProcessClass(className: String) =
     !hasImplementationLikeName(className) && !hasImplementationLikePackage(className)
+
+  override fun toString() = "Classes non containing *Impl or .impl."
 }
