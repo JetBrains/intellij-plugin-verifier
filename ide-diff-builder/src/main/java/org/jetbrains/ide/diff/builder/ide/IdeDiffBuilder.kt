@@ -45,8 +45,8 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
   }
 
   fun buildIdeDiff(oldIdePath: Path, newIdePath: Path): ApiReport {
-    val oldIde = IdeManager.createManager().createIde(oldIdePath.toFile())
-    val newIde = IdeManager.createManager().createIde(newIdePath.toFile())
+    val oldIde = IdeManager.createManager().createIde(oldIdePath)
+    val newIde = IdeManager.createManager().createIde(newIdePath)
     return buildIdeDiff(oldIde, newIde)
   }
 

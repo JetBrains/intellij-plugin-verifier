@@ -92,7 +92,7 @@ class ApiQualityCheckCommand : Command {
 
     val metadata = JsonApiReportReader().readApiReport(metadataPath)
 
-    val ide = IdeManager.createManager().createIde(idePath.toFile())
+    val ide = IdeManager.createManager().createIde(idePath)
     val qualityReport = ApiQualityReport(ide.version, qualityOptions)
     checkApi(ide, classFilter, metadata, qualityOptions, qualityReport)
     findNonDynamicExtensionPoints(ide, pluginsBuiltFromSources, qualityReport)
