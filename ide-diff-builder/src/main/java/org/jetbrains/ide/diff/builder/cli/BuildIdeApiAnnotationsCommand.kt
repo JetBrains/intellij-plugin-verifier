@@ -111,9 +111,9 @@ class BuildIdeApiAnnotationsCommand : Command {
           .groupBy { it.version.baselineVersion }
           .mapValues { (_, branchIdes) -> branchIdes.maxBy { it.version }!! }
           .values
-          .distinctBy { it.version }
       }
       .map { it.version }
+      .distinct()
       .sorted()
 
     LOG.info("Last branch IDEs: $lastBranchIdes")
@@ -129,7 +129,7 @@ class BuildIdeApiAnnotationsCommand : Command {
     classFilter: ClassFilter
   ) {
     for (ideVersion in ides) {
-      LOG.info("Building annotations for ${ideVersion.baselineVersion}")
+      LOG.info("Building annotations for $ideVersion")
       val artifactId = IntelliJIdeRepository.getArtifactIdByProductCode(ideVersion.productCode)
       checkNotNull(artifactId) { ideVersion.asString() }
       val resultPath = resultsDirectory.resolve("$artifactId-${ideVersion.asStringWithoutProductCode()}-annotations.zip")
