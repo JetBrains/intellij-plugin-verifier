@@ -94,12 +94,10 @@ class IdeRepositoryIndexCommand : Command {
 
 val releasesIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.RELEASE)
 val snapshotsIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.SNAPSHOTS)
-val nightlyIdeRepository = IntelliJIdeRepository(IntelliJIdeRepository.Channel.NIGHTLY)
 
 val allIdeRepositories = listOf(
   releasesIdeRepository,
-  snapshotsIdeRepository,
-  nightlyIdeRepository
+  snapshotsIdeRepository
 )
 
 val allIdeRepository = CompositeIdeRepository(allIdeRepositories)
