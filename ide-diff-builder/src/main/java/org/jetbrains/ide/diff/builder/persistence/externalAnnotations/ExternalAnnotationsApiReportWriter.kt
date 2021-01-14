@@ -11,7 +11,6 @@ import com.jetbrains.pluginverifier.results.signatures.FormatOptions
 import com.jetbrains.pluginverifier.results.signatures.SigVisitor
 import org.apache.commons.text.StringEscapeUtils
 import org.jetbrains.ide.diff.builder.api.*
-import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder.Companion.getOuterClassName
 import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
 import org.objectweb.asm.signature.SignatureReader
 import java.io.Closeable
@@ -251,13 +250,13 @@ private val FieldSignature.externalPresentation: String
   get() = hostSignature.externalPresentation + " $fieldName"
 
 private fun MethodSignature.convertMethodSignature(): Triple<String, String, String> {
-  val outerClassName = getOuterClassName(hostSignature.className)
+  val outerClassSignature = hostSignature.containingClassSignature
   val (rawParamDescriptors, rawReturnDescriptor) = JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes(methodDescriptor)
   val rawParamTypes = rawParamDescriptors.map { JvmDescriptorsPresentation.convertJvmDescriptorToNormalPresentation(it, toFullJavaClassName) }
   val rawReturnType = JvmDescriptorsPresentation.convertJvmDescriptorToNormalPresentation(rawReturnDescriptor, toFullJavaClassName)
 
   val isConstructor = methodName == "<init>"
-  val mustDropFirstParameter = isConstructor && outerClassName != null && rawParamTypes.firstOrNull() == toFullJavaClassName(outerClassName)
+  val mustDropFirstParameter = isConstructor && outerClassSignature != null && rawParamTypes.firstOrNull() == toFullJavaClassName(outerClassSignature.className)
   val dropParamsNumber = if (mustDropFirstParameter) 1 else 0
 
   val name = if (isConstructor) {

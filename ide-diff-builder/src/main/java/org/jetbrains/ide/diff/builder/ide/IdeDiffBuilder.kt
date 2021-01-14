@@ -24,26 +24,6 @@ import java.nio.file.Path
  */
 class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: Path) {
 
-  companion object {
-    /**
-     * com/example/Foo -> null
-     * com/example/Some$Foo -> com/example/Some
-     */
-    fun getOuterClassName(className: String): String? {
-      val packageName = className.substringBeforeLast("/")
-      val simpleName = className.substringAfterLast("/")
-      if ('$' in simpleName) {
-        val outerSimpleName = simpleName.substringBeforeLast('$')
-        return if (packageName.isEmpty()) {
-          outerSimpleName
-        } else {
-          "$packageName/$outerSimpleName"
-        }
-      }
-      return null
-    }
-  }
-
   fun buildIdeDiff(oldIdePath: Path, newIdePath: Path): ApiReport {
     val oldIde = IdeManager.createManager().createIde(oldIdePath)
     val newIde = IdeManager.createManager().createIde(newIdePath)
@@ -143,14 +123,6 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
     allSignatures.removeAll(nestedSignatures)
     return allSignatures
   }
-
-  private val ApiSignature.containingClassSignature: ClassSignature?
-    get() = when (this) {
-      is ClassSignature -> getOuterClassName(className)
-      is MethodSignature -> hostSignature.className
-      is FieldSignature -> hostSignature.className
-    }?.let { ClassSignature(it) }
-
 }
 
 fun ClassFileMember.toSignature(): ApiSignature = when (this) {

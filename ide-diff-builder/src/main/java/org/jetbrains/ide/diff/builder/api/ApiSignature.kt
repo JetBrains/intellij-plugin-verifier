@@ -75,3 +75,60 @@ object ApiSignatureSerializer {
     )
   }
 }
+
+/**
+ * org/some/Some -> org/some/Some
+ * org/some/Some$Inner -> org/some/Some
+ * org/some/Some$Inner$Nested -> org/some/Some$Inner
+ */
+private fun getOuterClassName(className: String): String? {
+  val packageName = className.substringBeforeLast("/")
+  val simpleName = className.substringAfterLast("/")
+  if ('$' in simpleName) {
+    val outerSimpleName = simpleName.substringBeforeLast('$')
+    return if (packageName.isEmpty()) {
+      outerSimpleName
+    } else {
+      "$packageName/$outerSimpleName"
+    }
+  }
+  return null
+}
+
+/**
+ * org/some/Some -> null
+ * org/some/Some$Inner -> org/some/Some
+ * org/some/Some$Inner$Nested -> org/some/Some$Inner
+ * org/some/Some#foo() -> org/some/Some
+ * org/some/Some.x -> org/some/Some
+ * org/some/Some$Inner#foo -> org/some/Some$Inner
+ * org/some/Some$Inner.x -> org/some/Some$Inner
+ */
+val ApiSignature.containingClassSignature: ClassSignature?
+  get() = when (this) {
+    is ClassSignature -> getOuterClassName(className)
+    is MethodSignature -> hostSignature.className
+    is FieldSignature -> hostSignature.className
+  }?.let { ClassSignature(it) }
+
+/**
+ * org/some/Some -> org/some/Some
+ * org/some/Some$Inner -> org/some/Some
+ * org/some/Some#foo() -> org/some/Some
+ * org/some/Some.x -> org/some/Some
+ * org/some/Some$Inner#foo -> org/some/Some
+ * org/some/Some$Inner$Nested#foo -> org/some/Some
+ * org/some/Some$Inner.x -> org/some/Some
+ */
+val ApiSignature.topLevelClassSignature: ClassSignature
+  get() {
+    var containingClass = when (this) {
+      is ClassSignature -> this
+      is MethodSignature -> this.hostSignature
+      is FieldSignature -> this.hostSignature
+    }
+    while (containingClass.containingClassSignature != null) {
+      containingClass = containingClass.containingClassSignature!!
+    }
+    return containingClass
+  }

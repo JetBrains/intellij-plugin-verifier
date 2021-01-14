@@ -72,15 +72,23 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
         continue
       }
 
-      val removedIn = events.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
-      val introducedIn = events.filterIsInstance<IntroducedIn>().maxBy { it.ideVersion }
+      val topLevelClassEvents = apiSignatureToEvents[signature.topLevelClassSignature].orEmpty()
+      val allRelevantEvents = topLevelClassEvents + events
+
+      val removedIn = allRelevantEvents.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
+      val introducedIn = allRelevantEvents.filterIsInstance<IntroducedIn>().maxBy { it.ideVersion }
       if (removedIn != null && (introducedIn == null || introducedIn.ideVersion <= removedIn.ideVersion)) {
         // Skip already removed APIs.
         continue
       }
 
       val deprecatedIn = events.filterIsInstance<MarkedDeprecatedIn>().maxBy { it.ideVersion }
-      if (deprecatedIn != null) {
+
+      /*
+        Ignore APIs that were added in X and marked deprecated in X.
+        It probably means that such APIs were not bundled to IDE before X.
+       */
+      if (deprecatedIn != null && deprecatedIn.ideVersion != introducedIn?.ideVersion) {
         apiSignatureToEvents[signature] = setOf(deprecatedIn)
       }
     }
