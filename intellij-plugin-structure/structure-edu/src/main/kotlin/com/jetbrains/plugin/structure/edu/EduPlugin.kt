@@ -18,11 +18,11 @@ data class EduPlugin(
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginId: String? = null,
   override val pluginVersion: String? = null,
+  val jsonVersion: Int? = null,
   val language: String? = null,
   val programmingLanguage: String? = null,
   val eduPluginVersion: String?,
   val eduStat: EduStat? = null
-
 ) : Plugin {
 
   override val url: String = ""

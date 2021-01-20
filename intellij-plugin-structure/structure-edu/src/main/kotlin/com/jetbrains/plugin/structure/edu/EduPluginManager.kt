@@ -94,6 +94,7 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           vendor = this.vendor?.name,
           vendorUrl = this.vendor?.vendorUrl,
           vendorEmail = this.vendor?.vendorEmail,
+          jsonVersion = this.jsonVersion,
           pluginVersion = this.pluginVersion,
           language = this.language,
           programmingLanguage = this.programmingLanguage,

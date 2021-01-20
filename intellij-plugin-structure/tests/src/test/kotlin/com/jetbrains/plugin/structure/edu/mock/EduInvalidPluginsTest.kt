@@ -47,6 +47,11 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   }
 
   @Test
+  fun `json version is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified(JSON_VERSION)) { jsonVersion = null }
+  }
+
+  @Test
   fun `incorrect language specified`() {
     val incorrectLanguage = "english"
     checkInvalidPlugin(UnsupportedLanguage(incorrectLanguage)) { language = incorrectLanguage }

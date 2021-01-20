@@ -23,13 +23,15 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.items.isEmpty()) {
     problems.add(PropertyNotSpecified(ITEMS))
   }
-  val vendor = descriptor.vendor
-  if (vendor == null || vendor.name.isNullOrBlank()) {
+  if (descriptor.vendor?.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(VENDOR))
   }
   val version = descriptor.pluginVersion
   if (version.isNullOrEmpty()) {
     problems.add(PropertyNotSpecified(VERSION))
+  }
+  if (descriptor.jsonVersion == null) {
+    problems.add(PropertyNotSpecified(JSON_VERSION))
   }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
