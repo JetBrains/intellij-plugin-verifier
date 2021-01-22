@@ -33,9 +33,9 @@ data class EduVendor(
   @JsonProperty(VENDOR_NAME)
   val name: String? = null,
   @JsonProperty(VENDOR_EMAIL)
-  val vendorEmail: String? = null,
+  val vendorEmail: String = "",
   @JsonProperty(VENDOR_URL)
-  val vendorUrl: String? = null
+  val vendorUrl: String = ""
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
