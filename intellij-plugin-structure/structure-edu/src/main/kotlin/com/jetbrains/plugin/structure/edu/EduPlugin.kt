@@ -21,14 +21,11 @@ data class EduPlugin(
   val jsonVersion: Int? = null,
   val language: String? = null,
   val programmingLanguage: String? = null,
-  val eduPluginVersion: String?,
   val eduStat: EduStat? = null
 ) : Plugin {
 
   override val url: String = ""
   override val changeNotes: String? = null
-
-  val parsedEduVersion = EduFullPluginVersion.fromString(eduPluginVersion)
 }
 
 data class EduStat(

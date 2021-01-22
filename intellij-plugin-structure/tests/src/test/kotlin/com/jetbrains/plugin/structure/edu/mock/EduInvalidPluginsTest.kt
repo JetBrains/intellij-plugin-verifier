@@ -90,23 +90,6 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
     checkInvalidPlugin(PropertyNotSpecified(ITEMS)) { items = emptyList() }
   }
 
-  @Test
-  fun `broken edu plugin version`() {
-    var badVersion = "3.7-2019.3"
-    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
-    badVersion = "3.7"
-    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
-    badVersion = "3.7-2019.3-5266-3.7"
-    checkInvalidPlugin(InvalidVersionError(badVersion)) { version = badVersion }
-  }
-
-  @Test
-  fun `edu plugin version is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = "" }
-    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = null }
-    checkInvalidPlugin(PropertyNotSpecified(EDU_PLUGIN_VERSION)) { version = "\n" }
-  }
-
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: EduPluginJsonBuilder.() -> Unit) {
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("course.zip")) {
       file(EduPluginManager.DESCRIPTOR_NAME) {

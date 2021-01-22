@@ -35,7 +35,6 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
-  validatePluginVersion(descriptor, problems)
   return problems
 }
 
@@ -57,8 +56,4 @@ private fun validateLanguage(descriptor: EduPluginDescriptor, problems: MutableL
   if (Locale.getISOLanguages().find { it == descriptor.language } == null) {
     problems.add(UnsupportedLanguage(descriptor.language))
   }
-}
-
-private fun validatePluginVersion(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
-  EduFullPluginVersion.createIfValid(descriptor.eduPluginVersion, problems)
 }

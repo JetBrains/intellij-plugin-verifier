@@ -55,9 +55,5 @@ data class EduPluginDescriptor(
   @JsonProperty(VERSION)
   val pluginVersion: String? = null,
   @JsonProperty(JSON_VERSION)
-  val jsonVersion: Int? = null,
-
-  // format example: 2021.1-2020.3-5266  -- plugin version-ide version-build number
-  @JsonProperty(EDU_PLUGIN_VERSION)
-  val eduPluginVersion: String? = null
+  val jsonVersion: Int? = null
 )
