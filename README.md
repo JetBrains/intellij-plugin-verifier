@@ -323,7 +323,7 @@ The most straightforward way of integrating the Plugin Verifier with your projec
 
 If you're not using Gradle within your project, there are predefined third-party actions available in the GitHub Actions Marketplace that automate the plugin verification process.
 
-Read more about possible integration options in the [Incompatible Changes in IntelliJ Platform and Plugins API](https://jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html) article.
+Read more about possible integration options in the [Incompatible Changes in IntelliJ Platform and Plugins API](https://plugins.jetbrains.com/docs/intellij/api-changes-list.html) article.
 
 ## Feedback
 
