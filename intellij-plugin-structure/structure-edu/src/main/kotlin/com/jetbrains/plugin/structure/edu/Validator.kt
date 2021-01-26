@@ -30,8 +30,8 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (version.isNullOrEmpty()) {
     problems.add(PropertyNotSpecified(VERSION))
   }
-  if (descriptor.jsonVersion == null) {
-    problems.add(PropertyNotSpecified(JSON_VERSION))
+  if (descriptor.descriptorVersion == null) {
+    problems.add(PropertyNotSpecified(DESCRIPTOR_VERSION))
   }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)

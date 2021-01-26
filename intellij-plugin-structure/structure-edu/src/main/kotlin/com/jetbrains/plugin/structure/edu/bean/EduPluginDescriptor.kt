@@ -54,6 +54,6 @@ data class EduPluginDescriptor(
   val vendor: EduVendor? = null,
   @JsonProperty(VERSION)
   val pluginVersion: String? = null,
-  @JsonProperty(JSON_VERSION)
-  val jsonVersion: Int? = null
+  @JsonProperty(DESCRIPTOR_VERSION)
+  val descriptorVersion: Int? = null
 )

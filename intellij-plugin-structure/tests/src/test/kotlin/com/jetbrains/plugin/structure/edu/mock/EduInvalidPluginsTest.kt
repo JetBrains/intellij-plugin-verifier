@@ -48,7 +48,7 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
 
   @Test
   fun `json version is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(JSON_VERSION)) { jsonVersion = null }
+    checkInvalidPlugin(PropertyNotSpecified(DESCRIPTOR_VERSION)) { descriptorVersion = null }
   }
 
   @Test

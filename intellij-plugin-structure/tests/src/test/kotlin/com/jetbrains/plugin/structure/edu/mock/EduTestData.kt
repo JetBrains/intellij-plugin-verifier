@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.edu.mock
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.edu.JSON_VERSION
+import com.jetbrains.plugin.structure.edu.DESCRIPTOR_VERSION
 import com.jetbrains.plugin.structure.edu.PROGRAMMING_LANGUAGE
 import com.jetbrains.plugin.structure.edu.VERSION
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
@@ -22,8 +22,8 @@ data class EduPluginJsonBuilder(
   @JsonProperty(PROGRAMMING_LANGUAGE)
   var programmingLanguage: String? = "kotlin",
   var items: List<EduItem>? = listOf(EduItem("lesson1"), EduItem("lesson2")),
-  @JsonProperty(JSON_VERSION)
-  var jsonVersion: Int? = 1,
+  @JsonProperty(DESCRIPTOR_VERSION)
+  var descriptorVersion: Int? = 1,
   @JsonProperty(VERSION)
   val pluginVersion: String? = "1.1"
 ) {
