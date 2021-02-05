@@ -24,6 +24,9 @@ class RepositoryDependencyFinder(
 
   override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result =
     retry("Resolve dependency $dependencyId") {
+      if (dependencyId.isBlank()) {
+        return@retry DependencyFinder.Result.NotFound("Invalid empty dependency ID")
+      }
       if (isModule) {
         resolveModuleDependency(dependencyId)
       } else {
