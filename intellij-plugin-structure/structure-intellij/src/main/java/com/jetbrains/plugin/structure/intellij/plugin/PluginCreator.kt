@@ -324,17 +324,34 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validatePluginBean(bean: PluginBean) {
-    validateAttributes(bean)
-    validateId(bean.id)
-    validateName(bean.name)
-    validateVersion(bean.pluginVersion)
-    validateDescription(bean.description)
-    validateChangeNotes(bean.changeNotes)
-    validateVendor(bean.vendor)
-    validateIdeaVersion(bean.ideaVersion)
-    validateProductDescriptor(bean.productDescriptor)
-
+  private fun validatePluginBean(bean: PluginBean, validateDescriptor: Boolean) {
+    if (validateDescriptor || bean.url != null) {
+      validateBeanUrl(bean.url)
+    }
+    if (validateDescriptor || bean.id != null) {
+      validateId(bean.id)
+    }
+    if (validateDescriptor || bean.name != null) {
+      validateName(bean.name)
+    }
+    if (validateDescriptor || bean.pluginVersion != null) {
+      validateVersion(bean.pluginVersion, validateDescriptor)
+    }
+    if (validateDescriptor || bean.description != null) {
+      validateDescription(bean.description, validateDescriptor)
+    }
+    if (validateDescriptor || bean.changeNotes != null) {
+      validateChangeNotes(bean.changeNotes)
+    }
+    if (validateDescriptor || bean.vendor != null) {
+      validateVendor(bean.vendor)
+    }
+    if (validateDescriptor || bean.ideaVersion != null) {
+      validateIdeaVersion(bean.ideaVersion)
+    }
+    if (validateDescriptor || bean.productDescriptor != null) {
+      validateProductDescriptor(bean.productDescriptor)
+    }
     if (bean.dependencies != null) {
       validateDependencies(bean.dependencies)
     }
@@ -404,13 +421,16 @@ internal class PluginCreator private constructor(
   }
 
 
-  private fun validateAttributes(bean: PluginBean) {
-    if (bean.url != null) {
-      validatePropertyLength("plugin url", bean.url, MAX_PROPERTY_LENGTH)
+  private fun validateBeanUrl(beanUrl: String?) {
+    if (beanUrl != null) {
+      validatePropertyLength("plugin url", beanUrl, MAX_PROPERTY_LENGTH)
     }
   }
 
-  private fun validateVersion(pluginVersion: String?) {
+  private fun validateVersion(pluginVersion: String?, validateDescriptor: Boolean) {
+    if (!validateDescriptor && pluginVersion == null) {
+      return
+    }
     if (pluginVersion.isNullOrEmpty()) {
       registerProblem(PropertyNotSpecified("version", descriptorPath))
     } else {
@@ -457,9 +477,7 @@ internal class PluginCreator private constructor(
   ) {
     val document = resolveXIncludesOfDocument(originalDocument, documentName, pathResolver, documentPath) ?: return
     val bean = readDocumentIntoXmlBean(document) ?: return
-    if (validateDescriptor) {
-      validatePluginBean(bean)
-    }
+    validatePluginBean(bean, validateDescriptor)
     if (hasErrors()) {
       return
     }
@@ -567,7 +585,10 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validateDescription(htmlDescription: String?) {
+  private fun validateDescription(htmlDescription: String?, validateDescriptor: Boolean) {
+    if (!validateDescriptor && htmlDescription == null) {
+      return
+    }
     if (htmlDescription.isNullOrEmpty()) {
       registerProblem(PropertyNotSpecified("description", descriptorPath))
       return

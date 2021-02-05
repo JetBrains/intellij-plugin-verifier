@@ -664,4 +664,36 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
   }
 
+  @Test
+  fun `optional dependency configuration file is invalid leads to warnings of the main plugin descriptor`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="a.xml">a</depends>"""
+          }
+        }
+
+        file(
+          "a.xml",
+          """
+                <idea-plugin>
+                  <depends></depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+    val allWarnings = createPluginSuccessfully(pluginFile).warnings
+    val optionalDependenciesWarnings = allWarnings.filterIsInstance<OptionalDependencyDescriptorResolutionProblem>()
+    assertEquals(allWarnings, optionalDependenciesWarnings)
+    assertEquals(
+      listOf(
+        OptionalDependencyDescriptorResolutionProblem("a", "a.xml", listOf(InvalidDependencyId("a.xml", "")))
+      ),
+      optionalDependenciesWarnings
+    )
+  }
+
+
 }
