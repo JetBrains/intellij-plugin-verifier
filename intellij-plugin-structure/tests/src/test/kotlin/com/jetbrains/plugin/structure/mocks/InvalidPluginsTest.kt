@@ -110,6 +110,16 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `plugin id is empty`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        id = "<id></id>"
+      },
+      listOf(PropertyNotSpecified("id"))
+    )
+  }
+
+  @Test
   fun `plugin id contains newline at end`() {
     val pluginId = "someId"
     val plugin = `test valid plugin xml`(

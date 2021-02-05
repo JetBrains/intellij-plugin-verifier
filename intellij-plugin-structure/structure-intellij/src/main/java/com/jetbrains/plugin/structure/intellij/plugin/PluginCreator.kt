@@ -536,11 +536,17 @@ internal class PluginCreator private constructor(
 
   private fun validateId(id: String?) {
     if (id != null) {
-      if ("com.your.company.unique.plugin.id" == id) {
-        registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID))
-      } else {
-        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
-        validateNewlines("id", id)
+      when {
+        id.isBlank() -> {
+          registerProblem(PropertyNotSpecified("id"))
+        }
+        "com.your.company.unique.plugin.id" == id -> {
+          registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID))
+        }
+        else -> {
+          validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
+          validateNewlines("id", id)
+        }
       }
     }
   }
