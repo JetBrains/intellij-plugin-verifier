@@ -555,8 +555,12 @@ internal class PluginCreator private constructor(
     when {
       name.isNullOrBlank() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
       "Plugin display name here" == name -> registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME))
-      "plugin".contains(name) -> registerProblem(PluginWordInPluginName(descriptorPath))
       else -> {
+        val templateWords = listOf("plugin", "JetBrains", "IntelliJ")
+        val templateWord = templateWords.find { name.contains(it, true) }
+        if (templateWord != null) {
+          registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
+        }
         validatePropertyLength("name", name, MAX_PROPERTY_LENGTH)
         validateNewlines("name", name)
       }

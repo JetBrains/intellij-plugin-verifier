@@ -131,6 +131,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `plugin name contains template words`() {
+    val templateWords = listOf("plugin", "JetBrains", "IntelliJ")
+    for (templateWord in templateWords) {
+      val warning = `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>$templateWord</name>"
+        }
+      ).warnings.single()
+      assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
+    }
+  }
+
+  @Test
   fun `plugin id is not specified but it is equal to name`() {
     val pluginXmlContent = perfectXmlBuilder.modify {
       id = ""

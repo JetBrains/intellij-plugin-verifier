@@ -46,13 +46,13 @@ class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
     get() = "Default value in plugin descriptor $descriptorPath: <change-notes> shouldn't have 'Add change notes here' or 'most HTML tags may be used'"
 }
 
-class PluginWordInPluginName(private val descriptorPath: String) : PluginProblem() {
+class TemplateWordInPluginName(private val descriptorPath: String, private val templateWord: String) : PluginProblem() {
 
   override val level
     get() = Level.WARNING
 
   override val message
-    get() = "Plugin name specified in $descriptorPath should not contain the word 'plugin'"
+    get() = "Plugin name specified in $descriptorPath should not contain the word '$templateWord'"
 
 }
 
