@@ -12,31 +12,37 @@ import java.util.concurrent.TimeUnit
 class DocumentedProblemsPagesFetcher {
 
   private companion object {
-    private val subPagePathRegex = Regex("(api_changes/api_changes_list_20..)\\.md")
+    private val subPagePathRegex = Regex("(api_changes_list_20..)\\.md")
     private const val MAIN_SOURCE_PAGE_URL = "https://jb.gg/ij-api-changes-raw"
     private const val MAIN_WEB_PAGE_URL = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
     private const val MAIN_EDIT_PAGE_URL = "https://jb.gg/ij-api-changes-edit"
   }
 
   fun fetchPages(): List<DocumentedProblemsPage> {
-    val mainPageBody = fetchPageBody(MAIN_SOURCE_PAGE_URL)
+    val (mainUrl, mainPageBody) = fetchPageBody(MAIN_SOURCE_PAGE_URL)
+    val (mainWebUrl, _) = runCatching { fetchPageBody(MAIN_WEB_PAGE_URL) }.getOrNull() ?: MAIN_WEB_PAGE_URL to ""
+    val (editUrl, _) = runCatching { fetchPageBody(MAIN_EDIT_PAGE_URL) }.getOrNull()
+      ?: fetchPageBody("https://github.com/JetBrains/intellij-sdk-docs/edit/main/reference_guide/api_changes_list.md")
     val subPagesPaths = subPagePathRegex.findAll(mainPageBody).map { it.groups[1]!!.value }.toList()
     return subPagesPaths.map { path ->
-      val sourcePageUrl = MAIN_SOURCE_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
-      val webPageUrl = MAIN_WEB_PAGE_URL.substringBeforeLast("/") + "/" + path + ".html"
-      val editPageUrl = MAIN_EDIT_PAGE_URL.substringBeforeLast("/") + "/" + path + ".md"
-      val pageBody = fetchPageBody(sourcePageUrl)
+      val sourcePageUrl = mainUrl.substringBeforeLast("/") + "/" + path + ".md"
+      val webPageUrl = mainWebUrl.substringBeforeLast("/") + "/" + path + ".html"
+      val editPageUrl = editUrl.substringBeforeLast("/") + "/" + path + ".md"
+      val (_, pageBody) = fetchPageBody(sourcePageUrl)
       DocumentedProblemsPage(URL(webPageUrl), URL(sourcePageUrl), URL(editPageUrl), pageBody)
     }
   }
 
-  private fun fetchPageBody(pageUrl: String) = try {
-    Jsoup
+  /**
+   * Returns resolved URL and the content of the page.
+   */
+  private fun fetchPageBody(pageUrl: String): Pair<String, String> = try {
+    val response = Jsoup
       .connect(pageUrl)
       .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
       .method(Connection.Method.GET)
       .execute()
-      .body()
+    response.url().toExternalForm() to response.body()
   } catch (e: Exception) {
     throw RuntimeException("Unable to fetch body of page $pageUrl", e)
   }

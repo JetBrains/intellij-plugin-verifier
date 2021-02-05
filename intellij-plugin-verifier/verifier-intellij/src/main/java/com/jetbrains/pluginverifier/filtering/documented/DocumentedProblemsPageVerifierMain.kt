@@ -15,6 +15,7 @@ object DocumentedProblemsPageVerifierMain {
     println("WARN: CLI arguments are ignored. You can avoid passing them.")
 
     val documentedPages = DocumentedProblemsPagesFetcher().fetchPages()
+    check(documentedPages.isNotEmpty()) { "No pages" }
     val documentedProblemsParser = DocumentedProblemsParser(false)
     for (page in documentedPages) {
       val pageDescriptor = buildString {
