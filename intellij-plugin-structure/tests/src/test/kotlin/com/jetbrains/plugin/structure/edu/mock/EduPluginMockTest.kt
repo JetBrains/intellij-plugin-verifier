@@ -109,6 +109,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("JetBrains s.r.o.", plugin.vendor)
     assertEquals("en", plugin.language)
     assertEquals("Python", plugin.programmingLanguage)
+    assertEquals("unittest", plugin.environment)
     assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
     assertEquals(1, plugin.eduStat!!.lessons.size)
     assertEquals("lesson1", plugin.eduStat!!.lessons[0])
