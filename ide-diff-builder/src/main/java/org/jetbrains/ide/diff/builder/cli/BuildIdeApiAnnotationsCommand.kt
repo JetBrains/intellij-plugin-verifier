@@ -177,7 +177,7 @@ class BuildIdeApiAnnotationsCommand : Command {
 
       apiSignatureToEvents[signature] = sanitizedEvents.toSet()
     }
-    return ApiReport(ideVersion, apiSignatureToEvents)
+    return ApiReport(ideVersion, apiSignatureToEvents, metadata.theFirstIdeVersion, null)
   }
 
   private fun createIdeFilesBank(idesDir: Path): IdeFilesBank {

@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.ide.IdeManager
 import org.jetbrains.ide.diff.builder.filter.PackagesClassFilter
 import org.jetbrains.ide.diff.builder.ide.IdeDiffBuilder
 import org.junit.Assert
-import java.lang.IllegalArgumentException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -38,7 +37,11 @@ abstract class BaseOldNewIdesTest {
 
     val jdkHome = getJdkPathForTests()
 
-    return IdeDiffBuilder(PackagesClassFilter(emptyList()), jdkHome).buildIdeDiff(oldIde, newIde)
+    return IdeDiffBuilder(PackagesClassFilter(emptyList()), jdkHome).buildIdeDiff(
+      oldIde = oldIde,
+      newIde = newIde,
+      shouldBuildOldIdeDeprecatedApis = true
+    )
   }
 
   private fun getJdkPathForTests(): Path {

@@ -130,6 +130,40 @@ class IdeDiffBuilderTest : BaseOldNewIdesTest() {
         + modifiedFields).toSet(),
       removedSignatures
     )
+
+    val markedDeprecatedIn = MarkedDeprecatedIn(ideVersion, false, null)
+    val markedDeprecatedSignatures = apiReport.asSequence()
+      .filter { it.second == markedDeprecatedIn }.map { it.first }
+      .map { it.externalPresentation }.toSet()
+    assertSetsEqual(
+      setOf(
+        "deprecated.BecameDeprecatedMembers x",
+        "deprecated.BecameDeprecatedMembers void foo()",
+        "deprecated.BecameDeprecatedClass"
+      ),
+      markedDeprecatedSignatures
+    )
+
+    val unmarkedDeprecatedIn = UnmarkedDeprecatedIn(ideVersion)
+    val unmarkedDeprecatedSignatures = apiReport.asSequence()
+      .filter { it.second == unmarkedDeprecatedIn }.map { it.first }
+      .map { it.externalPresentation }.toSet()
+    assertSetsEqual(
+      setOf(
+        "deprecated.WereDeprecatedMembers x",
+        "deprecated.WasDeprecatedClass",
+        "deprecated.WereDeprecatedMembers void foo()"
+      ), unmarkedDeprecatedSignatures
+    )
+
+    assertSetsEqual(
+      setOf(
+        "deprecated.WereDeprecatedMembers void foo()",
+        "deprecated.WasDeprecatedClass",
+        "deprecated.WereDeprecatedMembers x"
+      ),
+      apiReport.theFirstIdeDeprecatedApis.orEmpty().map { it.externalPresentation }.toSet()
+    )
   }
 
 }

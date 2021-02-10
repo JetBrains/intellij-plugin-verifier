@@ -59,7 +59,11 @@ class IdeDiffCommand : Command {
     LOG.info("JDK path will be used: $jdkPath")
     LOG.info(classFilter.toString())
 
-    val apiReport = IdeDiffBuilder(classFilter, jdkPath).buildIdeDiff(oldIdePath, newIdePath)
+    val apiReport = IdeDiffBuilder(classFilter, jdkPath).buildIdeDiff(
+      oldIdePath = oldIdePath,
+      newIdePath = newIdePath,
+      shouldBuildOldIdeDeprecatedApis = true
+    )
     ExternalAnnotationsApiReportWriter().saveReport(apiReport, resultRoot)
 
     LOG.info("API diff between ${newIdePath.simpleName} and ${oldIdePath.simpleName} is saved to ${resultRoot.simpleName}")

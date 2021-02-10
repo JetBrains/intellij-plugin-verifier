@@ -62,6 +62,7 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
 
   private fun getReportWithOnlyDeprecationInfo(metadata: ApiReport, classFilter: ClassFilter): ApiReport {
     val apiSignatureToEvents = hashMapOf<ApiSignature, Set<ApiEvent>>()
+    val seenDeprecatedSignatures = hashSetOf<ApiSignature>()
     for ((signature, events) in metadata.apiSignatureToEvents) {
       val className = when (signature) {
         is ClassSignature -> signature.className
@@ -75,6 +76,11 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
       val topLevelClassEvents = apiSignatureToEvents[signature.topLevelClassSignature].orEmpty()
       val allRelevantEvents = topLevelClassEvents + events
 
+      val deprecatedIn = events.filterIsInstance<MarkedDeprecatedIn>().maxBy { it.ideVersion }
+      if (deprecatedIn != null) {
+        seenDeprecatedSignatures += signature
+      }
+
       val removedIn = allRelevantEvents.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
       val introducedIn = allRelevantEvents.filterIsInstance<IntroducedIn>().maxBy { it.ideVersion }
       if (removedIn != null && (introducedIn == null || introducedIn.ideVersion <= removedIn.ideVersion)) {
@@ -82,7 +88,6 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
         continue
       }
 
-      val deprecatedIn = events.filterIsInstance<MarkedDeprecatedIn>().maxBy { it.ideVersion }
 
       /*
         Ignore APIs that were added in X and marked deprecated in X.
@@ -92,7 +97,21 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
         apiSignatureToEvents[signature] = setOf(deprecatedIn)
       }
     }
-    return ApiReport(metadata.ideBuildNumber, apiSignatureToEvents)
+    val theFirstIdeVersion = metadata.theFirstIdeVersion
+    if (theFirstIdeVersion != null) {
+      val theFirstIdeDeprecatedApis = metadata.theFirstIdeDeprecatedApis.orEmpty()
+      for (deprecatedApi in theFirstIdeDeprecatedApis) {
+        if (deprecatedApi !in seenDeprecatedSignatures) {
+          apiSignatureToEvents[deprecatedApi] = setOf(MarkedDeprecatedIn(theFirstIdeVersion, false, null))
+        }
+      }
+    }
+    return ApiReport(
+      ideBuildNumber = metadata.ideBuildNumber,
+      apiSignatureToEvents = apiSignatureToEvents,
+      theFirstIdeVersion = theFirstIdeVersion,
+      theFirstIdeDeprecatedApis = metadata.theFirstIdeDeprecatedApis
+    )
   }
 
   class CliOptions : IdeDiffCommand.CliOptions()

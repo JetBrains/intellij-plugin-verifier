@@ -17,7 +17,12 @@ data class ApiReport(
   val apiSignatureToEvents: Map<
     @Serializable(with = ApiSignatureSerializer::class) ApiSignature,
     Set<@Serializable(with = ApiEventSerializer::class) ApiEvent>
-    >
+    >,
+  val theFirstIdeVersion: @Serializable(with = IdeVersionSerializer::class) IdeVersion? = null,
+  /**
+   * Deprecated API signatures available in the very first known IDE [theFirstIdeVersion].
+   */
+  val theFirstIdeDeprecatedApis: Set<@Serializable(with = ApiSignatureSerializer::class) ApiSignature>? = null
 ) {
   /**
    * Returns this report as a sequence of signatures and corresponding events.

@@ -80,13 +80,18 @@ class BuildIdeApiMetadata {
     var metadata: ApiReport = JsonApiReportReader().readApiReport(ideDiffs.first().reportPath)
     for (ideDiff in ideDiffs.drop(1)) {
       val apiReport = JsonApiReportReader().readApiReport(ideDiff.reportPath)
-      metadata = mergeApiReports(ideDiff.newIde.version, listOf(metadata, apiReport))
+      metadata = mergeApiReports(ideDiff.newIde.version, metadata, apiReport)
     }
     return metadata
   }
 
-  private fun mergeApiReports(resultIdeVersion: IdeVersion, reports: List<ApiReport>): ApiReport {
+  private fun mergeApiReports(
+    resultIdeVersion: IdeVersion,
+    beforeReport: ApiReport,
+    afterReport: ApiReport
+  ): ApiReport {
     val signatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
+    val reports = listOf(beforeReport, afterReport)
     for (report in reports) {
       for ((signature, _) in report.asSequence()) {
         if (!signatureToEvents.containsKey(signature)) {
@@ -94,7 +99,7 @@ class BuildIdeApiMetadata {
         }
       }
     }
-    return ApiReport(resultIdeVersion, signatureToEvents)
+    return ApiReport(resultIdeVersion, signatureToEvents, beforeReport.theFirstIdeVersion, beforeReport.theFirstIdeDeprecatedApis)
   }
 
   private fun buildAdjacentIdeDiffs(
@@ -108,7 +113,14 @@ class BuildIdeApiMetadata {
       val currentIde = idesToProcess[index]
       ExecutorWithProgress.Task(
         "IDE diff between ${previousIde.version} and ${currentIde.version}",
-        BuildIdeDiffTask(diffsPath, ideFilesBank, previousIde, currentIde, ideDiffBuilder)
+        BuildIdeDiffTask(
+          diffsPath = diffsPath,
+          ideFilesBank = ideFilesBank,
+          previousIde = previousIde,
+          currentIde = currentIde,
+          ideDiffBuilder = ideDiffBuilder,
+          shouldBuildOldIdeDeprecatedApis = index == 1
+        )
       )
     }
     val executor = ExecutorWithProgress<IdeDiff>("ide-diff-builder", 8, false) { progressData ->
@@ -131,7 +143,8 @@ class BuildIdeApiMetadata {
     private val ideFilesBank: IdeFilesBank,
     private val previousIde: AvailableIde,
     private val currentIde: AvailableIde,
-    private val ideDiffBuilder: IdeDiffBuilder
+    private val ideDiffBuilder: IdeDiffBuilder,
+    private val shouldBuildOldIdeDeprecatedApis: Boolean
   ) : Callable<IdeDiff> {
     override fun call(): IdeDiff {
       LOG.info("Building IDE diff between $previousIde and $currentIde")
@@ -164,7 +177,7 @@ class BuildIdeApiMetadata {
         if (oldException != null) throw oldException
         if (newException != null) throw newException
         return ideDiffExecutor.submit(Callable {
-          ideDiffBuilder.buildIdeDiff(oldIdeFile!!.file, newIdeFile!!.file)
+          ideDiffBuilder.buildIdeDiff(oldIdeFile!!.file, newIdeFile!!.file, shouldBuildOldIdeDeprecatedApis)
         }).get()
       } finally {
         oldIdeFile.closeLogged()

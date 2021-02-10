@@ -22,16 +22,19 @@ import java.nio.file.Path
 /**
  * Builder of [ApiReport] by APIs difference of two IDEs.
  */
-class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: Path) {
+class IdeDiffBuilder(
+  private val classFilter: ClassFilter,
+  private val jdkPath: Path
+) {
 
-  fun buildIdeDiff(oldIdePath: Path, newIdePath: Path): ApiReport {
+  fun buildIdeDiff(oldIdePath: Path, newIdePath: Path, shouldBuildOldIdeDeprecatedApis: Boolean): ApiReport {
     val oldIde = IdeManager.createManager().createIde(oldIdePath)
     val newIde = IdeManager.createManager().createIde(newIdePath)
-    return buildIdeDiff(oldIde, newIde)
+    return buildIdeDiff(oldIde, newIde, shouldBuildOldIdeDeprecatedApis)
   }
 
 
-  fun buildIdeDiff(oldIde: Ide, newIde: Ide): ApiReport =
+  fun buildIdeDiff(oldIde: Ide, newIde: Ide, shouldBuildOldIdeDeprecatedApis: Boolean): ApiReport =
     JdkDescriptorCreator.createJdkDescriptor(jdkPath, Resolver.ReadMode.SIGNATURES).use { jdkDescriptor ->
       buildIdeResources(oldIde, Resolver.ReadMode.SIGNATURES).use { oldResources ->
         buildIdeResources(newIde, Resolver.ReadMode.SIGNATURES).use { newResources ->
@@ -47,19 +50,24 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
             listOf(removedProcessor, introducedProcessor, experimentalProcessor, deprecatedProcessor)
           )
 
-          diffBuilder.buildDiff(
-            completeOldResolver,
-            completeNewResolver,
-            oldResources.allResolver.allClasses,
-            newResources.allResolver.allClasses
-          )
+          val oldClasses = oldResources.allResolver.allClasses
+          val newClasses = newResources.allResolver.allClasses
+          diffBuilder.buildDiff(completeOldResolver, completeNewResolver, oldClasses, newClasses)
+
+          val deprecatedApis = if (shouldBuildOldIdeDeprecatedApis) {
+            IdeDeprecatedApiBuilder(classFilter).buildDeprecatedApis(completeOldResolver, oldClasses)
+          } else {
+            null
+          }
 
           buildApiReport(
+            oldIde.version,
             newIde.version,
             introducedProcessor,
             removedProcessor,
             experimentalProcessor,
-            deprecatedProcessor
+            deprecatedProcessor,
+            deprecatedApis
           )
         }
       }
@@ -67,30 +75,32 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
 
   @Suppress("DuplicatedCode")
   private fun buildApiReport(
-    ideVersion: IdeVersion,
+    oldIdeVersion: IdeVersion,
+    newIdeVersion: IdeVersion,
     introducedProcessor: IntroducedProcessor,
     removedProcessor: RemovedProcessor,
     experimentalProcessor: ExperimentalProcessor,
-    deprecatedProcessor: DeprecatedProcessor
+    deprecatedProcessor: DeprecatedProcessor,
+    deprecatedApis: Set<ApiSignature>?
   ): ApiReport {
     val apiSignatureToEvents = hashMapOf<ApiSignature, MutableSet<ApiEvent>>()
 
-    val removedIn = RemovedIn(ideVersion)
+    val removedIn = RemovedIn(newIdeVersion)
     for (signature in getNonNestedApiSignatures(removedProcessor.result)) {
       apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += removedIn
     }
 
-    val introducedIn = IntroducedIn(ideVersion)
+    val introducedIn = IntroducedIn(newIdeVersion)
     for (signature in getNonNestedApiSignatures(introducedProcessor.result)) {
       apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += introducedIn
     }
 
-    val markedExperimentalIn = MarkedExperimentalIn(ideVersion)
+    val markedExperimentalIn = MarkedExperimentalIn(newIdeVersion)
     for (signature in getNonNestedApiSignatures(experimentalProcessor.markedExperimental)) {
       apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += markedExperimentalIn
     }
 
-    val unmarkedExperimentalIn = UnmarkedExperimentalIn(ideVersion)
+    val unmarkedExperimentalIn = UnmarkedExperimentalIn(newIdeVersion)
     for (signature in getNonNestedApiSignatures(experimentalProcessor.unmarkedExperimental)) {
       apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += unmarkedExperimentalIn
     }
@@ -99,16 +109,16 @@ class IdeDiffBuilder(private val classFilter: ClassFilter, private val jdkPath: 
     for ((member, forRemoval, inVersion) in deprecatedProcessor.markedDeprecated) {
       val signature = member.toSignature()
       if (signature in nonNestedDeprecated) {
-        apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += MarkedDeprecatedIn(ideVersion, forRemoval, inVersion)
+        apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += MarkedDeprecatedIn(newIdeVersion, forRemoval, inVersion)
       }
     }
 
-    val unmarkedDeprecated = UnmarkedDeprecatedIn(ideVersion)
+    val unmarkedDeprecated = UnmarkedDeprecatedIn(newIdeVersion)
     for (signature in getNonNestedApiSignatures(deprecatedProcessor.unmarkedDeprecated)) {
       apiSignatureToEvents.getOrPut(signature) { hashSetOf() } += unmarkedDeprecated
     }
 
-    return ApiReport(ideVersion, apiSignatureToEvents)
+    return ApiReport(newIdeVersion, apiSignatureToEvents, oldIdeVersion, deprecatedApis)
   }
 
   private fun getNonNestedApiSignatures(allMembers: List<ClassFileMember>): Set<ApiSignature> {

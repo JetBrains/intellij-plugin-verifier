@@ -35,6 +35,8 @@ class ApiReportSerializationTest : BaseOldNewIdesTest() {
       val restoredEvents = restoredReport[originalSignature]
       assertSetsEqual(events, restoredEvents.toSet())
     }
+
+    assertSetsEqual(originalReport.theFirstIdeDeprecatedApis!!, restoredReport.theFirstIdeDeprecatedApis!!)
   }
 
 }
