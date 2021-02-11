@@ -21,6 +21,7 @@ data class EduPlugin(
   val descriptorVersion: Int? = null,
   val language: String? = null,
   val programmingLanguage: String? = null,
+  val environment: String? = null,
   val eduStat: EduStat? = null
 ) : Plugin {
 
