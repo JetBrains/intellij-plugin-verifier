@@ -107,16 +107,15 @@ class PluginVerifier(
         )
       ).verify(classesToCheck, context) {}
 
-      val compatibilityProblems = context.compatibilityProblems
+      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
+
       analyzeMissingClassesCausedByMissingOptionalDependencies(
-        compatibilityProblems,
+        reportProblems,
         dependenciesGraph,
         context.idePlugin,
         context.pluginResolver
       )
-      groupMissingClassesToMissingPackages(compatibilityProblems, context.classResolver)
-
-      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(compatibilityProblems, context)
+      groupMissingClassesToMissingPackages(reportProblems, context.classResolver)
 
       return with(context) {
         PluginVerificationResult.Verified(
@@ -141,7 +140,7 @@ class PluginVerifier(
   private fun partitionReportAndIgnoredProblems(
     allProblems: Set<CompatibilityProblem>,
     verificationContext: VerificationContext
-  ): Pair<Set<CompatibilityProblem>, Map<CompatibilityProblem, String>> {
+  ): Pair<MutableSet<CompatibilityProblem>, Map<CompatibilityProblem, String>> {
 
     val reportProblems = hashSetOf<CompatibilityProblem>()
     val ignoredProblems = hashMapOf<CompatibilityProblem, String>()
