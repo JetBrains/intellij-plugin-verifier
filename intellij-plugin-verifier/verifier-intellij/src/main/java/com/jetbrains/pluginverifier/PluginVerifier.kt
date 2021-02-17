@@ -9,6 +9,9 @@ import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
+import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector
@@ -16,7 +19,9 @@ import com.jetbrains.pluginverifier.filtering.MainClassesSelector
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodOverridingProcessor
@@ -102,9 +107,16 @@ class PluginVerifier(
         )
       ).verify(classesToCheck, context) {}
 
-      context.postProcessResults()
+      val compatibilityProblems = context.compatibilityProblems
+      analyzeMissingClassesCausedByMissingOptionalDependencies(
+        compatibilityProblems,
+        dependenciesGraph,
+        context.idePlugin,
+        context.pluginResolver
+      )
+      groupMissingClassesToMissingPackages(compatibilityProblems, context.classResolver)
 
-      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
+      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(compatibilityProblems, context)
 
       return with(context) {
         PluginVerificationResult.Verified(
@@ -148,6 +160,114 @@ class PluginVerifier(
     }
 
     return reportProblems to ignoredProblems
+  }
+
+  /**
+   * Returns the top-most package of the given [className] that is not available in this [Resolver].
+   *
+   * If all packages of the specified class exist, `null` is returned.
+   * If the class has default (empty) package, and that default package
+   * is not available, then "" is returned.
+   */
+  private fun Resolver.getTopMostMissingPackage(className: String): String? {
+    if ('/' !in className) {
+      return if (containsPackage("")) {
+        null
+      } else {
+        ""
+      }
+    }
+    val packageParts = className.substringBeforeLast('/', "").split('/')
+    var superPackage = ""
+    for (packagePart in packageParts) {
+      if (superPackage.isNotEmpty()) {
+        superPackage += '/'
+      }
+      superPackage += packagePart
+      if (!containsPackage(superPackage)) {
+        return superPackage
+      }
+    }
+    return null
+  }
+
+  private fun analyzeMissingClassesCausedByMissingOptionalDependencies(
+    compatibilityProblems: MutableSet<CompatibilityProblem>,
+    dependenciesGraph: DependenciesGraph,
+    idePlugin: IdePlugin,
+    pluginResolver: Resolver
+  ) {
+    val classNotFoundProblems = compatibilityProblems.filterIsInstance<ClassNotFoundProblem>()
+    if (classNotFoundProblems.isEmpty()) {
+      return
+    }
+
+    if (dependenciesGraph.getDirectMissingDependencies().none { it.dependency.isOptional }) {
+      return
+    }
+
+    val reachabilityGraph = buildClassReachabilityGraph(idePlugin, pluginResolver, dependenciesGraph)
+
+    val ignoredProblems = arrayListOf<ClassNotFoundProblem>()
+    for (classNotFoundProblem in classNotFoundProblems) {
+      val usageClassName = classNotFoundProblem.usage.containingClass.className
+      if (reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
+        && !reachabilityGraph.isClassReachableFromMark(usageClassName, ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN)
+      ) {
+        ignoredProblems += classNotFoundProblem
+      }
+    }
+
+    compatibilityProblems.removeAll(ignoredProblems)
+  }
+
+  /**
+   * Post-processes the verification result and groups many [ClassNotFoundProblem]s into [PackageNotFoundProblem]s,
+   * to make the report easier to understand.
+   */
+  private fun groupMissingClassesToMissingPackages(compatibilityProblems: MutableSet<CompatibilityProblem>, classResolver: Resolver) {
+    val classNotFoundProblems = compatibilityProblems.filterIsInstance<ClassNotFoundProblem>()
+
+    /**
+     * All [ClassNotFoundProblem]s will be split into 2 parts:
+     * 1) Independent [ClassNotFoundProblem]s for classes
+     * that originate from found packages.
+     * These classes seem to be removed, causing API breakages.
+     *
+     * 2) Grouped [PackageNotFoundProblem]s for several [ClassNotFoundProblem]s
+     * for packages that are not found.
+     * These missing packages might have been removed,
+     * or the Verifier is not properly configured to find them.
+     */
+    val noClassProblems = hashSetOf<ClassNotFoundProblem>()
+    val packageToMissingProblems = hashMapOf<String, MutableSet<ClassNotFoundProblem>>()
+
+    for (classNotFoundProblem in classNotFoundProblems) {
+      val className = classNotFoundProblem.unresolved.className
+      val missingPackage = classResolver.getTopMostMissingPackage(className)
+      if (missingPackage != null) {
+        packageToMissingProblems
+          .getOrPut(missingPackage) { hashSetOf() }
+          .add(classNotFoundProblem)
+      } else {
+        noClassProblems.add(classNotFoundProblem)
+      }
+    }
+
+    val packageNotFoundProblems = packageToMissingProblems.map { (packageName, missingClasses) ->
+      PackageNotFoundProblem(packageName, missingClasses)
+    }
+
+    //Retain all individual [ClassNotFoundProblem]s.
+    for (problem in classNotFoundProblems) {
+      if (problem !in noClassProblems) {
+        compatibilityProblems -= problem
+      }
+    }
+
+    for (packageNotFoundProblem in packageNotFoundProblems) {
+      compatibilityProblems += packageNotFoundProblem
+    }
   }
 
   private fun PluginVerificationContext.findDependenciesCycles(dependenciesGraph: DependenciesGraph) {
