@@ -79,11 +79,14 @@ sealed class PluginVerificationResult(
 
           val allDirectMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
           if (allDirectMissingDependencies.isNotEmpty()) {
-            append(", some of which may be caused by missing ")
+            append(", some of which may be caused by absence of ")
             if (allDirectMissingDependencies.all { it.dependency.isOptional }) {
               append("optional ")
             }
             append("dependency".pluralize(allDirectMissingDependencies.size))
+            if (verificationTarget is PluginVerificationTarget.IDE) {
+              append(" in the target IDE " + verificationTarget.ideVersion.asString())
+            }
           }
         }
         if (compatibilityWarnings.isNotEmpty()) {
