@@ -165,7 +165,11 @@ data class DocPackageRemoved(val packageName: String) : DocumentedProblem {
 
   override fun isDocumenting(problem: CompatibilityProblem, context: VerificationContext) =
     when (problem) {
-      is PackageNotFoundProblem -> problem.packageName == packageName || problem.packageName.belongsToPackage()
+      is PackageNotFoundProblem -> {
+        problem.packageName == packageName
+          || problem.packageName.belongsToPackage()
+          || problem.classNotFoundProblems.all { it.unresolved.className.belongsToPackage() }
+      }
       is ClassNotFoundProblem -> problem.unresolved.className.belongsToPackage()
       is MethodNotFoundProblem -> problem.unresolvedMethod.doesMethodDependOnClass { it.belongsToPackage() }
       is FieldNotFoundProblem -> problem.unresolvedField.doesFieldDependOnClass { it.belongsToPackage() }

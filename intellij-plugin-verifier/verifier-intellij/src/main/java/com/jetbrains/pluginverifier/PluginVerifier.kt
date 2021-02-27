@@ -107,15 +107,14 @@ class PluginVerifier(
         )
       ).verify(classesToCheck, context) {}
 
-      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
-
       analyzeMissingClassesCausedByMissingOptionalDependencies(
-        reportProblems,
+        context.compatibilityProblems,
         dependenciesGraph,
         context.idePlugin,
         context.pluginResolver
       )
-      groupMissingClassesToMissingPackages(reportProblems, context.classResolver)
+      groupMissingClassesToMissingPackages(context.compatibilityProblems, context.classResolver)
+      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
 
       return with(context) {
         PluginVerificationResult.Verified(
