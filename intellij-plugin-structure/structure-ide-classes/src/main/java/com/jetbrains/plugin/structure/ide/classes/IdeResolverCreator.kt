@@ -31,16 +31,17 @@ object IdeResolverCreator {
   }
 
   private fun getJarsResolver(
-    directory: Path,
+    libDirectory: Path,
     readMode: Resolver.ReadMode,
     parentOrigin: FileOrigin
   ): Resolver {
-    if (!directory.isDirectory) {
+    if (!libDirectory.isDirectory) {
       return EmptyResolver
     }
 
-    val jars = directory.listFiles().filter { file -> file.isJar() }
-    return CompositeResolver.create(buildJarOrZipFileResolvers(jars, readMode, parentOrigin))
+    val jars = libDirectory.listFiles().filter { file -> file.isJar() }
+    val antJars = libDirectory.resolve("ant").resolve("lib").listFiles().filter { it.isJar() }
+    return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars, readMode, parentOrigin))
   }
 
   //TODO: Resolver created this way contains all libraries declared in the project,
