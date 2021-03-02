@@ -13,7 +13,8 @@ data class FleetPlugin(
     override val pluginName: String? = null,
     override val pluginVersion: String? = null,
     override val description: String? = null,
-    val entryPoint: List<FleetDependency>? = null
+    val entryPoint: String? = null,
+    val requires: List<FleetDependency>? = null
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendor: String? = null

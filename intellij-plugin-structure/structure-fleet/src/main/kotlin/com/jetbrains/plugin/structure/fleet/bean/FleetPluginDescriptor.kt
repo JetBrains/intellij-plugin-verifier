@@ -12,7 +12,8 @@ data class FleetPluginDescriptor(
   val name: String? = null,
   val version: String? = null,
   val description: String? = null,
-  val entryPoint: List<FleetDependency>? = null
+  val entryPoint: String? = null,
+  val requires: List<FleetDependency>? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
