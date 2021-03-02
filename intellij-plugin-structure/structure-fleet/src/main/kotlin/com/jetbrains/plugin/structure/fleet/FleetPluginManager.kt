@@ -79,6 +79,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           pluginName = name,
           pluginVersion = version,
           description = description,
+          requires = requires,
           entryPoint = entryPoint
         )
       }
