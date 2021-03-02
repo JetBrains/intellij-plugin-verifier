@@ -12,6 +12,7 @@ import java.nio.file.Paths
 enum class Settings(private val key: String, private val defaultValue: () -> String) {
   EXTRACT_DIRECTORY("intellij.structure.temp.dir", { Paths.get(FileUtils.getTempDirectory().absolutePath).resolve("extracted-plugins").toString() }),
   INTELLIJ_PLUGIN_SIZE_LIMIT("intellij.structure.intellij.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
+  FLEET_PLUGIN_SIZE_LIMIT("intellij.structure.fleet.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   TEAM_CITY_PLUGIN_SIZE_LIMIT("intellij.structure.team.city.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   RE_SHARPER_PLUGIN_SIZE_LIMIT("intellij.structure.re.sharper.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   HUB_PLUGIN_SIZE_LIMIT("intellij.structure.hub.plugin.size.limit", { (FileUtils.ONE_MB * 30).toString() }),
