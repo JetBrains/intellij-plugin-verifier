@@ -23,5 +23,8 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.entryPoint.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("entryPoint"))
   }
+  if (descriptor.description.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("description"))
+  }
   return problems
 }
