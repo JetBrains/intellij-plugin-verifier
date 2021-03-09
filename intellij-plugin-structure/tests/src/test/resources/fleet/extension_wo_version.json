@@ -1,0 +1,12 @@
+{
+  "id": "fleet.language.css",
+  "version": "1.0.0-SNAPSHOT",
+  "name": "CSS",
+  "description": "CSS language support",
+  "entryPoint": "fleet.language.css.Css",
+  "requires": [
+    {
+      "id": "fleet.language.xml"
+    }
+  ]
+}

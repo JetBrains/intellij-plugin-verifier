@@ -17,7 +17,7 @@ data class FleetPluginDescriptor(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class FleetDependency(val id: String, val version: FleetDependencyVersion)
+data class FleetDependency(val id: String, val version: FleetDependencyVersion? = null)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class FleetDependencyVersion(val min: String, val max: String)

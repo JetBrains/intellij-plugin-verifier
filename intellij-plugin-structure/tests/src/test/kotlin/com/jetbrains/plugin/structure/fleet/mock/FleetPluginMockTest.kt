@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
@@ -22,14 +23,28 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
         getMockPluginJsonContent("extension")
       }
     }
+    testMockPluginStructureAndConfiguration(pluginFile).also {
+      val plugin = it.plugin
+      assertEquals("2.0.0-beta+exp.sha.5114f85", plugin.requires?.first()?.version?.max)
+      assertEquals("1.0.0", plugin.requires?.first()?.version?.min)
+    }
+  }
+  @Test
+  fun `parse fields fleet plugin without version test`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+      file(FleetPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("extension_wo_version")
+      }
+    }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
 
-  private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
+  private fun testMockPluginStructureAndConfiguration(pluginFile: Path): PluginCreationSuccess<FleetPlugin> {
     val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
     testMockConfigs(pluginCreationSuccess.plugin)
     testMockWarnings(pluginCreationSuccess.warnings)
+    return pluginCreationSuccess
   }
 
   private fun testMockWarnings(problems: List<PluginProblem>) {
@@ -44,7 +59,5 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertTrue(plugin.requires?.isNotEmpty() == true)
     assertEquals("fleet.language.xml", plugin.requires?.first()?.id)
-    assertEquals("2.0.0-beta+exp.sha.5114f85", plugin.requires?.first()?.version?.max)
-    assertEquals("1.0.0", plugin.requires?.first()?.version?.min)
   }
 }
