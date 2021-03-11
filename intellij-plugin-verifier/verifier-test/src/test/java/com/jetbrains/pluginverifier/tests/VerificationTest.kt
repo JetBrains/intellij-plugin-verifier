@@ -38,7 +38,7 @@ class VerificationTest {
     val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
-    val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-145.500")
+    val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
     Assert.assertThat(missingDependencies.toSet(), hasItem(expectedDep))
   }
 

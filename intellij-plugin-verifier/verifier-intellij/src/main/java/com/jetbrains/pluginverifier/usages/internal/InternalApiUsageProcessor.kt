@@ -4,16 +4,18 @@
 
 package com.jetbrains.pluginverifier.usages.internal
 
+import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
 
-class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsageRegistrar) : ApiUsageProcessor {
+class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVerificationContext) : ApiUsageProcessor {
 
   private fun isInternal(
     resolvedMember: ClassFileMember,
@@ -31,9 +33,7 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
   ) {
     val usageLocation = referrer.location
     if (isInternal(resolvedClass, context, usageLocation)) {
-      internalApiRegistrar.registerInternalApiUsage(
-        InternalClassUsage(classReference, resolvedClass.location, usageLocation)
-      )
+      registerInternalApiUsage(InternalClassUsage(classReference, resolvedClass.location, usageLocation))
     }
   }
 
@@ -46,9 +46,7 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
   ) {
     val usageLocation = callerMethod.location
     if (isInternal(resolvedMethod, context, usageLocation)) {
-      internalApiRegistrar.registerInternalApiUsage(
-        InternalMethodUsage(methodReference, resolvedMethod.location, usageLocation)
-      )
+      registerInternalApiUsage(InternalMethodUsage(methodReference, resolvedMethod.location, usageLocation))
     }
   }
 
@@ -60,9 +58,19 @@ class InternalApiUsageProcessor(private val internalApiRegistrar: InternalApiUsa
   ) {
     val usageLocation = callerMethod.location
     if (isInternal(resolvedField, context, usageLocation)) {
-      internalApiRegistrar.registerInternalApiUsage(
-        InternalFieldUsage(fieldReference, resolvedField.location, usageLocation)
-      )
+      registerInternalApiUsage(InternalFieldUsage(fieldReference, resolvedField.location, usageLocation))
+    }
+  }
+
+  private fun registerInternalApiUsage(usage: InternalApiUsage) {
+    // MP-3421 Plugin Verifier must report compatibility errors for usages of internal FUS APIs
+    if (usage.apiElement.containingClass.packageName.startsWith("com/intellij/internal/statistic")
+      && pluginVerificationContext.verificationDescriptor is PluginVerificationDescriptor.IDE
+      && pluginVerificationContext.verificationDescriptor.ideVersion.baselineVersion >= 211
+    ) {
+      pluginVerificationContext.registerProblem(InternalFusApiUsageCompatibilityProblem(usage))
+    } else {
+      pluginVerificationContext.registerInternalApiUsage(usage)
     }
   }
 }
