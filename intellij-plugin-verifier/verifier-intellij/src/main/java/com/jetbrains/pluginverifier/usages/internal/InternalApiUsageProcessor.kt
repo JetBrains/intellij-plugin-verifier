@@ -65,6 +65,7 @@ class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVer
   private fun registerInternalApiUsage(usage: InternalApiUsage) {
     // MP-3421 Plugin Verifier must report compatibility errors for usages of internal FUS APIs
     if (usage.apiElement.containingClass.packageName.startsWith("com/intellij/internal/statistic")
+      && pluginVerificationContext.idePlugin.vendor?.contains("JetBrains", true) != true
       && pluginVerificationContext.verificationDescriptor is PluginVerificationDescriptor.IDE
       && pluginVerificationContext.verificationDescriptor.ideVersion.baselineVersion >= 211
     ) {
