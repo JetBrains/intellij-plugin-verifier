@@ -29,6 +29,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       assertEquals("1.0.0", plugin.requires?.first()?.version?.min)
     }
   }
+
   @Test
   fun `parse fields fleet plugin without version test`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
@@ -39,6 +40,42 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     testMockPluginStructureAndConfiguration(pluginFile)
   }
 
+  @Test
+  fun `parse fleet icons test`() {
+    val content = "<svg></svg>"
+    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+      file(FleetPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("extension")
+      }
+      dir("META-INF") {
+        file("pluginIcon.svg", content)
+        file("pluginIcon_dark.svg", content)
+      }
+    }
+    testMockPluginStructureAndConfiguration(pluginFile).also {
+      val (f, s) = it.plugin.icons
+      assertEquals(content, String(f.content))
+      assertEquals(content, String(s.content))
+    }
+  }
+
+  @Test
+  fun `parse fleet incorrect icons test`() {
+    val content = "<svg></svg>"
+    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+      file(FleetPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("extension")
+      }
+      dir("META-INF") {
+        file("pluginIcon.svg", content)
+        file("pluginIcon_darkest.svg", content)
+      }
+    }
+    testMockPluginStructureAndConfiguration(pluginFile).also {
+      assertTrue("Invalid Fleet icons size", it.plugin.icons.size == 1)
+      assertEquals(content, String(it.plugin.icons.single().content))
+    }
+  }
 
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path): PluginCreationSuccess<FleetPlugin> {
     val pluginCreationSuccess = createPluginSuccessfully(pluginFile)

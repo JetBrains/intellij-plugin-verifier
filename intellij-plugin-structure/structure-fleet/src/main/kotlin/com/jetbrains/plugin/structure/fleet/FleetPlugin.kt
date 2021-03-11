@@ -12,13 +12,13 @@ data class FleetPlugin(
     override val pluginId: String? = null,
     override val pluginName: String? = null,
     override val pluginVersion: String? = null,
+    override val icons: List<PluginIcon> = emptyList(),
     override val description: String? = null,
     val entryPoint: String? = null,
     val requires: List<FleetDependency>? = null
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendor: String? = null
-  override val icons: List<PluginIcon> = emptyList()
   override val vendorEmail: String? = null
   override val vendorUrl: String? = null
   override val url: String? = null

@@ -22,6 +22,7 @@ import java.nio.file.Paths
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "extension.json"
+    const val META_INF = "META-INF"
 
     private val LOG: Logger = LoggerFactory.getLogger(FleetPluginManager::class.java)
 
@@ -64,10 +65,24 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
     val descriptor = jacksonObjectMapper().readValue(descriptorFile.readText(), FleetPluginDescriptor::class.java)
-    return createPlugin(descriptor)
+    val icons = loadIconFromDir(pluginDirectory)
+    return createPlugin(descriptor, icons)
   }
 
-  private fun createPlugin(descriptor: FleetPluginDescriptor): PluginCreationResult<FleetPlugin> {
+  private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
+    IconTheme.values().mapNotNull { theme ->
+      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+      val iconPath = pluginDirectory.resolve(iconEntryName)
+      if (iconPath.exists()) {
+        PluginIcon(theme, iconPath.readBytes(), iconEntryName)
+      } else {
+        null
+      }
+    }
+
+  private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
+
+  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>): PluginCreationResult<FleetPlugin> {
     try {
       val beanValidationResult = validateFleetPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
@@ -80,7 +95,8 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           pluginVersion = version,
           description = description,
           requires = requires,
-          entryPoint = entryPoint
+          entryPoint = entryPoint,
+          icons = icons
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
