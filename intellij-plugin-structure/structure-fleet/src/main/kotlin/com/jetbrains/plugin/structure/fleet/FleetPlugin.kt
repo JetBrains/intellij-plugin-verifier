@@ -15,6 +15,7 @@ data class FleetPlugin(
     override val icons: List<PluginIcon> = emptyList(),
     override val description: String? = null,
     val entryPoint: String? = null,
+    val fullDescriptorJson: String = "",
     val requires: List<FleetDependency>? = null
 ) : Plugin {
   override val changeNotes: String? = null

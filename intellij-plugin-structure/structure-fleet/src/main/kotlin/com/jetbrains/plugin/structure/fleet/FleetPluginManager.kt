@@ -96,7 +96,8 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           description = description,
           requires = requires,
           entryPoint = entryPoint,
-          icons = icons
+          icons = icons,
+          fullDescriptorJson = jacksonObjectMapper().writeValueAsString(descriptor)
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
