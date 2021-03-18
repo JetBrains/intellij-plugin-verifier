@@ -95,6 +95,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertTrue(plugin.requires?.isNotEmpty() == true)
+    assertTrue(plugin.fullDescriptorJson.isNotEmpty())
     assertEquals("fleet.language.xml", plugin.requires?.first()?.id)
   }
 }
