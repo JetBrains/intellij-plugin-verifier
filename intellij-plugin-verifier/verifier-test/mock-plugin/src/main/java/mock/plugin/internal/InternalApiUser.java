@@ -1,5 +1,7 @@
 package mock.plugin.internal;
 
+import idea.kotlin.internal.InternalFileKt;
+import idea.kotlin.internal.NonInternalClass;
 import internal.InternalApiClass;
 import internal.InternalApiField;
 import internal.InternalApiMethod;
@@ -93,5 +95,25 @@ public class InternalApiUser {
     InternalApiClass.staticField = "";
   }
 
+  public void nonInternalKotlinClassUser() {
+    // This is not an effectively @Internal class because the @Internal annotation is applied to @file: rather than to a package,
+    // and Kotlin applies this annotation only to top-leve declarations.
+    new NonInternalClass();
+  }
+
+  /*expected(INTERNAL)
+  Internal class idea.kotlin.internal.InternalFileKt reference
+
+  Internal class idea.kotlin.internal.InternalFileKt is referenced in mock.plugin.internal.InternalApiUser.internalKotlinTopLevelDeclarations() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates that the class is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
+  Internal method idea.kotlin.internal.InternalFileKt.internalTopLevelFunction() invocation
+
+  Internal method idea.kotlin.internal.InternalFileKt.internalTopLevelFunction() : void is invoked in mock.plugin.internal.InternalApiUser.internalKotlinTopLevelDeclarations() : void. This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates that the method is not supposed to be used in client code.
+  */
+  public void internalKotlinTopLevelDeclarations() {
+    InternalFileKt.internalTopLevelFunction();
+  }
 
 }
