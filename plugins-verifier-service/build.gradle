@@ -6,7 +6,6 @@ plugins {
   id "io.spring.dependency-management" version "1.0.8.RELEASE"
   id "org.jetbrains.kotlin.jvm" version "1.3.70"
   id "org.jetbrains.kotlin.plugin.spring" version "1.3.70"
-  id "com.jfrog.bintray" version "1.8.4"
 }
 
 compileKotlin {
@@ -44,8 +43,9 @@ configure(allprojects) {
     mavenLocal()
     mavenCentral()
     maven { url "https://dl.bintray.com/jetbrains/intellij-plugin-service" }
+    maven { url "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-structure" }
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
-    maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+    maven { url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies" }
   }
 
   configurations {
