@@ -3,7 +3,7 @@
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Twitter Follow](https://img.shields.io/twitter/follow/JBPlatform?style=flat)](https://twitter.com/JBPlatform)
 [![Slack](https://img.shields.io/badge/Slack-%23intellij--plugin--verifier-blue)](https://plugins.jetbrains.com/slack)
-[![Download](https://api.bintray.com/packages/jetbrains/intellij-plugin-service/intellij-plugin-verifier/images/download.svg)](https://bintray.com/jetbrains/intellij-plugin-service/intellij-plugin-verifier/_latestVersion)
+[Download](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/)
 
 
 IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.
@@ -35,11 +35,11 @@ Example problems the Plugin Verifier can detect:
 
 ## Installation
 
-Download self-contained *verifier-all.jar* from [Bintray](https://bintray.com/jetbrains/intellij-plugin-service/intellij-plugin-verifier), or use the below `curl` script:
+Download the latest available `verifier-cli-<version>-all.jar` from [Maven Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/), or use the below `curl` script:
 
-    curl -L --output verifier-all.jar https://dl.bintray.com/jetbrains/intellij-plugin-service/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
+    curl -L --output verifier-all.jar https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
 
-Where `<version>` is the latest released version (see at the top).
+Where `<version>` is the latest version, which you can find in the package [page](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/).
 
 ## Options
 
