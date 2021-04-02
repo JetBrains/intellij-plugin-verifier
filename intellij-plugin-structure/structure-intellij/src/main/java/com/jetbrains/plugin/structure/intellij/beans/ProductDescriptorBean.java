@@ -11,4 +11,5 @@ public class ProductDescriptorBean {
   @XmlAttribute(name = "release-date") public String releaseDate;
   @XmlAttribute(name = "release-version") public String releaseVersion;
   @XmlAttribute(name = "eap") public String eap;
+  @XmlAttribute(name = "optional") public String optional;
 }
