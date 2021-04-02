@@ -478,7 +478,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     assertEquals(LocalDate.of(2018, 1, 18), plugin.productDescriptor?.releaseDate)
     assertEquals(20181, plugin.productDescriptor?.releaseVersion)
     assertEquals(true, plugin.productDescriptor?.eap)
-
+    assertEquals(true, plugin.productDescriptor?.optional)
   }
 
   private fun checkIdeCompatibility(plugin: IdePlugin) {

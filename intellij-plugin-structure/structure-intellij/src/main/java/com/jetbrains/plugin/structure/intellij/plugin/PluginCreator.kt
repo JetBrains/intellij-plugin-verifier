@@ -211,7 +211,8 @@ internal class PluginCreator private constructor(
         productDescriptorBean.code,
         LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
         Integer.parseInt(productDescriptorBean.releaseVersion),
-        productDescriptorBean.eap == "true"
+        productDescriptorBean.eap == "true",
+        productDescriptorBean.optional == "true"
       )
     }
     changeNotes = bean.changeNotes
@@ -379,6 +380,7 @@ internal class PluginCreator private constructor(
       validateReleaseDate(productDescriptor.releaseDate)
       validateReleaseVersion(productDescriptor.releaseVersion)
       productDescriptor.eap?.let { validateEapFlag(it) }
+      productDescriptor.optional?.let { validateOptionalFlag(it) }
     }
   }
 
@@ -414,12 +416,15 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validateEapFlag(eapFlag: String) {
-    if (eapFlag != "true" && eapFlag != "false") {
-      registerProblem(NotBoolean("eap", descriptorPath))
+  private fun validateEapFlag(eapFlag: String) = validateBooleanFlag(eapFlag, "eap")
+
+  private fun validateOptionalFlag(optionalFlag: String) = validateBooleanFlag(optionalFlag, "optional")
+
+  private fun validateBooleanFlag(flag: String, name: String) {
+    if (flag != "true" && flag != "false") {
+      registerProblem(NotBoolean(name, descriptorPath))
     }
   }
-
 
   private fun validateBeanUrl(beanUrl: String?) {
     if (beanUrl != null) {

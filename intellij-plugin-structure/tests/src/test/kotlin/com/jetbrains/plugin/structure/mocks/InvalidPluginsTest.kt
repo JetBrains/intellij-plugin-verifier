@@ -518,6 +518,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         NotBoolean("eap", "plugin.xml")
       )
     )
+
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" optional="not-bool"/>"""
+      },
+      listOf(
+        NotBoolean("optional", "plugin.xml")
+      )
+    )
   }
 
   @Test

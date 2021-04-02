@@ -10,5 +10,6 @@ data class ProductDescriptor(
   val code: String,
   val releaseDate: LocalDate,
   val releaseVersion: Int,
-  val eap: Boolean
+  val eap: Boolean,
+  val optional: Boolean
 )
