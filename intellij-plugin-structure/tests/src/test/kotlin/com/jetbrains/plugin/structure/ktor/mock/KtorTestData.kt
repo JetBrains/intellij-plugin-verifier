@@ -22,22 +22,14 @@ data class FeatureInstallRecipeJsonBuilder(
   @JsonProperty("install_block")
   var installBlock: String? = null,
   @JsonProperty("templates")
-  var templatesValue: List<String> = emptyList(),
-  @JsonProperty("test_templates")
-  var testTemplatesValue: List<String> = emptyList()
+  var templatesValue: List<CodeTemplateJsonBuilder> = emptyList()
 ) {
   fun asString(): String = jacksonObjectMapper().writeValueAsString(this)
 
   fun addTemplate(build: CodeTemplateJsonBuilder.() -> Unit) {
     val builder = CodeTemplateJsonBuilder()
     builder.build()
-    templatesValue += builder.asString()
-  }
-
-  fun addTestTemplate(build: CodeTemplateJsonBuilder.() -> Unit) {
-    val builder = CodeTemplateJsonBuilder()
-    builder.build()
-    testTemplatesValue += builder.asString()
+    templatesValue += builder
   }
 }
 
