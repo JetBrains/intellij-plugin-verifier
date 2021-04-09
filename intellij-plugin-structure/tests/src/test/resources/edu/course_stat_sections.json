@@ -5,6 +5,7 @@
   "language" : "en",
   "course_type" : "PyCharm",
   "edu_plugin_version": "3.7-2019.3-5266",
+  "is_private": true,
   "vendor": {
     "name": "JetBrains s.r.o.",
     "url": "http://jetbrains.com/"

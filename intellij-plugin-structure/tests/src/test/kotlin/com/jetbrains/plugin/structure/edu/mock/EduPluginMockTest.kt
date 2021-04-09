@@ -2,7 +2,9 @@ package com.jetbrains.plugin.structure.edu.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.edu.*
+import com.jetbrains.plugin.structure.edu.EduPlugin
+import com.jetbrains.plugin.structure.edu.EduPluginManager
+import com.jetbrains.plugin.structure.edu.TaskType
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -39,6 +41,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     val plugin = pluginCreationSuccess.plugin
 
     assertEquals("Python Course", plugin.pluginName)
+    assertEquals(false, plugin.isPrivate)
     val eduStat = plugin.eduStat
     assertNotNull(eduStat)
     assertEquals(3, eduStat!!.lessons.size)
@@ -67,6 +70,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     val plugin = pluginCreationSuccess.plugin
 
     assertEquals("Python Course", plugin.pluginName)
+    assertEquals(true, plugin.isPrivate)
     val eduStat = plugin.eduStat
     assertNotNull(eduStat)
     assertEquals(3, eduStat!!.lessons.size)
@@ -113,6 +117,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
     assertEquals(1, plugin.eduStat!!.lessons.size)
     assertEquals("lesson1", plugin.eduStat!!.lessons[0])
+    assertEquals(false, plugin.isPrivate)
     assertEquals(iconTestContent, String(plugin.icons.single().content))
   }
 }
