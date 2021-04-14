@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
@@ -17,7 +16,6 @@ import com.jetbrains.pluginverifier.tasks.TaskParameters
 class CheckTrunkApiParams(
   private val trunkIde: IdeDescriptor,
   private val releaseIde: IdeDescriptor,
-  private val deleteReleaseIdeOnExit: Boolean,
   private val releaseIdeFile: FileLock,
   val problemsFilters: List<ProblemsFilter>,
   val releaseVerificationDescriptors: List<PluginVerificationDescriptor.IDE>,
@@ -47,9 +45,6 @@ class CheckTrunkApiParams(
     trunkIde.closeLogged()
     releaseIde.closeLogged()
     releaseIdeFile.release()
-    if (deleteReleaseIdeOnExit) {
-      releaseIdeFile.file.deleteLogged()
-    }
   }
 
 }

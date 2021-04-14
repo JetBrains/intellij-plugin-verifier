@@ -9,8 +9,6 @@ import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
-import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions
@@ -115,16 +113,11 @@ object PluginVerifierMain {
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
 
-    val ideRepository = ReleaseIdeRepository()
-    val ideFilesDiskSetting = getDiskSpaceSetting("plugin.verifier.cache.ide.dir.max.space", 10 * 1024)
-    val ideFilesBank = IdeFilesBank(ideDownloadDirectory, ideRepository, ideFilesDiskSetting)
-
     DirectoryBasedPluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
         runner.getParametersBuilder(
           pluginRepository,
-          ideFilesBank,
           pluginDetailsCache,
           reportage
         ).build(opts, freeArgs).use { parameters ->

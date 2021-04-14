@@ -8,12 +8,10 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -36,7 +34,6 @@ import java.nio.file.Paths
 
 class CheckTrunkApiParamsBuilder(
   private val pluginRepository: PluginRepository,
-  private val ideFilesBank: IdeFilesBank,
   private val reportage: PluginVerificationReportage,
   private val pluginDetailsCache: PluginDetailsCache
 ) : TaskParametersBuilder {
@@ -55,35 +52,17 @@ class CheckTrunkApiParamsBuilder(
 
   private fun buildParameters(opts: CmdOpts, apiOpts: CheckTrunkApiOpts, trunkIdeDescriptor: IdeDescriptor): CheckTrunkApiParams {
     val releaseIdeFileLock: FileLock
-    val deleteReleaseIdeOnExit: Boolean
 
-    when {
-      apiOpts.majorIdePath != null -> {
-        val majorPath = Paths.get(apiOpts.majorIdePath!!)
-        require(majorPath.isDirectory) { "The specified major IDE doesn't exist: $majorPath" }
-        releaseIdeFileLock = IdleFileLock(majorPath)
-        deleteReleaseIdeOnExit = false
-      }
-      apiOpts.majorIdeVersion != null -> {
-        val ideVersion = parseIdeVersion(apiOpts.majorIdeVersion!!)
-        releaseIdeFileLock = retry("download ide $ideVersion") {
-          val result = ideFilesBank.getIdeFile(ideVersion)
-          if (result is IdeFilesBank.Result.Found) {
-            result.ideFileLock
-          } else {
-            throw RuntimeException("IDE $ideVersion is not found in $ideFilesBank")
-          }
-        }
-        deleteReleaseIdeOnExit = !apiOpts.saveMajorIdeFile
-      }
-      else -> throw IllegalArgumentException("Neither the version (-miv) nor the path to the IDE (-mip) with which to compare API problems are specified")
-    }
+    val majorIdePath = requireNotNull(apiOpts.majorIdePath) { "-mip --major-ide-path option is not specified" }
+    val majorPath = Paths.get(majorIdePath)
+    require(majorPath.isDirectory) { "The specified major IDE doesn't exist: $majorPath" }
+    releaseIdeFileLock = IdleFileLock(majorPath)
 
     reportage.logVerificationStage("Reading classes of the release IDE ${releaseIdeFileLock.file}")
     val releaseIdeDescriptor = OptionsParser.createIdeDescriptor(releaseIdeFileLock.file, opts)
     return releaseIdeDescriptor.closeOnException {
       releaseIdeFileLock.closeOnException {
-        buildParameters(opts, apiOpts, releaseIdeDescriptor, trunkIdeDescriptor, deleteReleaseIdeOnExit, releaseIdeFileLock)
+        buildParameters(opts, apiOpts, releaseIdeDescriptor, trunkIdeDescriptor, releaseIdeFileLock)
       }
     }
   }
@@ -93,7 +72,6 @@ class CheckTrunkApiParamsBuilder(
     apiOpts: CheckTrunkApiOpts,
     releaseIdeDescriptor: IdeDescriptor,
     trunkIdeDescriptor: IdeDescriptor,
-    deleteReleaseIdeOnExit: Boolean,
     releaseIdeFileLock: FileLock
   ): CheckTrunkApiParams {
     val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
@@ -197,7 +175,6 @@ class CheckTrunkApiParamsBuilder(
     return CheckTrunkApiParams(
       trunkIdeDescriptor,
       releaseIdeDescriptor,
-      deleteReleaseIdeOnExit,
       releaseIdeFileLock,
       problemsFilters,
       releaseVerificationDescriptors,
@@ -259,12 +236,6 @@ class CheckTrunkApiParamsBuilder(
       return PluginFilter.Result.Verify
     }
   }
-
-  private fun parseIdeVersion(ideVersion: String) = IdeVersion.createIdeVersionIfValid(ideVersion)
-    ?: throw IllegalArgumentException(
-      "Invalid IDE version: $ideVersion. Please provide IDE version (with product ID) with which to compare API problems; " +
-        "See https://www.jetbrains.com/intellij-repository/releases/"
-    )
 
 }
 

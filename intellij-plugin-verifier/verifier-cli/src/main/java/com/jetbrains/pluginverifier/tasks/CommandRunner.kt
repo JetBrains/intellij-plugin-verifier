@@ -4,7 +4,6 @@
 
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -15,7 +14,6 @@ interface CommandRunner {
 
   fun getParametersBuilder(
     pluginRepository: PluginRepository,
-    ideFilesBank: IdeFilesBank,
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
   ): TaskParametersBuilder

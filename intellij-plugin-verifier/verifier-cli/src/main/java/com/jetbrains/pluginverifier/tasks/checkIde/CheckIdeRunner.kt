@@ -4,7 +4,6 @@
 
 package com.jetbrains.pluginverifier.tasks.checkIde
 
-import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -18,7 +17,6 @@ class CheckIdeRunner : CommandRunner {
 
   override fun getParametersBuilder(
     pluginRepository: PluginRepository,
-    ideFilesBank: IdeFilesBank,
     pluginDetailsCache: PluginDetailsCache,
     reportage: PluginVerificationReportage
   ) = CheckIdeParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
