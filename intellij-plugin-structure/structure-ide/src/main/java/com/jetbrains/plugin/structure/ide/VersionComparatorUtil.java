@@ -46,10 +46,10 @@ public class VersionComparatorUtil {
   /**
    * Compare two version strings. See TeamCity documentation on requirements comparison
    * for formal description.
-   * <p/>
-   * Examples: 1.0rc1 < 1.0release, 1.0 < 1.0.1, 1.1 > 1.02
+   * <p></p>
+   * Examples: 1.0rc1 &lt; 1.0release, 1.0 &lt; 1.0.1, 1.1 &gt; 1.02
    *
-   * @return 0 if ver1 equals ver2, positive value if ver1 > ver2, negative value if ver1 < ver2
+   * @return 0 if ver1 equals ver2, positive value if ver1 &gt; ver2, negative value if ver1 &lt; ver2
    */
   public static int compare(@Nullable String ver1, @Nullable String ver2) {
     if (ver1 == null) {
