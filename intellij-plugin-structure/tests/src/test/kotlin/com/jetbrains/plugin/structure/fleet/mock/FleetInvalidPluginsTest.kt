@@ -42,6 +42,13 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
   }
 
   @Test
+  fun `vendor is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { vendor = null }
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { vendor = "" }
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { vendor = "\n" }
+  }
+
+  @Test
   fun `description is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("description")) { description = null }
     checkInvalidPlugin(PropertyNotSpecified("description")) { description = "" }

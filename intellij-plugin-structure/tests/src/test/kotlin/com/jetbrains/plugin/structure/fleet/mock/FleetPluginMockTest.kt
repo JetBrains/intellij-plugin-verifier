@@ -92,6 +92,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("fleet.language.css", plugin.pluginId)
     assertEquals("CSS", plugin.pluginName)
     assertEquals("fleet.language.css.Css", plugin.entryPoint)
+    assertEquals("JetBrains", plugin.vendor)
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertTrue(plugin.requires?.isNotEmpty() == true)
