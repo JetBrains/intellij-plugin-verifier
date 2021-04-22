@@ -99,6 +99,14 @@ class IdeManagerImpl : IdeManager() {
       if (resolveResult !is ResourceResolver.Result.NotFound) {
         return resolveResult
       }
+      if (basePath.startsWith("META-INF")) {
+        var metaInf = basePath
+        while (!metaInf.endsWith("META-INF")) metaInf = metaInf.parent
+        val metaInfResult = jarFilesResourceResolver.resolveResource(relativePath, metaInf)
+        if (metaInfResult !is ResourceResolver.Result.NotFound) {
+          return metaInfResult
+        }
+      }
       if (!relativePath.startsWith("/")) {
         return jarFilesResourceResolver.resolveResource("/META-INF/$relativePath", basePath)
       }

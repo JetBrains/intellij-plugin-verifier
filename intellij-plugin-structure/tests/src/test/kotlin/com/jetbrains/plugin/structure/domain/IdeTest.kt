@@ -13,7 +13,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.nio.file.Paths
 
 class IdeTest {
@@ -46,8 +45,12 @@ class IdeTest {
    *  build.txt
    *  plugins/
    *    somePlugin/
-   *      META-INF/
-   *        plugin.xml
+   *      lib/
+   *        somePlugin.jar
+   *          META-INF/
+   *            plugin.xml
+   *              -- references 'inRootXml.xml'
+   *          inRootXml.xml
    *  lib/
    *    resources.jar!/
    *      META-INF/
@@ -59,9 +62,28 @@ class IdeTest {
       file("build.txt", "IU-163.1.2.3")
       dir("plugins") {
         dir("somePlugin") {
-          dir("META-INF") {
-            file("plugin.xml") {
-              perfectXmlBuilder.modify { }
+          dir("lib") {
+            zip("somePlugin.jar") {
+              dir("META-INF") {
+                file("plugin.xml") {
+                  perfectXmlBuilder.modify {
+                    ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+
+                    additionalContent = """
+                      <xi:include href="inRootXml.xml" xpointer="xpointer(/idea-plugin/*)"/>
+                    """.trimIndent()
+                  }
+                }
+              }
+              file("inRootXml.xml") {
+                """
+                  <idea-plugin>
+                     <extensions defaultExtensionNs="com.intellij">
+                        <inRootExt someKey="inRootKey"/>
+                      </extensions>
+                  </idea-plugin>
+                """.trimIndent()
+              }
             }
           }
         }
