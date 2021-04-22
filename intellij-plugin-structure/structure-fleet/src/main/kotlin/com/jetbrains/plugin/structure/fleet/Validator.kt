@@ -26,5 +26,8 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
   }
+  if (descriptor.vendor.isNullOrBlank()) {
+    problems.add(PropertyNotSpecified("vendor"))
+  }
   return problems
 }

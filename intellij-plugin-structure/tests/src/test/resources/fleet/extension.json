@@ -3,6 +3,7 @@
   "version": "1.0.0-SNAPSHOT",
   "name": "CSS",
   "description": "CSS language support",
+  "vendor": "JetBrains",
   "entryPoint": "fleet.language.css.Css",
   "requires": [
     {

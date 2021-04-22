@@ -12,6 +12,7 @@ data class FleetTestDescriptor(
   var version: String? = "1.0.0-SNAPSHOT",
   var description: String? = "CSS language support",
   var entryPoint: String? = "fleet.language.css.Css",
+  var vendor: String? = "JetBrains",
   val requires: List<FleetDependency>? = null
 ) {
   fun asString(): String = jacksonObjectMapper().writeValueAsString(this)
