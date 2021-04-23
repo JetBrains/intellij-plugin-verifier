@@ -75,14 +75,14 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertNotNull(eduStat)
     assertEquals(3, eduStat!!.lessons.size)
     assertEquals(2, eduStat.sections.size)
-    val section1Stat = eduStat.sections["section1"]
+    val section1Stat = eduStat.sections[0]
     assertNotNull(section1Stat)
-    assertEquals(1, section1Stat!!.size)
-    assertEquals(listOf("lesson1 in section1"), section1Stat)
-    val section2Stat = eduStat.sections["section2"]
+    assertEquals(1, section1Stat.items.size)
+    assertEquals(listOf("lesson1 in section1"), section1Stat.items)
+    val section2Stat = eduStat.sections[1]
     assertNotNull(section2Stat)
-    assertEquals(2, section2Stat!!.size)
-    assertEquals(listOf("lesson1 in section2", "lesson2 in section2"), section2Stat)
+    assertEquals(2, section2Stat.items.size)
+    assertEquals(listOf("lesson1 in section2", "lesson2 in section2"), section2Stat.items)
     assertEquals(4, eduStat.tasks.size)
     assertEquals(3, eduStat.tasks[TaskType.EDU.id])
     assertEquals(1, eduStat.tasks[TaskType.CHOICE.id])
@@ -93,6 +93,28 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(4, eduStat.countInteractiveChallenges())
     assertEquals(1, eduStat.countQuizzes())
     assertEquals(1, eduStat.countTheoryTasks())
+  }
+
+  @Test
+  fun `parse edu plugin stat with sections order test`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(EduPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("course_stat_sections_rustling")
+      }
+      file("courseIcon.svg", iconTestContent)
+    }
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
+    val plugin = pluginCreationSuccess.plugin
+
+    assertEquals("Rustlings", plugin.pluginName)
+    val eduStat = plugin.eduStat
+    assertNotNull(eduStat)
+    val sectionNames = listOf("Introduction", "Common Programming Concepts", "Understanding Ownership",
+    "Structs", "Enums", "Modules and Macros", "Common Collections", "Type Conversions",
+    "Recoverable and Unrecoverable Errors", "Generic Types, Traits and Lifetime",
+    "Writing Automated Tests", "Iterators and Closures", "Fearless Concurrency")
+    assertEquals(13, eduStat!!.sections.size)
+    assertEquals(sectionNames, eduStat.sections.map { it.title })
   }
 
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
