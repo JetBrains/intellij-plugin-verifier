@@ -31,7 +31,7 @@ data class EduPlugin(
 }
 
 data class EduStat(
-  val sections: Map<String, List<String>>,
+  val sections: List<Section>,
   val lessons: List<String>,
   val tasks: Map<String, Int>
 ) {
@@ -55,8 +55,8 @@ data class EduStat(
     fun fromDescriptor(descriptor: EduPluginDescriptor): EduStat {
       val allItems = descriptor.items.flatMap { it.items } + descriptor.items
 
-      val sections = allItems.filter { it.type == ItemType.SECTION.id }
-        .associate { it.title to it.items.map { lesson -> lesson.title }}
+      val sections = descriptor.items.filter { it.type == ItemType.SECTION.id }
+        .map { Section(it.title, it.items.map { lesson -> lesson.title }) }
       val lessons = allItems.filter { it.type == ItemType.LESSON.id || it.type.isBlank() }.map { it.title }
       val tasks = allItems.flatMap { it.taskList }.groupingBy { it.taskType }.eachCount()
 
@@ -64,6 +64,8 @@ data class EduStat(
     }
   }
 }
+
+data class Section(val title: String, val items: List<String>)
 
 enum class TaskType(val id: String) {
   EDU("edu"),
