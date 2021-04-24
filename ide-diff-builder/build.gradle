@@ -16,7 +16,6 @@ allprojects {
     mavenLocal()
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies" }
-    maven { url "https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-structure" }
   }
 }
 
