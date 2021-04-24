@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -14,16 +15,29 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
  */
 class LastVersionSelector : PluginVersionSelector {
   override fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
-    val allVersionsOfPlugin = pluginRepository.getAllVersionsOfPlugin(pluginId)
+    val allVersions = pluginRepository.getAllVersionsOfPlugin(pluginId)
+    return selectLastVersion(allVersions, pluginRepository, "Plugin $pluginId is not found in $pluginRepository")
+  }
+
+  override fun selectPluginByModuleId(moduleId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
+    val plugins = pluginRepository.getPluginsDeclaringModule(moduleId, null)
+    return selectLastVersion(plugins, pluginRepository, "Plugin declaring module '$moduleId' is not found in $pluginRepository")
+  }
+
+  private fun selectLastVersion(
+    allVersions: List<PluginInfo>,
+    pluginRepository: PluginRepository,
+    notFoundMessage: String
+  ): PluginVersionSelector.Result {
     val lastVersion = if (pluginRepository is MarketplaceRepository) {
-      allVersionsOfPlugin.maxBy { (it as UpdateInfo).updateId }
+      allVersions.maxBy { (it as UpdateInfo).updateId }
     } else {
-      allVersionsOfPlugin.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+      allVersions.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
     }
-    return if (lastVersion == null) {
-      PluginVersionSelector.Result.NotFound("Plugin $pluginId is not found in $pluginRepository")
-    } else {
+    return if (lastVersion != null) {
       PluginVersionSelector.Result.Selected(lastVersion)
+    } else {
+      PluginVersionSelector.Result.NotFound(notFoundMessage)
     }
   }
 }

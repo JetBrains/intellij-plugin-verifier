@@ -28,25 +28,18 @@ class RepositoryDependencyFinder(
         return@retry DependencyFinder.Result.NotFound("Invalid empty dependency ID")
       }
       if (isModule) {
-        resolveModuleDependency(dependencyId)
+        convertResult(pluginVersionSelector.selectPluginByModuleId(dependencyId, pluginRepository))
       } else {
-        selectPluginVersion(dependencyId)
+        convertResult(pluginVersionSelector.selectPluginVersion(dependencyId, pluginRepository))
       }
     }
 
-  private fun resolveModuleDependency(moduleId: String): DependencyFinder.Result {
-    val pluginId = pluginRepository.getIdOfPluginDeclaringModule(moduleId)
-      ?: return DependencyFinder.Result.NotFound("Module '$moduleId' is not found")
-    return selectPluginVersion(pluginId)
-  }
-
-  private fun selectPluginVersion(pluginId: String): DependencyFinder.Result {
-    return when (val selectResult = pluginVersionSelector.selectPluginVersion(pluginId, pluginRepository)) {
+  private fun convertResult(selectResult: PluginVersionSelector.Result): DependencyFinder.Result =
+    when (selectResult) {
       is PluginVersionSelector.Result.Selected -> {
         val cacheEntryResult = pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo)
         DependencyFinder.Result.DetailsProvided(cacheEntryResult)
       }
       is PluginVersionSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
     }
-  }
 }

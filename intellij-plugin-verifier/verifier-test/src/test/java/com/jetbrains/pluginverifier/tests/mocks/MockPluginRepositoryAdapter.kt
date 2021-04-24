@@ -12,7 +12,7 @@ open class MockPluginRepositoryAdapter : PluginRepository {
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<PluginInfo> = defaultAction()
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String): String? = defaultAction()
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo> = defaultAction()
 
   open fun defaultAction(): Nothing = throw AssertionError("Not required in tests")
 

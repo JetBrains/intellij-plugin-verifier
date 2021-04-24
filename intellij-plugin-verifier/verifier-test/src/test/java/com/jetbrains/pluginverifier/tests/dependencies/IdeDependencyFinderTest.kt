@@ -112,8 +112,8 @@ class IdeDependencyFinderTest {
 
   private fun configureTestIdeDependencyFinder(ide: Ide): DependencyFinder {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
-      override fun getIdOfPluginDeclaringModule(moduleId: String) =
-        if (moduleId == "externalModule") "externalPlugin" else null
+      override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
+        if (moduleId == "externalModule") listOf(createMockPluginInfo("externalPlugin", "1.0")) else emptyList()
 
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
         if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, "1.0") else null

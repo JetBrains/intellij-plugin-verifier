@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.repository.repositories.custom
 
 import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 import java.net.URL
@@ -33,6 +34,6 @@ abstract class CustomPluginRepository : PluginRepository {
   override fun getAllVersionsOfPlugin(pluginId: String) =
     getAllPlugins().filter { it.pluginId == pluginId }
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String): String? = null
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo> = emptyList()
 
 }

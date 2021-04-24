@@ -33,9 +33,9 @@ interface PluginRepository {
   fun getAllVersionsOfPlugin(pluginId: String): List<PluginInfo>
 
   /**
-   * Given the [moduleId] returns the ID of the plugin that
-   * declares this module.
+   * Returns all plugins declaring module [moduleId].
+   * If [ideVersion] is specified, only plugins compatible with this IDE are returned.
    */
-  fun getIdOfPluginDeclaringModule(moduleId: String): String?
+  fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo>
 
 }

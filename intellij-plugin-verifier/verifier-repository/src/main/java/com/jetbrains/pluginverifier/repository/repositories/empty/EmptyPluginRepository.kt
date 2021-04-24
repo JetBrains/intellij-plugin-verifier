@@ -16,7 +16,7 @@ object EmptyPluginRepository : PluginRepository {
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<PluginInfo> = emptyList()
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String): String? = null
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo> = emptyList()
 
   override val presentableName
     get() = "Empty repository"

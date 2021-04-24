@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.repository.repositories.bundled
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 
@@ -32,12 +33,14 @@ class BundledPluginsRepository(
   override fun getAllVersionsOfPlugin(pluginId: String) =
     getAllPlugins().filter { it.pluginId == pluginId }
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String) =
-    ide.getPluginByModule(moduleId)?.pluginId
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo> {
+    val pluginInfo = findPluginByModule(moduleId)
+    return listOfNotNull(pluginInfo?.takeIf { ideVersion == null || pluginInfo.isCompatibleWith(ideVersion) })
+  }
 
   fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
 
-  fun findPluginByModule(moduleId: String) = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
+  fun findPluginByModule(moduleId: String): BundledPluginInfo? = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
 
   override val presentableName
     get() = "Bundled plugins of ${ide.version}"

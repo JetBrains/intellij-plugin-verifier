@@ -7,7 +7,6 @@ package com.jetbrains.pluginverifier.repository.repositories.marketplace
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.collect.ImmutableMap
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
@@ -60,8 +59,13 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
   }
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String): String? =
-    INTELLIJ_MODULE_TO_CONTAINING_PLUGIN[moduleId]
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<UpdateInfo> {
+    val plugins = pluginRepositoryInstance.pluginManager.searchCompatibleUpdates(
+      module = moduleId, build = ideVersion?.asString().orEmpty()
+    )
+    val pluginIdAndUpdateIds = plugins.map { it.pluginId to it.id }
+    return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
+  }
 
   private fun createAndCacheUpdateInfo(metadata: IntellijUpdateMetadata, pluginId: Int): UpdateInfo {
     val updateInfo = UpdateInfo(
@@ -187,20 +191,6 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   private companion object {
 
     private val DEFAULT_URL = URL("https://plugins.jetbrains.com")
-
-    /**
-     * TODO: implement this mapping on the Plugins Repository: MP-1152.
-     * Currently, the Plugin Repository doesn't know about what modules are declared in what plugins.
-     *
-     * The list of IntelliJ plugins which define some modules
-     * (e.g. the plugin "org.jetbrains.plugins.ruby" defines a module "com.intellij.modules.ruby")
-     */
-    private val INTELLIJ_MODULE_TO_CONTAINING_PLUGIN = ImmutableMap.of(
-      "com.intellij.modules.ruby", "org.jetbrains.plugins.ruby",
-      "com.intellij.modules.php", "com.jetbrains.php",
-      "com.intellij.modules.python", "Pythonid",
-      "com.intellij.modules.swift.lang", "com.intellij.clion-swift"
-    )
 
     //In the late future this will need to be updated. Currently, there are ~= 4000 plugins in the repository available.
     // This magic constant is the limit of the Elastic Search used in the Plugin Search Service.

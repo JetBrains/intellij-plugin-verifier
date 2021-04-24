@@ -8,12 +8,13 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 
 /**
- * [Selects] [selectPluginVersion] a specific [version] [PluginInfo]
- * of the plugin among all plugins available in the [PluginRepository].
+ * Selects a specific plugin version of the plugin among all versions available in the [PluginRepository].
  */
 interface PluginVersionSelector {
 
   fun selectPluginVersion(pluginId: String, pluginRepository: PluginRepository): Result
+
+  fun selectPluginByModuleId(moduleId: String, pluginRepository: PluginRepository): Result
 
   sealed class Result {
     /**

@@ -32,8 +32,8 @@ class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = 
   override fun getAllVersionsOfPlugin(pluginId: String) =
     plugins.filter { it.pluginId == pluginId }
 
-  override fun getIdOfPluginDeclaringModule(moduleId: String) =
-    plugins.find { moduleId in it.definedModules }?.pluginId
+  override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
+    plugins.filter { moduleId in it.definedModules && (ideVersion == null || it.isCompatibleWith(ideVersion)) }
 
   override val presentableName
     get() = "Local Plugin Repository"

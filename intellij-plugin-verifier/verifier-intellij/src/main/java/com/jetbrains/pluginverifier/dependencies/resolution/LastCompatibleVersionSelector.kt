@@ -23,4 +23,13 @@ class LastCompatibleVersionSelector(val ideVersion: IdeVersion) : PluginVersionS
     }
     return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion in ${pluginRepository.presentableName}")
   }
+
+  override fun selectPluginByModuleId(moduleId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
+    val plugins = pluginRepository.getPluginsDeclaringModule(moduleId, ideVersion)
+    val somePlugin = plugins.firstOrNull()
+    if (somePlugin != null) {
+      return PluginVersionSelector.Result.Selected(somePlugin)
+    }
+    return PluginVersionSelector.Result.NotFound("Plugins declaring module '$moduleId' are not found in ${pluginRepository.presentableName}")
+  }
 }
