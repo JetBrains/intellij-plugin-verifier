@@ -177,19 +177,21 @@ publishing {
 signing {
   def isRequired = hasProperty("mavenCentralUsername")
 
-  useInMemoryPgpKeys(findProperty("signingKey").toString(), findProperty("signingPassword").toString())
-  sign(publishing.publications.BasePublication)
-  sign(publishing.publications.ClassesPublication)
-  sign(publishing.publications.IntellijPublication)
-  sign(publishing.publications.IntellijClassesPublication)
-  sign(publishing.publications.IdePublication)
-  sign(publishing.publications.IdeClassesPublication)
-  sign(publishing.publications.TeamCityPublication)
-  sign(publishing.publications.DotNetPublication)
-  sign(publishing.publications.HubPublication)
-  sign(publishing.publications.EduPublication)
-  sign(publishing.publications.FleetPublication)
-  sign(publishing.publications.KtorPublication)
+  if (isRequired) {
+    useInMemoryPgpKeys(findProperty("signingKey").toString(), findProperty("signingPassword").toString())
+    sign(publishing.publications.BasePublication)
+    sign(publishing.publications.ClassesPublication)
+    sign(publishing.publications.IntellijPublication)
+    sign(publishing.publications.IntellijClassesPublication)
+    sign(publishing.publications.IdePublication)
+    sign(publishing.publications.IdeClassesPublication)
+    sign(publishing.publications.TeamCityPublication)
+    sign(publishing.publications.DotNetPublication)
+    sign(publishing.publications.HubPublication)
+    sign(publishing.publications.EduPublication)
+    sign(publishing.publications.FleetPublication)
+    sign(publishing.publications.KtorPublication)
+  }
 }
 
 test.dependsOn project(":tests").test
