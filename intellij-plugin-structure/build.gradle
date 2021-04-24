@@ -175,9 +175,9 @@ publishing {
 }
 
 signing {
-  def isRequired = hasProperty("mavenCentralUsername")
+  required { findProperty("mavenCentralUsername") != null }
 
-  if (isRequired) {
+  if( required ) {
     useInMemoryPgpKeys(findProperty("signingKey").toString(), findProperty("signingPassword").toString())
     sign(publishing.publications.BasePublication)
     sign(publishing.publications.ClassesPublication)
