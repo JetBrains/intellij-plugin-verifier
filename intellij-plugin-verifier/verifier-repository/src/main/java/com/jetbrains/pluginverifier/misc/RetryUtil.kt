@@ -17,15 +17,17 @@ fun <T, R> T.retry(
   attemptsDelayTimeUnit: TimeUnit = TimeUnit.SECONDS,
   block: T.() -> R
 ): R {
+  var lastError: Exception? = null
   for (attempt in 1..attempts) {
     try {
       return block()
     } catch (e: Exception) {
+      lastError = e
       e.rethrowIfInterrupted()
       val delayMillis = attemptsDelayTimeUnit.toMillis(attemptsDelay)
       LOG.error("Failed attempt #$attempt of $attempts to invoke '$presentableBlockName'. Wait for $delayMillis millis to reattempt", e)
       Thread.sleep(delayMillis)
     }
   }
-  throw RuntimeException("Failed to invoke $presentableBlockName in $attempts attempts")
+  throw RuntimeException("Failed to invoke $presentableBlockName in $attempts attempts, last error:", lastError)
 }
