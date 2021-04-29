@@ -16,7 +16,6 @@ data class FleetPlugin(
   override val description: String? = null,
   override val vendor: String? = null,
   val entryPoint: String? = null,
-  val fullDescriptorJson: String = "",
   val requires: List<FleetDependency>? = null
 ) : Plugin {
   override val changeNotes: String? = null
