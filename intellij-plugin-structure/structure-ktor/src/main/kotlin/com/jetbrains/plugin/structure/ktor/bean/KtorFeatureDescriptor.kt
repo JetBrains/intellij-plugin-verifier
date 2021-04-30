@@ -56,7 +56,17 @@ data class KtorFeatureDescriptor(
   @JsonProperty(TEST_DEPENDENCIES)
   val testDependencies: List<BuildSystemDependency> = emptyList(),
   @JsonProperty(DOCUMENTATION)
-  val documentation: KtorFeatureDocumentation? = null
+  val documentation: KtorFeatureDocumentation? = null,
+  @JsonProperty(EXTRA_FILES)
+  val extraFiles: List<ExtraGeneratedFie> = emptyList()
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class ExtraGeneratedFie(
+  @JsonProperty(FILE_PATH)
+  val relativePath: String,
+  @JsonProperty(FILE_CONTENT)
+  val fileContent: String
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)

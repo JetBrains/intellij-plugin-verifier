@@ -187,6 +187,37 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) :
         }
     }
 
+    private fun checkInvalidPath(path: String) {
+        checkInvalidPlugin(IncorrectFilePath(path)) {
+            addExtraFile(path, "content")
+        }
+    }
+
+    @Test
+    fun `invalid path with one dot`() {
+        checkInvalidPath("./path/to/file.kt")
+    }
+
+    @Test
+    fun `invalid path with two dots`() {
+        checkInvalidPath("path/to/../file.kt")
+    }
+
+    @Test
+    fun `invalid path with symbols`() {
+        checkInvalidPath("path/to#/file.kt")
+    }
+
+    @Test
+    fun `invalid path with double extension`() {
+        checkInvalidPath("path/to/file.kt.kts")
+    }
+
+    @Test
+    fun `invalid path with extension not in the end`() {
+        checkInvalidPath("path/to/file.kt/dir/file")
+    }
+
     private fun checkInvalidPlugin(problem: PluginProblem, descriptor: KtorFeatureJsonBuilder.() -> Unit) {
         val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("feature.zip")) {
             file(KtorFeaturePluginManager.DESCRIPTOR_NAME) {

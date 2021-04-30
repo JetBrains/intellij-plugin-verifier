@@ -167,6 +167,12 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
         validateKtorVersionRange(sinceParsed, untilParsed, problems)
     }
 
+    descriptor.extraFiles.map { it.relativePath }.forEach { path ->
+        if (!SIMPLE_PATH_REGEX.matches(path)) {
+            problems.add(IncorrectFilePath(path))
+        }
+    }
+
     return problems
 }
 

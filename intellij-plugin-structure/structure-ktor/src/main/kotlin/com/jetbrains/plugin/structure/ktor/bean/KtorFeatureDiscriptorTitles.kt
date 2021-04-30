@@ -16,6 +16,7 @@ const val GRADLE_INSTALL = "gradle_install"
 const val MAVEN_INSTALL = "maven_install"
 const val DEPENDENCIES = "dependencies"
 const val TEST_DEPENDENCIES = "test_dependencies"
+const val EXTRA_FILES = "extra_files"
 const val SINCE = "since"
 const val UNTIL = "until"
 
@@ -82,3 +83,8 @@ const val POSITION_SERIALIZATION = "serialization_config"
 const val POSITION_TESTFUN = "test_function"
 const val RESOURCES_FILE = "resources"
 const val IN_CINFIG = "application_conf"
+
+// Extra Files:
+const val FILE_PATH = "relative_path"
+const val FILE_CONTENT = "content"
+val SIMPLE_PATH_REGEX = "([a-zA-Z0-9\\-_]+/)*[a-zA-Z0-9\\-_]+(\\.[a-zA-Z0-9]+)?".toRegex()
