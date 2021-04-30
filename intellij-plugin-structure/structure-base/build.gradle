@@ -4,7 +4,6 @@ dependencies {
 
   api 'commons-io:commons-io:2.6'
   implementation 'org.apache.commons:commons-compress:1.20'
-  implementation 'org.tukaani:xz:1.6'
 
   //Provides English class capable of pluralizing english words.
   implementation group: 'org.atteo', name: 'evo-inflector', version: '1.2.2'
