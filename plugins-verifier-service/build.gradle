@@ -44,6 +44,7 @@ configure(allprojects) {
     mavenCentral()
     maven { url "https://www.jetbrains.com/intellij-repository/releases" }
     maven { url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies" }
+    maven { url "https://packages.jetbrains.team/maven/p/teamcity-rest-client/teamcity-rest-client" }
   }
 
   configurations {
@@ -65,10 +66,10 @@ configure(allprojects) {
     implementation 'com.github.salomonbrys.kotson:kotson:2.4.0'
     implementation 'com.google.code.gson:gson:2.7'
 
-    implementation 'com.squareup.okhttp3:okhttp:4.3.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
     implementation('com.squareup.retrofit2:retrofit:2.7.0')
     implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.3.1'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.1'
 
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
     implementation 'org.mapdb:mapdb:3.0.5'
@@ -81,6 +82,8 @@ configure(allprojects) {
 
     implementation group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: 'dev'
     implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-intellij', version: 'dev'
+
+    implementation 'org.jetbrains.teamcity:teamcity-rest-client:1.14.0'
   }
 
 }

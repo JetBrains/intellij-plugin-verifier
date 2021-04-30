@@ -51,10 +51,27 @@ class IdeDownloader : Downloader<AvailableIde> {
     val destinationDir = Files.createTempDirectory(tempDirectory, "")
     return try {
       archivedIde.extractTo(destinationDir)
+      if (destinationDir.resolve("__MACOSX").isDirectory) {
+        /**
+         * If this is a MacOS IDE, the root directory of extracted archive must contain
+         * /
+         *   __MACOS/
+         *   AppCode.app/
+         *     Contents/
+         *       ..
+         */
+        require(destinationDir.listFiles().size == 2) { destinationDir.listFiles() }
+        destinationDir.resolve("__MACOSX").deleteQuietly()
+        // Strip the 'AppCode.app' directory.
+        stripTopLevelDirectory(destinationDir)
+        require(destinationDir.listFiles() == listOf(destinationDir.resolve("Contents"))) { destinationDir.listFiles() }
+      }
       /**
        * Some IDE builds (like MPS) are distributed in form
        * of `<build>.zip/<single>/...`
        * where the <single> is the only directory under .zip.
+       *
+       * This also applies to MacOS IDEs where the Contents/ directory is at the top level.
        */
       stripTopLevelDirectory(destinationDir)
       DownloadResult.Downloaded(destinationDir, "", true)

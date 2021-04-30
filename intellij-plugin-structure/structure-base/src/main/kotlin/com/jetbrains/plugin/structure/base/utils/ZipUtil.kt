@@ -17,7 +17,7 @@ fun extractZip(pluginFile: Path, destination: Path, outputSizeLimit: Long? = nul
 
 fun Path.extractTo(destination: Path, outputSizeLimit: Long? = null): Path {
   val decompressor = when {
-    simpleName.endsWith(".zip") -> ZipDecompressor(this, outputSizeLimit)
+    simpleName.endsWith(".zip") || simpleName.endsWith(".sit") -> ZipDecompressor(this, outputSizeLimit)
     simpleName.endsWith(".tar.gz") -> TarDecompressor(this, outputSizeLimit)
     else -> throw IllegalArgumentException("Unknown type archive type: ${destination.fileName}")
   }

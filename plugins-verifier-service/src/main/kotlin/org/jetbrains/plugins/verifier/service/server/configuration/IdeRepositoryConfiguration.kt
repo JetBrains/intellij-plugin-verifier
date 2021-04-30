@@ -8,11 +8,40 @@ import com.jetbrains.pluginverifier.ide.repositories.AndroidStudioIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.CompositeIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
+import org.jetbrains.plugins.verifier.service.service.ide.AppCodeIdeRepository
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
 class IdeRepositoryConfiguration {
+
+  private val log = LoggerFactory.getLogger(IdeRepositoryConfiguration::class.java)
+
   @Bean
-  fun ideRepository(): IdeRepository = CompositeIdeRepository(listOf(ReleaseIdeRepository(), AndroidStudioIdeRepository()))
+  fun ideRepository(
+    @Value("\${verifier.service.app.code.ide.repository.build.server.url}")
+    buildServerUrl: String,
+    @Value("\${verifier.service.app.code.ide.repository.configuration.ids}")
+    configurationIds: String
+  ): IdeRepository = CompositeIdeRepository(
+    listOfNotNull(
+      ReleaseIdeRepository(),
+      AndroidStudioIdeRepository(),
+      appCodeRepository(buildServerUrl, configurationIds.split(",").map { it.trim() }.filterNot { it.isEmpty() })
+    )
+  )
+
+  private fun appCodeRepository(buildServerUrl: String, configurationIds: List<String>): IdeRepository? {
+    val repository = AppCodeIdeRepository(buildServerUrl, configurationIds)
+    return try {
+      repository.fetchIndex()
+      log.info("Successfully added IDE repository $repository")
+      repository
+    } catch (e: Exception) {
+      log.warn("Unable to get index from AppCode IDE repository because it is not available (see the cause). $repository", e)
+      null
+    }
+  }
 }
