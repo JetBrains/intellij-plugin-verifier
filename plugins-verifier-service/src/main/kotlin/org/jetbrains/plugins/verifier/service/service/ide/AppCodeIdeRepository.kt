@@ -50,7 +50,7 @@ class AppCodeIdeRepository(
         result += AvailableIde(
           ideVersion,
           if (isRelease) productVersion else null,
-          URL(buildServerUrl.trimEnd('/') + "/app/rest/builds/id:${build.id.stringId}/artifacts/content/$path"),
+          URL(buildServerUrl.trimEnd('/') + "/guestAuth/app/rest/builds/id:${build.id.stringId}/artifacts/content/$path"),
           build.finishDateTime!!.toLocalDate(),
           appCodeProduct
         )
