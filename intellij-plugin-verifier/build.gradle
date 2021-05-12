@@ -84,7 +84,6 @@ configure(childProjects.values()) {
     from javadoc.destinationDir
   }
 
-
   artifacts {
     archives sourcesJar
     archives javadocJar
@@ -114,7 +113,7 @@ publishing {
 
     def configurePublication = { MavenPublication pub, String projectName, String pubName, String pubDesc ->
 
-      def proj = project(":$projectName")
+      def proj = project(projectName)
       pub.groupId proj.group
       pub.artifactId proj.name
       pub.version proj.version
