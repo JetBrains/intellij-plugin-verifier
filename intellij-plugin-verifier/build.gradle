@@ -1,6 +1,8 @@
 plugins {
-  id "org.jetbrains.kotlin.jvm" version "1.3.70"
   id "maven-publish"
+  id "signing"
+  id "org.jetbrains.kotlin.jvm" version "1.3.70"
+  id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
 }
 
 ext.kotlin_version = '1.3.70'
@@ -19,12 +21,10 @@ if (!isDevMode) {
 project.ext.intellijStructureVersion = intellijStructureVersion
 
 configure(allprojects) {
+  group = 'org.jetbrains.intellij.plugins'
+  version = projectVersion
   apply plugin: 'java'
   apply plugin: 'kotlin'
-
-  group = 'org.jetbrains.intellij.plugins'
-
-  version = projectVersion
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
@@ -74,12 +74,21 @@ task versionTxt() {
 
 configure(childProjects.values()) {
 
-  task sourcesJar(type: Jar) {
+  task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
   }
 
-  artifacts.archives sourcesJar
+  task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+  }
+
+
+  artifacts {
+    archives sourcesJar
+    archives javadocJar
+  }
 
   jar {
     metaInf {
@@ -89,16 +98,23 @@ configure(childProjects.values()) {
       attributes 'Verifier-Version': projectVersion
     }
   }
+}
 
+nexusPublishing {
+  repositories {
+    sonatype {
+      username = findProperty("mavenCentralUsername")
+      password = findProperty("mavenCentralPassword")
+    }
+  }
 }
 
 publishing {
-
   publications {
 
-    def configurePublication = { MavenPublication pub, String projectName ->
+    def configurePublication = { MavenPublication pub, String projectName, String pubName, String pubDesc ->
 
-      def proj = project(projectName)
+      def proj = project(":$projectName")
       pub.groupId proj.group
       pub.artifactId proj.name
       pub.version proj.version
@@ -106,19 +122,94 @@ publishing {
       pub.from proj.components.java
       proj.artifacts
       pub.artifact proj.sourcesJar
+      pub.artifact proj.javadocJar
 
       if (proj.name == "verifier-cli") {
         pub.artifact proj.tasks.findByName("shadowJar")
+      }
+
+      pub.pom {
+        name.set(pubName)
+        description.set(pubDesc)
+        url.set("https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-verifier/$projectName")
+        licenses {
+          license {
+            name.set("The Apache Software License, Version 2.0")
+            url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+          }
+        }
+        developers {
+          developer {
+            id.set("serejke")
+            name.set("Sergey Patrikeev")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("satamas")
+            name.set("Semyon Atamas")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("AlexanderPrendota")
+            name.set("Alexander Prendota")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("ktisha")
+            name.set("Ekaterina Smal")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("chashnikov")
+            name.set("Nikolay Chashnikov")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("chrkv")
+            name.set("Ivan Chirkov")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("Ololoshechkin")
+            name.set("Brilyantov Vadim")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("shalupov")
+            name.set("Leonid Shalupov")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("hsz")
+            name.set("Jakub Chrzanowski")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("kesarevs")
+            name.set("Kesarev Sergey")
+            organization.set("JetBrains")
+          }
+          developer {
+            id.set("LChernigovskaya")
+            name.set("Lidiya Chernigovskaya")
+            organization.set("JetBrains")
+          }
+        }
+        scm {
+          connection.set("scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git")
+          developerConnection.set("scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git")
+          url.set("https://github.com/JetBrains/intellij-plugin-verifier")
+        }
       }
     }
 
     def cliProject = project(':verifier-cli')
     cliProject.afterEvaluate {
-      VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli') }
+      VerifierCliPublication(MavenPublication) { configurePublication(it, ':verifier-cli', "JetBrains Plugin Verifier CLI", "IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.") }
     }
-    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core') }
-    VerifierIntelliJPublication(MavenPublication) { configurePublication(it, ':verifier-intellij') }
-    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository') }
+    VerifierCorePublication(MavenPublication) { configurePublication(it, ':verifier-core', "JetBrains Plugin Verifier Core", "Core library used by the IntelliJ Plugin Verifier tool for verifying plugins and plugin repositories.") }
+    VerifierIntelliJPublication(MavenPublication) { configurePublication(it, ':verifier-intellij', "JetBrains Plugin Verifier IntelliJ", "Library used by the IntelliJ Plugin Verifier tool for working with IntelliJ IDEs.") }
+    RepositoryPublication(MavenPublication) { configurePublication(it, ':verifier-repository', "JetBrains Plugin Verifier Repository", "Library used by the IntelliJ Plugin Verifier tool for working with plugin repositories.") }
   }
 
   repositories {
@@ -129,6 +220,18 @@ publishing {
         password = project.hasProperty('publishPassword') ? project.property('publishPassword') : System.getenv('PUBLISH_PASSWORD')
       }
     }
+  }
+}
+
+signing {
+  required { findProperty("mavenCentralUsername") != null }
+
+  if( required ) {
+    useInMemoryPgpKeys(findProperty("signingKey").toString(), findProperty("signingPassword").toString())
+    sign(publishing.publications.VerifierCliPublication)
+    sign(publishing.publications.VerifierCorePublication)
+    sign(publishing.publications.VerifierIntelliJPublication)
+    sign(publishing.publications.RepositoryPublication)
   }
 }
 
