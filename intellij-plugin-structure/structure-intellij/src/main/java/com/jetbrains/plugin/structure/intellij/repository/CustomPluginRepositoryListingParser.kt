@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.repository.repositories.custom
+package com.jetbrains.plugin.structure.intellij.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.w3c.dom.Element
@@ -11,12 +11,25 @@ import javax.xml.parsers.DocumentBuilderFactory
  */
 object CustomPluginRepositoryListingParser {
 
+  data class PluginInfo(
+    val pluginId: String,
+    val pluginName: String,
+    val version: String,
+    val vendor: String?,
+    val repositoryUrl: URL,
+    val downloadUrl: URL,
+    val browserUrl: URL,
+    val sourceCodeUrl: URL?,
+    val sinceBuild: IdeVersion?,
+    val untilBuild: IdeVersion?
+  )
+
   fun parseListOfPlugins(
     pluginsListXmlContent: String,
     pluginsListXmlUrl: URL,
     repositoryUrl: URL,
     listingType: CustomPluginRepositoryListingType
-  ): List<CustomPluginInfo> {
+  ): List<PluginInfo> {
     val document = DocumentBuilderFactory.newInstance()
       .newDocumentBuilder()
       .parse(pluginsListXmlContent.toByteArray().inputStream())
@@ -32,12 +45,12 @@ object CustomPluginRepositoryListingParser {
     root: Element,
     xmlUrl: URL,
     repositoryUrl: URL
-  ): List<CustomPluginInfo> {
+  ): List<PluginInfo> {
     if (root.tagName != "plugins") return emptyList()
 
     val pluginsList = root.getElementsByTagName("plugin")
 
-    val result = arrayListOf<CustomPluginInfo>()
+    val result = arrayListOf<PluginInfo>()
     for (i in 0 until pluginsList.length) {
       val pluginElement = pluginsList.item(i) as? Element ?: continue
       if (pluginElement.tagName != "plugin") continue
@@ -53,7 +66,7 @@ object CustomPluginRepositoryListingParser {
         val ideaVersionElement: Element? = pluginElement.getSingleChild("idea-version")
         val (sinceBuild, untilBuild) = parseSinceAndUntil(ideaVersionElement)
 
-        result += CustomPluginInfo(
+        result += PluginInfo(
           id,
           pluginName,
           version,
@@ -74,10 +87,10 @@ object CustomPluginRepositoryListingParser {
     root: Element,
     xmlUrl: URL,
     repositoryUrl: URL
-  ): List<CustomPluginInfo> {
+  ): List<PluginInfo> {
     if (root.tagName != "plugin-repository") return emptyList()
     val ideaPluginElements = root.getElementsByTagName("idea-plugin")
-    val result = arrayListOf<CustomPluginInfo>()
+    val result = arrayListOf<PluginInfo>()
     for (i in 0 until ideaPluginElements.length) {
       val ideaPlugin = ideaPluginElements.item(i) as? Element ?: continue
       if (ideaPlugin.tagName != "idea-plugin") continue
@@ -93,7 +106,7 @@ object CustomPluginRepositoryListingParser {
 
       val downloadUrl = URL(xmlUrl, downloadUrlRelative)
 
-      result += CustomPluginInfo(
+      result += PluginInfo(
         id,
         name,
         version,

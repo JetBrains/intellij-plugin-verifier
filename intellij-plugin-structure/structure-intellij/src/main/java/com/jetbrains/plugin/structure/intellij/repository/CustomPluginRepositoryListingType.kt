@@ -1,4 +1,4 @@
-package com.jetbrains.pluginverifier.repository.repositories.custom
+package com.jetbrains.plugin.structure.intellij.repository
 
 /**
  * Specifies format of xml file containing list of plugins in a [custom plugin repository] [CustomPluginRepository]

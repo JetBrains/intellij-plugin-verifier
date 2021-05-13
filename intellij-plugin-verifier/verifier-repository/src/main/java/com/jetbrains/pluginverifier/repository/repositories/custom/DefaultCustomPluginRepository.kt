@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
+import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingParser
+import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingType
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import com.jetbrains.pluginverifier.network.executeSuccessfully
 import okhttp3.ResponseBody
@@ -22,7 +24,7 @@ class DefaultCustomPluginRepository(
 ) : CustomPluginRepository() {
 
   private val repositoryConnector = Retrofit.Builder()
-    .baseUrl("http://not-used.com")
+    .baseUrl("https://not-used.com")
     .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
     .build()
     .create(PluginListConnector::class.java)
@@ -37,7 +39,20 @@ class DefaultCustomPluginRepository(
       pluginsListXmlUrl,
       repositoryUrl,
       pluginsXmlListingType
-    )
+    ).map {
+      CustomPluginInfo(
+        it.pluginId,
+        it.pluginName,
+        it.version,
+        it.vendor,
+        it.repositoryUrl,
+        it.downloadUrl,
+        it.browserUrl,
+        it.sourceCodeUrl,
+        it.sinceBuild,
+        it.untilBuild
+      )
+    }
   }
 
   override fun toString() = presentableName

@@ -1,9 +1,8 @@
-package com.jetbrains.pluginverifier.repository
+package com.jetbrains.plugin.structure.repository
 
+import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingParser
+import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingType
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryListingParser
-import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryListingType
 import org.junit.Assert
 import org.junit.Test
 import java.net.URL
@@ -25,7 +24,7 @@ class CustomPluginRepositoryListingParserTest {
     val repositoryUrl = URL("https://browser-url.com")
 
     val expectedInfos = listOf(
-      CustomPluginInfo(
+      CustomPluginRepositoryListingParser.PluginInfo(
         "pluginId",
         "pluginId",
         "1.0",
@@ -37,7 +36,7 @@ class CustomPluginRepositoryListingParserTest {
         null,
         null
       ),
-      CustomPluginInfo(
+      CustomPluginRepositoryListingParser.PluginInfo(
         "pluginId2",
         "pluginName2",
         "1.0",
@@ -90,7 +89,7 @@ class CustomPluginRepositoryListingParserTest {
     val repositoryUrl = URL("https://browser-url.com")
 
     val expectedInfos = listOf(
-      CustomPluginInfo(
+      CustomPluginRepositoryListingParser.PluginInfo(
         "com.some.id",
         "Plugin Name",
         "1.0",
@@ -115,7 +114,7 @@ class CustomPluginRepositoryListingParserTest {
   }
 
   companion object {
-    fun assertCustomPluginInfosAreTheSame(expectedInfo: CustomPluginInfo, actualInfo: CustomPluginInfo, checkVersions: Boolean = true) {
+    fun assertCustomPluginInfosAreTheSame(expectedInfo: CustomPluginRepositoryListingParser.PluginInfo, actualInfo: CustomPluginRepositoryListingParser.PluginInfo, checkVersions: Boolean = true) {
       Assert.assertEquals(expectedInfo.pluginId, actualInfo.pluginId)
       Assert.assertEquals(expectedInfo.pluginName, actualInfo.pluginName)
       if (checkVersions) {
@@ -129,7 +128,7 @@ class CustomPluginRepositoryListingParserTest {
       Assert.assertEquals(expectedInfo.untilBuild, actualInfo.untilBuild)
     }
 
-    fun assertCustomPluginInfoListsAreTheSame(expectedInfos: List<CustomPluginInfo>, actualInfos: List<CustomPluginInfo>, checkVersions: Boolean = true) {
+    fun assertCustomPluginInfoListsAreTheSame(expectedInfos: List<CustomPluginRepositoryListingParser.PluginInfo>, actualInfos: List<CustomPluginRepositoryListingParser.PluginInfo>, checkVersions: Boolean = true) {
       Assert.assertEquals(expectedInfos.size, actualInfos.size)
       expectedInfos.forEachIndexed { index, expectedInfo ->
         assertCustomPluginInfosAreTheSame(expectedInfo, actualInfos[index], checkVersions)
