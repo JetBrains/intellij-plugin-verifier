@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
+import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingType
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import java.net.URL
 
