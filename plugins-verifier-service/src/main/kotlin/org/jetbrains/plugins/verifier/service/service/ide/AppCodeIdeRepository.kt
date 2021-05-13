@@ -13,10 +13,11 @@ import java.util.concurrent.TimeUnit
 
 class AppCodeIdeRepository(
   private val buildServerUrl: String,
+  authToken: String,
   private val configurationIds: List<String>
 ) : IdeRepository {
 
-  private val teamCityInstance = TeamCityInstanceFactory.guestAuth(buildServerUrl)
+  private val teamCityInstance = TeamCityInstanceFactory.tokenAuth(buildServerUrl, authToken)
 
   private val releaseRegex = Regex("(\\d\\d\\d\\d)\\.(\\d)(\\.\\d)?")
 

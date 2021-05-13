@@ -24,17 +24,19 @@ class IdeRepositoryConfiguration {
     @Value("\${verifier.service.app.code.ide.repository.build.server.url}")
     buildServerUrl: String,
     @Value("\${verifier.service.app.code.ide.repository.configuration.ids}")
-    configurationIds: String
+    configurationIds: String,
+    @Value("\${verifier.service.app.code.ide.repository.auth.token}")
+    authToken: String
   ): IdeRepository = CompositeIdeRepository(
     listOfNotNull(
       ReleaseIdeRepository(),
       AndroidStudioIdeRepository(),
-      appCodeRepository(buildServerUrl, configurationIds.split(",").map { it.trim() }.filterNot { it.isEmpty() })
+      appCodeRepository(buildServerUrl, authToken, configurationIds.split(",").map { it.trim() }.filterNot { it.isEmpty() })
     )
   )
 
-  private fun appCodeRepository(buildServerUrl: String, configurationIds: List<String>): IdeRepository? {
-    val repository = AppCodeIdeRepository(buildServerUrl, configurationIds)
+  private fun appCodeRepository(buildServerUrl: String, authToken: String, configurationIds: List<String>): IdeRepository? {
+    val repository = AppCodeIdeRepository(buildServerUrl, authToken, configurationIds)
     return try {
       repository.fetchIndex()
       log.info("Successfully added IDE repository $repository")
