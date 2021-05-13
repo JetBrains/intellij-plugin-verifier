@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
 import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.TeamCityIdeaPluginRepository
 import org.junit.Assert
@@ -19,10 +20,10 @@ class TeamCityIdeaPluginRepositoryTest : BaseRepositoryTest<TeamCityIdeaPluginRe
 
     val loginUrl = URL(buildServerUrl, "login.html")
 
-//    Assume.assumeTrue(checkHostIsAvailable(loginUrl))
-//    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
+    Assume.assumeTrue(checkHostIsAvailable(loginUrl))
+    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
 
-    return TeamCityIdeaPluginRepository(buildServerUrl!!, sourceCodeUrl!!)
+    return TeamCityIdeaPluginRepository(buildServerUrl!!, sourceCodeUrl)
   }
 
   @Test

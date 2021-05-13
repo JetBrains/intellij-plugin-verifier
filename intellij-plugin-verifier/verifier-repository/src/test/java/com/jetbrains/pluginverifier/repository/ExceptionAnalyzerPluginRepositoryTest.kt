@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.repository
 
+import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
 import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.ExceptionAnalyzerPluginRepository
 import org.junit.Assert
@@ -17,10 +18,10 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
     Assume.assumeNotNull(repositoryUrl)
     Assume.assumeNotNull(sourceCodeUrl)
 
-//    Assume.assumeTrue(checkHostIsAvailable(repositoryUrl!!))
-//    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
+    Assume.assumeTrue(checkHostIsAvailable(repositoryUrl!!))
+    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
 
-    return ExceptionAnalyzerPluginRepository(repositoryUrl!!, sourceCodeUrl!!)
+    return ExceptionAnalyzerPluginRepository(repositoryUrl, sourceCodeUrl)
   }
 
   @Test
