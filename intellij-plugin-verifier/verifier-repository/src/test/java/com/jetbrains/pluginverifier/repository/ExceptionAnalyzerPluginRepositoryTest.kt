@@ -6,9 +6,11 @@ import com.jetbrains.pluginverifier.repository.repositories.custom.ExceptionAnal
 import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assume
+import org.junit.Ignore
 import org.junit.Test
 import java.net.URL
 
+@Ignore
 class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyzerPluginRepository>() {
 
   override fun createRepository(): ExceptionAnalyzerPluginRepository {
