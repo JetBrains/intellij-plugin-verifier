@@ -1,9 +1,8 @@
 package com.jetbrains.pluginverifier.repository
 
-import com.jetbrains.pluginverifier.misc.checkHostIsAvailable
-import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginRepositoryProperties
 import com.jetbrains.pluginverifier.repository.repositories.custom.ExceptionAnalyzerPluginRepository
+import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assume
 import org.junit.Test
@@ -18,34 +17,30 @@ class ExceptionAnalyzerPluginRepositoryTest : BaseRepositoryTest<ExceptionAnalyz
     Assume.assumeNotNull(repositoryUrl)
     Assume.assumeNotNull(sourceCodeUrl)
 
-    Assume.assumeTrue(checkHostIsAvailable(repositoryUrl!!))
-    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
+//    Assume.assumeTrue(checkHostIsAvailable(repositoryUrl!!))
+//    Assume.assumeTrue(checkHostIsAvailable(sourceCodeUrl!!))
 
-    return ExceptionAnalyzerPluginRepository(repositoryUrl, sourceCodeUrl)
+    return ExceptionAnalyzerPluginRepository(repositoryUrl!!, sourceCodeUrl!!)
   }
 
   @Test
   fun `verify plugin info`() {
     val url = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_REPOSITORY_URL.getUrl()!!
     val sourceCodeUrl = CustomPluginRepositoryProperties.EXCEPTION_ANALYZER_PLUGIN_SOURCE_CODE_URL.getUrl()!!
-
-    val expectedInfos = listOf(
-      CustomPluginInfo(
-        "com.intellij.sisyphus",
-        "ExceptionAnalyzer",
-        "IGNORED",
-        "JetBrains",
-        url,
-        URL(url, "/ExceptionAnalyzer.zip"),
-        url,
-        sourceCodeUrl,
-        null,
-        null
-      )
-    )
-
-    CustomPluginRepositoryListingParserTest.assertCustomPluginInfoListsAreTheSame(expectedInfos, repository.getAllVersionsOfPlugin("com.intellij.sisyphus"), checkVersions = false)
-    CustomPluginRepositoryListingParserTest.assertCustomPluginInfoListsAreTheSame(expectedInfos, repository.getAllPlugins(), checkVersions = false)
+    for (list in listOf(repository.getAllPlugins(), repository.getAllVersionsOfPlugin("com.intellij.sisyphus"))) {
+      for (plugin in list) {
+        Assert.assertEquals("com.intellij.sisyphus", plugin.pluginId)
+        Assert.assertEquals("ExceptionAnalyzer", plugin.pluginName)
+        Assert.assertEquals("IGNORED", plugin.version)
+        Assert.assertEquals("JetBrains", plugin.vendor)
+        Assert.assertEquals(url, plugin.repositoryUrl)
+        Assert.assertEquals(URL(url, "/ExceptionAnalyzer.zip"), plugin.downloadUrl)
+        Assert.assertEquals(url, plugin.browserUrl)
+        Assert.assertEquals(sourceCodeUrl, plugin.sourceCodeUrl)
+        Assert.assertEquals(null, plugin.sinceBuild)
+        Assert.assertEquals(null, plugin.untilBuild)
+      }
+    }
   }
 
   @Test

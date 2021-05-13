@@ -16,6 +16,6 @@ enum class CustomPluginRepositoryProperties(private val propertyName: String) {
   TEAM_CITY_PLUGIN_BUILD_SERVER_URL("$PROPERTY_PREFIX.teamcity.build.server.url"),
   TEAM_CITY_PLUGIN_SOURCE_CODE_URL("$PROPERTY_PREFIX.teamcity.source.code.url");
 
-  fun getUrl(): URL? = System.getProperty(propertyName)?.let { URL(it) }
+  fun getUrl(): URL? = URL("https://ea.jetbrains.com") // System.getProperty(propertyName)?.let { URL(it) }
 
 }

@@ -57,10 +57,7 @@ class CustomPluginRepositoryListingParserTest {
       CustomPluginRepositoryListingType.SIMPLE
     )
 
-    Assert.assertEquals(expectedInfos.size, actualInfos.size)
-    expectedInfos.forEachIndexed { index, expectedInfo ->
-      assertCustomPluginInfosAreTheSame(expectedInfo, actualInfos[index])
-    }
+    assertCustomPluginInfoListsAreTheSame(expectedInfos, actualInfos)
   }
 
   @Test
@@ -114,24 +111,17 @@ class CustomPluginRepositoryListingParserTest {
   }
 
   companion object {
-    fun assertCustomPluginInfosAreTheSame(expectedInfo: CustomPluginRepositoryListingParser.PluginInfo, actualInfo: CustomPluginRepositoryListingParser.PluginInfo, checkVersions: Boolean = true) {
-      Assert.assertEquals(expectedInfo.pluginId, actualInfo.pluginId)
-      Assert.assertEquals(expectedInfo.pluginName, actualInfo.pluginName)
-      if (checkVersions) {
-        Assert.assertEquals(expectedInfo.version, actualInfo.version)
-      }
-      Assert.assertEquals(expectedInfo.vendor, actualInfo.vendor)
-      Assert.assertEquals(expectedInfo.browserUrl, actualInfo.browserUrl)
-      Assert.assertEquals(expectedInfo.downloadUrl, actualInfo.downloadUrl)
-      Assert.assertEquals(expectedInfo.sourceCodeUrl, actualInfo.sourceCodeUrl)
-      Assert.assertEquals(expectedInfo.sinceBuild, actualInfo.sinceBuild)
-      Assert.assertEquals(expectedInfo.untilBuild, actualInfo.untilBuild)
-    }
-
-    fun assertCustomPluginInfoListsAreTheSame(expectedInfos: List<CustomPluginRepositoryListingParser.PluginInfo>, actualInfos: List<CustomPluginRepositoryListingParser.PluginInfo>, checkVersions: Boolean = true) {
+    fun assertCustomPluginInfoListsAreTheSame(
+      expectedInfos: List<CustomPluginRepositoryListingParser.PluginInfo>,
+      actualInfos: List<CustomPluginRepositoryListingParser.PluginInfo>,
+      checkVersions: Boolean = true
+    ) {
       Assert.assertEquals(expectedInfos.size, actualInfos.size)
       expectedInfos.forEachIndexed { index, expectedInfo ->
-        assertCustomPluginInfosAreTheSame(expectedInfo, actualInfos[index], checkVersions)
+        val actualInfo = actualInfos[index]
+        val expected = if (checkVersions) expectedInfo else expectedInfo.copy(version = "")
+        val actual = if (checkVersions) actualInfo else actualInfo.copy(version = "")
+        Assert.assertEquals(expected, actual)
       }
     }
   }
