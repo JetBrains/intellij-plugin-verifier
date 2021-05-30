@@ -5,7 +5,6 @@ const val ID = "id"
 const val NAME = "name"
 const val COPYRIGHT = "copyright"
 const val SHORT_DESCRIPTION = "short_description"
-
 const val VERSION = "version"
 const val KTOR_VERSION = "ktor_version"
 const val VENDOR = "vendor"
@@ -16,7 +15,6 @@ const val GRADLE_INSTALL = "gradle_install"
 const val MAVEN_INSTALL = "maven_install"
 const val DEPENDENCIES = "dependencies"
 const val TEST_DEPENDENCIES = "test_dependencies"
-const val EXTRA_FILES = "extra_files"
 const val SINCE = "since"
 const val UNTIL = "until"
 
@@ -72,29 +70,10 @@ const val GRADLE_REP_TYPE_URL = "url_based"
 
 // Code Template
 const val TEMPLATE_POSITION = "position"
-const val TEMPLATE_NAME = "name"
 const val TEMPLATE_TEXT = "text"
 
 // Code Position
 const val POSITION_INSIDE = "inside_app"
 const val POSITION_OUTSIDE = "outside_app"
-const val POSITION_ROUTING = "in_routing"
-const val POSITION_SERIALIZATION = "serialization_config"
+const val POSITION_FILE = "separate_file"
 const val POSITION_TESTFUN = "test_function"
-const val RESOURCES_FILE = "resources"
-const val IN_CINFIG = "application_conf"
-
-// Extra Files:
-const val FILE_PATH = "relative_path"
-const val FILE_CONTENT = "content"
-/**
- * A relative path to a file of any type that can be added to a Ktor application.
- * Only simple path scenarios are supported (not like in a complex file system).
- * A path can only consist of one or more parts separated with "/", while each part is an alphanumerical string
- * with small/large latin letters and/or numbers, and the last part can also have one "." symbol in the middle (file extension)
- *
- * Examples:
- * a) path/to/a/file
- * b) path/to/a/file.ext
- * */
-val SIMPLE_PATH_REGEX = "([a-zA-Z0-9\\-_]+/)*[a-zA-Z0-9\\-_]+(\\.[a-zA-Z0-9]+)?".toRegex()
