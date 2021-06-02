@@ -34,11 +34,11 @@
     <depends>com.intellij.modules.mandatoryDependency</depends>
 
     <content>
-        <module id="intellij.clouds.kubernetes.charts.gotpl"/>
+        <module name="intellij.clouds.kubernetes.charts.gotpl"/>
     </content>
     <dependencies>
         <plugin id="mandatoryDependencyV2"/>
-        <module id="com.intellij.modules.mandatoryDependencyV2"/>
+        <module name="com.intellij.modules.mandatoryDependencyV2"/>
     </dependencies>
 
     <depends>duplicatedDependencyId</depends>
