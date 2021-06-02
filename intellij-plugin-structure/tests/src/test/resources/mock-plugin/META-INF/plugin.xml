@@ -33,6 +33,9 @@
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>
 
+    <content>
+        <module id="intellij.clouds.kubernetes.charts.gotpl"/>
+    </content>
     <dependencies>
         <plugin id="mandatoryDependencyV2"/>
         <module id="com.intellij.modules.mandatoryDependencyV2"/>

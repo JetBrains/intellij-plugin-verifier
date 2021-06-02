@@ -590,7 +590,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
   private fun checkDependenciesAndModules(plugin: IdePlugin) {
-    assertEquals(11, plugin.dependencies.size.toLong())
+    assertEquals(12, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
       PluginDependencyImpl("JUnit", true, false),
@@ -603,7 +603,8 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       PluginDependencyImpl("duplicatedDependencyId", false, false),
       PluginDependencyImpl("duplicatedDependencyId", false, false),
       PluginDependencyImpl("com.intellij.modules.mandatoryDependencyV2", false, true),
-      PluginDependencyImpl("mandatoryDependencyV2", false, false)
+      PluginDependencyImpl("mandatoryDependencyV2", false, false),
+      PluginDependencyImpl("intellij.clouds.kubernetes.charts.gotpl", true, true)
     )
     assertEquals(expectedDependencies, plugin.dependencies)
 
