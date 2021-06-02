@@ -33,6 +33,11 @@
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>
 
+    <dependencies>
+        <plugin id="mandatoryDependencyV2"/>
+        <module id="com.intellij.modules.mandatoryDependencyV2"/>
+    </dependencies>
+
     <depends>duplicatedDependencyId</depends>
     <depends>duplicatedDependencyId</depends>
 

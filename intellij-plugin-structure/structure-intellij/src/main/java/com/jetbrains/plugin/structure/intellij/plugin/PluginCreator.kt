@@ -194,6 +194,36 @@ internal class PluginCreator private constructor(
       }
     }
 
+    if (bean.dependenciesV2 != null) {
+      for (dependencyBeanV2 in bean.dependenciesV2.modules) {
+        if (dependencyBeanV2.dependencyId != null) {
+          val isModule = true
+          val isOptional = false // TODO: understand how optional dependencies work in new format
+          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, isOptional, isModule)
+          dependencies += dependency
+
+          // TODO: understand how optional dependencies work in new format
+//          if (dependency.isOptional && dependencyBean.configFile != null) {
+//            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
+//          }
+        }
+      }
+      for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
+        if (dependencyBeanV2.dependencyId != null) {
+          val isModule = false
+          val isOptional = false // TODO: understand how optional dependencies work in new format
+          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, isOptional, isModule)
+          dependencies += dependency
+
+          // TODO: understand how optional dependencies work in new format
+//          if (dependency.isOptional && dependencyBean.configFile != null) {
+//            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
+//          }
+        }
+      }
+    }
+
+
     bean.incompatibleModules?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
       incompatibleModules += it
     }
