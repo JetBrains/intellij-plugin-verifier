@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<top>
+    <!--Start <xi:include href="part.xml"/>-->
+    <part>42</part>
+    <!--End <xi:include href="part.xml"/>-->
+</top>

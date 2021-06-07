@@ -91,6 +91,11 @@ class XIncluderTest {
   }
 
   @Test
+  fun `if no xpointer is specified then include all the children`() {
+    testSuccess("emptyXPointer")
+  }
+
+  @Test
   fun `cycle error`() {
     testError("cycle")
   }
@@ -109,5 +114,4 @@ class XIncluderTest {
   fun `nothing selected error`() {
     testError("nothingSelected")
   }
-
 }

@@ -172,7 +172,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     bases: Stack<XIncludeEntry>
   ): List<Content> {
     val xPointer = xincludeElement.getAttributeValue(XPOINTER)
-      ?: return listOf(remoteRootElement)
+      ?: return remoteRootElement.content.toList().map { it.detach() }
 
     val pointerMatcher = XPOINTER_PATTERN.matcher(xPointer)
     if (!pointerMatcher.matches()) {
