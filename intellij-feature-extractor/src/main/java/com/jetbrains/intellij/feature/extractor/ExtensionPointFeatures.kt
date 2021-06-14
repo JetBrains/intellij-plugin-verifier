@@ -14,7 +14,8 @@ enum class ExtensionPoint(val extensionPointName: String) {
   FILE_TYPE_FACTORY("com.intellij.fileTypeFactory"),
   FILE_TYPE("com.intellij.fileType"),
   ARTIFACT_TYPE("com.intellij.packaging.artifactType"),
-  MODULE_TYPE("com.intellij.moduleType")
+  MODULE_TYPE("com.intellij.moduleType"),
+  DEPENDENCY_SUPPORT_TYPE("com.intellij.dependencySupport")
 }
 
 /**

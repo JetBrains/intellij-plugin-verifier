@@ -30,7 +30,8 @@ object FeaturesExtractor {
     FileTypeFactoryExtractor(),
     FileTypeExtractor(),
     ArtifactTypeExtractor(),
-    ModuleTypeExtractor()
+    ModuleTypeExtractor(),
+    DependencySupportExtractor()
   )
 
   fun extractFeatures(ide: Ide, ideResolver: Resolver, plugin: IdePlugin): List<ExtensionPointFeatures> {
