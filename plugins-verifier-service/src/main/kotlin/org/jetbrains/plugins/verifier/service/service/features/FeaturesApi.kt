@@ -41,6 +41,7 @@ private fun convertExtensionPoint(it: ExtensionPointFeatures): ApiExtensionPoint
    */
   ExtensionPoint.FILE_TYPE_FACTORY -> ApiExtensionPoint.FILE_TYPE
   ExtensionPoint.FILE_TYPE -> ApiExtensionPoint.FILE_TYPE
+  ExtensionPoint.DEPENDENCY_SUPPORT_TYPE -> ApiExtensionPoint.DEPENDENCY_SUPPORT_TYPE
 }
 
 private fun ExtractFeaturesTask.Result.ResultType.convertResultType(): ApiFeaturesResult.ResultType = when (this) {
@@ -73,5 +74,6 @@ private enum class ApiExtensionPoint {
   FACET_TYPE,
   FILE_TYPE,
   ARTIFACT_TYPE,
-  MODULE_TYPE
+  MODULE_TYPE,
+  DEPENDENCY_SUPPORT_TYPE
 }
