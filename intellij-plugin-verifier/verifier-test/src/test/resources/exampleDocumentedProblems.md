@@ -11,11 +11,13 @@ The following problem patterns are supported:
 <class name> class removed
 
 <class name>.<method name> method removed
+<class name>.<method name> method moved to the superclass
 <class name>.<method name> method return type changed from <before> to <after>
 <class name>.<method name> method parameter type changed from <before> to <after>
 <class name>.<method name> method visibility changed from <before> to <after>
 
 <class name>.<field name> field removed
+<class name>.<field name> field moved to the superclass
 <class name>.<field name> field type changed from <before> to <after>
 <class name>.<field name> field visibility changed from <before> to <after>
 
@@ -48,6 +50,8 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : Implement this method or extend [`com.intellij.openapi.application.ApplicationAdapter`](upsource:////platform/core-api/src/com/intellij/openapi/application/ApplicationAdapter.java) class instead of implementing the interface
 `com.example.Baz.REMOVED_FIELD` field removed 
 : Use [`com.intellij.util.net.HttpConfigurable.getProxyLogin()`](upsource:///platform/platform-api/src/com/intellij/util/net/HttpConfigurable.java) instead
+`com.example.Baz.MOVED_FIELD` field moved to the superclass
+: Recompile the client code
 `com.example.Inner.Class` class removed 
 : Use other class instead
 `com.example.SomeClass.abstractMethodWithParams(int, boolean)` abstract method added 
@@ -71,6 +75,8 @@ NOTE: You are allowed to prettify the pattern using markdown-features:
 : reason
 `com.example.Bar.removedMethod` method removed 
 : Use classes from `org.jetbrains.org.objectweb.asm` package instead
+`com.example.Bar.movedMethod` method moved to the superclass
+: Recompile the client code
 `com.example.Baf` class moved to package `com.another` 
 : Use the moved classes
 `com.example.MI` interface moved to package `com.another` 
