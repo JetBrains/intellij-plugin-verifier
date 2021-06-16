@@ -48,7 +48,8 @@ private interface AvailableIdeConnector {
 
 class DefaultAvailableIdeProtocol(
   token: String,
-  pluginRepository: MarketplaceRepository
+  pluginRepository: MarketplaceRepository,
+  private val disableVerificationWith212: Boolean
 ) : AvailableIdeProtocol {
   private val authorizationToken = "Bearer $token"
 
@@ -62,7 +63,7 @@ class DefaultAvailableIdeProtocol(
   }
 
   override fun sendAvailableIdes(availableIdes: List<AvailableIde>) {
-    val jsonIdes = availableIdes.map { it.convertToJson() }
+    val jsonIdes = availableIdes.filter { !disableVerificationWith212 || it.version.baselineVersion < 212 }.map { it.convertToJson() }
     retrofitConnector.sendAvailableIdes(
       authorizationToken,
       jsonIdes
