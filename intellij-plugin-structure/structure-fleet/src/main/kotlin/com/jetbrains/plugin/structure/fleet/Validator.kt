@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
 
 
@@ -29,5 +32,6 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.vendor.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor"))
   }
+  validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name!!, MAX_NAME_LENGTH, problems)
   return problems
 }

@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
 
@@ -25,6 +28,9 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
       problems.add(ForbiddenWordInPluginName)
     }
   }
+
+  validatePropertyLength(DESCRIPTOR_NAME, "name", bean.info?.name!!, MAX_NAME_LENGTH, problems)
+  validatePropertyLength(DESCRIPTOR_NAME, "display-name", beanDisplayName!!, MAX_NAME_LENGTH, problems)
 
   if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))

@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.ktor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.ktor.bean.*
 import com.jetbrains.plugin.structure.ktor.problems.DocumentationContainsResource
 import com.jetbrains.plugin.structure.ktor.problems.EmptyDependencies
@@ -156,7 +159,7 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
   if (sinceParsed != null && untilParsed != null) {
     validateKtorVersionRange(sinceParsed, untilParsed, problems)
   }
-
+  validatePropertyLength(DESCRIPTOR_NAME, NAME, descriptor.pluginName!!, MAX_NAME_LENGTH, problems)
   return problems
 }
 

@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.edu
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.edu.EduPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.Language
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
@@ -33,6 +36,7 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.descriptorVersion == null) {
     problems.add(PropertyNotSpecified(DESCRIPTOR_VERSION))
   }
+  validatePropertyLength(DESCRIPTOR_NAME, TITLE, descriptor.title!!, MAX_NAME_LENGTH, problems)
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
   return problems

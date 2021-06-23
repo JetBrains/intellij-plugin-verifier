@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.assertEquals
@@ -538,7 +539,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
     val expectedProblems = listOf(
       TooLongPropertyValue("plugin.xml", "id", 256, 255),
-      TooLongPropertyValue("plugin.xml", "name", 256, 255),
+      TooLongPropertyValue("plugin.xml", "name", 256, 64),
       TooLongPropertyValue("plugin.xml", "version", 65, 64),
       TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
       TooLongPropertyValue("plugin.xml", "vendor", 256, 255),

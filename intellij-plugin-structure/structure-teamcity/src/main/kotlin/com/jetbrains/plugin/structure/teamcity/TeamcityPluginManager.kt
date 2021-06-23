@@ -21,7 +21,7 @@ class TeamcityPluginManager private constructor(
   private val validateBean: Boolean
 ) : PluginManager<TeamcityPlugin> {
   companion object {
-    private const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
+    const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
 
     private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
