@@ -28,9 +28,13 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
       problems.add(ForbiddenWordInPluginName)
     }
   }
-
-  validatePropertyLength(DESCRIPTOR_NAME, "name", bean.info?.name!!, MAX_NAME_LENGTH, problems)
-  validatePropertyLength(DESCRIPTOR_NAME, "display-name", beanDisplayName!!, MAX_NAME_LENGTH, problems)
+  val name = bean.info?.name
+  if (name != null) {
+    validatePropertyLength(DESCRIPTOR_NAME, "name", name, MAX_NAME_LENGTH, problems)
+  }
+  if (beanDisplayName != null) {
+    validatePropertyLength(DESCRIPTOR_NAME, "display-name", beanDisplayName, MAX_NAME_LENGTH, problems)
+  }
 
   if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))

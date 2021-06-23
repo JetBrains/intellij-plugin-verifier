@@ -159,7 +159,9 @@ internal fun validateKtorPluginBean(descriptor: KtorFeatureDescriptor): List<Plu
   if (sinceParsed != null && untilParsed != null) {
     validateKtorVersionRange(sinceParsed, untilParsed, problems)
   }
-  validatePropertyLength(DESCRIPTOR_NAME, NAME, descriptor.pluginName!!, MAX_NAME_LENGTH, problems)
+  if (descriptor.pluginName != null) {
+    validatePropertyLength(DESCRIPTOR_NAME, NAME, descriptor.pluginName, MAX_NAME_LENGTH, problems)
+  }
   return problems
 }
 

@@ -32,6 +32,8 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.vendor.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor"))
   }
-  validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name!!, MAX_NAME_LENGTH, problems)
+  if (descriptor.name != null) {
+    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name!!, MAX_NAME_LENGTH, problems)
+  }
   return problems
 }

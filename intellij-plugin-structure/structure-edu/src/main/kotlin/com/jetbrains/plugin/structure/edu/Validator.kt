@@ -36,7 +36,9 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   if (descriptor.descriptorVersion == null) {
     problems.add(PropertyNotSpecified(DESCRIPTOR_VERSION))
   }
-  validatePropertyLength(DESCRIPTOR_NAME, TITLE, descriptor.title!!, MAX_NAME_LENGTH, problems)
+  if (descriptor.title != null) {
+    validatePropertyLength(DESCRIPTOR_NAME, TITLE, descriptor.title, MAX_NAME_LENGTH, problems)
+  }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)
   return problems
