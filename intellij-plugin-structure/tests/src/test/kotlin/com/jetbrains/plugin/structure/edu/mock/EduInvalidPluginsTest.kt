@@ -6,10 +6,10 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
-import com.jetbrains.plugin.structure.edu.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
@@ -75,6 +75,14 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "" }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "\n" }
+    checkInvalidPlugin(
+      TooLongPropertyValue(
+        EduPluginManager.DESCRIPTOR_NAME,
+        TITLE,
+        65,
+        64
+      )
+    ) { title = "a".repeat(65) }
   }
 
   @Test

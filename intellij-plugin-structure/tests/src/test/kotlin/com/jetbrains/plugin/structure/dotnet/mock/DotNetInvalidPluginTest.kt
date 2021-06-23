@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Rule
@@ -83,6 +84,14 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
     `test invalid plugin xml`(
       perfectDotNetBuilder.modify { licenseUrl = "" },
       listOf(PropertyNotSpecified("licenseUrl"))
+    )
+  }
+
+  @Test
+  fun `plugin long name`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { title = "<title>${"a".repeat(65)}</title>" },
+      listOf(TooLongPropertyValue("", "title", 65, 64))
     )
   }
 

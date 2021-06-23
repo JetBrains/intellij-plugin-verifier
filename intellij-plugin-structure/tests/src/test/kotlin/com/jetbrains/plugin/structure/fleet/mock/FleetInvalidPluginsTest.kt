@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
@@ -32,6 +33,14 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = null }
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = "" }
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = "\n" }
+    checkInvalidPlugin(
+      TooLongPropertyValue(
+        FleetPluginManager.DESCRIPTOR_NAME,
+        "name",
+        65,
+        64
+      )
+    ) { name = "a".repeat(65) }
   }
 
   @Test

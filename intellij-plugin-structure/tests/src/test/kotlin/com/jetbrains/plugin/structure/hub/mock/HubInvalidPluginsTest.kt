@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
@@ -70,6 +71,14 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   fun `name is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = null }
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = "" }
+    checkInvalidPlugin(
+      TooLongPropertyValue(
+        HubPluginManager.DESCRIPTOR_NAME,
+        "name",
+        65,
+        64
+      )
+    ) { name = "a".repeat(65) }
   }
 
   @Test
