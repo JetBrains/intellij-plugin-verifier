@@ -50,6 +50,9 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
   if (bean.licenseUrl.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("licenseUrl"))
   }
-  validatePropertyLength("", "title", bean.title!!, MAX_NAME_LENGTH, problems)
+  val title = bean.title
+  if (title != null) {
+    validatePropertyLength("", "title", title, MAX_NAME_LENGTH, problems)
+  }
   return problems
 }
