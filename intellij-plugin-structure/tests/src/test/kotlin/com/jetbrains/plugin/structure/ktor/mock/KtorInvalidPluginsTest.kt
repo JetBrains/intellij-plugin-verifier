@@ -4,6 +4,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.edu.TITLE
+import com.jetbrains.plugin.structure.hub.HubPluginManager
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.ktor.KtorFeature
 import com.jetbrains.plugin.structure.ktor.KtorFeaturePluginManager
 import com.jetbrains.plugin.structure.ktor.bean.*
@@ -34,6 +37,14 @@ class KtorInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManager
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = null }
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = "" }
     checkInvalidPlugin(PropertyNotSpecified(NAME)) { name = "\n" }
+    checkInvalidPlugin(
+      TooLongPropertyValue(
+        KtorFeaturePluginManager.DESCRIPTOR_NAME,
+        "name",
+        65,
+        64
+      )
+    ) { name = "a".repeat(65) }
   }
 
   @Test
