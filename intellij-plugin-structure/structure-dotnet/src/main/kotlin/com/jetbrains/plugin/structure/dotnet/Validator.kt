@@ -5,7 +5,9 @@
 package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidIdError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
@@ -48,6 +50,6 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
   if (bean.licenseUrl.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("licenseUrl"))
   }
-
+  validatePropertyLength("", "title", bean.title!!, MAX_NAME_LENGTH, problems)
   return problems
 }

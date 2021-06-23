@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
@@ -625,7 +626,7 @@ internal class PluginCreator private constructor(
         if (templateWord != null) {
           registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
-        validatePropertyLength("name", name, MAX_PROPERTY_LENGTH)
+        validatePropertyLength("name", name, MAX_NAME_LENGTH)
         validateNewlines("name", name)
       }
     }

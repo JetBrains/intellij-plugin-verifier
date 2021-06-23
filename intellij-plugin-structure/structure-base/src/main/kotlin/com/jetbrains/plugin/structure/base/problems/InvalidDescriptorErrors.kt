@@ -23,6 +23,19 @@ class UnexpectedDescriptorElements(
 
 }
 
+class TooLongPropertyValue(
+  descriptorPath: String,
+  private val propertyName: String,
+  private val propertyValueLength: Int,
+  private val maxLength: Int
+) : InvalidDescriptorProblem(descriptorPath) {
+  override val detailedMessage: String
+    get() = "value of property '$propertyName' is too long. Its length is $propertyValueLength which is more than maximum $maxLength characters long"
+
+  override val level
+    get() = Level.ERROR
+}
+
 class PropertyNotSpecified(
   private val propertyName: String,
   descriptorPath: String? = null

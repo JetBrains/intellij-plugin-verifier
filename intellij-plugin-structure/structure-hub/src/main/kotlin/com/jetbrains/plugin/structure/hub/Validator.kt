@@ -7,7 +7,10 @@ package com.jetbrains.plugin.structure.hub
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.hub.HubPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.hub.bean.HubPluginManifest
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
@@ -64,7 +67,7 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
   } else if (manifest.products.isEmpty()) {
     problems.add(HubProductsNotSpecified())
   }
-
+  validatePropertyLength(DESCRIPTOR_NAME, "name", manifest.pluginName!!, MAX_NAME_LENGTH, problems)
   return problems
 }
 
