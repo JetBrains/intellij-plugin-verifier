@@ -46,7 +46,7 @@ configure(allprojects) {
 
     implementation "org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion"
 
-    testImplementation group: 'junit', name: 'junit', version: '4.11'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
     implementation group: 'org.bouncycastle', name: 'bcpkix-jdk15on', version: '1.61'
