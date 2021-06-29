@@ -10,7 +10,7 @@ dependencies {
   testImplementation project(":structure-fleet")
   testImplementation project(":structure-dotnet")
   testImplementation project(":structure-edu")
-  testImplementation 'junit:junit:4.11'
+  testImplementation 'junit:junit:4.13.2'
   testImplementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.0"
   testImplementation "com.google.jimfs:jimfs:1.1"
   testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
