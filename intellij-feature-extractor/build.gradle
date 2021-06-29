@@ -38,7 +38,7 @@ dependencies {
   implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
   implementation group: 'commons-io', name: 'commons-io', version: '2.5'
 
-  testImplementation group: 'junit', name: 'junit', version: '4.11'
+  testImplementation group: 'junit', name: 'junit', version: '4.13.2'
   testImplementation project(':test-classes')
 }
 
