@@ -83,7 +83,7 @@ configure(allprojects) {
     implementation group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: 'dev'
     implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-intellij', version: 'dev'
 
-    implementation 'org.jetbrains.teamcity:teamcity-rest-client:1.14.0'
+    implementation 'org.jetbrains.teamcity:teamcity-rest-client:3.5'
   }
 
 }
