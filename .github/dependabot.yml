@@ -1,0 +1,118 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/intellij-feature-extractor/test-classes/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-feature-extractor/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-repository/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-core/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-test/before-idea/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-test/after-idea/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-test/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-test/mock-plugin/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-intellij/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/verifier-cli/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-verifier/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/plugins-verifier-service/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/ide-diff-builder/mock-old-ide/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/ide-diff-builder/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/ide-diff-builder/mock-new-ide/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-edu/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-ide/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-teamcity/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-ide-classes/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-classes/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/tests/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-intellij-classes/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-dotnet/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-intellij/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-fleet/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-hub/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-base/"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "gradle"
+    directory: "/intellij-plugin-structure/structure-ktor/"
+    schedule:
+      interval: "daily"
