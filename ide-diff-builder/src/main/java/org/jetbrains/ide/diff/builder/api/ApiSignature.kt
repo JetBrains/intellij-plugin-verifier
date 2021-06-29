@@ -5,8 +5,12 @@
 package org.jetbrains.ide.diff.builder.api
 
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Base class for signatures to be recorded in API snapshots.
@@ -33,14 +37,14 @@ data class FieldSignature(
 object ApiSignatureSerializer {
 
   override val descriptor
-    get() = PrimitiveDescriptor("ApiSignature", PrimitiveKind.STRING)
+    get() = PrimitiveSerialDescriptor("ApiSignature", PrimitiveKind.STRING)
 
-  override fun serialize(encoder: Encoder, obj: ApiSignature) {
-    encoder.encodeSerializableValue(String.serializer().list, obj.encodeToList())
+  override fun serialize(encoder: Encoder, value: ApiSignature) {
+    encoder.encodeSerializableValue(ListSerializer(String.serializer()), value.encodeToList())
   }
 
   override fun deserialize(decoder: Decoder): ApiSignature =
-    decoder.decodeSerializableValue(String.serializer().list).decodeSignature()
+    decoder.decodeSerializableValue(ListSerializer(String.serializer())).decodeSignature()
 
   private fun List<String>.decodeSignature(): ApiSignature = when (first()) {
     "class" -> ClassSignature(get(1))

@@ -120,7 +120,7 @@ class IdeDownloader : Downloader<AvailableIde> {
       if (conflict != null) {
         //Create a unique temporary name from the set of files.
         //This name will be used as a destination of a conflicting name.
-        val uniqueTempName = contents.map { it.simpleName }.max()!! + ".temp"
+        val uniqueTempName = contents.maxOfOrNull { it.simpleName } + ".temp"
         val tempDestination = directory.resolve(uniqueTempName)
 
         //Move conflict to unique location.

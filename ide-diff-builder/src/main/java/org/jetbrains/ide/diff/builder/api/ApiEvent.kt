@@ -6,6 +6,10 @@ package org.jetbrains.ide.diff.builder.api
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import kotlinx.serialization.*
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /**
  * Base class for all events associated with API.
@@ -55,10 +59,10 @@ data class UnmarkedDeprecatedIn(override val ideVersion: IdeVersion) : ApiEvent(
 
 object ApiEventSerializer : KSerializer<ApiEvent> {
   override val descriptor
-    get() = PrimitiveDescriptor("ApiEventSerializer", PrimitiveKind.STRING)
+    get() = PrimitiveSerialDescriptor("ApiEventSerializer", PrimitiveKind.STRING)
 
-  override fun serialize(encoder: Encoder, obj: ApiEvent) {
-    val qualifier = when (obj) {
+  override fun serialize(encoder: Encoder, value: ApiEvent) {
+    val qualifier = when (value) {
       is IntroducedIn -> "+"
       is RemovedIn -> "-"
       is MarkedExperimentalIn -> "E"
@@ -66,11 +70,11 @@ object ApiEventSerializer : KSerializer<ApiEvent> {
       is MarkedDeprecatedIn -> "D"
       is UnmarkedDeprecatedIn -> "ND"
     }
-    val payload = when (obj) {
-      is MarkedDeprecatedIn -> (if (obj.forRemoval) "1" else "0") + "|" + (obj.removalVersion ?: "")
+    val payload = when (value) {
+      is MarkedDeprecatedIn -> (if (value.forRemoval) "1" else "0") + "|" + (value.removalVersion ?: "")
       else -> ""
     }
-    encoder.encodeString(qualifier + ":" + payload + ":" + obj.ideVersion.asString())
+    encoder.encodeString(qualifier + ":" + payload + ":" + value.ideVersion.asString())
   }
 
   override fun deserialize(decoder: Decoder): ApiEvent {

@@ -51,18 +51,18 @@ class AllIgnoredProblemsReporter(private val targetDirectoryProvider: (PluginVer
       verificationTarget: PluginVerificationTarget,
       allIgnoredProblems: List<ProblemIgnoredEvent>
     ) = buildString {
-      appendln("The following problems against $verificationTarget were ignored:")
+      appendLine("The following problems against $verificationTarget were ignored:")
       for ((reason, allWithReason) in allIgnoredProblems.groupBy { it.reason }) {
-        appendln("because $reason:")
+        appendLine("because $reason:")
         for ((shortDescription, allWithShortDescription) in allWithReason.groupBy { it.problem.shortDescription }) {
-          appendln("    $shortDescription:")
+          appendLine("    $shortDescription:")
           for ((plugin, allWithPlugin) in allWithShortDescription.groupBy { it.plugin }) {
-            appendln("      $plugin:")
+            appendLine("      $plugin:")
             for (ignoredEvent in allWithPlugin) {
-              appendln("        ${ignoredEvent.problem.fullDescription}")
+              appendLine("        ${ignoredEvent.problem.fullDescription}")
             }
           }
-          appendln()
+          appendLine()
         }
       }
     }

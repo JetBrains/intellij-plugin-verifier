@@ -7,6 +7,7 @@ package org.jetbrains.ide.diff.builder.cli
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -109,7 +110,7 @@ class BuildIdeApiAnnotationsCommand : Command {
       .flatMap { ides ->
         ides
           .groupBy { it.version.baselineVersion }
-          .mapValues { (_, branchIdes) -> branchIdes.maxBy { it.version }!! }
+          .mapValues { (_, branchIdes) -> branchIdes.maxByOrNull { it.version }!! }
           .values
       }
       .map { it.version }

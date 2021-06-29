@@ -34,7 +34,7 @@ class KtorVersionTest {
         null
       }
 
-      Assert.assertThat("Ktor version $v is incorrect", result, IsNull.nullValue())
+      Assert.assertNull("Ktor version $v is incorrect", result)
     }
   }
 

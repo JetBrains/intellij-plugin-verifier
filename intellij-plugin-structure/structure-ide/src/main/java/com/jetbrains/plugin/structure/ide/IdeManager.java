@@ -23,6 +23,10 @@ public abstract class IdeManager {
   }
 
   /**
+   * @param idePath Path to IDE
+   * @return IDE instance
+   * @throws IOException if IO error occurs
+   * @throws InvalidIdeException if IDE is invalid
    * @deprecated use {@link #createIde(Path)}
    */
   @NotNull
@@ -45,6 +49,10 @@ public abstract class IdeManager {
 
 
   /**
+   * @param idePath IDE path
+   * @param version IDE version
+   * @return IDE instance
+   * @throws IOException if IO error occurs
    * @deprecated use {@link #createIde(Path, IdeVersion)}
    */
   @Deprecated

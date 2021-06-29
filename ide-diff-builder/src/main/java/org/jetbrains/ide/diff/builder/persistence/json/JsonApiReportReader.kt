@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 class JsonApiReportReader : ApiReportReader {
   override fun readApiReport(reportPath: Path): ApiReport =
-    jsonInstance.parse(
+    jsonInstance.decodeFromString(
       ApiReport.serializer(),
       Files.newBufferedReader(reportPath).use { it.readText() }
     )

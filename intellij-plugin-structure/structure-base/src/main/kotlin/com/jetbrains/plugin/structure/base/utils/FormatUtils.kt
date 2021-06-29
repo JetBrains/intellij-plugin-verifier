@@ -51,7 +51,7 @@ fun <T> List<T>.listPresentationInColumns(columns: Int, minColumnWidth: Int): St
     while (pos < list.size) {
       val subList = list.subList(pos, minOf(pos + columns, list.size))
       val row = subList.map { it.toString() }.joinToString(separator = "") { it.padEnd(minColumnWidth) }
-      appendln(row)
+      appendLine(row)
       pos += columns
     }
   }

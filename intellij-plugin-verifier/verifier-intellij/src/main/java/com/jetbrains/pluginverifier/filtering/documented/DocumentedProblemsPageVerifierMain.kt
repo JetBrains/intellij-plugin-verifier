@@ -19,9 +19,9 @@ object DocumentedProblemsPageVerifierMain {
     val documentedProblemsParser = DocumentedProblemsParser(false)
     for (page in documentedPages) {
       val pageDescriptor = buildString {
-        appendln("Source page URL: ${page.sourcePageUrl}")
-        appendln("Web page URL: ${page.webPageUrl}")
-        appendln("Edit page URL: ${page.editPageUrl}")
+        appendLine("Source page URL: ${page.sourcePageUrl}")
+        appendLine("Web page URL: ${page.webPageUrl}")
+        appendLine("Edit page URL: ${page.editPageUrl}")
       }
 
       val documentedProblems = try {
@@ -29,10 +29,10 @@ object DocumentedProblemsPageVerifierMain {
       } catch (e: DocumentedProblemsParseException) {
         throw RuntimeException(
           buildString {
-            appendln(pageDescriptor)
-            appendln("Failed to parse documented problems page")
-            appendln()
-            appendln(e.message)
+            appendLine(pageDescriptor)
+            appendLine("Failed to parse documented problems page")
+            appendLine()
+            appendLine(e.message)
           }
         )
       }

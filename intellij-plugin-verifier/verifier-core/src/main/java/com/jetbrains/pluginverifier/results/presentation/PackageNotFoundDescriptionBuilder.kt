@@ -40,9 +40,9 @@ object PackageNotFoundDescriptionBuilder {
     } else {
       append("class " + toFullJavaClassName(missingClasses.first()))
     }
-    appendln(".")
+    appendLine(".")
 
-    appendln(
+    appendLine(
       "Probably the package '$normalPackageName' belongs to a library or dependency that is not resolved by the checker.\n" +
         "It is also possible, however, that this package was actually removed from a dependency causing the detected problems. " +
         "Access to unresolved classes at runtime may lead to **NoSuchClassError**."
@@ -56,9 +56,9 @@ object PackageNotFoundDescriptionBuilder {
 
     append("The following classes of '$normalPackageName' are not resolved")
     if (hideClasses > 0) {
-      appendln(" (only $showClasses most used classes are shown, $hideClasses hidden):")
+      appendLine(" (only $showClasses most used classes are shown, $hideClasses hidden):")
     } else {
-      appendln(":")
+      appendLine(":")
     }
 
     /**
@@ -83,12 +83,12 @@ object PackageNotFoundDescriptionBuilder {
       }
 
       val differentProblems = selectFromDifferentLocations(showLocations, problems)
-      appendln("  Class " + classRef.formatClassReference(ClassOption.FULL_NAME) + " is referenced in")
+      appendLine("  Class " + classRef.formatClassReference(ClassOption.FULL_NAME) + " is referenced in")
       differentProblems.map { it.usage }.sortedWith(locationsComparator).forEach {
-        appendln("    $it")
+        appendLine("    $it")
       }
       if (hideLocations > 0) {
-        appendln("    ...and $hideLocations other " + "place".pluralize(hideLocations) + "...")
+        appendLine("    ...and $hideLocations other " + "place".pluralize(hideLocations) + "...")
       }
     }
   }

@@ -49,7 +49,7 @@ class FieldNotFoundProblem(
       val canBeDeclaredInSuperInterface = instruction == Instruction.GET_STATIC || instruction == Instruction.PUT_STATIC
       val hint = HierarchicalProblemsDescription.presentableElementMightHaveBeenDeclaredInSuperTypes("field", fieldOwnerHierarchy, true, canBeDeclaredInSuperInterface)
       if (hint.isNotEmpty()) {
-        appendln()
+        appendLine()
         append(hint)
       }
     }

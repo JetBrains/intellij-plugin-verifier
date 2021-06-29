@@ -39,14 +39,14 @@ class VerificationTest {
     Assert.assertFalse(missingDependencies.isEmpty())
     println(missingDependencies)
     val expectedDep = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
-    Assert.assertThat(missingDependencies.toSet(), hasItem(expectedDep))
+    Assert.assertTrue("$expectedDep not in $missingDependencies", expectedDep in missingDependencies)
   }
 
   @Test
   fun `check that module incompatibility is detected`() {
     val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
     val expectedDep = MissingDependency(PluginDependencyImpl("com.intellij.modules.arbitrary.module", false, true), "The plugin is incompatible with module 'com.intellij.modules.arbitrary.module'")
-    Assert.assertThat(missingDependencies.toSet(), hasItem(expectedDep))
+    Assert.assertTrue("$expectedDep not in $missingDependencies", expectedDep in missingDependencies)
   }
 
   @Test

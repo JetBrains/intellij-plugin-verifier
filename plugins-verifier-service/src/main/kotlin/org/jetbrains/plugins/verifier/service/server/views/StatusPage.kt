@@ -117,10 +117,10 @@ class StatusPage(
                   td {
                     pre {
                       +buildString {
-                        appendln("We have tried to verify $updateInfo " + "time".pluralizeWithNumber(attempts.size))
+                        appendLine("We have tried to verify $updateInfo " + "time".pluralizeWithNumber(attempts.size))
                         for (attempt in attempts.sortedByDescending { it.verificationEndTime }) {
-                          appendln("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
-                          appendln("        ${attempt.failureReason.reason}")
+                          appendLine("    ${attempt.verificationResult.verificationTarget} on ${DATE_FORMAT.format(attempt.verificationEndTime)}")
+                          appendLine("        ${attempt.failureReason.reason}")
                         }
                       }
                     }

@@ -41,58 +41,58 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
   private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
     if (pluginStructureWarnings.isNotEmpty()) {
-      appendln("Plugin structure warnings (${pluginStructureWarnings.size}): ")
+      appendLine("Plugin structure warnings (${pluginStructureWarnings.size}): ")
       for (warning in pluginStructureWarnings) {
-        appendln("$INDENT${warning.message}")
+        appendLine("$INDENT${warning.message}")
       }
     }
 
     val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
     if (directMissingDependencies.isNotEmpty()) {
-      appendln("Missing dependencies: ")
+      appendLine("Missing dependencies: ")
       for (missingDependency in directMissingDependencies) {
-        appendln("$INDENT${missingDependency.dependency}: ${missingDependency.missingReason}")
+        appendLine("$INDENT${missingDependency.dependency}: ${missingDependency.missingReason}")
       }
     }
 
     if (compatibilityWarnings.isNotEmpty()) {
-      appendln("Compatibility warnings (${compatibilityWarnings.size}): ")
+      appendLine("Compatibility warnings (${compatibilityWarnings.size}): ")
       appendShortAndFullDescriptions(compatibilityWarnings.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (compatibilityProblems.isNotEmpty()) {
-      appendln("Compatibility problems (${compatibilityProblems.size}): ")
+      appendLine("Compatibility problems (${compatibilityProblems.size}): ")
       appendShortAndFullDescriptions(compatibilityProblems.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (deprecatedUsages.isNotEmpty()) {
-      appendln("Deprecated API usages (${deprecatedUsages.size}): ")
+      appendLine("Deprecated API usages (${deprecatedUsages.size}): ")
       appendShortAndFullDescriptions(deprecatedUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (experimentalApiUsages.isNotEmpty()) {
-      appendln("Experimental API usages (${experimentalApiUsages.size}): ")
+      appendLine("Experimental API usages (${experimentalApiUsages.size}): ")
       appendShortAndFullDescriptions(experimentalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (internalApiUsages.isNotEmpty()) {
-      appendln("Internal API usages (${internalApiUsages.size}): ")
+      appendLine("Internal API usages (${internalApiUsages.size}): ")
       appendShortAndFullDescriptions(internalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (overrideOnlyMethodUsages.isNotEmpty()) {
-      appendln("Override-only API usages (${overrideOnlyMethodUsages.size}): ")
+      appendLine("Override-only API usages (${overrideOnlyMethodUsages.size}): ")
       appendShortAndFullDescriptions(overrideOnlyMethodUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     if (nonExtendableApiUsages.isNotEmpty()) {
-      appendln("Non-extendable API usages (${nonExtendableApiUsages.size}): ")
+      appendLine("Non-extendable API usages (${nonExtendableApiUsages.size}): ")
       appendShortAndFullDescriptions(nonExtendableApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
     when (val dynamicPluginStatus = dynamicPluginStatus) {
-      is DynamicPluginStatus.MaybeDynamic -> appendln("${INDENT}Plugin can be loaded/unloaded without IDE restart")
-      is DynamicPluginStatus.NotDynamic -> appendln("${INDENT}Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+      is DynamicPluginStatus.MaybeDynamic -> appendLine("${INDENT}Plugin can be loaded/unloaded without IDE restart")
+      is DynamicPluginStatus.NotDynamic -> appendLine("${INDENT}Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
       null -> Unit
     }
 
@@ -101,10 +101,10 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   private fun StringBuilder.appendShortAndFullDescriptions(shortToFullDescriptions: Map<String, List<String>>) {
     val indent = "    "
     shortToFullDescriptions.forEach { (shortDescription, fullDescriptions) ->
-      appendln("$indent#$shortDescription")
+      appendLine("$indent#$shortDescription")
       for (fullDescription in fullDescriptions) {
         fullDescription.lines().forEach { line ->
-          appendln("$indent$indent$line")
+          appendLine("$indent$indent$line")
         }
       }
     }

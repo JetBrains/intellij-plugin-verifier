@@ -12,7 +12,7 @@ import java.util.List;
 public class ParametersListUtil {
   /**
    * <p>Joins list of parameters into single string, which may be then parsed back into list by parseToArray(String).</p>
-   * <p></p>
+   * <br>
    * <p>
    * <strong>Conversion rules:</strong>
    * <ul>
@@ -20,7 +20,7 @@ public class ParametersListUtil {
    * <li>empty parameters parameters and parameters with spaces inside are surrounded with double quotes (<code>"</code>);</li>
    * <li>parameters are separated by single whitespace.</li>
    * </ul>
-   * <p></p>
+   * <br>
    * <p><strong>Examples:</strong></p>
    * <p>
    * <code>['a', 'b'] =&gt; 'a  b'</code><br>
@@ -37,7 +37,7 @@ public class ParametersListUtil {
 
   /**
    * <p>Splits single parameter string (as created by {@link #join(java.util.List)}) into list of parameters.</p>
-   * <p></p>
+   * <br>
    * <p>
    * <strong>Conversion rules:</strong>
    * <ul>
@@ -46,7 +46,7 @@ public class ParametersListUtil {
    * <li>parameters inside double quotes (<code>"a b"</code>) are kept as single one;</li>
    * <li>double quotes are dropped, escaped double quotes (<code>&#92;"</code>) are un-escaped.</li>
    * </ul>
-   * <p></p>
+   * <br>
    * <p><strong>Examples:</strong></p>
    * <p>
    * <code>' a  b ' =&gt; ['a', 'b']</code><br>

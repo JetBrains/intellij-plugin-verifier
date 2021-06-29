@@ -25,14 +25,14 @@ class CheckPluginApiParams(
 
   override val presentableText
     get() = buildString {
-      appendln("Base verifications (${baseVerificationDescriptors.size}): ")
+      appendLine("Base verifications (${baseVerificationDescriptors.size}): ")
       for ((apiPlugin, pluginVerifications) in baseVerificationDescriptors.groupBy { it.apiPlugin }) {
-        appendln(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
+        appendLine(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
       }
 
-      appendln("New verifications: (${newVerificationDescriptors.size}): ")
+      appendLine("New verifications: (${newVerificationDescriptors.size}): ")
       for ((apiPlugin, pluginVerifications) in newVerificationDescriptors.groupBy { it.apiPlugin }) {
-        appendln(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
+        appendLine(apiPlugin.presentableName + " against " + pluginVerifications.joinToString { it.checkedPlugin.presentableName })
       }
     }
 

@@ -208,17 +208,17 @@ class TeamCityResultPrinter(
     val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
     if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {
       return buildString {
-        appendln(getPluginOverviewLink(plugin))
+        appendLine(getPluginOverviewLink(plugin))
         if (problems.isNotEmpty()) {
-          appendln("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
+          appendLine("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
         }
 
         if (missingDependencies.isNotEmpty()) {
           if (problems.isNotEmpty()) {
-            appendln("Some problems might have been caused by missing dependencies: ")
+            appendLine("Some problems might have been caused by missing dependencies: ")
           }
           for (missingDependency in missingDependencies) {
-            appendln("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
+            appendLine("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
           }
         }
 
@@ -229,8 +229,8 @@ class TeamCityResultPrinter(
           getProblemsContent(problems)
         }
 
-        appendln()
-        appendln(problemsContent)
+        appendLine()
+        appendLine(problemsContent)
       }
     }
     return null
@@ -243,9 +243,9 @@ class TeamCityResultPrinter(
 
   private fun getProblemsContent(problems: Iterable<CompatibilityProblem>): String = buildString {
     for ((shortDescription, problemsWithShortDescription) in problems.groupBy { it.shortDescription }) {
-      appendln("#$shortDescription")
+      appendLine("#$shortDescription")
       for (compatibilityProblem in problemsWithShortDescription) {
-        appendln("    ${compatibilityProblem.fullDescription}")
+        appendLine("    ${compatibilityProblem.fullDescription}")
       }
     }
   }
@@ -256,12 +256,12 @@ class TeamCityResultPrinter(
   ): String {
     val otherProblems = getProblemsContent(problems.filterNot { it in notFoundClassesProblems })
     return buildString {
-      appendln("There are too many missing classes (${notFoundClassesProblems.size});")
-      appendln("it's probably because of missing plugins or modules")
-      appendln("some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];")
+      appendLine("There are too many missing classes (${notFoundClassesProblems.size});")
+      appendLine("it's probably because of missing plugins or modules")
+      appendLine("some not-found classes: [${notFoundClassesProblems.take(20).map { it.unresolved }.joinToString()}...];")
       if (otherProblems.isNotEmpty()) {
-        appendln("Other problems: ")
-        appendln(otherProblems)
+        appendLine("Other problems: ")
+        appendLine(otherProblems)
       }
     }
   }
@@ -291,9 +291,9 @@ class TeamCityResultPrinter(
     val plugins = runCatching { repository.getLastCompatiblePlugins(ideVersion) }.getOrDefault(emptyList())
     return plugins.groupBy { it.pluginId }.mapValues { (_, sameIdPlugins) ->
       if (repository is MarketplaceRepository) {
-        sameIdPlugins.maxBy { (it as UpdateInfo).updateId }
+        sameIdPlugins.maxByOrNull { (it as UpdateInfo).updateId }
       } else {
-        sameIdPlugins.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+        sameIdPlugins.maxWithOrNull(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
       }
     }.values.filterNotNull()
   }

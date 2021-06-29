@@ -56,7 +56,7 @@ object HierarchicalProblemsDescription {
         append(superTypes.joinToString())
       } else {
         for (superType in superTypes) {
-          appendln()
+          appendLine()
           append("  $superType")
         }
       }

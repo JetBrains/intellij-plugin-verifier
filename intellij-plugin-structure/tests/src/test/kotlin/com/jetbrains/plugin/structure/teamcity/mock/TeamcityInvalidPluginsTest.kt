@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
 import com.jetbrains.plugin.structure.teamcity.problems.createIncorrectTeamCityPluginFile
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
@@ -19,10 +20,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<TeamcityPlugin, TeamcityPluginManager>(fileSystemType) {
-  @Rule
-  @JvmField
-  val expectedEx: ExpectedException = ExpectedException.none()
-
   override fun createManager(extractDirectory: Path): TeamcityPluginManager =
     TeamcityPluginManager.createManager(extractDirectory)
 
@@ -35,9 +32,9 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
   @Test
   fun `plugin file does not exist`() {
     val nonExistentFile = Paths.get("non-existent-file")
-    expectedEx.expect(IllegalArgumentException::class.java)
-    expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    createPluginSuccessfully(nonExistentFile)
+    Assert.assertThrows("Plugin file non-existent-file does not exist", IllegalArgumentException::class.java) {
+      createPluginSuccessfully(nonExistentFile)
+    }
   }
 
   @Test

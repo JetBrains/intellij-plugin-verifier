@@ -6,11 +6,11 @@ import org.junit.Assert
 
 data class DescriptionHolder(val shortDescription: String, val fullDescription: String, val type: DescriptionType) {
   override fun toString() = buildString {
-    appendln("/*expected(${type.name})")
-    appendln(shortDescription)
-    appendln()
-    appendln(fullDescription)
-    appendln("*/")
+    appendLine("/*expected(${type.name})")
+    appendLine(shortDescription)
+    appendLine()
+    appendLine(fullDescription)
+    appendLine("*/")
   }
 }
 

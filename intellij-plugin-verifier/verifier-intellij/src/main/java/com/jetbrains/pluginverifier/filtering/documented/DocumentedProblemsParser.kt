@@ -123,13 +123,13 @@ class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
   private fun createParseException(description: String, unwrappedDescription: String) =
     DocumentedProblemsParseException(
       buildString {
-        appendln("Unable to parse documented problem description")
-        appendln("Description: \"$description\"")
-        appendln("Description (no Markdown): \"$unwrappedDescription\"")
-        appendln("Only the following patterns are supported: ")
-        appendln("Where <method-params>='$METHOD_PARAMS' and <identifier>='$IDENTIFIER':")
+        appendLine("Unable to parse documented problem description")
+        appendLine("Description: \"$description\"")
+        appendLine("Description (no Markdown): \"$unwrappedDescription\"")
+        appendLine("Only the following patterns are supported: ")
+        appendLine("Where <method-params>='$METHOD_PARAMS' and <identifier>='$IDENTIFIER':")
         for (regex in pattern2Parser.map { it.first }) {
-          appendln(
+          appendLine(
             regex.pattern
               .replace(METHOD_PARAMS, "<method-params>")
               .replace(IDENTIFIER, "<identifier>")

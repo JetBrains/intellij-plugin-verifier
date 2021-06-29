@@ -70,7 +70,7 @@ class ExtractFeaturesTask(
     if (specifiedVersion is IdeDescriptorsCache.Result.Found) {
       return specifiedVersion
     }
-    val maxUltimateVersion = ideRepository.fetchIndex().map { it.version }.filter { it.productCode == "IU" }.max()
+    val maxUltimateVersion = ideRepository.fetchIndex().map { it.version }.filter { it.productCode == "IU" }.maxOrNull()
     if (maxUltimateVersion != null) {
       LOG.warn("IDE $featureExtractorIdeVersion is not available, defaulting to $maxUltimateVersion")
       val maxUltimateIdeEntry = ideDescriptorsCache.getIdeDescriptorCacheEntry(maxUltimateVersion)

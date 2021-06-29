@@ -21,11 +21,12 @@ import com.jetbrains.pluginverifier.tests.mocks.TestJdkDescriptorProvider
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 import java.net.URL
 import java.nio.file.Files
+import kotlin.io.path.createTempDirectory
 
 class VerificationRunner {
 
   fun runPluginVerification(ide: Ide, idePlugin: IdePlugin): PluginVerificationResult {
-    val tempDownloadDir = createTempDir().apply { deleteOnExit() }.toPath()
+    val tempDownloadDir = createTempDirectory().toFile().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
     val jdkPath = TestJdkDescriptorProvider.getJdkPathForTests()

@@ -217,14 +217,14 @@ class ApiQualityCheckCommand : Command {
             val testName = "($javaPackageName)"
             tc.testStarted(testName).use {
               val message = buildString {
-                appendln("The following APIs belonging to package '$javaPackageName' are marked with @ApiStatus.Experimental for too long")
+                appendLine("The following APIs belonging to package '$javaPackageName' are marked with @ApiStatus.Experimental for too long")
                 for ((apiSignature, _) in samePackage.sortedBy { it.apiSignature.fullPresentation }) {
                   append("  ").append(apiSignature.fullPresentation).append(" is marked experimental since $sinceVersion")
-                  appendln()
+                  appendLine()
                 }
-                appendln("The current branch is ${report.apiQualityOptions.currentBranch}")
-                appendln()
-                appendln(getExperimentalNote())
+                appendLine("The current branch is ${report.apiQualityOptions.currentBranch}")
+                appendLine()
+                appendLine(getExperimentalNote())
               }
               failedTests += TeamCityTest(suiteName, testName)
               tc.testFailed(testName, message, "")
@@ -270,7 +270,7 @@ class ApiQualityCheckCommand : Command {
                   append(" must be ")
                 }
                 append("removed in ${removalVersion.originalVersion}")
-                appendln()
+                appendLine()
                 append("It was deprecated")
                 if (deprecatedInVersion != null) {
                   append(" in $deprecatedInVersion")
@@ -280,7 +280,7 @@ class ApiQualityCheckCommand : Command {
                 if (scheduledForRemovalInVersion != null && scheduledForRemovalInVersion.baselineVersion <= removalVersion.branch) {
                   append(" and marked with @ApiStatus.ScheduledForRemoval annotation in $scheduledForRemovalInVersion to be removed in $removalVersion")
                 }
-                appendln()
+                appendLine()
                 append("Consider removing this API right now or promoting planned removal version a little bit if there are too many plugins still using it.")
               }
               failedTests += TeamCityTest(suiteName, testName)
@@ -305,7 +305,7 @@ class ApiQualityCheckCommand : Command {
               } else {
                 append("it is not specified")
               }
-              appendln()
+              appendLine()
               append("API was deprecated")
               if (deprecatedInVersion != null) {
                 append(" in $deprecatedInVersion")
@@ -325,14 +325,14 @@ class ApiQualityCheckCommand : Command {
     val stabilizedApis = report.stabilizedExperimentalApis
     if (stabilizedApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
-        appendln("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
-        appendln("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2020.html")
-        appendln()
+        appendLine("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
+        appendLine("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2020.html")
+        appendLine()
         for ((_, apisOfPackage) in stabilizedApis.sortedBy { it.apiSignature.javaPackageName }.groupBy { it.apiSignature.javaPackageName }) {
           for ((signature, inVersion) in apisOfPackage) {
-            appendln("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
+            appendLine("${signature.externalPresentation} was unmarked @ApiStatus.Experimental in $inVersion")
           }
-          appendln("")
+          appendLine("")
         }
       }
       Paths.get("stabilized-experimental-apis.txt").writeText(stabilizedMessage)
@@ -369,9 +369,9 @@ class ApiQualityCheckCommand : Command {
     if (nonDynamicExtensionPoints.isNotEmpty()) {
       Paths.get("non-dynamic-extension-points.csv").writeText(
         buildString {
-          appendln("EP name,Usages")
+          appendLine("EP name,Usages")
           nonDynamicExtensionPoints.sortedByDescending { it.numberOfUsages }.forEach { (extensionPointName, numberOfUsages) ->
-            appendln("$extensionPointName,$numberOfUsages")
+            appendLine("$extensionPointName,$numberOfUsages")
           }
         }
       )
@@ -421,13 +421,13 @@ class ApiQualityCheckCommand : Command {
     val experimentalMemberAnnotation = classFileMember.findEffectiveExperimentalAnnotation(ideResolver)
     if (experimentalMemberAnnotation != null) {
       if (experimentalMemberAnnotation !is MemberAnnotation.AnnotatedViaContainingClass) {
-        val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.min()
+        val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.minOrNull()
         if (since != null && since.baselineVersion <= qualityOptions.minExperimentalBranch) {
           qualityReport.tooLongExperimental += TooLongExperimental(signature, since, experimentalMemberAnnotation)
         }
       }
     } else {
-      val unmarkedExperimentalIn = apiEvents.filterIsInstance<UnmarkedExperimentalIn>().map { it.ideVersion }.max()
+      val unmarkedExperimentalIn = apiEvents.filterIsInstance<UnmarkedExperimentalIn>().map { it.ideVersion }.maxOrNull()
       if (unmarkedExperimentalIn != null && unmarkedExperimentalIn.baselineVersion >= qualityOptions.currentBranch) {
         qualityReport.stabilizedExperimentalApis += StabilizedExperimentalApi(signature, unmarkedExperimentalIn)
       }
@@ -438,16 +438,16 @@ class ApiQualityCheckCommand : Command {
       val markedDeprecated = apiEvents.filterIsInstance<MarkedDeprecatedIn>()
       val unmarkedDeprecated = apiEvents.filterIsInstance<UnmarkedDeprecatedIn>()
 
-      val firstDeprecated = markedDeprecated.map { it.ideVersion }.min()
-      val firstUnDeprecated = unmarkedDeprecated.map { it.ideVersion }.min()
+      val firstDeprecated = markedDeprecated.map { it.ideVersion }.minOrNull()
+      val firstUnDeprecated = unmarkedDeprecated.map { it.ideVersion }.minOrNull()
 
-      val scheduledForRemovalInVersion = markedDeprecated.filter { it.forRemoval }.minBy { it.ideVersion }?.ideVersion
+      val scheduledForRemovalInVersion = markedDeprecated.filter { it.forRemoval }.minByOrNull { it.ideVersion }?.ideVersion
 
       val wasDeprecatedBeforeFirstKnownIde = firstDeprecated != null && firstUnDeprecated != null && firstUnDeprecated <= firstDeprecated
       val deprecatedInVersion = if (wasDeprecatedBeforeFirstKnownIde) {
         null
       } else {
-        markedDeprecated.minBy { it.ideVersion }?.ideVersion
+        markedDeprecated.minByOrNull { it.ideVersion }?.ideVersion
       }
 
       val untilVersionStr = deprecationInfo.untilVersion

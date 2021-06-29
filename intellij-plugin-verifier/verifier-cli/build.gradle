@@ -1,13 +1,13 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '5.1.0'
+  id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 dependencies {
   api project(':verifier-intellij')
 
   runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-  implementation 'com.github.spullara.cli-parser:cli-parser:1.1.2'
-  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.7'
+  implementation 'com.github.spullara.cli-parser:cli-parser:1.1.5'
+  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
 }
 
 shadowJar {

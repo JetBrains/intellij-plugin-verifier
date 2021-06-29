@@ -40,6 +40,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   fun getLastCompatiblePlugins(ideVersion: IdeVersion, channel: String): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
+    @Suppress("DEPRECATION")
     val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
     val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString(), channel)
     val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }

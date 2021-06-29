@@ -132,7 +132,7 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
       file("bigFile.bin", ByteArray(tooBigSize))
     }
 
-    assertProblematicPlugin(pluginFile, listOf(PluginFileSizeIsTooLarge(30 * 1024 * 1024)))
+    assertProblematicPlugin(pluginFile, listOf(PluginFileSizeIsTooLarge(30L * 1024 * 1024)))
   }
 
 }

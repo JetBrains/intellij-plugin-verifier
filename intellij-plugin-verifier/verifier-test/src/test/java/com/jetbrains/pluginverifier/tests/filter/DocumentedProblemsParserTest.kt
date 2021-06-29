@@ -3,16 +3,11 @@ package com.jetbrains.pluginverifier.tests.filter
 import com.jetbrains.pluginverifier.filtering.documented.*
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.toInternalName
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser.Companion.unwrapMarkdownTags
+import org.junit.Assert
 import org.junit.Assert.*
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 
 class DocumentedProblemsParserTest {
-
-  @Rule
-  @JvmField
-  val expectedEx: ExpectedException = ExpectedException.none()
 
   @Test
   fun `unwrap markdown tags test`() {
@@ -90,12 +85,13 @@ class DocumentedProblemsParserTest {
 
   @Test
   fun `failed to parse`() {
-    expectedEx.expect(DocumentedProblemsParseException::class.java)
-    val page = """
+    Assert.assertThrows(DocumentedProblemsParseException::class.java) {
+      val page = """
   `SomeClass` non-parsed description 
   : Use classes from `org.apache.commons.imaging` instead
 """.trimIndent()
-    DocumentedProblemsParser(false).parse(page)
+      DocumentedProblemsParser(false).parse(page)
+    }
   }
 
   @Test

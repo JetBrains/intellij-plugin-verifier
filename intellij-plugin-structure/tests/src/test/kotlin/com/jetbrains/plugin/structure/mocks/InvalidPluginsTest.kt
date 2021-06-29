@@ -12,18 +12,13 @@ import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import java.nio.file.Path
 import java.nio.file.Paths
 
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
-  @Rule
-  @JvmField
-  val expectedEx: ExpectedException = ExpectedException.none()
-
   override fun createManager(extractDirectory: Path): IdePluginManager =
     IdePluginManager.createManager(extractDirectory)
 
@@ -42,9 +37,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin file does not exist`() {
     val nonExistentFile = Paths.get("non-existent-file")
-    expectedEx.expect(IllegalArgumentException::class.java)
-    expectedEx.expectMessage("Plugin file non-existent-file does not exist")
-    createPluginSuccessfully(nonExistentFile)
+    Assert.assertThrows("Plugin file non-existent-file does not exist", IllegalArgumentException::class.java) {
+      createPluginSuccessfully(nonExistentFile)
+    }
   }
 
   @Test

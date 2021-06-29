@@ -44,7 +44,7 @@ class FileReporter<in T>(
           fileWriter = openFileWriter()
         }
         try {
-          fileWriter?.appendln(line)
+          fileWriter?.appendLine(line)
         } catch (e: Exception) {
           e.rethrowIfInterrupted()
           isClosed = true

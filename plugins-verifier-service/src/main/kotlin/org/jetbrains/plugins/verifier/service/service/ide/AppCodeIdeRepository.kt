@@ -38,7 +38,7 @@ class AppCodeIdeRepository(
     }.toList()
     val interesting = arrayListOf<Build>()
     interesting += allBuilds.filterNot { "EAP" in it.tags }
-    val latestEap = allBuilds.filter { "EAP" in it.tags }.maxBy { IdeVersion.createIdeVersion(it.buildNumber!!) }
+    val latestEap = allBuilds.filter { "EAP" in it.tags }.maxByOrNull { IdeVersion.createIdeVersion(it.buildNumber!!) }
     if (latestEap != null) {
       interesting += latestEap
     }
@@ -66,7 +66,7 @@ class AppCodeIdeRepository(
 
     // Drop similar builds.
     return result.groupBy { "${it.version.baselineVersion}.${it.version.build}" }
-      .mapValues { entry -> entry.value.maxBy { it.version }!! }
+      .mapValues { entry -> entry.value.maxByOrNull { it: AvailableIde -> it.version }!! }
       .values
       .toList()
   }

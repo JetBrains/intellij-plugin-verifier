@@ -159,8 +159,8 @@ const val BUILD_TXT_FILE_NAME = "build.txt"
 private class ExternalAnnotationsXmlWriter(private val writer: Writer) : Closeable {
 
   fun appendXmlStart() {
-    writer.appendln("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>""")
-    writer.appendln("<root>")
+    writer.appendLine("""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>""")
+    writer.appendLine("<root>")
   }
 
   fun appendSignature(apiSignature: ApiSignature, apiEvent: ApiEvent) {
@@ -179,16 +179,16 @@ private class ExternalAnnotationsXmlWriter(private val writer: Writer) : Closeab
     }
 
     with(writer) {
-      appendln("""  <item name="${StringEscapeUtils.escapeHtml4(apiSignature.externalPresentation)}">""")
-      appendln("""    <annotation name="${apiEventAnnotation.annotationName}">""")
-      appendln("""      <val name="${apiEventAnnotation.valueName}" val="&quot;${ideVersion.asStringWithoutProductCode()}&quot;"/>""")
-      appendln("""    </annotation>""")
-      appendln("""  </item>""")
+      appendLine("""  <item name="${StringEscapeUtils.escapeHtml4(apiSignature.externalPresentation)}">""")
+      appendLine("""    <annotation name="${apiEventAnnotation.annotationName}">""")
+      appendLine("""      <val name="${apiEventAnnotation.valueName}" val="&quot;${ideVersion.asStringWithoutProductCode()}&quot;"/>""")
+      appendLine("""    </annotation>""")
+      appendLine("""  </item>""")
     }
   }
 
   fun appendXmlEnd() {
-    writer.appendln("</root>")
+    writer.appendLine("</root>")
   }
 
   override fun close() {

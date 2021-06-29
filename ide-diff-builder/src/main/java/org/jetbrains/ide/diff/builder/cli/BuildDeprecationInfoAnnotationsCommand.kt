@@ -76,13 +76,13 @@ class BuildDeprecationInfoAnnotationsCommand : Command {
       val topLevelClassEvents = apiSignatureToEvents[signature.topLevelClassSignature].orEmpty()
       val allRelevantEvents = topLevelClassEvents + events
 
-      val deprecatedIn = events.filterIsInstance<MarkedDeprecatedIn>().maxBy { it.ideVersion }
+      val deprecatedIn = events.filterIsInstance<MarkedDeprecatedIn>().maxByOrNull { it.ideVersion }
       if (deprecatedIn != null) {
         seenDeprecatedSignatures += signature
       }
 
-      val removedIn = allRelevantEvents.filterIsInstance<RemovedIn>().maxBy { it.ideVersion }
-      val introducedIn = allRelevantEvents.filterIsInstance<IntroducedIn>().maxBy { it.ideVersion }
+      val removedIn = allRelevantEvents.filterIsInstance<RemovedIn>().maxByOrNull { it.ideVersion }
+      val introducedIn = allRelevantEvents.filterIsInstance<IntroducedIn>().maxByOrNull { it.ideVersion }
       if (removedIn != null && (introducedIn == null || introducedIn.ideVersion <= removedIn.ideVersion)) {
         // Skip already removed APIs.
         continue

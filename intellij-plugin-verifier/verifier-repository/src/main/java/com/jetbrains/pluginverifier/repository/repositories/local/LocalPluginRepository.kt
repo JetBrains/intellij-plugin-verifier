@@ -23,11 +23,11 @@ class LocalPluginRepository(private val plugins: MutableList<LocalPluginInfo> = 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion) =
     plugins.filter { it.isCompatibleWith(ideVersion) }
       .groupBy { it.pluginId }
-      .mapValues { it.value.maxWith(VERSION_COMPARATOR)!! }
+      .mapValues { it.value.maxWithOrNull(VERSION_COMPARATOR)!! }
       .values.toList()
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
-    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }.maxWith(VERSION_COMPARATOR)
+    getAllVersionsOfPlugin(pluginId).filter { it.isCompatibleWith(ideVersion) }.maxWithOrNull(VERSION_COMPARATOR)
 
   override fun getAllVersionsOfPlugin(pluginId: String) =
     plugins.filter { it.pluginId == pluginId }

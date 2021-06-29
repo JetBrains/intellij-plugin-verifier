@@ -5,26 +5,27 @@
 package org.jetbrains.ide.diff.builder.persistence.json
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import kotlinx.serialization.*
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 
-val jsonInstance: Json = Json(
-  JsonConfiguration.Stable.copy(
-    isLenient = true,
-    ignoreUnknownKeys = true,
-    prettyPrint = true,
-    indent = "  "
-  )
-)
+val jsonInstance: Json = Json {
+  isLenient = true
+  ignoreUnknownKeys = true
+  prettyPrint = true
+  prettyPrintIndent = "  "
+}
 
 @Serializer(forClass = IdeVersion::class)
 object IdeVersionSerializer {
   override val descriptor
-    get() = PrimitiveDescriptor("IdeVersionSerializer", PrimitiveKind.STRING)
+    get() = PrimitiveSerialDescriptor("IdeVersionSerializer", PrimitiveKind.STRING)
 
-  override fun serialize(encoder: Encoder, obj: IdeVersion) {
-    encoder.encodeString(obj.asString())
+  override fun serialize(encoder: Encoder, value: IdeVersion) {
+    encoder.encodeString(value.asString())
   }
 
   override fun deserialize(decoder: Decoder) =

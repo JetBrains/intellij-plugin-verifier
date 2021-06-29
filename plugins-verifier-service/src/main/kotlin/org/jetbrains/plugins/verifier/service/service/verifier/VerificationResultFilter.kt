@@ -45,7 +45,7 @@ class VerificationResultFilter {
       while (iterator.hasNext()) {
         val attempts = iterator.next().value
         if (attempts.isNotEmpty()) {
-          val lastAttemptInstant = attempts.map { it.verificationEndTime }.max()!!
+          val lastAttemptInstant = attempts.map { it.verificationEndTime }.maxOrNull()!!
           if (lastAttemptInstant.plus(CLEANUP_TIMEOUT) < nowInstant) {
             iterator.remove()
           }
@@ -58,7 +58,7 @@ class VerificationResultFilter {
   fun shouldStartVerification(scheduledVerification: ScheduledVerification, nowTime: Instant): Boolean {
     doCleanup()
     val failedAttempts = _failedAttempts[scheduledVerification.updateInfo].orEmpty()
-    val lastFailedAttempt = failedAttempts.maxBy { it.verificationEndTime } ?: return true
+    val lastFailedAttempt = failedAttempts.maxByOrNull { it: VerificationAttempt -> it.verificationEndTime } ?: return true
     return lastFailedAttempt.failureReason.shouldRecheck
       && nowTime > lastFailedAttempt.verificationEndTime.plus(RECHECK_ATTEMPT_TIMEOUT)
   }
@@ -81,8 +81,8 @@ class VerificationResultFilter {
     attempts += VerificationAttempt(verificationResult, scheduledVerification, verificationEndTime, failureReason)
 
     val times = attempts.map { it.verificationEndTime }
-    val firstTime = times.min()!!
-    val lastTime = times.max()!!
+    val firstTime = times.minOrNull()!!
+    val lastTime = times.maxOrNull()!!
 
     val triedEnough = attempts.size >= RECHECK_ATTEMPTS
       && Duration.between(firstTime, lastTime) > RECHECK_ATTEMPT_TIMEOUT.multipliedBy(RECHECK_ATTEMPTS.toLong())

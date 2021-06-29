@@ -109,7 +109,7 @@ object PluginVerifierMain {
       MarketplaceRepository(URL(pluginRepositoryUrl))
     }
 
-    val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5 * 1024)
+    val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
 

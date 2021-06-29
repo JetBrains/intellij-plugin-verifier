@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.io.IOException
 import java.nio.file.Files
@@ -16,10 +16,6 @@ class DecompressorTest {
   @Rule
   @JvmField
   val tempFolder = TemporaryFolder()
-
-  @Rule
-  @JvmField
-  val expectedEx: ExpectedException = ExpectedException.none()
 
   @Test
   fun simple() {
@@ -37,33 +33,31 @@ class DecompressorTest {
   fun `contains file with relative path`() {
     val relativeName = "some/../relative.txt"
 
-    expectedEx.expect(IOException::class.java)
-    expectedEx.expectMessage("Invalid relative entry name: some/../relative.txt")
+    Assert.assertThrows("Invalid relative entry name: some/../relative.txt", IOException::class.java) {
+      val zipFile = tempFolder.newFile("broken.zip").toPath()
+      ZipOutputStream(Files.newOutputStream(zipFile)).use {
+        it.putNextEntry(ZipEntry(relativeName))
+        it.write("42".toByteArray())
+        it.closeEntry()
+      }
 
-    val zipFile = tempFolder.newFile("broken.zip").toPath()
-    ZipOutputStream(Files.newOutputStream(zipFile)).use {
-      it.putNextEntry(ZipEntry(relativeName))
-      it.write("42".toByteArray())
-      it.closeEntry()
+      zipFile.extractTo(tempFolder.newFolder().toPath())
     }
-
-    zipFile.extractTo(tempFolder.newFolder().toPath())
   }
 
   @Test
   fun `contains file with too long name`() {
     val tooLongName = "a".repeat(256)
 
-    expectedEx.expect(IOException::class.java)
-    expectedEx.expectMessage("Entry name is too long: $tooLongName")
+    Assert.assertThrows("Entry name is too long: $tooLongName", IOException::class.java) {
+      val zipFile = tempFolder.newFile("broken.zip").toPath()
+      ZipOutputStream(Files.newOutputStream(zipFile)).use {
+        it.putNextEntry(ZipEntry(tooLongName))
+        it.write("42".toByteArray())
+        it.closeEntry()
+      }
 
-    val zipFile = tempFolder.newFile("broken.zip").toPath()
-    ZipOutputStream(Files.newOutputStream(zipFile)).use {
-      it.putNextEntry(ZipEntry(tooLongName))
-      it.write("42".toByteArray())
-      it.closeEntry()
+      zipFile.extractTo(tempFolder.newFolder().toPath())
     }
-
-    zipFile.extractTo(tempFolder.newFolder().toPath())
   }
 }

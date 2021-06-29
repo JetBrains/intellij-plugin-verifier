@@ -22,8 +22,8 @@ class CheckIdeParams(
 
   override val presentableText
     get() = buildString {
-      appendln("Scheduled verifications against ${verificationTarget.ideVersion.asString()} (${verificationDescriptors.size}):")
-      appendln(verificationDescriptors.joinToString { it.checkedPlugin.presentableName })
+      appendLine("Scheduled verifications against ${verificationTarget.ideVersion.asString()} (${verificationDescriptors.size}):")
+      appendLine(verificationDescriptors.joinToString { it.checkedPlugin.presentableName })
     }
 
   override fun createTask() = CheckIdeTask(this)

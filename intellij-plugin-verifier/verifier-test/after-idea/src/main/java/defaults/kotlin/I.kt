@@ -5,6 +5,7 @@ package defaults.kotlin
  */
 interface I {
 
+  @Suppress("DEPRECATION")
   @JvmDefault
   fun withDefault(): Int = 0
 

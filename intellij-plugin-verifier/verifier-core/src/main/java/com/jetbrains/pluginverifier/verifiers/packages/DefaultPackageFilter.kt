@@ -30,7 +30,7 @@ class DefaultPackageFilter(private val packages: List<Descriptor>) : PackageFilt
   override fun acceptPackageOfClass(binaryClassName: String): Boolean {
     val longestIncluding = packages.asSequence()
       .filter { it.includeOrExclude && it.matchesPackageOf(binaryClassName) }
-      .maxBy { it.binaryPackageName.length }
+      .maxByOrNull { it.binaryPackageName.length }
       ?: return false
 
     /**

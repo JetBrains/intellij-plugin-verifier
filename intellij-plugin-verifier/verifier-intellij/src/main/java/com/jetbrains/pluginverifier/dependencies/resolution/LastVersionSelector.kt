@@ -30,9 +30,9 @@ class LastVersionSelector : PluginVersionSelector {
     notFoundMessage: String
   ): PluginVersionSelector.Result {
     val lastVersion = if (pluginRepository is MarketplaceRepository) {
-      allVersions.maxBy { (it as UpdateInfo).updateId }
+      allVersions.maxByOrNull { it: PluginInfo -> (it as UpdateInfo).updateId }
     } else {
-      allVersions.maxWith(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
+      allVersions.maxWithOrNull(compareBy(VersionComparatorUtil.COMPARATOR) { it.version })
     }
     return if (lastVersion != null) {
       PluginVersionSelector.Result.Selected(lastVersion)

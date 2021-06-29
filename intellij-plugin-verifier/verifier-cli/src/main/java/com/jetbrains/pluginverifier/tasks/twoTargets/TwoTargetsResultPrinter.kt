@@ -132,10 +132,10 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                 val (oldResult, newResult) = pluginToTwoResults[plugin] ?: continue
 
                 if (isNotEmpty()) {
-                  appendln()
-                  appendln()
+                  appendLine()
+                  appendLine()
                 }
-                appendln(plugin.getFullPluginCoordinates())
+                appendLine(plugin.getFullPluginCoordinates())
 
                 val latestPluginVerification = if (newTarget is PluginVerificationTarget.IDE) {
                   @Suppress("RemoveExplicitTypeArguments")
@@ -147,13 +147,13 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                 }
 
                 val compatibilityNote = createCompatibilityNote(plugin, baseTarget, newTarget, latestPluginVerification, problems)
-                appendln(compatibilityNote)
+                appendLine(compatibilityNote)
 
                 if (newResult.hasDirectMissingMandatoryDependencies) {
                   val missingDependenciesNote = getMissingDependenciesNote(oldResult, newResult)
-                  appendln()
-                  appendln(missingDependenciesNote)
-                  appendln()
+                  appendLine()
+                  appendLine(missingDependenciesNote)
+                  appendLine()
                 }
 
                 val compatibilityProblems = buildString {
@@ -161,27 +161,27 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                     if (problems.size > 1) {
                       append("${index + 1}) ")
                     }
-                    appendln(problem.fullDescription)
+                    appendLine(problem.fullDescription)
                     if (latestPluginVerification != null) {
                       if (latestPluginVerification.isKnownProblem(problem)) {
-                        appendln("This problem also takes place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
+                        appendLine("This problem also takes place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
                       } else {
-                        appendln("This problem does not take place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
+                        appendLine("This problem does not take place in the newest version of the plugin ${latestPluginVerification.plugin.getFullPluginCoordinates()}")
                       }
                     }
                   }
                 }
-                appendln(compatibilityProblems)
+                appendLine(compatibilityProblems)
               }
             }
 
             val testMessage = buildString {
-              appendln(shortDescription)
-              appendln("This problem is detected for $newTarget but not for $baseTarget (affects " + "plugin".pluralizeWithNumber(plugin2Problems.size) + ")")
+              appendLine(shortDescription)
+              appendLine("This problem is detected for $newTarget but not for $baseTarget (affects " + "plugin".pluralizeWithNumber(plugin2Problems.size) + ")")
               if (oldProblemApiUsages.isNotEmpty()) {
-                appendln(getOldProblemApiUsagesNote(oldProblemApiUsages))
+                appendLine(getOldProblemApiUsagesNote(oldProblemApiUsages))
               } else {
-                appendln(documentationNote)
+                appendLine(documentationNote)
               }
             }
 
@@ -211,16 +211,16 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
     return buildString {
       val experimentalApiUsage = oldProblemApiUsages.filterIsInstance<ExperimentalApiUsage>().firstOrNull()
       if (experimentalApiUsage != null) {
-        appendln("$apiLocation was marked @ApiStatus.Experimental so changes must be expected by external plugins. ")
-        appendln("And yet we want to keep track of breaking experimental API changes. You can mute this test on TeamCity with a comment 'Experimental API change'.")
-        appendln()
+        appendLine("$apiLocation was marked @ApiStatus.Experimental so changes must be expected by external plugins. ")
+        appendLine("And yet we want to keep track of breaking experimental API changes. You can mute this test on TeamCity with a comment 'Experimental API change'.")
+        appendLine()
       }
 
       val internalApiUsage = oldProblemApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
       if (internalApiUsage != null) {
-        appendln("$apiLocation was marked @ApiStatus.Internal so external plugins must not you it. ")
-        appendln("And yet we want to keep track of breaking internal API changes. You can mute this test on TeamCity with a comment 'Internal API change'.")
-        appendln()
+        appendLine("$apiLocation was marked @ApiStatus.Internal so external plugins must not you it. ")
+        appendLine("And yet we want to keep track of breaking internal API changes. You can mute this test on TeamCity with a comment 'Internal API change'.")
+        appendLine()
       }
 
       val deprecatedApiUsage = oldProblemApiUsages.filterIsInstance<DeprecatedApiUsage>().firstOrNull()
@@ -234,13 +234,13 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
             append(" in ${deprecationInfo.untilVersion}")
           }
         }
-        appendln()
-        appendln("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
-        appendln(
+        appendLine()
+        appendLine("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
+        appendLine(
           "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
             "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
         )
-        appendln()
+        appendLine()
       }
     }
   }
@@ -298,26 +298,26 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       && newTarget is PluginVerificationTarget.IDE
       && !plugin.isCompatibleWith(newTarget.ideVersion)
     ) {
-      appendln(
+      appendLine(
         "Note that compatibility range ${plugin.presentableSinceUntilRange} " +
           "of plugin ${plugin.presentableName} does not include ${newTarget.ideVersion}."
       )
       if (latestPluginVerification != null) {
-        appendln(
+        appendLine(
           "We have also verified the newest plugin version ${latestPluginVerification.plugin.presentableName} " +
             "whose compatibility range ${latestPluginVerification.plugin.presentableSinceUntilRange} includes ${newTarget.ideVersion}. "
         )
         val latestVersionSameProblemsCount = problems.count { latestPluginVerification.isKnownProblem(it) }
         if (latestVersionSameProblemsCount > 0) {
-          appendln(
+          appendLine(
             "The newest version ${latestPluginVerification.plugin.version} has $latestVersionSameProblemsCount/${problems.size} same " + "problem".pluralize(latestVersionSameProblemsCount) + " " +
               "and thus it has also been affected by this breaking change."
           )
         } else {
-          appendln("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
+          appendLine("The newest version ${latestPluginVerification.plugin.version} has none of the problems of the old version and thus it may be considered unaffected by this breaking change.")
         }
       } else {
-        appendln("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
+        appendLine("There are no newer versions of the plugin for ${newTarget.ideVersion}. ")
       }
     }
   }
@@ -338,7 +338,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
     baseResult: PluginVerificationResult.Verified,
     newResult: PluginVerificationResult.Verified
   ): String = buildString {
-    appendln("Note: some problems might have been caused by missing dependencies: [")
+    appendLine("Note: some problems might have been caused by missing dependencies: [")
     for ((dependency, missingReason) in newResult.directMissingMandatoryDependencies) {
       append("    $dependency: $missingReason")
 
@@ -356,9 +356,9 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
           }
         }
       }
-      appendln()
+      appendLine()
     }
-    appendln("]")
+    appendLine("]")
   }
 
 }

@@ -8,10 +8,10 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.PluginXmlBuilder
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Paths
 
@@ -21,23 +21,19 @@ class IdeTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
-  @Rule
-  @JvmField
-  val expectedEx: ExpectedException = ExpectedException.none()
-
   @Test
   fun `version is not specified in distributed IDE`() {
     val idePath = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
       dir("lib") { }
     }
 
-    expectedEx.expect(InvalidIdeException::class.java)
-    expectedEx.expectMessage(
+    Assert.assertThrows(
       "IDE by path '$idePath' is invalid: Build number is not found in the following files relative to $idePath: " +
-        "'build.txt', '${Paths.get("Resources").resolve("build.txt")}', '${Paths.get("community").resolve("build.txt")}', '${Paths.get("ultimate").resolve("community").resolve("build.txt")}'"
-    )
-
-    IdeManager.createManager().createIde(idePath)
+        "'build.txt', '${Paths.get("Resources").resolve("build.txt")}', '${Paths.get("community").resolve("build.txt")}', '${Paths.get("ultimate").resolve("community").resolve("build.txt")}'",
+      InvalidIdeException::class.java
+    ) {
+      IdeManager.createManager().createIde(idePath)
+    }
   }
 
   /**

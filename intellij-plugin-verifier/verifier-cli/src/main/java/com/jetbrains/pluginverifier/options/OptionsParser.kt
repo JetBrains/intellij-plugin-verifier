@@ -111,7 +111,7 @@ object OptionsParser {
     val availableIde = ideRepository.fetchIndex()
       .filter { it.product.productCode == productCode }
       .filter { if (latestOrLatestRelease) true else it.isRelease }
-      .maxBy { it.version }
+      .maxByOrNull { it.version }
     availableIde ?: throw IllegalArgumentException("No IDE found for $productCode in $ideRepository")
 
     val idesTempDirectory = System.getProperty("intellij.plugin.verifier.download.ide.temp.dir")?.let { Paths.get(it) }
