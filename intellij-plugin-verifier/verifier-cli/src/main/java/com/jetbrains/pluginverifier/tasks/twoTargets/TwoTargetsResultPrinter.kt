@@ -276,6 +276,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
     get() = """
       If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.
       If the problem is documented, it will be ignored by Plugin Verifier on the next verification. Note that TeamCity investigation may not disappear immediately.
+      If an investigation is not closed automatically, mark the investigation as "Fixed". 
       
       To document the change do the following:
       1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html
