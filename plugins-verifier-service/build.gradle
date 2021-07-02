@@ -2,7 +2,7 @@ plugins {
   id "war"
   id "idea"
   id "maven-publish"
-  id "org.springframework.boot" version "2.2.2.RELEASE"
+  id "org.springframework.boot" version "2.5.2"
   id "io.spring.dependency-management" version "1.0.11.RELEASE"
   id "org.jetbrains.kotlin.jvm" version "1.5.20"
   id "org.jetbrains.kotlin.plugin.spring" version "1.5.20"
@@ -62,21 +62,21 @@ configure(allprojects) {
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
     developmentOnly "org.springframework.boot:spring-boot-devtools"
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     implementation group: 'commons-io', name: 'commons-io', version: '2.5'
     implementation 'com.github.salomonbrys.kotson:kotson:2.4.0'
     implementation 'com.google.code.gson:gson:2.8.7'
 
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
-    implementation('com.squareup.retrofit2:retrofit:2.7.0')
-    implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
+    implementation('com.squareup.retrofit2:retrofit:2.9.0')
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.1'
 
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
     implementation 'org.mapdb:mapdb:3.0.8'
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.24'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.31'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     runtimeOnly "org.codehaus.groovy:groovy:2.4.12"
 
