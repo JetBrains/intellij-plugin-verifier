@@ -10,7 +10,24 @@ dependencies {
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
 }
 
+task versionTxt() {
+  def versionTxt = new File(buildDir, "intellij-plugin-verifier-version.txt")
+  outputs.file(versionTxt)
+  doLast {
+    versionTxt.text = projectVersion
+  }
+}
+
+jar {
+  metaInf {
+    from(versionTxt)
+  }
+}
+
 shadowJar {
+  metaInf {
+    from(versionTxt)
+  }
   manifest {
     attributes 'Main-Class': 'com.jetbrains.pluginverifier.PluginVerifierMain'
   }

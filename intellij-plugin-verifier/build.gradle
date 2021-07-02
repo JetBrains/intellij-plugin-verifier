@@ -17,6 +17,7 @@ if (!isDevMode) {
 }
 
 project.ext.intellijStructureVersion = intellijStructureVersion
+project.ext.projectVersion = projectVersion
 
 configure(allprojects) {
   apply plugin: 'java'
@@ -67,14 +68,6 @@ configure(allprojects) {
   }
 }
 
-task versionTxt() {
-  def versionTxt = new File(buildDir, "intellij-plugin-verifier-version.txt")
-  outputs.file(versionTxt)
-  doLast {
-    versionTxt.text = projectVersion
-  }
-}
-
 configure(childProjects.values()) {
 
   task sourcesJar(type: Jar) {
@@ -85,9 +78,6 @@ configure(childProjects.values()) {
   artifacts.archives sourcesJar
 
   jar {
-    metaInf {
-      from(versionTxt)
-    }
     manifest {
       attributes 'Verifier-Version': projectVersion
     }
