@@ -64,7 +64,7 @@ configure(allprojects) {
 
     testImplementation 'junit:junit:4.13.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation group: 'commons-io', name: 'commons-io', version: '2.5'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.10.0'
     implementation 'com.github.salomonbrys.kotson:kotson:2.4.0'
     implementation 'com.google.code.gson:gson:2.8.7'
 
