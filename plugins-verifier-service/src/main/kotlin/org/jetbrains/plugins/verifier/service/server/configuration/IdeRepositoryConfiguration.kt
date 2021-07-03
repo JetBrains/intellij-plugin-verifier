@@ -21,11 +21,11 @@ class IdeRepositoryConfiguration {
 
   @Bean
   fun ideRepository(
-    @Value("\${verifier.service.app.code.ide.repository.build.server.url}")
+    @Value("\${verifier.service.app.code.ide.repository.build.server.url:}")
     buildServerUrl: String,
-    @Value("\${verifier.service.app.code.ide.repository.configuration.ids}")
+    @Value("\${verifier.service.app.code.ide.repository.configuration.ids:}")
     configurationIds: String,
-    @Value("\${verifier.service.app.code.ide.repository.auth.token}")
+    @Value("\${verifier.service.app.code.ide.repository.auth.token:}")
     authToken: String
   ): IdeRepository = CompositeIdeRepository(
     listOfNotNull(
@@ -36,6 +36,10 @@ class IdeRepositoryConfiguration {
   )
 
   private fun appCodeRepository(buildServerUrl: String, authToken: String, configurationIds: List<String>): IdeRepository? {
+    if (buildServerUrl.isEmpty() || authToken.isEmpty() || configurationIds.isEmpty()) {
+      log.info("Skipping initialization of the AppCode IDE repository because corresponding startup options are not set")
+      return null
+    }
     val repository = AppCodeIdeRepository(buildServerUrl, authToken, configurationIds)
     return try {
       repository.fetchIndex()

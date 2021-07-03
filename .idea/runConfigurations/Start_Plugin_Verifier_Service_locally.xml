@@ -1,0 +1,24 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Start Plugin Verifier Service locally" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/plugins-verifier-service" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value="bootRun" />
+          <option value="--args='--spring.profiles.active=dev'" />
+        </list>
+      </option>
+      <option name="vmOptions" value="-Dverifier.service.home.directory=$USER_HOME$/.verifier -Dverifier.service.max.disk.space.mb=100000 -Dverifier.service.jdk.8.dir=/usr/lib/jvm/java-11-amazon-corretto -Dverifier.service.enable.feature.extractor.service=false -Dverifier.service.enable.plugin.verifier.service=false -Dverifier.service.enable.available.ide.service=false -Dverifier.service.admin.password=qwerty654321 -Dverifier.service.plugins.repository.url=https://plugins.jetbrains.com -Dverifier.service.plugins.repository.token=TOKEN -Dverifier.service.clear.corrupted.database=true -Dverifier.service.scheduler.period.seconds=10 -Dverifier.service.feature.extractor.ide.build=IU-211.7442.40 -Dverifier.service.task.manager.concurrency=8 -Dintellij.plugin.verifier.add.implicit.dependencies.on.platform.plugins=true -Dverifier.service.disable.verification.with.212=true" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <method v="2" />
+  </configuration>
+</component>
