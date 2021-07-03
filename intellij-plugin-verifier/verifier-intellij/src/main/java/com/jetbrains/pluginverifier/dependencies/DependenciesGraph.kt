@@ -41,7 +41,6 @@ data class DependenciesGraph(
     DependenciesGraphCycleFinder(this)
       .findAllCycles()
       .filter { verifiedPlugin in it }
-      .map { it.reversed() }
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 

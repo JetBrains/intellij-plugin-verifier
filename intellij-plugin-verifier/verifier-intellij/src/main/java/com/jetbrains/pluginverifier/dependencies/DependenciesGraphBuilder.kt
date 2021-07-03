@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import org.jgrapht.DirectedGraph
+import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
 
@@ -42,7 +42,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun addTransitiveDependencies(
-    graph: DirectedGraph<DepVertex, DepEdge>,
+    graph: Graph<DepVertex, DepEdge>,
     vertex: DepVertex,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
@@ -88,7 +88,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   private fun resolveDependency(
     vertex: DepVertex,
     pluginDependency: PluginDependency,
-    graph: DirectedGraph<DepVertex, DepEdge>,
+    graph: Graph<DepVertex, DepEdge>,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ): DepVertex? {
     val depId = DepId(pluginDependency.id, pluginDependency.isModule)
@@ -153,7 +153,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   private fun maybeAddOptionalJavaPluginDependency(
     plugin: IdePlugin,
     ide: Ide,
-    graph: DirectedGraph<DepVertex, DepEdge>,
+    graph: Graph<DepVertex, DepEdge>,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
     if (ide.getPluginByModule(ALL_MODULES_ID) == null) {
@@ -184,7 +184,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
    */
   private fun maybeAddBundledPluginsWithUseIdeaClassLoader(
     ide: Ide,
-    graph: DirectedGraph<DepVertex, DepEdge>,
+    graph: Graph<DepVertex, DepEdge>,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
     for (bundledPlugin in ide.bundledPlugins) {
@@ -224,7 +224,7 @@ private data class DepMissingVertex(val vertex: DepVertex, val pluginDependency:
 private class DepGraph2ApiGraphConverter {
 
   fun convert(
-    graph: DirectedGraph<DepVertex, DepEdge>,
+    graph: Graph<DepVertex, DepEdge>,
     startVertex: DepVertex,
     vertexMissingDependencies: Map<DepId, Set<DepMissingVertex>>
   ): DependenciesGraph {

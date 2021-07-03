@@ -19,8 +19,8 @@ configure(allprojects) {
   apply plugin: 'java'
   apply plugin: 'kotlin'
 
-  sourceCompatibility = 1.8
-  targetCompatibility = 1.8
+  sourceCompatibility = 11
+  targetCompatibility = 11
 
   repositories {
     maven { url "https://repo.maven.apache.org/maven2" }

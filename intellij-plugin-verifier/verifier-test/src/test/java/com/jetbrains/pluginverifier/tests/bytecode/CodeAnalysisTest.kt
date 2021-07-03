@@ -23,7 +23,6 @@ class CodeAnalysisTest {
       assertEvaluatedConstantStringValue(classNode, "myRefFunction", ".constantValue")
       assertEvaluatedConstantStringValue(classNode, "instance", ".constantValue")
       assertEvaluatedConstantStringValue(classNode, "staticConstant", "I_am_constant")
-      assertEvaluatedConstantStringValue(classNode, "concat", ".constantValueConcat")
       assertEvaluatedConstantStringValue(classNode, "finalStaticInitConstant", "staticInitConstant")
       assertEvaluatedConstantStringValue(classNode, "directRecursion", null)
     }
