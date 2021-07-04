@@ -29,6 +29,9 @@ Plugin Verifier accepts as its input a plugin `P` and an IDE build `X` to check 
    - displayed as TeamCity failed tests (`TeamCityResultPrinter`)
    - converted to JSON and sent to the [Marketplace](https://plugins.jetbrains.com/) by the Plugin Verifier Service
     
+#### How to verify plugin locally
+Run `Verify plugin` configuration, which starts `verifier.jar check-plugin #plugin-update-id [latest-IU]`
+
 #### Modules
 - `verifier-cli` — command-line interface of the IntelliJ Plugin Verifier tool `PluginVerifierMain`
 - `verifier-core` — main logic of the bytecode verification, JVM references resolution and detecting binary compatibility issues

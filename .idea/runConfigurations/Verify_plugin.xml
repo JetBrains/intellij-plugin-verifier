@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Check specified plugin" type="Application" factoryName="Application">
+  <configuration default="false" name="Verify plugin" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="com.jetbrains.pluginverifier.PluginVerifierMain" />
     <module name="intellij-plugin-verifier.verifier-cli.main" />
-    <option name="PROGRAM_PARAMETERS" value="check-plugin #12345 ${FOR_TESTS_HOME}/ALL_IDES/IU-192.6817.14 -r /usr/lib/jvm/java-8-oracle" />
+    <option name="PROGRAM_PARAMETERS" value="check-plugin #110226 [latest-IU]" />
     <option name="VM_PARAMETERS" value="-Xmx2000m" />
     <method v="2">
       <option name="Make" enabled="true" />
