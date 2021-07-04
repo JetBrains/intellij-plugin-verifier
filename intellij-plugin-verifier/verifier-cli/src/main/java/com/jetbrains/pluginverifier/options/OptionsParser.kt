@@ -114,18 +114,22 @@ object OptionsParser {
       .maxByOrNull { it.version }
     availableIde ?: throw IllegalArgumentException("No IDE found for $productCode in $ideRepository")
 
-    val idesTempDirectory = System.getProperty("intellij.plugin.verifier.download.ide.temp.dir")?.let { Paths.get(it) }
-      ?: Files.createTempDirectory("downloaded-ides")
+    val idesDirectory = System.getProperty("intellij.plugin.verifier.download.ide.temp.dir")?.let { Paths.get(it) }
+      ?: Path.of(System.getProperty("java.io.tmpdir")).resolve("downloaded-ides")
 
-    val ideDirectory = idesTempDirectory.resolve(availableIde.version.asString())
+    val ideDirectory = idesDirectory.resolve(availableIde.version.asString())
     if (Files.isDirectory(ideDirectory)) {
       LOG.info("IDE $releaseModifier is already downloaded to $ideDirectory")
       return ideDirectory
     }
 
-    LOG.info("Downloading $releaseModifier ${availableIde.version} from $ideRepository to a temp directory $ideDirectory")
-    return when (val downloadResult = IdeDownloader().download(availableIde, ideDirectory)) {
-      is DownloadResult.Downloaded -> downloadResult.downloadedFileOrDirectory
+    val downloadingTempDir = idesDirectory.resolve("downloading").createDir()
+    LOG.info("Downloading $releaseModifier ${availableIde.version} from $ideRepository to $ideDirectory")
+    return when (val downloadResult = IdeDownloader().download(availableIde, downloadingTempDir)) {
+      is DownloadResult.Downloaded -> {
+        Files.move(downloadResult.downloadedFileOrDirectory, ideDirectory)
+        ideDirectory
+      }
       is DownloadResult.NotFound -> throw IllegalArgumentException("No IDE found for $productCode in $ideRepository")
       is DownloadResult.FailedToDownload -> throw RuntimeException("Failed to download IDE $productCode", downloadResult.error)
     }
