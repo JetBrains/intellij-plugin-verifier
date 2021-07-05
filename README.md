@@ -49,6 +49,8 @@ The Plugin Verifier can be run using the command line:
 
 Command is one of `check-plugin`, `check-ide` or `check-trunk-api`.
 
+Plugin Verifier versions starting with 1.260 require Java 11, before that Java 8 was enough.
+
 ## Results
 
 All the verification results are printed and saved in the following ways:
@@ -115,11 +117,11 @@ If no plugins are explicitly specified then all compatible plugins in the [Plugi
 
 Check IDEA Ultimate #162.1121.32 against all plugins listed in `pluginsToCheck.txt`:
 
-    java -jar verifier-all.jar -runtime-dir /usr/lib/jvm/java-8-oracle -team-city -tc-grouping problem_type -excluded-plugins-file ignorePlugins.txt -plugins-to-check-file pluginsToCheck.txt -dump-broken-plugin-list actualBroken.txt check-ide /tmp/IU-162.1121.32
+    java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 -team-city -tc-grouping problem_type -excluded-plugins-file ignorePlugins.txt -plugins-to-check-file pluginsToCheck.txt -dump-broken-plugin-list actualBroken.txt check-ide /tmp/IU-162.1121.32
 
 Check IDEA Ultimate 162.1121.32 against all version of `Kotlin` and `NodeJs` plugins and the last version of the `PHP` plugin:
 
-    java -jar verifier-all.jar -runtime-dir /usr/lib/jvm/java-8-oracle -plugins-to-check-all-builds org.jetbrains.kotlin:NodeJS -plugins-to-check-last-builds com.jetbrains.php check-ide /tmp/IU-162.1121.32
+    java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 -plugins-to-check-all-builds org.jetbrains.kotlin:NodeJS -plugins-to-check-last-builds com.jetbrains.php check-ide /tmp/IU-162.1121.32
 
 ### check-plugin
 
@@ -141,7 +143,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 
 Check `Kotlin` plugin against IDEA Ultimate 162.2032.8, 163.1024, and 163.7277:
 
-    java -jar verifier-all.jar -runtime-dir /usr/lib/jvm/java-8-oracle check-plugin /tmp/Kotlin /tmp/IU-162.2032.8 /tmp/IU-163.1024 /tmp/IU-163.7277
+    java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 check-plugin /tmp/Kotlin /tmp/IU-162.2032.8 /tmp/IU-163.1024 /tmp/IU-163.7277
 
 ### check-trunk-api
 
@@ -154,7 +156,7 @@ Given the release IDE build, all plugins' versions for release IDE will be verif
 For clarity, here is an example of the command:
 
     check-trunk-api
-        -r /usr/lib/jvm/java-8-oracle
+        -r /home/user/.jdks/corretto-11.0.8
         -subsystems-to-check without-android
         -team-city
         -jetbrains-plugins-file all-jetbrains-plugins.txt
