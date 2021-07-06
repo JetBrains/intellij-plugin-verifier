@@ -28,13 +28,33 @@ Plugin Verifier accepts as its input a plugin `P` and an IDE build `X` to check 
      - `plugin-structure-warnings.txt`
    - displayed as TeamCity failed tests (`TeamCityResultPrinter`)
    - converted to JSON and sent to the [Marketplace](https://plugins.jetbrains.com/) by the Plugin Verifier Service
-    
+
 #### How to verify plugin locally
+
 Run `Verify plugin` configuration, which starts `verifier.jar check-plugin #plugin-update-id [latest-IU]`
 
 #### Modules
+
 - `verifier-cli` — command-line interface of the IntelliJ Plugin Verifier tool `PluginVerifierMain`
-- `verifier-core` — main logic of the bytecode verification, JVM references resolution and detecting binary compatibility issues
-- `verifier-intellij` — module specific for IntelliJ Platform Plugins that runs additional checks such as detecting usages of `@Deprecated`, `@ApiStatus.Internal` and `@ApiStatus.Experimental` APIs inside the plugin.
-- `verifier-repository` — APIs for downloading plugins from the [Marketplace](https://plugins.jetbrains.com/) (`MarketplaceRepository`) and IDE builds from corresponding IDE repositories (`IdeRepository`).
-- `verifier-test` — tests checking correctness of the verifier: build a plugin against an "old" IDE build and then verify it against the "new" IDE build with a known set of compatibility problems. 
+- `verifier-core` — main logic of the bytecode verification, JVM references resolution and detecting binary
+  compatibility issues
+- `verifier-intellij` — module specific for IntelliJ Platform Plugins that runs additional checks such as detecting
+  usages of `@Deprecated`, `@ApiStatus.Internal` and `@ApiStatus.Experimental` APIs inside the plugin.
+- `verifier-repository` — APIs for downloading plugins from
+  the [Marketplace](https://plugins.jetbrains.com/) (`MarketplaceRepository`) and IDE builds from corresponding IDE
+  repositories (`IdeRepository`).
+- `verifier-test` — tests checking correctness of the verifier: build a plugin against an "old" IDE build and then
+  verify it against the "new" IDE build with a known set of compatibility problems.
+
+#### How to publish a new release
+
+1) Run [Upload Plugin Verifier](https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_Service_PluginVerifier_UploadPluginVerifier?branch=%3Cdefault%3E&buildTypeTab=overview&mode=builds)
+build configuration.
+2) Go to [GitHub Releases](https://github.com/JetBrains/intellij-plugin-verifier/releases)
+3) Draft a new release with version tag `v<version>` for example `v1.260`
+4) Go
+   to https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/
+5) Download `verifier-cli-<version>-all.jar` for the latest uploaded version.
+6) Attach the `-all-.jar` as a binary to the GitHub Release.
+7) Add Release title and comment
+8) Publish the Release
