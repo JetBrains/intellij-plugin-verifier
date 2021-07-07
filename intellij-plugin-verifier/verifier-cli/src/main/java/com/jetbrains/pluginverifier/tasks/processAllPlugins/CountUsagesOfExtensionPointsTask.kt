@@ -1,13 +1,13 @@
 package com.jetbrains.pluginverifier.tasks.processAllPlugins
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.pluginverifier.getConcurrencyLevel
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.TaskResult
@@ -16,6 +16,11 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 class CountUsagesOfExtensionPointsTask(private val params: CountUsagesOfExtensionPointsParameters) : Task {
+  private sealed class ProcessingOutcome {
+    object Success : ProcessingOutcome()
+    data class Failed(val reason: String) : ProcessingOutcome()
+  }
+
   override fun execute(reportage: PluginVerificationReportage, pluginDetailsCache: PluginDetailsCache): TaskResult {
     val ideAndPluginsExtensionPoints = arrayListOf<IdePluginContentDescriptor.ExtensionPoint>()
     for (idePlugin in params.ideDescriptor.ide.bundledPlugins) {
@@ -38,28 +43,34 @@ class CountUsagesOfExtensionPointsTask(private val params: CountUsagesOfExtensio
     val tasks = params.compatiblePluginsList.map { plugin ->
       ExecutorWithProgress.Task("$plugin") {
         pluginDetailsCache.getPluginDetailsCacheEntry(plugin).use { cacheResult ->
-          if (cacheResult is PluginDetailsCache.Result.Provided) {
-            for ((extensionPointName, elements) in cacheResult.pluginDetails.idePlugin.extensions) {
-              extensionPointUsages.compute(extensionPointName) { _, count ->
-                if (count == null) null /* Count only IDE extension points */ else count + elements.size
+          when (cacheResult) {
+            is PluginDetailsCache.Result.Provided -> {
+              for ((extensionPointName, elements) in cacheResult.pluginDetails.idePlugin.extensions) {
+                extensionPointUsages.compute(extensionPointName) { _, count ->
+                  if (count == null) null /* Count only IDE extension points */ else count + elements.size
+                }
               }
+              ProcessingOutcome.Success
             }
+            is PluginDetailsCache.Result.Failed -> ProcessingOutcome.Failed(cacheResult.reason)
+            is PluginDetailsCache.Result.FileNotFound -> ProcessingOutcome.Failed(cacheResult.reason)
+            is PluginDetailsCache.Result.InvalidPlugin -> ProcessingOutcome.Failed("Invalid plugin: " + cacheResult.pluginErrors.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message })
           }
         }
-        plugin
       }
     }
-    val executor = ExecutorWithProgress<PluginInfo>("processAllPlugins [countUsagesOfExtensionPoints]", getConcurrencyLevel(), false) { progressData ->
+    val executor = ExecutorWithProgress<ProcessingOutcome>("processAllPlugins [countUsagesOfExtensionPoints]", getConcurrencyLevel(), false) { progressData ->
       val message = buildString {
+        append("Finished #${progressData.finishedNumber} of ${progressData.totalNumber}: ")
         if (progressData.exception != null) {
-          append("[ error ]")
+          append("[error] [ ${progressData.exception!!.message} ]")
         } else {
-          append("[success]")
+          when (val result = progressData.result!!) {
+            is ProcessingOutcome.Success -> append("[success]")
+            is ProcessingOutcome.Failed -> append("[bad plugin] [${result.reason}]")
+          }
         }
-        append(" for #${progressData.finishedNumber} of ${progressData.totalNumber}: ${progressData.task.presentableName}")
-        if (progressData.exception != null) {
-          append(": ${progressData.exception!!.message}")
-        }
+        append(progressData.task.presentableName)
       }
       reportage.logVerificationStage(message)
     }
