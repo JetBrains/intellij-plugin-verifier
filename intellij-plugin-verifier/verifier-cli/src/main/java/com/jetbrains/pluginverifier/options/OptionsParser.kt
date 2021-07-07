@@ -69,7 +69,7 @@ object OptionsParser {
       Paths.get(ide)
     }
     require(ideFile.isDirectory) { "IDE must reside in a directory: $ideFile" }
-    LOG.info("Preparing IDE $ideFile")
+    LOG.info("Reading IDE from $ideFile")
     return createIdeDescriptor(ideFile, opts)
   }
 

@@ -16,6 +16,7 @@ class ExecutorWithProgress<T>(
 ) : Closeable {
 
   data class ProgressData<T>(
+    val task: Task<T>,
     val finishedNumber: Int,
     val totalNumber: Int,
     val result: T?,
@@ -95,11 +96,11 @@ class ExecutorWithProgress<T>(
               throw RuntimeException("Worker '${timedResult.presentableTaskName}' finished with error", exception)
             } else {
               exceptions += exception
-              progress(ProgressData(finished, futuresNumber, null, exception, timedResult.elapsedTime))
+              progress(ProgressData(timedResult.task, finished, futuresNumber, null, exception, timedResult.elapsedTime))
             }
           } else {
             val result = timedResult.result!!
-            progress(ProgressData(finished, futuresNumber, result, null, timedResult.elapsedTime))
+            progress(ProgressData(timedResult.task, finished, futuresNumber, result, null, timedResult.elapsedTime))
             results += result
           }
           break
@@ -116,6 +117,7 @@ class ExecutorWithProgress<T>(
   }
 
   private data class TimedResult<T>(
+    val task: Task<T>,
     val result: T?,
     val exception: Throwable?,
     val elapsedTime: Long,
@@ -133,7 +135,7 @@ class ExecutorWithProgress<T>(
         exception = e
       }
       val elapsedTime = System.nanoTime() - start
-      return TimedResult(result, exception, elapsedTime / 1_000_000, task.presentableName)
+      return TimedResult(task, result, exception, elapsedTime / 1_000_000, task.presentableName)
     }
   }
 

@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
-import java.io.File
 import java.nio.file.Path
 
 data class MockIdePlugin(
@@ -28,7 +27,10 @@ data class MockIdePlugin(
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
   override val untilBuild: IdeVersion? = null,
   override val definedModules: Set<String> = emptySet(),
-  override val originalFile: Path? = null
+  override val originalFile: Path? = null,
+  override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
+  override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
+  override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
 ) : IdePlugin {
 
   override val useIdeClassLoader = false

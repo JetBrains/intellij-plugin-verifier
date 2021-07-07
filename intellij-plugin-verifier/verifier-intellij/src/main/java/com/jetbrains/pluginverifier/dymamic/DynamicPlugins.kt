@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.dymamic
 
-import com.jetbrains.plugin.structure.intellij.plugin.ExtensionPoint
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
@@ -92,7 +92,7 @@ object DynamicPlugins {
     return result
   }
 
-  private fun IdePluginImpl.findExtensionPoint(epName: String): ExtensionPoint? {
+  private fun IdePluginImpl.findExtensionPoint(epName: String): IdePluginContentDescriptor.ExtensionPoint? {
     for (descriptor in listOf(appContainerDescriptor, projectContainerDescriptor, moduleContainerDescriptor)) {
       val extensionPoint = descriptor.extensionPoints.find { it.extensionPointName == epName }
       if (extensionPoint != null) {

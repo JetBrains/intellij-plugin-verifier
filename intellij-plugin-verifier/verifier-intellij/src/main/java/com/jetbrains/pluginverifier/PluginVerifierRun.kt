@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
-import java.util.concurrent.Callable
 
 fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<PluginVerifier>): List<PluginVerificationResult> {
   if (verifiers.isEmpty()) {
@@ -22,19 +21,16 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
   }
 
   val tasks = verifiers.map { verifier ->
-    ExecutorWithProgress.Task(
-      verifier.verificationDescriptor.toString(),
-      Callable {
-        val verificationResult = verifier.loadPluginAndVerify()
-        reportage.reportVerificationResult(verificationResult)
-        verificationResult
-      }
-    )
+    ExecutorWithProgress.Task(verifier.verificationDescriptor.toString()) {
+      val verificationResult = verifier.loadPluginAndVerify()
+      reportage.reportVerificationResult(verificationResult)
+      verificationResult
+    }
   }
   return executor.executeTasks(tasks)
 }
 
-private fun getConcurrencyLevel(): Int {
+fun getConcurrencyLevel(): Int {
   val fromProperty = System.getProperty("intellij.plugin.verifier.concurrency.level")?.toIntOrNull()
   if (fromProperty != null) {
     check(fromProperty > 0) { "Invalid concurrency level: $fromProperty" }
@@ -45,5 +41,5 @@ private fun getConcurrencyLevel(): Int {
   val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
   //About 200 Mb is needed for an average verification
   val maxByMemory = availableMemory / 1024 / 1024 / 200
-  return maxOf(4, minOf(maxByMemory, availableCpu)).toInt()
+  return maxOf(8, minOf(maxByMemory, availableCpu)).toInt()
 }

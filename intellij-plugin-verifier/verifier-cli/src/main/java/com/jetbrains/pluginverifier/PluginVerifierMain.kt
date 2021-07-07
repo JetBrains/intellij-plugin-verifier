@@ -27,6 +27,7 @@ import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
 import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
 import com.jetbrains.pluginverifier.tasks.checkPluginApi.CheckPluginApiRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
+import com.jetbrains.pluginverifier.tasks.processAllPlugins.ProcessAllPluginsCommand
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import java.net.URL
@@ -44,7 +45,8 @@ object PluginVerifierMain {
     CheckPluginRunner(),
     CheckIdeRunner(),
     CheckTrunkApiRunner(),
-    CheckPluginApiRunner()
+    CheckPluginApiRunner(),
+    ProcessAllPluginsCommand()
   )
 
   private val pluginVerifierVersion: String by lazy {
