@@ -13,8 +13,8 @@ import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
-import com.jetbrains.plugin.structure.intellij.plugin.ExtensionPoint
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -135,7 +135,7 @@ class ApiQualityCheckCommand : Command {
     pluginsBuiltFromSources: List<IdePlugin>,
     qualityReport: ApiQualityReport
   ) {
-    val nonDynamicExtensionPoints = hashSetOf<ExtensionPoint>()
+    val nonDynamicExtensionPoints = hashSetOf<IdePluginContentDescriptor.ExtensionPoint>()
     val extensionPointsUsages = hashMapOf<String, Int>()
 
     val allPlugins = (ide.bundledPlugins + pluginsBuiltFromSources).filterIsInstance<IdePluginImpl>()
