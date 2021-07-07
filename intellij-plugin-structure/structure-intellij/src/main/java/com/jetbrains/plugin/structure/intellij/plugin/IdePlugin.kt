@@ -17,6 +17,12 @@ interface IdePlugin : Plugin {
 
   val extensions: Map<String, List<Element>>
 
+  val appContainerDescriptor: IdePluginContentDescriptor
+
+  val projectContainerDescriptor: IdePluginContentDescriptor
+
+  val moduleContainerDescriptor: IdePluginContentDescriptor
+
   val dependencies: List<PluginDependency>
 
   val incompatibleModules: List<String>

@@ -4,29 +4,21 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-data class ExtensionPoint(
-  val extensionPointName: String,
-  val isDynamic: Boolean
-)
+interface IdePluginContentDescriptor {
+  val services: List<ServiceDescriptor>
+  val components: List<ComponentConfig>
+  val listeners: List<ListenerDescriptor>
+  val extensionPoints: List<ExtensionPoint>
 
-data class ComponentConfig(
-  val interfaceClass: String?,
-  val implementationClass: String
-)
+  data class ExtensionPoint(val extensionPointName: String, val isDynamic: Boolean)
+  data class ComponentConfig(val interfaceClass: String?, val implementationClass: String)
+  data class ListenerDescriptor(val topicName: String, val className: String)
+  data class ServiceDescriptor(val serviceInterface: String?, val serviceImplementation: String?)
+}
 
-data class ListenerDescriptor(
-  val topicName: String,
-  val className: String
-)
-
-data class ServiceDescriptor(
-  val serviceInterface: String?,
-  val serviceImplementation: String?
-)
-
-data class ContainerDescriptor(
-  val services: MutableList<ServiceDescriptor> = arrayListOf(),
-  val components: MutableList<ComponentConfig> = arrayListOf(),
-  val listeners: MutableList<ListenerDescriptor> = arrayListOf(),
-  val extensionPoints: MutableList<ExtensionPoint> = arrayListOf()
-)
+data class MutableIdePluginContentDescriptor(
+  override val services: MutableList<IdePluginContentDescriptor.ServiceDescriptor> = arrayListOf(),
+  override val components: MutableList<IdePluginContentDescriptor.ComponentConfig> = arrayListOf(),
+  override val listeners: MutableList<IdePluginContentDescriptor.ListenerDescriptor> = arrayListOf(),
+  override val extensionPoints: MutableList<IdePluginContentDescriptor.ExtensionPoint> = arrayListOf()
+) : IdePluginContentDescriptor

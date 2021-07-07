@@ -118,7 +118,7 @@ internal class PluginCreator private constructor(
       val optionalPlugin = pluginCreationResult.plugin
       plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       optionalPlugin.extensions.forEach { (extensionPointName, extensionElement) ->
-        plugin.extensions.getOrPut(extensionPointName, { ArrayList() }).addAll(extensionElement)
+        plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
       }
       if (optionalPlugin is IdePluginImpl) {
         plugin.appContainerDescriptor.mergeWith(optionalPlugin.appContainerDescriptor)
@@ -133,7 +133,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun ContainerDescriptor.mergeWith(other: ContainerDescriptor) {
+  private fun MutableIdePluginContentDescriptor.mergeWith(other: MutableIdePluginContentDescriptor) {
     services += other.services
     components += other.components
     listeners += other.listeners
@@ -287,7 +287,7 @@ internal class PluginCreator private constructor(
           "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement)
           "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement)
           "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement)
-          else -> idePlugin.extensions.getOrPut(epName, { ArrayList() }).add(extensionElement)
+          else -> idePlugin.extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
         }
       }
     }
@@ -305,7 +305,7 @@ internal class PluginCreator private constructor(
           else -> null
         } ?: continue
         val isDynamic = extensionPoint.getAttributeValue("dynamic")?.toBoolean() ?: false
-        containerDescriptor.extensionPoints += ExtensionPoint(extensionPointName, isDynamic)
+        containerDescriptor.extensionPoints += IdePluginContentDescriptor.ExtensionPoint(extensionPointName, isDynamic)
       }
     }
   }
@@ -317,10 +317,10 @@ internal class PluginCreator private constructor(
     return "$pluginId.$name"
   }
 
-  private fun readServiceDescriptor(extensionElement: Element): ServiceDescriptor {
+  private fun readServiceDescriptor(extensionElement: Element): IdePluginContentDescriptor.ServiceDescriptor {
     val serviceInterface = extensionElement.getAttributeValue("serviceInterface")
     val serviceImplementation = extensionElement.getAttributeValue("serviceImplementation")
-    return ServiceDescriptor(serviceInterface, serviceImplementation)
+    return IdePluginContentDescriptor.ServiceDescriptor(serviceInterface, serviceImplementation)
   }
 
   private fun extractEPName(extensionElement: Element): String {
@@ -337,7 +337,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun readListeners(rootElement: Element, listenersName: String, containerDescriptor: ContainerDescriptor) {
+  private fun readListeners(rootElement: Element, listenersName: String, containerDescriptor: MutableIdePluginContentDescriptor) {
     for (listenersRoot in rootElement.getChildren(listenersName)) {
       for (listener in listenersRoot.children) {
         val className = listener.getAttributeValue("class")
@@ -349,19 +349,19 @@ internal class PluginCreator private constructor(
           registerProblem(ElementMissingAttribute("listener", "topic"))
         }
         if (className != null && topicName != null) {
-          containerDescriptor.listeners += ListenerDescriptor(topicName, className)
+          containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(topicName, className)
         }
       }
     }
   }
 
-  private fun readComponents(rootElement: Element, componentsArea: String, containerDescriptor: ContainerDescriptor) {
+  private fun readComponents(rootElement: Element, componentsArea: String, containerDescriptor: MutableIdePluginContentDescriptor) {
     for (componentsRoot in rootElement.getChildren(componentsArea)) {
       for (component in componentsRoot.getChildren("component")) {
         val interfaceClass = component.getChild("interface-class")?.text
         val implementationClass = component.getChild("implementation-class")?.text
         if (implementationClass != null) {
-          containerDescriptor.components += ComponentConfig(interfaceClass, implementationClass)
+          containerDescriptor.components += IdePluginContentDescriptor.ComponentConfig(interfaceClass, implementationClass)
         }
       }
     }

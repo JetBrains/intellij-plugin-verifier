@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
-import java.io.File
 import java.nio.file.Path
 
 data class MockIdePlugin(
@@ -13,6 +12,9 @@ data class MockIdePlugin(
   override val pluginVersion: String?
 ) : IdePlugin {
   override val extensions: MutableMap<String, MutableList<Element>> = hashMapOf()
+  override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
+  override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
+  override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
   override val pluginName: String? = null
   override val description: String? = null
   override val url: String? = null
