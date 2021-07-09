@@ -741,6 +741,8 @@ internal class PluginCreator private constructor(
     } else {
       if (untilBuildParsed.baselineVersion > 999) {
         registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
+      } else if (untilBuildParsed.baselineVersion > 400) {
+        registerProblem(SuspiciousUntilBuild(untilBuild))
       }
       if (untilBuildParsed.productCode.isNotEmpty()) {
         registerProblem(ProductCodePrefixInBuild(descriptorPath))
