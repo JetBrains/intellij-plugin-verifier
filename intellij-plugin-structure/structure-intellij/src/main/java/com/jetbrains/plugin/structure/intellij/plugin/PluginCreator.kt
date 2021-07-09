@@ -724,7 +724,7 @@ internal class PluginCreator private constructor(
         if (sinceBuildParsed.baselineVersion < 130 && sinceBuild.endsWith(".*")) {
           registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
         }
-        if (sinceBuildParsed.baselineVersion > 2000) {
+        if (sinceBuildParsed.baselineVersion > 999) {
           registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
         }
         if (sinceBuildParsed.productCode.isNotEmpty()) {
@@ -739,7 +739,7 @@ internal class PluginCreator private constructor(
     if (untilBuildParsed == null) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      if (untilBuildParsed.baselineVersion > 2000) {
+      if (untilBuildParsed.baselineVersion > 999) {
         registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
       }
       if (untilBuildParsed.productCode.isNotEmpty()) {
