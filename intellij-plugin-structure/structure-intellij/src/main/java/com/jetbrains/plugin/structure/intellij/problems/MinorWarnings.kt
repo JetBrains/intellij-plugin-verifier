@@ -129,3 +129,15 @@ class ElementMissingAttribute(
   override val message
     get() = "Element <$elementName> must specify attribute $attributeName"
 }
+
+
+class SuspiciousUntilBuild(
+  private val untilBuild: String
+) : PluginProblem() {
+  override val message: String
+    get() = "Probably incorrect until build value: $untilBuild. If you want your plugin to be compatible with all future IDEs, you can leave this field empty. " +
+      "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
+
+  override val level
+    get() = Level.WARNING
+}
