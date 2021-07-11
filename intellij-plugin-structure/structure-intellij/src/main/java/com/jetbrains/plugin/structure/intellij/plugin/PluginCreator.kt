@@ -41,6 +41,8 @@ internal class PluginCreator private constructor(
 
     private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
+    val v2ModulePrefix = Regex("^intellij\\..*")
+
     private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
 
     private val json = jacksonObjectMapper()
@@ -189,7 +191,10 @@ internal class PluginCreator private constructor(
           dependencies += dependency
 
           if (dependency.isOptional && dependencyBean.configFile != null) {
-            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
+            //V2 dependency configs can be located only in root
+            optionalDependenciesConfigFiles[dependency] =
+              if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
+
           }
         }
       }

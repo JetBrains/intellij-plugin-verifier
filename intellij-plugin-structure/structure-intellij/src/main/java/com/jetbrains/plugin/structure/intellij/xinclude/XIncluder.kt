@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.xinclude
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
@@ -48,7 +49,8 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
   private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {
-    val href = xincludeElement.getAttributeValue(HREF)
+    //V2 included configs can be located only in root
+    val href = xincludeElement.getAttributeValue(HREF).let { if (PluginCreator.v2ModulePrefix.matches(it)) "/$it" else it}
     val presentableXInclude = xincludeElement.getElementNameAndAttributes()
     if (href.isNullOrEmpty()) {
       throw XIncluderException(bases, "Missing or empty 'href' attribute in $presentableXInclude")
