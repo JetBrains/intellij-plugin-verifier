@@ -2,7 +2,7 @@ dependencies {
   api project(":structure-base")
   api group: 'org.jdom', name: 'jdom', version: '2.0.2'
 
-  implementation 'org.jsoup:jsoup:1.13.1'
+  implementation 'org.jsoup:jsoup:1.14.1'
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
   implementation "org.glassfish.jaxb:jaxb-runtime:2.3.1"
 }
