@@ -7,5 +7,5 @@ dependencies {
   implementation 'org.tukaani:xz:1.9'
 
   //Provides English class capable of pluralizing english words.
-  implementation group: 'org.atteo', name: 'evo-inflector', version: '1.2.2'
+  implementation group: 'org.atteo', name: 'evo-inflector', version: '1.3'
 }
