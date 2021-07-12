@@ -7,7 +7,7 @@ ext.kotlin_version = '1.5.20'
 
 String projectVersion = project.hasProperty('verifierProjectVersion') ? project.verifierProjectVersion : 'dev'
 def isDevMode = projectVersion == 'dev'
-def intellijStructureVersion = 'dev'
+def intellijStructureVersion = '3.194'
 if (!isDevMode) {
   if (project.hasProperty('intellijStructureVersion')) {
     intellijStructureVersion = project.intellijStructureVersion
