@@ -12,7 +12,7 @@ import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
 
-val NON_ID_SYMBOL_REGEX = "[^A-Za-z0-9_.]".toRegex()
+val NON_ID_SYMBOL_REGEX = "^[A-Za-z0-9_.]+$".toRegex()
 
 fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
