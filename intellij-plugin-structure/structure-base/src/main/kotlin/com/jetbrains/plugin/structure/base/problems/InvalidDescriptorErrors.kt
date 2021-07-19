@@ -13,6 +13,14 @@ abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : P
     get() = "Invalid plugin descriptor" + (if (descriptorPath.isNullOrEmpty()) ": " else " '$descriptorPath': ") + detailedMessage
 }
 
+
+class InvalidPluginIDProblem(private val id: String) : PluginProblem() {
+  override val message
+    get() = "Plugin id contains unsupported symbols: $id."
+  override val level
+    get() = Level.ERROR
+}
+
 class UnexpectedDescriptorElements(
   override val detailedMessage: String,
   descriptorPath: String? = null

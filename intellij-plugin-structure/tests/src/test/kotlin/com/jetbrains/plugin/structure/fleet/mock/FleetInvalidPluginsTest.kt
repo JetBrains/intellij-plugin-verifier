@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -48,6 +49,9 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(PropertyNotSpecified("id")) { id = null }
     checkInvalidPlugin(PropertyNotSpecified("id")) { id = "" }
     checkInvalidPlugin(PropertyNotSpecified("id")) { id = "\n" }
+    listOf("cat/../cat", "cat\\..\\cat").forEach {
+      checkInvalidPlugin(InvalidPluginIDProblem(it)) { id = it }
+    }
   }
 
   @Test

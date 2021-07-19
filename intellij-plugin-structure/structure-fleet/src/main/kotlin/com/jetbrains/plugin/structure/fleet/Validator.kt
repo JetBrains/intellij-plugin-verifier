@@ -5,12 +5,14 @@
 package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
 
+val NON_ID_SYMBOL_REGEX = "[^A-Za-z0-9_.]".toRegex()
 
 fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -19,6 +21,11 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   }
   if (descriptor.id.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("id"))
+  }
+  if (descriptor.id.isNullOrBlank().not()){
+    if (NON_ID_SYMBOL_REGEX.matches(descriptor.id!!).not()){
+      problems.add(InvalidPluginIDProblem(descriptor.id))
+    }
   }
   if (descriptor.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
