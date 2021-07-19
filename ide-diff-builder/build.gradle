@@ -61,7 +61,7 @@ compileKotlin {
 }
 
 dependencies {
-  runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+  runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.4'
 
   testImplementation 'junit:junit:4.13.2'
   testImplementation project(':')
