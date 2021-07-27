@@ -1,4 +1,4 @@
-name: plugins-verifier-service
+name: Plugins Verifier Service
 on:
   # Trigger the workflow on pushes to only the 'master' branch (this avoids duplicate checks being run e.g. for dependabot pull requests)
   push:
