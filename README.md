@@ -5,6 +5,12 @@
 [![Slack](https://img.shields.io/badge/Slack-%23intellij--plugin--verifier-blue)](https://plugins.jetbrains.com/slack)
 [Download](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/)
 
+[![ide-diff-builder](https://github.com/JetBrains/intellij-plugin-verifier/workflows/ide-diff-builder/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions?query=workflow%3Aide-diff-builder)
+[![intellij-feature-extractor](https://github.com/JetBrains/intellij-plugin-verifier/workflows/intellij-feature-extractor/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions?query=workflow%3Aintellij-feature-extractor)
+[![intellij-plugin-structure](https://github.com/JetBrains/intellij-plugin-verifier/workflows/intellij-plugin-structure/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions?query=workflow%3Aintellij-plugin-structure)
+[![intellij-plugin-verifier](https://github.com/JetBrains/intellij-plugin-verifier/workflows/intellij-plugin-verifier/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions?query=workflow%3Aintellij-plugin-verifier)
+[![plugins-verifier-service](https://github.com/JetBrains/intellij-plugin-verifier/workflows/plugins-verifier-service/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions?query=workflow%3Aplugins-verifier-service)
+
 
 IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.
 
