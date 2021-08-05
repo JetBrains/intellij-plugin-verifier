@@ -5,7 +5,7 @@ dependencies {
   testRuntimeOnly project('mock-plugin')
 
   //bytecode generation library
-  implementation 'net.bytebuddy:byte-buddy:1.11.9'
+  implementation 'net.bytebuddy:byte-buddy:1.11.10'
 }
 
 task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build') {
