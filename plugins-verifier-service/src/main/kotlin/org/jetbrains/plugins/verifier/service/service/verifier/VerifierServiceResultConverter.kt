@@ -89,7 +89,7 @@ private fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
   }
 }
 
-private fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =
+fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =
   when {
     compatibilityProblems.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
     directMissingMandatoryDependencies.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
@@ -106,7 +106,7 @@ private fun PluginVerificationResult.Verified.convertResultType(): VerificationR
 private fun AvailableIde.convert() =
   AvailableIdeDto(version.asString(), releaseVersion, product.productName)
 
-private fun DependenciesGraph.convert() =
+fun DependenciesGraph.convert() =
   DependenciesGraphDto(
     verifiedPlugin.convert(),
     vertices.map { it.convert() },
