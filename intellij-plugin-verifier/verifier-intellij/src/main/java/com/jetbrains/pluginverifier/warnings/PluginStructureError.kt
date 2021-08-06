@@ -18,5 +18,7 @@ data class PluginStructureError(private val pluginProblem: PluginProblem) {
   val message: String
     get() = pluginProblem.message
 
+  val description = "Represents a fatal plugin's structure error, such as missing mandatory field in the plugin descriptor (`<id>`, `<version>`, etc.)"
+
   override fun toString() = message
 }
