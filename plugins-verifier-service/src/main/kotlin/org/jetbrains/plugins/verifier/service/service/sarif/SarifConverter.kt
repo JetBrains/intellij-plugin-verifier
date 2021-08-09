@@ -48,9 +48,44 @@ fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResul
 
 private fun PluginVerificationResult.Verified.buildRules(): List<Rule> {
   val warningsStructureRules = buildPluginStructureWarningsRules()
-  return warningsStructureRules
+  val compatibilityWarningsRules = buildCompatibilityWarningsRules()
+  val compatibilityProblemsRules = buildCompatibilityProblemRules()
+  return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules
+}
+private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): List<Rule> {
+  if (compatibilityProblems.isEmpty()) return emptyList()
+  return compatibilityProblems.map {
+    Rule(
+      id = it.problemType,
+      shortDescription = Message(it.shortDescription),
+      fullDescription = Message(it.fullDescription),
+      defaultConfiguration = RuleConfiguration(
+        level = SeverityValue.ERROR,
+        parameters = RuleParameters(
+          ideaSeverity = SeverityIdea.ERROR
+        )
+      )
+    )
+  }
 }
 
+private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules(): List<Rule> {
+  if (compatibilityWarnings.isEmpty()) return emptyList()
+  val defaultWarning = compatibilityWarnings.first()
+  return listOf(
+    Rule(
+      id = "CompatibilityWarnings", // TODO
+      shortDescription = Message(defaultWarning.shortDescription), // TODO
+      fullDescription = Message(defaultWarning.fullDescription), // TODO
+      defaultConfiguration = RuleConfiguration(
+        level = SeverityValue.WARNING,
+        parameters = RuleParameters(
+          ideaSeverity = SeverityIdea.WARNING
+        )
+      )
+    )
+  )
+}
 
 private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(): List<Rule> {
   if (pluginStructureWarnings.isEmpty()) return emptyList()
