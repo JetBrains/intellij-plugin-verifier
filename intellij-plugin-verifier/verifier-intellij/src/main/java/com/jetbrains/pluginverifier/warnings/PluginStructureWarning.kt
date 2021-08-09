@@ -12,5 +12,9 @@ data class PluginStructureWarning(private val pluginProblem: PluginProblem) {
     check(pluginProblem.level == PluginProblem.Level.WARNING)
   }
 
+  val problemType: String get() = "Plugin descriptor warning"
+
+  val description: String get() = "Represents a plugin's structure waring"
+
   val message: String get() = pluginProblem.message
 }

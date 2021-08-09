@@ -32,6 +32,30 @@ fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResul
   return this.defaultSarifError(ruleId)
 }
 
+private fun PluginVerificationResult.Verified.buildRules(): List<Rule> {
+  val warningsStructureRules = buildPluginStructureWarningsRules()
+  return warningsStructureRules
+}
+
+
+private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(): List<Rule> {
+  if (pluginStructureWarnings.isEmpty()) return emptyList()
+  val defaultWarning = pluginStructureWarnings.first()
+  return listOf(
+    Rule(
+      id = defaultWarning.problemType,
+      shortDescription = Message(defaultWarning.description),
+      fullDescription = Message(defaultWarning.description),
+      defaultConfiguration = RuleConfiguration(
+        level = SeverityValue.WARNING,
+        parameters = RuleParameters(
+          ideaSeverity = SeverityIdea.WARNING
+        )
+      )
+    )
+  )
+}
+
 
 private fun PluginVerificationResult.InvalidPlugin.buildPluginStructureErrors(): List<InspectionResults> {
   return pluginStructureErrors.map {
