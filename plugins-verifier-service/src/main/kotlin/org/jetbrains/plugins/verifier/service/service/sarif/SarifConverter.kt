@@ -49,7 +49,7 @@ private fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules(): 
   val defaultError = pluginStructureErrors.first()
   return listOf(
     Rule(
-      id = defaultError.javaClass.canonicalName, // TODO
+      id = defaultError.problemType,
       shortDescription = Message(defaultError.description),
       fullDescription = Message(defaultError.description),
       defaultConfiguration = RuleConfiguration(

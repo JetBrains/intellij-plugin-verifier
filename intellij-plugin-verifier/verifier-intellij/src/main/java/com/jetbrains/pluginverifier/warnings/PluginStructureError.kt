@@ -15,6 +15,9 @@ data class PluginStructureError(private val pluginProblem: PluginProblem) {
     check(pluginProblem.level == PluginProblem.Level.ERROR)
   }
 
+  val problemType: String
+    get() = "Plugin descriptor error"
+
   val message: String
     get() = pluginProblem.message
 
