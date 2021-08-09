@@ -18,7 +18,7 @@ data class PluginVerificationResultSARIF(
 
 data class Runner(
   val tool: Tool,
-  val results: List<InspectionResults>,
+  val results: List<InspectionResult>,
   val automationDetails: AutomationDetails,
   val language: String = "en-US",
   val invocations: List<InvocationStatus>,
@@ -118,7 +118,7 @@ enum class SeverityIdea {
  * @param level - The SARIF severity values could be one of the following strings: error, warning, note
  * @param location - always one element
  */
-data class InspectionResults(
+data class InspectionResult(
   val ruleId: String,
   val kind: String = "fail",
   val level: SeverityValue,
