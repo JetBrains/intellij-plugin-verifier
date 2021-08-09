@@ -14,9 +14,6 @@ data class NoExplicitDependencyOnJavaPluginWarning(
   val javaPluginClassUsages: MutableSet<JavaPluginClassUsage> = hashSetOf()
 ) : CompatibilityWarning() {
 
-  override val problemType: String
-    get() = "No explicit dependency on java plugin warning"
-
   override val shortDescription
     get() = "Dependency on Java plugin is not specified"
 

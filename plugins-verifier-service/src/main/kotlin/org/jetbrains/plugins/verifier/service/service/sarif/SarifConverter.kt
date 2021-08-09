@@ -74,7 +74,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules():
   if (compatibilityWarnings.isEmpty()) return emptyList()
   return compatibilityWarnings.map {
     Rule(
-      id = it.problemType,
+      id = it.javaClass.canonicalName,
       shortDescription = Message(it.shortDescription),
       fullDescription = Message(it.fullDescription),
       defaultConfiguration = RuleConfiguration(
@@ -84,7 +84,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules():
         )
       )
     )
-  }
+  }.distinctBy { it.id }
 }
 
 private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(): List<Rule> {

@@ -8,9 +8,6 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 
 data class DependenciesCycleWarning(val cycle: List<DependencyNode>) : CompatibilityWarning() {
 
-  override val problemType: String
-    get() = "Dependencies cycle warning"
-
   override val shortDescription
     get() = "Plugin dependencies are cyclic"
 

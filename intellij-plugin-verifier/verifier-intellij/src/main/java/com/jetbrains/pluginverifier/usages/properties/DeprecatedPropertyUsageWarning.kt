@@ -11,9 +11,6 @@ data class DeprecatedPropertyUsageWarning(
   val usageLocation: Location
 ) : CompatibilityWarning() {
 
-  override val problemType: String
-    get() = "Deprecated property usage warning"
-
   override val shortDescription: String
     get() = "Reference to a deprecated property ''{0}'' of resource bundle ''{1}'', which was moved to ''{2}''".formatMessage(
       propertyKey, originalResourceBundle, deprecatedResourceBundle
