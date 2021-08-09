@@ -37,7 +37,6 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
 
 
 private fun buildApiUsageRules(apiUsage: Set<ApiUsage>): List<Rule> {
-  if (apiUsage.isEmpty()) return emptyList()
   return apiUsage.map {
     Rule(
       id = it.javaClass.canonicalName,
@@ -54,7 +53,6 @@ private fun buildApiUsageRules(apiUsage: Set<ApiUsage>): List<Rule> {
 }
 
 private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): List<Rule> {
-  if (compatibilityProblems.isEmpty()) return emptyList()
   return compatibilityProblems.map {
     Rule(
       id = it.problemType,
@@ -71,7 +69,6 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): 
 }
 
 private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules(): List<Rule> {
-  if (compatibilityWarnings.isEmpty()) return emptyList()
   return compatibilityWarnings.map {
     Rule(
       id = it.javaClass.canonicalName,
