@@ -1,13 +1,20 @@
 package org.jetbrains.plugins.verifier.service.service.sarif
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.usages.ApiUsage
 
 internal fun PluginVerificationResult.Verified.buildRules(): List<Rule> {
   val warningsStructureRules = buildPluginStructureWarningsRules()
   val compatibilityWarningsRules = buildCompatibilityWarningsRules()
   val compatibilityProblemsRules = buildCompatibilityProblemRules()
-  val deprecatedApiRules = buildDeprecatedApiRules()
-  return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules + deprecatedApiRules
+  val deprecatedApiRules = buildApiUsageRules(deprecatedUsages)
+  val experimentalApiRules = buildApiUsageRules(experimentalApiUsages)
+  val internalApiUsagesRules = buildApiUsageRules(internalApiUsages)
+  val nonExtendableApiUsagesRules = buildApiUsageRules(nonExtendableApiUsages)
+  val overrideOnlyMethodUsagesRules = buildApiUsageRules(overrideOnlyMethodUsages)
+  return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules +
+    deprecatedApiRules + experimentalApiRules + internalApiUsagesRules +
+    nonExtendableApiUsagesRules + overrideOnlyMethodUsagesRules
 }
 
 internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules(): List<Rule> {
@@ -28,9 +35,10 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
   )
 }
 
-private fun PluginVerificationResult.Verified.buildDeprecatedApiRules(): List<Rule> {
-  if (deprecatedUsages.isEmpty()) return emptyList()
-  return deprecatedUsages.map {
+
+private fun buildApiUsageRules(apiUsage: Set<ApiUsage>): List<Rule> {
+  if (apiUsage.isEmpty()) return emptyList()
+  return apiUsage.map {
     Rule(
       id = it.javaClass.canonicalName,
       shortDescription = Message(it.shortDescription),
