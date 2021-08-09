@@ -36,7 +36,7 @@ fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResul
 private fun PluginVerificationResult.InvalidPlugin.buildPluginStructureErrors(): List<InspectionResults> {
   return pluginStructureErrors.map {
     InspectionResults(
-      ruleId = it.javaClass.canonicalName,
+      ruleId = it.problemType,
       level = SeverityValue.ERROR,
       message = Message(it.message),
       location = emptyList()
