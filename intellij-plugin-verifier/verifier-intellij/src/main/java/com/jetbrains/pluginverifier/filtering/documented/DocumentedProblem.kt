@@ -230,6 +230,11 @@ data class DocClassTypeParameterAdded(val className: String) : NoOpValidatingDoc
 data class DocSuperclassChanged(val className: String, val oldSuperClassName: String, val newSuperClassName: String) : NoOpValidatingDocumentedProblem()
 
 /**
+ * <class name> class now interface
+ */
+data class DocClassNowInterface(val className: String) : NoOpValidatingDocumentedProblem()
+
+/**
  * Checks if the method's signature of _this_ [MethodReference] contains
  * the class [className].
  */
@@ -269,3 +274,4 @@ private fun FieldReference.doesFieldDependOnClass(classFinder: (String) -> Boole
   val fieldType = fieldDescriptor.extractClassNameFromDescriptor()
   return fieldType != null && classFinder(fieldType)
 }
+
