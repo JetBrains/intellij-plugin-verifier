@@ -50,7 +50,25 @@ private fun PluginVerificationResult.Verified.buildRules(): List<Rule> {
   val warningsStructureRules = buildPluginStructureWarningsRules()
   val compatibilityWarningsRules = buildCompatibilityWarningsRules()
   val compatibilityProblemsRules = buildCompatibilityProblemRules()
-  return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules
+  val deprecatedApiRules = buildDeprecatedApiRules()
+  return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules + deprecatedApiRules
+}
+
+private fun PluginVerificationResult.Verified.buildDeprecatedApiRules(): List<Rule> {
+  if (deprecatedUsages.isEmpty()) return emptyList()
+  return deprecatedUsages.map {
+    Rule(
+      id = it.javaClass.canonicalName,
+      shortDescription = Message(it.shortDescription),
+      fullDescription = Message(it.fullDescription),
+      defaultConfiguration = RuleConfiguration(
+        level = SeverityValue.ERROR,
+        parameters = RuleParameters(
+          ideaSeverity = SeverityIdea.ERROR
+        )
+      )
+    )
+  }.distinctBy { it.id }
 }
 
 private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): List<Rule> {
