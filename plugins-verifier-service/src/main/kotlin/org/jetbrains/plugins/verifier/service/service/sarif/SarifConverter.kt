@@ -37,12 +37,12 @@ fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSA
 }
 
 fun PluginVerificationResult.NotFound.toSarif(): PluginVerificationResultSARIF {
-  val ruleId = "NotFound"
+  val ruleId = "Plugin is not found"
   return this.defaultSarifError(ruleId)
 }
 
 fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResultSARIF {
-  val ruleId = "FailedToDownload"
+  val ruleId = "Failed to download"
   return this.defaultSarifError(ruleId)
 }
 
