@@ -82,7 +82,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
   }
 }
 
-private fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
+fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
   return when (this) {
     is DynamicPluginStatus.MaybeDynamic -> DynamicPluginStatusDto(true, emptyList())
     is DynamicPluginStatus.NotDynamic -> DynamicPluginStatusDto(false, reasonsNotToLoadUnloadWithoutRestart.toList())

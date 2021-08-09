@@ -120,6 +120,7 @@ private fun PluginVerificationResult.toAutomationDetails(): AutomationDetails {
 
 private fun PluginVerificationResult.toPluginVerifierPropertiesBag(): PluginVerifierPropertiesBag {
   val dependenciesGraph = if (this is PluginVerificationResult.Verified) dependenciesGraph.convert() else null
+  val dynamicPluginStatus = if (this is PluginVerificationResult.Verified) dynamicPluginStatus?.convert() else null
   val ideVersion = verificationTarget as PluginVerificationTarget.IDE
   val type = when (this) {
     is PluginVerificationResult.Verified -> this.convertResultType()
@@ -131,7 +132,8 @@ private fun PluginVerificationResult.toPluginVerifierPropertiesBag(): PluginVeri
     javaVersion = ideVersion.jdkVersion.javaVersion,
     resultType = type,
     verdict = this.verificationVerdict,
-    dependenciesGraph = dependenciesGraph
+    dependenciesGraph = dependenciesGraph,
+    dynamicPluginStatus = dynamicPluginStatus,
   )
 }
 

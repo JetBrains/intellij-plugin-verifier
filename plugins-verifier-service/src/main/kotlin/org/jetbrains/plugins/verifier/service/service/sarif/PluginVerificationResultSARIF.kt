@@ -2,6 +2,7 @@ package org.jetbrains.plugins.verifier.service.service.sarif
 
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import org.jetbrains.plugins.verifier.service.service.verifier.DependenciesGraphDto
+import org.jetbrains.plugins.verifier.service.service.verifier.DynamicPluginStatusDto
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultTypeDto
 import java.util.*
 
@@ -31,6 +32,7 @@ data class PluginVerifierPropertiesBag(
   val resultType: VerificationResultTypeDto,
   val verdict: String,
   val dependenciesGraph: DependenciesGraphDto?,
+  val dynamicPluginStatus: DynamicPluginStatusDto?,
 )
 
 /**
