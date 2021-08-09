@@ -59,7 +59,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): 
         )
       )
     )
-  }
+  }.distinctBy { it.id }
 }
 
 private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules(): List<Rule> {
