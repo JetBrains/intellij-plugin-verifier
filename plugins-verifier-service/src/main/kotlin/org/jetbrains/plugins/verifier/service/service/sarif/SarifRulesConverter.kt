@@ -28,6 +28,21 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
   )
 }
 
+internal fun PluginVerificationResult.buildSingleRule(): List<Rule> {
+  return listOf(
+    Rule(
+      id = this.javaClass.canonicalName,
+      shortDescription = Message(this.verificationVerdict),
+      fullDescription = Message(this.verificationVerdict),
+      defaultConfiguration = RuleConfiguration(
+        level = SeverityValue.ERROR,
+        parameters = RuleParameters(
+          ideaSeverity = SeverityIdea.ERROR
+        )
+      )
+    )
+  )
+}
 
 private fun PluginVerificationResult.Verified.buildApiUsageRules(): List<Rule> {
   val apiUsages = deprecatedUsages + experimentalApiUsages + internalApiUsages + nonExtendableApiUsages + overrideOnlyMethodUsages

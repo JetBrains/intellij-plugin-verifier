@@ -7,21 +7,37 @@ import org.jetbrains.plugins.verifier.service.service.verifier.convert
 import org.jetbrains.plugins.verifier.service.service.verifier.convertResultType
 
 fun PluginVerificationResult.Verified.toSarif(): PluginVerificationResultSARIF {
-  return PluginVerificationResultSARIF(
-    runs = listOf(
-      Runner(
-        properties = this.toPluginVerifierPropertiesBag(),
-        automationDetails = this.toAutomationDetails(),
-        versionControlProvenance = toVersionControlProvenance(),
-        invocations = this.toInvocationStatus(),
-        tool = toToolWithRules(buildRules()),
-        results = emptyList() // TODO()
-      )
-    )
+  return generateReport(
+    rules = buildRules(),
+    invocations = emptyList() // TODO()
   )
 }
 
 fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSARIF {
+  return generateReport(
+    rules = buildPluginStructureRules(),
+    invocations = buildPluginStructureInspections()
+  )
+}
+
+fun PluginVerificationResult.NotFound.toSarif(): PluginVerificationResultSARIF {
+  return generateReport(
+    rules = buildSingleRule(),
+    invocations = buildSingleInvocation(),
+  )
+}
+
+fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResultSARIF {
+  return generateReport(
+    rules = buildSingleRule(),
+    invocations = buildSingleInvocation(),
+  )
+}
+
+private fun PluginVerificationResult.generateReport(
+  rules: List<Rule>,
+  invocations: List<InspectionResult>
+): PluginVerificationResultSARIF {
   return PluginVerificationResultSARIF(
     runs = listOf(
       Runner(
@@ -29,64 +45,20 @@ fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSA
         automationDetails = toAutomationDetails(),
         versionControlProvenance = toVersionControlProvenance(),
         invocations = toInvocationStatus(),
-        tool = toToolWithRules(buildPluginStructureRules()),
-        results = buildPluginStructureErrors()
+        tool = toToolWithRules(rules),
+        results = invocations
       )
     )
   )
 }
 
-fun PluginVerificationResult.NotFound.toSarif(): PluginVerificationResultSARIF {
-  val ruleId = "Plugin is not found"
-  return this.defaultSarifError(ruleId)
-}
-
-fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResultSARIF {
-  val ruleId = "Failed to download"
-  return this.defaultSarifError(ruleId)
-}
-
-
-private fun PluginVerificationResult.InvalidPlugin.buildPluginStructureErrors(): List<InspectionResults> {
-  return pluginStructureErrors.map {
-    InspectionResults(
-      ruleId = it.problemType,
+private fun PluginVerificationResult.buildSingleInvocation(): List<InspectionResult> {
+  return listOf(
+    InspectionResult(
+      ruleId = this.javaClass.canonicalName,
       level = SeverityValue.ERROR,
-      message = Message(it.message),
+      message = Message(this.verificationVerdict),
       location = emptyList()
-    )
-  }
-}
-
-
-private fun PluginVerificationResult.defaultSarifError(ruleId: String): PluginVerificationResultSARIF {
-  val rule = Rule(
-    id = ruleId,
-    shortDescription = Message(this.verificationVerdict),
-    fullDescription = Message(this.verificationVerdict),
-    defaultConfiguration = RuleConfiguration(
-      level = SeverityValue.ERROR,
-      parameters = RuleParameters(
-        ideaSeverity = SeverityIdea.ERROR
-      )
-    )
-  )
-  val results = InspectionResults(
-    ruleId = ruleId,
-    level = SeverityValue.ERROR,
-    message = Message(this.verificationVerdict),
-    location = emptyList()
-  )
-  return PluginVerificationResultSARIF(
-    runs = listOf(
-      Runner(
-        properties = this.toPluginVerifierPropertiesBag(),
-        automationDetails = this.toAutomationDetails(),
-        versionControlProvenance = toVersionControlProvenance(),
-        invocations = this.toInvocationStatus(),
-        tool = toToolWithRules(listOf(rule)),
-        results = listOf(results)
-      )
     )
   )
 }
