@@ -6,6 +6,20 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResul
 import org.jetbrains.plugins.verifier.service.service.verifier.convert
 import org.jetbrains.plugins.verifier.service.service.verifier.convertResultType
 
+fun PluginVerificationResult.Verified.toSarif(): PluginVerificationResultSARIF {
+  return PluginVerificationResultSARIF(
+    runs = listOf(
+      Runner(
+        properties = this.toPluginVerifierPropertiesBag(),
+        automationDetails = this.toAutomationDetails(),
+        versionControlProvenance = toVersionControlProvenance(),
+        invocations = this.toInvocationStatus(),
+        tool = toToolWithRules(buildRules()),
+        results = emptyList() // TODO()
+      )
+    )
+  )
+}
 
 fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSARIF {
   return PluginVerificationResultSARIF(
