@@ -52,6 +52,7 @@ private fun PluginVerificationResult.Verified.buildRules(): List<Rule> {
   val compatibilityProblemsRules = buildCompatibilityProblemRules()
   return warningsStructureRules + compatibilityWarningsRules + compatibilityProblemsRules
 }
+
 private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): List<Rule> {
   if (compatibilityProblems.isEmpty()) return emptyList()
   return compatibilityProblems.map {
@@ -71,12 +72,11 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): 
 
 private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules(): List<Rule> {
   if (compatibilityWarnings.isEmpty()) return emptyList()
-  val defaultWarning = compatibilityWarnings.first()
-  return listOf(
+  return compatibilityWarnings.map {
     Rule(
-      id = "CompatibilityWarnings", // TODO
-      shortDescription = Message(defaultWarning.shortDescription), // TODO
-      fullDescription = Message(defaultWarning.fullDescription), // TODO
+      id = it.problemType,
+      shortDescription = Message(it.shortDescription),
+      fullDescription = Message(it.fullDescription),
       defaultConfiguration = RuleConfiguration(
         level = SeverityValue.WARNING,
         parameters = RuleParameters(
@@ -84,7 +84,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules():
         )
       )
     )
-  )
+  }
 }
 
 private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(): List<Rule> {

@@ -6,6 +6,8 @@ package com.jetbrains.pluginverifier.warnings
 
 abstract class CompatibilityWarning {
 
+  abstract val problemType: String
+
   abstract val shortDescription: String
 
   abstract val fullDescription: String
