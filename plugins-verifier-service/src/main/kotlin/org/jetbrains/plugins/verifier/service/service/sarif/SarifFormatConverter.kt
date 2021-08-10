@@ -9,14 +9,14 @@ import org.jetbrains.plugins.verifier.service.service.verifier.convertResultType
 fun PluginVerificationResult.Verified.toSarif(): PluginVerificationResultSARIF {
   return generateReport(
     rules = buildRules(),
-    invocations = emptyList() // TODO()
+    invocations = buildVerifiedInspections(),
   )
 }
 
 fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSARIF {
   return generateReport(
     rules = buildPluginStructureRules(),
-    invocations = buildPluginStructureInspections()
+    invocations = buildPluginStructureInspections(),
   )
 }
 
@@ -48,17 +48,6 @@ private fun PluginVerificationResult.generateReport(
         tool = toToolWithRules(rules),
         results = invocations
       )
-    )
-  )
-}
-
-private fun PluginVerificationResult.buildSingleInvocation(): List<InspectionResult> {
-  return listOf(
-    InspectionResult(
-      ruleId = this.javaClass.canonicalName,
-      level = SeverityValue.ERROR,
-      message = Message(this.verificationVerdict),
-      location = emptyList()
     )
   )
 }
