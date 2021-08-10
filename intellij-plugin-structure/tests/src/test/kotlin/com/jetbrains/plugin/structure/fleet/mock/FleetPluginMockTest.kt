@@ -17,6 +17,27 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
 
   @Test
+  fun `test plugin modules set`() {
+    val frontItem = "frontend"
+    val backItem = "backend"
+    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+      dir(frontItem) {}
+      dir(backItem) {}
+      dir(FleetPluginManager.COMMON_DIR_NAME) {}
+      file(FleetPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("extension")
+      }
+    }
+    testMockPluginStructureAndConfiguration(pluginFile).also {
+      val plugin = it.plugin
+      val modules = plugin.modules!!
+      assertEquals(2, modules.size)
+      assertTrue("$frontItem is not present", modules.contains(frontItem))
+      assertTrue("$backItem is not present", modules.contains(backItem))
+    }
+  }
+
+  @Test
   fun `parse base fields fleet plugin test`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
