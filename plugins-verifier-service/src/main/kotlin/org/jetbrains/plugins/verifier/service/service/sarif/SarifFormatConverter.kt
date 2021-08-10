@@ -6,33 +6,23 @@ import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResul
 import org.jetbrains.plugins.verifier.service.service.verifier.convert
 import org.jetbrains.plugins.verifier.service.service.verifier.convertResultType
 
-fun PluginVerificationResult.Verified.toSarif(): PluginVerificationResultSARIF {
-  return generateReport(
-    rules = buildRules(),
-    invocations = buildVerifiedInspections(),
-  )
+fun PluginVerificationResult.toSarif(): PluginVerificationResultSARIF {
+  return when (this) {
+    is PluginVerificationResult.Verified -> generateReport(
+      rules = buildRules(),
+      invocations = buildVerifiedInspections(),
+    )
+    is PluginVerificationResult.InvalidPlugin -> generateReport(
+      rules = buildPluginStructureRules(),
+      invocations = buildPluginStructureInspections(),
+    )
+    else -> generateReport(
+      rules = buildSingleRule(),
+      invocations = buildSingleInvocation(),
+    )
+  }
 }
 
-fun PluginVerificationResult.InvalidPlugin.toSarif(): PluginVerificationResultSARIF {
-  return generateReport(
-    rules = buildPluginStructureRules(),
-    invocations = buildPluginStructureInspections(),
-  )
-}
-
-fun PluginVerificationResult.NotFound.toSarif(): PluginVerificationResultSARIF {
-  return generateReport(
-    rules = buildSingleRule(),
-    invocations = buildSingleInvocation(),
-  )
-}
-
-fun PluginVerificationResult.FailedToDownload.toSarif(): PluginVerificationResultSARIF {
-  return generateReport(
-    rules = buildSingleRule(),
-    invocations = buildSingleInvocation(),
-  )
-}
 
 private fun PluginVerificationResult.generateReport(
   rules: List<Rule>,
