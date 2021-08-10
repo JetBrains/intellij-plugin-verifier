@@ -26,7 +26,7 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureInspecti
 internal fun PluginVerificationResult.buildSingleInvocation(): List<InspectionResult> {
   return listOf(
     InspectionResult(
-      ruleId = this.javaClass.canonicalName,
+      ruleId = this.javaClass.simpleName,
       level = SeverityValue.ERROR,
       message = Message(this.verificationVerdict),
       location = emptyList()
@@ -39,7 +39,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageInspection(): List<In
   val apiUsages = deprecatedUsages + experimentalApiUsages + internalApiUsages + nonExtendableApiUsages + overrideOnlyMethodUsages
   return apiUsages.map {
     InspectionResult(
-      ruleId = it.javaClass.canonicalName,
+      ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR,
       message = Message(it.fullDescription),
       location = emptyList()
@@ -61,7 +61,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemInspectio
 private fun PluginVerificationResult.Verified.buildCompatibilityWarningsInspection(): List<InspectionResult> {
   return compatibilityWarnings.map {
     InspectionResult(
-      ruleId = it.javaClass.canonicalName,
+      ruleId = it.javaClass.simpleName,
       level = SeverityValue.WARNING,
       message = Message(it.fullDescription),
       location = emptyList()

@@ -31,7 +31,7 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
 internal fun PluginVerificationResult.buildSingleRule(): List<Rule> {
   return listOf(
     Rule(
-      id = this.javaClass.canonicalName,
+      id = this.javaClass.simpleName,
       shortDescription = Message(this.verificationVerdict),
       fullDescription = Message(this.verificationVerdict),
       defaultConfiguration = RuleConfiguration(
@@ -48,7 +48,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageRules(): List<Rule> {
   val apiUsages = deprecatedUsages + experimentalApiUsages + internalApiUsages + nonExtendableApiUsages + overrideOnlyMethodUsages
   return apiUsages.map {
     Rule(
-      id = it.javaClass.canonicalName,
+      id = it.javaClass.simpleName,
       shortDescription = Message(it.shortDescription),
       fullDescription = Message(it.fullDescription),
       defaultConfiguration = RuleConfiguration(
@@ -80,7 +80,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): 
 private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules(): List<Rule> {
   return compatibilityWarnings.map {
     Rule(
-      id = it.javaClass.canonicalName,
+      id = it.javaClass.simpleName,
       shortDescription = Message(it.shortDescription),
       fullDescription = Message(it.fullDescription),
       defaultConfiguration = RuleConfiguration(
