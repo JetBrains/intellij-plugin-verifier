@@ -19,8 +19,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
+    const val COMMON_DIR_NAME = "common"
     const val DESCRIPTOR_NAME = "extension.json"
     const val META_INF = "META-INF"
 
@@ -66,8 +68,14 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     }
     val descriptor = jacksonObjectMapper().readValue(descriptorFile.readText(), FleetPluginDescriptor::class.java)
     val icons = loadIconFromDir(pluginDirectory)
-    return createPlugin(descriptor, icons)
+    val modules = detectModules(pluginDirectory)
+    return createPlugin(descriptor, icons, modules)
   }
+
+  private fun detectModules(pluginDirectory: Path): List<String> =
+    Files.newDirectoryStream(pluginDirectory).use { stream ->
+      stream.filter { it.isDirectory && it.fileName.toString() != COMMON_DIR_NAME }.map { it.fileName.toString() }
+    }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
     IconTheme.values().mapNotNull { theme ->
@@ -82,7 +90,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
-  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>): PluginCreationResult<FleetPlugin> {
+  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>, modules: List<String>): PluginCreationResult<FleetPlugin> {
     try {
       val beanValidationResult = validateFleetPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
@@ -97,7 +105,8 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           requires = requires,
           entryPoint = entryPoint,
           icons = icons,
-          vendor = vendor
+          vendor = vendor,
+          modules = modules
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
