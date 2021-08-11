@@ -98,9 +98,9 @@ private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(
   val defaultWarning = pluginStructureWarnings.first()
   return listOf(
     Rule(
-      id = defaultWarning.problemType,
-      shortDescription = Message(defaultWarning.description),
-      fullDescription = Message(defaultWarning.description),
+      id = defaultWarning.javaClass.simpleName,
+      shortDescription = Message(defaultWarning.problemType),
+      fullDescription = Message(defaultWarning.problemType),
       defaultConfiguration = RuleConfiguration(
         level = SeverityValue.WARNING,
         parameters = RuleParameters(
