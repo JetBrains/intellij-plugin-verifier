@@ -23,6 +23,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       dir(frontItem) {}
       dir(backItem) {}
+      dir(FleetPluginManager.META_INF){}
       dir(FleetPluginManager.COMMON_DIR_NAME) {}
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
@@ -68,7 +69,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
       }
-      dir("META-INF") {
+      dir(FleetPluginManager.META_INF) {
         file("pluginIcon.svg", content)
         file("pluginIcon_dark.svg", content)
       }
@@ -87,7 +88,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
       }
-      dir("META-INF") {
+      dir(FleetPluginManager.META_INF) {
         file("pluginIcon.svg", content)
         file("pluginIcon_darkest.svg", content)
       }

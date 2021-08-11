@@ -74,7 +74,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun detectModules(pluginDirectory: Path): List<String> =
     Files.newDirectoryStream(pluginDirectory).use { stream ->
-      stream.filter { it.isDirectory && it.fileName.toString() != COMMON_DIR_NAME }.map { it.fileName.toString() }
+      stream.filter { it.isDirectory && (it.fileName.toString() !in listOf(COMMON_DIR_NAME, META_INF)) }.map { it.fileName.toString() }
     }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
