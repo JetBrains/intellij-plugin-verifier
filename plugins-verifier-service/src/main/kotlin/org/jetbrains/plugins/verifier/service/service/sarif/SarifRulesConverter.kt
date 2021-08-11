@@ -81,8 +81,8 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules():
   return compatibilityWarnings.map {
     Rule(
       id = it.javaClass.simpleName,
-      shortDescription = Message(it.shortDescription),
-      fullDescription = Message(it.fullDescription),
+      shortDescription = Message(it.problemType),
+      fullDescription = Message(it.problemType),
       defaultConfiguration = RuleConfiguration(
         level = SeverityValue.WARNING,
         parameters = RuleParameters(
