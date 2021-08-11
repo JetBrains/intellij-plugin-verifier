@@ -20,6 +20,9 @@ class ExperimentalClassUsage(
   override val usageLocation: Location
 ) : ExperimentalApiUsage() {
 
+  override val problemType: String
+    get() = "Experimental class usage"
+
   override val shortDescription
     get() = "Experimental API " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} reference"
 

@@ -20,6 +20,9 @@ class InternalClassUsage(
   override val usageLocation: Location
 ) : InternalApiUsage() {
 
+  override val problemType: String
+    get() = "Internal class usage"
+
   override val shortDescription
     get() = "Internal " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} reference"
 

@@ -20,6 +20,9 @@ class DeprecatedClassUsage(
   override val usageLocation: Location,
   deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
+
+  override val problemType: String
+    get() = "Deprecated class usage"
   override val shortDescription
     get() = "Deprecated " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, NO_GENERICS)} reference"
 

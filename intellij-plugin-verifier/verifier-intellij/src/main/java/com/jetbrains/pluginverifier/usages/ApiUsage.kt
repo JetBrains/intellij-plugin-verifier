@@ -38,6 +38,11 @@ abstract class ApiUsage {
   abstract val fullDescription: String
 
   /**
+   * Description of the API usage type
+   */
+  abstract val problemType: String
+
+  /**
    * `equals` must be implemented in inheritors
    */
   abstract override fun equals(other: Any?): Boolean

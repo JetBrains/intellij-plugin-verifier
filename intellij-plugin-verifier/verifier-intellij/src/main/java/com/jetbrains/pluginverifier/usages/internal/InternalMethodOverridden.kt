@@ -24,6 +24,9 @@ class InternalMethodOverridden(
   override val usageLocation: MethodLocation
 ) : InternalApiUsage() {
 
+  override val problemType: String
+    get() = "Internal method is overridden"
+
   override val apiReference
     get() = apiElement.toReference()
 

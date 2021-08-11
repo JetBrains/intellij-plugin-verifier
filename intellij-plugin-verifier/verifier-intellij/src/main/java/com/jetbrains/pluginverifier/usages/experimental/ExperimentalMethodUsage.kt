@@ -24,6 +24,9 @@ class ExperimentalMethodUsage(
   override val usageLocation: Location
 ) : ExperimentalApiUsage() {
 
+  override val problemType: String
+    get() = "Experimental method usage"
+
   override val shortDescription
     get() = "Experimental API " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 
