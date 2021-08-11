@@ -50,7 +50,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageInspection(): List<In
 private fun PluginVerificationResult.Verified.buildCompatibilityProblemInspection(): List<InspectionResult> {
   return compatibilityProblems.map {
     InspectionResult(
-      ruleId = it.problemType,
+      ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR,
       message = Message(it.fullDescription),
       location = emptyList()
