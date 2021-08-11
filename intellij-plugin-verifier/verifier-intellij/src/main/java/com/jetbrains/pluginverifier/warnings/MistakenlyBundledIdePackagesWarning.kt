@@ -8,6 +8,9 @@ import com.jetbrains.plugin.structure.base.utils.pluralize
 
 data class MistakenlyBundledIdePackagesWarning(private val idePackages: List<String>) : CompatibilityWarning() {
 
+  override val problemType: String
+    get() = shortDescription
+
   override val shortDescription
     get() = "Plugin bundles IDE packages"
 
