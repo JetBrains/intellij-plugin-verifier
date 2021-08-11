@@ -30,6 +30,9 @@ class DiscouragingJdkClassUsage(
   private val classFileOrigin: FileOrigin
 ) : DeprecatedApiUsage(DeprecationInfo(false, "JDK 8")) {
 
+  override val problemType: String
+    get() = "JDK classes of some packages should not be used when they come from JDK or IDEA distribution because these classes will not be available in JDK 9+."
+
   override val apiReference
     get() = apiElement.toReference()
 

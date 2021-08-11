@@ -20,6 +20,9 @@ class DeprecatedFieldUsage(
   deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
 
+  override val problemType: String
+    get() = "Deprecated field usage"
+
   override val shortDescription
     get() = "Deprecated field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
 

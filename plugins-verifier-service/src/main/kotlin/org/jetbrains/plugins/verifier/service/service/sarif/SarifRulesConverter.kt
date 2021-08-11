@@ -49,8 +49,8 @@ private fun PluginVerificationResult.Verified.buildApiUsageRules(): List<Rule> {
   return apiUsages.map {
     Rule(
       id = it.javaClass.simpleName,
-      shortDescription = Message(it.shortDescription),
-      fullDescription = Message(it.fullDescription),
+      shortDescription = Message(it.problemType),
+      fullDescription = Message(it.problemType),
       defaultConfiguration = RuleConfiguration(
         level = SeverityValue.ERROR,
         parameters = RuleParameters(

@@ -25,6 +25,9 @@ class DeprecatedMethodOverridden(
   deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
 
+  override val problemType: String
+    get() = "Deprecated method is overridden"
+
   override val apiReference
     get() = apiElement.toReference()
 

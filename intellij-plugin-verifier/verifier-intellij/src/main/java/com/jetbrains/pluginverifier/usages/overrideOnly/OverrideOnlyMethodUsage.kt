@@ -25,6 +25,9 @@ class OverrideOnlyMethodUsage(
   override val usageLocation: Location
 ) : ApiUsage() {
 
+  override val problemType: String
+    get() = "Violating invocation of `ApiStatus.OverrideOnly` method"
+
   override val shortDescription
     get() = "Invocation of override-only method " + apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)
 
