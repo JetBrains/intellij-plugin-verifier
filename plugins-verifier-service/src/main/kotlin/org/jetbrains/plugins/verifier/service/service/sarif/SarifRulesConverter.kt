@@ -15,9 +15,9 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
   val defaultError = pluginStructureErrors.first()
   return listOf(
     Rule(
-      id = defaultError.problemType,
-      shortDescription = Message(defaultError.description),
-      fullDescription = Message(defaultError.description),
+      id = defaultError.javaClass.simpleName,
+      shortDescription = Message(defaultError.problemType),
+      fullDescription = Message(defaultError.problemType),
       defaultConfiguration = RuleConfiguration(
         level = SeverityValue.ERROR,
         parameters = RuleParameters(

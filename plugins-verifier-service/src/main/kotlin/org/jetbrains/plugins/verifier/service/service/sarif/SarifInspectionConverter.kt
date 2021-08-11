@@ -15,7 +15,7 @@ internal fun PluginVerificationResult.Verified.buildVerifiedInspections(): List<
 internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureInspections(): List<InspectionResult> {
   return pluginStructureErrors.map {
     InspectionResult(
-      ruleId = it.problemType,
+      ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR,
       message = Message(it.message),
       location = emptyList()
