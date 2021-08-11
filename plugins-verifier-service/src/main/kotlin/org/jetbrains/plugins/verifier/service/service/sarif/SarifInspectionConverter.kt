@@ -72,7 +72,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsInspecti
 private fun PluginVerificationResult.Verified.buildPluginStructureWarningsInspection(): List<InspectionResult> {
   return pluginStructureWarnings.map {
     InspectionResult(
-      ruleId = it.problemType,
+      ruleId = it.javaClass.simpleName,
       level = SeverityValue.WARNING,
       message = Message(it.message),
       location = emptyList()
