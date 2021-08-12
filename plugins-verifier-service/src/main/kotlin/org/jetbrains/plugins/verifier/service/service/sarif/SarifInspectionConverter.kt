@@ -18,7 +18,7 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureInspecti
       ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR.id,
       message = Message(it.message),
-      location = emptyList()
+      locations = emptyList()
     )
   }
 }
@@ -29,7 +29,7 @@ internal fun PluginVerificationResult.buildSingleInvocation(): List<InspectionRe
       ruleId = this.javaClass.simpleName,
       level = SeverityValue.ERROR.id,
       message = Message(this.verificationVerdict),
-      location = emptyList()
+      locations = emptyList()
     )
   )
 }
@@ -42,7 +42,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageInspection(): List<In
       ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR.id,
       message = Message(it.fullDescription),
-      location = emptyList()
+      locations = emptyList()
     )
   }
 }
@@ -53,7 +53,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemInspectio
       ruleId = it.javaClass.simpleName,
       level = SeverityValue.ERROR.id,
       message = Message(it.fullDescription),
-      location = emptyList()
+      locations = emptyList()
     )
   }
 }
@@ -64,7 +64,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsInspecti
       ruleId = it.javaClass.simpleName,
       level = SeverityValue.WARNING.id,
       message = Message(it.fullDescription),
-      location = emptyList()
+      locations = emptyList()
     )
   }
 }
@@ -75,7 +75,7 @@ private fun PluginVerificationResult.Verified.buildPluginStructureWarningsInspec
       ruleId = it.javaClass.simpleName,
       level = SeverityValue.WARNING.id,
       message = Message(it.message),
-      location = emptyList()
+      locations = emptyList()
     )
   }
 }
