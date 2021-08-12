@@ -116,14 +116,14 @@ enum class SeverityIdea {
  * @param ruleId - [Rule.id]
  * @param kind - always fail
  * @param level - The SARIF severity values could be one of the following strings: error, warning, note
- * @param location - always one element
+ * @param locations - always one element
  */
 data class InspectionResult(
   val ruleId: String,
   val kind: String = "fail",
   val level: String,
   val message: Message,
-  val location: List<Location>,
+  val locations: List<Location>,
 )
 
 enum class SeverityValue(val id: String) {
