@@ -98,7 +98,7 @@ data class Rule(
 )
 
 data class RuleConfiguration(
-  val level: SeverityValue,
+  val level: String,
   val parameters: RuleParameters,
 )
 
@@ -121,13 +121,14 @@ enum class SeverityIdea {
 data class InspectionResult(
   val ruleId: String,
   val kind: String = "fail",
-  val level: SeverityValue,
+  val level: String,
   val message: Message,
   val location: List<Location>,
 )
 
 enum class SeverityValue(val id: String) {
-  NOTE("note"),
+  NONE("none"),
+  INFO("info"),
   ERROR("error"),
   WARNING("warning")
 }
