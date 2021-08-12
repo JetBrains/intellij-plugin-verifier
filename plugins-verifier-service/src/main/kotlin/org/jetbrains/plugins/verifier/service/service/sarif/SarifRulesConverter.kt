@@ -19,7 +19,7 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureRules():
       shortDescription = Message(defaultError.problemType),
       fullDescription = Message(defaultError.problemType),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.ERROR,
+        level = SeverityValue.ERROR.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.ERROR
         )
@@ -35,7 +35,7 @@ internal fun PluginVerificationResult.buildSingleRule(): List<Rule> {
       shortDescription = Message(this.verificationVerdict),
       fullDescription = Message(this.verificationVerdict),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.ERROR,
+        level = SeverityValue.ERROR.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.ERROR
         )
@@ -52,7 +52,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageRules(): List<Rule> {
       shortDescription = Message(it.problemType),
       fullDescription = Message(it.problemType),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.ERROR,
+        level = SeverityValue.ERROR.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.ERROR
         )
@@ -68,7 +68,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemRules(): 
       shortDescription = Message(it.problemType),
       fullDescription = Message(it.problemType),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.ERROR,
+        level = SeverityValue.ERROR.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.ERROR
         )
@@ -84,7 +84,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsRules():
       shortDescription = Message(it.problemType),
       fullDescription = Message(it.problemType),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.WARNING,
+        level = SeverityValue.WARNING.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.WARNING
         )
@@ -102,7 +102,7 @@ private fun PluginVerificationResult.Verified.buildPluginStructureWarningsRules(
       shortDescription = Message(defaultWarning.problemType),
       fullDescription = Message(defaultWarning.problemType),
       defaultConfiguration = RuleConfiguration(
-        level = SeverityValue.WARNING,
+        level = SeverityValue.WARNING.id,
         parameters = RuleParameters(
           ideaSeverity = SeverityIdea.WARNING
         )

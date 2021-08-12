@@ -16,7 +16,7 @@ internal fun PluginVerificationResult.InvalidPlugin.buildPluginStructureInspecti
   return pluginStructureErrors.map {
     InspectionResult(
       ruleId = it.javaClass.simpleName,
-      level = SeverityValue.ERROR,
+      level = SeverityValue.ERROR.id,
       message = Message(it.message),
       location = emptyList()
     )
@@ -27,7 +27,7 @@ internal fun PluginVerificationResult.buildSingleInvocation(): List<InspectionRe
   return listOf(
     InspectionResult(
       ruleId = this.javaClass.simpleName,
-      level = SeverityValue.ERROR,
+      level = SeverityValue.ERROR.id,
       message = Message(this.verificationVerdict),
       location = emptyList()
     )
@@ -40,7 +40,7 @@ private fun PluginVerificationResult.Verified.buildApiUsageInspection(): List<In
   return apiUsages.map {
     InspectionResult(
       ruleId = it.javaClass.simpleName,
-      level = SeverityValue.ERROR,
+      level = SeverityValue.ERROR.id,
       message = Message(it.fullDescription),
       location = emptyList()
     )
@@ -51,7 +51,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityProblemInspectio
   return compatibilityProblems.map {
     InspectionResult(
       ruleId = it.javaClass.simpleName,
-      level = SeverityValue.ERROR,
+      level = SeverityValue.ERROR.id,
       message = Message(it.fullDescription),
       location = emptyList()
     )
@@ -62,7 +62,7 @@ private fun PluginVerificationResult.Verified.buildCompatibilityWarningsInspecti
   return compatibilityWarnings.map {
     InspectionResult(
       ruleId = it.javaClass.simpleName,
-      level = SeverityValue.WARNING,
+      level = SeverityValue.WARNING.id,
       message = Message(it.fullDescription),
       location = emptyList()
     )
@@ -73,7 +73,7 @@ private fun PluginVerificationResult.Verified.buildPluginStructureWarningsInspec
   return pluginStructureWarnings.map {
     InspectionResult(
       ruleId = it.javaClass.simpleName,
-      level = SeverityValue.WARNING,
+      level = SeverityValue.WARNING.id,
       message = Message(it.message),
       location = emptyList()
     )
