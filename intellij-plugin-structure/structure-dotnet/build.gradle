@@ -2,5 +2,5 @@ dependencies {
   api project(':structure-base')
   implementation group: 'org.jdom', name: 'jdom', version: '2.0.2'
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-  implementation "org.glassfish.jaxb:jaxb-runtime:2.3.1"
+  implementation "org.glassfish.jaxb:jaxb-runtime:3.0.2"
 }
