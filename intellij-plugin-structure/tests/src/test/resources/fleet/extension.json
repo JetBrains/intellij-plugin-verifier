@@ -4,7 +4,6 @@
   "name": "CSS",
   "description": "CSS language support",
   "vendor": "JetBrains",
-  "entryPoint": "fleet.language.css.Css",
   "requires": [
     {
       "id": "fleet.language.xml",
