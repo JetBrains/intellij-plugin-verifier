@@ -103,7 +103,6 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           pluginVersion = version,
           description = description,
           requires = requires,
-          entryPoint = entryPoint,
           icons = icons,
           vendor = vendor,
           modules = modules
