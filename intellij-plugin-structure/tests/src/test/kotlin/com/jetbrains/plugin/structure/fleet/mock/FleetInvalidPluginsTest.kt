@@ -68,15 +68,6 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(PropertyNotSpecified("description")) { description = "\n" }
   }
 
-
-  @Test
-  fun `entryPoint is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("entryPoint")) { entryPoint = null }
-    checkInvalidPlugin(PropertyNotSpecified("entryPoint")) { entryPoint = "" }
-    checkInvalidPlugin(PropertyNotSpecified("entryPoint")) { entryPoint = "\n" }
-  }
-
-
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: FleetTestDescriptor.() -> Unit) {
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
