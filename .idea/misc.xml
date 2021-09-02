@@ -5,12 +5,6 @@
     <groovy codeStyle="LEGACY" />
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
-  <component name="FrameworkDetectionExcludesConfiguration">
-    <file type="web" url="file://$PROJECT_DIR$/intellij-feature-extractor" />
-    <file type="web" url="file://$PROJECT_DIR$/intellij-plugin-structure" />
-    <file type="web" url="file://$PROJECT_DIR$/intellij-plugin-verifier" />
-    <file type="web" url="file://$PROJECT_DIR$/plugins-verifier-service" />
-  </component>
   <component name="JavaScriptSettings">
     <option name="languageLevel" value="ES6" />
   </component>
