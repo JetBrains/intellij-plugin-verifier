@@ -88,7 +88,7 @@ data class Driver(
  * Based on [CompatibilityProblem]
  * @param id - class name
  * @param shortDescription - [CompatibilityProblem.problemType]
- * @param fullDescription - [CompatibilityProblem.fullDescription]
+ * @param fullDescription - [CompatibilityProblem.problemType]
  */
 data class Rule(
   val id: String,
