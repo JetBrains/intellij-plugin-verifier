@@ -1,9 +1,9 @@
-package org.jetbrains.plugins.verifier.service.service.sarif
+package com.jetbrains.pluginverifier.response.sarif
 
+import com.jetbrains.pluginverifier.response.DependenciesGraphDto
+import com.jetbrains.pluginverifier.response.DynamicPluginStatusDto
+import com.jetbrains.pluginverifier.response.VerificationResultTypeDto
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import org.jetbrains.plugins.verifier.service.service.verifier.DependenciesGraphDto
-import org.jetbrains.plugins.verifier.service.service.verifier.DynamicPluginStatusDto
-import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultTypeDto
 import java.util.*
 
 /**
