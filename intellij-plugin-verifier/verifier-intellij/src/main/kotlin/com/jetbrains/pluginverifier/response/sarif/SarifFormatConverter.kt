@@ -1,10 +1,10 @@
-package org.jetbrains.plugins.verifier.service.service.sarif
+package com.jetbrains.pluginverifier.response.sarif
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultTypeDto
-import org.jetbrains.plugins.verifier.service.service.verifier.convert
-import org.jetbrains.plugins.verifier.service.service.verifier.convertResultType
+import com.jetbrains.pluginverifier.response.VerificationResultTypeDto
+import com.jetbrains.pluginverifier.response.convert
+import com.jetbrains.pluginverifier.response.convertResultType
 
 fun PluginVerificationResult.toSarif(): PluginVerificationResultSARIF {
   return when (this) {

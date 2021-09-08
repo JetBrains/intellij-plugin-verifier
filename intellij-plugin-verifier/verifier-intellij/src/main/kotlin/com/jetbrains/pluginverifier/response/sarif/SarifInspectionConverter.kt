@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service.sarif
+package com.jetbrains.pluginverifier.response.sarif
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 
