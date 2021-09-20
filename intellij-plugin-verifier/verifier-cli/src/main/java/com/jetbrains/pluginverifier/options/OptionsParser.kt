@@ -151,6 +151,15 @@ object OptionsParser {
     return null
   }
 
+  private fun createKeepOnlyProblemsFilter(opts: CmdOpts): ProblemsFilter? {
+    if (opts.keepOnlyProblemsFile != null) {
+      val file = Paths.get(opts.keepOnlyProblemsFile!!)
+      require(file.exists()) { "Keep only problems file doesn't exist $file" }
+      return getKeepOnlyFilter(file)
+    }
+    return null
+  }
+
   /**
    * Determines which subsystem should be verified in this task.
    *
@@ -166,6 +175,7 @@ object OptionsParser {
     }
 
   fun getProblemsFilters(opts: CmdOpts): List<ProblemsFilter> {
+    val keepOnlyProblemsFilter = createKeepOnlyProblemsFilter(opts)
     val ignoredProblemsFilter = createIgnoredProblemsFilter(opts)
     val documentedProblemsFilter = try {
       if (opts.offlineMode) null else createDocumentedProblemsFilter()
@@ -174,7 +184,7 @@ object OptionsParser {
       null
     }
     val codeProblemsFilter = createSubsystemProblemsFilter(opts)
-    return listOfNotNull(ignoredProblemsFilter, documentedProblemsFilter, codeProblemsFilter)
+    return listOfNotNull(keepOnlyProblemsFilter, ignoredProblemsFilter, documentedProblemsFilter, codeProblemsFilter)
   }
 
   private fun createDocumentedProblemsFilter(): DocumentedProblemsFilter {
@@ -201,5 +211,24 @@ object OptionsParser {
     }
 
     return IgnoredProblemsFilter(ignoreConditions)
+  }
+
+  private fun getKeepOnlyFilter(keepOnlyProblemsFile: Path): KeepOnlyProblemsFilter {
+    val keepOnlyConditions = arrayListOf<KeepOnlyCondition>()
+    try {
+      keepOnlyProblemsFile.forEachLine { lineT ->
+        val line = lineT.trim()
+        if (line.isBlank() || line.startsWith("//")) {
+          //it is a comment
+          return@forEachLine
+        }
+        keepOnlyConditions.add(KeepOnlyCondition.parseCondition(line))
+      }
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      throw IllegalArgumentException("Unable to parse keep only problems file $keepOnlyProblemsFile", e)
+    }
+
+    return KeepOnlyProblemsFilter(keepOnlyConditions)
   }
 }
