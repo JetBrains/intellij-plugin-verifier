@@ -113,6 +113,8 @@ This command is used to check IDE build against a set of plugins.
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
         [-dump-broken-plugin-list | -d]
+        [-ignored-problems | -ip <file>]
+        [-keep-only-problems | -kop <file>]
 
 `<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
@@ -292,6 +294,15 @@ Here is the full syntax of the command:
     Specifies which subsystems of IDE should be checked.
     Available options: `all` (default), `android-only`, `without-android`.
 
+* `-ignore-problems (-ip)`
+
+    A file that contains a list of problems that will be ignored in report. 
+    The file must contain lines in form `<plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>`
+
+* `-keep-only-problems (-kop)`
+
+    A file that contains patterns of problems that will be reflected in report. All other problems will be ignored.
+    The file must contain lines in form: `<problem_description_regexp_pattern>`
 
 ## Technical details
 
