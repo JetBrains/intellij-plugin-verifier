@@ -290,9 +290,9 @@ internal class PluginCreator private constructor(
     for (extensionsRoot in rootElement.getChildren("extensions")) {
       for (extensionElement in extensionsRoot.children) {
         when (val epName = extractEPName(extensionElement)) {
-          "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement)
-          "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement)
-          "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement)
+          "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
+          "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
+          "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
           else -> idePlugin.extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
         }
       }
@@ -323,10 +323,43 @@ internal class PluginCreator private constructor(
     return "$pluginId.$name"
   }
 
-  private fun readServiceDescriptor(extensionElement: Element): IdePluginContentDescriptor.ServiceDescriptor {
+  fun Element.getAttributeBooleanValue(attname: String, default: Boolean): Boolean {
+    return getAttributeValue(attname)?.toBoolean() ?: default
+  }
+
+  private fun Element.readServicePreloadMode() =
+    when (getAttributeValue("preload")) {
+      "true" -> IdePluginContentDescriptor.PreloadMode.TRUE
+      "await" -> IdePluginContentDescriptor.PreloadMode.AWAIT
+      "notHeadless" -> IdePluginContentDescriptor.PreloadMode.NOT_HEADLESS
+      "notLightEdit" -> IdePluginContentDescriptor.PreloadMode.NOT_LIGHT_EDIT
+      null -> IdePluginContentDescriptor.PreloadMode.FALSE
+      else -> IdePluginContentDescriptor.PreloadMode.FALSE.also { LOG.error("Unknown preload mode value '${getAttributeValue("preload")}'") }
+    }
+
+  private fun Element.readServiceClient() =
+    when (getAttributeValue("client")) {
+      "all" -> IdePluginContentDescriptor.ClientKind.ALL
+      "local" -> IdePluginContentDescriptor.ClientKind.LOCAL
+      "guest" -> IdePluginContentDescriptor.ClientKind.GUEST
+      null -> null
+      else -> null.also { LOG.error("Unknown client value: '${getAttributeValue("client")}'") }
+    }
+
+  private fun readServiceDescriptor(extensionElement: Element, epName: String): IdePluginContentDescriptor.ServiceDescriptor {
     val serviceInterface = extensionElement.getAttributeValue("serviceInterface")
     val serviceImplementation = extensionElement.getAttributeValue("serviceImplementation")
-    return IdePluginContentDescriptor.ServiceDescriptor(serviceInterface, serviceImplementation)
+    val serviceType = IdePluginContentDescriptor.ServiceType.valueOf(epName.replace("(Service)|(com.intellij.)".toRegex(), "").toUpperCase())
+    val testServiceImplementation = extensionElement.getAttributeValue("testServiceImplementation")
+    val headlessImplementation = extensionElement.getAttributeValue("headlessImplementation")
+    val configurationSchemaKey = extensionElement.getAttributeValue("configurationSchemaKey")
+    val overrides = extensionElement.getAttributeBooleanValue("overrides", false)
+    val preload = extensionElement.readServicePreloadMode()
+    val client = extensionElement.readServiceClient()
+    //TODO: add OS extraction
+    var os: IdePluginContentDescriptor.Os? = null
+    return IdePluginContentDescriptor.ServiceDescriptor(serviceInterface, serviceImplementation, serviceType, testServiceImplementation,
+                                                        headlessImplementation, overrides, configurationSchemaKey, preload, client, os)
   }
 
   private fun extractEPName(extensionElement: Element): String {
@@ -343,11 +376,24 @@ internal class PluginCreator private constructor(
     }
   }
 
+  private fun Element.readOs() = when (getAttributeValue("os")) {
+    "mac" -> IdePluginContentDescriptor.Os.mac
+    "linux" -> IdePluginContentDescriptor.Os.linux
+    "windows" -> IdePluginContentDescriptor.Os.windows
+    "unix" -> IdePluginContentDescriptor.Os.unix
+    "freebsd" -> IdePluginContentDescriptor.Os.freebsd
+    null -> null
+    else -> null.also { LOG.error("Unknown OS: ${getAttributeValue("os")}") }
+  }
+
   private fun readListeners(rootElement: Element, listenersName: String, containerDescriptor: MutableIdePluginContentDescriptor) {
     for (listenersRoot in rootElement.getChildren(listenersName)) {
       for (listener in listenersRoot.children) {
         val className = listener.getAttributeValue("class")
         val topicName = listener.getAttributeValue("topic")
+        val isActiveInTestMode = listener.getAttributeBooleanValue("activeInTestMode", true)
+        val isActiveInHeadlessMode = listener.getAttributeBooleanValue("activeInHeadlessMode", true)
+        val os: IdePluginContentDescriptor.Os? = listener.readOs()
         if (className == null) {
           registerProblem(ElementMissingAttribute("listener", "class"))
         }
@@ -355,7 +401,8 @@ internal class PluginCreator private constructor(
           registerProblem(ElementMissingAttribute("listener", "topic"))
         }
         if (className != null && topicName != null) {
-          containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(topicName, className)
+          val listenerType = IdePluginContentDescriptor.ListenerType.valueOf(listenersName.replace("Listeners", "").toUpperCase())
+          containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(topicName, className, listenerType, isActiveInTestMode, isActiveInHeadlessMode, os)
         }
       }
     }
