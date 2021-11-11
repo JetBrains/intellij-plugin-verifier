@@ -30,6 +30,7 @@ import java.util.*
 class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
   private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
+  private val v2ModuleFile = mockPluginRoot.resolve("intellij.v2.module.xml")
 
   private val optionalsDir = mockPluginRoot.resolve("optionalsDir")
   private val propertiesDir = mockPluginRoot.resolve("properties")
@@ -227,6 +228,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   fun `classes and resources directories inside lib`() {
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
+        file("intellij.v2.module.xml", v2ModuleFile)
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
         dir("lib") {
