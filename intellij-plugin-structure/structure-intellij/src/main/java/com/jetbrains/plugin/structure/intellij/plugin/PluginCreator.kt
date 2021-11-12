@@ -204,8 +204,9 @@ internal class PluginCreator private constructor(
       for (dependencyBeanV2 in bean.dependenciesV2.modules) {
         if (dependencyBeanV2.dependencyId != null) {
           val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, false)
+          //TODO: get dependencies from dependency config file
           dependencies += PluginDependencyImpl("unresolved", true, false)
-          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanV2.dependencyId}.xml"
+          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanV2.dependencyId.replace("/", ".")}.xml"
         }
       }
       for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
@@ -221,8 +222,9 @@ internal class PluginCreator private constructor(
       for (dependencyBeanContent in bean.contentDependencies.modules) {
         if (dependencyBeanContent.dependencyId != null) {
           val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
+          //TODO: get dependencies from dependency config file
           dependencies += PluginDependencyImpl("unresolved", true, false)
-          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanContent.dependencyId}.xml"
+          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanContent.dependencyId.replace("/", ".")}.xml"
         }
       }
       //TODO: is this even possible?
