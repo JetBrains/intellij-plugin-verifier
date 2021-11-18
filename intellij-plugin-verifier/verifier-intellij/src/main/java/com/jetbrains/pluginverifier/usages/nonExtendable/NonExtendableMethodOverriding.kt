@@ -23,6 +23,9 @@ class NonExtendableMethodOverriding(
   override val usageLocation: Location
 ) : NonExtendableApiUsage() {
 
+  override val problemType: String
+    get() = "Non extendable method is overridden"
+
   override val apiReference
     get() = apiElement.toReference()
 

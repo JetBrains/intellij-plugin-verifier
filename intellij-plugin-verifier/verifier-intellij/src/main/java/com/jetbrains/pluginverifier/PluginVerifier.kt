@@ -73,7 +73,7 @@ class PluginVerifier(
   }
 
 
-  private fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
+  fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
     verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, allResolver, dependenciesGraph) ->
       val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 

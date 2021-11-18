@@ -24,6 +24,10 @@ class DeprecatedMethodUsage(
   override val usageLocation: Location,
   deprecationInfo: DeprecationInfo
 ) : DeprecatedApiUsage(deprecationInfo) {
+
+  override val problemType: String
+    get() = "Deprecated method usage"
+
   override val shortDescription
     get() = "Deprecated " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 

@@ -1,11 +1,11 @@
 dependencies {
   implementation project(':verifier-cli')
 
-  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.5'
+  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.6'
   testRuntimeOnly project('mock-plugin')
 
   //bytecode generation library
-  implementation 'net.bytebuddy:byte-buddy:1.11.13'
+  implementation 'net.bytebuddy:byte-buddy:1.11.20'
 }
 
 task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build') {

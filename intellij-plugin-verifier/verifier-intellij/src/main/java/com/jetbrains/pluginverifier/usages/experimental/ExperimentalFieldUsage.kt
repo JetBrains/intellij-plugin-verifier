@@ -19,6 +19,9 @@ class ExperimentalFieldUsage(
   override val usageLocation: Location
 ) : ExperimentalApiUsage() {
 
+  override val problemType: String
+    get() = "Experimental field usage"
+
   override val shortDescription
     get() = "Experimental API field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
 

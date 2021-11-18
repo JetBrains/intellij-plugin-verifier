@@ -24,6 +24,9 @@ class ExperimentalMethodOverridden(
   override val usageLocation: MethodLocation
 ) : ExperimentalApiUsage() {
 
+  override val problemType: String
+    get() = "Experimental method is overridden"
+
   override val apiReference
     get() = apiElement.toReference()
 

@@ -19,6 +19,9 @@ class InternalFieldUsage(
   override val usageLocation: Location
 ) : InternalApiUsage() {
 
+  override val problemType: String
+    get() = "Internal field usage"
+
   override val shortDescription
     get() = "Internal field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.NO_TYPE)} access"
 

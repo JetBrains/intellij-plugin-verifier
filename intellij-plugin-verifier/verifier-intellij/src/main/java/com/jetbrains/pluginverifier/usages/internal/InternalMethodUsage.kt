@@ -24,6 +24,9 @@ class InternalMethodUsage(
   override val usageLocation: Location
 ) : InternalApiUsage() {
 
+  override val problemType: String
+    get() = "Internal method usage"
+
   override val shortDescription
     get() = "Internal " + apiElement.elementType.presentableName + " ${apiElement.formatMethodLocation(FULL_HOST_NAME, SIMPLE_PARAM_CLASS_NAME, NO_RETURN_TYPE, NO_PARAMETER_NAMES)} invocation"
 

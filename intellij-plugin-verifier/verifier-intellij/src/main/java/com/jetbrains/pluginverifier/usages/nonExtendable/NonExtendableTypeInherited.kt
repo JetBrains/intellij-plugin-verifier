@@ -19,6 +19,9 @@ class NonExtendableTypeInherited(
   override val usageLocation: ClassLocation
 ) : NonExtendableApiUsage() {
 
+  override val problemType: String
+    get() = "Non-extendable type inherited"
+
   override val apiReference
     get() = apiElement.toReference()
 

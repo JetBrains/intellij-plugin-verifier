@@ -2,7 +2,7 @@
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package org.jetbrains.plugins.verifier.service.service.verifier
+package com.jetbrains.pluginverifier.response
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -26,16 +26,16 @@ import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
-fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVerification): FullVerificationResultDto {
-  val updateId = scheduledVerification.updateInfo.updateId
-  val ideVersion = scheduledVerification.availableIde.convert()
+fun PluginVerificationResult.prepareResponse(updateId: Int, ideVersion: String): FullVerificationResultDto {
   val ideTarget = verificationTarget as PluginVerificationTarget.IDE
+  // TODO: should add productName
+  val ide = AvailableIdeDto(ideVersion, null, null)
   val javaVersion = ideTarget.jdkVersion.javaVersion
   return when (this) {
     is PluginVerificationResult.FailedToDownload -> {
       FullVerificationResultDto(
         updateId,
-        ideVersion,
+        ide,
         javaVersion,
         VerificationResultTypeDto.NON_DOWNLOADABLE,
         verificationVerdict,
@@ -45,7 +45,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
     is PluginVerificationResult.InvalidPlugin ->
       FullVerificationResultDto(
         updateId,
-        ideVersion,
+        ide,
         javaVersion,
         VerificationResultTypeDto.INVALID_PLUGIN,
         verificationVerdict,
@@ -55,7 +55,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
     is PluginVerificationResult.NotFound ->
       FullVerificationResultDto(
         updateId,
-        ideVersion,
+        ide,
         javaVersion,
         VerificationResultTypeDto.NON_DOWNLOADABLE,
         verificationVerdict,
@@ -64,7 +64,7 @@ fun PluginVerificationResult.prepareResponse(scheduledVerification: ScheduledVer
     is PluginVerificationResult.Verified ->
       FullVerificationResultDto(
         updateId,
-        ideVersion,
+        ide,
         javaVersion,
         convertResultType(),
         verificationVerdict,

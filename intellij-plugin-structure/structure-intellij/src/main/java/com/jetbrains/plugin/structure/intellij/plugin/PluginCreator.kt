@@ -203,13 +203,16 @@ internal class PluginCreator private constructor(
     if (bean.dependenciesV2 != null) {
       for (dependencyBeanV2 in bean.dependenciesV2.modules) {
         if (dependencyBeanV2.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, true)
-          dependencies += dependency
+          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, false)
+          //TODO: get dependencies from dependency config file
+          dependencies += PluginDependencyImpl("unresolved", true, false)
+          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanV2.dependencyId.replace("/", ".")}.xml"
         }
       }
       for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
         if (dependencyBeanV2.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, false)
+          val isModule = dependencyBeanV2.dependencyId.startsWith(modulePrefix)
+          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, isModule)
           dependencies += dependency
         }
       }
@@ -218,15 +221,13 @@ internal class PluginCreator private constructor(
     if (bean.contentDependencies != null) {
       for (dependencyBeanContent in bean.contentDependencies.modules) {
         if (dependencyBeanContent.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, true)
-          dependencies += dependency
-
-          // TODO: understand how optional dependencies config files work in new format
-//          if (dependency.isOptional && dependencyBean.configFile != null) {
-//            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
-//          }
+          val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
+          //TODO: get dependencies from dependency config file
+          dependencies += PluginDependencyImpl("unresolved", true, false)
+          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanContent.dependencyId.replace("/", ".")}.xml"
         }
       }
+      //TODO: is this even possible?
       for (dependencyBeanContent in bean.contentDependencies.plugins) {
         if (dependencyBeanContent.dependencyId != null) {
           val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)

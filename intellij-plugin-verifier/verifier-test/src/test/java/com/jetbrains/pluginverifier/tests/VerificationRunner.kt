@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -25,7 +26,7 @@ import kotlin.io.path.createTempDirectory
 
 class VerificationRunner {
 
-  fun runPluginVerification(ide: Ide, idePlugin: IdePlugin): PluginVerificationResult {
+  fun runPluginVerification(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList()): PluginVerificationResult {
     val tempDownloadDir = createTempDirectory().toFile().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
@@ -47,7 +48,7 @@ class VerificationRunner {
 
       val pluginVerifier = PluginVerifier(
         verificationDescriptor,
-        emptyList(),
+        problemsFilters,
         pluginDetailsCache,
         listOf(DynamicallyLoadedFilter())
       )

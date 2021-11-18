@@ -51,6 +51,12 @@ open class CmdOpts(
       "\tandroid-only - verify only code related to Android support.\n" +
       "\twithout-android - exclude problems related to Android support. "
   )
-  var subsystemsToCheck: String = "all"
+  var subsystemsToCheck: String = "all",
 
+  @set:Argument(
+    "keep-only-problems",
+    alias = "kop",
+    description = "Only the problems matching lines in this file will be reflected in report. The file must contain lines in form: <problem_description_regexp_pattern>"
+  )
+  var keepOnlyProblemsFile: String? = null
 )

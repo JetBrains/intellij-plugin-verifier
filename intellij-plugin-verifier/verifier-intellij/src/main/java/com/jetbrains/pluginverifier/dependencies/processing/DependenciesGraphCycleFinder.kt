@@ -17,7 +17,12 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
     val graph: Graph<DependencyNode, DefaultEdge> = DefaultDirectedGraph(DefaultEdge::class.java)
     dependenciesGraph.vertices.forEach { graph.addVertex(it) }
     dependenciesGraph.edges.forEach { graph.addEdge(it.from, it.to) }
-    return JohnsonSimpleCycles(graph).findSimpleCycles()
+    //TODO: solve the problem here actually
+    return try {
+      JohnsonSimpleCycles(graph).findSimpleCycles()
+    } catch (e: Exception) {
+      emptyList()
+    }
   }
 
 }
