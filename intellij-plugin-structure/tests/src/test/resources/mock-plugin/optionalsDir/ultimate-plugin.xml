@@ -1,0 +1,5 @@
+<idea-plugin>
+    <content>
+        <module name="intellij.v2.module-ultimate"/>
+    </content>
+</idea-plugin>

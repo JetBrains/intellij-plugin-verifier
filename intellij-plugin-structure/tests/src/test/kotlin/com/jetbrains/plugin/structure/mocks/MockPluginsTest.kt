@@ -31,6 +31,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
   private val v2ModuleFile = mockPluginRoot.resolve("intellij.v2.module.xml")
+  private val v2ModuleFileUltimate = mockPluginRoot.resolve("intellij.v2.module-ultimate.xml")
 
   private val optionalsDir = mockPluginRoot.resolve("optionalsDir")
   private val propertiesDir = mockPluginRoot.resolve("properties")
@@ -51,7 +52,8 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       "/META-INF/referencedFromRoot.xml",
       listOf(PluginDescriptorIsNotFound("/META-INF/referencedFromRoot.xml"))
     ),
-    DuplicatedDependencyWarning("duplicatedDependencyId")
+    DuplicatedDependencyWarning("duplicatedDependencyId"),
+    DuplicatedDependencyWarning("unresolved"),
   )
 
   private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> Path): IdePlugin {
@@ -71,6 +73,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
         file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
         dir("somePackage", somePackageDir)
@@ -90,6 +93,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         zip("plugin.jar") {
           file("intellij.v2.module.xml", v2ModuleFile)
+          file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
           dir("META-INF", metaInfDir)
           dir("optionalsDir", optionalsDir)
           dir("somePackage", somePackageDir)
@@ -120,6 +124,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
           zip("plugin.jar") {
             file("intellij.v2.module.xml", v2ModuleFile)
+            file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
             dir("META-INF", metaInfDir)
             dir("optionalsDir", optionalsDir)
             dir("somePackage", somePackageDir)
@@ -151,6 +156,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
           zip("plugin.jar") {
             file("intellij.v2.module.xml", v2ModuleFile)
+            file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
             dir("META-INF", metaInfDir)
             dir("optionalsDir", optionalsDir)
             dir("somePackage", somePackageDir)
@@ -182,6 +188,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
             zip("plugin.jar") {
               file("intellij.v2.module.xml", v2ModuleFile)
+              file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
               dir("META-INF", metaInfDir)
               dir("optionalsDir", optionalsDir)
               dir("somePackage", somePackageDir)
@@ -202,6 +209,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
         file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
         dir("classes") {
@@ -235,6 +243,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
         file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
         dir("META-INF", metaInfDir)
         dir("optionalsDir", optionalsDir)
         dir("lib") {
@@ -271,6 +280,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
         dir("plugin") {
           file("intellij.v2.module.xml", v2ModuleFile)
+          file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
           dir("META-INF", metaInfDir)
           dir("optionalsDir", optionalsDir)
           dir("classes") {
@@ -569,17 +579,26 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   private fun checkOptionalDescriptors(plugin: IdePlugin) {
     val optionalDescriptors = plugin.optionalDescriptors
     assertEquals(
-      listOf("extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml", "../intellij.v2.module.xml"),
+      listOf(
+        "extension.xml", "optionals/optional.xml", "../optionalsDir/otherDirOptional.xml",
+        "../intellij.v2.module-ultimate.xml", "../intellij.v2.module.xml"
+      ),
       optionalDescriptors.map { it.configurationFilePath }
     )
 
     assertEquals(
-      listOf("JUnit", "optionalDependency", "otherDirOptionalDependency", "intellij.v2.module"),
+      listOf(
+        "JUnit",
+        "optionalDependency",
+        "otherDirOptionalDependency",
+        "intellij.v2.module-ultimate",
+        "intellij.v2.module"
+      ),
       optionalDescriptors.map { it.dependency.id }
     )
 
     assertEquals(
-      listOf(true, true, true, true),
+      listOf(true, true, true, true, true),
       optionalDescriptors.map { it.dependency.isOptional }
     )
 
@@ -600,7 +619,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
   private fun checkDependenciesAndModules(plugin: IdePlugin) {
-    assertEquals(12, plugin.dependencies.size.toLong())
+    assertEquals(13, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
       PluginDependencyImpl("JUnit", true, false),
@@ -614,6 +633,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       PluginDependencyImpl("duplicatedDependencyId", false, false),
       PluginDependencyImpl("mandatoryDependencyV2", false, false),
       PluginDependencyImpl("com.intellij.modules.mandatoryDependencyV2", false, true),
+      PluginDependencyImpl("unresolved", true, true),
       PluginDependencyImpl("unresolved", true, true)
     )
     assertEquals(expectedDependencies, plugin.dependencies)
@@ -640,7 +660,9 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
         "org.jetbrains.kotlin2.updater",
         "org.jetbrains.kotlin2.appEP",
         "org.jetbrains.kotlin2.appEP2",
-        "org.jetbrains.kotlin2.optionalUpdater"
+        "org.jetbrains.kotlin2.optionalUpdater",
+        "org.jetbrains.kotlin2.optionalUpdaterV2",
+        "org.jetbrains.kotlin2.optionalUpdaterV2Ultimate"
       ),
       appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )

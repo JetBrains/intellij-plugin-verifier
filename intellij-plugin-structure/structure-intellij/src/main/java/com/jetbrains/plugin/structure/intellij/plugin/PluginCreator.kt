@@ -219,7 +219,10 @@ internal class PluginCreator private constructor(
     }
 
     if (bean.contentDependencies != null) {
-      for (dependencyBeanContent in bean.contentDependencies.modules) {
+      val modules = bean.contentDependencies.flatMap { it.modules }
+      val plugins = bean.contentDependencies.flatMap { it.plugins }
+
+      for (dependencyBeanContent in modules) {
         if (dependencyBeanContent.dependencyId != null) {
           val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
           //TODO: get dependencies from dependency config file
@@ -228,7 +231,7 @@ internal class PluginCreator private constructor(
         }
       }
       //TODO: is this even possible?
-      for (dependencyBeanContent in bean.contentDependencies.plugins) {
+      for (dependencyBeanContent in plugins) {
         if (dependencyBeanContent.dependencyId != null) {
           val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
           dependencies += dependency
