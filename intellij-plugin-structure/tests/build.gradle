@@ -13,5 +13,5 @@ dependencies {
   testImplementation 'junit:junit:4.13.2'
   testImplementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5"
   testImplementation "com.google.jimfs:jimfs:1.2"
-  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.6'
+  testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.9'
 }
