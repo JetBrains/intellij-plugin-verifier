@@ -1,0 +1,5 @@
+<idea-plugin package="com.intellij.kubernetes.helm.gotpl_ultimate">
+    <extensionPoints>
+        <extensionPoint name="optionalUpdaterV2Ultimate" beanClass="com.intellij.BeanClassUltimate" dynamic="true"/>
+    </extensionPoints>
+</idea-plugin>
