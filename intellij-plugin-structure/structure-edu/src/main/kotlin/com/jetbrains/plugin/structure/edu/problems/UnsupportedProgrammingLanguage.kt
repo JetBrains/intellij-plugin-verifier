@@ -11,7 +11,8 @@ enum class Language(val id: String) {
   KOTLIN("kotlin"),
   PYTHON("Python"),
   RUST("Rust"),
-  SCALA("Scala")
+  SCALA("Scala"),
+  PHP("PHP")
 }
 
 object UnsupportedProgrammingLanguage : PluginProblem() {
