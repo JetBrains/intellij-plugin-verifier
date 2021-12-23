@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
-import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -55,12 +54,6 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   fun `incorrect language specified`() {
     val incorrectLanguage = "english"
     checkInvalidPlugin(UnsupportedLanguage(incorrectLanguage)) { language = incorrectLanguage }
-  }
-
-  @Test
-  fun `incorrect programming language specified`() {
-    val incorrectLanguage = "Kotlin"
-    checkInvalidPlugin(UnsupportedProgrammingLanguage) { programmingLanguage = incorrectLanguage }
   }
 
   @Test
