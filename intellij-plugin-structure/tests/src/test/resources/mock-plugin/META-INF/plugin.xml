@@ -33,6 +33,10 @@
     <depends>mandatoryDependency</depends>
     <depends>com.intellij.modules.mandatoryDependency</depends>
 
+    <xi:include href="../optionalsDir/ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+        <xi:fallback/>
+    </xi:include>
+
     <content>
         <module name="intellij.v2.module"/>
     </content>

@@ -10,9 +10,7 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.edu.EduPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
-import com.jetbrains.plugin.structure.edu.problems.Language
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
-import com.jetbrains.plugin.structure.edu.problems.UnsupportedProgrammingLanguage
 import java.util.*
 
 internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
@@ -48,9 +46,6 @@ private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problem
   if (descriptor.programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE))
     return
-  }
-  if (descriptor.programmingLanguage !in Language.values().map { it.id }) {
-    problems.add(UnsupportedProgrammingLanguage)
   }
 }
 

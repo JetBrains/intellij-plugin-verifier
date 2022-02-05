@@ -31,7 +31,10 @@ enum class IntelliJPlatformProduct(
   RIDER("RD", "Rider", "Rider"),
   GO_LAND("GO", "GoLand", "GoLand"),
   MPS("MPS", "MPS", "Idea"),
-  ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio");
+  ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio"),
+  DATA_SPELL("DS", "DataSpell", "DataSpell"),
+  JETBRAINS_CLIENT("JBC", "JetBrains Client", "JetBrainsClient"),
+  GATEWAY("GW", "Gateway", "Gateway");
 
   companion object {
     fun fromProductCode(productCode: String): IntelliJPlatformProduct? =

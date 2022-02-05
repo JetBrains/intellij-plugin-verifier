@@ -5,6 +5,26 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 interface IdePluginContentDescriptor {
+  enum class Os {
+    mac, linux, windows, unix, freebsd
+  }
+
+  enum class ListenerType {
+    PROJECT, APPLICATION
+  }
+
+  enum class ServiceType {
+    PROJECT, APPLICATION, MODULE
+  }
+
+  enum class PreloadMode {
+    TRUE, FALSE, AWAIT, NOT_HEADLESS, NOT_LIGHT_EDIT
+  }
+
+  enum class ClientKind {
+    ALL, GUEST, LOCAL
+  }
+
   val services: List<ServiceDescriptor>
   val components: List<ComponentConfig>
   val listeners: List<ListenerDescriptor>
@@ -12,8 +32,27 @@ interface IdePluginContentDescriptor {
 
   data class ExtensionPoint(val extensionPointName: String, val isDynamic: Boolean)
   data class ComponentConfig(val interfaceClass: String?, val implementationClass: String)
-  data class ListenerDescriptor(val topicName: String, val className: String)
-  data class ServiceDescriptor(val serviceInterface: String?, val serviceImplementation: String?)
+  data class ListenerDescriptor(
+    val topicName: String,
+    val className: String,
+    val type: ListenerType,
+    val activeInTestMode: Boolean,
+    val activeInHeadlessMode: Boolean,
+    val os: Os?
+  )
+
+  data class ServiceDescriptor(
+    val serviceInterface: String?,
+    val serviceImplementation: String?,
+    val type: ServiceType,
+    val testServiceImplementation: String?,
+    val headlessImplementation: String?,
+    val overrides: Boolean?,
+    val configurationSchemaKey: String?,
+    val preload: PreloadMode = PreloadMode.FALSE,
+    val client: ClientKind?,
+    val os: Os?
+  )
 }
 
 data class MutableIdePluginContentDescriptor(
