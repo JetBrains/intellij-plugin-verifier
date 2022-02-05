@@ -22,9 +22,7 @@ import java.nio.file.Paths
 
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
-    const val COMMON_DIR_NAME = "common"
     const val DESCRIPTOR_NAME = "extension.json"
-    const val META_INF = "META-INF"
 
     private val LOG: Logger = LoggerFactory.getLogger(FleetPluginManager::class.java)
 
@@ -68,18 +66,12 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     }
     val descriptor = jacksonObjectMapper().readValue(descriptorFile.readText(), FleetPluginDescriptor::class.java)
     val icons = loadIconFromDir(pluginDirectory)
-    val modules = detectModules(pluginDirectory)
-    return createPlugin(descriptor, icons, modules)
+    return createPlugin(descriptor, icons)
   }
-
-  private fun detectModules(pluginDirectory: Path): List<String> =
-    Files.newDirectoryStream(pluginDirectory).use { stream ->
-      stream.filter { it.isDirectory && (it.fileName.toString() !in listOf(COMMON_DIR_NAME, META_INF)) }.map { it.fileName.toString() }
-    }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
     IconTheme.values().mapNotNull { theme ->
-      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+      val iconEntryName = getIconFileName(theme)
       val iconPath = pluginDirectory.resolve(iconEntryName)
       if (iconPath.exists()) {
         PluginIcon(theme, iconPath.readBytes(), iconEntryName)
@@ -90,7 +82,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
-  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>, modules: List<String>): PluginCreationResult<FleetPlugin> {
+  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>): PluginCreationResult<FleetPlugin> {
     try {
       val beanValidationResult = validateFleetPluginBean(descriptor)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
@@ -98,14 +90,15 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       }
       val plugin = with(descriptor) {
         FleetPlugin(
-          pluginId = id,
+          pluginId = id!!,
+          pluginVersion = version!!,
+          depends = depends ?: mapOf(),
+          frontend = frontend,
+          workspace = workspace,
           pluginName = name,
-          pluginVersion = version,
           description = description,
-          requires = requires,
           icons = icons,
           vendor = vendor,
-          modules = modules
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)

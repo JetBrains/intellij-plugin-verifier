@@ -6,17 +6,18 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import com.jetbrains.plugin.structure.fleet.bean.FleetDependency
+import com.jetbrains.plugin.structure.fleet.bean.Part
 
 data class FleetPlugin(
-  override val pluginId: String? = null,
+  override val pluginId: String,
+  override val pluginVersion: String,
   override val pluginName: String? = null,
-  override val pluginVersion: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
   override val description: String? = null,
   override val vendor: String? = null,
-  val requires: List<FleetDependency>? = null,
-  val modules: List<String>? = null
+  val depends: Map<String, String>,
+  val frontend: Part? = null,
+  val workspace: Part? = null,
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendorEmail: String? = null
