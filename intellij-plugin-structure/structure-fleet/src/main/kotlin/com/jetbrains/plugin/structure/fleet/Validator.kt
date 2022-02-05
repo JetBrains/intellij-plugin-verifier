@@ -18,14 +18,13 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   val problems = mutableListOf<PluginProblem>()
   if (descriptor.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
+  } else {
+    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name, MAX_NAME_LENGTH, problems)
   }
   if (descriptor.id.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("id"))
-  }
-  if (descriptor.id.isNullOrBlank().not()){
-    if (NON_ID_SYMBOL_REGEX.matches(descriptor.id!!).not()){
-      problems.add(InvalidPluginIDProblem(descriptor.id))
-    }
+  } else if (!NON_ID_SYMBOL_REGEX.matches(descriptor.id)) {
+    problems.add(InvalidPluginIDProblem(descriptor.id))
   }
   if (descriptor.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
@@ -36,8 +35,8 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.vendor.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor"))
   }
-  if (descriptor.name != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name, MAX_NAME_LENGTH, problems)
+  if (descriptor.frontend == null && descriptor.workspace == null) {
+    problems.add(PropertyNotSpecified("parts"))
   }
   return problems
 }

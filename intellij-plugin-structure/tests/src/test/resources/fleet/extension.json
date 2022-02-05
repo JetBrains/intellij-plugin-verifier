@@ -4,13 +4,12 @@
   "name": "CSS",
   "description": "CSS language support",
   "vendor": "JetBrains",
-  "requires": [
-    {
-      "id": "fleet.language.xml",
-      "version": {
-        "min": "1.0.0",
-        "max": "2.0.0-beta+exp.sha.5114f85"
-      }
-    }
-  ]
+  "depends": {
+    "fleet.language.xml": "1.0.0"
+  },
+  "frontend": {
+    "modules": ["frontend-module.jar:sha1234"],
+    "classpath": ["frontend-classpath.jar:sha2345"],
+    "roots": ["frontend-module"]
+  }
 }
