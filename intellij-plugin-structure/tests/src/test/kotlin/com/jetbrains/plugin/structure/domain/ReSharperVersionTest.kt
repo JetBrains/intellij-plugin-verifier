@@ -41,9 +41,9 @@ class ReSharperVersionTest {
   @Test
   fun typicalVersionTest() {
     val resharperVersion = version("RSU-2021.3.1")
-    Assert.assertEquals(2021, resharperVersion.baseline)
-    Assert.assertEquals(3, resharperVersion.build)
-    Assert.assertEquals(1, resharperVersion.minor)
+    Assert.assertEquals(2021, resharperVersion.components[0])
+    Assert.assertEquals(3, resharperVersion.components[1])
+    Assert.assertEquals(1, resharperVersion.components[2])
     Assert.assertEquals("RSU", resharperVersion.productCode)
     Assert.assertEquals("RSU-2021.3.1", resharperVersion.asString())
   }
@@ -51,9 +51,19 @@ class ReSharperVersionTest {
   @Test
   fun versionWithOnly2ComponentsTest() {
     val resharperVersion = version("RSU-2021.3")
-    Assert.assertEquals(2021, resharperVersion.baseline)
-    Assert.assertEquals(3, resharperVersion.build)
-    Assert.assertEquals(null, resharperVersion.minor)
+    Assert.assertEquals(2021, resharperVersion.components[0])
+    Assert.assertEquals(3, resharperVersion.components[1])
+    Assert.assertEquals(2, resharperVersion.components.size)
+    Assert.assertEquals("RSU", resharperVersion.productCode)
+    Assert.assertEquals("RSU-2021.3", resharperVersion.asString())
+  }
+
+  @Test
+  fun versionWith4ComponentsTest() {
+    val resharperVersion = version("RSU-2021.3")
+    Assert.assertEquals(2021, resharperVersion.components[0])
+    Assert.assertEquals(3, resharperVersion.components[1])
+    Assert.assertEquals(2, resharperVersion.components.size)
     Assert.assertEquals("RSU", resharperVersion.productCode)
     Assert.assertEquals("RSU-2021.3", resharperVersion.asString())
   }

@@ -24,8 +24,7 @@ object VersionMatching {
     else {
       Pair(2000 + wave.firstComponent / 10, wave.firstComponent % 10)
     }
-    val minor = if (wave.secondComponent != 0) wave.secondComponent else null
-    return ReSharperVersion(baseline, build, minor)
+    return if (wave.secondComponent != 0) ReSharperVersion(listOf(baseline, build, wave.secondComponent)) else ReSharperVersion(listOf(baseline, build))
   }
 
   private fun getWaveRangeFromString(originalWaveRange: String): WaveRange {

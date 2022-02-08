@@ -1,11 +1,28 @@
 package com.jetbrains.plugin.structure.dotnet.version
 
 import com.jetbrains.plugin.structure.base.utils.Version
+import kotlin.math.min
 
-data class ReSharperVersion(val baseline: Int, val build: Int, val minor: Int? = null, val productCode: String = ""): Version<ReSharperVersion> {
-  override fun compareTo(other: ReSharperVersion) = compareValuesBy(this, other, {it.baseline}, {it.build}, {it.minor})
+data class ReSharperVersion(val components: List<Int>, val productCode: String = "RS"): Version<ReSharperVersion> {
+  override fun compareTo(other: ReSharperVersion): Int {
+   val compareProductCodes = productCode.compareTo(other.productCode)
+    if (productCode.isNotEmpty() && other.productCode.isNotEmpty() && compareProductCodes != 0) {
+      return compareProductCodes
+    }
+    val c1 = components
+    val c2 = other.components
+    for (i in 0 until min(c1.size, c2.size)) {
+      val result = c1[i].compareTo(c2[i])
+      if (result != 0) {
+        return result
+      }
+    }
+    return c1.size.compareTo(c2.size)
+  }
+
   override fun asString() = asString(true)
   override fun asStringWithoutProductCode() = asString(false)
+
   companion object {
     fun fromString(versionString: String): ReSharperVersion {
       if (versionString.isBlank()) {
@@ -20,17 +37,26 @@ data class ReSharperVersion(val baseline: Int, val build: Int, val minor: Int? =
       } else {
         productCode = ""
       }
-      val components = versionNumber.trim().split('.')
+      val components = versionNumber.trim().split('.').map { it.toIntOrNull() ?: throw IllegalArgumentException("Invalid version $versionNumber, should consists from numbers") }
       require(components.size >= 2) { "Invalid version number $versionNumber, should be at least 2 parts" }
-      val (baseline, build) = Pair (components[0].toIntOrNull(), components[1].toIntOrNull())
-      require(baseline != null && build != null) { "Invalid version $versionNumber, should consists from numbers" }
-      val minor = if (components.size > 2) components[2].toIntOrNull()
-        ?: throw IllegalArgumentException("Invalid version $versionNumber, the third component should be number") else null
-      return ReSharperVersion(baseline, build, minor, productCode)
+      return ReSharperVersion(components, productCode)
     }
   }
-  private fun asString(includeProductCode: Boolean) = (if (includeProductCode && productCode != "") "$productCode-" else "") +
-    "$baseline.$build" + if (minor != null) ".$minor" else ""
+
+  private fun asString(includeProductCode: Boolean): String {
+    val builder = StringBuilder()
+
+    if (includeProductCode && productCode.isNotEmpty()) {
+      builder.append(productCode).append('-')
+    }
+
+    builder.append(components[0])
+    for (i in 1 until components.size) {
+      builder.append('.').append(components[i])
+    }
+
+    return builder.toString()
+  }
 }
 
 data class WaveVersion(val firstComponent: Int, val secondComponent: Int): Version<WaveVersion> {
