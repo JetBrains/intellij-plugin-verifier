@@ -36,7 +36,7 @@ object VersionMatching {
   }
 
   private fun getReSharperRangeFromWaveRange(waveRange: WaveRange): ReSharperRange {
-    val min = if (waveRange.min != null) getReSharperVersionFromWave(waveRange.min) else null
+    val min = if (waveRange.min != null && waveRange.min != WaveVersion(0,0)) getReSharperVersionFromWave(waveRange.min) else null
     val max = if (waveRange.max != null) getReSharperVersionFromWave(waveRange.max) else null
     return ReSharperRange(min, waveRange.isMinIncluded, max, waveRange.isMaxIncluded)
   }
