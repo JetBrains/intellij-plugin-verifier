@@ -22,6 +22,7 @@ data class ReSharperVersion(val components: List<Int>, val productCode: String =
 
   override fun asString() = asString(true)
   override fun asStringWithoutProductCode() = asString(false)
+  override fun toString() = asString()
 
   companion object {
     fun fromString(versionString: String): ReSharperVersion {
