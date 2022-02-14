@@ -4,13 +4,14 @@
 
 package com.jetbrains.plugin.structure.intellij.version;
 
+import com.jetbrains.plugin.structure.base.utils.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-public abstract class IdeVersion implements Comparable<IdeVersion> {
+public abstract class IdeVersion implements Version<IdeVersion> {
 
   /**
    * Tries to parse specified string as IDE version and throws an {@link IllegalArgumentException}
@@ -83,6 +84,7 @@ public abstract class IdeVersion implements Comparable<IdeVersion> {
     return asString(true, true);
   }
 
+  @NotNull
   public String asStringWithoutProductCode() {
     return asString(false, true);
   }
