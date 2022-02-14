@@ -5,16 +5,14 @@
 package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
+import com.jetbrains.plugin.structure.fleet.bean.collectPaths
 
 val NON_ID_SYMBOL_REGEX = "^[A-Za-z0-9_.]+$".toRegex()
 
-fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProblem> {
+fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): MutableList<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
   if (descriptor.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
@@ -38,5 +36,23 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): List<PluginProbl
   if (descriptor.frontend == null && descriptor.workspace == null) {
     problems.add(PropertyNotSpecified("parts"))
   }
+  val allFiles = descriptor.frontend.collectPaths() + descriptor.workspace.collectPaths()
+  for (file in allFiles) {
+    if (file.substringAfterLast("#", "") == "") {
+      problems.add(FileSHANotSpecified(file))
+    }
+  }
   return problems
+}
+
+class FileSHANotSpecified(
+  private val file: String,
+  descriptorPath: String? = null
+) : InvalidDescriptorProblem(descriptorPath) {
+
+  override val detailedMessage: String
+    get() = "SHA is not specified: $file"
+
+  override val level
+    get() = Level.ERROR
 }

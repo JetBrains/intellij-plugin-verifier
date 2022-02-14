@@ -6,7 +6,6 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import com.jetbrains.plugin.structure.fleet.bean.Part
 
 data class FleetPlugin(
   override val pluginId: String,
@@ -16,11 +15,39 @@ data class FleetPlugin(
   override val description: String? = null,
   override val vendor: String? = null,
   val depends: Map<String, String>,
-  val frontend: Part? = null,
-  val workspace: Part? = null,
+  val frontend: ParsedPluginPart? = null,
+  val workspace: ParsedPluginPart? = null,
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendorEmail: String? = null
   override val vendorUrl: String? = null
   override val url: String? = null
+}
+
+data class ParsedPluginPart(
+  val modules: List<PluginFile>,
+  val classpath: List<PluginFile>,
+  val roots: List<String>,
+)
+
+data class PluginFile(val name: String, val sha: String, val content: ByteArray) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PluginFile
+
+    if (name != other.name) return false
+    if (sha != other.sha) return false
+    if (!content.contentEquals(other.content)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + sha.hashCode()
+    result = 31 * result + content.contentHashCode()
+    return result
+  }
 }

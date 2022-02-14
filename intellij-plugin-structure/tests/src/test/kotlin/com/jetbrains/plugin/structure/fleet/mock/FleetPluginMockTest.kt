@@ -14,7 +14,7 @@ import java.nio.file.Path
 
 class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<FleetPlugin, FleetPluginManager>(fileSystemType) {
 
-  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
+  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory, true)
 
   @Test
   fun `parse base fields fleet plugin test`() {
