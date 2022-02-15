@@ -14,29 +14,7 @@ import java.nio.file.Path
 
 class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<FleetPlugin, FleetPluginManager>(fileSystemType) {
 
-  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
-
-  @Test
-  fun `test plugin modules set`() {
-    val frontItem = "frontend"
-    val backItem = "backend"
-    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      dir(frontItem) {}
-      dir(backItem) {}
-      dir(FleetPluginManager.META_INF){}
-      dir(FleetPluginManager.COMMON_DIR_NAME) {}
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
-        getMockPluginJsonContent("extension")
-      }
-    }
-    testMockPluginStructureAndConfiguration(pluginFile).also {
-      val plugin = it.plugin
-      val modules = plugin.modules!!
-      assertEquals(2, modules.size)
-      assertTrue("$frontItem is not present", modules.contains(frontItem))
-      assertTrue("$backItem is not present", modules.contains(backItem))
-    }
-  }
+  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory, true)
 
   @Test
   fun `parse base fields fleet plugin test`() {
@@ -46,20 +24,9 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       }
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
-      val plugin = it.plugin
-      assertEquals("2.0.0-beta+exp.sha.5114f85", plugin.requires?.first()?.version?.max)
-      assertEquals("1.0.0", plugin.requires?.first()?.version?.min)
+      val version = it.plugin.depends.values.first()
+      assertEquals("1.0.0", version)
     }
-  }
-
-  @Test
-  fun `parse fields fleet plugin without version test`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
-        getMockPluginJsonContent("extension_wo_version")
-      }
-    }
-    testMockPluginStructureAndConfiguration(pluginFile)
   }
 
   @Test
@@ -69,10 +36,8 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
       }
-      dir(FleetPluginManager.META_INF) {
-        file("pluginIcon.svg", content)
-        file("pluginIcon_dark.svg", content)
-      }
+      file("pluginIcon.svg", content)
+      file("pluginIcon_dark.svg", content)
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
       val (f, s) = it.plugin.icons
@@ -88,10 +53,8 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
       }
-      dir(FleetPluginManager.META_INF) {
-        file("pluginIcon.svg", content)
-        file("pluginIcon_darkest.svg", content)
-      }
+      file("pluginIcon.svg", content)
+      file("pluginIcon_darkest.svg", content)
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
       assertTrue("Invalid Fleet icons size", it.plugin.icons.size == 1)
@@ -116,7 +79,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("JetBrains", plugin.vendor)
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
-    assertTrue(plugin.requires?.isNotEmpty() == true)
-    assertEquals("fleet.language.xml", plugin.requires?.first()?.id)
+    assertTrue(plugin.depends.isNotEmpty())
+    assertEquals("fleet.language.xml", plugin.depends.keys.first())
   }
 }

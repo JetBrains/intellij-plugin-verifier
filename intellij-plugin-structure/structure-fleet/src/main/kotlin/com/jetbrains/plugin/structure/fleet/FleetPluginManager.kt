@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
+import com.jetbrains.plugin.structure.fleet.bean.PluginPart
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,20 +20,18 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
-class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
+class FleetPluginManager private constructor(private val extractDirectory: Path, val mockFilesContent: Boolean) : PluginManager<FleetPlugin> {
   companion object {
-    const val COMMON_DIR_NAME = "common"
     const val DESCRIPTOR_NAME = "extension.json"
-    const val META_INF = "META-INF"
 
     private val LOG: Logger = LoggerFactory.getLogger(FleetPluginManager::class.java)
 
     fun createManager(
-      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
+      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get()),
+      mockFilesContent: Boolean = false
     ): FleetPluginManager {
       extractDirectory.createDir()
-      return FleetPluginManager(extractDirectory)
+      return FleetPluginManager(extractDirectory, mockFilesContent)
     }
   }
 
@@ -68,18 +67,12 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     }
     val descriptor = jacksonObjectMapper().readValue(descriptorFile.readText(), FleetPluginDescriptor::class.java)
     val icons = loadIconFromDir(pluginDirectory)
-    val modules = detectModules(pluginDirectory)
-    return createPlugin(descriptor, icons, modules)
+    return createPlugin(descriptor, icons, pluginDirectory)
   }
-
-  private fun detectModules(pluginDirectory: Path): List<String> =
-    Files.newDirectoryStream(pluginDirectory).use { stream ->
-      stream.filter { it.isDirectory && (it.fileName.toString() !in listOf(COMMON_DIR_NAME, META_INF)) }.map { it.fileName.toString() }
-    }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
     IconTheme.values().mapNotNull { theme ->
-      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+      val iconEntryName = getIconFileName(theme)
       val iconPath = pluginDirectory.resolve(iconEntryName)
       if (iconPath.exists()) {
         PluginIcon(theme, iconPath.readBytes(), iconEntryName)
@@ -90,22 +83,29 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
-  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>, modules: List<String>): PluginCreationResult<FleetPlugin> {
+  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
     try {
       val beanValidationResult = validateFleetPluginBean(descriptor)
+
+      val fileChecker = FileChecker(descriptor.id ?: "<plugin with no id>")
+      val fr = descriptor.frontend?.parse(pluginDir, fileChecker)
+      val ws = descriptor.workspace?.parse(pluginDir, fileChecker)
+      beanValidationResult.addAll(fileChecker.problems)
+
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
       val plugin = with(descriptor) {
         FleetPlugin(
-          pluginId = id,
+          pluginId = id!!,
+          pluginVersion = version!!,
+          depends = depends ?: mapOf(),
+          frontend = fr,
+          workspace = ws,
           pluginName = name,
-          pluginVersion = version,
           description = description,
-          requires = requires,
           icons = icons,
           vendor = vendor,
-          modules = modules
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
@@ -116,5 +116,29 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     }
   }
 
+  private fun PluginPart.parse(pluginDir: Path, fileChecker: FileChecker): ParsedPluginPart {
+    // format: "path_in_zip/filename-1.1.1.ext#hash12345"
+    fun List<String>.parse(pluginDir: Path): List<PluginFile> {
+      val files = mutableListOf<PluginFile>()
+      for (relPath in this) {
+        val sha = relPath.substringAfterLast("#", "")
+        val filePath = relPath.substringBeforeLast("#")
+        val filename = filePath.substringAfterLast("/")
+        if (mockFilesContent) {
+          files.add(PluginFile(filename, sha, ByteArray(0)))
+        } else {
+          if (fileChecker.addFile(pluginDir, filePath)) {
+            val file = pluginDir.resolve(filePath)
+            val content = Files.readAllBytes(file)
+            files.add(PluginFile(filename, sha, content))
+          }
+        }
+      }
+      return files
+    }
 
+    return ParsedPluginPart(this.modules.parse(pluginDir), this.classpath.parse(pluginDir), roots)
+  }
 }
+
+

@@ -16,7 +16,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<FleetPlugin, FleetPluginManager>(fileSystemType) {
-  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
+  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory, true)
 
   @Test(expected = IllegalArgumentException::class)
   fun `file does not exist`() {
