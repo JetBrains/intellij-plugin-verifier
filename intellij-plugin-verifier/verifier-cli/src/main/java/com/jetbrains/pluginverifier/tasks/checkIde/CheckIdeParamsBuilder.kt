@@ -62,7 +62,8 @@ class CheckIdeParamsBuilder(
         verificationDescriptors,
         problemsFilters,
         missingCompatibleVersionsProblems,
-        ideDescriptor
+        ideDescriptor,
+        opts.excludeExternalBuildClassesSelector
       )
     }
   }

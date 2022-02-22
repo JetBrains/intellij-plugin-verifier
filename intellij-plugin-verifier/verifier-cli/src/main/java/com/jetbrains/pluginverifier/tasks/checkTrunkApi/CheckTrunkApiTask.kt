@@ -30,7 +30,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          classFilters
+          classFilters,
+          excludeExternalBuildClassesSelector
         )
       }
 
@@ -39,7 +40,8 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          classFilters
+          classFilters,
+          excludeExternalBuildClassesSelector
         )
       }
 

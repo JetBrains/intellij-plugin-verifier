@@ -15,7 +15,8 @@ class CheckPluginParams(
   private val ideDescriptors: List<IdeDescriptor>,
   val problemsFilters: List<ProblemsFilter>,
   val verificationDescriptors: List<PluginVerificationDescriptor>,
-  val invalidPluginFiles: List<InvalidPluginFile>
+  val invalidPluginFiles: List<InvalidPluginFile>,
+  val excludeExternalBuildClassesSelector: Boolean
 ) : TaskParameters {
 
   override val presentableText

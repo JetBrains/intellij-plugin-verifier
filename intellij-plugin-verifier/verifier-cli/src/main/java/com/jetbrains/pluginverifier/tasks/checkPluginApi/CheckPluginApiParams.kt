@@ -20,7 +20,8 @@ class CheckPluginApiParams(
   val baseVerificationDescriptors: List<PluginVerificationDescriptor.Plugin>,
   val newVerificationDescriptors: List<PluginVerificationDescriptor.Plugin>,
   val baseVerificationTarget: PluginVerificationTarget.Plugin,
-  val newVerificationTarget: PluginVerificationTarget.Plugin
+  val newVerificationTarget: PluginVerificationTarget.Plugin,
+  val excludeExternalBuildClassesSelector: Boolean
 ) : TaskParameters {
 
   override val presentableText

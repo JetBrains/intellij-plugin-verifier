@@ -44,6 +44,11 @@ open class CmdOpts(
   var externalClassesPrefixes: Array<String> = arrayOf(),
 
   @set:Argument(
+    "exclude-external-build-classes-selector", alias = "ex-selector", description = "Specify this flag if the Plugin Verifier must exclude selector for classes " +
+    "used for the external build processes such as JPS classes bundled into the Kotlin plugin (`/lib/jps`).")
+  var excludeExternalBuildClassesSelector: Boolean = false,
+
+  @set:Argument(
     "subsystems-to-check",
     alias = "subsystems",
     description = "Specifies which subsystems of IDE should be checked. Available options: all (default), android-only, without-android.\n" +

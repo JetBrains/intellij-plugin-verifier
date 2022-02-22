@@ -25,7 +25,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          listOf(DynamicallyLoadedFilter())
+          listOf(DynamicallyLoadedFilter()),
+          excludeExternalBuildClassesSelector
         )
       }
 
@@ -34,7 +35,8 @@ class CheckPluginApiTask(private val parameters: CheckPluginApiParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          listOf(DynamicallyLoadedFilter())
+          listOf(DynamicallyLoadedFilter()),
+          excludeExternalBuildClassesSelector
         )
       }
 

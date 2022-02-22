@@ -21,7 +21,8 @@ class CheckTrunkApiParams(
   val releaseVerificationDescriptors: List<PluginVerificationDescriptor.IDE>,
   val trunkVerificationDescriptors: List<PluginVerificationDescriptor.IDE>,
   val releaseVerificationTarget: PluginVerificationTarget.IDE,
-  val trunkVerificationTarget: PluginVerificationTarget.IDE
+  val trunkVerificationTarget: PluginVerificationTarget.IDE,
+  val excludeExternalBuildClassesSelector: Boolean
 ) : TaskParameters {
   override val presentableText: String
     get() = buildString {

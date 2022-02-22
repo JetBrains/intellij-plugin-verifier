@@ -180,7 +180,8 @@ class CheckTrunkApiParamsBuilder(
       releaseVerificationDescriptors,
       trunkVerificationDescriptors,
       releaseVerificationTarget,
-      trunkVerificationTarget
+      trunkVerificationTarget,
+      opts.excludeExternalBuildClassesSelector
     )
   }
 

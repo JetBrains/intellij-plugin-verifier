@@ -85,7 +85,8 @@ class CheckPluginParamsBuilder(
       ideDescriptors,
       problemsFilters,
       verificationDescriptors,
-      pluginsSet.invalidPluginFiles
+      pluginsSet.invalidPluginFiles,
+      opts.excludeExternalBuildClassesSelector
     )
   }
 

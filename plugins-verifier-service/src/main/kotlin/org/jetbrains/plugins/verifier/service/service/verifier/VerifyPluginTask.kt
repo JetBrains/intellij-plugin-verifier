@@ -66,7 +66,8 @@ class VerifyPluginTask(
       verificationDescriptor,
       problemsFilters,
       pluginDetailsCache,
-      listOf(DynamicallyLoadedFilter())
+      listOf(DynamicallyLoadedFilter()),
+      false
     ).loadPluginAndVerify()
   }
 

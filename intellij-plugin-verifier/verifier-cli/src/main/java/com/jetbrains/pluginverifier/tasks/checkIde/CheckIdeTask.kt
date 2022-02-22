@@ -23,7 +23,8 @@ class CheckIdeTask(private val parameters: CheckIdeParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          listOf(DynamicallyLoadedFilter())
+          listOf(DynamicallyLoadedFilter()),
+          excludeExternalBuildClassesSelector
         )
       }
 

@@ -50,7 +50,8 @@ class VerificationRunner {
         verificationDescriptor,
         problemsFilters,
         pluginDetailsCache,
-        listOf(DynamicallyLoadedFilter())
+        listOf(DynamicallyLoadedFilter()),
+          false
       )
       pluginVerifier.loadPluginAndVerify()
     }

@@ -94,7 +94,8 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
             baseVerificationDescriptors,
             newVerificationDescriptors,
             baseVerificationTarget,
-            newVerificationTarget
+            newVerificationTarget,
+            opts.excludeExternalBuildClassesSelector
           )
         }
       }
