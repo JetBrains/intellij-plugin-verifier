@@ -56,6 +56,13 @@ jobs:
           path: ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
 
+      # Publish dev lib versions
+      - name: Publish Dev Version
+        run: |
+          cd plugins-verifier-service
+          ./gradlew :intellij-plugin-structure:publishToMavenLocal
+          ./gradlew :intellij-plugin-verifier:publishToMavenLocal
+
       # Run tests
       - name: Run Tests
         run: |
