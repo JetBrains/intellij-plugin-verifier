@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.bean.DependencyVersion
-import com.jetbrains.plugin.structure.fleet.bean.PluginPart
+import com.jetbrains.plugin.structure.fleet.bean.*
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,8 +16,8 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
     id: String,
     name: String,
     icon: String? = null,
-    vendor: String? = "JetBrains",
-    version: String? = "1.0.0",
+    vendor: String = "JetBrains",
+    version: String = "1.0.0",
     description: String? = null,
     depends: Map<String, String> = mapOf(),
     generateFrontend: Boolean = false,
@@ -28,8 +28,8 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
 
     return generate(
       id, name, icon, vendor, version, description, depends,
-      PluginPart(filesProvider.frontendModuleFiles, filesProvider.frontendClasspathFiles, listOf()),
-      PluginPart(filesProvider.workspaceModuleFiles, filesProvider.workspaceClasspathFiles, listOf()),
+      PluginPart(filesProvider.frontendModuleFiles, filesProvider.frontendClasspathFiles, filesProvider.frontendSquashedModuleFiles, listOf()),
+      PluginPart(filesProvider.workspaceModuleFiles, filesProvider.workspaceClasspathFiles, filesProvider.workspaceSquashedModuleFiles, listOf()),
     )
   }
 
@@ -37,38 +37,52 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
     id: String,
     name: String,
     icon: String? = null,
-    vendor: String? = "JetBrains",
-    version: String? = "1.0.0",
+    vendor: String = "JetBrains",
+    version: String = "1.0.0",
     description: String? = null,
     depends: Map<String, String> = mapOf(),
     frontend: PluginPart? = null,
     workspace: PluginPart? = null,
   ): File {
     val fileName = "$id-$version"
-    val descriptor = FleetTestDescriptor(
-      id = id,
-      name = name,
+    val descriptor = PluginDescriptor(
+      id = BundleName(id),
+      readableName = name,
       vendor = vendor,
-      version = version,
+      version = BundleVersion(version),
       description = description,
-      depends = depends.mapValues { DependencyVersion.CompatibleWith(it.value) },
-      frontend = frontend?.copy(modules = substitute(frontend.modules), classpath = substitute(frontend.classpath)),
-      workspace = workspace?.copy(modules = substitute(workspace.modules), classpath = substitute(workspace.classpath)),
+      deps = depends.map { (k, v) -> Pair(BundleName(k), VersionRequirement.CompatibleWith(BundleVersion(v))) }.toMap(),
+      frontend = frontend?.let {
+        Barrel(
+          modulePath = substitute(frontend.modulePath),
+          classPath = substitute(frontend.classPath),
+          squashedAutomaticModules = frontend.squashedAutomaticModules.map { substitute(it).toList() }.toSet()
+        )
+      },
+      workspace = workspace?.let {
+        Barrel(
+          modulePath = substitute(workspace.modulePath),
+          classPath = substitute(workspace.classPath),
+          squashedAutomaticModules = workspace.squashedAutomaticModules.map { substitute(it).toList() }.toSet()
+        )
+      }
     )
     return build(
-      jacksonObjectMapper().writeValueAsString(descriptor),
+      Json.encodeToString(descriptor),
       fileName,
       icon,
-      listOfNotNull(frontend?.modules, frontend?.classpath, workspace?.modules, workspace?.classpath).flatten()
+      listOfNotNull(frontend?.modulePath, frontend?.classPath, workspace?.modulePath, workspace?.classPath).flatten()
     ).toFile()
   }
 
-  private fun substitute(modules: List<String>): List<String> {
+  private fun substitute(modules: List<String>): Set<Barrel.Coordinates> {
     val digest = MessageDigest.getInstance("SHA-1")
     return modules.map {
       val file = Paths.get(it)
-      return@map file.fileName.toString() + "#" + digest.sha(file.toFile())
-    }
+      val fileName = file.fileName.toString()
+      val hash = digest.sha(file.toFile())
+      return@map Barrel.Coordinates.Relative(fileName, hash)
+    }.toSet()
   }
 
   private fun build(
@@ -115,18 +129,22 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
 private class FilesGenerator(private val generateFrontend: Boolean, private val generateWorkspace: Boolean) {
   val workspaceClasspathFiles = mutableListOf<String>()
   val workspaceModuleFiles = mutableListOf<String>()
+  val workspaceSquashedModuleFiles = mutableSetOf<MutableList<String>>()
   val frontendClasspathFiles = mutableListOf<String>()
   val frontendModuleFiles = mutableListOf<String>()
+  val frontendSquashedModuleFiles = mutableSetOf<MutableList<String>>()
 
   fun generateFiles() {
     val filesNum = 5
     if (generateFrontend) {
       frontendModuleFiles.addAll(createFiles(filesNum))
       frontendClasspathFiles.addAll(createFiles(filesNum))
+      frontendSquashedModuleFiles.add(createFiles(filesNum).toMutableList())
     }
     if (generateWorkspace) {
       workspaceModuleFiles.addAll(createFiles(filesNum))
       workspaceClasspathFiles.addAll(createFiles(filesNum))
+      workspaceSquashedModuleFiles.add(createFiles(filesNum).toMutableList())
     }
   }
 
@@ -138,6 +156,14 @@ private class FilesGenerator(private val generateFrontend: Boolean, private val 
     }.toList()
   }
 }
+
+data class PluginPart(
+  //strings in modules and classpath in a form of filepath/filename-1.0.0+alpha#SHA.ext todo deserialize to Coordinate
+  val modulePath: List<String>,
+  val classPath: List<String>,
+  val squashedAutomaticModules: Set<List<String>>,
+  val modules: List<String>,
+)
 
 fun main() {
   //FleetPluginGenerator("~/test").generate("test.plugin.first", "First Test", frontend = PluginPart(listOf("~/module.jar"), listOf("~/classpath.jar"), listOf()))

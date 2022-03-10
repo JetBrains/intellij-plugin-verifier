@@ -8,8 +8,9 @@
     "fleet.language.xml": "1.0.0"
   },
   "frontend": {
-    "modules": ["frontend-module.jar#sha1234"],
-    "classpath": ["frontend-classpath.jar#sha2345"],
-    "roots": ["frontend-module"]
+    "modulePath": ["/frontend-module.jar#sha1234"],
+    "classPath": ["/frontend-classpath.jar#sha2345"],
+    "squashedAutomaticModules": [["/frontend-classpath.jar#sha2345"]],
+    "modules": ["frontend-module"]
   }
 }

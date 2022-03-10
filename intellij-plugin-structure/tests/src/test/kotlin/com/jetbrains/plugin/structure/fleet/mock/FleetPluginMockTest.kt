@@ -5,8 +5,12 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
+import com.jetbrains.plugin.structure.fleet.bean.BundleName
+import com.jetbrains.plugin.structure.fleet.bean.VersionRequirement
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,7 +29,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
       val version = it.plugin.depends.values.first()
-      assertEquals("1.0.0", version)
+      assertEquals("1.0.0", Json.encodeToString(version).trim('\"'))
     }
   }
 
@@ -80,6 +84,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertTrue(plugin.depends.isNotEmpty())
-    assertEquals("fleet.language.xml", plugin.depends.keys.first())
+    assertEquals("fleet.language.xml", plugin.depends.keys.first().name)
   }
 }
