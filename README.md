@@ -46,6 +46,12 @@ Download the latest available `verifier-cli-<version>-all.jar` from [Maven Repos
 
 Where `<version>` is the latest version, which you can find in the package [page](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/).
 
+It is also possible to reply on the GitHub API that provides the latest available release as JSON response, which can be handled using `jq` command, like:
+
+    curl -s https://api.github.com/repos/JetBrains/intellij-plugin-verifier/releases/latest \
+        | jq -r '.assets[].browser_download_url' \
+        | xargs curl --output verifier-all.jar
+
 ## Options
 
 The Plugin Verifier can be run using the command line:
