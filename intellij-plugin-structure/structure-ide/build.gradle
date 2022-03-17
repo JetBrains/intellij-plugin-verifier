@@ -1,4 +1,4 @@
-def platformVersion = "193.7288.26"
+def platformVersion = "213.7172.25"
 
 dependencies {
   api project(':structure-intellij')
