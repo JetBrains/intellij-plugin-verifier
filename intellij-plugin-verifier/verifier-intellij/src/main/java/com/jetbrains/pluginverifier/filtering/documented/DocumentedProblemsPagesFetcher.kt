@@ -18,8 +18,8 @@ class DocumentedProblemsPagesFetcher {
     private const val MAIN_EDIT_PAGE_URL = "https://jb.gg/ij-api-changes-edit"
   }
 
-  fun fetchPages(): List<DocumentedProblemsPage> {
-    val (mainUrl, mainPageBody) = fetchPageBody(MAIN_SOURCE_PAGE_URL)
+  fun fetchPages(url: String? = null): List<DocumentedProblemsPage> {
+    val (mainUrl, mainPageBody) = fetchPageBody(url?.takeUnless(String::isNullOrBlank) ?: MAIN_SOURCE_PAGE_URL)
     val (mainWebUrl, _) = runCatching { fetchPageBody(MAIN_WEB_PAGE_URL) }.getOrNull() ?: MAIN_WEB_PAGE_URL to ""
     val (editUrl, _) = runCatching { fetchPageBody(MAIN_EDIT_PAGE_URL) }.getOrNull()
       ?: fetchPageBody("https://github.com/JetBrains/intellij-sdk-docs/edit/main/reference_guide/api_changes_list.md")

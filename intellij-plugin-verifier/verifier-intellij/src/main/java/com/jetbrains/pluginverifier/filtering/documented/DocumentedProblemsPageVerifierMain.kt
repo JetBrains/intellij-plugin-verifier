@@ -14,7 +14,11 @@ object DocumentedProblemsPageVerifierMain {
   fun main(args: Array<String>) {
     println("WARN: CLI arguments are ignored. You can avoid passing them.")
 
-    val documentedPages = DocumentedProblemsPagesFetcher().fetchPages()
+    val (repository, branch) = args + arrayOf("", "")
+    val url = "https://raw.githubusercontent.com/$repository/$branch/reference_guide/api_changes_list.md".takeIf {
+      repository.isNotBlank() && branch.isNotBlank()
+    }
+    val documentedPages = DocumentedProblemsPagesFetcher().fetchPages(url)
     check(documentedPages.isNotEmpty()) { "No pages" }
     val documentedProblemsParser = DocumentedProblemsParser(false)
     for (page in documentedPages) {
