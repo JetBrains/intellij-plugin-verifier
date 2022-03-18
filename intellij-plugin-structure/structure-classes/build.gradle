@@ -9,5 +9,5 @@ dependencies {
 
   implementation project(':structure-base')
 
-  implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
+  implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
 }
