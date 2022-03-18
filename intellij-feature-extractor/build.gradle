@@ -2,7 +2,7 @@ plugins {
   id "org.jetbrains.kotlin.jvm" version "1.5.20"
 }
 
-ext.kotlin_version = '1.5.20'
+ext.kotlin_version = '1.6.10'
 
 def extractorVersion = project.hasProperty('featureExtractorVersion') ? project.featureExtractorVersion : 'dev'
 
