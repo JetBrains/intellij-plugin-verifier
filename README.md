@@ -50,7 +50,7 @@ It is also possible to reply on the GitHub API that provides the latest availabl
 
     curl -s https://api.github.com/repos/JetBrains/intellij-plugin-verifier/releases/latest \
         | jq -r '.assets[].browser_download_url' \
-        | xargs curl --output verifier-all.jar
+        | xargs curl -L --output verifier-all.jar
 
 ## Options
 
