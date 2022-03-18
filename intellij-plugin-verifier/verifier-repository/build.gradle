@@ -2,7 +2,7 @@ dependencies {
   api group: 'org.jetbrains.intellij.plugins', name: 'structure-intellij-classes', version: intellijStructureVersion
   api group: 'org.jetbrains.intellij.plugins', name: 'structure-ide', version: intellijStructureVersion
 
-  implementation 'com.google.code.gson:gson:2.8.8'
+  implementation 'com.google.code.gson:gson:2.9.0'
 
   implementation group: 'com.google.guava', name: 'guava', version: '31.1-jre'
   implementation 'org.apache.commons:commons-compress:1.21'
