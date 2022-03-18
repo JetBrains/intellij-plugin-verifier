@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.filtering.documented
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.net.URL
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class DocumentedProblemsPagesFetcher {
@@ -36,15 +37,17 @@ class DocumentedProblemsPagesFetcher {
   /**
    * Returns resolved URL and the content of the page.
    */
-  private fun fetchPageBody(pageUrl: String): Pair<String, String> = try {
-    val response = Jsoup
-      .connect(pageUrl)
-      .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
-      .method(Connection.Method.GET)
-      .execute()
-    response.url().toExternalForm() to response.body()
-  } catch (e: Exception) {
-    throw RuntimeException("Unable to fetch body of page $pageUrl", e)
+  private fun fetchPageBody(pageUrl: String): Pair<String, String> {
+    val url = "$pageUrl?${Date().time}"
+    return try {
+      val response = Jsoup
+        .connect(url)
+        .timeout(TimeUnit.MINUTES.toMillis(5).toInt())
+        .method(Connection.Method.GET)
+        .execute()
+      response.url().toExternalForm() to response.body()
+    } catch (e: Exception) {
+      throw RuntimeException("Unable to fetch body of page $url", e)
+    }
   }
-
 }
