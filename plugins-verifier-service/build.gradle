@@ -85,7 +85,7 @@ configure(allprojects) {
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
     implementation 'org.mapdb:mapdb:3.0.8'
 
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.31'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
     runtimeOnly "org.codehaus.groovy:groovy:2.4.12"
 
