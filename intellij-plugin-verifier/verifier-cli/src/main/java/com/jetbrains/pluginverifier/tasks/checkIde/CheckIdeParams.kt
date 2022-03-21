@@ -17,7 +17,8 @@ class CheckIdeParams(
   val verificationDescriptors: List<PluginVerificationDescriptor.IDE>,
   val problemsFilters: List<ProblemsFilter>,
   val missingCompatibleVersionsProblems: List<MissingCompatibleVersionProblem>,
-  private val ideDescriptor: IdeDescriptor
+  private val ideDescriptor: IdeDescriptor,
+  val excludeExternalBuildClassesSelector: Boolean
 ) : TaskParameters {
 
   override val presentableText

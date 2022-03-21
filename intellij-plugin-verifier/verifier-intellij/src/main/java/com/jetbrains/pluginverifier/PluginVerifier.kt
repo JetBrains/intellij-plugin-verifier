@@ -44,7 +44,8 @@ class PluginVerifier(
   val verificationDescriptor: PluginVerificationDescriptor,
   private val problemFilters: List<ProblemsFilter>,
   private val pluginDetailsCache: PluginDetailsCache,
-  private val classFilters: List<ClassFilter>
+  private val classFilters: List<ClassFilter>,
+  private val excludeExternalBuildClassesSelector: Boolean
 ) {
 
   fun loadPluginAndVerify(): PluginVerificationResult {
@@ -284,7 +285,9 @@ class PluginVerifier(
 
   private fun selectClassesForCheck(pluginDetails: PluginDetails): Set<String> {
     val classesForCheck = hashSetOf<String>()
-    for (classesSelector in classesSelectors) {
+    val selectorsToUse =
+        if (excludeExternalBuildClassesSelector) classesSelectors.filterNot { it is ExternalBuildClassesSelector } else classesSelectors
+    for (classesSelector in selectorsToUse) {
       classesForCheck += classesSelector.getClassesForCheck(pluginDetails.pluginClassesLocations)
     }
     return classesForCheck

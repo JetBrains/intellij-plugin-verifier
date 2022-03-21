@@ -32,7 +32,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
           it,
           problemsFilters,
           pluginDetailsCache,
-          listOf(DynamicallyLoadedFilter())
+          listOf(DynamicallyLoadedFilter()),
+          excludeExternalBuildClassesSelector
         )
       }
 
