@@ -7,7 +7,6 @@ package com.jetbrains.pluginverifier.filtering.documented
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 import java.net.URL
-import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class DocumentedProblemsPagesFetcher {
@@ -38,7 +37,7 @@ class DocumentedProblemsPagesFetcher {
    * Returns resolved URL and the content of the page.
    */
   private fun fetchPageBody(pageUrl: String): Pair<String, String> {
-    val url = "$pageUrl?${Date().time}"
+    val url = "$pageUrl?flush_cache=true"
     return try {
       val response = Jsoup
         .connect(url)
