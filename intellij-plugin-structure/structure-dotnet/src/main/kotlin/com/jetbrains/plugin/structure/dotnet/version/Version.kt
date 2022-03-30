@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.dotnet.version
 import com.jetbrains.plugin.structure.base.utils.Version
 import kotlin.math.min
 
-data class ReSharperVersion(val components: List<Int>, val productCode: String = "RS"): Version<ReSharperVersion> {
+data class ReSharperVersion(val components: List<Int>, override val productCode: String = "RS"): Version<ReSharperVersion> {
   override fun compareTo(other: ReSharperVersion): Int {
    val compareProductCodes = productCode.compareTo(other.productCode)
     if (productCode.isNotEmpty() && other.productCode.isNotEmpty() && compareProductCodes != 0) {
@@ -58,9 +58,16 @@ data class ReSharperVersion(val components: List<Int>, val productCode: String =
 
     return builder.toString()
   }
+
+  override fun setProductCodeIfAbsent(productCode: String) =
+    if (this.productCode.isEmpty())
+      fromString("$productCode-" + asStringWithoutProductCode())
+    else {
+      this
+    }
 }
 
-data class WaveVersion(val firstComponent: Int, val secondComponent: Int): Version<WaveVersion> {
+data class WaveVersion(val firstComponent: Int, val secondComponent: Int, override val productCode: String = ""): Version<WaveVersion> {
   override fun compareTo(other: WaveVersion) = compareValuesBy(this, other, {it.firstComponent}, {it.secondComponent})
   override fun asString() = "$firstComponent.$secondComponent"
   override fun asStringWithoutProductCode() = asString()
@@ -75,4 +82,7 @@ data class WaveVersion(val firstComponent: Int, val secondComponent: Int): Versi
       return WaveVersion(versionFirstComponent, minVersionSecondComponent)
     }
   }
+
+  // Wave versions can't have product codes
+  override fun setProductCodeIfAbsent(productCode: String): WaveVersion = this
 }

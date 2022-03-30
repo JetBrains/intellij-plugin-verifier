@@ -93,9 +93,6 @@ public abstract class IdeVersion implements Version<IdeVersion> {
     return asString(false, false);
   }
 
-  @NotNull
-  public abstract String getProductCode();
-
   public abstract int getBaselineVersion();
 
   public abstract int getBuild();

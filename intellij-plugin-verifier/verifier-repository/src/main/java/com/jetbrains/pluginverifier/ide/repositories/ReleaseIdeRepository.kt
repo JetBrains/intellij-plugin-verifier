@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.ide.repositories
 
 import com.google.common.base.Suppliers
 import com.google.gson.annotations.SerializedName
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.DataServicesIndexParser
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
@@ -109,10 +108,3 @@ internal data class Download(
   @SerializedName("size")
   val size: Long
 )
-
-fun IdeVersion.setProductCodeIfAbsent(productCode: String) =
-  if (this.productCode.isEmpty())
-    IdeVersion.createIdeVersion("$productCode-" + asStringWithoutProductCode())
-  else {
-    this
-  }
