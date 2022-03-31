@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import java.util.*
 
 class IdeVersionImpl(
-  private val productCode: String,
+  override val productCode: String,
   private val components: IntArray,
   private val isSnapshot: Boolean = false
 ) : IdeVersion() {
@@ -32,13 +32,18 @@ class IdeVersionImpl(
     return builder.toString()
   }
 
+  override fun setProductCodeIfAbsent(productCode: String) =
+    if (this.productCode.isEmpty())
+      fromString("$productCode-" + asStringWithoutProductCode())
+    else {
+      this
+    }
+
   override fun getComponents() = components.clone()
 
   override fun asLong(): Long = CompatibilityUtils.versionAsLong(*components)
 
   override fun getBaselineVersion() = components[0]
-
-  override fun getProductCode() = productCode
 
   override fun toString() = asString()
 

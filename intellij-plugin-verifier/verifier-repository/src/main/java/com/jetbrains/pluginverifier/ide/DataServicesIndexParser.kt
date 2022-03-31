@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.Download
 import com.jetbrains.pluginverifier.ide.repositories.Product
 import com.jetbrains.pluginverifier.ide.repositories.Release
-import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import java.net.URL
 import java.time.LocalDate
 

@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.ArtifactJson
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
-import com.jetbrains.pluginverifier.ide.repositories.setProductCodeIfAbsent
 import java.net.URL
 import java.time.Instant
 import java.time.ZoneOffset
