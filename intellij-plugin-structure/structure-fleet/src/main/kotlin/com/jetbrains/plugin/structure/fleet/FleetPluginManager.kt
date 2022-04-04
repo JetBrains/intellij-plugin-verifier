@@ -4,16 +4,17 @@
 
 package com.jetbrains.plugin.structure.fleet
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
-import com.jetbrains.plugin.structure.fleet.bean.PluginPart
+import com.jetbrains.plugin.structure.fleet.bean.Barrel
+import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -65,9 +66,8 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
     if (!descriptorFile.exists()) {
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
-    val descriptor = jacksonObjectMapper().readValue(descriptorFile.readText(), FleetPluginDescriptor::class.java)
     val icons = loadIconFromDir(pluginDirectory)
-    return createPlugin(descriptor, icons, pluginDirectory)
+    return createPlugin(descriptorFile.readText(), icons, pluginDirectory)
   }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
@@ -83,11 +83,12 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
-  private fun createPlugin(descriptor: FleetPluginDescriptor, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
+  private fun createPlugin(serializedDescriptor: String, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
     try {
+      val descriptor = Json.decodeFromString<PluginDescriptor>(serializedDescriptor)
       val beanValidationResult = validateFleetPluginBean(descriptor)
 
-      val fileChecker = FileChecker(descriptor.id ?: "<plugin with no id>")
+      val fileChecker = FileChecker(descriptor.id.name)
       val fr = descriptor.frontend?.parse(pluginDir, fileChecker)
       val ws = descriptor.workspace?.parse(pluginDir, fileChecker)
       beanValidationResult.addAll(fileChecker.problems)
@@ -97,12 +98,12 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
       }
       val plugin = with(descriptor) {
         FleetPlugin(
-          pluginId = id!!,
-          pluginVersion = version!!,
-          depends = depends ?: mapOf(),
+          pluginId = id.name,
+          pluginVersion = version.version.value,
+          depends = deps,
           frontend = fr,
           workspace = ws,
-          pluginName = name,
+          pluginName = readableName,
           description = description,
           icons = icons,
           vendor = vendor,
@@ -116,13 +117,19 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
     }
   }
 
-  private fun PluginPart.parse(pluginDir: Path, fileChecker: FileChecker): ParsedPluginPart {
+  private fun Barrel.parse(pluginDir: Path, fileChecker: FileChecker): ParsedPluginPart {
     // format: "path_in_zip/filename-1.1.1.ext#hash12345"
-    fun List<String>.parse(pluginDir: Path): List<PluginFile> {
+    fun Collection<Barrel.Coordinates>.parse(pluginDir: Path): List<PluginFile> {
       val files = mutableListOf<PluginFile>()
-      for (relPath in this) {
-        val sha = relPath.substringAfterLast("#", "")
-        val filePath = relPath.substringBeforeLast("#")
+      for (coord in this) {
+        val relCoord = coord as? Barrel.Coordinates.Relative
+        if (relCoord == null) {
+          LOG.error("Only relative coordinates are expected in plugin distribution: skipping $coord")
+          continue
+        }
+
+        val sha = relCoord.hash
+        val filePath = relCoord.relPath
         val filename = filePath.substringAfterLast("/")
         if (mockFilesContent) {
           files.add(PluginFile(filename, sha, ByteArray(0)))
@@ -137,7 +144,12 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
       return files
     }
 
-    return ParsedPluginPart(this.modules.parse(pluginDir), this.classpath.parse(pluginDir), roots)
+    return ParsedPluginPart(
+      modulePath.parse(pluginDir),
+      classPath.parse(pluginDir),
+      squashedAutomaticModules.map { it.parse(pluginDir) }.toSet(),
+      modules
+    )
   }
 }
 

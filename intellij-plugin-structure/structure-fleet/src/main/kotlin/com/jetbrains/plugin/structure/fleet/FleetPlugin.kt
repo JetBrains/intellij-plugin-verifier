@@ -6,6 +6,8 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.fleet.bean.BundleName
+import com.jetbrains.plugin.structure.fleet.bean.VersionRequirement
 
 data class FleetPlugin(
   override val pluginId: String,
@@ -14,7 +16,7 @@ data class FleetPlugin(
   override val icons: List<PluginIcon> = emptyList(),
   override val description: String? = null,
   override val vendor: String? = null,
-  val depends: Map<String, String>,
+  val depends: Map<BundleName, VersionRequirement>,
   val frontend: ParsedPluginPart? = null,
   val workspace: ParsedPluginPart? = null,
 ) : Plugin {
@@ -25,9 +27,10 @@ data class FleetPlugin(
 }
 
 data class ParsedPluginPart(
-  val modules: List<PluginFile>,
+  val modulePath: List<PluginFile>,
   val classpath: List<PluginFile>,
-  val roots: List<String>,
+  val squashedAutomaticModules: Set<List<PluginFile>>,
+  val roots: Set<String>,
 )
 
 data class PluginFile(val name: String, val sha: String, val content: ByteArray) {

@@ -7,25 +7,20 @@ package com.jetbrains.plugin.structure.fleet
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
-import com.jetbrains.plugin.structure.fleet.bean.FleetPluginDescriptor
-import com.jetbrains.plugin.structure.fleet.bean.collectPaths
+import com.jetbrains.plugin.structure.fleet.bean.Barrel
+import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
 
 val NON_ID_SYMBOL_REGEX = "^[A-Za-z0-9_.]+$".toRegex()
 
-fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): MutableList<PluginProblem> {
+fun validateFleetPluginBean(descriptor: PluginDescriptor): MutableList<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (descriptor.name.isNullOrBlank()) {
+  if (descriptor.readableName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   } else {
-    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.name, MAX_NAME_LENGTH, problems)
+    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.readableName, MAX_NAME_LENGTH, problems)
   }
-  if (descriptor.id.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("id"))
-  } else if (!NON_ID_SYMBOL_REGEX.matches(descriptor.id)) {
-    problems.add(InvalidPluginIDProblem(descriptor.id))
-  }
-  if (descriptor.version.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("version"))
+  if (!NON_ID_SYMBOL_REGEX.matches(descriptor.id.name)) {
+    problems.add(InvalidPluginIDProblem(descriptor.id.name))
   }
   if (descriptor.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
@@ -37,22 +32,25 @@ fun validateFleetPluginBean(descriptor: FleetPluginDescriptor): MutableList<Plug
     problems.add(PropertyNotSpecified("parts"))
   }
   val allFiles = descriptor.frontend.collectPaths() + descriptor.workspace.collectPaths()
-  for (file in allFiles) {
-    if (file.substringAfterLast("#", "") == "") {
-      problems.add(FileSHANotSpecified(file))
+  for (coord in allFiles) {
+    if (coord !is Barrel.Coordinates.Relative) {
+      problems.add(NonRelativeCoordinate(coord))
     }
   }
   return problems
 }
 
-class FileSHANotSpecified(
-  private val file: String,
+class NonRelativeCoordinate(
+  private val file: Barrel.Coordinates,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val detailedMessage: String
-    get() = "SHA is not specified: $file"
+    get() = "Only relative coordinates are allowed in plugin distribution: $file"
 
   override val level
     get() = Level.ERROR
 }
+
+fun Barrel?.collectPaths(): Collection<Barrel.Coordinates> =
+  if (this == null) emptyList() else (classPath + modulePath + squashedAutomaticModules.flatten())
