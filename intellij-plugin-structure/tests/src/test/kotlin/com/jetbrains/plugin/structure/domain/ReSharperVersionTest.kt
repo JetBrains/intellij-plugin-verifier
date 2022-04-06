@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.domain
 
 import com.jetbrains.plugin.structure.dotnet.version.ReSharperVersion
 import com.jetbrains.plugin.structure.dotnet.version.WaveVersion
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.junit.Assert
 import org.junit.Test
 
@@ -25,17 +24,17 @@ class ReSharperVersionTest {
 
   @Test(expected = IllegalArgumentException::class)
   fun wrongBaselineVersionTest() {
-    IdeVersion.createIdeVersion("test.3.3")
+    ReSharperVersion.fromString("test.3.3")
   }
 
   @Test(expected = IllegalArgumentException::class)
   fun wrongBuildVersionTest() {
-    IdeVersion.createIdeVersion("138.test.3")
+    ReSharperVersion.fromString("138.test.3")
   }
 
   @Test(expected = IllegalArgumentException::class)
   fun wrongMinorVersionTest() {
-    IdeVersion.createIdeVersion("138.3.test")
+    ReSharperVersion.fromString("138.3.test")
   }
 
   @Test
