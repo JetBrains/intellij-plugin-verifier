@@ -8,6 +8,6 @@ dependencies {
 
   api 'org.jgrapht:jgrapht-core:1.5.1'
 
-  implementation 'org.jsoup:jsoup:1.14.2'
+  implementation 'org.jsoup:jsoup:1.14.3'
   api group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: intellijStructureVersion
 }
