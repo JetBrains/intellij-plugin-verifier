@@ -11,8 +11,7 @@ import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginF
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import fleet.bundles.encodeToString
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -76,7 +75,7 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         val builder = perfectFleetPluginBuilder.descriptorUpdater()
-        Json.encodeToString(builder)
+        builder.encodeToString()
       }
     }
     assertProblematicPlugin(pluginFile, listOf(problem))

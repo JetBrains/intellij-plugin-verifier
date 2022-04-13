@@ -5,12 +5,10 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import fleet.bundles.BundleName
-import fleet.bundles.VersionRequirement
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import com.vdurmont.semver4j.Semver
+import fleet.bundles.VersionRequirement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,7 +27,8 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
       val version = it.plugin.depends.values.first()
-      assertEquals("1.0.0", Json.encodeToString(version).trim('\"'))
+      assertTrue(version is VersionRequirement.CompatibleWith)
+      assertEquals(Semver("1.0.0"), (version as VersionRequirement.CompatibleWith).version.version)
     }
   }
 

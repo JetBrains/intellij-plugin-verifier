@@ -1,6 +1,5 @@
 dependencies {
   implementation project(':structure-base')
-  implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2"
-  implementation "com.jetbrains.fleet.bundles:bundles:1.4.40"
+  implementation "com.jetbrains.fleet.bundles:bundles:1.4.44"
   implementation "com.vdurmont:semver4j:3.1.0"
 }

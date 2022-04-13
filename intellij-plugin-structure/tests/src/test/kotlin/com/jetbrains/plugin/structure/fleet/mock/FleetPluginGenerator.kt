@@ -3,8 +3,6 @@ package com.jetbrains.plugin.structure.fleet.mock
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
 import fleet.bundles.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -68,7 +66,7 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
       }
     )
     return build(
-      Json.encodeToString(descriptor),
+      descriptor.encodeToString(),
       fileName,
       icon,
       listOfNotNull(frontend?.modulePath, frontend?.classPath, workspace?.modulePath, workspace?.classPath).flatten()

@@ -13,13 +13,13 @@ import com.jetbrains.plugin.structure.base.utils.*
 import fleet.bundles.Barrel
 import fleet.bundles.PluginDescriptor
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
+import fleet.bundles.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.KClass
 
 class FleetPluginManager private constructor(private val extractDirectory: Path, val mockFilesContent: Boolean) : PluginManager<FleetPlugin> {
   companion object {
@@ -85,7 +85,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
 
   private fun createPlugin(serializedDescriptor: String, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
     try {
-      val descriptor = Json.decodeFromString<PluginDescriptor>(serializedDescriptor)
+      val descriptor = PluginDescriptor.decodeFromString(serializedDescriptor)
       val beanValidationResult = validateFleetPluginBean(descriptor)
 
       val fileChecker = FileChecker(descriptor.id.name)
