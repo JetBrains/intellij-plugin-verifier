@@ -7,17 +7,18 @@ package com.jetbrains.plugin.structure.fleet
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
-import com.jetbrains.plugin.structure.fleet.bean.Barrel
-import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
+import fleet.bundles.Barrel
+import fleet.bundles.PluginDescriptor
 
 val NON_ID_SYMBOL_REGEX = "^[A-Za-z0-9_.]+$".toRegex()
 
 fun validateFleetPluginBean(descriptor: PluginDescriptor): MutableList<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (descriptor.readableName.isNullOrBlank()) {
+  val readableName = descriptor.readableName
+  if (readableName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   } else {
-    validatePropertyLength(DESCRIPTOR_NAME, "name", descriptor.readableName, MAX_NAME_LENGTH, problems)
+    validatePropertyLength(DESCRIPTOR_NAME, "name", readableName, MAX_NAME_LENGTH, problems)
   }
   if (!NON_ID_SYMBOL_REGEX.matches(descriptor.id.name)) {
     problems.add(InvalidPluginIDProblem(descriptor.id.name))

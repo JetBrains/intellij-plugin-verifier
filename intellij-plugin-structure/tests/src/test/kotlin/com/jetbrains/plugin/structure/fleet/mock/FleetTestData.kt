@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
-import com.jetbrains.plugin.structure.fleet.bean.Barrel
-import com.jetbrains.plugin.structure.fleet.bean.BundleName
-import com.jetbrains.plugin.structure.fleet.bean.BundleVersion
-import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
+import fleet.bundles.Barrel
+import fleet.bundles.BundleName
+import fleet.bundles.BundleVersion
+import fleet.bundles.PluginDescriptor
 
 val perfectFleetPluginBuilder
   get() = PluginDescriptor(

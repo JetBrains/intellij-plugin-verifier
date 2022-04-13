@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
+import fleet.bundles.PluginDescriptor
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest

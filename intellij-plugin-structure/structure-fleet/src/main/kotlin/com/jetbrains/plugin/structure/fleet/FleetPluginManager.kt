@@ -10,8 +10,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.fleet.bean.Barrel
-import com.jetbrains.plugin.structure.fleet.bean.PluginDescriptor
+import fleet.bundles.Barrel
+import fleet.bundles.PluginDescriptor
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -113,7 +113,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
-      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, e.localizedMessage))
+      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME,  "Bad descriptor format. Descriptor text: $serializedDescriptor"+"\n"+e.localizedMessage))
     }
   }
 

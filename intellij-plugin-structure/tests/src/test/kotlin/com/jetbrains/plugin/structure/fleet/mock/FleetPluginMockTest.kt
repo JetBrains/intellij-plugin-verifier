@@ -5,8 +5,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.bean.BundleName
-import com.jetbrains.plugin.structure.fleet.bean.VersionRequirement
+import fleet.bundles.BundleName
+import fleet.bundles.VersionRequirement
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import kotlinx.serialization.encodeToString

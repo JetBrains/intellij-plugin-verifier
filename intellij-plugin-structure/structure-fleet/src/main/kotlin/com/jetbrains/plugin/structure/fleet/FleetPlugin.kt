@@ -6,8 +6,8 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import com.jetbrains.plugin.structure.fleet.bean.BundleName
-import com.jetbrains.plugin.structure.fleet.bean.VersionRequirement
+import fleet.bundles.BundleName
+import fleet.bundles.VersionRequirement
 
 data class FleetPlugin(
   override val pluginId: String,

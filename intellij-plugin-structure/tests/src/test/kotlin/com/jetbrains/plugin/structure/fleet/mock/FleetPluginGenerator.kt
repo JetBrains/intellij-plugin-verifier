@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.bean.*
+import fleet.bundles.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
