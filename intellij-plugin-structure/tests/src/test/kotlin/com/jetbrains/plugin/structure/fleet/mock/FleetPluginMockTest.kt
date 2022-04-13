@@ -7,6 +7,8 @@ import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import com.vdurmont.semver4j.Semver
+import fleet.bundles.VersionRequirement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,7 +27,8 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
       val version = it.plugin.depends.values.first()
-      assertEquals("1.0.0", version)
+      assertTrue(version is VersionRequirement.CompatibleWith)
+      assertEquals(Semver("1.0.0"), (version as VersionRequirement.CompatibleWith).version.version)
     }
   }
 
@@ -80,6 +83,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertTrue(plugin.depends.isNotEmpty())
-    assertEquals("fleet.language.xml", plugin.depends.keys.first())
+    assertEquals("fleet.language.xml", plugin.depends.keys.first().name)
   }
 }

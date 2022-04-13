@@ -1,3 +1,5 @@
 dependencies {
   implementation project(':structure-base')
+  implementation "com.jetbrains.fleet.bundles:bundles:1.4.44"
+  implementation "com.vdurmont:semver4j:3.1.0"
 }
