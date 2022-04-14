@@ -10,16 +10,15 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import fleet.bundles.Barrel
 import fleet.bundles.PluginDescriptor
-import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import fleet.bundles.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.reflect.KClass
 
 class FleetPluginManager private constructor(private val extractDirectory: Path, val mockFilesContent: Boolean) : PluginManager<FleetPlugin> {
   companion object {
@@ -43,7 +42,6 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
       else -> PluginCreationFail(createIncorrectFleetPluginFile(pluginFile.simpleName))
     }
   }
-
 
   private fun loadDescriptorFromZip(pluginFile: Path): PluginCreationResult<FleetPlugin> {
     val sizeLimit = Settings.FLEET_PLUGIN_SIZE_LIMIT.getAsLong()
@@ -89,35 +87,34 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
       val beanValidationResult = validateFleetPluginBean(descriptor)
 
       val fileChecker = FileChecker(descriptor.id.name)
-      val fr = descriptor.frontend?.parse(pluginDir, fileChecker)
-      val ws = descriptor.workspace?.parse(pluginDir, fileChecker)
       beanValidationResult.addAll(fileChecker.problems)
 
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
       val plugin = with(descriptor) {
+        val frFiles = descriptor.frontend?.parse(pluginDir, fileChecker) ?: listOf()
+        val wsFiles = descriptor.workspace?.parse(pluginDir, fileChecker) ?: listOf()
         FleetPlugin(
           pluginId = id.name,
           pluginVersion = version.version.value,
-          depends = deps,
-          frontend = fr,
-          workspace = ws,
           pluginName = readableName,
           description = description,
           icons = icons,
           vendor = vendor,
+          descriptorContent = serializedDescriptor,
+          files = frFiles + wsFiles
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
-      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME,  "Bad descriptor format. Descriptor text: $serializedDescriptor"+"\n"+e.localizedMessage))
+      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, "Bad descriptor format. Descriptor text: $serializedDescriptor" + "\n" + e.localizedMessage))
     }
   }
 
-  private fun Barrel.parse(pluginDir: Path, fileChecker: FileChecker): ParsedPluginPart {
+  private fun Barrel.parse(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
     // format: "path_in_zip/filename-1.1.1.ext#hash12345"
     fun Collection<Barrel.Coordinates>.parse(pluginDir: Path): List<PluginFile> {
       val files = mutableListOf<PluginFile>()
@@ -144,12 +141,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
       return files
     }
 
-    return ParsedPluginPart(
-      modulePath.parse(pluginDir),
-      classPath.parse(pluginDir),
-      squashedAutomaticModules.map { it.parse(pluginDir) }.toSet(),
-      modules
-    )
+    return modulePath.parse(pluginDir) + classPath.parse(pluginDir) + squashedAutomaticModules.flatMap { it.parse(pluginDir) }
   }
 }
 

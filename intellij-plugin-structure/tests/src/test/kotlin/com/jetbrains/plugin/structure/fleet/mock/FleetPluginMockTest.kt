@@ -25,11 +25,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
         getMockPluginJsonContent("extension")
       }
     }
-    testMockPluginStructureAndConfiguration(pluginFile).also {
-      val version = it.plugin.depends.values.first()
-      assertTrue(version is VersionRequirement.CompatibleWith)
-      assertEquals(Semver("1.0.0"), (version as VersionRequirement.CompatibleWith).version.version)
-    }
   }
 
   @Test
@@ -82,7 +77,5 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("JetBrains", plugin.vendor)
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
-    assertTrue(plugin.depends.isNotEmpty())
-    assertEquals("fleet.language.xml", plugin.depends.keys.first().name)
   }
 }
