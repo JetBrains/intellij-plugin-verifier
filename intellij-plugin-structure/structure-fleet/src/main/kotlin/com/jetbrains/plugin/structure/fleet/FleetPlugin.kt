@@ -6,8 +6,8 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import fleet.bundles.BundleName
-import fleet.bundles.VersionRequirement
+import fleet.bundles.*
+
 
 data class FleetPlugin(
   override val pluginId: String,
@@ -16,9 +16,9 @@ data class FleetPlugin(
   override val icons: List<PluginIcon> = emptyList(),
   override val description: String? = null,
   override val vendor: String? = null,
-  val depends: Map<BundleName, VersionRequirement>,
-  val frontend: ParsedPluginPart? = null,
-  val workspace: ParsedPluginPart? = null,
+
+  val descriptorContent: String,
+  val files: List<PluginFile>
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendorEmail: String? = null
@@ -26,12 +26,6 @@ data class FleetPlugin(
   override val url: String? = null
 }
 
-data class ParsedPluginPart(
-  val modulePath: List<PluginFile>,
-  val classpath: List<PluginFile>,
-  val squashedAutomaticModules: Set<List<PluginFile>>,
-  val roots: Set<String>,
-)
 
 data class PluginFile(val name: String, val sha: String, val content: ByteArray) {
   override fun equals(other: Any?): Boolean {
