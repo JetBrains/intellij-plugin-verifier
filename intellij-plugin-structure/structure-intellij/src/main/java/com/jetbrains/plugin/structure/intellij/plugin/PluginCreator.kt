@@ -361,8 +361,18 @@ internal class PluginCreator private constructor(
     val client = extensionElement.readServiceClient()
     //TODO: add OS extraction
     var os: IdePluginContentDescriptor.Os? = null
-    return IdePluginContentDescriptor.ServiceDescriptor(serviceInterface, serviceImplementation, serviceType, testServiceImplementation,
-                                                        headlessImplementation, overrides, configurationSchemaKey, preload, client, os)
+    return IdePluginContentDescriptor.ServiceDescriptor(
+      serviceInterface,
+      serviceImplementation,
+      serviceType,
+      testServiceImplementation,
+      headlessImplementation,
+      overrides,
+      configurationSchemaKey,
+      preload,
+      client,
+      os
+    )
   }
 
   private fun extractEPName(extensionElement: Element): String {
