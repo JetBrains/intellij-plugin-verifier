@@ -13,25 +13,31 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
   fun generateWithRandomFiles(
     id: String,
     name: String,
-    icon: String? = null,
     vendor: String = "JetBrains",
     version: String = "1.0.0",
     description: String? = null,
+    icon: String? = null,
     depends: Map<String, String> = mapOf(),
     generateFrontend: Boolean = false,
     generateWorkspace: Boolean = false,
-  ): File {
-    val filesProvider = FilesGenerator(generateFrontend, generateWorkspace)
-    filesProvider.generateFiles()
+  ): File =
+    generate(id, name, icon, vendor, version, description, depends, RandomFilesGenerator(generateFrontend, generateWorkspace))
 
-    return generate(
-      id, name, icon, vendor, version, description, depends,
-      PluginPart(filesProvider.frontendModuleFiles, filesProvider.frontendClasspathFiles, filesProvider.frontendSquashedModuleFiles, listOf()),
-      PluginPart(filesProvider.workspaceModuleFiles, filesProvider.workspaceClasspathFiles, filesProvider.workspaceSquashedModuleFiles, listOf()),
-    )
-  }
+  fun generateWithFileNames(
+    id: String,
+    name: String,
+    vendor: String = "JetBrains",
+    version: String = "1.0.0",
+    description: String? = null,
+    icon: String? = null,
+    depends: Map<String, String> = mapOf(),
+    frontend: PluginPartFileNames? = null,
+    workspace: PluginPartFileNames? = null,
+  ): File =
+    generate(id, name, icon, vendor, version, description, depends, ByNameFilesGenerator(frontend, workspace))
 
-  fun generate(
+
+  private fun generate(
     id: String,
     name: String,
     icon: String? = null,
@@ -39,9 +45,12 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
     version: String = "1.0.0",
     description: String? = null,
     depends: Map<String, String> = mapOf(),
-    frontend: PluginPart? = null,
-    workspace: PluginPart? = null,
+    filesGenerator: FilesGenerator,
   ): File {
+    filesGenerator.generateFiles()
+    val frontend = filesGenerator.frontendFiles
+    val workspace = filesGenerator.workspaceFiles
+
     val fileName = "$id-$version"
     val descriptor = PluginDescriptor(
       id = BundleName(id),
@@ -69,7 +78,10 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
       descriptor.encodeToString(),
       fileName,
       icon,
-      listOfNotNull(frontend?.modulePath, frontend?.classPath, workspace?.modulePath, workspace?.classPath).flatten()
+      listOfNotNull(
+        frontend?.modulePath, frontend?.classPath, frontend?.squashedAutomaticModules?.flatten(),
+        workspace?.modulePath, workspace?.classPath, workspace?.squashedAutomaticModules?.flatten()
+      ).flatten()
     ).toFile()
   }
 
@@ -124,47 +136,85 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
   }
 }
 
-private class FilesGenerator(private val generateFrontend: Boolean, private val generateWorkspace: Boolean) {
-  val workspaceClasspathFiles = mutableListOf<String>()
-  val workspaceModuleFiles = mutableListOf<String>()
-  val workspaceSquashedModuleFiles = mutableSetOf<MutableList<String>>()
-  val frontendClasspathFiles = mutableListOf<String>()
-  val frontendModuleFiles = mutableListOf<String>()
-  val frontendSquashedModuleFiles = mutableSetOf<MutableList<String>>()
+data class PluginPartFileNames(
+  val moduleFileNames: List<String>,
+  val classPathFileNames: List<String>,
+  val autoModulesFileNames: Set<List<String>>,
+)
 
-  fun generateFiles() {
-    val filesNum = 5
-    if (generateFrontend) {
-      frontendModuleFiles.addAll(createFiles(filesNum))
-      frontendClasspathFiles.addAll(createFiles(filesNum))
-      frontendSquashedModuleFiles.add(createFiles(filesNum).toMutableList())
-    }
-    if (generateWorkspace) {
-      workspaceModuleFiles.addAll(createFiles(filesNum))
-      workspaceClasspathFiles.addAll(createFiles(filesNum))
-      workspaceSquashedModuleFiles.add(createFiles(filesNum).toMutableList())
-    }
+data class PluginPartFiles(
+  val modulePath: MutableList<String> = mutableListOf(),
+  val classPath: MutableList<String> = mutableListOf(),
+  val squashedAutomaticModules: MutableSet<MutableList<String>> = mutableSetOf(),
+)
+
+private abstract class FilesGenerator {
+  var workspaceFiles: PluginPartFiles? = null
+  var frontendFiles: PluginPartFiles? = null
+
+  abstract fun generateFiles();
+}
+
+private class ByNameFilesGenerator(
+  private val frontend: PluginPartFileNames? = null,
+  private val workspace: PluginPartFileNames? = null
+) : FilesGenerator() {
+
+  override fun generateFiles() {
+    frontendFiles = frontend?.let { createPartFiles(it) }
+    workspaceFiles = workspace?.let { createPartFiles(it) }
   }
 
-  private fun createFiles(number: Int): List<String> {
+  private fun createPartFiles(fileNames: PluginPartFileNames): PluginPartFiles =
+    PluginPartFiles(
+      createFiles(fileNames.moduleFileNames),
+      createFiles(fileNames.classPathFileNames),
+      fileNames.autoModulesFileNames.map { createFiles(it).toMutableList() }.toMutableSet()
+    )
+
+  private fun createFiles(names: List<String>): MutableList<String> {
+    return names.map {
+      val tmpDir = Files.createTempDirectory("testPluginData")
+      val file = Files.createFile(tmpDir.resolve(it))
+      Files.writeString(file, "File #$it")
+      return@map file.toString()
+    }.toMutableList()
+  }
+}
+
+private class RandomFilesGenerator(
+  private val generateFrontend: Boolean,
+  private val generateWorkspace: Boolean
+) : FilesGenerator() {
+  override fun generateFiles() {
+    val filesNum = 5
+    if (generateFrontend) frontendFiles = createPartFiles(filesNum)
+    if (generateWorkspace) workspaceFiles = createPartFiles(filesNum)
+  }
+
+  private fun createPartFiles(filesNum: Int): PluginPartFiles =
+    PluginPartFiles(
+      createFiles(filesNum),
+      createFiles(filesNum),
+      mutableSetOf(createFiles(filesNum))
+    )
+
+  private fun createFiles(number: Int): MutableList<String> {
     return (0 until number).map {
       val file = Files.createTempFile("file$it-", ".txt")
       Files.writeString(file, "File #$it")
       return@map file.toString()
-    }.toList()
+    }.toMutableList()
   }
 }
 
-data class PluginPart(
-  //strings in modules and classpath in a form of filepath/filename-1.0.0+alpha#SHA.ext todo deserialize to Coordinate
-  val modulePath: List<String>,
-  val classPath: List<String>,
-  val squashedAutomaticModules: Set<List<String>>,
-  val modules: List<String>,
-)
-
 fun main() {
-  //FleetPluginGenerator("~/test").generate("test.plugin.first", "First Test", frontend = PluginPart(listOf("~/module.jar"), listOf("~/classpath.jar"), listOf()))
-  FleetPluginGenerator("~/test").generateWithRandomFiles("test.plugin.second", "Second Test", generateFrontend = true)
+  //FleetPluginGenerator("test").generate("test.plugin.first", "First Test", frontend = PluginPart(listOf("~/module.jar"), listOf("~/classpath.jar"), listOf()))
+  FleetPluginGenerator("test").generateWithRandomFiles("test.plugin.second", "Second Test", generateFrontend = true)
+  FleetPluginGenerator("test").generateWithFileNames(
+    "test.plugin.third", "Third Test",
+    frontend = PluginPartFileNames(listOf("f-module1.txt"), listOf("f-cp1.txt"), setOf(listOf("f-sq_m1.txt"))),
+    workspace = PluginPartFileNames(listOf("w-module1.txt"), listOf("w-cp1.txt"), setOf(listOf("w-sq_m1.txt"))),
+  )
 }
 
