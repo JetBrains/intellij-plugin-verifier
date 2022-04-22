@@ -121,7 +121,11 @@ data class PluginPartFileNames(
   val moduleFileNames: List<String>,
   val classPathFileNames: List<String>,
   val autoModulesFileNames: Set<List<String>>,
-)
+){
+  fun getNames(): Set<String> {
+    return (classPathFileNames + moduleFileNames + autoModulesFileNames.flatten()).toSet()
+  }
+}
 
 data class PluginPartFiles(
   val modulePath: MutableList<String> = mutableListOf(),
