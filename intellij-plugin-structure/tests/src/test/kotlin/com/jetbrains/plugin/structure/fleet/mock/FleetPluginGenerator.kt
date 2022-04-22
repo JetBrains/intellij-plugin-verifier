@@ -8,43 +8,40 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
+import kotlin.io.path.createDirectories
 
-class FleetPluginGenerator(private val path: String = "/tmp") {
-  fun generateWithRandomFiles(
+class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
+  fun generate(
     id: String,
     name: String,
+    icon: String? = null,
     vendor: String = "JetBrains",
     version: String = "1.0.0",
     description: String? = null,
-    icon: String? = null,
-    depends: Map<String, String> = mapOf(),
-    generateFrontend: Boolean = false,
-    generateWorkspace: Boolean = false,
-  ): File =
-    generate(id, name, icon, vendor, version, description, depends, RandomFilesGenerator(generateFrontend, generateWorkspace))
-
-  fun generateWithFileNames(
-    id: String,
-    name: String,
-    vendor: String = "JetBrains",
-    version: String = "1.0.0",
-    description: String? = null,
-    icon: String? = null,
     depends: Map<String, String> = mapOf(),
     frontend: PluginPartFileNames? = null,
     workspace: PluginPartFileNames? = null,
   ): File =
-    generate(id, name, icon, vendor, version, description, depends, ByNameFilesGenerator(frontend, workspace))
+    generate(
+      id = id,
+      name = name,
+      icon = icon,
+      vendor = vendor,
+      version = version,
+      description = description,
+      depends = depends,
+      filesGenerator = ByNameFilesGenerator(frontend, workspace)
+    )
 
 
   private fun generate(
     id: String,
     name: String,
-    icon: String? = null,
-    vendor: String = "JetBrains",
-    version: String = "1.0.0",
-    description: String? = null,
-    depends: Map<String, String> = mapOf(),
+    icon: String?,
+    vendor: String,
+    version: String,
+    description: String?,
+    depends: Map<String, String>,
     filesGenerator: FilesGenerator,
   ): File {
     filesGenerator.generateFiles()
@@ -75,10 +72,10 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
       }
     )
     return build(
-      descriptor.encodeToString(),
-      fileName,
-      icon,
-      listOfNotNull(
+      text = descriptor.encodeToString(),
+      fileName = fileName,
+      icon = icon,
+      files = listOfNotNull(
         frontend?.modulePath, frontend?.classPath, frontend?.squashedAutomaticModules?.flatten(),
         workspace?.modulePath, workspace?.classPath, workspace?.squashedAutomaticModules?.flatten()
       ).flatten()
@@ -86,11 +83,10 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
   }
 
   private fun substitute(modules: List<String>): Set<Barrel.Coordinates> {
-    val digest = MessageDigest.getInstance("SHA-1")
     return modules.map {
       val file = Paths.get(it)
       val fileName = file.fileName.toString()
-      val hash = digest.sha(file.toFile())
+      val hash = hash(file.toFile())
       return@map Barrel.Coordinates.Relative(fileName, hash)
     }.toSet()
   }
@@ -102,8 +98,10 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
     files: List<String>
   ): Path {
     val existing = mutableMapOf<String, Path>()
-    val path = Paths.get(path, "$fileName.zip")
-    Files.createDirectories(path.parent)
+    val path = Paths.get(pluginsPath, "$fileName.zip")
+    if (!Files.exists(path.parent)){
+      path.parent.createDirectories()
+    }
     return buildZipFile(path) {
       files.forEach {
         val p = Paths.get(it)
@@ -115,23 +113,6 @@ class FleetPluginGenerator(private val path: String = "/tmp") {
       if (icon != null) {
         file("pluginIcon.svg", icon)
       }
-    }
-  }
-
-  private fun MessageDigest.sha(file: File): String {
-    val buffer = ByteArray(1 * 1024 * 1024)
-    reset()
-    file.inputStream().buffered().use {
-      while (true) {
-        val read = it.read(buffer)
-        if (read <= 0) break
-        update(buffer, 0, read)
-      }
-    }
-
-    val shaBytes = digest()
-    return buildString {
-      shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
     }
   }
 }
@@ -182,39 +163,28 @@ private class ByNameFilesGenerator(
   }
 }
 
-private class RandomFilesGenerator(
-  private val generateFrontend: Boolean,
-  private val generateWorkspace: Boolean
-) : FilesGenerator() {
-  override fun generateFiles() {
-    val filesNum = 5
-    if (generateFrontend) frontendFiles = createPartFiles(filesNum)
-    if (generateWorkspace) workspaceFiles = createPartFiles(filesNum)
+private val digestToClone = MessageDigest.getInstance("SHA-1")
+private fun hash(file: File): String {
+  val digest  = digestToClone.clone() as MessageDigest
+  val buffer = ByteArray(1 * 1024 * 1024)
+  digest.reset()
+  file.inputStream().buffered().use {
+    while (true) {
+      val read = it.read(buffer)
+      if (read <= 0) break
+      digest.update(buffer, 0, read)
+    }
   }
-
-  private fun createPartFiles(filesNum: Int): PluginPartFiles =
-    PluginPartFiles(
-      createFiles(filesNum),
-      createFiles(filesNum),
-      mutableSetOf(createFiles(filesNum))
-    )
-
-  private fun createFiles(number: Int): MutableList<String> {
-    return (0 until number).map {
-      val file = Files.createTempFile("file$it-", ".txt")
-      Files.writeString(file, "File #$it")
-      return@map file.toString()
-    }.toMutableList()
+  val shaBytes = digest.digest()
+  return buildString {
+    shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
   }
 }
 
 fun main() {
-  //FleetPluginGenerator("test").generate("test.plugin.first", "First Test", frontend = PluginPart(listOf("~/module.jar"), listOf("~/classpath.jar"), listOf()))
-  FleetPluginGenerator("test").generateWithRandomFiles("test.plugin.second", "Second Test", generateFrontend = true)
-  FleetPluginGenerator("test").generateWithFileNames(
+  FleetPluginGenerator().generate(
     "test.plugin.third", "Third Test",
     frontend = PluginPartFileNames(listOf("f-module1.txt"), listOf("f-cp1.txt"), setOf(listOf("f-sq_m1.txt"))),
     workspace = PluginPartFileNames(listOf("w-module1.txt"), listOf("w-cp1.txt"), setOf(listOf("w-sq_m1.txt"))),
   )
 }
-
