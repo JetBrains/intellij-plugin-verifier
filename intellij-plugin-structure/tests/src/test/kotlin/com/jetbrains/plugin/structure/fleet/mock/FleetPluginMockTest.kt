@@ -16,11 +16,11 @@ import java.nio.file.Path
 
 class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<FleetPlugin, FleetPluginManager>(fileSystemType) {
 
-  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory, true)
+  override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
 
   @Test
   fun `parse base fields fleet plugin test`() {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+    buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
       }

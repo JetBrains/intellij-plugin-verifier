@@ -11,16 +11,18 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
-import fleet.bundles.Barrel
 import fleet.bundles.PluginDescriptor
 import fleet.bundles.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.MessageDigest
+import kotlin.streams.toList
 
-class FleetPluginManager private constructor(private val extractDirectory: Path, val mockFilesContent: Boolean) : PluginManager<FleetPlugin> {
+class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "extension.json"
 
@@ -28,10 +30,9 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
 
     fun createManager(
       extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get()),
-      mockFilesContent: Boolean = false
     ): FleetPluginManager {
       extractDirectory.createDir()
-      return FleetPluginManager(extractDirectory, mockFilesContent)
+      return FleetPluginManager(extractDirectory)
     }
   }
 
@@ -93,8 +94,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
         return PluginCreationFail(beanValidationResult)
       }
       val plugin = with(descriptor) {
-        val frFiles = descriptor.frontend?.parse(pluginDir, fileChecker) ?: listOf()
-        val wsFiles = descriptor.workspace?.parse(pluginDir, fileChecker) ?: listOf()
+        val files = descriptor.getFiles(pluginDir, fileChecker) ?: listOf()
         FleetPlugin(
           pluginId = id.name,
           pluginVersion = version.version.value,
@@ -103,7 +103,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
           icons = icons,
           vendor = vendor,
           descriptorContent = serializedDescriptor,
-          files = frFiles + wsFiles
+          files = files
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
@@ -114,34 +114,39 @@ class FleetPluginManager private constructor(private val extractDirectory: Path,
     }
   }
 
-  private fun Barrel.parse(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
-    // format: "path_in_zip/filename-1.1.1.ext#hash12345"
-    fun Collection<Barrel.Coordinates>.parse(pluginDir: Path): List<PluginFile> {
-      val files = mutableListOf<PluginFile>()
-      for (coord in this) {
-        val relCoord = coord as? Barrel.Coordinates.Relative
-        if (relCoord == null) {
-          LOG.error("Only relative coordinates are expected in plugin distribution: skipping $coord")
-          continue
-        }
-
-        val sha = relCoord.hash
-        val filePath = relCoord.relPath
+  private fun PluginDescriptor.getFiles(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
+    //todo [MM]: extract files from descriptor or filter them by layout
+    return Files.walk(pluginDir).use { pathStream ->
+      pathStream.filter { !it.isDirectory }.map {
+        val filePath = it.fileName.toString()
         val filename = filePath.substringAfterLast("/")
-        if (mockFilesContent) {
-          files.add(PluginFile(filename, sha, ByteArray(0)))
-        } else {
-          if (fileChecker.addFile(pluginDir, filePath)) {
-            val file = pluginDir.resolve(filePath)
-            val content = Files.readAllBytes(file)
-            files.add(PluginFile(filename, sha, content))
-          }
-        }
-      }
-      return files
+        if (fileChecker.addFile(pluginDir, filePath)) {
+          val file = pluginDir.resolve(filePath)
+          val content = Files.readAllBytes(file)
+          val sha = hash(content.inputStream())
+          PluginFile(filename, sha, content)
+        } else null
+      }.toList().filterNotNull()
     }
+  }
+}
 
-    return modulePath.parse(pluginDir) + classPath.parse(pluginDir) + squashedAutomaticModules.flatMap { it.parse(pluginDir) }
+private val digestToClone = MessageDigest.getInstance("SHA-1")
+
+fun hash(s: InputStream): String {
+  val digest = digestToClone.clone() as MessageDigest
+  val buffer = ByteArray(1 * 1024 * 1024)
+  digest.reset()
+  s.buffered().use {
+    while (true) {
+      val read = it.read(buffer)
+      if (read <= 0) break
+      digest.update(buffer, 0, read)
+    }
+  }
+  val shaBytes = digest.digest()
+  return buildString {
+    shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
   }
 }
 
