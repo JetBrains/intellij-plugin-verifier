@@ -17,7 +17,7 @@ data class FleetPlugin(
   override val description: String? = null,
   override val vendor: String? = null,
 
-  val descriptorContent: String,
+  val descriptorFileName: String,
   val files: List<PluginFile>
 ) : Plugin {
   override val changeNotes: String? = null

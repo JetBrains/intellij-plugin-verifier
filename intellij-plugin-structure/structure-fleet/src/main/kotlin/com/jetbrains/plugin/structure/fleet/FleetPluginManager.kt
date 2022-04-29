@@ -102,7 +102,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
           description = description,
           icons = icons,
           vendor = vendor,
-          descriptorContent = serializedDescriptor,
+          descriptorFileName = DESCRIPTOR_NAME,
           files = files
         )
       }
