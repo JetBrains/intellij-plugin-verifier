@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
+import com.jetbrains.plugin.structure.fleet.hash
 import fleet.bundles.*
 import java.io.File
 import java.nio.file.Files
@@ -9,6 +10,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
 import kotlin.io.path.createDirectories
+import kotlin.io.path.inputStream
 
 class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
   fun generate(
@@ -86,7 +88,7 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
     return modules.map {
       val file = Paths.get(it)
       val fileName = file.fileName.toString()
-      val hash = hash(file.toFile())
+      val hash = file.inputStream().use (::hash)
       return@map Barrel.Coordinates.Relative(fileName, hash)
     }.toSet()
   }
@@ -167,28 +169,3 @@ private class ByNameFilesGenerator(
   }
 }
 
-private val digestToClone = MessageDigest.getInstance("SHA-1")
-private fun hash(file: File): String {
-  val digest  = digestToClone.clone() as MessageDigest
-  val buffer = ByteArray(1 * 1024 * 1024)
-  digest.reset()
-  file.inputStream().buffered().use {
-    while (true) {
-      val read = it.read(buffer)
-      if (read <= 0) break
-      digest.update(buffer, 0, read)
-    }
-  }
-  val shaBytes = digest.digest()
-  return buildString {
-    shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
-  }
-}
-
-fun main() {
-  FleetPluginGenerator().generate(
-    "test.plugin.third", "Third Test",
-    frontend = PluginPartFileNames(listOf("f-module1.txt"), listOf("f-cp1.txt"), setOf(listOf("f-sq_m1.txt"))),
-    workspace = PluginPartFileNames(listOf("w-module1.txt"), listOf("w-cp1.txt"), setOf(listOf("w-sq_m1.txt"))),
-  )
-}
