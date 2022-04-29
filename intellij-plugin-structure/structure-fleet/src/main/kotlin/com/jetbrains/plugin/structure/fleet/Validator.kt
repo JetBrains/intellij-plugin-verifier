@@ -34,20 +34,20 @@ fun validateFleetPluginBean(descriptor: PluginDescriptor): MutableList<PluginPro
   }
   val allFiles = descriptor.frontend.collectPaths() + descriptor.workspace.collectPaths()
   for (coord in allFiles) {
-    if (coord !is Barrel.Coordinates.Relative) {
-      problems.add(NonRelativeCoordinate(coord))
+    if (coord !is Barrel.Coordinates.Remote) {
+      problems.add(NonRemoteCoordinate(coord))
     }
   }
   return problems
 }
 
-class NonRelativeCoordinate(
+class NonRemoteCoordinate(
   private val file: Barrel.Coordinates,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
   override val detailedMessage: String
-    get() = "Only relative coordinates are allowed in plugin distribution: $file"
+    get() = "Only remote coordinates are allowed in plugin distribution: $file"
 
   override val level
     get() = Level.ERROR

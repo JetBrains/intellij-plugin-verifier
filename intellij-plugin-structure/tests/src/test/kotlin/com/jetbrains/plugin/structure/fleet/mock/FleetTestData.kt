@@ -14,8 +14,8 @@ val perfectFleetPluginBuilder
     vendor = "JetBrains",
     deps = mapOf(),
     frontend = Barrel(
-      setOf(Barrel.Coordinates.Relative("f-1.1.1.jar", "123")),
-      setOf(Barrel.Coordinates.Relative("f-cp.jar", "abc")),
+      setOf(Barrel.Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-1.1.1.jar", "123")),
+      setOf(Barrel.Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-cp.jar", "abc")),
       setOf(),
       setOf("f")
     ),

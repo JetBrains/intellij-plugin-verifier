@@ -8,9 +8,9 @@
     "fleet.language.xml": "1.0.0"
   },
   "frontend": {
-    "modulePath": ["/frontend-module.jar#sha1234"],
-    "classPath": ["/frontend-classpath.jar#sha2345"],
-    "squashedAutomaticModules": [["/frontend-classpath.jar#sha2345"]],
+    "modulePath": ["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-module.jar#sha1234"],
+    "classPath": ["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar#sha2345"],
+    "squashedAutomaticModules": [["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar#sha2345"]],
     "modules": ["frontend-module"]
   }
 }
