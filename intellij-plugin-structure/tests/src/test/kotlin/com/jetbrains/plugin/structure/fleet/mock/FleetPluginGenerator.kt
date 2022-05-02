@@ -8,7 +8,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
 import kotlin.io.path.createDirectories
 import kotlin.io.path.inputStream
 
@@ -51,25 +50,26 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
     val workspace = filesGenerator.workspaceFiles
 
     val fileName = "$id-$version"
+    val bundleId = BundleId(BundleName(id), BundleVersion(version))
     val descriptor = PluginDescriptor(
-      id = BundleName(id),
+      id = bundleId.name,
       readableName = name,
       vendor = vendor,
-      version = BundleVersion(version),
+      version = bundleId.version,
       description = description,
       deps = depends.map { (k, v) -> Pair(BundleName(k), VersionRequirement.CompatibleWith(BundleVersion(v))) }.toMap(),
       frontend = frontend?.let {
         Barrel(
-          modulePath = substitute(frontend.modulePath),
-          classPath = substitute(frontend.classPath),
-          squashedAutomaticModules = frontend.squashedAutomaticModules.map { substitute(it).toList() }.toSet()
+          modulePath = substitute(bundleId, frontend.modulePath),
+          classPath = substitute(bundleId, frontend.classPath),
+          squashedAutomaticModules = frontend.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
         )
       },
       workspace = workspace?.let {
         Barrel(
-          modulePath = substitute(workspace.modulePath),
-          classPath = substitute(workspace.classPath),
-          squashedAutomaticModules = workspace.squashedAutomaticModules.map { substitute(it).toList() }.toSet()
+          modulePath = substitute(bundleId, workspace.modulePath),
+          classPath = substitute(bundleId, workspace.classPath),
+          squashedAutomaticModules = workspace.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
         )
       }
     )
@@ -84,12 +84,13 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
     ).toFile()
   }
 
-  private fun substitute(modules: List<String>): Set<Barrel.Coordinates> {
+  private fun substitute(bundleId: BundleId, modules: List<String>): Set<Barrel.Coordinates> {
     return modules.map {
       val file = Paths.get(it)
       val fileName = file.fileName.toString()
       val hash = file.inputStream().use (::hash)
-      return@map Barrel.Coordinates.Relative(fileName, hash)
+      val fileUrl = "https://plugins.jetbrains.com/files/fleet/${bundleId.name.name}/${bundleId.version.version.value}/modules/$fileName"
+      return@map Barrel.Coordinates.Remote(fileUrl, hash)
     }.toSet()
   }
 
