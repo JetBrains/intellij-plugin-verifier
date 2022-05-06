@@ -17,7 +17,8 @@ enum class VerificationResultTypeDto {
   WARNINGS,
   PROBLEMS,
   INVALID_PLUGIN,
-  NON_DOWNLOADABLE;
+  NON_DOWNLOADABLE,
+  UNCHANGED;
 }
 
 data class FullVerificationResultDto(
