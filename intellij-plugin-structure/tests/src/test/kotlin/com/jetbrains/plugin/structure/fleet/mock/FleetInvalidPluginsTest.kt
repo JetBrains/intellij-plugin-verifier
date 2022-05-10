@@ -6,11 +6,12 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import fleet.bundles.PluginDescriptor
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import fleet.bundles.BundleSpec
+import fleet.bundles.KnownMeta
 import fleet.bundles.encodeToString
 import org.junit.Test
 import java.nio.file.Path
@@ -32,9 +33,9 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `name is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("name")) { copy(readableName = null )}
-    checkInvalidPlugin(PropertyNotSpecified("name")) { copy(readableName = "" )}
-    checkInvalidPlugin(PropertyNotSpecified("name")) { copy(readableName = "\n" )}
+    checkInvalidPlugin(PropertyNotSpecified("name")) { withMeta(KnownMeta.ReadableName, null) }
+    checkInvalidPlugin(PropertyNotSpecified("name")) { withMeta(KnownMeta.ReadableName, "") }
+    checkInvalidPlugin(PropertyNotSpecified("name")) { withMeta(KnownMeta.ReadableName, "\n") }
     checkInvalidPlugin(
       TooLongPropertyValue(
         FleetPluginManager.DESCRIPTOR_NAME,
@@ -42,7 +43,7 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
         65,
         64
       )
-    ) { copy(readableName = "a".repeat(65) )}
+    ) { withMeta(KnownMeta.ReadableName, "a".repeat(65)) }
   }
 
 /*
@@ -59,19 +60,19 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `vendor is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { copy(vendor = null )}
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { copy(vendor = "" )}
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { copy(vendor = "\n" )}
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { withMeta(KnownMeta.Vendor, null) }
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { withMeta(KnownMeta.Vendor, "") }
+    checkInvalidPlugin(PropertyNotSpecified("vendor")) { withMeta(KnownMeta.Vendor, "\n") }
   }
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("description")) { copy(description = null) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { copy(description = "" )}
-    checkInvalidPlugin(PropertyNotSpecified("description")) { copy(description = "\n" )}
+    checkInvalidPlugin(PropertyNotSpecified("description")) { withMeta(KnownMeta.Description, null) }
+    checkInvalidPlugin(PropertyNotSpecified("description")) { withMeta(KnownMeta.Description, "") }
+    checkInvalidPlugin(PropertyNotSpecified("description")) { withMeta(KnownMeta.Description, "\n") }
   }
 
-  private fun checkInvalidPlugin(problem: PluginProblem, descriptorUpdater: PluginDescriptor.() -> PluginDescriptor) {
+  private fun checkInvalidPlugin(problem: PluginProblem, descriptorUpdater: BundleSpec.() -> BundleSpec) {
     val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         val builder = perfectFleetPluginBuilder.descriptorUpdater()
@@ -80,4 +81,15 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     }
     assertProblematicPlugin(pluginFile, listOf(problem))
   }
+
+  private fun BundleSpec.withMeta(key: String, value: String?): BundleSpec =
+    copy(
+      bundle = bundle.copy(
+        meta = if (value == null) {
+          bundle.meta.filterKeys { it != key }
+        } else {
+          bundle.meta + mapOf(key to value)
+        }
+      )
+    )
 }

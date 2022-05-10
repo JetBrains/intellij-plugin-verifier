@@ -12,7 +12,7 @@ dependencies {
   testImplementation project(":structure-edu")
   testImplementation 'junit:junit:4.13.2'
   testImplementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5"
-  testImplementation "com.jetbrains.fleet.bundles:bundles:1.4.54"
+  testImplementation "com.jetbrains.fleet.bundles:bundles:1.4.835"
   testImplementation "com.google.jimfs:jimfs:1.2"
   testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
 }

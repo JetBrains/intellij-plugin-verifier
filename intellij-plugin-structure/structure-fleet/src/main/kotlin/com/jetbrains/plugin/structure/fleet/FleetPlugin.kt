@@ -6,8 +6,6 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import fleet.bundles.*
-
 
 data class FleetPlugin(
   override val pluginId: String,
@@ -26,8 +24,7 @@ data class FleetPlugin(
   override val url: String? = null
 }
 
-
-data class PluginFile(val name: String, val sha: String, val content: ByteArray) {
+data class PluginFile(val name: String, val content: ByteArray) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -35,7 +32,6 @@ data class PluginFile(val name: String, val sha: String, val content: ByteArray)
     other as PluginFile
 
     if (name != other.name) return false
-    if (sha != other.sha) return false
     if (!content.contentEquals(other.content)) return false
 
     return true
@@ -43,7 +39,6 @@ data class PluginFile(val name: String, val sha: String, val content: ByteArray)
 
   override fun hashCode(): Int {
     var result = name.hashCode()
-    result = 31 * result + sha.hashCode()
     result = 31 * result + content.contentHashCode()
     return result
   }
