@@ -1,4 +1,4 @@
 dependencies {
   implementation project(':structure-base')
-  implementation "com.jetbrains.fleet.bundles:bundles:1.4.54"
+  implementation "com.jetbrains.fleet.bundles:bundles:1.4.835"
 }

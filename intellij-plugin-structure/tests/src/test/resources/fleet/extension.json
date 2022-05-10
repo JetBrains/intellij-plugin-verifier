@@ -1,16 +1,39 @@
 {
+  "formatVersion": 0,
   "id": "fleet.language.css",
   "version": "1.0.0-SNAPSHOT",
-  "name": "CSS",
-  "description": "CSS language support",
-  "vendor": "JetBrains",
-  "depends": {
+  "meta": {
+    "readableName": "CSS",
+    "description": "CSS language support",
+    "vendor": "JetBrains"
+  },
+  "dependencies": {
     "fleet.language.xml": "1.0.0"
   },
-  "frontend": {
-    "modulePath": ["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-module.jar#sha1234"],
-    "classPath": ["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar#sha2345"],
-    "squashedAutomaticModules": [["https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar#sha2345"]],
-    "modules": ["frontend-module"]
+  "parts": {
+    "frontend": {
+      "modulePath": [
+        {
+          "type": "Remote",
+          "url": "https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-module.jar",
+          "hash": "sha1234"
+        }
+      ],
+      "classPath": [
+        {
+          "type": "Remote",
+          "url": "https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar",
+          "hash": "sha2345"
+        }
+      ],
+      "squashedAutomaticModules": [[
+        {
+          "type": "Remote",
+          "url": "https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/frontend-classpath.jar",
+          "hash": "sha2345"
+        }
+      ]],
+      "modules": ["frontend-module"]
+    }
   }
 }

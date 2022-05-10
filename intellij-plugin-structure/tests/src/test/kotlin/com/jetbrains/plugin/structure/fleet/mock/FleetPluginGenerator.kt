@@ -2,12 +2,13 @@ package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.hash
 import fleet.bundles.*
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.security.MessageDigest
 import kotlin.io.path.createDirectories
 import kotlin.io.path.inputStream
 
@@ -51,27 +52,34 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
 
     val fileName = "$id-$version"
     val bundleId = BundleId(BundleName(id), BundleVersion(version))
-    val descriptor = PluginDescriptor(
-      id = bundleId.name,
-      readableName = name,
-      vendor = vendor,
-      version = bundleId.version,
-      description = description,
-      deps = depends.map { (k, v) -> Pair(BundleName(k), VersionRequirement.CompatibleWith(BundleVersion(v))) }.toMap(),
-      frontend = frontend?.let {
-        Barrel(
-          modulePath = substitute(bundleId, frontend.modulePath),
-          classPath = substitute(bundleId, frontend.classPath),
-          squashedAutomaticModules = frontend.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
-        )
-      },
-      workspace = workspace?.let {
-        Barrel(
-          modulePath = substitute(bundleId, workspace.modulePath),
-          classPath = substitute(bundleId, workspace.classPath),
-          squashedAutomaticModules = workspace.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
-        )
-      }
+    val descriptor = BundleSpec(
+      BundleId(bundleId.name, bundleId.version),
+      Bundle(
+        meta = listOfNotNull(
+          KnownMeta.ReadableName to name,
+          description?.let { KnownMeta.Description to it },
+          KnownMeta.Vendor to vendor
+        ).toMap(),
+        deps = depends.map { (k, v) -> Bundle.Dependency(BundleName(k), VersionRequirement.CompatibleWith(BundleVersion(v))) }.toSet(),
+        barrels = listOfNotNull(
+          frontend?.let {
+            BarrelSelector.Frontend to
+              Barrel(
+                modulePath = substitute(bundleId, frontend.modulePath),
+                classPath = substitute(bundleId, frontend.classPath),
+                squashedAutomaticModules = frontend.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
+              )
+          },
+          workspace?.let {
+            BarrelSelector.Workspace to
+              Barrel(
+                modulePath = substitute(bundleId, workspace.modulePath),
+                classPath = substitute(bundleId, workspace.classPath),
+                squashedAutomaticModules = workspace.squashedAutomaticModules.map { substitute(bundleId, it).toList() }.toSet()
+              )
+          }
+        ).toMap()
+      )
     )
     return build(
       text = descriptor.encodeToString(),
@@ -84,13 +92,13 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
     ).toFile()
   }
 
-  private fun substitute(bundleId: BundleId, modules: List<String>): Set<Barrel.Coordinates> {
+  private fun substitute(bundleId: BundleId, modules: List<String>): Set<Coordinates> {
     return modules.map {
       val file = Paths.get(it)
       val fileName = file.fileName.toString()
-      val hash = file.inputStream().use (::hash)
+      val hash = file.inputStream().use(::hash)
       val fileUrl = "https://plugins.jetbrains.com/files/fleet/${bundleId.name.name}/${bundleId.version.version.value}/modules/$fileName"
-      return@map Barrel.Coordinates.Remote(fileUrl, hash)
+      return@map Coordinates.Remote(fileUrl, hash)
     }.toSet()
   }
 
@@ -102,7 +110,7 @@ class FleetPluginGenerator(val pluginsPath: String = "/tmp") {
   ): Path {
     val existing = mutableMapOf<String, Path>()
     val path = Paths.get(pluginsPath, "$fileName.zip")
-    if (!Files.exists(path.parent)){
+    if (!Files.exists(path.parent)) {
       path.parent.createDirectories()
     }
     return buildZipFile(path) {
@@ -124,7 +132,7 @@ data class PluginPartFileNames(
   val moduleFileNames: List<String>,
   val classPathFileNames: List<String>,
   val autoModulesFileNames: Set<List<String>>,
-){
+) {
   fun getNames(): Set<String> {
     return (classPathFileNames + moduleFileNames + autoModulesFileNames.flatten()).toSet()
   }
@@ -169,4 +177,24 @@ private class ByNameFilesGenerator(
     }.toMutableList()
   }
 }
+
+private val digestToClone = MessageDigest.getInstance(Coordinates.Remote.HASH_ALGORITHM)
+
+private fun hash(s: InputStream): String {
+  val digest = digestToClone.clone() as MessageDigest
+  val buffer = ByteArray(1 * 1024 * 1024)
+  digest.reset()
+  s.buffered().use {
+    while (true) {
+      val read = it.read(buffer)
+      if (read <= 0) break
+      digest.update(buffer, 0, read)
+    }
+  }
+  val shaBytes = digest.digest()
+  return buildString {
+    shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
+  }
+}
+
 

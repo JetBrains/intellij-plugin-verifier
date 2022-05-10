@@ -8,33 +8,35 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager.Companion.DESCRIPTOR_NAME
 import fleet.bundles.Barrel
-import fleet.bundles.PluginDescriptor
+import fleet.bundles.BundleSpec
+import fleet.bundles.Coordinates
+import fleet.bundles.KnownMeta
 
 val NON_ID_SYMBOL_REGEX = "^[A-Za-z0-9_.]+$".toRegex()
 
-fun validateFleetPluginBean(descriptor: PluginDescriptor): MutableList<PluginProblem> {
+fun validateFleetPluginBean(bundleSpec: BundleSpec): MutableList<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  val readableName = descriptor.readableName
+  val readableName = bundleSpec.readableName
   if (readableName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   } else {
     validatePropertyLength(DESCRIPTOR_NAME, "name", readableName, MAX_NAME_LENGTH, problems)
   }
-  if (!NON_ID_SYMBOL_REGEX.matches(descriptor.id.name)) {
-    problems.add(InvalidPluginIDProblem(descriptor.id.name))
+  if (!NON_ID_SYMBOL_REGEX.matches(bundleSpec.bundleId.name.name)) {
+    problems.add(InvalidPluginIDProblem(bundleSpec.bundleId.name.name))
   }
-  if (descriptor.description.isNullOrBlank()) {
+  if (bundleSpec.description.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("description"))
   }
-  if (descriptor.vendor.isNullOrBlank()) {
+  if (bundleSpec.vendor.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor"))
   }
-  if (descriptor.frontend == null && descriptor.workspace == null) {
+  if (bundleSpec.bundle.barrels.isNullOrEmpty()) {
     problems.add(PropertyNotSpecified("parts"))
   }
-  val allFiles = descriptor.frontend.collectPaths() + descriptor.workspace.collectPaths()
+  val allFiles = bundleSpec.bundle.barrels.values.flatMap(Barrel::collectPaths)
   for (coord in allFiles) {
-    if (coord !is Barrel.Coordinates.Remote) {
+    if (coord !is Coordinates.Remote) {
       problems.add(NonRemoteCoordinate(coord))
     }
   }
@@ -42,7 +44,7 @@ fun validateFleetPluginBean(descriptor: PluginDescriptor): MutableList<PluginPro
 }
 
 class NonRemoteCoordinate(
-  private val file: Barrel.Coordinates,
+  private val file: Coordinates,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
@@ -53,5 +55,11 @@ class NonRemoteCoordinate(
     get() = Level.ERROR
 }
 
-fun Barrel?.collectPaths(): Collection<Barrel.Coordinates> =
+fun Barrel?.collectPaths(): Collection<Coordinates> =
   if (this == null) emptyList() else (classPath + modulePath + squashedAutomaticModules.flatten())
+
+val BundleSpec.readableName: String? get() = bundle.meta[KnownMeta.ReadableName]
+
+val BundleSpec.description: String? get() = bundle.meta[KnownMeta.Description]
+
+val BundleSpec.vendor: String? get() = bundle.meta[KnownMeta.Vendor]

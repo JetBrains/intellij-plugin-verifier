@@ -11,15 +11,13 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
-import fleet.bundles.PluginDescriptor
+import fleet.bundles.BundleSpec
 import fleet.bundles.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
 import kotlin.streams.toList
 
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
@@ -84,20 +82,20 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun createPlugin(serializedDescriptor: String, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
     try {
-      val descriptor = PluginDescriptor.decodeFromString(serializedDescriptor)
-      val beanValidationResult = validateFleetPluginBean(descriptor)
+      val bundleSpec = BundleSpec.decodeFromString(serializedDescriptor)
+      val beanValidationResult = validateFleetPluginBean(bundleSpec)
 
-      val fileChecker = FileChecker(descriptor.id.name)
+      val fileChecker = FileChecker(bundleSpec.bundleId.name.name)
       beanValidationResult.addAll(fileChecker.problems)
 
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      val plugin = with(descriptor) {
-        val files = descriptor.getFiles(pluginDir, fileChecker) ?: listOf()
+      val plugin = with(bundleSpec) {
+        val files = bundleSpec.getFiles(pluginDir, fileChecker)
         FleetPlugin(
-          pluginId = id.name,
-          pluginVersion = version.version.value,
+          pluginId = bundleId.name.name,
+          pluginVersion = bundleId.version.version.value,
           pluginName = readableName,
           description = description,
           icons = icons,
@@ -114,40 +112,20 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     }
   }
 
-  private fun PluginDescriptor.getFiles(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
+  private fun BundleSpec.getFiles(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
     //todo [MM]: extract files from descriptor or filter them by layout
     return Files.walk(pluginDir).use { pathStream ->
       pathStream.filter { !it.isDirectory }.map {
         val filePath = it.fileName.toString()
         val filename = filePath.substringAfterLast("/")
+
         if (fileChecker.addFile(pluginDir, filePath)) {
           val file = pluginDir.resolve(filePath)
           val content = Files.readAllBytes(file)
-          val sha = hash(content.inputStream())
-          PluginFile(filename, sha, content)
+          PluginFile(filename, content)
         } else null
       }.toList().filterNotNull()
     }
   }
 }
-
-private val digestToClone = MessageDigest.getInstance("SHA-1")
-
-fun hash(s: InputStream): String {
-  val digest = digestToClone.clone() as MessageDigest
-  val buffer = ByteArray(1 * 1024 * 1024)
-  digest.reset()
-  s.buffered().use {
-    while (true) {
-      val read = it.read(buffer)
-      if (read <= 0) break
-      digest.update(buffer, 0, read)
-    }
-  }
-  val shaBytes = digest.digest()
-  return buildString {
-    shaBytes.forEach { byte -> append(java.lang.Byte.toUnsignedInt(byte).toString(16)) }
-  }
-}
-
 

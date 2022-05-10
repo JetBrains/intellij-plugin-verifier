@@ -1,25 +1,27 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
-import fleet.bundles.Barrel
-import fleet.bundles.BundleName
-import fleet.bundles.BundleVersion
-import fleet.bundles.PluginDescriptor
+import fleet.bundles.*
 
 val perfectFleetPluginBuilder
-  get() = PluginDescriptor(
-    id = BundleName("fleet.language.css"),
-    version = BundleVersion("1.0.0-SNAPSHOT"),
-    readableName = "CSS",
-    description = "CSS language support",
-    vendor = "JetBrains",
-    deps = mapOf(),
-    frontend = Barrel(
-      setOf(Barrel.Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-1.1.1.jar", "123")),
-      setOf(Barrel.Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-cp.jar", "abc")),
-      setOf(),
-      setOf("f")
-    ),
-    workspace = null
+  get() = BundleSpec(
+    BundleId(BundleName("fleet.language.css"), BundleVersion("1.0.0-SNAPSHOT")),
+    Bundle(
+      deps = setOf(),
+      barrels = mapOf(
+        BarrelSelector.Frontend to
+          Barrel(
+            setOf(Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-1.1.1.jar", "123")),
+            setOf(Coordinates.Remote("https://plugins.jetbrains.com/files/fleet/fleet/fleet.plugin/1.0.0/modules/f-cp.jar", "abc")),
+            setOf(),
+            setOf("f")
+          )
+      ),
+      meta = mapOf(
+        KnownMeta.ReadableName to "CSS",
+        KnownMeta.Description to "CSS language support",
+        KnownMeta.Vendor to "JetBrains",
+      )
+    )
   )
 
 fun getMockPluginJsonContent(fileName: String): String {
