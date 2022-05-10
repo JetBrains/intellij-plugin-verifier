@@ -7,7 +7,7 @@ dependencies {
 
   runtimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
   implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2"
-  implementation 'com.github.spullara.cli-parser:cli-parser:1.1.5'
+  implementation 'com.github.spullara.cli-parser:cli-parser:1.1.6'
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
 }
 
