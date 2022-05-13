@@ -7,10 +7,7 @@ import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import com.vdurmont.semver4j.Semver
-import fleet.bundles.VersionRequirement
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Path
 
@@ -41,6 +38,10 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       val (f, s) = it.plugin.icons
       assertEquals(content, String(f.content))
       assertEquals(content, String(s.content))
+
+      val fileNames = it.plugin.files.map { file -> file.name }.toSet()
+      assertTrue("File ${f.fileName} should not be in files list: $fileNames", f.fileName !in fileNames)
+      assertTrue("File ${s.fileName} should not be in files list: $fileNames", s.fileName !in fileNames)
     }
   }
 

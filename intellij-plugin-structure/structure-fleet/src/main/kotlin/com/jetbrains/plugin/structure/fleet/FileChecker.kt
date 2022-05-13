@@ -8,13 +8,13 @@ private const val MAX_FILE_SIZE = 100L * 1024 * 1024 //100MB
 private const val MAX_PLUGIN_SIZE = 400L * 1024 * 1024 //400MB
 private const val MAX_FILES = 1000
 
-internal class FileChecker(val pluginId: String) {
+internal class FileChecker(val pluginId: String?) {
   private var sumSize = 0L
   private var sumFiles = 0
 
   val problems = mutableListOf<PluginProblem>()
 
-  fun addFile(pluginDir: Path, filePath: String): Boolean {
+  fun addFile(file: Path): Boolean {
     if (sumFiles <= MAX_FILES) {
       sumFiles += 1
       if (sumFiles > MAX_FILES) {
@@ -22,10 +22,8 @@ internal class FileChecker(val pluginId: String) {
       }
     }
 
-    val file = pluginDir.resolve(filePath)
-
     if (!Files.exists(file)) {
-      problems.add(MissedFile(filePath))
+      problems.add(MissedFile(file.fileName.toString()))
       return false
     }
     val size = Files.size(file)
@@ -42,14 +40,14 @@ internal class FileChecker(val pluginId: String) {
   }
 }
 
-private class PluginTooBig(val pluginId: String) : PluginProblem() {
+private class PluginTooBig(val pluginId: String?) : PluginProblem() {
   override val message: String
     get() = "Plugin $pluginId is bigger than max allowed size: $MAX_PLUGIN_SIZE"
 
   override val level = Level.ERROR
 }
 
-private class TooManyFiles(val pluginId: String) : PluginProblem() {
+private class TooManyFiles(val pluginId: String?) : PluginProblem() {
   override val message: String
     get() = "Plugin $pluginId has more files than allowed: $MAX_PLUGIN_SIZE"
 
