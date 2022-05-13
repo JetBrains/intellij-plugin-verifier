@@ -11,8 +11,6 @@ import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
-import fleet.bundles.BundleSpec
-import fleet.bundles.decodeFromString
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -63,8 +61,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
     if (!descriptorFile.exists()) {
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
-    val icons = loadIconFromDir(pluginDirectory)
-    return createPlugin(descriptorFile.readText(), icons, pluginDirectory)
+    return createPlugin(descriptorFile.readText(), pluginDirectory)
   }
 
   private fun loadIconFromDir(pluginDirectory: Path): List<PluginIcon> =
@@ -80,52 +77,43 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
-  private fun createPlugin(serializedDescriptor: String, icons: List<PluginIcon>, pluginDir: Path): PluginCreationResult<FleetPlugin> {
+  private fun createPlugin(serializedDescriptor: String, pluginDir: Path): PluginCreationResult<FleetPlugin> {
     try {
-      val bundleSpec = BundleSpec.decodeFromString(serializedDescriptor)
-      val beanValidationResult = validateFleetPluginBean(bundleSpec)
+      val descriptor = FleetPluginDescriptor.parse(serializedDescriptor)
+      val problems = descriptor.validate()
 
-      val fileChecker = FileChecker(bundleSpec.bundleId.name.name)
-      beanValidationResult.addAll(fileChecker.problems)
+      val icons = loadIconFromDir(pluginDir)
+      val iconNames = icons.map { it.fileName }.toSet()
 
-      if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
-        return PluginCreationFail(beanValidationResult)
+      val fileChecker = FileChecker(descriptor.id)
+      val files = Files.list(pluginDir).toList().mapNotNull { file ->
+        val fileName = file.fileName.toString()
+        if (file.isFile && fileName !in iconNames && fileChecker.addFile(file)) {
+          PluginFile(fileName, Files.readAllBytes(file))
+        }
+        else {
+          null
+        }
       }
-      val plugin = with(bundleSpec) {
-        val files = bundleSpec.getFiles(pluginDir, fileChecker)
-        FleetPlugin(
-          pluginId = bundleId.name.name,
-          pluginVersion = bundleId.version.version.value,
-          pluginName = readableName,
-          description = description,
-          icons = icons,
-          vendor = vendor,
-          descriptorFileName = DESCRIPTOR_NAME,
-          files = files
-        )
+      if (problems.any { it.level == PluginProblem.Level.ERROR } || fileChecker.problems.isNotEmpty()) {
+        return PluginCreationFail(problems + fileChecker.problems)
       }
-      return PluginCreationSuccess(plugin, beanValidationResult)
+
+      val plugin = FleetPlugin(
+        pluginId = requireNotNull(descriptor.id),
+        pluginVersion = requireNotNull(descriptor.version),
+        pluginName = descriptor.meta?.name,
+        description = descriptor.meta?.description,
+        vendor = descriptor.meta?.vendor,
+        icons = icons,
+        descriptorFileName = DESCRIPTOR_NAME,
+        files = files
+      )
+      return PluginCreationSuccess(plugin, problems)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, "Bad descriptor format. Descriptor text: $serializedDescriptor" + "\n" + e.localizedMessage))
     }
   }
-
-  private fun BundleSpec.getFiles(pluginDir: Path, fileChecker: FileChecker): List<PluginFile> {
-    //todo [MM]: extract files from descriptor or filter them by layout
-    return Files.walk(pluginDir).use { pathStream ->
-      pathStream.filter { !it.isDirectory }.map {
-        val filePath = it.fileName.toString()
-        val filename = filePath.substringAfterLast("/")
-
-        if (fileChecker.addFile(pluginDir, filePath)) {
-          val file = pluginDir.resolve(filePath)
-          val content = Files.readAllBytes(file)
-          PluginFile(filename, content)
-        } else null
-      }.toList().filterNotNull()
-    }
-  }
 }
-
