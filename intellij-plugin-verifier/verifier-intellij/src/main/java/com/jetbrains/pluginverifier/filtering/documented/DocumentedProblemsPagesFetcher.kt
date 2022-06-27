@@ -14,7 +14,7 @@ class DocumentedProblemsPagesFetcher {
   private companion object {
     private val subPagePathRegex = Regex("(api_changes_list_20..)\\.md")
     private const val MAIN_SOURCE_PAGE_URL = "https://jb.gg/ij-api-changes-raw"
-    private const val MAIN_WEB_PAGE_URL = "https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html"
+    private const val MAIN_WEB_PAGE_URL = "https://plugins.jetbrains.com/docs/intellij/api-changes-list.html"
     private const val MAIN_EDIT_PAGE_URL = "https://jb.gg/ij-api-changes-edit"
   }
 

@@ -32,8 +32,6 @@
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-structure.tests.teamcity-mock-plugin.main" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-structure.tests.teamcity-mock-plugin.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-structure.tests.test" target="1.8" />
-      <module name="org.jetbrains.intellij.plugins.intellij-plugin-verifier.main" target="1.8" />
-      <module name="org.jetbrains.intellij.plugins.intellij-plugin-verifier.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-verifier.verifier-cli.main" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-verifier.verifier-cli.test" target="1.8" />
       <module name="org.jetbrains.intellij.plugins.intellij-plugin-verifier.verifier-core.main" target="1.8" />

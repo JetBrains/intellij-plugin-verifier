@@ -326,7 +326,7 @@ class ApiQualityCheckCommand : Command {
     if (stabilizedApis.isNotEmpty()) {
       val stabilizedMessage = buildString {
         appendLine("The following APIs have become stable (not marked with @ApiStatus.Experimental) in branch ${report.apiQualityOptions.currentBranch}")
-        appendLine("These APIs may be advertised on http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable_list_2020.html")
+        appendLine("These APIs may be advertised on https://plugins.jetbrains.com/docs/intellij/api-notable.html")
         appendLine()
         for ((_, apisOfPackage) in stabilizedApis.sortedBy { it.apiSignature.javaPackageName }.groupBy { it.apiSignature.javaPackageName }) {
           for ((signature, inVersion) in apisOfPackage) {
@@ -384,7 +384,7 @@ class ApiQualityCheckCommand : Command {
     append("API shouldn't be marked @Experimental for too long. ")
     append("Please consider clarifying the API status by removing @Experimental and making it usable by external developers without hesitation. ")
     append("Also verify that Javadoc is up to date ")
-    append("and consider advertising this API on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_notable/api_notable.html.")
+    append("and consider advertising this API on https://plugins.jetbrains.com/docs/intellij/api-notable.html")
   }
 
   private val ApiSignature.shortPresentation: String

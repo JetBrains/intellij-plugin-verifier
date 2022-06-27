@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.dymamic
 
 /**
  * Whether the IntelliJ plugin can be loaded/unloaded without IDE restart
- * [https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/dynamic_plugins.html]
+ * See: https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html
  */
 sealed class DynamicPluginStatus {
 

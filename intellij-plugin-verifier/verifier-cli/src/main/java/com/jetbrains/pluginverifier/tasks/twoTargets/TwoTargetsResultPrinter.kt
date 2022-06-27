@@ -238,7 +238,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
         appendLine("If this change was planned, mute the test with a comment 'Planned removal of deprecated API'. We would like to keep such changes visible.")
         appendLine(
           "If this change was accidental, consider reverting the change until the removal time comes and plugins migrate to new API. " +
-            "Also consider documenting this change on https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html. "
+            "Also consider documenting this change on https://plugins.jetbrains.com/docs/intellij/api-changes-list.html. "
         )
         appendLine()
       }
@@ -279,7 +279,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       If an investigation is not closed automatically, mark the investigation as "Fixed". 
       
       To document the change do the following:
-      1) Open https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html
+      1) Open https://plugins.jetbrains.com/docs/intellij/api-changes-list.html
       2) Open a page corresponding to the current year, for example 'Changes in 2020.*'
       3) Click 'Edit Page' at the right upper corner to navigate to GitHub.
       4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 

@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.filtering.documented
 
 /**
  * Main method that checks that all documented problems on page
- * http://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html
+ * https://plugins.jetbrains.com/docs/intellij/api-changes-list.html
  * can be parsed and recognized.
  */
 object DocumentedProblemsPageVerifierMain {

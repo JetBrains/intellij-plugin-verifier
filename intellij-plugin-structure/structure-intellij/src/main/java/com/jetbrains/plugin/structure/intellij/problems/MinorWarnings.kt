@@ -15,7 +15,7 @@ class NoModuleDependencies(private val descriptorPath: String) : PluginProblem()
   override val message
     get() = "Plugin descriptor $descriptorPath does not include any module dependency tags. " +
       "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. " +
-      "See https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html"
+      "See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
 }
 
 class NonLatinDescription : PluginProblem() {
@@ -136,7 +136,7 @@ class SuspiciousUntilBuild(
 ) : PluginProblem() {
   override val message: String
     get() = "Probably incorrect until build value: $untilBuild. If you want your plugin to be compatible with all future IDEs, you can leave this field empty. " +
-      "For detailed info refer to https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html"
+      "For detailed info refer to https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
 
   override val level
     get() = Level.WARNING

@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 /**
- * Parser of the markdown-formatted [Breaking API Changes page](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/api_changes_list.html).
+ * Parser of the markdown-formatted [Breaking API Changes page](https://plugins.jetbrains.com/docs/intellij/api-changes-list.html).
  */
 class DocumentedProblemsParser(private val ignoreNonParsed: Boolean) {
 

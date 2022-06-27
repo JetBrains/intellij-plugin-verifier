@@ -13,7 +13,7 @@
 
 IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.
 
-This tool is useful because plugin authors often specify a wide [[since; until] compatibility range](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_configuration_file.html) but compile a plugin against only a specific IDE from the range.
+This tool is useful because plugin authors often specify a wide [[since; until] compatibility range](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html) but compile a plugin against only a specific IDE from the range.
 The IntelliJ Platform API can occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
 
 Example problems the Plugin Verifier can detect:

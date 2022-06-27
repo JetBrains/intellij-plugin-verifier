@@ -5,7 +5,7 @@ package com.jetbrains.plugin.structure.intellij.repository
  */
 enum class CustomPluginRepositoryListingType {
   /**
-   * Format recommended for [custom plugin repositories](https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/update_plugins_format.html#the-format-of-an-updateplugins-file)
+   * Format recommended for [custom plugin repositories](https://plugins.jetbrains.com/docs/intellij/update-plugins-format.html)
    * (except that <idea-version> tag is optional), for example:
    * ```
    * <plugins>
