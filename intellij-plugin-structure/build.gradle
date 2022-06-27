@@ -170,7 +170,6 @@ publishing {
     HubPublication(MavenPublication) { configurePublication(it, 'structure-hub', "JetBrains Plugins Structure Hub", "Library for parsing JetBrains Hub widgets. Can be used to verify that widget complies with the JetBrains Marketplace requirements.") }
     EduPublication(MavenPublication) { configurePublication(it, 'structure-edu', "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.") }
     FleetPublication(MavenPublication) { configurePublication(it, 'structure-fleet', "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.") }
-    KtorPublication(MavenPublication) { configurePublication(it, 'structure-ktor', "JetBrains Plugins Structure Ktor", "Library for parsing JetBrains Ktor features. Can be used to verify that feature complies with the JetBrains Marketplace requirements.") }
 
   }
 }
@@ -191,7 +190,6 @@ signing {
     sign(publishing.publications.HubPublication)
     sign(publishing.publications.EduPublication)
     sign(publishing.publications.FleetPublication)
-    sign(publishing.publications.KtorPublication)
   }
 }
 
