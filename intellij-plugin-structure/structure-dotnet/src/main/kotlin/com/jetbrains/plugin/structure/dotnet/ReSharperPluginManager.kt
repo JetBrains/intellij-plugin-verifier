@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.dotnet
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
@@ -73,11 +75,25 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
         )
       )
     }
-
-    return loadDescriptor(descriptorFile)
+    val thirdPartyDependencies = resolveThirdPartyDependencies(pluginDirectory)
+    return loadDescriptor(descriptorFile, thirdPartyDependencies)
   }
 
-  private fun loadDescriptor(descriptorFile: Path): PluginCreationResult<ReSharperPlugin> {
+  private fun resolveThirdPartyDependencies(pluginDirectory: Path): List<ThirdPartyDependency> {
+    val depsPath = pluginDirectory.resolve("third-party-libraries.json")
+    if (!depsPath.exists()) {
+      return emptyList()
+    }
+    return runCatching {
+      val dependencies: List<ThirdPartyDependency> = jacksonObjectMapper().readValue(depsPath.inputStream())
+      dependencies
+    }.getOrNull() ?: emptyList()
+  }
+
+  private fun loadDescriptor(
+    descriptorFile: Path,
+    thirdPartyDependencies: List<ThirdPartyDependency>,
+  ): PluginCreationResult<ReSharperPlugin> {
     try {
       val descriptorContent = Files.readAllBytes(descriptorFile)
       val bean = ReSharperPluginBeanExtractor.extractPluginBean(descriptorContent.inputStream())
@@ -85,7 +101,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      val plugin = createPluginFromValidBean(bean, descriptorContent)
+      val plugin = createPluginFromValidBean(bean, descriptorContent, thirdPartyDependencies)
       return PluginCreationSuccess(plugin, beanValidationResult)
     } catch (e: SAXParseException) {
       val lineNumber = e.lineNumber
@@ -98,7 +114,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
     }
   }
 
-  private fun createPluginFromValidBean(bean: ReSharperPluginBean, nuspecFileContent: ByteArray) = with(bean) {
+  private fun createPluginFromValidBean(bean: ReSharperPluginBean, nuspecFileContent: ByteArray, thirdPartyDependencies: List<ThirdPartyDependency>) = with(bean) {
     val id = this.id!!
     val idParts = id.split('.')
     val vendor = if (idParts.size > 1) idParts[0] else null
@@ -109,9 +125,20 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
       else -> id
     }
     ReSharperPlugin(
-      pluginId = id, pluginName = pluginName, vendor = vendor, nonNormalizedVersion = this.version!!, url = this.url,
-      changeNotes = this.changeNotes, description = this.description, vendorEmail = null, vendorUrl = null,
-      authors = authors, licenseUrl = licenseUrl, copyright = copyright, summary = summary,
+      pluginId = id,
+      pluginName = pluginName,
+      vendor = vendor,
+      nonNormalizedVersion = this.version!!,
+      url = this.url,
+      changeNotes = this.changeNotes,
+      description = this.description,
+      vendorEmail = null,
+      vendorUrl = null,
+      authors = authors,
+      licenseUrl = licenseUrl,
+      copyright = copyright,
+      summary = summary,
+      thirdPartyDependencies = thirdPartyDependencies,
       dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version) },
       nuspecFileContent = nuspecFileContent
     )

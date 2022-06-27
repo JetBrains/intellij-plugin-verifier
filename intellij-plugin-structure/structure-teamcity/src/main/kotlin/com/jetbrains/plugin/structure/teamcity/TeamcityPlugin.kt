@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.teamcity
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 
 data class TeamcityPlugin(
@@ -18,6 +19,7 @@ data class TeamcityPlugin(
   override val vendor: String?,
   override val vendorEmail: String?,
   override val vendorUrl: String?,
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   val sinceBuild: TeamcityVersion?,
   val untilBuild: TeamcityVersion?,
   val downloadUrl: String?,
@@ -29,18 +31,18 @@ data class TeamcityPlugin(
 
 
 fun TeamcityPluginBean.toPlugin() = TeamcityPlugin(
-    pluginId = "teamcity_" + this.info?.name!!,
-    pluginName = this.info?.displayName!!,
-    pluginVersion = this.info?.version!!,
-    url = null,
-    changeNotes = null,
-    description = this.info?.description,
-    vendor = this.info?.vendor?.name,
-    vendorEmail = this.info?.email,
-    vendorUrl = this.info?.vendor?.url,
-    sinceBuild = this.requirements?.minBuild?.toLong()?.let { TeamcityVersion(it) },
-    untilBuild = this.requirements?.maxBuild?.toLong()?.let { TeamcityVersion(it) },
-    downloadUrl = this.info?.downloadUrl,
-    useSeparateClassLoader = this.deployment?.useSeparateClassLoader?.toBoolean() ?: false,
-    parameters = this.parameters.associate { it.name!! to it.value!! }
+  pluginId = "teamcity_" + this.info?.name!!,
+  pluginName = this.info?.displayName!!,
+  pluginVersion = this.info?.version!!,
+  url = null,
+  changeNotes = null,
+  description = this.info?.description,
+  vendor = this.info?.vendor?.name,
+  vendorEmail = this.info?.email,
+  vendorUrl = this.info?.vendor?.url,
+  sinceBuild = this.requirements?.minBuild?.toLong()?.let { TeamcityVersion(it) },
+  untilBuild = this.requirements?.maxBuild?.toLong()?.let { TeamcityVersion(it) },
+  downloadUrl = this.info?.downloadUrl,
+  useSeparateClassLoader = this.deployment?.useSeparateClassLoader?.toBoolean() ?: false,
+  parameters = this.parameters.associate { it.name!! to it.value!! }
 )

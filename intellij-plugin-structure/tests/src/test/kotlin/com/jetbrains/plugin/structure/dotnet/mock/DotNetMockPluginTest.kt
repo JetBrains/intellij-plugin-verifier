@@ -44,6 +44,7 @@ class DotNetMockPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTe
   fun `nupkg plugin`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("jetbrains.mock.10.2.55.nupkg")) {
       file("JetBrains.Mock.nuspec", getMockPluginXmlContent())
+      file("third-party-libraries.json", thirdPartyLicenciesContent)
     }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
@@ -57,7 +58,30 @@ class DotNetMockPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTe
     val plugin = pluginCreationSuccess.plugin
 
     testMockConfigs(plugin)
+    testThirdPartyDependencies(plugin)
     testMockWarnings(pluginCreationSuccess.warnings)
   }
+
+  private fun testThirdPartyDependencies(plugin: ReSharperPlugin) {
+    val dependency = plugin.thirdPartyDependencies.first()
+    Assert.assertEquals("TheCat", dependency.name)
+    Assert.assertEquals("Custom license", dependency.license)
+    Assert.assertEquals("https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat", dependency.licenseUrl)
+    Assert.assertEquals("1.2.0.547", dependency.version)
+    Assert.assertEquals("https://github.com/TheCat/TheCat123", dependency.url)
+  }
+
+  private val thirdPartyLicenciesContent = """
+    [
+      {
+        "name": "TheCat",
+        "version": "1.2.0.547",
+        "url": "https://github.com/TheCat/TheCat123",
+        "license": "Custom license",
+        "licenseUrl": "https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat"
+      }
+    ]
+
+  """.trimIndent()
 
 }

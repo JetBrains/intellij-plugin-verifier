@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -64,6 +65,8 @@ class IdePluginImpl : IdePlugin {
   override var icons: List<PluginIcon> = emptyList()
 
   override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
+
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
     (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)
