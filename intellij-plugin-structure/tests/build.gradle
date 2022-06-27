@@ -6,7 +6,6 @@ dependencies {
   testImplementation project(":structure-intellij-classes")
   testImplementation project(":structure-teamcity")
   testImplementation project(":structure-hub")
-  testImplementation project(":structure-ktor")
   testImplementation project(":structure-fleet")
   testImplementation project(":structure-dotnet")
   testImplementation project(":structure-edu")
