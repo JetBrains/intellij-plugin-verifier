@@ -24,4 +24,6 @@ interface Plugin {
   val vendorUrl: String?
 
   val icons: List<PluginIcon>
+
+  val thirdPartyDependencies: List<ThirdPartyDependency>
 }

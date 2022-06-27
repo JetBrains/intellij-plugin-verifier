@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.edu
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 
 
@@ -18,6 +19,7 @@ data class EduPlugin(
   override val icons: List<PluginIcon> = emptyList(),
   override val pluginId: String? = null,
   override val pluginVersion: String? = null,
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   val descriptorVersion: Int? = null,
   val language: String? = null,
   val programmingLanguage: String? = null,

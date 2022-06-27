@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.fleet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 
 data class FleetPlugin(
   override val pluginId: String,
@@ -14,7 +15,7 @@ data class FleetPlugin(
   override val icons: List<PluginIcon> = emptyList(),
   override val description: String? = null,
   override val vendor: String? = null,
-
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   val descriptorFileName: String,
   val files: List<PluginFile>
 ) : Plugin {
