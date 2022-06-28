@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -30,7 +31,8 @@ data class MockIdePlugin(
   override val originalFile: Path? = null,
   override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
-  override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
+  override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
