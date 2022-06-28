@@ -1,6 +1,7 @@
 package com.intellij.featureExtractor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -35,5 +36,6 @@ data class MockIdePlugin(
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val declaredThemes = emptyList<IdeTheme>()
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
   override fun isCompatibleWithIde(ideVersion: IdeVersion) = false
 }
