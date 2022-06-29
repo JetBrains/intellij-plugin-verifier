@@ -66,7 +66,7 @@ class IdePluginImpl : IdePlugin {
 
   override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
 
-  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
+  override var thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
     (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)

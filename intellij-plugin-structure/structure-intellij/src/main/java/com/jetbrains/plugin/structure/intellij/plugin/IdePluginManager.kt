@@ -3,6 +3,8 @@
  */
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
@@ -29,6 +31,9 @@ class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
   private val extractDirectory: Path
 ) : PluginManager<IdePlugin> {
+
+  private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
+
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
     descriptorPath: String,
@@ -50,8 +55,10 @@ class IdePluginManager private constructor(
           try {
             val document = Files.newInputStream(entry).use { JDOMUtil.loadDocument(it) }
             val icons = getIconsFromJarFile(jarFileSystem)
+            val dependencies = getThirdPartyDependenciesFromJarFile(jarFileSystem)
             val plugin = createPlugin(jarFile, descriptorPath, parentPlugin, validateDescriptor, document, entry, resourceResolver)
             plugin.setIcons(icons)
+            plugin.setThirdPartyDependencies(dependencies)
             plugin
           } catch (e: Exception) {
             LOG.info("Unable to read file $descriptorPath", e)
@@ -66,6 +73,19 @@ class IdePluginManager private constructor(
       LOG.warn("Unable to read $jarFile in search of $descriptorPath: ${e.message}")
       return createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
     }
+  }
+
+  private fun getThirdPartyDependenciesFromJarFile(jarFileSystem: FileSystem): List<ThirdPartyDependency> {
+    val path = jarFileSystem.getPath(META_INF, THIRD_PARTY_LIBRARIES_FILE_NAME)
+    return parseThirdPartyDependenciesByPath(path)
+  }
+
+  private fun parseThirdPartyDependenciesByPath(path: Path): List<ThirdPartyDependency> {
+    if (path.exists().not()) return emptyList()
+    return runCatching {
+      val dependencies: List<ThirdPartyDependency> = jacksonObjectMapper().readValue(Files.readAllBytes(path))
+      dependencies
+    }.getOrNull() ?: emptyList()
   }
 
   private fun getIconsFromJarFile(jarFileSystem: FileSystem): List<PluginIcon> =
@@ -92,10 +112,12 @@ class IdePluginManager private constructor(
     } else try {
       val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
       val icons = loadIconsFromDir(pluginDirectory)
+      val dependencies = getThirdPartyDependenciesFromDir(pluginDirectory)
       val plugin = createPlugin(
         pluginDirectory, descriptorPath, parentPlugin, validateDescriptor, document, descriptorFile, resourceResolver
       )
       plugin.setIcons(icons)
+      plugin.setThirdPartyDependencies(dependencies)
       plugin
     } catch (e: JDOMParseException) {
       val lineNumber = e.lineNumber
@@ -107,6 +129,12 @@ class IdePluginManager private constructor(
       createInvalidPlugin(pluginDirectory, descriptorPath, UnableToReadDescriptor(descriptorPath, descriptorPath))
     }
   }
+
+  private fun getThirdPartyDependenciesFromDir(pluginDirectory: Path): List<ThirdPartyDependency> {
+    val path = pluginDirectory.resolve(META_INF).resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)
+    return parseThirdPartyDependenciesByPath(path)
+  }
+
 
   @Throws(IOException::class)
   private fun loadIconsFromDir(pluginDirectory: Path): List<PluginIcon> {
@@ -182,9 +210,11 @@ class IdePluginManager private constructor(
       pluginFile.isDirectory -> {
         loadPluginInfoFromDirectory(pluginFile, systemIndependentDescriptorPath, validateDescriptor, resourceResolver, parentPlugin)
       }
+
       pluginFile.isJar() -> {
         loadPluginInfoFromJarFile(pluginFile, systemIndependentDescriptorPath, validateDescriptor, resourceResolver, parentPlugin)
       }
+
       else -> throw IllegalArgumentException()
     }
   }
@@ -248,6 +278,7 @@ class IdePluginManager private constructor(
           getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
         }
       }
+
       is ExtractorResult.Fail -> createInvalidPlugin(pluginFile.simpleName, descriptorPath, extractorResult.pluginProblem)
     }
   }

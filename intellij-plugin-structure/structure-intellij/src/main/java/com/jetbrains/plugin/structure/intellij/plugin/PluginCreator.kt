@@ -150,6 +150,10 @@ internal class PluginCreator private constructor(
     plugin.icons = icons
   }
 
+  fun setThirdPartyDependencies(thirdPartyDependencies: List<ThirdPartyDependency>){
+    plugin.thirdPartyDependencies = thirdPartyDependencies
+  }
+
   fun setPluginVersion(pluginVersion: String) {
     plugin.pluginVersion = pluginVersion
   }
