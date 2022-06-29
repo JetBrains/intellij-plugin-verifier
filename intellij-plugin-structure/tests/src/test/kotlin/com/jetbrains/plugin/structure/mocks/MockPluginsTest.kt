@@ -350,6 +350,65 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
   @Test
+  fun `plugin contains third party deps test`() {
+    val thirdPartyContent = """
+    [
+      {
+        "name": "TheCat",
+        "version": "1.2.0.547",
+        "url": "https://github.com/TheCat/TheCat123",
+        "license": "Custom license",
+        "licenseUrl": "https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat"
+      }
+    ]
+  """.trimIndent()
+    val plugin = createPluginWithThirdPartyDeps(thirdPartyContent)
+    val dependency = plugin.thirdPartyDependencies.first()
+    assertEquals("TheCat", dependency.name)
+    assertEquals("1.2.0.547", dependency.version)
+    assertEquals("https://github.com/TheCat/TheCat123", dependency.url)
+    assertEquals("https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat", dependency.licenseUrl)
+    assertEquals("Custom license", dependency.license)
+  }
+
+  @Test
+  fun `plugin contains half of file with third party deps test`() {
+    val thirdPartyContent = """
+    [
+      {
+        "name": "TheCat",
+        "version": "1.2.0.547"
+      }
+    ]
+  """.trimIndent()
+    val plugin = createPluginWithThirdPartyDeps(thirdPartyContent)
+    val dependency = plugin.thirdPartyDependencies.first()
+    assertEquals("TheCat", dependency.name)
+    assertEquals("1.2.0.547", dependency.version)
+    assertNull(dependency.license)
+    assertNull(dependency.url)
+    assertNull(dependency.licenseUrl)
+  }
+
+  private fun createPluginWithThirdPartyDeps(content: String): IdePlugin {
+    val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
+      dir("lib") {
+        zip("plugin.jar") {
+          dir("META-INF") {
+            file("dependencies.json", content)
+            file("plugin.xml") {
+              perfectXmlBuilder.modify { }
+            }
+          }
+        }
+      }
+    }
+    val plugin = createPluginSuccessfully(pluginDirectory).plugin
+    assertTrue("No third party dependencies", plugin.thirdPartyDependencies.isNotEmpty())
+    return plugin
+  }
+
+  @Test
   fun `plugin has optional dependency where configuration file is ambiguous in two jar files`() {
     val pluginDirectory = buildDirectory(temporaryFolder.newFolder("plugin")) {
       dir("lib") {
@@ -408,11 +467,13 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
         zip("other.jar") {
           dir("META-INF") {
             dir("extensions") {
-              file("other.xml", """
+              file(
+                "other.xml", """
                 <idea-plugin>
                   <change-notes>Change notes included from xml file residing in another jar file</change-notes> 
                 </idea-plugin>
-              """.trimIndent())
+              """.trimIndent()
+              )
             }
           }
         }
