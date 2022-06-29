@@ -23,6 +23,7 @@ import java.nio.file.Paths
 class ReSharperPluginManager private constructor(private val extractDirectory: Path) : PluginManager<ReSharperPlugin> {
   companion object {
     private val LOG = LoggerFactory.getLogger(ReSharperPluginManager::class.java)
+    const val THIRD_PARTY_LIBRARIES_FILE_NAME = "third-party-libraries.json"
 
     fun createManager(
       extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
@@ -80,7 +81,8 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
   }
 
   private fun resolveThirdPartyDependencies(pluginDirectory: Path): List<ThirdPartyDependency> {
-    val depsPath = pluginDirectory.resolve("third-party-libraries.json")
+
+    val depsPath = pluginDirectory.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)
     if (!depsPath.exists()) {
       return emptyList()
     }
