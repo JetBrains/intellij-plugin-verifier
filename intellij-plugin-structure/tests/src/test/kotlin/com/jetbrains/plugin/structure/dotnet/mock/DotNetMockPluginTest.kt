@@ -44,7 +44,7 @@ class DotNetMockPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTe
   fun `nupkg plugin`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("jetbrains.mock.10.2.55.nupkg")) {
       file("JetBrains.Mock.nuspec", getMockPluginXmlContent())
-      file("third-party-libraries.json", thirdPartyLicenciesContent)
+      file("dependencies.json", thirdPartyLicenciesContent)
     }
     testMockPluginStructureAndConfiguration(pluginFile)
   }
