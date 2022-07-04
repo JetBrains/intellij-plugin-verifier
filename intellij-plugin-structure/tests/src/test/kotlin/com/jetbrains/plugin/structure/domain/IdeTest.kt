@@ -292,4 +292,50 @@ class IdeTest {
     val plugin = ide.bundledPlugins[0]!!
     assertEquals("Bundled", plugin.pluginId)
   }
+
+  /**
+   * idea-IE/
+   *  build.txt
+   *  plugins/
+   *    somePlugin/
+   *      lib/
+   *        somePlugin.jar
+   *          META-INF/
+   *            plugin.xml
+   *              -- references 'inRootXml.xml'
+   *          inRootXml.xml
+   *  lib/
+   *    app.jar!/
+   *      META-INF/
+   *        PlatformLangPlugin.xml
+   */
+  @Test
+  fun `create idea IE from binaries`() {
+    val ideaFolder = buildDirectory(temporaryFolder.newFolder("idea-IE").toPath()) {
+      file("build.txt", "IE-221.5591.62")
+
+      dir("lib") {
+        zip("app.jar") {
+          dir("META-INF") {
+            file("PlatformLangPlugin.xml") {
+              perfectXmlBuilder.modify {
+                id = "<id>com.intellij</id>"
+                name = "<name>IDEA CORE</name>"
+                modules = listOf("some.idea.module")
+              }
+            }
+          }
+        }
+      }
+    }
+
+    val ide = IdeManager.createManager().createIde(ideaFolder)
+    assertEquals(IdeVersion.createIdeVersion("IE-221.5591.62"), ide.version)
+    assertEquals(1, ide.bundledPlugins.size)
+    val ideaCorePlugin = ide.bundledPlugins[0]!!
+    assertEquals("com.intellij", ideaCorePlugin.pluginId)
+    assertEquals("IDEA CORE", ideaCorePlugin.pluginName)
+    assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
+    assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
+  }
 }
