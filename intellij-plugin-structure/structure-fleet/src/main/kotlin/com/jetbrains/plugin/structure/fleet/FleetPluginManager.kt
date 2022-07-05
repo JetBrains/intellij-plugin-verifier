@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.fleet
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -21,6 +23,7 @@ import kotlin.streams.toList
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "extension.json"
+    const val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
     private val LOG: Logger = LoggerFactory.getLogger(FleetPluginManager::class.java)
 
@@ -107,6 +110,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
         vendor = descriptor.meta?.vendor,
         icons = icons,
         descriptorFileName = DESCRIPTOR_NAME,
+        thirdPartyDependencies = parseThirdPartyDependenciesByPath(pluginDir.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)),
         files = files
       )
       return PluginCreationSuccess(plugin, problems)
@@ -114,6 +118,15 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
       return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, "Bad descriptor format. Descriptor text: $serializedDescriptor" + "\n" + e.localizedMessage))
+    }
+  }
+
+  private fun parseThirdPartyDependenciesByPath(path: Path): List<ThirdPartyDependency> {
+    return if (path.exists()) {
+      jacksonObjectMapper().readValue(Files.readAllBytes(path))
+    }
+    else {
+      emptyList()
     }
   }
 }

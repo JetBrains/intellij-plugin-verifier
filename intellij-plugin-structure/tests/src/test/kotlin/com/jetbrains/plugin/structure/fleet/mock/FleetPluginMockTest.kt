@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
@@ -16,7 +17,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   override fun createManager(extractDirectory: Path) = FleetPluginManager.createManager(extractDirectory)
 
   @Test
-  fun `parse base fields fleet plugin test`() {
+  fun `parse base fields fleet plugin`() {
     buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
         getMockPluginJsonContent("extension")
@@ -25,7 +26,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   }
 
   @Test
-  fun `parse fleet icons test`() {
+  fun `parse fleet icons`() {
     val content = "<svg></svg>"
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
@@ -46,7 +47,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   }
 
   @Test
-  fun `parse fleet incorrect icons test`() {
+  fun `parse fleet incorrect icons`() {
     val content = "<svg></svg>"
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
       file(FleetPluginManager.DESCRIPTOR_NAME) {
@@ -58,6 +59,47 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     testMockPluginStructureAndConfiguration(pluginFile).also {
       assertTrue("Invalid Fleet icons size", it.plugin.icons.size == 1)
       assertEquals(content, String(it.plugin.icons.single().content))
+    }
+  }
+
+  @Test
+  fun `parse licenses`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
+      file(FleetPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("extension")
+      }
+      file(FleetPluginManager.THIRD_PARTY_LIBRARIES_FILE_NAME) {
+        """
+          [ {
+            "name" : "OkHttp",
+            "url" : "https://square.github.io/okhttp/",
+            "version" : "5.0.0-alpha.9",
+            "license" : "Apache 2.0",
+            "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0"
+          }, {
+            "name" : "docker-java-core",
+            "url" : "https://github.com/docker-java/docker-java",
+            "version" : "3.2.6",
+            "license" : "Apache 2.0",
+            "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0"
+          } ]
+        """.trimIndent()
+      }
+    }
+    testMockPluginStructureAndConfiguration(pluginFile).also {
+      assertEquals(listOf(
+              ThirdPartyDependency(
+                      name = "OkHttp",
+                      url = "https://square.github.io/okhttp/",
+                      version = "5.0.0-alpha.9",
+                      license = "Apache 2.0",
+                      licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"),
+              ThirdPartyDependency(name = "docker-java-core",
+                      url = "https://github.com/docker-java/docker-java",
+                      version = "3.2.6",
+                      license = "Apache 2.0",
+                      licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"),
+      ), it.plugin.thirdPartyDependencies)
     }
   }
 
