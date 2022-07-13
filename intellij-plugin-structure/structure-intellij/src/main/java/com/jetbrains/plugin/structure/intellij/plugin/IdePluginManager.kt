@@ -80,14 +80,6 @@ class IdePluginManager private constructor(
     return parseThirdPartyDependenciesByPath(path)
   }
 
-  private fun parseThirdPartyDependenciesByPath(path: Path): List<ThirdPartyDependency> {
-    if (path.exists().not()) return emptyList()
-    return runCatching {
-      val dependencies: List<ThirdPartyDependency> = jacksonObjectMapper().readValue(Files.readAllBytes(path))
-      dependencies
-    }.getOrNull() ?: emptyList()
-  }
-
   private fun getIconsFromJarFile(jarFileSystem: FileSystem): List<PluginIcon> =
     IconTheme.values().mapNotNull { theme ->
       val iconEntryName = "$META_INF/${getIconFileName(theme)}"

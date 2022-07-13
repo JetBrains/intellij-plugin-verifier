@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.teamcity
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
@@ -22,6 +24,7 @@ class TeamcityPluginManager private constructor(
 ) : PluginManager<TeamcityPlugin> {
   companion object {
     const val DESCRIPTOR_NAME = "teamcity-plugin.xml"
+    const val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
     private val LOG = LoggerFactory.getLogger(TeamcityPluginManager::class.java)
 
@@ -64,25 +67,27 @@ class TeamcityPluginManager private constructor(
 
   private fun loadDescriptorFromDirectory(pluginDirectory: Path): PluginCreationResult<TeamcityPlugin> {
     val descriptorFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
+    val dependenciesFile = pluginDirectory.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)
+    val dependencies = parseThirdPartyDependenciesByPath(dependenciesFile)
     if (descriptorFile.exists()) {
-      return loadDescriptor(descriptorFile)
+      return loadDescriptor(descriptorFile, dependencies)
     }
     return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
   }
 
-  private fun loadDescriptor(descriptorFile: Path): PluginCreationResult<TeamcityPlugin> {
+  private fun loadDescriptor(descriptorFile: Path, dependencies: List<ThirdPartyDependency>): PluginCreationResult<TeamcityPlugin> {
     try {
       val bean = Files.newInputStream(descriptorFile).buffered().use {
         TeamcityPluginBeanExtractor.extractPluginBean(it)
       }
 
-      if (!validateBean) return PluginCreationSuccess(bean.toPlugin(), emptyList())
+      if (!validateBean) return PluginCreationSuccess(bean.toPlugin(dependencies), emptyList())
 
       val beanValidationResult = validateTeamcityPluginBean(bean)
       if (beanValidationResult.any { it.level == PluginProblem.Level.ERROR }) {
         return PluginCreationFail(beanValidationResult)
       }
-      return PluginCreationSuccess(bean.toPlugin(), beanValidationResult)
+      return PluginCreationSuccess(bean.toPlugin(dependencies), beanValidationResult)
     } catch (e: SAXParseException) {
       val lineNumber = e.lineNumber
       val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
