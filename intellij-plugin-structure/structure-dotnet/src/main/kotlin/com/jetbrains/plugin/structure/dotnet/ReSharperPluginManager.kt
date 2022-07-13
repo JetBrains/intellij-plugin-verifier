@@ -83,9 +83,6 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
   private fun resolveThirdPartyDependencies(pluginDirectory: Path): List<ThirdPartyDependency> {
 
     val depsPath = pluginDirectory.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)
-    if (!depsPath.exists()) {
-      return emptyList()
-    }
     return parseThirdPartyDependenciesByPath(depsPath)
   }
 
