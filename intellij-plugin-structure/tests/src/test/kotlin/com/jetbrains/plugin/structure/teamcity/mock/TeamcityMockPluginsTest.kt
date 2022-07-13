@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPlugin
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
 import com.jetbrains.plugin.structure.teamcity.TeamcityVersion
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -62,6 +63,32 @@ class TeamcityMockPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       file("teamcity-plugin.xml", getMockPluginXmlContent())
     }
     testMockPluginStructureAndConfiguration(pluginFile)
+  }
+
+  @Test
+  fun `plugin third party deps`() {
+    val content = """
+        [
+      {
+        "name": "TheCat",
+        "version": "1.2.0.547",
+        "url": "https://github.com/TheCat/TheCat123",
+        "license": "Custom license",
+        "licenseUrl": "https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat"
+      }
+    ]
+    """.trimIndent()
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file("teamcity-plugin.xml", getMockPluginXmlContent())
+      file("dependencies.json", content)
+    }
+    val dependency = createPluginSuccessfully(pluginFile)
+      .plugin.thirdPartyDependencies.first()
+    assertEquals("TheCat", dependency.name)
+    assertEquals("Custom license", dependency.license)
+    assertEquals("https://github.com/rsdn/TheCat/TheCat/v1.1/TheCat", dependency.licenseUrl)
+    assertEquals("1.2.0.547", dependency.version)
+    assertEquals("https://github.com/TheCat/TheCat123", dependency.url)
   }
 
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
