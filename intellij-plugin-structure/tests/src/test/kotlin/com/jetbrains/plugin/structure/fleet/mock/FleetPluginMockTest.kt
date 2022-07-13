@@ -87,19 +87,24 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       }
     }
     testMockPluginStructureAndConfiguration(pluginFile).also {
-      assertEquals(listOf(
-              ThirdPartyDependency(
-                      name = "OkHttp",
-                      url = "https://square.github.io/okhttp/",
-                      version = "5.0.0-alpha.9",
-                      license = "Apache 2.0",
-                      licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"),
-              ThirdPartyDependency(name = "docker-java-core",
-                      url = "https://github.com/docker-java/docker-java",
-                      version = "3.2.6",
-                      license = "Apache 2.0",
-                      licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"),
-      ), it.plugin.thirdPartyDependencies)
+      assertEquals(
+        listOf(
+          ThirdPartyDependency(
+            name = "OkHttp",
+            url = "https://square.github.io/okhttp/",
+            version = "5.0.0-alpha.9",
+            license = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"
+          ),
+          ThirdPartyDependency(
+            name = "docker-java-core",
+            url = "https://github.com/docker-java/docker-java",
+            version = "3.2.6",
+            license = "Apache 2.0",
+            licenseUrl = "https://www.apache.org/licenses/LICENSE-2.0"
+          ),
+        ), it.plugin.thirdPartyDependencies
+      )
     }
   }
 
