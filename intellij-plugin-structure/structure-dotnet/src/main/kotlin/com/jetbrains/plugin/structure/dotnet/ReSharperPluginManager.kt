@@ -86,10 +86,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
     if (!depsPath.exists()) {
       return emptyList()
     }
-    return runCatching {
-      val dependencies: List<ThirdPartyDependency> = jacksonObjectMapper().readValue(depsPath.inputStream())
-      dependencies
-    }.getOrNull() ?: emptyList()
+    return parseThirdPartyDependenciesByPath(depsPath)
   }
 
   private fun loadDescriptor(
