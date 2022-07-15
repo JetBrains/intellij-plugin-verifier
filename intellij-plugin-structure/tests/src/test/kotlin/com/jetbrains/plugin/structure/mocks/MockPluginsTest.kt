@@ -522,6 +522,42 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     )
   }
 
+  @Test
+  fun `locale extension point test`() {
+    val lang = "zh-CN"
+    val locale = "<locale>${lang}</locale>"
+    val extension = "<languageBundle locale=\"${lang}\"/>"
+    val xml = """
+      <idea-plugin>
+      <id>test.ex.point</id>
+      <name>My top for test</name>
+      <version>1.0.9</version>
+      <vendor email="sasha@gsasha.com" url="https://www.sassja.com">SashaCompanyLTD</vendor>
+      <description><![CDATA[
+        the plugin about cats dogs and humans the plugin about cats dogs and humans the plugin about cats dogs and humans
+      ]]></description>
+      <change-notes><![CDATA[
+          notees notees notees notees notees notees notees notees notees notees
+        ]]>
+      </change-notes>
+      <idea-version since-build="145.0"/>
+      <depends>com.intellij.modules.platform</depends>
+          $locale
+  <extensions defaultExtensionNs="com.intellij">
+    $extension
+  </extensions>
+    </idea-plugin>
+    """
+    val plugin = buildPluginSuccess(emptyList()) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF") {
+          file("plugin.xml") { xml }
+        }
+      }
+    }
+    assertEquals(lang, plugin.extensions.values.first().first().attributes.first().value)
+  }
+
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
