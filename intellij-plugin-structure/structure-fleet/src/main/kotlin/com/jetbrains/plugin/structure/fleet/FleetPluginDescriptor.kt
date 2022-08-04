@@ -15,6 +15,8 @@ data class FleetPluginDescriptor(
   val id: String? = null,
   @JsonProperty("version")
   val version: String? = null,
+  @JsonProperty("compatibleShipVersionRange")
+  val compatibleShipVersionRange: ShipVersionRange? = null,
   @JsonProperty("meta")
   val meta: FleetMeta? = null
 ) {
@@ -49,6 +51,18 @@ data class FleetPluginDescriptor(
       problems.add(PropertyNotSpecified("vendor"))
     }
 
+    when {
+      compatibleShipVersionRange == null -> {
+        problems.add(PropertyNotSpecified("compatibleShipVersionRange"))
+      }
+      compatibleShipVersionRange.from.isNullOrBlank() -> {
+        problems.add(PropertyNotSpecified("compatibleShipVersionRange.from"))
+      }
+      compatibleShipVersionRange.to.isNullOrBlank() -> {
+        problems.add(PropertyNotSpecified("compatibleShipVersionRange.to"))
+      }
+    }
+
     val readableName = meta?.name
     when {
       readableName.isNullOrBlank() -> {
@@ -70,4 +84,11 @@ data class FleetMeta(
   val description: String? = null,
   @JsonProperty("vendor")
   val vendor: String? = null
+)
+
+data class ShipVersionRange(
+  @JsonProperty("from")
+  val from: String? = null,
+  @JsonProperty("to")
+  val to: String? = null
 )

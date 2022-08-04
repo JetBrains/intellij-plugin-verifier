@@ -16,6 +16,7 @@ data class FleetPlugin(
   override val description: String? = null,
   override val vendor: String? = null,
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
+  val compatibleShipVersionRange: ShipVersionRange,
   val descriptorFileName: String,
   val files: List<PluginFile>
 ) : Plugin {

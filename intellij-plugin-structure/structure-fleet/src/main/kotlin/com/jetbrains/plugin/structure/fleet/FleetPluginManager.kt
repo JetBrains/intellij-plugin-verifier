@@ -105,6 +105,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       val plugin = FleetPlugin(
         pluginId = requireNotNull(descriptor.id),
         pluginVersion = requireNotNull(descriptor.version),
+        compatibleShipVersionRange = requireNotNull(descriptor.compatibleShipVersionRange),
         pluginName = descriptor.meta?.name,
         description = descriptor.meta?.description,
         vendor = descriptor.meta?.vendor,

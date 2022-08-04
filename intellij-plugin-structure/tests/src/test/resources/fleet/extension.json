@@ -7,6 +7,10 @@
     "description": "CSS language support",
     "vendor": "JetBrains"
   },
+  "compatibleShipVersionRange": {
+    "from": "1.1000.1",
+    "to": "1.1001.10"
+  },
   "dependencies": {
     "fleet.language.xml": "1.0.0"
   },

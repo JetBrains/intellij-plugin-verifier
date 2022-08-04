@@ -75,6 +75,19 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
   }
 
+  @Test
+  fun `compatibility range is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange")) { it.copy(compatibleShipVersionRange = null) }
+
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.from")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.from")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.from")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "\n")) }
+
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.to")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.to")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.to")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "\n")) }
+  }
+
   private fun checkInvalidPlugin(expectedProblem: PluginProblem, descriptorUpdater: (FleetPluginDescriptor) -> FleetPluginDescriptor) {
     val descriptor = descriptorUpdater(FleetPluginDescriptor.parse(getMockPluginJsonContent("extension")))
     Assert.assertEquals(listOf(expectedProblem), descriptor.validate())
