@@ -88,8 +88,31 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.to")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "\n")) }
   }
 
+  @Test
+  fun `compatibility range is valid`() {
+    checkInvalidPlugin(FleetInvalidShipVersion("from", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123")) }
+    checkInvalidPlugin(FleetInvalidShipVersion("to", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
+
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "major", "2097152.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "2097152.1.2", to = "2097152.1.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "major", "2097152.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "2097152.1.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "minor", "0.4194304.2", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.4194304.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "minor", "1.4194304.2", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.4194304.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "patch", "1.2.4194304", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.4194304")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "patch", "1.1000.4194304", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.4194304")) }
+
+    checkInvalidPlugin(FleetInvalidShipVersionRange(from = "1.1000.1", to = "1.1000.0")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
+
+    checkValidPlugin { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "2097151.4194303.4194303", to = "2097151.4194303.4194303")) }
+  }
+
+
   private fun checkInvalidPlugin(expectedProblem: PluginProblem, descriptorUpdater: (FleetPluginDescriptor) -> FleetPluginDescriptor) {
     val descriptor = descriptorUpdater(FleetPluginDescriptor.parse(getMockPluginJsonContent("extension")))
     Assert.assertEquals(listOf(expectedProblem), descriptor.validate())
+  }
+
+  private fun checkValidPlugin(descriptorUpdater: (FleetPluginDescriptor) -> FleetPluginDescriptor) {
+    val descriptor = descriptorUpdater(FleetPluginDescriptor.parse(getMockPluginJsonContent("extension")))
+    Assert.assertEquals(emptyList<PluginProblem>(), descriptor.validate())
   }
 }

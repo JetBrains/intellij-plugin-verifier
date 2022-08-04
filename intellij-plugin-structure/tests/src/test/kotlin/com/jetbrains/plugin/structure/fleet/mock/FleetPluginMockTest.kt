@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
-import com.jetbrains.plugin.structure.fleet.ShipVersionRange
+import com.jetbrains.plugin.structure.fleet.FleetShipVersionRange
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -127,6 +127,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("JetBrains", plugin.vendor)
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
-    assertEquals(ShipVersionRange("1.1000.1", "1.1001.10"), plugin.compatibleShipVersionRange)
+    assertEquals(FleetShipVersionRange("1.1000.1", "1.1001.10"), plugin.compatibleShipVersionRange)
   }
 }
