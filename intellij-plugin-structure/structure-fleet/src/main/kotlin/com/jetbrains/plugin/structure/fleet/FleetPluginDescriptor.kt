@@ -17,7 +17,7 @@ data class FleetPluginDescriptor(
   @JsonProperty("compatibleShipVersionRange")
   val compatibleShipVersionRange: FleetShipVersionRange? = null,
   @JsonProperty("meta")
-  val meta: FleetMeta? = null
+  val meta: FleetMeta? = null,
 ) {
   companion object {
     private val NON_ID_SYMBOL_REGEX = "^[A-Za-z\\d_.]+$".toRegex()
@@ -33,6 +33,7 @@ data class FleetPluginDescriptor(
       id.isNullOrBlank() -> {
         problems.add(PropertyNotSpecified("id"))
       }
+
       !NON_ID_SYMBOL_REGEX.matches(id) -> {
         problems.add(InvalidPluginIDProblem(id))
       }
@@ -54,12 +55,15 @@ data class FleetPluginDescriptor(
       compatibleShipVersionRange == null -> {
         problems.add(PropertyNotSpecified("compatibleShipVersionRange"))
       }
+
       compatibleShipVersionRange.from.isNullOrBlank() -> {
         problems.add(PropertyNotSpecified("compatibleShipVersionRange.from"))
       }
+
       compatibleShipVersionRange.to.isNullOrBlank() -> {
         problems.add(PropertyNotSpecified("compatibleShipVersionRange.to"))
       }
+
       else -> {
         val fromSemver = parseVersionOrNull(compatibleShipVersionRange.from)
         val toSemver = parseVersionOrNull(compatibleShipVersionRange.to)
@@ -67,12 +71,15 @@ data class FleetPluginDescriptor(
           fromSemver == null -> {
             problems.add(FleetInvalidShipVersion("from", compatibleShipVersionRange.from))
           }
+
           toSemver == null -> {
             problems.add(FleetInvalidShipVersion("to", compatibleShipVersionRange.to))
           }
+
           fromSemver.isGreaterThan(toSemver) -> {
             problems.add(FleetInvalidShipVersionRange(compatibleShipVersionRange.from, compatibleShipVersionRange.to))
           }
+
           else -> {
             val fromVersionProblems = validateVersion("from", fromSemver)
             problems.addAll(fromVersionProblems)
@@ -89,6 +96,7 @@ data class FleetPluginDescriptor(
       readableName.isNullOrBlank() -> {
         problems.add(PropertyNotSpecified("name"))
       }
+
       else -> {
         validatePropertyLength(FleetPluginManager.DESCRIPTOR_NAME, "name", readableName, MAX_NAME_LENGTH, problems)
       }
@@ -96,11 +104,10 @@ data class FleetPluginDescriptor(
     return problems
   }
 
-  private fun parseVersionOrNull(version: String) : Semver? {
+  private fun parseVersionOrNull(version: String): Semver? {
     return try {
       Semver(version)
-    }
-    catch (e: SemverException) {
+    } catch (e: SemverException) {
       null
     }
   }
@@ -132,9 +139,19 @@ data class FleetShipVersionRange(
   @JsonProperty("to")
   val to: String? = null
 ) {
+
+  companion object {
+    fun fromStringToLong(version: String?): Long {
+      return Semver(version).run {
+        major.toLong().shl(40) + minor.toLong().shl(21) + patch
+      }
+    }
+  }
+
+  @Suppress("unused")
   fun asLongRange(): LongRange {
-    val fromLong = Semver(from).run { major.toLong().shl(40) + minor.toLong().shl(21) + patch }
-    val toLong = Semver(to).run { major.toLong().shl(40) + minor.toLong().shl(21) + patch }
+    val fromLong = fromStringToLong(from)
+    val toLong = fromStringToLong(to)
     return fromLong..toLong
   }
 }
@@ -158,10 +175,12 @@ class FleetInvalidShipVersionRange(private val from: String, private val to: Str
     get() = Level.ERROR
 }
 
-class FleetErroneousShipVersion(private val versionName: String,
-                                private val partName: String,
-                                private val version: String,
-                                private val limit: Int) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
+class FleetErroneousShipVersion(
+  private val versionName: String,
+  private val partName: String,
+  private val version: String,
+  private val limit: Int,
+) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
   override val detailedMessage: String
     get() = "$partName part of $versionName version is too big [$version]. Max value is $limit"
 
