@@ -41,9 +41,18 @@ internal class PluginCreator private constructor(
 
     private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
+    private val DEFAULT_TEMPLATE_NAMES = listOf("Plugin display name here", "My Framework Support", "Template", "Demo")
+    private val PLUGIN_NAME_RESTRICTED_WORDS = listOf(
+      "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm",
+      "WebStorm", "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
+    )
+    private val DEFAULT_TEMPLATE_DESCRIPTIONS = listOf(
+      "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
+    )
+
     val v2ModulePrefix = Regex("^intellij\\..*")
 
-    private val latinSymbolsRegex = Regex("[A-Za-z]|\\s")
+    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}]{40,}")
 
     private val json = jacksonObjectMapper()
 
@@ -676,7 +685,7 @@ internal class PluginCreator private constructor(
           registerProblem(PropertyNotSpecified("id"))
         }
         "com.your.company.unique.plugin.id" == id -> {
-          registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID))
+          registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
         }
         else -> {
           validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
@@ -689,10 +698,11 @@ internal class PluginCreator private constructor(
   private fun validateName(name: String?) {
     when {
       name.isNullOrBlank() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
-      "Plugin display name here" == name -> registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME))
+      DEFAULT_TEMPLATE_NAMES.any { it.equals(name, true) } -> {
+        registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME, name))
+      }
       else -> {
-        val templateWords = listOf("plugin", "JetBrains", "IntelliJ")
-        val templateWord = templateWords.find { name.contains(it, true) }
+        val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
         if (templateWord != null) {
           registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
@@ -712,21 +722,32 @@ internal class PluginCreator private constructor(
     }
     validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH)
 
-    val textDescription = Jsoup.parseBodyFragment(htmlDescription).text()
+    val html = Jsoup.parseBodyFragment(htmlDescription)
+    val textDescription = html.text()
 
     if (textDescription.length < 40) {
       registerProblem(ShortDescription())
+    }
+
+    if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
       return
     }
 
-    if (textDescription.contains("Enter short description for your plugin here.") || textDescription.contains("most HTML tags may be used")) {
-      registerProblem(DefaultDescription(descriptorPath))
-      return
-    }
-
-    val latinSymbols = latinSymbolsRegex.findAll(textDescription).count()
-    if (latinSymbols < 40) {
+    val latinDescriptionPartLength = latinSymbolsRegex.find(textDescription)?.value?.length ?: 0
+    if (latinDescriptionPartLength < 40) {
       registerProblem(NonLatinDescription())
+    }
+    val links = html.select("[href],img[src]")
+    links.forEach { link ->
+      val href = link.attr("abs:href")
+      val src = link.attr("abs:src")
+      if (href.startsWith("http://")) {
+        registerProblem(HttpLinkInDescription(href))
+      }
+      if (src.startsWith("http://")) {
+        registerProblem(HttpLinkInDescription(src))
+      }
     }
   }
 
@@ -768,17 +789,17 @@ internal class PluginCreator private constructor(
     }
 
     if ("YourCompany" == vendorBean.name) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR))
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR, vendorBean.name))
     }
     validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH)
 
     if ("https://www.yourcompany.com" == vendorBean.url) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL))
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, vendorBean.url))
     }
     validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH)
 
     if ("support@yourcompany.com" == vendorBean.email) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL))
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, vendorBean.email))
     }
     validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH)
   }

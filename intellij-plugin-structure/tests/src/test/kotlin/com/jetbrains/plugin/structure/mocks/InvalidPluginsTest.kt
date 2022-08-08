@@ -19,6 +19,15 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+  private val DEFAULT_TEMPLATE_NAMES = listOf("Plugin display name here", "My Framework Support", "Template", "Demo")
+  private val PLUGIN_NAME_RESTRICTED_WORDS = listOf(
+    "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm", "WebStorm",
+    "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
+  )
+  private val DEFAULT_TEMPLATE_DESCRIPTIONS = listOf(
+    "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
+  )
+
   override fun createManager(extractDirectory: Path): IdePluginManager =
     IdePluginManager.createManager(extractDirectory)
 
@@ -127,15 +136,39 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `plugin name is not default`() {
+    for (templateName in DEFAULT_TEMPLATE_NAMES) {
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>${templateName}</name>"
+        },
+        listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, templateName))
+      )
+    }
+  }
+
+  @Test
   fun `plugin name contains template words`() {
-    val templateWords = listOf("plugin", "JetBrains", "IntelliJ")
-    for (templateWord in templateWords) {
+    for (templateWord in PLUGIN_NAME_RESTRICTED_WORDS) {
       val warning = `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          name = "<name>$templateWord</name>"
+          name = "<name>bla ${templateWord}bla</name>"
         }
       ).warnings.single()
       assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
+    }
+  }
+
+  @Test
+  fun `plugin description is not default`() {
+    for (templateDesc in DEFAULT_TEMPLATE_DESCRIPTIONS) {
+      val descriptionText = "description ${templateDesc}description description"
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          description = "<description>$descriptionText</description>"
+        },
+        listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, descriptionText))
+      )
     }
   }
 
@@ -310,8 +343,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `latin description`() {
+    val desc = "Latin description, 1234 & ;,.! () long enough"
+    val plugin = `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        description = "<description>${desc.replace("&", "&amp;")}</description>"
+      }
+    )
+    assertEquals(desc, plugin.plugin.description)
+  }
+
+  @Test
   fun `non latin description`() {
-    `test plugin xml warnings`(
+    `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         description = "<description>Описание без английского, но достаточно длинное</description>"
       },
@@ -320,14 +364,69 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `http links in description`() {
+    val testLinks = listOf(
+      Pair("a", "http://test_a.com"),
+      Pair("link", "http://test_link.com"),
+      Pair("img", "http://test.png")
+    )
+    val linksString = testLinks.joinToString(", ") {
+      val tag = it.first
+      val attr = when(tag) {
+        "img" -> "src"
+        else -> "href"
+      }
+      val link = it.second
+
+      "<$tag $attr='$link'></$tag>"
+    }
+
+    val desc = """
+      <![CDATA[
+        Long enough test description with http links in it:
+        $linksString
+      ]]>
+    """.trimIndent()
+    val plugin = `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      },
+      testLinks.map { HttpLinkInDescription(it.second) }
+    )
+  }
+
+  @Test
+  fun `https and relative links in description`() {
+    val desc = """
+      <![CDATA[
+        Long enough test description with http links in it:
+        <a href='https://test_a.com'></a> 
+        <a href='/test'></a>
+        <a href='test.php'></a> 
+        <link href='https://test_a.com'></link> 
+        <link href='/test'></link> 
+        <link href='test.php'></link> 
+        <img src='https://test.png'></img>
+        <img src='/test.png'></img>
+        <img src='test.png'></img>
+      ]]>
+    """.trimIndent()
+    `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      }
+    )
+  }
+
+  @Test
   fun `html description`() {
-    `test plugin xml warnings`(
+    `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         description = """<description><![CDATA[
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
       },
-      listOf(ShortDescription())
+      listOf(ShortDescription(), NonLatinDescription())
     )
   }
 
@@ -355,13 +454,17 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       </actions>
     </idea-plugin>
       """, listOf(
-      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.ID),
-      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME),
-      DefaultDescription("plugin.xml"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.ID, "com.your.company.unique.plugin.id"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, "Plugin display name here"),
+      PropertyWithDefaultValue(
+        "plugin.xml",
+        PropertyWithDefaultValue.DefaultProperty.DESCRIPTION,
+        "Enter short description for your plugin here. most HTML tags may be used"
+      ),
       DefaultChangeNotes("plugin.xml"),
-      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR),
-      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_URL),
-      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL)
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR, "YourCompany"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, "https://www.yourcompany.com"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, "support@yourcompany.com")
     )
     )
   }
