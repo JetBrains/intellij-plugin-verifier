@@ -15,9 +15,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -88,9 +86,68 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
   @Test
-  fun `invalid jar file renamed to zip`() {
+  fun `single jar file in zip`() {
+    val name = "plugin.jar"
+    val file = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      zip("plugin.jar") {
+        file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("somePackage", somePackageDir)
+        dir("properties", propertiesDir)
+      }
+    }
+    assertProblematicPlugin(file, listOf(PluginZipContainsSingleJarInRoot(name)))
+  }
+
+  @Test
+  fun `plugin jar packed in correct path in zip archive`() {
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+        dir("xmlId") {
+          dir("lib") {
+            dir("compile") {
+              zip("compile-library.jar") {
+                dir("META-INF") {
+                  dir("services", compileLibraryServices)
+                }
+                dir("com", compileLibraryClassesRoot.resolve("com"))
+              }
+            }
+
+            zip("plugin.jar") {
+              file("intellij.v2.module.xml", v2ModuleFile)
+              file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
+              dir("META-INF", metaInfDir)
+              dir("optionalsDir", optionalsDir)
+              dir("somePackage", somePackageDir)
+              dir("properties", propertiesDir)
+            }
+          }
+        }
+      }
+    }
+
+    checkPluginConfiguration(plugin, false)
+
+    val pluginJarOrigin = JarOrZipFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
+    checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
+  }
+
+  @Test
+  fun `plugin jar packed in incorrect path in zip archive`() {
+    val file = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("lib") {
+        dir("compile") {
+          zip("compile-library.jar") {
+            dir("META-INF") {
+              dir("services", compileLibraryServices)
+            }
+            dir("com", compileLibraryClassesRoot.resolve("com"))
+          }
+        }
+
         zip("plugin.jar") {
           file("intellij.v2.module.xml", v2ModuleFile)
           file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
@@ -101,43 +158,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
         }
       }
     }
-
-    checkPluginConfiguration(plugin, false)
-
-    val jarOrigin = PluginFileOrigin.SingleJar(plugin)
-    checkPluginClassesAndProperties(plugin, jarOrigin, jarOrigin)
-  }
-
-  @Test
-  fun `plugin jar packed in lib directory of zip archive`() {
-    val plugin = buildPluginSuccess(expectedWarnings) {
-      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-        dir("lib") {
-          dir("compile") {
-            zip("compile-library.jar") {
-              dir("META-INF") {
-                dir("services", compileLibraryServices)
-              }
-              dir("com", compileLibraryClassesRoot.resolve("com"))
-            }
-          }
-
-          zip("plugin.jar") {
-            file("intellij.v2.module.xml", v2ModuleFile)
-            file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
-            dir("META-INF", metaInfDir)
-            dir("optionalsDir", optionalsDir)
-            dir("somePackage", somePackageDir)
-            dir("properties", propertiesDir)
-          }
-        }
-      }
-    }
-
-    checkPluginConfiguration(plugin, false)
-
-    val pluginJarOrigin = JarOrZipFileOrigin("plugin.jar", PluginFileOrigin.LibDirectory(plugin))
-    checkPluginClassesAndProperties(plugin, pluginJarOrigin, pluginJarOrigin)
+    assertProblematicPlugin(file, listOf(UnexpectedPluginZipStructure()))
   }
 
   @Test
