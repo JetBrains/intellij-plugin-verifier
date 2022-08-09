@@ -18,25 +18,6 @@ class NoModuleDependencies(private val descriptorPath: String) : PluginProblem()
       "See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
 }
 
-class NonLatinDescription : PluginProblem() {
-
-  override val level
-    get() = Level.WARNING
-
-  override val message
-    get() = "Please make sure to provide the description in English"
-}
-
-class ShortDescription : PluginProblem() {
-
-  override val level
-    get() = Level.WARNING
-
-  override val message
-    get() = "Description is too short"
-}
-
-
 class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
 
   override val level

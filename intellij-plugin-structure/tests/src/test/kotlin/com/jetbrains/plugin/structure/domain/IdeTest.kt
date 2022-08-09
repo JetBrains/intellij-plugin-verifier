@@ -274,7 +274,7 @@ class IdeTest {
                       name = "<name>Bundled</name>"
                       id = "<id>Bundled</id>"
                       vendor = "<vendor>JetBrains</vendor>"
-                      description = "<description>Short</description>"
+                      description = "<description>Long enough test description for bundled plugin without version</description>"
                       changeNotes = "<change-notes>Short</change-notes>"
                     }
                   }

@@ -10,19 +10,21 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class PropertyWithDefaultValue(
   descriptorPath: String,
-  private val defaultProperty: DefaultProperty
+  private val property: DefaultProperty,
+  private val value: String
 ) : InvalidDescriptorProblem(descriptorPath) {
 
-  enum class DefaultProperty(val propertyName: String, val defaultValue: String) {
-    ID("<id>", "com.your.company.unique.plugin.id"),
-    NAME("<name>", "Plugin display name here"),
-    VENDOR("<vendor>", "YourCompany"),
-    VENDOR_URL("<vendor url>", "https://www.yourcompany.com"),
-    VENDOR_EMAIL("<vendor email>", "support@yourcompany.com")
+  enum class DefaultProperty(val propertyName: String) {
+    ID("<id>"),
+    NAME("<name>"),
+    VENDOR("<vendor>"),
+    VENDOR_URL("<vendor url>"),
+    VENDOR_EMAIL("<vendor email>"),
+    DESCRIPTION("<description>")
   }
 
   override val detailedMessage: String
-    get() = "${defaultProperty.propertyName} must not be equal to default value '${defaultProperty.defaultValue}'"
+    get() = "${property.propertyName} must not be equal to default value: '$value'"
 
   override val level
     get() = Level.ERROR
@@ -178,4 +180,31 @@ class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private v
 
   override val detailedMessage: String
     get() = "optional dependencies configuration files contain cycle: " + cyclicPath.joinToString(separator = " -> ")
+}
+
+class ShortDescription : PluginProblem() {
+
+  override val level
+    get() = Level.ERROR
+
+  override val message
+    get() = "Description is too short"
+}
+
+class NonLatinDescription : PluginProblem() {
+
+  override val level
+    get() = Level.ERROR
+
+  override val message
+    get() = "Please make sure to provide the description in English"
+}
+
+class HttpLinkInDescription(private val link: String) : PluginProblem() {
+
+  override val level
+    get() = Level.ERROR
+
+  override val message
+    get() = "All links in description should be HTTPS: $link"
 }
