@@ -19,12 +19,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
-  private val DEFAULT_TEMPLATE_NAMES = listOf("Plugin display name here", "My Framework Support", "Template", "Demo")
-  private val PLUGIN_NAME_RESTRICTED_WORDS = listOf(
+  private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
+  private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
     "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm", "WebStorm",
     "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
   )
-  private val DEFAULT_TEMPLATE_DESCRIPTIONS = listOf(
+  private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
     "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
   )
 

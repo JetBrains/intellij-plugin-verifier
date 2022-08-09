@@ -41,12 +41,12 @@ internal class PluginCreator private constructor(
 
     private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
-    private val DEFAULT_TEMPLATE_NAMES = listOf("Plugin display name here", "My Framework Support", "Template", "Demo")
-    private val PLUGIN_NAME_RESTRICTED_WORDS = listOf(
+    private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
+    private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
       "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm",
       "WebStorm", "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
     )
-    private val DEFAULT_TEMPLATE_DESCRIPTIONS = listOf(
+    private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
       "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
     )
 
@@ -734,8 +734,8 @@ internal class PluginCreator private constructor(
       return
     }
 
-    val latinDescriptionPartLength = latinSymbolsRegex.find(textDescription)?.value?.length ?: 0
-    if (latinDescriptionPartLength < 40) {
+    val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
+    if (latinDescriptionPart == null) {
       registerProblem(NonLatinDescription())
     }
     val links = html.select("[href],img[src]")
