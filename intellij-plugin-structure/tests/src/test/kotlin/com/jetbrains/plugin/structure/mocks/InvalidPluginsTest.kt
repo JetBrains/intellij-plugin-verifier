@@ -387,7 +387,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         $linksString
       ]]>
     """.trimIndent()
-    val plugin = `test invalid plugin xml`(
+    `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
