@@ -27,6 +27,20 @@ class PluginZipContainsUnknownFile(private val fileName: String) : PluginFileErr
 
 }
 
+class PluginZipContainsSingleJarInRoot(private val fileName: String) : PluginFileError() {
+
+  override val message
+    get() = "Plugin zip file contains a single jar file in root '$fileName'."
+
+}
+
+class UnexpectedPluginZipStructure : PluginFileError() {
+
+  override val message
+    get() = "Unexpected plugin zip file structure. It should be <plugin_id>/lib/*.jar"
+
+}
+
 class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : PluginFileError() {
 
   override val message
