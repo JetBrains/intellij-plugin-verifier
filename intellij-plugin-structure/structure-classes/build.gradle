@@ -1,5 +1,5 @@
 dependencies {
-  def asmVersion = '8.0.1'
+  def asmVersion = '9.1'
 
   api group: 'org.ow2.asm', name: 'asm', version: asmVersion
   api group: 'org.ow2.asm', name: 'asm-commons', version: asmVersion
