@@ -355,7 +355,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `non latin description`() {
-    `test invalid plugin xml`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>Описание без английского, но достаточно длинное</description>"
       },
@@ -387,7 +387,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         $linksString
       ]]>
     """.trimIndent()
-    `test invalid plugin xml`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
@@ -420,7 +420,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `html description`() {
-    `test invalid plugin xml`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = """<description><![CDATA[
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>

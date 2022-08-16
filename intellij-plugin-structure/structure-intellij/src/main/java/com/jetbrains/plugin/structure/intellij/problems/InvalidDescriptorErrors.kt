@@ -185,7 +185,7 @@ class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private v
 class ShortDescription : InvalidDescriptorProblem("description") {
 
   override val level
-    get() = Level.ERROR
+    get() = Level.WARNING
 
   override val detailedMessage
     get() = "Description is too short"
@@ -194,7 +194,7 @@ class ShortDescription : InvalidDescriptorProblem("description") {
 class NonLatinDescription : InvalidDescriptorProblem("description") {
 
   override val level
-    get() = Level.ERROR
+    get() = Level.WARNING
 
   override val detailedMessage
     get() = "Please make sure to provide the description in English"
@@ -203,7 +203,7 @@ class NonLatinDescription : InvalidDescriptorProblem("description") {
 class HttpLinkInDescription(private val link: String) : InvalidDescriptorProblem("description") {
 
   override val level
-    get() = Level.ERROR
+    get() = Level.WARNING
 
   override val detailedMessage
     get() = "All links in description should be HTTPS: $link"
