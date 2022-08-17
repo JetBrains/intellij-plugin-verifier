@@ -26,5 +26,5 @@ class HttpLinkInDescription(private val link: String) : InvalidDescriptorProblem
     get() = Level.UNACCEPTABLE_WARNING
 
   override val detailedMessage
-    get() = "All links in description should be HTTPS: $link"
+    get() = "All links in description must be HTTPS: $link"
 }

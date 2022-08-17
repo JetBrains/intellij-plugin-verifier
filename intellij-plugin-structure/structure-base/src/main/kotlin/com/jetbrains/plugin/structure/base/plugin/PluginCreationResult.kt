@@ -18,6 +18,12 @@ data class PluginCreationSuccess<out PluginType : Plugin>(
   val unacceptableWarnings: List<PluginProblem> = emptyList()
 ) :
   PluginCreationResult<PluginType>() {
+  constructor(plugin: PluginType, problems: List<PluginProblem>) : this(
+    plugin,
+    problems.filter { it.level == PluginProblem.Level.WARNING },
+    problems.filter { it.level == PluginProblem.Level.UNACCEPTABLE_WARNING }
+  )
+
   override fun toString(): String = "Success" +
     (if (unacceptableWarnings.isNotEmpty()) " but unacceptable warnings: " + unacceptableWarnings.joinToString() else "") +
     (if (warnings.isNotEmpty()) " but warnings: " + warnings.joinToString() else "")
