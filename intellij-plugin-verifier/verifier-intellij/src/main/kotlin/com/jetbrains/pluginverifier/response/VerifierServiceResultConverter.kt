@@ -93,11 +93,11 @@ fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTyp
   when {
     compatibilityProblems.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
     directMissingMandatoryDependencies.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
+    internalApiUsages.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
     pluginStructureWarnings.isEmpty()
       && compatibilityWarnings.isEmpty()
       && deprecatedUsages.isEmpty()
       && experimentalApiUsages.isEmpty()
-      && internalApiUsages.isEmpty()
       && overrideOnlyMethodUsages.isEmpty()
       && nonExtendableApiUsages.isEmpty() -> VerificationResultTypeDto.OK
     else -> VerificationResultTypeDto.WARNINGS
