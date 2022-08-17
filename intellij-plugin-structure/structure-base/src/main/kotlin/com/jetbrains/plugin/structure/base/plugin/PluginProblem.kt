@@ -14,7 +14,8 @@ abstract class PluginProblem {
 
   enum class Level {
     ERROR,
-    WARNING
+    WARNING,
+    UNACCEPTABLE_WARNING
   }
 
   final override fun toString() = message

@@ -355,7 +355,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `non latin description`() {
-    `test plugin xml warnings`(
+    `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         description = "<description>Описание без английского, но достаточно длинное</description>"
       },
@@ -387,7 +387,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         $linksString
       ]]>
     """.trimIndent()
-    `test plugin xml warnings`(
+    `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
@@ -420,7 +420,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `html description`() {
-    `test plugin xml warnings`(
+    `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         description = """<description><![CDATA[
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
@@ -473,6 +473,12 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     val successResult = createPluginSuccessfully(pluginFolder)
     assertEquals(expectedWarnings, successResult.warnings)
+  }
+
+  private fun `test plugin xml unacceptable warnings`(pluginXmlContent: String, expectedUnacceptableWarnings: List<PluginProblem>) {
+    val pluginFolder = getTempPluginFolder(pluginXmlContent)
+    val successResult = createPluginSuccessfully(pluginFolder)
+    assertEquals(expectedUnacceptableWarnings, successResult.unacceptableWarnings)
   }
 
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {

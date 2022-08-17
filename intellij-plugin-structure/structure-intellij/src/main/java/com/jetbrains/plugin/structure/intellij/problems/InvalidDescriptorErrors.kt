@@ -181,30 +181,3 @@ class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private v
   override val detailedMessage: String
     get() = "optional dependencies configuration files contain cycle: " + cyclicPath.joinToString(separator = " -> ")
 }
-
-class ShortDescription : InvalidDescriptorProblem("description") {
-
-  override val level
-    get() = Level.WARNING
-
-  override val detailedMessage
-    get() = "Description is too short"
-}
-
-class NonLatinDescription : InvalidDescriptorProblem("description") {
-
-  override val level
-    get() = Level.WARNING
-
-  override val detailedMessage
-    get() = "Please make sure to provide the description in English"
-}
-
-class HttpLinkInDescription(private val link: String) : InvalidDescriptorProblem("description") {
-
-  override val level
-    get() = Level.WARNING
-
-  override val detailedMessage
-    get() = "All links in description should be HTTPS: $link"
-}

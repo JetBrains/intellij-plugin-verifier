@@ -116,7 +116,8 @@ internal class PluginCreator private constructor(
     get() = if (hasErrors()) {
       PluginCreationFail(problems)
     } else {
-      PluginCreationSuccess<IdePlugin>(plugin, problems)
+      val (warnings, unacceptableWarnings) = problems.partition { it.level == PluginProblem.Level.WARNING }
+      PluginCreationSuccess<IdePlugin>(plugin, warnings, unacceptableWarnings)
     }
 
   fun addOptionalDescriptor(
