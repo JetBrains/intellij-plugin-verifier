@@ -109,8 +109,8 @@ data class FleetPluginDescriptor(
     val problems = mutableListOf<PluginProblem>()
     when {
       semver.major > VERSION_MAJOR_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "major", semver.originalValue, VERSION_MAJOR_PART_MAX_VALUE))
-      semver.minor > VERSION_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "minor", semver.originalValue, VERSION_PART_MAX_VALUE))
-      semver.patch > VERSION_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "patch", semver.originalValue, VERSION_PART_MAX_VALUE))
+      semver.minor > VERSION_MINOR_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "minor", semver.originalValue, VERSION_MINOR_PART_MAX_VALUE))
+      semver.patch > VERSION_PATCH_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "patch", semver.originalValue, VERSION_PATCH_PART_MAX_VALUE))
     }
     return problems
   }
@@ -133,14 +133,18 @@ data class FleetShipVersionRange(
   val to: String? = null
 ) {
   fun asLongRange(): LongRange {
-    val fromLong = Semver(from).run { major.toLong().shl(40) + minor.toLong().shl(21) + patch }
-    val toLong = Semver(to).run { major.toLong().shl(40) + minor.toLong().shl(21) + patch }
+    val fromLong = Semver(from).run { major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch }
+    val toLong = Semver(to).run { major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch }
     return fromLong..toLong
   }
 }
 
-const val VERSION_MAJOR_PART_MAX_VALUE = 1.shl(21) - 1
-const val VERSION_PART_MAX_VALUE = 1.shl(22) - 1
+private const val VERSION_PATCH_LENGTH = 14
+private const val VERSION_MINOR_LENGTH = 13
+
+const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
+const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
+const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
 
 class FleetInvalidShipVersion(private val versionName: String, private val version: String) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
   override val detailedMessage: String
