@@ -93,16 +93,16 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(FleetInvalidShipVersion("from", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123")) }
     checkInvalidPlugin(FleetInvalidShipVersion("to", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
 
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "major", "2097152.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "2097152.1.2", to = "2097152.1.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "major", "2097152.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "2097152.1.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "minor", "0.4194304.2", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.4194304.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "minor", "1.4194304.2", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.4194304.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "patch", "1.2.4194304", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.4194304")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "patch", "1.1000.4194304", limit = VERSION_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.4194304")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "minor", "0.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "minor", "1.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("from", "patch", "1.2.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
+    checkInvalidPlugin(FleetErroneousShipVersion("to", "patch", "1.1000.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
 
     checkInvalidPlugin(FleetInvalidShipVersionRange(from = "1.1000.1", to = "1.1000.0")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
 
-    checkValidPlugin { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "2097151.4194303.4194303", to = "2097151.4194303.4194303")) }
+    checkValidPlugin { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7449.8191.16383", to = "7449.8191.16383")) }
   }
 
 
