@@ -12,7 +12,19 @@ data class PluginCreationFail<out PluginType : Plugin>(val errorsAndWarnings: Li
   override fun toString(): String = "Failed: ${errorsAndWarnings.joinToString()}"
 }
 
-data class PluginCreationSuccess<out PluginType : Plugin>(val plugin: PluginType, val warnings: List<PluginProblem>) :
+data class PluginCreationSuccess<out PluginType : Plugin>(
+  val plugin: PluginType,
+  val warnings: List<PluginProblem>,
+  val unacceptableWarnings: List<PluginProblem> = emptyList()
+) :
   PluginCreationResult<PluginType>() {
-  override fun toString(): String = "Success" + (if (warnings.isNotEmpty()) " but warnings: " + warnings.joinToString() else "")
+  constructor(plugin: PluginType, problems: List<PluginProblem>) : this(
+    plugin,
+    problems.filter { it.level == PluginProblem.Level.WARNING },
+    problems.filter { it.level == PluginProblem.Level.UNACCEPTABLE_WARNING }
+  )
+
+  override fun toString(): String = "Success" +
+    (if (unacceptableWarnings.isNotEmpty()) " but unacceptable warnings: " + unacceptableWarnings.joinToString() else "") +
+    (if (warnings.isNotEmpty()) " but warnings: " + warnings.joinToString() else "")
 }
