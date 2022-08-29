@@ -30,7 +30,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
   }
 
   val version = bean.version
-  if (version == null || version.isBlank()) {
+  if (version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   } else {
     try {
