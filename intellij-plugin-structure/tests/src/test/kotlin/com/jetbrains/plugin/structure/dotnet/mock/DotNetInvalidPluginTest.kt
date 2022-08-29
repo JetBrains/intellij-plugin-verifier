@@ -91,6 +91,14 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
   }
 
   @Test
+  fun `plugin long releaseNotes`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { title = "<releaseNotes>${"a".repeat(65550)}</releaseNotes>" },
+      listOf(TooLongPropertyValue("", "releaseNotes", 65550, 65500))
+    )
+  }
+
+  @Test
   fun `plugin authors is not specified`() {
     `test invalid plugin xml`(
       perfectDotNetBuilder.modify { authors = "" },
