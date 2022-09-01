@@ -15,6 +15,7 @@ task prepareMockPlugin(type: Copy, dependsOn: ':verifier-test:mock-plugin:build'
 }
 
 def afterIdeaBuildDir = project('after-idea').buildDir
+def additionalAfterIdeaBuildDir = project('additional-after-idea').buildDir
 
 /**
  * Creates resources.jar file with brokenPlugins.txt file inside.
@@ -40,6 +41,11 @@ task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build',
     into "lib"
   }
 
+  def additionalJar = copySpec {
+    from "$additionalAfterIdeaBuildDir/libs/additional-after-idea-1.0.jar"
+    into "lib"
+  }
+
   def resourcesJar = copySpec {
     from prepareResourcesJar
     into "lib"
@@ -50,7 +56,7 @@ task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build',
     into "."
   }
 
-  with ideaJar, resourcesJar, buildTxt
+  with ideaJar, additionalJar, resourcesJar, buildTxt
 }
 
 test.dependsOn prepareMockPlugin, prepareAfterIdea
