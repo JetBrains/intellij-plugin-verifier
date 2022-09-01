@@ -34,7 +34,7 @@ task prepareResourcesJar(type: Jar, dependsOn: [project('after-idea').processRes
  * `lib/after-idea-1.0.jar` (contains plugin.xml with 'IDEA CORE' plugin)
  * `lib/additional-after-idea-1.0.jar (contains extra IDE classes)
  */
-task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build', prepareResourcesJar]) {
+task prepareAfterIdea(type: Copy, dependsOn: [':verifier-test:after-idea:build', ':verifier-test:additional-after-idea:build', prepareResourcesJar]) {
   into "$buildDir/mocks/after-idea"
 
   def ideaJar = copySpec {
