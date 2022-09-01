@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -30,7 +31,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     classUsageType: ClassUsageType
   ) {
     val usageLocation = referrer.location
-    if (isExperimental(resolvedClass, context, usageLocation)) {
+    if (isExperimental(resolvedClass, context, usageLocation) && context.isFromVerifiedPlugin(referrer)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
         ExperimentalClassUsage(classReference, resolvedClass.location, usageLocation)
       )

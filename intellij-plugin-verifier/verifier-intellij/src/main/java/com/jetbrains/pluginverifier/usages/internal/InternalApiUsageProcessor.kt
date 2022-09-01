@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
@@ -38,7 +39,7 @@ class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVer
     classUsageType: ClassUsageType
   ) {
     val usageLocation = referrer.location
-    if (isInternal(resolvedClass, context, usageLocation)) {
+    if (isInternal(resolvedClass, context, usageLocation) && context.isFromVerifiedPlugin(referrer)) {
       registerInternalApiUsage(InternalClassUsage(classReference, resolvedClass.location, usageLocation))
     }
   }
