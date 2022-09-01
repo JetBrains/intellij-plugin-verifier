@@ -1,9 +1,0 @@
-version = '1.0'
-
-dependencies {
-  //compile against 'before-idea' and verify against 'after-idea'
-
-  compileOnly project(':verifier-test:before-idea')
-  runtimeOnly project(':verifier-test:after-idea')
-  implementation(project(':verifier-test:additional-after-idea'))
-}
