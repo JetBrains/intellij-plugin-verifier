@@ -10,8 +10,11 @@ import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
+import com.jetbrains.plugin.structure.dotnet.problems.InvalidDependencyVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidIdError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
+import com.jetbrains.plugin.structure.dotnet.problems.NullIdDependencyError
+import com.jetbrains.plugin.structure.dotnet.version.VersionMatching
 
 internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -65,6 +68,22 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
       maxLength = MAX_DOT_NET_RELEASE_NOTES_LENGTH,
       problems = problems
     )
+  }
+
+  val dependencies = bean.getAllDependencies()
+  dependencies.forEach {
+    if (it.id == null) {
+      problems.add(NullIdDependencyError())
+    }
+    val dependencyVersion = it.version
+    dependencyVersion?.let {
+      try {
+        VersionMatching.getNugetSemanticVersionRange(dependencyVersion)
+      }
+      catch (e: IllegalArgumentException) {
+        problems.add(InvalidDependencyVersionError(dependencyVersion, e.localizedMessage))
+      }
+    }
   }
   return problems
 }

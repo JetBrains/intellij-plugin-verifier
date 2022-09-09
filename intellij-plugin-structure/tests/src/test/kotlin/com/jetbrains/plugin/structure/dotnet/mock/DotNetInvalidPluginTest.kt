@@ -7,6 +7,8 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
+import com.jetbrains.plugin.structure.dotnet.problems.InvalidDependencyVersionError
+import com.jetbrains.plugin.structure.dotnet.problems.NullIdDependencyError
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -111,6 +113,62 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
     `test invalid plugin xml`(
       perfectDotNetBuilder.modify { description = "" },
       listOf(PropertyNotSpecified("description"))
+    )
+  }
+
+  @Test
+  fun `dependency name is not specified`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency version=\"[8.0, 8.3)\"/></dependencies>" },
+      listOf(NullIdDependencyError())
+    )
+  }
+
+  @Test
+  fun `dependency version is blank`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"ReSharper\" version=\"[8.0, 8.3)\" /><dependency id=\"Wave\" version=\"\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("", "Original range string is blank"))
+    )
+  }
+
+  @Test
+  fun `more than 2 values in dependency version`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"ReSharper\" version=\"[8.0, 8.3)\" /><dependency id=\"Wave\" version=\"[182.0.0, 183.0.0, 184.0.0)\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("[182.0.0, 183.0.0, 184.0.0)", "There shouldn't be more than 2 values in range"))
+    )
+  }
+
+  @Test
+  fun `wrong dependency version format`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"ReSharper\" version=\"[8.0)\" /><dependency id=\"Wave\" version=\"[182.0.0, 184.0.0)\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("[8.0)", "The formats (1.0.0], [1.0.0) and (1.0.0) are invalid"))
+    )
+  }
+
+  @Test
+  fun `upper and lower bounds were specified`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"Wave\" version=\"(, )\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("(, )", "Neither of upper nor lower bounds were specified"))
+    )
+  }
+
+  @Test
+  fun `lower bound is greater than upper one`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"Wave\" version=\"(184.0, 183.0)\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("(184.0, 183.0)", "maxVersion should be greater than minVersion"))
+    )
+  }
+
+  @Test
+  fun `wrong parentheses format=`() {
+    `test invalid plugin xml`(
+      perfectDotNetBuilder.modify { dependencies = "<dependencies><dependency id=\"Wave\" version=\"(183.0, 183.0)\"/></dependencies>" },
+      listOf(InvalidDependencyVersionError("(183.0, 183.0)", "Wrong format. (1.0.0, 1.0.0], [1.0.0, 1.0.0) and (1.0.0, 1.0.0) are invalid"))
     )
   }
 
