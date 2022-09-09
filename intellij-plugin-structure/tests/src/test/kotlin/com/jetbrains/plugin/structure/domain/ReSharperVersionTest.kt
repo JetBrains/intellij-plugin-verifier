@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.domain
 
 import com.jetbrains.plugin.structure.dotnet.version.ReSharperVersion
-import com.jetbrains.plugin.structure.dotnet.version.WaveVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.junit.Assert
 import org.junit.Test
@@ -66,22 +65,6 @@ class ReSharperVersionTest {
     Assert.assertEquals(2, resharperVersion.components.size)
     Assert.assertEquals("RSU", resharperVersion.productCode)
     Assert.assertEquals("RSU-2021.3", resharperVersion.asString())
-  }
-
-  @Test
-  fun getWaveVersionFromStringWithoutMinorTest() {
-    val waveVersionString = "183"
-    val waveVersion = WaveVersion.fromString(waveVersionString)
-    Assert.assertEquals(183, waveVersion.firstComponent)
-    Assert.assertEquals(0, waveVersion.secondComponent)
-  }
-
-  @Test
-  fun getWaveVersionFromWaveStringWithMinorTest() {
-    val waveVersionString = "213.1.0"
-    val waveVersion = WaveVersion.fromString(waveVersionString)
-    Assert.assertEquals(213, waveVersion.firstComponent)
-    Assert.assertEquals(1, waveVersion.secondComponent)
   }
 
   private fun version(s: String): ReSharperVersion {

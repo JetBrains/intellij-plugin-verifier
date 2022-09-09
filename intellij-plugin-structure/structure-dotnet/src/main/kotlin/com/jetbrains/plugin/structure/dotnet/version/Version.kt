@@ -66,23 +66,3 @@ data class ReSharperVersion(val components: List<Int>, override val productCode:
       this
     }
 }
-
-data class WaveVersion(val firstComponent: Int, val secondComponent: Int, override val productCode: String = ""): Version<WaveVersion> {
-  override fun compareTo(other: WaveVersion) = compareValuesBy(this, other, {it.firstComponent}, {it.secondComponent})
-  override fun asString() = "$firstComponent.$secondComponent"
-  override fun asStringWithoutProductCode() = asString()
-
-  companion object {
-    fun fromString(versionString: String) : WaveVersion {
-      val versionStringComponents = versionString.split('.')
-      val versionFirstComponent = versionStringComponents[0].toIntOrNull()
-        ?: throw IllegalArgumentException("Cannot parse the first component of version")
-      val minVersionSecondComponent = if (versionStringComponents.size > 1) versionStringComponents[1].toIntOrNull()
-        ?: throw IllegalArgumentException("Cannot parse the second component of version") else 0
-      return WaveVersion(versionFirstComponent, minVersionSecondComponent)
-    }
-  }
-
-  // Wave versions can't have product codes
-  override fun setProductCodeIfAbsent(productCode: String): WaveVersion = this
-}

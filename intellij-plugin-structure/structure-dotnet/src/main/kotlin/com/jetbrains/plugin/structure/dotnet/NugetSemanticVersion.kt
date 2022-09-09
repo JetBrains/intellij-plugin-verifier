@@ -4,10 +4,12 @@
 
 package com.jetbrains.plugin.structure.dotnet
 
+import com.jetbrains.plugin.structure.base.utils.Version
+
 //Copy of NuGet.SemVer from C#. Used for version normalization and same parsing as in NuGet gallery
 data class NugetSemanticVersion(
   val majorVersion: Int, val minorVersion: Int, val build: Int = 0, val revision: Int = 0, val release: String? = null, val metadata: String? = null
-) {
+): Version<NugetSemanticVersion> {
   companion object {
     private val semanticVersionRegex = Regex("^(?<Version>\\d+(\\s*\\.\\s*\\d+){0,3})(?<Release>-([0]\\b|[0]$|[0][0-9]*[A-Za-z-]+|[1-9A-Za-z-][0-9A-Za-z-]*)+(\\.([0]\\b|[0]$|[0][0-9]*[A-Za-z-]+|[1-9A-Za-z-][0-9A-Za-z-]*)+)*)?(?<Metadata>\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$")
 
@@ -45,4 +47,13 @@ data class NugetSemanticVersion(
       append('-').append(release)
     }
   }
+
+  override fun compareTo(other: NugetSemanticVersion) = compareValuesBy(this, other, {it.majorVersion}, {it.minorVersion}, {it.build})
+
+  override fun asString() = normalizedVersionString
+
+  override fun asStringWithoutProductCode() = normalizedVersionString
+
+  // These versions can't have product codes
+  override fun setProductCodeIfAbsent(productCode: String) = this
 }

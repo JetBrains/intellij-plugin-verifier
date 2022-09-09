@@ -100,4 +100,13 @@ class ReSharperRangeTest {
   fun oneNumberInRangeExclusiveTest() {
     VersionMatching.getResharperRangeFromWaveRangeString("(4.0)")
   }
+
+  @Test
+  fun getReSharperRangeFromReSharperString() {
+    val reSharperRange = VersionMatching.getReSharperRangeFromString("[8.2, 8.3)")
+    Assert.assertTrue(reSharperRange.isMinIncluded)
+    Assert.assertEquals(listOf(8, 2), reSharperRange.min?.components)
+    Assert.assertFalse(reSharperRange.isMaxIncluded)
+    Assert.assertEquals(listOf(8, 3), reSharperRange.max?.components)
+  }
 }

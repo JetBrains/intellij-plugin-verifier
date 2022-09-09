@@ -15,3 +15,13 @@ class InvalidVersionError(version: String) : PluginProblem() {
   override val level = Level.ERROR
   override val message = "Package version $version doesn't represent valid NuGet version"
 }
+
+class NullIdDependencyError : PluginProblem() {
+  override val level = Level.ERROR
+  override val message = "Dependency should have a name"
+}
+
+class InvalidDependencyVersionError(version: String, message: String) : PluginProblem() {
+  override val level = Level.ERROR
+  override val message = "Dependency version $version doesn't represent valid NuGet version: $message"
+}
