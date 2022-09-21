@@ -1,6 +1,6 @@
 dependencies {
   api group: 'org.jetbrains', name: 'annotations', version: '23.0.0'
-  api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0'
+  api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.2'
 
   api 'commons-io:commons-io:2.10.0'
   implementation 'org.apache.commons:commons-compress:1.21'
