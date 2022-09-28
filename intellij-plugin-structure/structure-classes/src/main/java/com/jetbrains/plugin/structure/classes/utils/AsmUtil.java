@@ -19,7 +19,7 @@ import java.nio.file.Path;
 
 public class AsmUtil {
 
-  public static final int ASM_API_LEVEL = Opcodes.ASM7;
+  public static final int ASM_API_LEVEL = Opcodes.ASM9;
 
   @NotNull
   public static ClassNode readClassNode(@NotNull String className,
