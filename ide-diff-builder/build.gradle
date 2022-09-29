@@ -72,7 +72,7 @@ dependencies {
   implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-cli', version: structureVersion
   implementation group: 'org.jetbrains.intellij.plugins', name: 'structure-ide-classes', version: structureVersion
   implementation 'com.github.spullara.cli-parser:cli-parser:1.1.6'
-  implementation 'org.apache.commons:commons-text:1.9'
+  implementation 'org.apache.commons:commons-text:1.10.0'
   implementation 'org.jetbrains.kotlinx:kotlinx-serialization-runtime:1.0-M1-1.4.0-rc'
 }
 
