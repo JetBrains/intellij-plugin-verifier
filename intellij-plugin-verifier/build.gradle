@@ -3,7 +3,7 @@ plugins {
   id "maven-publish"
 }
 
-ext.kotlin_version = '1.7.10'
+ext.kotlin_version = '1.7.20'
 
 String projectVersion = project.hasProperty('verifierProjectVersion') ? project.verifierProjectVersion : 'dev'
 def isDevMode = projectVersion == 'dev'
