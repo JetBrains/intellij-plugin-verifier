@@ -74,4 +74,4 @@ fun ClassFileMember.findEffectiveMemberAnnotation(annotationName: String, resolv
 }
 
 private fun ClassFileMember.isDirectlyAnnotatedWith(annotationName: String): Boolean =
-  runtimeInvisibleAnnotations.findAnnotation(annotationName) != null
+  annotations.findAnnotation(annotationName) != null

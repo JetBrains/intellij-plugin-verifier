@@ -19,6 +19,6 @@ class DynamicallyLoadedFilter : ClassFilter {
   }
 
   override fun shouldVerify(classFile: ClassFile) =
-    classFile.runtimeInvisibleAnnotations.findAnnotation(DYNAMICALLY_LOADED) == null
+    classFile.annotations.findAnnotation(DYNAMICALLY_LOADED) == null
 
 }
