@@ -86,7 +86,7 @@ configure(allprojects) {
     implementation 'org.mapdb:mapdb:3.0.8'
 
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.3'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.4'
     runtimeOnly "org.codehaus.groovy:groovy:3.0.13"
 
     implementation "commons-fileupload:commons-fileupload:1.4"
