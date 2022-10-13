@@ -30,7 +30,8 @@ class InternalFieldUsage(
       append("Internal field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
       append(" accessed in ${usageLocation.formatUsageLocation()}")
       append(
-        ". This field is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation and indicates " +
+        ". This field is marked with ${InternalConstants.INTERNAL_API_ANNOTATION} annotation or " +
+          "${InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
           "that the field is not supposed to be used in client code."
       )
     }

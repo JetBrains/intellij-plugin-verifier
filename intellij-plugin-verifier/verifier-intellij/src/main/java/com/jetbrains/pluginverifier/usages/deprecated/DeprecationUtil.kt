@@ -18,7 +18,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
  */
 val ClassFileMember.deprecationInfo: DeprecationInfo?
   get() {
-    val annotations = runtimeInvisibleAnnotations
+    val annotations = annotations
     val scheduledForRemoval = annotations.findAnnotation("org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval")
     if (scheduledForRemoval != null) {
       val inVersion = scheduledForRemoval.getAnnotationValue("inVersion") as? String

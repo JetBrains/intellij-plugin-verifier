@@ -24,7 +24,7 @@ interface ClassFile : ClassFileMember {
   val javaVersion: Int
   val enclosingClassName: String?
 
-  override val runtimeInvisibleAnnotations: List<AnnotationNode>
+  override val annotations: List<AnnotationNode>
 
   val isAbstract: Boolean
   val isFinal: Boolean

@@ -218,7 +218,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
 
       val internalApiUsage = oldProblemApiUsages.filterIsInstance<InternalApiUsage>().firstOrNull()
       if (internalApiUsage != null) {
-        appendLine("$apiLocation was marked @ApiStatus.Internal so external plugins must not you it. ")
+        appendLine("$apiLocation was marked @ApiStatus.Internal or @IntellijInternalApi so external plugins must not use it. ")
         appendLine("And yet we want to keep track of breaking internal API changes. You can mute this test on TeamCity with a comment 'Internal API change'.")
         appendLine()
       }

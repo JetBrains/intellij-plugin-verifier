@@ -32,8 +32,8 @@ class FieldAsm(override val containingClassFile: ClassFile, private val asmNode:
   override val accessType
     get() = getAccessType(asmNode.access)
 
-  override val runtimeInvisibleAnnotations
-    get() = asmNode.invisibleAnnotations.orEmpty()
+  override val annotations
+    get() = asmNode.invisibleAnnotations.orEmpty() + asmNode.visibleAnnotations.orEmpty()
 
   override val isStatic
     get() = asmNode.access and Opcodes.ACC_STATIC != 0

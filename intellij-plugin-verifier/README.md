@@ -39,7 +39,7 @@ Run `Verify plugin` configuration, which starts `verifier.jar check-plugin #plug
 - `verifier-core` — main logic of the bytecode verification, JVM references resolution and detecting binary
   compatibility issues
 - `verifier-intellij` — module specific for IntelliJ Platform Plugins that runs additional checks such as detecting
-  usages of `@Deprecated`, `@ApiStatus.Internal` and `@ApiStatus.Experimental` APIs inside the plugin.
+  usages of `@Deprecated`, `@ApiStatus.Internal`, `@IntellijInternalApi` and `@ApiStatus.Experimental` APIs inside the plugin.
 - `verifier-repository` — APIs for downloading plugins from
   the [Marketplace](https://plugins.jetbrains.com/) (`MarketplaceRepository`) and IDE builds from corresponding IDE
   repositories (`IdeRepository`).

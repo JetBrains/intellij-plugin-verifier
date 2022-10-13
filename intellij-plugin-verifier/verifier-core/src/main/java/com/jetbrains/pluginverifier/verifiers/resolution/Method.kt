@@ -38,5 +38,5 @@ interface Method : ClassFileMember {
   val tryCatchBlocks: List<TryCatchBlockNode>
   val localVariables: List<LocalVariableNode>
   val methodParameters: List<MethodParameter>
-  override val runtimeInvisibleAnnotations: List<AnnotationNode>
+  override val annotations: List<AnnotationNode>
 }

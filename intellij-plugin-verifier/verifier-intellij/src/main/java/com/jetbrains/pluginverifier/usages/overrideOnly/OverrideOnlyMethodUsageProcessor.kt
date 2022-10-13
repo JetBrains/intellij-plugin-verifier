@@ -33,8 +33,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
       && callerMethod.containingClassFile.superName == resolvedMethod.containingClassFile.name
 
   private fun Method.isOverrideOnlyMethod(): Boolean =
-    runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
-      || containingClassFile.runtimeInvisibleAnnotations.findAnnotation(overrideOnlyAnnotationName) != null
+    annotations.findAnnotation(overrideOnlyAnnotationName) != null
+      || containingClassFile.annotations.findAnnotation(overrideOnlyAnnotationName) != null
 
   private companion object {
     const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"

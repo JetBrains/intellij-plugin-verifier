@@ -38,8 +38,8 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
   override val signature: String?
     get() = asmNode.signature
 
-  override val runtimeInvisibleAnnotations: List<AnnotationNode>
-    get() = asmNode.invisibleAnnotations.orEmpty()
+  override val annotations: List<AnnotationNode>
+    get() = asmNode.invisibleAnnotations.orEmpty() + asmNode.visibleAnnotations.orEmpty()
 
   override val localVariables: List<LocalVariableNode>
     get() = asmNode.localVariables.orEmpty()

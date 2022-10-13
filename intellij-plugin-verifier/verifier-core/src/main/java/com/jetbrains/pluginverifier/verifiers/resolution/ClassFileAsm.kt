@@ -66,12 +66,11 @@ class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin:
       return asmNode.innerClasses.find { it.name == name }?.outerName
     }
 
-  override val runtimeInvisibleAnnotations
-    get() = asmNode.invisibleAnnotations.orEmpty()
+  override val annotations
+    get() = asmNode.invisibleAnnotations.orEmpty() + asmNode.visibleAnnotations.orEmpty()
 
   override val isAbstract
     get() = asmNode.access and Opcodes.ACC_ABSTRACT != 0
-
 
   override val isFinal
     get() = asmNode.access and Opcodes.ACC_FINAL != 0

@@ -14,7 +14,7 @@ interface Field : ClassFileMember {
   val name: String
   val descriptor: String
   val signature: String?
-  override val runtimeInvisibleAnnotations: List<AnnotationNode>
+  override val annotations: List<AnnotationNode>
 
   val isStatic: Boolean
   val isFinal: Boolean

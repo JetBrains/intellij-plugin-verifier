@@ -1,4 +1,4 @@
-package internal;
+package internal.internalApi;
 
 import org.jetbrains.annotations.ApiStatus;
 

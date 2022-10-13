@@ -10,9 +10,10 @@ import com.jetbrains.pluginverifier.usages.util.isMemberEffectivelyAnnotatedWith
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 /**
- * Usage of `@org.jetbrains.annotations.ApiStatus.Internal` API.
+ * Usage of [InternalConstants.INTERNAL_API_ANNOTATION] or [InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION] API
  */
 abstract class InternalApiUsage : ApiUsage()
 
 fun ClassFileMember.isInternalApi(resolver: Resolver): Boolean =
-  isMemberEffectivelyAnnotatedWith("org/jetbrains/annotations/ApiStatus\$Internal", resolver)
+  isMemberEffectivelyAnnotatedWith("org/jetbrains/annotations/ApiStatus\$Internal", resolver) ||
+    isMemberEffectivelyAnnotatedWith("com/intellij/openapi/util/IntellijInternalApi", resolver)
