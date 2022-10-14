@@ -3,7 +3,6 @@ package mock.plugin.internal;
 import idea.kotlin.internal.InternalFileKt;
 import idea.kotlin.internal.NonInternalClass;
 import internal.intellijInternalApi.IntellijInternalApiClass;
-import internal.intellijInternalApi.IntellijInternalApiField;
 import internal.intellijInternalApi.IntellijInternalApiMethod;
 import internal.internalApi.InternalApiClass;
 import internal.internalApi.InternalApiField;
@@ -120,15 +119,6 @@ public class InternalApiUser {
   }
 
   /*expected(INTERNAL)
-Internal field internal.intellijInternalApi.IntellijInternalApiField.x access
-
-Internal field internal.intellijInternalApi.IntellijInternalApiField.x : int is accessed in mock.plugin.internal.InternalApiUser.intellijInternalField(IntellijInternalApiField) : void. This field is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the field is not supposed to be used in client code.
-*/
-  public void intellijInternalField(IntellijInternalApiField field) {
-    int x = field.x;
-  }
-
-  /*expected(INTERNAL)
   Internal method internal.intellijInternalApi.IntellijInternalApiMethod.foo(int) invocation
 
   Internal method internal.intellijInternalApi.IntellijInternalApiMethod.foo(int x) : void is invoked in mock.plugin.internal.InternalApiUser.intellijInternalMethod(IntellijInternalApiMethod) : void. This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the method is not supposed to be used in client code.
@@ -151,36 +141,58 @@ Internal field internal.intellijInternalApi.IntellijInternalApiField.x : int is 
   public void intellijInternalClass() {
     new IntellijInternalApiClass();
   }
-  
+
+  /*expected(INTERNAL)
+  Internal method internal.intellijInternalApi.IntellijInternalApiClass.Companion.staticFun() invocation
+
+  Internal method internal.intellijInternalApi.IntellijInternalApiClass.Companion.staticFun() : void is invoked in mock.plugin.internal.InternalApiUser.staticFunOfIntellijInternalClass() : void. This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the method is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
+  Internal field internal.intellijInternalApi.IntellijInternalApiClass.Companion access
+
+  Internal field internal.intellijInternalApi.IntellijInternalApiClass.Companion : internal.intellijInternalApi.IntellijInternalApiClass.Companion is accessed in mock.plugin.internal.InternalApiUser.staticFunOfIntellijInternalClass() : void. This field is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the field is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
+  Internal class internal.intellijInternalApi.IntellijInternalApiClass.Companion reference
+
+  Internal class internal.intellijInternalApi.IntellijInternalApiClass.Companion is referenced in mock.plugin.internal.InternalApiUser.staticFunOfIntellijInternalClass() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
+  */
 
   /*expected(INTERNAL)
   Internal class internal.intellijInternalApi.IntellijInternalApiClass reference
 
   Internal class internal.intellijInternalApi.IntellijInternalApiClass is referenced in mock.plugin.internal.InternalApiUser.staticFunOfIntellijInternalClass() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
   */
-
-  /*expected(INTERNAL)
-  Internal method internal.intellijInternalApi.IntellijInternalApiClass.staticFun() invocation
-
-  Internal method internal.intellijInternalApi.IntellijInternalApiClass.staticFun() : void is invoked in mock.plugin.internal.InternalApiUser.staticFunOfIntellijInternalClass() : void. This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the method is not supposed to be used in client code.
-  */
   public void staticFunOfIntellijInternalClass() {
-    IntellijInternalApiClass.staticFun();
+    IntellijInternalApiClass.Companion.staticFun();
   }
 
-    /*expected(INTERNAL)
+  /*expected(INTERNAL)
+  Internal class internal.intellijInternalApi.IntellijInternalApiClass.Companion reference
+
+  Internal class internal.intellijInternalApi.IntellijInternalApiClass.Companion is referenced in mock.plugin.internal.InternalApiUser.staticFieldOfIntellijInternalClass() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
+  Internal method internal.intellijInternalApi.IntellijInternalApiClass.Companion.setStaticField(String) invocation
+
+  Internal method internal.intellijInternalApi.IntellijInternalApiClass.Companion.setStaticField(java.lang.String <set-?>) : void is invoked in mock.plugin.internal.InternalApiUser.staticFieldOfIntellijInternalClass() : void. This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the method is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
+  Internal field internal.intellijInternalApi.IntellijInternalApiClass.Companion access
+
+  Internal field internal.intellijInternalApi.IntellijInternalApiClass.Companion : internal.intellijInternalApi.IntellijInternalApiClass.Companion is accessed in mock.plugin.internal.InternalApiUser.staticFieldOfIntellijInternalClass() : void. This field is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the field is not supposed to be used in client code.
+  */
+
+  /*expected(INTERNAL)
   Internal class internal.intellijInternalApi.IntellijInternalApiClass reference
 
   Internal class internal.intellijInternalApi.IntellijInternalApiClass is referenced in mock.plugin.internal.InternalApiUser.staticFieldOfIntellijInternalClass() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
   */
-
-  /*expected(INTERNAL)
-  Internal field internal.intellijInternalApi.IntellijInternalApiClass.staticField access
-
-  Internal field internal.intellijInternalApi.IntellijInternalApiClass.staticField : java.lang.String is accessed in mock.plugin.internal.InternalApiUser.staticFieldOfIntellijInternalClass() : void. This field is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the field is not supposed to be used in client code.
-  */
   public void staticFieldOfIntellijInternalClass() {
-    IntellijInternalApiClass.staticField = "";
+    IntellijInternalApiClass.Companion.setStaticField("");
   }
-
 }
