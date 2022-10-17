@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.ide.repositories.AndroidStudioIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.CompositeIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
-import org.jetbrains.plugins.verifier.service.service.ide.AppCodeIdeRepository
+import org.jetbrains.plugins.verifier.service.server.ide.AppCodeIdeRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

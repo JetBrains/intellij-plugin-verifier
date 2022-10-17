@@ -23,8 +23,6 @@ import org.jetbrains.plugins.verifier.service.server.ServiceDAO
 import org.jetbrains.plugins.verifier.service.server.configuration.properties.TaskManagerProperties
 import org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService
 import org.jetbrains.plugins.verifier.service.service.features.FeatureServiceProtocol
-import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeProtocol
-import org.jetbrains.plugins.verifier.service.service.ide.AvailableIdeService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerificationResultFilter
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierService
 import org.jetbrains.plugins.verifier.service.service.verifier.VerifierServiceProtocol
@@ -55,7 +53,6 @@ class ServerContextConfiguration(
     buildProperties: BuildProperties,
     ideRepository: IdeRepository,
     pluginRepository: MarketplaceRepository,
-    availableIdeProtocol: AvailableIdeProtocol,
     featureServiceProtocol: FeatureServiceProtocol,
     @Value("\${verifier.service.jdk.8.dir}") defaultJdkPath: Path,
     @Value("\${verifier.service.home.directory}") applicationHomeDir: String,
@@ -147,26 +144,6 @@ class ServerContextConfiguration(
       featureService.start()
     }
     return featureService
-  }
-
-  @Bean
-  fun availableIdeService(
-    serverContext: ServerContext,
-    availableIdeProtocol: AvailableIdeProtocol,
-    taskManager: TaskManager,
-    @Value("\${verifier.service.enable.available.ide.service}") enableService: Boolean
-  ): AvailableIdeService {
-    val availableIdeService = with(serverContext) {
-      AvailableIdeService(
-        taskManager,
-        availableIdeProtocol,
-        ideRepository
-      )
-    }
-    if (enableService) {
-      availableIdeService.start()
-    }
-    return availableIdeService
   }
 
   private fun openServiceDAO(applicationHomeDir: Path, clearDatabaseOnCorruption: Boolean): ServiceDAO {
