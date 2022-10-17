@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.verifier.service.service.ide
+package org.jetbrains.plugins.verifier.service.server.ide
 
 import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
