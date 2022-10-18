@@ -11,9 +11,10 @@ import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import org.jdom2.Element
 
 /**
- * Utility methods that determine whether a plugin can be dynamically loaded/unloaded [DynamicPluginStatus].
+ * Utility methods that determine whether a plugin can be dynamically enabled/disabled [DynamicPluginStatus].
  */
 object DynamicPlugins {
+  private const val MESSAGE = "Plugin probably cannot be enabled or disabled without IDE restart"
   fun getDynamicPluginStatus(context: PluginVerificationContext): DynamicPluginStatus? {
     val verificationDescriptor = context.verificationDescriptor
     val idePlugin = context.idePlugin
@@ -27,7 +28,7 @@ object DynamicPlugins {
       )
         .filter { it.first.components.isNotEmpty() }
         .mapTo(reasonsNotToLoadUnloadWithoutRestart) { (descriptor, area) ->
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
+          "$MESSAGE because it declares $area components: " + formatListOfNames(descriptor.components.map { it.implementationClass })
         }
 
       val declaredExtensions = idePlugin.extensions.keys
@@ -45,7 +46,8 @@ object DynamicPlugins {
         }
       }
       if (nonDynamicExtensions.isNotEmpty()) {
-        reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: " + formatListOfNames(nonDynamicExtensions)
+        reasonsNotToLoadUnloadWithoutRestart += "$MESSAGE because it declares non-dynamic extensions: " +
+          formatListOfNames(nonDynamicExtensions)
       }
 
 
@@ -53,14 +55,14 @@ object DynamicPlugins {
 
       for (element in allActionsAndGroups) {
         if (element.name == "group" && element.getAttributeValue("id") == null) {
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified"
+          reasonsNotToLoadUnloadWithoutRestart += "$MESSAGE because it declares a group without 'id' specified"
           break
         }
       }
 
       for (element in allActionsAndGroups) {
         if (element.name == "action" && element.getAttributeValue("id") == null && element.getAttributeValue("class") == null) {
-          reasonsNotToLoadUnloadWithoutRestart += "Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified"
+          reasonsNotToLoadUnloadWithoutRestart += "$MESSAGE because it declares an action with neither 'id' nor 'class' specified"
           break
         }
       }

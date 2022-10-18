@@ -91,8 +91,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
 
     when (val dynamicPluginStatus = dynamicPluginStatus) {
-      is DynamicPluginStatus.MaybeDynamic -> appendLine("${INDENT}Plugin can be loaded/unloaded without IDE restart")
-      is DynamicPluginStatus.NotDynamic -> appendLine("${INDENT}Plugin cannot be loaded/unloaded without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+      is DynamicPluginStatus.MaybeDynamic -> appendLine("${INDENT}Plugin can probably be enabled or disabled without IDE restart")
+      is DynamicPluginStatus.NotDynamic -> appendLine("${INDENT}Plugin probably cannot be enabled or disabled without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
       null -> Unit
     }
 
