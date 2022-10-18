@@ -118,7 +118,7 @@ class DynamicPluginStatusTest {
 
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
+        setOf("Plugin probably cannot be enabled or disabled without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
       ),
       idePlugin
     )
@@ -180,7 +180,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring non dynamic extension point is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
+        setOf("Plugin probably cannot be enabled or disabled without IDE restart because it declares non-dynamic extensions: `com.intellij.nonDynamicEP`")
       ),
       buildPluginWithXml {
         """
@@ -199,9 +199,9 @@ class DynamicPluginStatusTest {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
         setOf(
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares project components: `SomeProjectComponent`",
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares module components: `SomeModuleComponent`",
-          "Plugin cannot be loaded/unloaded without IDE restart because it declares application components: `SomeApplicationComponent`"
+          "Plugin probably cannot be enabled or disabled without IDE restart because it declares project components: `SomeProjectComponent`",
+          "Plugin probably cannot be enabled or disabled without IDE restart because it declares module components: `SomeModuleComponent`",
+          "Plugin probably cannot be enabled or disabled without IDE restart because it declares application components: `SomeApplicationComponent`"
         )
       ),
       buildPluginWithXml {
@@ -252,7 +252,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring a group with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
+        setOf("Plugin probably cannot be enabled or disabled without IDE restart because it declares a group without 'id' specified")
       ),
       buildPluginWithXml {
         """
@@ -271,7 +271,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring a deep group with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares a group without 'id' specified")
+        setOf("Plugin probably cannot be enabled or disabled without IDE restart because it declares a group without 'id' specified")
       ),
       buildPluginWithXml {
         """
@@ -293,7 +293,7 @@ class DynamicPluginStatusTest {
   fun `plugin declaring an action with no ID specified is not dynamic`() {
     checkPlugin(
       DynamicPluginStatus.NotDynamic(
-        setOf("Plugin cannot be loaded/unloaded without IDE restart because it declares an action with neither 'id' nor 'class' specified")
+        setOf("Plugin probably cannot be enabled or disabled without IDE restart because it declares an action with neither 'id' nor 'class' specified")
       ),
       buildPluginWithXml {
         """
