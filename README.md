@@ -13,15 +13,15 @@
 
 IntelliJ Plugin Verifier checks the binary compatibility between IntelliJ-based IDE builds and IntelliJ Platform plugins.
 
-This tool is useful because plugin authors often specify a wide [[since; until] compatibility range](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html) but compile a plugin against only a specific IDE from the range.
+This tool is useful because plugin authors often specify a wide [\[since; until\] compatibility range](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html##idea-plugin__idea-version) but compile a plugin against only a specific IDE from the range.
 The IntelliJ Platform API can occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
 
 Example problems the Plugin Verifier can detect:
 
 1) Plugin references a class `com.example.Foo`, which is not available in the IDE. This can happen if the plugin was compiled against IDE v1.0, and the class `com.example.Foo` was removed in IDE v2.0.
 2) Plugin references a missing method of the IDE's class, which leads to `NoSuchMethodError` at runtime.
-3) Many other binary incompatibilities listed in the [Java Specification | Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html).
-4) Missing plugin dependencies, for example when plugin `A` depends on plugin `B`, but plugin `B` doesn't have a build that’s compatible with this IDE. It means that the user cannot install plugin `A` as the IDE requires all dependent plugins to be installed.
+3) Many other binary incompatibilities as listed in [Java Specification | Binary Compatibility](https://docs.oracle.com/javase/specs/jls/se9/html/jls-13.html).
+4) Missing plugin dependencies, for example, when plugin `A` depends on plugin `B`, but plugin `B` doesn't have a build that’s compatible with this IDE. It means that the user cannot install plugin `A` as the IDE requires all dependent plugins to be installed.
 
 ## Table of Contents
 
@@ -35,7 +35,6 @@ Example problems the Plugin Verifier can detect:
     - [Common Options](#common-options)
 - [Technical details](#technical-details)
 - [Integration](#integration)
-- [GitHub Actions](#github-actions)
 - [Feedback](#feedback)
 
 ## Installation
@@ -124,7 +123,7 @@ This command is used to check IDE build against a set of plugins.
 
 `<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
-If no plugins are explicitly specified then all compatible plugins in the [Plugin Repository](https://plugins.jetbrains.com) will be verified ([options](#common-options)).
+If no plugins are explicitly specified, then all compatible plugins in the [Plugin Repository](https://plugins.jetbrains.com) will be verified ([options](#common-options)).
 
 #### Examples
 
@@ -132,7 +131,7 @@ Check IDEA Ultimate #162.1121.32 against all plugins listed in `pluginsToCheck.t
 
     java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 -team-city -tc-grouping problem_type -excluded-plugins-file ignorePlugins.txt -plugins-to-check-file pluginsToCheck.txt -dump-broken-plugin-list actualBroken.txt check-ide /tmp/IU-162.1121.32
 
-Check IDEA Ultimate 162.1121.32 against all version of `Kotlin` and `NodeJs` plugins and the last version of the `PHP` plugin:
+Check IDEA Ultimate 162.1121.32 against all versions of `Kotlin` and `NodeJs` plugins and the last version of the `PHP` plugin:
 
     java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 -plugins-to-check-all-builds org.jetbrains.kotlin:NodeJS -plugins-to-check-last-builds com.jetbrains.php check-ide /tmp/IU-162.1121.32
 
@@ -148,7 +147,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
 
-`<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugins paths to verify, separated by a newline.
+`<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
 `<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
@@ -182,7 +181,7 @@ The `IU-173.4548.28` is IDEA Ultimate 2017.3.4 build, and `IU-181.3741.2` is som
 This command will do the following:
 
 1) Take all plugins from the Plugin Repository compatible with `IU-173.4548.28` and run the verification against `IU-173.4548.28`.
-2) Take the same versions of the plugins and verify them against `IU-181.3741.2`, even if those plugins' [since; until] compatibility ranges don't include the `IU-181.3741.2`.
+2) Take the same versions of the plugins and verify them against `IU-181.3741.2`, even if those plugins' \[since; until\] compatibility ranges don't include the `IU-181.3741.2`.
 3) Report problems that are present in `IU-181.3741.2` but not present in `IU-173.4548.28`.
 
 There are the following points to mention:
@@ -326,7 +325,7 @@ Plugins to be verified and plugins' dependencies are downloaded into `<plugins-d
 It can be reused between multiple runs of the Plugin Verifier: on the first run, all the necessary plugins will be downloaded, and on the subsequent runs, they will be taken from the cache.
 Note that not only the verified plugins are downloaded but also all plugins' dependencies.
 
-Plugins are downloaded from the [Plugin Repository](https://plugins.jetbrains.com/) into  `<plugins-directory>/<update-ID>.jar` or `<plugins-directory>/<update-ID>.zip`, depending on the  plugin's packaging type.
+Plugins are downloaded from the [Plugin Repository](https://plugins.jetbrains.com/) into  `<plugins-directory>/<update-ID>.jar` or `<plugins-directory>/<update-ID>.zip`, depending on the plugin's packaging type.
 `<update-ID>` is the unique ID of the plugin's version in the Plugin Repository's database.
 For example, [Kotlin 1.2.30-release-IJ2018.1-1](https://plugins.jetbrains.com/plugin/6954-kotlin/update/43775) has `update-ID` equal to `43775`.
 
@@ -343,7 +342,7 @@ This is necessary to speed up the verification, which needs to do many searches 
 
 ## Integration
 
-The most straightforward way of integrating the Plugin Verifier with your project is using the Gradle IntelliJ Plugin, which provides [`runPluginVerifier`](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#runpluginverifier-task) configurable task.
+The most straightforward way of integrating the Plugin Verifier with your project is using the Gradle IntelliJ Plugin, which provides [`runPluginVerifier`](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-runpluginverifier) configurable task.
 
 If you're not using Gradle within your project, there are predefined third-party actions available in the GitHub Actions Marketplace that automate the plugin verification process.
 
