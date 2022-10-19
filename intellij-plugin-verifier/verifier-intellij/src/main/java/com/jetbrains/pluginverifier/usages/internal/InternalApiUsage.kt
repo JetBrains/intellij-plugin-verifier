@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.usages.util.isMemberEffectivelyAnnotatedWith
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 /**
- * Usage of [InternalConstants.INTERNAL_API_ANNOTATION] or [InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION] API
+ * Usage of [InternalApiConstants.INTERNAL_API_ANNOTATION] or [InternalApiConstants.INTELLIJ_INTERNAL_API_ANNOTATION] API
  */
 abstract class InternalApiUsage : ApiUsage()
 

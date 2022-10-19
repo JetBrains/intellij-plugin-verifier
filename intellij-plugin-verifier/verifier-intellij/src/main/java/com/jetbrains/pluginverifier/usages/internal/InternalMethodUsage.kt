@@ -37,8 +37,8 @@ class InternalMethodUsage(
       append(" is invoked in " + usageLocation.formatUsageLocation())
       append(
         ". This " + apiElement.elementType.presentableName + " is marked with " +
-          "${InternalConstants.INTERNAL_API_ANNOTATION} annotation or " +
-          "${InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
+          "${InternalApiConstants.INTERNAL_API_ANNOTATION} annotation or " +
+          "${InternalApiConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
           "that the method is not supposed to be used in client code."
       )
     }
