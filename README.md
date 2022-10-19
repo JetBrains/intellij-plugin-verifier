@@ -3,7 +3,6 @@
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Twitter Follow](https://img.shields.io/twitter/follow/JBPlatform?style=flat)](https://twitter.com/JBPlatform)
 [![Slack](https://img.shields.io/badge/Slack-%23intellij--plugin--verifier-blue)](https://plugins.jetbrains.com/slack)
-[Download](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/)
 
 [![IDE Diff Builder](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml)
 [![IntelliJ Feature Extractor](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/intellij-feature-extractor.yml/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/intellij-feature-extractor.yml)
@@ -97,7 +96,7 @@ All the verification results are printed and saved in the following ways:
    
    **Note!** If you are implementing integration with the Plugin Verifier, you may check the presence of corresponding files to distinguish "successful" and "failed" verifications.
 
-2) If the `-teamcity (-tc)` option is specified, the results are printed in [TeamCity Tests Format](https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity#BuildScriptInteractionwithTeamCity-ReportingTests).
+2) If the `-teamcity (-tc)` option is specified, the results are printed in [TeamCity Tests Format](https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Tests).
    To choose a presentation type, specify the `-tc-grouping (-g)` option to either `plugin`, to group by each plugin, or `problem_type`, to group by the problem.
 3) If `-teamcity` isn't specified, the results are printed to console.
 
