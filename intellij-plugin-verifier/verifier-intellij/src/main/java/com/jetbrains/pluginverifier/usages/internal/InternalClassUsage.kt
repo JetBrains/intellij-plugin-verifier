@@ -32,8 +32,8 @@ class InternalClassUsage(
       append(" is referenced in " + usageLocation.formatUsageLocation())
       append(". This " + apiElement.elementType.presentableName)
       append(
-        " is marked with ${InternalConstants.INTERNAL_API_ANNOTATION} annotation or " +
-          "${InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
+        " is marked with ${InternalApiConstants.INTERNAL_API_ANNOTATION} annotation or " +
+          "${InternalApiConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
           "that the class is not supposed to be used in client code."
       )
     }

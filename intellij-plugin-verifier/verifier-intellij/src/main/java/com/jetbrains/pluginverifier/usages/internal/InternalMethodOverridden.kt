@@ -38,8 +38,8 @@ class InternalMethodOverridden(
       append("Internal method ${apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE)}")
       append(" is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}")
       append(
-        ". This method is marked with ${InternalConstants.INTERNAL_API_ANNOTATION} annotation or " +
-          "${InternalConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
+        ". This method is marked with ${InternalApiConstants.INTERNAL_API_ANNOTATION} annotation or " +
+          "${InternalApiConstants.INTELLIJ_INTERNAL_API_ANNOTATION} annotation and indicates " +
           "that the method is not supposed to be used in client code."
       )
     }
