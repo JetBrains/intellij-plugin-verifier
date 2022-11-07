@@ -22,7 +22,7 @@ interface IdePluginContentDescriptor {
   }
 
   enum class ClientKind {
-    ALL, GUEST, LOCAL
+    ALL, GUEST, LOCAL, CONTROLLER, OWNER, REMOTE
   }
 
   val services: List<ServiceDescriptor>
