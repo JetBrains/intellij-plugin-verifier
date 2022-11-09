@@ -68,28 +68,35 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   }
 
   private fun getOrCreateJrtFileSystem(jdkPath: Path): FileSystem {
-    try {
-      return FileSystems.getFileSystem(JRT_SCHEME_URI)
-    } catch (e: Exception) {
-      val jrtFsJars = listOf(
-        jdkPath.resolve("lib").resolve("jrt-fs.jar"),
-        jdkPath.resolve("Contents").resolve("Home").resolve("lib").resolve("jrt-fs.jar")
-      )
-      val jrtJar = jrtFsJars.find { it.exists() }
+    val javaVersion = System.getProperty("java.version")?.substringBefore(".")?.toIntOrNull()
+    val jrtFsJars = listOf(
+      jdkPath.resolve("lib").resolve("jrt-fs.jar"),
+      jdkPath.resolve("Contents").resolve("Home").resolve("lib").resolve("jrt-fs.jar")
+    )
+    val jrtJar = jrtFsJars.find { it.exists() }
 
-      requireNotNull(jrtJar) { "Invalid JDK. Neither of .jars exist: " + jrtFsJars.joinToString() }
+    requireNotNull(jrtJar) { "Invalid JDK. Neither of .jars exist: " + jrtFsJars.joinToString() }
 
-      val classLoader = URLClassLoader(arrayOf(jrtJar.toUri().toURL()))
-      return try {
-        val fileSystem = FileSystems.newFileSystem(JRT_SCHEME_URI, hashMapOf<String, Any>(), classLoader)
-        closeableResources += classLoader
-        fileSystem
-      } catch (e: FileSystemAlreadyExistsException) {
-        classLoader.closeLogged()
+    val classLoader = URLClassLoader(arrayOf(jrtJar.toUri().toURL()))
 
-        //File system might be already created concurrently. Try to get existing file system again.
+    return if (javaVersion == null || javaVersion < 17) {
+      try {
         FileSystems.getFileSystem(JRT_SCHEME_URI)
+      } catch (e: Exception) {
+        try {
+          val fileSystem = FileSystems.newFileSystem(JRT_SCHEME_URI, hashMapOf("java.home" to jdkPath.toString()), classLoader)
+          closeableResources += classLoader
+          fileSystem
+        } catch (e: FileSystemAlreadyExistsException) {
+          classLoader.closeLogged()
+
+          //File system might be already created concurrently. Try to get existing file system again.
+          FileSystems.getFileSystem(JRT_SCHEME_URI)
+        }
       }
+    }
+    else {
+      FileSystems.newFileSystem(JRT_SCHEME_URI, hashMapOf("java.home" to jdkPath.toString()), classLoader)
     }
   }
 
