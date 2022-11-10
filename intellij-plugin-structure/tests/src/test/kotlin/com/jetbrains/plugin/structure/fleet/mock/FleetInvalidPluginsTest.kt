@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.fleet.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginNameProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.*
@@ -30,6 +31,14 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `name is not specified`() {
+    listOf(
+      "<script>kk</script>",
+      "//df//",
+      "+Plugin",
+      "+Plugi-",
+    ).forEach {
+      checkInvalidPlugin(InvalidPluginNameProblem(it)) { file -> file.copy(meta = file.meta?.copy(name = it)) }
+    }
     checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = null)) }
     checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "")) }
     checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "\n")) }

@@ -198,8 +198,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         version = ""
-      }
-      , listOf(PropertyNotSpecified("version", "plugin.xml")))
+      }, listOf(PropertyNotSpecified("version", "plugin.xml")))
   }
 
   @Test
@@ -372,7 +371,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
     val linksString = testLinks.joinToString(", ") {
       val tag = it.first
-      val attr = when(tag) {
+      val attr = when (tag) {
         "img" -> "src"
         else -> "href"
       }
@@ -571,9 +570,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
 
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
-        }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
+      }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
     )
   }
 
@@ -664,6 +663,24 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         changeNotes = "<change-notes>$string65536</change-notes>"
       }, expectedProblems
     )
+  }
+
+
+  @Test
+  fun `invalid name test`() {
+    listOf(
+      "<script>kk</script>",
+      "//df//",
+      "+Plugin",
+      "+Plugi-",
+    ).forEach {
+      val problem = InvalidPluginNameProblem(it)
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>$it</name>"
+        }, listOf(problem)
+      )
+    }
   }
 
   @Test

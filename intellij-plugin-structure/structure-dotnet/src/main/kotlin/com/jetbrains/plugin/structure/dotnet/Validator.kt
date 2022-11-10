@@ -5,10 +5,7 @@
 package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.MAX_DOT_NET_RELEASE_NOTES_LENGTH
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidDependencyVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidIdError
@@ -54,10 +51,12 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
   if (bean.licenseUrl.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("licenseUrl"))
   }
-  val title = bean.title
-  if (title != null) {
-    validatePropertyLength("", "title", title, MAX_NAME_LENGTH, problems)
-  }
+  validatePluginName(
+    descriptor = "plugin.nupkg",
+    name = bean.title,
+    propertyName = "title",
+    problems = problems,
+  )
 
   val releaseNotes = bean.changeNotes
   if (releaseNotes != null) {

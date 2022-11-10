@@ -159,7 +159,7 @@ internal class PluginCreator private constructor(
     plugin.icons = icons
   }
 
-  fun setThirdPartyDependencies(thirdPartyDependencies: List<ThirdPartyDependency>){
+  fun setThirdPartyDependencies(thirdPartyDependencies: List<ThirdPartyDependency>) {
     plugin.thirdPartyDependencies = thirdPartyDependencies
   }
 
@@ -640,9 +640,11 @@ internal class PluginCreator private constructor(
           }
           themes.add(theme)
         }
+
         is ResourceResolver.Result.NotFound -> {
           registerProblem(UnableToFindTheme(descriptorPath, themePath))
         }
+
         is ResourceResolver.Result.Failed -> {
           registerProblem(UnableToReadTheme(descriptorPath, themePath, resolvedTheme.exception.localizedMessage))
         }
@@ -687,9 +689,11 @@ internal class PluginCreator private constructor(
         id.isBlank() -> {
           registerProblem(PropertyNotSpecified("id"))
         }
+
         "com.your.company.unique.plugin.id" == id -> {
           registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
         }
+
         else -> {
           validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
           validateNewlines("id", id)
@@ -704,12 +708,17 @@ internal class PluginCreator private constructor(
       DEFAULT_TEMPLATE_NAMES.any { it.equals(name, true) } -> {
         registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME, name))
       }
+
       else -> {
         val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
         if (templateWord != null) {
           registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
-        validatePropertyLength("name", name, MAX_NAME_LENGTH)
+        validatePluginName(
+          descriptor = "plugin.xml",
+          name,
+          problems,
+        )
         validateNewlines("name", name)
       }
     }

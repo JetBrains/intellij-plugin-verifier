@@ -21,6 +21,14 @@ class InvalidPluginIDProblem(private val id: String) : PluginProblem() {
     get() = Level.ERROR
 }
 
+class InvalidPluginNameProblem(private val name: String) : PluginProblem() {
+  override val message
+    get() = "Plugin name contains unsupported symbols: $name"
+  override val level
+    get() = Level.ERROR
+}
+
+
 class UnexpectedDescriptorElements(
   override val detailedMessage: String,
   descriptorPath: String? = null

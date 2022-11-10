@@ -5,9 +5,8 @@
 package com.jetbrains.plugin.structure.edu
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.base.problems.validatePluginName
 import com.jetbrains.plugin.structure.edu.EduPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
@@ -15,9 +14,12 @@ import java.util.*
 
 internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (descriptor.title.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified(TITLE))
-  }
+  validatePluginName(
+    descriptor = DESCRIPTOR_NAME,
+    name = descriptor.title,
+    propertyName = "title",
+    problems = problems,
+  )
   if (descriptor.summary.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(SUMMARY))
   }
@@ -33,9 +35,6 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
   }
   if (descriptor.descriptorVersion == null) {
     problems.add(PropertyNotSpecified(DESCRIPTOR_VERSION))
-  }
-  if (descriptor.title != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, TITLE, descriptor.title, MAX_NAME_LENGTH, problems)
   }
   validateLanguage(descriptor, problems)
   validateProgrammingLanguage(descriptor, problems)

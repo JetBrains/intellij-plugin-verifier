@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.edu.mock
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginNameProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -65,6 +66,15 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
 
   @Test
   fun `title is not specified`() {
+    listOf(
+      "<script>kk</script>",
+      "//df//",
+      "+Plugin",
+      "+Plugi-",
+    ).forEach {
+      checkInvalidPlugin(InvalidPluginNameProblem(it)) { title = it }
+    }
+    checkInvalidPlugin(InvalidPluginNameProblem(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "" }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "\n" }

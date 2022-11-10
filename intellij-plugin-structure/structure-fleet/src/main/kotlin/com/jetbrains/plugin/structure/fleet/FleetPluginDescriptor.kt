@@ -90,17 +90,11 @@ data class FleetPluginDescriptor(
         }
       }
     }
-
-    val readableName = meta?.name
-    when {
-      readableName.isNullOrBlank() -> {
-        problems.add(PropertyNotSpecified("name"))
-      }
-
-      else -> {
-        validatePropertyLength(FleetPluginManager.DESCRIPTOR_NAME, "name", readableName, MAX_NAME_LENGTH, problems)
-      }
-    }
+    validatePluginName(
+      descriptor = FleetPluginManager.DESCRIPTOR_NAME,
+      name = meta?.name,
+      problems = problems
+    )
     return problems
   }
 

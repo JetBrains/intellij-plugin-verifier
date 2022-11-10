@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.teamcity
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validatePluginName
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
@@ -20,7 +21,7 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   }
 
   val beanDisplayName = bean.info?.displayName
-  if (beanDisplayName == null || beanDisplayName.isBlank()) {
+  if (beanDisplayName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("display-name"))
   } else {
     val hasForbiddenWords = ForbiddenWordInPluginName.forbiddenWords.any { beanDisplayName.contains(it, ignoreCase = true) }
@@ -32,9 +33,13 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   if (name != null) {
     validatePropertyLength(DESCRIPTOR_NAME, "name", name, MAX_NAME_LENGTH, problems)
   }
-  if (beanDisplayName != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, "display-name", beanDisplayName, MAX_NAME_LENGTH, problems)
-  }
+
+  validatePluginName(
+    descriptor = DESCRIPTOR_NAME,
+    name = beanDisplayName,
+    propertyName = "display-name",
+    problems = problems,
+  )
 
   if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
