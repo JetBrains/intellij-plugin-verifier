@@ -88,7 +88,7 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
   fun `plugin long name`() {
     `test invalid plugin xml`(
       perfectDotNetBuilder.modify { title = "<title>${"a".repeat(65)}</title>" },
-      listOf(TooLongPropertyValue("", "title", 65, 64))
+      listOf(TooLongPropertyValue("plugin.nupkg", "title", 65, 64))
     )
   }
 

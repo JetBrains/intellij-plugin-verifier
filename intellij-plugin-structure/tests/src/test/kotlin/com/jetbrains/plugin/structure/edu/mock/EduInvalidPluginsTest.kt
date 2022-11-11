@@ -74,7 +74,7 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
     ).forEach {
       checkInvalidPlugin(InvalidPluginNameProblem(it)) { title = it }
     }
-    checkInvalidPlugin(InvalidPluginNameProblem(TITLE)) { title = null }
+    checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = null }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "" }
     checkInvalidPlugin(PropertyNotSpecified(TITLE)) { title = "\n" }
