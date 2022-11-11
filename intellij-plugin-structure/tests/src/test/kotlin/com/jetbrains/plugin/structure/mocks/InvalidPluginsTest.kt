@@ -84,27 +84,6 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
-  fun `plugin name contains newline`() {
-    `test invalid plugin xml`(
-      perfectXmlBuilder.modify {
-        name = "<name>Some\nname</name>"
-      },
-      listOf(ContainsNewlines("name", "plugin.xml"))
-    )
-  }
-
-  @Test
-  fun `plugin name contains newline at end`() {
-    val pluginName = "Some name"
-    val plugin = `test valid plugin xml`(
-      perfectXmlBuilder.modify {
-        name = "<name>$pluginName\n </name>"
-      }
-    )
-    assertEquals(pluginName, plugin.plugin.pluginName)
-  }
-
-  @Test
   fun `plugin id contains newline`() {
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
@@ -198,7 +177,8 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         version = ""
-      }, listOf(PropertyNotSpecified("version", "plugin.xml")))
+      }, listOf(PropertyNotSpecified("version", "plugin.xml"))
+    )
   }
 
   @Test
@@ -669,17 +649,16 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `invalid name test`() {
     listOf(
-      "<script>kk</script>",
+      "Some\n name",
       "//df//",
-      "+Plugin",
-      "+Plugi-",
+      "+cats",
+      "dogs-",
     ).forEach {
       val problem = InvalidPluginNameProblem(it)
-      `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          name = "<name>$it</name>"
-        }, listOf(problem)
-      )
+      val pluginXml = perfectXmlBuilder.modify {
+        name = "<name>$it</name>"
+      }
+      `test invalid plugin xml`(pluginXml, listOf(problem))
     }
   }
 

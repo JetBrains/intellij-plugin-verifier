@@ -719,7 +719,6 @@ internal class PluginCreator private constructor(
           name,
           problems,
         )
-        validateNewlines("name", name)
       }
     }
   }
