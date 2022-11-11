@@ -27,7 +27,11 @@ object VersionMatching {
         require(wave.majorVersion >= FIRST_NEW_WAVE_VERSION) { "The first wave version component should be in (1,..,9,11,12) or equal or greater than 182" }
         Pair(2000 + wave.majorVersion / 10, wave.majorVersion % 10)
       }
-    return if (wave.minorVersion != 0) ReSharperVersion(listOf(baseline, build, wave.minorVersion)) else ReSharperVersion(listOf(baseline, build))
+    return if (wave.minorVersion != 0) {
+      ReSharperVersion(listOf(baseline, build, wave.minorVersion), productCode = "")
+    } else {
+      ReSharperVersion(listOf(baseline, build), productCode = "")
+    }
   }
 
   fun getNugetSemanticVersionRange(originalVersionRange: String): NugetSemanticVersionRange {
