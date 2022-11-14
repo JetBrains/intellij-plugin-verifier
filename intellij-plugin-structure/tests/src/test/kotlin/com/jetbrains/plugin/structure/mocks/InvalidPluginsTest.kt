@@ -344,13 +344,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `latin description`() {
-    val desc = "Latin description, 1234 & ;,.! () long enough"
+    val desc = "Latin description, 1234 & ;,.!-–— () long enough"
     val plugin = `test valid plugin xml`(
       perfectXmlBuilder.modify {
         description = "<description>${desc.replace("&", "&amp;")}</description>"
       }
     )
     assertEquals(desc, plugin.plugin.description)
+    assert(plugin.unacceptableWarnings.isEmpty()) {
+      "Plugin with latin description has some unacceptable warnings: ${plugin.unacceptableWarnings}"
+    }
+    assert(plugin.warnings.isEmpty()) {
+      "Plugin with latin description has some warnings: ${plugin.warnings}"
+    }
   }
 
   @Test
