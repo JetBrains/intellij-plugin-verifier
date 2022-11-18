@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 data class PluginStructureWarning(private val pluginProblem: PluginProblem) {
 
   init {
-    check(pluginProblem.level == PluginProblem.Level.WARNING)
+    check(pluginProblem.level == PluginProblem.Level.WARNING || pluginProblem.level == PluginProblem.Level.UNACCEPTABLE_WARNING)
   }
 
   val problemType: String get() = "Plugin descriptor warning"
