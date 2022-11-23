@@ -64,19 +64,19 @@ class PublicPluginRepositoryTest : BaseRepositoryTest<MarketplaceRepository>() {
 
   @Test
   fun `request update info`() {
-    //Plugin ".ignore 2.3.2"
-    val updateInfo = repository.getPluginInfoByUpdateId(40625)!!
-    assertEquals(".ignore", updateInfo.pluginName)
-    assertEquals("2.3.2", updateInfo.version)
+    //Plugin ".env files support 2022.3"
+    val updateInfo = repository.getPluginInfoByUpdateId(228993)!!
+    assertEquals(".env files support", updateInfo.pluginName)
+    assertEquals("2022.3", updateInfo.version)
 
-    val updateIdToInfo = repository.getPluginInfosForManyPluginIdsAndUpdateIds(listOf(7495 to 40625))
-    assertEquals(mapOf(40625 to updateInfo), updateIdToInfo)
+    val updateIdToInfo = repository.getPluginInfosForManyPluginIdsAndUpdateIds(listOf(9525 to 228993))
+    assertEquals(mapOf(228993 to updateInfo), updateIdToInfo)
   }
 
   @Test
   fun `download existing plugin`() {
-    //Plugin ".ignore 2.3.2"
-    val updateInfo = repository.getPluginInfoByUpdateId(40625)!!
+    //Plugin ".env files support 2022.3"
+    val updateInfo = repository.getPluginInfoByUpdateId(228993)!!
     checkDownloadPlugin(updateInfo)
   }
 
