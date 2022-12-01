@@ -5,7 +5,7 @@
 package com.jetbrains.pluginverifier.results.signatures
 
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
-import org.objectweb.asm.signature.SignatureVisitor
+import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor
 
 
 /**

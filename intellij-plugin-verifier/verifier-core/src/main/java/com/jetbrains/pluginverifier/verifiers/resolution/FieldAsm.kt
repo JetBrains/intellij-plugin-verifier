@@ -7,8 +7,8 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 import com.jetbrains.pluginverifier.results.location.FieldLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.FieldNode
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.FieldNode
 
 class FieldAsm(override val containingClassFile: ClassFile, private val asmNode: FieldNode) : Field {
   override val location

@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.net.URI
 import java.net.URLClassLoader

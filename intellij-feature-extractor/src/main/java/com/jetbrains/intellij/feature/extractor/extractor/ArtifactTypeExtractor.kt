@@ -11,9 +11,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.MethodInsnNode
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
 
 /**
  * Extracts value returned by ArtifactType#getId() from a class extending ArtifactType.

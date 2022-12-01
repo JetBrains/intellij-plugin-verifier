@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.results.signatures.SigVisitor
 import org.apache.commons.text.StringEscapeUtils
 import org.jetbrains.ide.diff.builder.api.*
 import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
-import org.objectweb.asm.signature.SignatureReader
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader
 import java.io.Closeable
 import java.io.Writer
 import java.nio.file.Files

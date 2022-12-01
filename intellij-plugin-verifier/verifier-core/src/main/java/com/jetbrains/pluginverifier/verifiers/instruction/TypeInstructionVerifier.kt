@@ -10,9 +10,9 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.TypeInsnNode
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode
 
 /**
  * Processing of `new`, `anewarray`, `checkcast`, `instanceof` instructions.

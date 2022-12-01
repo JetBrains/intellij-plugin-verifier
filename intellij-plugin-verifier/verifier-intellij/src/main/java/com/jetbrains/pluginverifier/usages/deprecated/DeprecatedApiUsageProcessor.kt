@@ -10,7 +10,7 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : ApiUsageProcessor {
   override fun processClassReference(

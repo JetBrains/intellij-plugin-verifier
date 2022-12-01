@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*

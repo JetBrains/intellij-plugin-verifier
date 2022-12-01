@@ -7,12 +7,12 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.Frame
-import org.objectweb.asm.tree.analysis.SourceInterpreter
-import org.objectweb.asm.tree.analysis.SourceValue
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.*
+import org.jetbrains.org.objectweb.asm.tree.analysis.Analyzer
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceInterpreter
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceValue
 import java.util.*
 
 fun analyzeMethodFrames(method: Method): List<Frame<SourceValue>>? =

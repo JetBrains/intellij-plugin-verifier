@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: ExperimentalApiRegistrar) : ApiUsageProcessor {
 

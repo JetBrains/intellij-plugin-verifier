@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
-import org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.Type
 
 class MethodReturnTypeVerifier : MethodVerifier {
   override fun verify(method: Method, context: VerificationContext) {

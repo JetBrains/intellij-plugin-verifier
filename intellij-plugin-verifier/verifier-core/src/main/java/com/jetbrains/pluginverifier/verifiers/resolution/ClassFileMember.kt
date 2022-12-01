@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.access.AccessType
 import com.jetbrains.pluginverifier.results.location.Location
-import org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
 
 interface ClassFileMember {
   val containingClassFile: ClassFile

@@ -8,12 +8,12 @@ import com.jetbrains.plugin.structure.base.utils.toList
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.Type
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.LocalVariableNode
-import org.objectweb.asm.tree.MethodNode
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.tree.LocalVariableNode
+import org.jetbrains.org.objectweb.asm.tree.MethodNode
 
 class MethodAsm(override val containingClassFile: ClassFile, val asmNode: MethodNode) : Method {
   override val location

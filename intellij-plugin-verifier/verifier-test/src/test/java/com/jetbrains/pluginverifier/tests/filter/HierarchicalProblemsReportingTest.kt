@@ -21,7 +21,7 @@ import net.bytebuddy.description.modifier.MethodManifestation
 import net.bytebuddy.description.modifier.Visibility
 import net.bytebuddy.implementation.ExceptionMethod
 import org.junit.Test
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 
 class HierarchicalProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
 

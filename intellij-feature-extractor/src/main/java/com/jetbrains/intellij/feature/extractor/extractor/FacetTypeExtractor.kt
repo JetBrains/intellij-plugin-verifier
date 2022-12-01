@@ -12,8 +12,8 @@ import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
 import com.jetbrains.pluginverifier.verifiers.getOnStack
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.analysis.Value
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value
 
 /*
  * Extracts value returned by FacetType#getStringId from a class extending FacetType.

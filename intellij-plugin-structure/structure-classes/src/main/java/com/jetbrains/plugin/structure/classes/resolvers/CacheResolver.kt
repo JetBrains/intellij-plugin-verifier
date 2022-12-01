@@ -7,7 +7,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ExecutionException
 

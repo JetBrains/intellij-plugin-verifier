@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
-import org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
 
 interface ClassFile : ClassFileMember {
   override val location: ClassLocation

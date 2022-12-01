@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.resolvers
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import org.junit.Assert.*
 import org.junit.Test
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 
 class ResolverTest {

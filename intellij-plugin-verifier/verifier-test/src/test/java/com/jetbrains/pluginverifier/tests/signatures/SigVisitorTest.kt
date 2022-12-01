@@ -4,7 +4,7 @@ import com.jetbrains.pluginverifier.results.presentation.toFullJavaClassName
 import com.jetbrains.pluginverifier.results.signatures.*
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.objectweb.asm.signature.SignatureReader
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader
 
 /**
  * Asserts that [SigVisitor] returns proper

@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 interface ApiUsageProcessor {
   fun processClassReference(

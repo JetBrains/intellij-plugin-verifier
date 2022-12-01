@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 import java.util.*
 
 class PropertyUsageProcessor : ApiUsageProcessor {

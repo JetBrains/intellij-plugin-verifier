@@ -12,12 +12,12 @@ import com.jetbrains.pluginverifier.verifiers.*
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
-import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
-import org.objectweb.asm.tree.analysis.Frame
-import org.objectweb.asm.tree.analysis.SourceValue
-import org.objectweb.asm.tree.analysis.Value
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.*
+import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
+import org.jetbrains.org.objectweb.asm.tree.analysis.SourceValue
+import org.jetbrains.org.objectweb.asm.tree.analysis.Value
 
 /**
  * Extracts file extensions passed to consumer of FileTypeFactory.createFileTypes(FileTypeConsumer) from a class extending FileTypeFactory

@@ -5,8 +5,8 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.access.AccessType
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
 
 /**
  * Peels an internal JVM descriptor of a type.

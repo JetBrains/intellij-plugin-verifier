@@ -1,8 +1,8 @@
 package com.jetbrains.pluginverifier.tests.bytecode
 
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.tree.ClassNode
-import org.objectweb.asm.util.TraceClassVisitor
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.io.PrintWriter
 import java.io.StringWriter
 

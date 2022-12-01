@@ -5,7 +5,7 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.location.FieldLocation
-import org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
 
 interface Field : ClassFileMember {
   override val location: FieldLocation

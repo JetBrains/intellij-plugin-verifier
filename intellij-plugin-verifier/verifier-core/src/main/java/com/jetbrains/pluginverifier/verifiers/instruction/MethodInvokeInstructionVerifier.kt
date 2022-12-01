@@ -13,7 +13,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 class MethodInvokeInstructionVerifier(
   private val callerMethod: Method,

@@ -20,7 +20,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVerificationContext) : ApiUsageProcessor {
 

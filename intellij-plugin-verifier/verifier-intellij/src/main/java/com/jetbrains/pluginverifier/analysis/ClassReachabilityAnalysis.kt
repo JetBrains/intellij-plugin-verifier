@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.*
 import java.util.*
 
 private typealias ClassName = String

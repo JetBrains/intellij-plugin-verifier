@@ -5,10 +5,10 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.AnnotationNode
-import org.objectweb.asm.tree.LocalVariableNode
-import org.objectweb.asm.tree.TryCatchBlockNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.tree.LocalVariableNode
+import org.jetbrains.org.objectweb.asm.tree.TryCatchBlockNode
 
 interface Method : ClassFileMember {
   override val location: MethodLocation

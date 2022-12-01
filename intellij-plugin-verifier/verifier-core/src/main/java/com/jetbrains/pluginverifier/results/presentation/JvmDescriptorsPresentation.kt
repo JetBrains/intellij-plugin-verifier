@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.results.presentation
 
 import com.jetbrains.pluginverifier.results.signatures.FormatOptions
 import com.jetbrains.pluginverifier.results.signatures.SigVisitor
-import org.objectweb.asm.signature.SignatureReader
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader
 
 object JvmDescriptorsPresentation {
 

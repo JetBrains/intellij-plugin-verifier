@@ -7,9 +7,9 @@ package com.jetbrains.plugin.structure.classes.utils;
 import com.jetbrains.plugin.structure.base.utils.FileUtilKt;
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.ClassNode;
+import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.tree.ClassNode;
 
 import java.io.IOException;
 import java.io.InputStream;

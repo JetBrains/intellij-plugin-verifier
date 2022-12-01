@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import org.objectweb.asm.tree.ClassNode
+import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.util.*
 
 class FixedClassesResolver private constructor(

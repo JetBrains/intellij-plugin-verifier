@@ -11,12 +11,12 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
-import org.objectweb.asm.Handle
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.InvokeDynamicInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
+import org.jetbrains.org.objectweb.asm.Handle
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode
+import org.jetbrains.org.objectweb.asm.tree.InvokeDynamicInsnNode
+import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode
 
 class MemberAccessVerifier : InstructionVerifier {
   override fun verify(method: Method, instructionNode: AbstractInsnNode, context: VerificationContext) {

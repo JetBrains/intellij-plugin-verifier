@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import org.objectweb.asm.tree.AbstractInsnNode
+import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode
 
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
