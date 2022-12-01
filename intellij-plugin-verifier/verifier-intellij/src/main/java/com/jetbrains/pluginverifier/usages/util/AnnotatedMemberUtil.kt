@@ -52,7 +52,9 @@ fun ClassFileMember.findEffectiveMemberAnnotation(annotationName: String, resolv
   }
 
   val enclosingClassName = enclosingClassName
-  if (enclosingClassName != null) {
+  // If enclosing class name is the same as the current class name the endless loop happens
+  // (since the same class will be resolved and findEffectiveMemberAnnotation call leads here)
+  if (enclosingClassName != null && enclosingClassName != this.name) {
     val enclosingClass = resolver.resolveClassOrNull(enclosingClassName) ?: return null
     val memberAnnotation = enclosingClass.findEffectiveMemberAnnotation(annotationName, resolver)
     return memberAnnotation?.let { MemberAnnotation.AnnotatedViaContainingClass(enclosingClass, this, annotationName) }
