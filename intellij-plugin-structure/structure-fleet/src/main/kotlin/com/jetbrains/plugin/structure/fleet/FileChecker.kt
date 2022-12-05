@@ -8,6 +8,8 @@ private const val MAX_FILE_SIZE = 100L * 1024 * 1024 //100MB
 private const val MAX_PLUGIN_SIZE = 400L * 1024 * 1024 //400MB
 private const val MAX_FILES = 1000
 
+const val SHIP_PLUGIN_ID = "SHIP"
+
 internal class FileChecker(val pluginId: String?) {
   private var sumSize = 0L
   private var sumFiles = 0

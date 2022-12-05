@@ -51,40 +51,42 @@ data class FleetPluginDescriptor(
       problems.add(PropertyNotSpecified("vendor"))
     }
 
-    when {
-      compatibleShipVersionRange == null -> {
-        problems.add(PropertyNotSpecified("compatibleShipVersionRange"))
-      }
+    if (id != SHIP_PLUGIN_ID) {
+      when {
+        compatibleShipVersionRange == null -> {
+          problems.add(PropertyNotSpecified("compatibleShipVersionRange"))
+        }
 
-      compatibleShipVersionRange.from.isNullOrBlank() -> {
-        problems.add(PropertyNotSpecified("compatibleShipVersionRange.from"))
-      }
+        compatibleShipVersionRange.from.isNullOrBlank() -> {
+          problems.add(PropertyNotSpecified("compatibleShipVersionRange.from"))
+        }
 
-      compatibleShipVersionRange.to.isNullOrBlank() -> {
-        problems.add(PropertyNotSpecified("compatibleShipVersionRange.to"))
-      }
+        compatibleShipVersionRange.to.isNullOrBlank() -> {
+          problems.add(PropertyNotSpecified("compatibleShipVersionRange.to"))
+        }
 
-      else -> {
-        val fromSemver = parseVersionOrNull(compatibleShipVersionRange.from)
-        val toSemver = parseVersionOrNull(compatibleShipVersionRange.to)
-        when {
-          fromSemver == null -> {
-            problems.add(FleetInvalidShipVersion("from", compatibleShipVersionRange.from))
-          }
+        else -> {
+          val fromSemver = parseVersionOrNull(compatibleShipVersionRange.from)
+          val toSemver = parseVersionOrNull(compatibleShipVersionRange.to)
+          when {
+            fromSemver == null -> {
+              problems.add(FleetInvalidShipVersion("from", compatibleShipVersionRange.from))
+            }
 
-          toSemver == null -> {
-            problems.add(FleetInvalidShipVersion("to", compatibleShipVersionRange.to))
-          }
+            toSemver == null -> {
+              problems.add(FleetInvalidShipVersion("to", compatibleShipVersionRange.to))
+            }
 
-          fromSemver.isGreaterThan(toSemver) -> {
-            problems.add(FleetInvalidShipVersionRange(compatibleShipVersionRange.from, compatibleShipVersionRange.to))
-          }
+            fromSemver.isGreaterThan(toSemver) -> {
+              problems.add(FleetInvalidShipVersionRange(compatibleShipVersionRange.from, compatibleShipVersionRange.to))
+            }
 
-          else -> {
-            val fromVersionProblems = validateVersion("from", fromSemver)
-            problems.addAll(fromVersionProblems)
-            if (fromVersionProblems.isEmpty()) {
-              problems.addAll(validateVersion("to", toSemver))
+            else -> {
+              val fromVersionProblems = validateVersion("from", fromSemver)
+              problems.addAll(fromVersionProblems)
+              if (fromVersionProblems.isEmpty()) {
+                problems.addAll(validateVersion("to", toSemver))
+              }
             }
           }
         }
