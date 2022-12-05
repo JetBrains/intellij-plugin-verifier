@@ -76,6 +76,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
   }
 
   @Test
+  fun `do not validate compatibility range for ship`() {
+    checkValidPlugin { it.copy(id = SHIP_PLUGIN_ID, compatibleShipVersionRange = null) }
+  }
+
+  @Test
   fun `compatibility range is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange")) { it.copy(compatibleShipVersionRange = null) }
 
