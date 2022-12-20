@@ -2,53 +2,86 @@ package com.jetbrains.plugin.structure.base.utils
 
 import java.util.ArrayList
 
+abstract class BaseCompatibilityUtils {
+  protected abstract val maxBranchValue: Int
+  protected abstract val maxMinorValue: Int
+  protected abstract val maxBuildValue: Int
+  protected abstract val numbersOfNines: IntArray
 
-class CompatibilityUtils {
-  companion object {
-    private const val MAX_BRANCH_VALUE = 1000
-    private const val MAX_COMPONENT_VALUE = 10000
-    private const val MAX_BUILD_VALUE = 100000
-    private val NUMBERS_OF_NINES by lazy { initNumberOfNines() }
+  fun versionAsLong(vararg components: Int): Long {
+    val baselineVersion = components.getOrElse(0) { 0 }
+    val build = components.getOrElse(1) { 0 }
+    var longVersion = branchBuildAsLong(baselineVersion, build)
 
-    fun versionAsLong(vararg components: Int): Long {
-      val baselineVersion = components.getOrElse(0) { 0 }
-      val build = components.getOrElse(1) { 0 }
-      var longVersion = branchBuildAsLong(baselineVersion, build)
-
-      if (components.size >= 3) {
-        val component = components[2]
-        longVersion += if (component == Integer.MAX_VALUE) MAX_COMPONENT_VALUE - 1 else component
-      }
-
-      return longVersion
+    if (components.size >= 3) {
+      val component = components[2]
+      longVersion += if (component >= maxMinorValue) maxMinorValue - 1 else component
     }
 
-    fun getMaxVersionAsLong(): Long {
-      return branchBuildAsLong(MAX_BRANCH_VALUE - 1, MAX_BUILD_VALUE - 1)
+    return longVersion
+  }
+
+  fun getMaxVersionAsLong(): Long {
+    return branchBuildAsLong(maxBranchValue - 1, maxBuildValue - 1)
+  }
+
+  private fun branchBuildAsLong(branch: Int, build: Int): Long {
+    val result = if (build == Integer.MAX_VALUE || isNumberOfNines(build)) {
+      maxBuildValue - 1
+    } else {
+      build
     }
 
-    private fun branchBuildAsLong(branch: Int, build: Int): Long {
-      val result = if (build == Integer.MAX_VALUE || isNumberOfNines(build)) {
-        MAX_BUILD_VALUE - 1
-      } else {
-        build
-      }
+    return branch.toLong() * maxMinorValue * maxBuildValue + result.toLong() * maxMinorValue
+  }
 
-      return branch.toLong() * MAX_COMPONENT_VALUE * MAX_BUILD_VALUE + result.toLong() * MAX_COMPONENT_VALUE
+  private fun isNumberOfNines(p: Int) = numbersOfNines.any { it == p }
+}
+
+object ReSharperCompatibilityUtils: BaseCompatibilityUtils() {
+  override val maxBranchValue: Int
+    get() = 10000
+  override val maxMinorValue: Int
+    get() = 10
+  override val maxBuildValue: Int
+    get() = 10
+  override val numbersOfNines: IntArray
+    get() = initNumberOfNines()
+
+  private fun initNumberOfNines(): IntArray {
+    val numbersOfNines = ArrayList<Int>()
+    var i = 9
+    val maxIntDiv10 = Integer.MAX_VALUE / 10
+    while (i < maxIntDiv10) {
+      i = i * 10 + 9
+      numbersOfNines.add(i)
     }
 
-    private fun isNumberOfNines(p: Int) = NUMBERS_OF_NINES.any { it == p }
+    return numbersOfNines.toIntArray()
+  }
 
-    private fun initNumberOfNines(): IntArray {
-      val numbersOfNines = ArrayList<Int>()
-      var i = 99999
-      val maxIntDiv10 = Integer.MAX_VALUE / 10
-      while (i < maxIntDiv10) {
-        i = i * 10 + 9
-        numbersOfNines.add(i)
-      }
+  fun getMaxBuild() = maxBuildValue - 1
+}
 
-      return numbersOfNines.toIntArray()
+object CompatibilityUtils: BaseCompatibilityUtils() {
+  override val maxBranchValue: Int
+    get() = 1000
+  override val maxMinorValue: Int
+    get() = 10000
+  override val maxBuildValue: Int
+    get() = 100000
+  override val numbersOfNines: IntArray
+    get() = initNumberOfNines()
+
+  private fun initNumberOfNines(): IntArray {
+    val numbersOfNines = ArrayList<Int>()
+    var i = 99999
+    val maxIntDiv10 = Integer.MAX_VALUE / 10
+    while (i < maxIntDiv10) {
+      i = i * 10 + 9
+      numbersOfNines.add(i)
     }
+
+    return numbersOfNines.toIntArray()
   }
 }

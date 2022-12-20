@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.dotnet.version
 
+import com.jetbrains.plugin.structure.base.utils.ReSharperCompatibilityUtils
 import com.jetbrains.plugin.structure.base.utils.Version
 import kotlin.math.min
 
@@ -23,6 +24,7 @@ data class ReSharperVersion(val components: List<Int>, override val productCode:
   override fun asString() = asString(true)
   override fun asStringWithoutProductCode() = asString(false)
   override fun toString() = asString()
+  fun asLong() = ReSharperCompatibilityUtils.versionAsLong(*components.toIntArray())
 
   companion object {
     fun fromString(versionString: String): ReSharperVersion {
@@ -65,4 +67,34 @@ data class ReSharperVersion(val components: List<Int>, override val productCode:
     else {
       this
     }
+
+  fun getLowerVersion(): ReSharperVersion {
+    if (components.size >= 3 && components[2] != 0) {
+      val minorValue = components[2]
+      assert(minorValue > 0)
+      return ReSharperVersion(listOf(this.components[0], this.components[1], minorValue - 1), this.productCode)
+    }
+    val baselineVersion = components.getOrElse(0) { 0 }
+    val build = components.getOrElse(1) { 0 }
+    if (build != 0) {
+      assert(build > 0)
+      return ReSharperVersion(listOf(baselineVersion, build - 1), this.productCode)
+    }
+    assert(baselineVersion > 0)
+    return ReSharperVersion(listOf(baselineVersion - 1, ReSharperCompatibilityUtils.getMaxBuild()), this.productCode)
+  }
+
+  fun getHigherVersion(): ReSharperVersion {
+    if (components.size < 3 || components[2] < Integer.MAX_VALUE) {
+      val minorValue = components.getOrElse(0) { 0 }
+      return ReSharperVersion(listOf(components[0], components[1], minorValue + 1), this.productCode)
+    }
+    val baselineVersion = components.getOrElse(0) { 0 }
+    val build = components.getOrElse(1) { 0 }
+    if (build < Integer.MAX_VALUE) {
+      return ReSharperVersion(listOf(baselineVersion, build + 1), this.productCode)
+    }
+    assert(baselineVersion < Integer.MAX_VALUE)
+    return ReSharperVersion(listOf(baselineVersion + 1, build), this.productCode)
+  }
 }
