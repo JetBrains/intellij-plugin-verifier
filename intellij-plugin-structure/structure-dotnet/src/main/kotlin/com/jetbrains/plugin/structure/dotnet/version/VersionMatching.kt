@@ -62,6 +62,10 @@ object VersionMatching {
     // if min was changed we should include it, if max was changed we should exclude it, since we take a greater version
     val (newMin, isMinIncluded) = if (min != null) min to true else range.min to range.isMinIncluded
     val (newMax, isMaxIncluded) = if (max != null) max to false else range.max to range.isMaxIncluded
+
+    require(newMin == null || newMax == null || newMax > newMin || (isMaxIncluded && isMinIncluded)) {
+      "There is no known waves within the specified wave interval"
+    }
     return NugetSemanticVersionRange(newMin, isMinIncluded, newMax, isMaxIncluded)
   }
 

@@ -38,6 +38,21 @@ class ReSharperRangeTest {
     Assert.assertEquals(listOf(2021, 3), reSharperRange.max?.components)
   }
 
+  @Test(expected = IllegalArgumentException::class)
+  fun getWaveRangeFromStringNonexistentWaveVersionsWithoutReplacementTest() {
+    VersionMatching.getResharperRangeFromWaveRangeString("[10.0.0]")
+  }
+
+  @Test
+  fun getWaveRangeFromStringNonexistentWaveVersionsWithReplacementTest() {
+    val reSharperRange = VersionMatching.getResharperRangeFromWaveRangeString("[10.0.0, 13.0.0]")
+    Assert.assertTrue(reSharperRange.isMinIncluded)
+    Assert.assertEquals(listOf(2017, 3), reSharperRange.min?.components)
+    Assert.assertTrue(reSharperRange.isMinIncluded)
+    Assert.assertFalse(reSharperRange.isMaxIncluded)
+    Assert.assertEquals(listOf(2018, 2), reSharperRange.max?.components)
+  }
+
   @Test
   fun getWaveRangeFromStringOnlyMaxInclusiveTest() {
     val reSharperRange = VersionMatching.getResharperRangeFromWaveRangeString("(,9.1.0]")

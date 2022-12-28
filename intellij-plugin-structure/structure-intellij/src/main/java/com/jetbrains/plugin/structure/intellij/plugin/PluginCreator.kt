@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
@@ -377,7 +378,7 @@ internal class PluginCreator private constructor(
     val preload = extensionElement.readServicePreloadMode()
     val client = extensionElement.readServiceClient()
     //TODO: add OS extraction
-    var os: IdePluginContentDescriptor.Os? = null
+    val os: IdePluginContentDescriptor.Os? = null
     return IdePluginContentDescriptor.ServiceDescriptor(
       serviceInterface,
       serviceImplementation,
@@ -819,7 +820,7 @@ internal class PluginCreator private constructor(
         if (sinceBuildParsed.baselineVersion < 130 && sinceBuild.endsWith(".*")) {
           registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
         }
-        if (sinceBuildParsed.baselineVersion > 999) {
+        if (sinceBuildParsed.baselineVersion >= CompatibilityUtils.maxBranchValue) {
           registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
         }
         if (sinceBuildParsed.productCode.isNotEmpty()) {
@@ -834,7 +835,7 @@ internal class PluginCreator private constructor(
     if (untilBuildParsed == null) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      if (untilBuildParsed.baselineVersion > 999) {
+      if (untilBuildParsed.baselineVersion >= CompatibilityUtils.maxBranchValue) {
         registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
       } else if (untilBuildParsed.baselineVersion > 400) {
         registerProblem(SuspiciousUntilBuild(untilBuild))

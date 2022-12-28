@@ -1,12 +1,9 @@
 package com.jetbrains.plugin.structure.base.utils
 
-import java.util.ArrayList
-
 abstract class BaseCompatibilityUtils {
-  protected abstract val maxBranchValue: Int
+  abstract val maxBranchValue: Int
   protected abstract val maxMinorValue: Int
   protected abstract val maxBuildValue: Int
-  protected abstract val numbersOfNines: IntArray
 
   fun versionAsLong(vararg components: Int): Long {
     val baselineVersion = components.getOrElse(0) { 0 }
@@ -26,7 +23,7 @@ abstract class BaseCompatibilityUtils {
   }
 
   private fun branchBuildAsLong(branch: Int, build: Int): Long {
-    val result = if (build == Integer.MAX_VALUE || isNumberOfNines(build)) {
+    val result = if (build >= maxBuildValue) {
       maxBuildValue - 1
     } else {
       build
@@ -34,8 +31,6 @@ abstract class BaseCompatibilityUtils {
 
     return branch.toLong() * maxMinorValue * maxBuildValue + result.toLong() * maxMinorValue
   }
-
-  private fun isNumberOfNines(p: Int) = numbersOfNines.any { it == p }
 }
 
 object ReSharperCompatibilityUtils: BaseCompatibilityUtils() {
@@ -45,20 +40,6 @@ object ReSharperCompatibilityUtils: BaseCompatibilityUtils() {
     get() = 10
   override val maxBuildValue: Int
     get() = 10
-  override val numbersOfNines: IntArray
-    get() = initNumberOfNines()
-
-  private fun initNumberOfNines(): IntArray {
-    val numbersOfNines = ArrayList<Int>()
-    var i = 9
-    val maxIntDiv10 = Integer.MAX_VALUE / 10
-    while (i < maxIntDiv10) {
-      i = i * 10 + 9
-      numbersOfNines.add(i)
-    }
-
-    return numbersOfNines.toIntArray()
-  }
 
   fun getMaxBuild() = maxBuildValue - 1
 }
@@ -70,18 +51,4 @@ object CompatibilityUtils: BaseCompatibilityUtils() {
     get() = 10000
   override val maxBuildValue: Int
     get() = 100000
-  override val numbersOfNines: IntArray
-    get() = initNumberOfNines()
-
-  private fun initNumberOfNines(): IntArray {
-    val numbersOfNines = ArrayList<Int>()
-    var i = 99999
-    val maxIntDiv10 = Integer.MAX_VALUE / 10
-    while (i < maxIntDiv10) {
-      i = i * 10 + 9
-      numbersOfNines.add(i)
-    }
-
-    return numbersOfNines.toIntArray()
-  }
 }

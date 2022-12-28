@@ -17,13 +17,15 @@ class IdeVersionAsLongTest {
       "88.0.*" to 88000009999,
       "88.0.0.*" to 88000000000,
       "0" to 0,
-      "203.4203.*" to 203042039999
+      "203.4203.*" to 203042039999,
+      "223.999999" to 223999990000,
+      "999.100000000" to 999999990000
     )
 
     data.forEach { (k, v) ->
       val version = IdeVersion.createIdeVersion(k)
 
-      Assert.assertEquals("Ktor version (as long) is not as expected", v, version.asLong())
+      Assert.assertEquals("Ide version (as long) is not as expected", v, version.asLong())
     }
   }
 }
