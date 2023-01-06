@@ -42,6 +42,7 @@ object ReSharperCompatibilityUtils: BaseCompatibilityUtils() {
     get() = 10
 
   fun getMaxBuild() = maxBuildValue - 1
+  fun getMaxMinor() = maxMinorValue - 1
 }
 
 object CompatibilityUtils: BaseCompatibilityUtils() {

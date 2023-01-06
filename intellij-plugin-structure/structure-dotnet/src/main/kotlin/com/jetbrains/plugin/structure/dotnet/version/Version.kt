@@ -71,30 +71,38 @@ data class ReSharperVersion(val components: List<Int>, override val productCode:
   fun getLowerVersion(): ReSharperVersion {
     if (components.size >= 3 && components[2] != 0) {
       val minorValue = components[2]
-      assert(minorValue > 0)
+      require(minorValue > 0) {
+        "Current version has wrong format: minor value cannot be lower than 0"
+      }
       return ReSharperVersion(listOf(this.components[0], this.components[1], minorValue - 1), this.productCode)
     }
     val baselineVersion = components.getOrElse(0) { 0 }
     val build = components.getOrElse(1) { 0 }
     if (build != 0) {
-      assert(build > 0)
-      return ReSharperVersion(listOf(baselineVersion, build - 1), this.productCode)
+      require(build > 0) {
+        "Current version has wrong format: build value cannot be lower than 0"
+      }
+      return ReSharperVersion(listOf(baselineVersion, build - 1, ReSharperCompatibilityUtils.getMaxMinor()), this.productCode)
     }
-    assert(baselineVersion > 0)
+    require(baselineVersion > 0) {
+      "Current version has wrong format: baseline value cannot be lower than 0"
+    }
     return ReSharperVersion(listOf(baselineVersion - 1, ReSharperCompatibilityUtils.getMaxBuild()), this.productCode)
   }
 
   fun getHigherVersion(): ReSharperVersion {
-    if (components.size < 3 || components[2] < Integer.MAX_VALUE) {
-      val minorValue = components.getOrElse(0) { 0 }
+    if (components.size < 3 || components[2] < Int.MAX_VALUE) {
+      val minorValue = components.getOrElse(2) { 0 }
       return ReSharperVersion(listOf(components[0], components[1], minorValue + 1), this.productCode)
     }
     val baselineVersion = components.getOrElse(0) { 0 }
     val build = components.getOrElse(1) { 0 }
-    if (build < Integer.MAX_VALUE) {
+    if (build < Int.MAX_VALUE) {
       return ReSharperVersion(listOf(baselineVersion, build + 1), this.productCode)
     }
-    assert(baselineVersion < Integer.MAX_VALUE)
-    return ReSharperVersion(listOf(baselineVersion + 1, build), this.productCode)
+    require(baselineVersion < Int.MAX_VALUE) {
+      "It is not possible to get higher version, since the current version is the maximum possible version"
+    }
+    return ReSharperVersion(listOf(baselineVersion + 1, 0), this.productCode)
   }
 }
