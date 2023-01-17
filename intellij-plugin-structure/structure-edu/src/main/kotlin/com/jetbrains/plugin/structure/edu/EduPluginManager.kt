@@ -88,6 +88,7 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
         return PluginCreationFail(beanValidationResult)
       }
       val plugin = with(descriptor) {
+        val pluginId = this.pluginId ?: "${this.title}_${this.vendor?.name}_${this.programmingLanguage}"
         EduPlugin(
           pluginName = this.title,
           description = this.summary,
@@ -102,7 +103,7 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           isPrivate = this.isPrivate ?: false,
           eduStat = EduStat.fromDescriptor(this),
           icons = if (icon != null) listOf(icon) else emptyList(),
-          pluginId = "${this.title}_${this.vendor?.name}_${this.programmingLanguage}"
+          pluginId = pluginId
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
