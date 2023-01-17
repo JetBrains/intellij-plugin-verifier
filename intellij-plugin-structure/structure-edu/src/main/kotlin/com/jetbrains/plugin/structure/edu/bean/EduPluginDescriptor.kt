@@ -58,6 +58,8 @@ data class EduPluginDescriptor(
   val pluginVersion: String? = null,
   @JsonProperty(DESCRIPTOR_VERSION)
   val descriptorVersion: Int? = null,
+  @JsonProperty(PLUGIN_ID)
+  val pluginId: String? = null,
   @JsonProperty(IS_PRIVATE)
   val isPrivate: Boolean? = false
 )

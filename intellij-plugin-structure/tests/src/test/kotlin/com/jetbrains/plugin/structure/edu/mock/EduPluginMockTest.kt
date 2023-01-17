@@ -117,6 +117,32 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(sectionNames, eduStat.sections.map { it.title })
   }
 
+  @Test
+  fun `parse edu plugin with id`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(EduPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("course_with_id")
+      }
+      file("courseIcon.svg", iconTestContent)
+    }
+
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
+    val plugin = pluginCreationSuccess.plugin
+    assertEquals("Python Course", plugin.pluginName)
+    assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
+    assertEquals("1.1", plugin.pluginVersion)
+    assertEquals("JetBrains s.r.o.", plugin.vendor)
+    assertEquals("en", plugin.language)
+    assertEquals("Python", plugin.programmingLanguage)
+    assertEquals("unittest", plugin.environment)
+    assertEquals("new_id", plugin.pluginId)
+    assertEquals(1, plugin.eduStat!!.lessons.size)
+    assertEquals("lesson1", plugin.eduStat!!.lessons[0])
+    assertEquals(false, plugin.isPrivate)
+    assertEquals(iconTestContent, String(plugin.icons.single().content))
+    assertTrue(pluginCreationSuccess.warnings.isEmpty())
+  }
+
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
     val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
 
