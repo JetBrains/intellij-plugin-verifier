@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.dotnet.beans
 
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
 import java.io.InputStream
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.UnmarshalException
@@ -12,7 +14,13 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 object ReSharperPluginBeanExtractor {
   private val jaxbContext = JAXBContext.newInstance(NuspecDocumentBean::class.java)
-  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder().apply {
+    setErrorHandler(object : DefaultHandler() {
+      override fun error(e: SAXParseException) {
+        throw e
+      }
+    })
+  }
 
   @Throws(UnmarshalException::class)
   fun extractPluginBean(inputStream: InputStream): ReSharperPluginBean {

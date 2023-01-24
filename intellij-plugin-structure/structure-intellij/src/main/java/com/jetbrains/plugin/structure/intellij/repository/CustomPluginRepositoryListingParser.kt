@@ -2,6 +2,8 @@ package com.jetbrains.plugin.structure.intellij.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.w3c.dom.Element
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
 import java.net.URL
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -32,6 +34,13 @@ object CustomPluginRepositoryListingParser {
   ): List<PluginInfo> {
     val document = DocumentBuilderFactory.newInstance()
       .newDocumentBuilder()
+      .apply {
+        setErrorHandler(object : DefaultHandler() {
+          override fun error(e: SAXParseException) {
+            throw e
+          }
+        })
+      }
       .parse(pluginsListXmlContent.toByteArray().inputStream())
     val root = document.documentElement
     return if (listingType == CustomPluginRepositoryListingType.SIMPLE) {

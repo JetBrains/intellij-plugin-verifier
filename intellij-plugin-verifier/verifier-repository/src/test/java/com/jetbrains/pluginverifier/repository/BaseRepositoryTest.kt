@@ -11,6 +11,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
 import java.io.ByteArrayInputStream
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -52,6 +54,13 @@ abstract class BaseRepositoryTest<R : PluginRepository> {
   fun parseXmlDocument(xml: String): Document {
     return DocumentBuilderFactory.newInstance()
       .newDocumentBuilder()
+      .apply {
+        setErrorHandler(object : DefaultHandler() {
+          override fun error(e: SAXParseException) {
+            throw e
+          }
+        })
+      }
       .parse(InputSource(ByteArrayInputStream(xml.toByteArray())))
   }
 

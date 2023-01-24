@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.teamcity.beans
 
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
 import java.io.InputStream
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.UnmarshalException
@@ -11,7 +13,13 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 object TeamcityPluginBeanExtractor {
   private val jaxbContext = JAXBContext.newInstance(TeamcityPluginBean::class.java)
-  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder().apply {
+    setErrorHandler(object : DefaultHandler() {
+      override fun error(e: SAXParseException) {
+        throw e
+      }
+    })
+  }
 
   @Throws(UnmarshalException::class)
   fun extractPluginBean(inputStream: InputStream): TeamcityPluginBean {
