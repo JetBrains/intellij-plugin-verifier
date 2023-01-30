@@ -182,6 +182,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                 appendLine(getOldProblemApiUsagesNote(oldProblemApiUsages))
               } else {
                 appendLine(documentationNote)
+                appendLine()
               }
             }
 
