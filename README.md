@@ -1,7 +1,7 @@
 # intellij-plugin-verifier
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![Twitter Follow](https://img.shields.io/twitter/follow/JBPlatform?style=flat)](https://twitter.com/JBPlatform)
+[![Twitter Follow](https://img.shields.io/twitter/follow/JBPlatform?style=flat&logo=twitter)](https://twitter.com/JBPlatform)
 [![Slack](https://img.shields.io/badge/Slack-%23intellij--plugin--verifier-blue)](https://plugins.jetbrains.com/slack)
 
 [![IDE Diff Builder](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml)
@@ -349,7 +349,7 @@ Read more about possible integration options: [Verifying Plugin Compatibility](h
 
 ## Feedback
 
-Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP stands for `Marketplace aka Plugins`)
+Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP stands for `Marketplace`)
 
 - Check if there is already a similar ticket present.
 - If not, create a [<kbd>New Issue</kbd>](https://youtrack.jetbrains.com/newIssue?project=MP&c=Subsystem%20Plugin%20Verifier).
