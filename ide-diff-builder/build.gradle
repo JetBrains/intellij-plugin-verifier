@@ -3,7 +3,7 @@ plugins {
   id "org.jetbrains.kotlin.plugin.serialization" version "1.8.0" apply false
 }
 
-ext.kotlin_version = '1.8.0'
+ext.kotlin_version = '1.8.10'
 
 allprojects {
   apply plugin: 'java'
