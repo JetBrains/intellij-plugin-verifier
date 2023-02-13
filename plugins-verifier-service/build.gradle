@@ -89,7 +89,7 @@ configure(allprojects) {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
     runtimeOnly "org.codehaus.groovy:groovy:3.0.15"
 
-    implementation "commons-fileupload:commons-fileupload:1.4"
+    implementation "commons-fileupload:commons-fileupload:1.5"
 
     implementation group: 'org.jetbrains.intellij.plugins', name: 'intellij-feature-extractor', version: 'dev'
     implementation group: 'org.jetbrains.intellij.plugins', name: 'verifier-intellij', version: 'dev'
