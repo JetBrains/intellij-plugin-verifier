@@ -6,6 +6,6 @@ package com.jetbrains.plugin.structure.intellij.beans;
 
 import javax.xml.bind.annotation.XmlAttribute;
 
-public class PluginDependenciesModuleBean {
-  @XmlAttribute(name = "name") public String dependencyId;
+public class PluginModuleBean {
+  @XmlAttribute(name = "name") public String moduleName;
 }

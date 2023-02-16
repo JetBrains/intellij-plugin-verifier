@@ -194,6 +194,8 @@ internal class PluginCreator private constructor(
       }
     }
 
+    isV2 = bean.packageName != null
+
     val modulePrefix = "com.intellij.modules."
 
     if (bean.dependencies != null) {
@@ -208,7 +210,6 @@ internal class PluginCreator private constructor(
             //V2 dependency configs can be located only in root
             optionalDependenciesConfigFiles[dependency] =
               if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
-
           }
         }
       }
@@ -216,11 +217,9 @@ internal class PluginCreator private constructor(
 
     if (bean.dependenciesV2 != null) {
       for (dependencyBeanV2 in bean.dependenciesV2.modules) {
-        if (dependencyBeanV2.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, false)
-          //TODO: get dependencies from dependency config file
-          dependencies += PluginDependencyImpl("unresolved", true, false)
-          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanV2.dependencyId.replace("/", ".")}.xml"
+        if (dependencyBeanV2.moduleName != null) {
+          val dependency = PluginDependencyImpl(dependencyBeanV2.moduleName, false, false)
+          dependencies += dependency
         }
       }
       for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
@@ -232,32 +231,25 @@ internal class PluginCreator private constructor(
       }
     }
 
-    if (bean.contentDependencies != null) {
-      val modules = bean.contentDependencies.flatMap { it.modules }
-      val plugins = bean.contentDependencies.flatMap { it.plugins }
+    if (bean.pluginContent != null) {
+      val modules = bean.pluginContent.flatMap { it.modules }
 
-      for (dependencyBeanContent in modules) {
-        if (dependencyBeanContent.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
-          //TODO: get dependencies from dependency config file
-          dependencies += PluginDependencyImpl("unresolved", true, false)
-          optionalDependenciesConfigFiles[dependency] = "../${dependencyBeanContent.dependencyId.replace("/", ".")}.xml"
+      for (pluginModule in modules) {
+        val name = pluginModule.moduleName
+        if (name.isNullOrEmpty()) {
+          throw RuntimeException("Module name is not specified")
         }
-      }
-      //TODO: is this even possible?
-      for (dependencyBeanContent in plugins) {
-        if (dependencyBeanContent.dependencyId != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanContent.dependencyId, true, false)
-          dependencies += dependency
-
-          // TODO: understand how optional dependencies config files work in new format
-//          if (dependency.isOptional && dependencyBean.configFile != null) {
-//            optionalDependenciesConfigFiles[dependency] = dependencyBean.configFile
-//          }
+        // This code is taken from IntelliJ code, for now the information of content is not used, but may be useful in the future
+        // We will need to parse these config-files to find the optional dependencies (if it's needed)
+        // TODO: get optional dependencies from config file
+        var configFile: String? = null
+        val index = name.lastIndexOf('/')
+        if (index != -1) {
+          configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
         }
+        content += Module(name, configFile)
       }
     }
-
 
     bean.incompatibleModules?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
       incompatibleModules += it

@@ -42,6 +42,10 @@ class IdePluginImpl : IdePlugin {
 
   override var isImplementationDetail: Boolean = false
 
+  override var isV2: Boolean = false
+
+  override val content: MutableList<Module> = arrayListOf()
+
   override var underlyingDocument: Document = Document()
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
