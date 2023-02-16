@@ -9,6 +9,5 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PluginContentBean {
-  @XmlElement(name = "module") public List<PluginDependenciesModuleBean> modules = new ArrayList<>();
-  @XmlElement(name = "plugin") public List<PluginDependenciesPluginBean> plugins = new ArrayList<>();
+  @XmlElement(name = "module") public List<PluginModuleBean> modules = new ArrayList<>();
 }

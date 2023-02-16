@@ -43,5 +43,9 @@ interface IdePlugin : Plugin {
 
   val isImplementationDetail: Boolean
 
+  val isV2: Boolean
+
+  val content: List<Module>
+
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }
