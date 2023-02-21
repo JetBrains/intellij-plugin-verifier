@@ -92,9 +92,11 @@ fun buildClassReachabilityGraph(
   val missingOptionalDependencies = dependenciesGraph.getDirectMissingDependencies().filter { it.dependency.isOptional }
   for (missingOptionalDependency in missingOptionalDependencies) {
     val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
-      ?: idePlugin.modulesDescriptors.find { it.dependencies.contains(missingOptionalDependency.dependency) }?.module
-    if (optionalPlugin != null) {
-      val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(optionalPlugin)
+    val modules = idePlugin.modulesDescriptors
+      .filter { it.dependencies.map { it.id }.contains(missingOptionalDependency.dependency.id) }
+      .map { it.module }
+    (if (optionalPlugin != null) modules + optionalPlugin else modules).forEach {
+      val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(it)
       for (className in optionalClasses) {
         reachabilityGraph.markClass(className, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
       }

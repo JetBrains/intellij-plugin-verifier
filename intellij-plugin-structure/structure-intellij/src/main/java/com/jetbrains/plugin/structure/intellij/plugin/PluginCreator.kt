@@ -130,14 +130,7 @@ internal class PluginCreator private constructor(
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val optionalPlugin = pluginCreationResult.plugin
       plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
-      optionalPlugin.extensions.forEach { (extensionPointName, extensionElement) ->
-        plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
-      }
-      if (optionalPlugin is IdePluginImpl) {
-        plugin.appContainerDescriptor.mergeWith(optionalPlugin.appContainerDescriptor)
-        plugin.projectContainerDescriptor.mergeWith(optionalPlugin.projectContainerDescriptor)
-        plugin.moduleContainerDescriptor.mergeWith(optionalPlugin.moduleContainerDescriptor)
-      }
+      mergeContent(optionalPlugin)
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
         .errorsAndWarnings
@@ -148,31 +141,39 @@ internal class PluginCreator private constructor(
 
   fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin> && pluginCreationResult.plugin.isV2) {
-      val module = pluginCreationResult.plugin
-      // TODO: should we distinguish if it's module or plugin dependency
-      // These dependencies should be in V2 format and they are required for module but optional for plugin
-      val dependencies = mutableListOf<PluginDependency>()
-      module.dependencies.forEach { pluginDependency ->
-        val moduleDependency = PluginDependencyImpl(pluginDependency.id, true, pluginDependency.isModule)
-        plugin.dependencies += moduleDependency
-        dependencies.add(moduleDependency)
-      }
-      plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
+    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
+      // Content module should be in v2 model
+      if (pluginCreationResult.plugin.isV2) {
+        val module = pluginCreationResult.plugin
+        // TODO: should we distinguish if it's module or plugin dependency
+        // Module dependencies are required for module but optional for plugin
+        module.dependencies.forEach { pluginDependency ->
+          // no need to add already existing dependency
+          if (!plugin.dependencies.map { it.id }.contains(pluginDependency.id)) {
+            val moduleDependency = PluginDependencyImpl(pluginDependency.id, true, pluginDependency.isModule)
+            plugin.dependencies += moduleDependency
+          }
+        }
+        plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
 
-      module.extensions.forEach { (extensionPointName, extensionElement) ->
-        plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
-      }
-      if (module is IdePluginImpl) {
-        plugin.appContainerDescriptor.mergeWith(module.appContainerDescriptor)
-        plugin.projectContainerDescriptor.mergeWith(module.projectContainerDescriptor)
-        plugin.moduleContainerDescriptor.mergeWith(module.moduleContainerDescriptor)
+        mergeContent(module)
       }
     } else {
       val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
         .errorsAndWarnings
         .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, errors))
+    }
+  }
+
+  private fun mergeContent(pluginToMerge: IdePlugin) {
+    pluginToMerge.extensions.forEach { (extensionPointName, extensionElement) ->
+      plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
+    }
+    if (pluginToMerge is IdePluginImpl) {
+      plugin.appContainerDescriptor.mergeWith(pluginToMerge.appContainerDescriptor)
+      plugin.projectContainerDescriptor.mergeWith(pluginToMerge.projectContainerDescriptor)
+      plugin.moduleContainerDescriptor.mergeWith(pluginToMerge.moduleContainerDescriptor)
     }
   }
 
@@ -267,11 +268,10 @@ internal class PluginCreator private constructor(
 
       for (pluginModule in modules) {
         val name = pluginModule.moduleName
-        if (name.isNullOrEmpty()) {
-          throw RuntimeException("Module name is not specified")
+        if (name != null) {
+          val configFile = "../${name.replace("/", ".")}.xml"
+          contentModules += Module(name, configFile)
         }
-        val configFile = "../${name.replace("/", ".")}.xml"
-        contentModules += Module(name, configFile)
       }
     }
 
