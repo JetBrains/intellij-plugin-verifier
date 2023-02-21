@@ -1,0 +1,8 @@
+<idea-plugin>
+    <extensionPoints>
+        <extensionPoint name="appEP" interface="doesntMatter"/>
+        <extensionPoint area="IDEA_APPLICATION" name="appEP2" interface="doesntMatter"/>
+        <extensionPoint area="IDEA_PROJECT" name="projectEP" interface="doesntMatter"/>
+        <extensionPoint area="IDEA_MODULE" name="moduleEP" interface="doesntMatter"/>
+    </extensionPoints>
+</idea-plugin>

@@ -1,0 +1,38 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://github.com/JetBrains/intellij-plugins/tree/master/vuejs" package="org.jetbrains.vuejs">
+    <id>org.jetbrains.vuejs2</id>
+
+    <name>VueJS</name>
+    <description>Plugin description must be at least 40 characters long</description>
+    <version>231.7515.9</version>
+    <vendor email="vendor_email" url="https://www.jetbrains.com">JetBrains s.r.o.</vendor>
+
+    <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+
+    <xi:include href="../xiIncludeDir/ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+        <xi:fallback/>
+    </xi:include>
+
+    <content>
+        <module name="intellij.v2.module"/>
+        <module name="intellij.v2.missing"/>
+    </content>
+    
+    <dependencies>
+        <plugin id="mandatoryDependencyV2"/>
+        <plugin id="com.intellij.modules.mandatoryDependencyV2"/>
+        <module name="intellij.module.dependency"/>
+    </dependencies>
+
+    <actions>
+        <action class="SomeActionClass"/>
+        <group id="SomeGroupId"/>
+    </actions>
+
+    <!--  Resolve xi:include-s  -->
+    <xi:include href="extensions/ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <extensionPoints>
+        <xi:include href="extensions/common.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+    </extensionPoints>
+
+</idea-plugin>
