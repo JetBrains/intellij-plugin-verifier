@@ -59,7 +59,7 @@ configure(allprojects) {
   dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web") {
       dependencies {
-        implementation("org.apache.logging.log4j:log4j-to-slf4j:2.19.0") {
+        implementation("org.apache.logging.log4j:log4j-to-slf4j:2.20.0") {
           because("we need 2.17.0")
         }
         implementation("org.apache.logging.log4j:log4j-api:2.19.0") {
