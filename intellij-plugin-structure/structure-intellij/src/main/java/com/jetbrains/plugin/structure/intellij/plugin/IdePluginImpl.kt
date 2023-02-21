@@ -44,8 +44,6 @@ class IdePluginImpl : IdePlugin {
 
   override var isV2: Boolean = false
 
-  override val content: MutableList<Module> = arrayListOf()
-
   override var underlyingDocument: Document = Document()
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
@@ -69,6 +67,8 @@ class IdePluginImpl : IdePlugin {
   override var icons: List<PluginIcon> = emptyList()
 
   override val optionalDescriptors: MutableList<OptionalPluginDescriptor> = arrayListOf()
+
+  override val modulesDescriptors: MutableList<ModuleDescriptor> = arrayListOf()
 
   override var thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
 

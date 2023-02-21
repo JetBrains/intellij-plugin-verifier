@@ -31,6 +31,8 @@ interface IdePlugin : Plugin {
 
   val optionalDescriptors: List<OptionalPluginDescriptor>
 
+  val modulesDescriptors: List<ModuleDescriptor>
+
   val underlyingDocument: Document
 
   val originalFile: Path?
@@ -44,8 +46,6 @@ interface IdePlugin : Plugin {
   val isImplementationDetail: Boolean
 
   val isV2: Boolean
-
-  val content: List<Module>
 
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }

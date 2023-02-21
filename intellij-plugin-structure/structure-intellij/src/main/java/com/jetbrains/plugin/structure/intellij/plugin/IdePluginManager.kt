@@ -3,8 +3,6 @@
  */
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
@@ -217,6 +215,18 @@ class IdePluginManager private constructor(
     }
   }
 
+  private fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver) {
+    if (currentPlugin.isSuccess) {
+      val contentModules = currentPlugin.contentModules
+      for (module in contentModules) {
+        val configFile = module.configFile
+        val moduleCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configFile, false, resourceResolver, currentPlugin)
+        currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
+      }
+    }
+
+  }
+
   /**
    * [mainPlugin] - the root plugin (plugin.xml)
    * [currentPlugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
@@ -265,6 +275,7 @@ class IdePluginManager private constructor(
         if (extractedFile.isJar() || extractedFile.isDirectory) {
           val pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null)
           resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver)
+          resolveContentModules(extractedFile, pluginCreator, myResourceResolver)
           pluginCreator
         } else {
           getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
@@ -313,6 +324,7 @@ class IdePluginManager private constructor(
     } else if (pluginFile.isJar() || pluginFile.isDirectory) {
       pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null)
       resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver)
+      resolveContentModules(pluginFile, pluginCreator, myResourceResolver)
     } else {
       pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
     }

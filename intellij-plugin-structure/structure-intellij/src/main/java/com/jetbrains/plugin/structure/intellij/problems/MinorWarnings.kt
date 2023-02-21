@@ -58,6 +58,27 @@ class OptionalDependencyDescriptorResolutionProblem(
     }
 }
 
+class ModuleDescriptorResolutionProblem(
+  private val moduleName: String,
+  private val configurationFile: String,
+  private val errors: List<PluginProblem>
+) : PluginProblem() {
+
+  override val level
+    get() = Level.WARNING
+
+  override val message: String
+    get() {
+      val descriptorResolutionError = errors.filterIsInstance<PluginDescriptorResolutionError>().firstOrNull()
+      val prefix = "Configuration file '$configurationFile' for module '$moduleName'"
+      return if (descriptorResolutionError != null) {
+        "$prefix failed to be resolved: ${descriptorResolutionError.message}"
+      } else {
+        prefix + " is invalid: ${errors.joinToString { it.message }}"
+      }
+    }
+}
+
 data class DuplicatedDependencyWarning(val dependencyId: String) : PluginProblem() {
   override val level
     get() = Level.WARNING

@@ -32,7 +32,9 @@ data class MockIdePlugin(
   override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
-  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
+  override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
+  override val isV2: Boolean = false,
 ) : IdePlugin {
 
   override val useIdeClassLoader = false

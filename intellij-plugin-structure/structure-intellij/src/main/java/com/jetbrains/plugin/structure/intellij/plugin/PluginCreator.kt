@@ -103,6 +103,7 @@ internal class PluginCreator private constructor(
   }
 
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
+  val contentModules = arrayListOf<Module>()
 
   private val plugin = IdePluginImpl()
   private val problems = arrayListOf<PluginProblem>()
@@ -142,6 +143,36 @@ internal class PluginCreator private constructor(
         .errorsAndWarnings
         .filter { e -> e.level === PluginProblem.Level.ERROR }
       registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
+    }
+  }
+
+  fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
+    val pluginCreationResult = moduleCreator.pluginCreationResult
+    if (pluginCreationResult is PluginCreationSuccess<IdePlugin> && pluginCreationResult.plugin.isV2) {
+      val module = pluginCreationResult.plugin
+      // TODO: should we distinguish if it's module or plugin dependency
+      // These dependencies should be in V2 format and they are required for module but optional for plugin
+      val dependencies = mutableListOf<PluginDependency>()
+      module.dependencies.forEach { pluginDependency ->
+        val moduleDependency = PluginDependencyImpl(pluginDependency.id, true, pluginDependency.isModule)
+        plugin.dependencies += moduleDependency
+        dependencies.add(moduleDependency)
+      }
+      plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
+
+      module.extensions.forEach { (extensionPointName, extensionElement) ->
+        plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
+      }
+      if (module is IdePluginImpl) {
+        plugin.appContainerDescriptor.mergeWith(module.appContainerDescriptor)
+        plugin.projectContainerDescriptor.mergeWith(module.projectContainerDescriptor)
+        plugin.moduleContainerDescriptor.mergeWith(module.moduleContainerDescriptor)
+      }
+    } else {
+      val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
+        .errorsAndWarnings
+        .filter { e -> e.level === PluginProblem.Level.ERROR }
+      registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, errors))
     }
   }
 
@@ -239,15 +270,8 @@ internal class PluginCreator private constructor(
         if (name.isNullOrEmpty()) {
           throw RuntimeException("Module name is not specified")
         }
-        // This code is taken from IntelliJ code, for now the information of content is not used, but may be useful in the future
-        // We will need to parse these config-files to find the optional dependencies (if it's needed)
-        // TODO: get optional dependencies from config file
-        var configFile: String? = null
-        val index = name.lastIndexOf('/')
-        if (index != -1) {
-          configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
-        }
-        content += Module(name, configFile)
+        val configFile = "../${name.replace("/", ".")}.xml"
+        contentModules += Module(name, configFile)
       }
     }
 
@@ -569,7 +593,7 @@ internal class PluginCreator private constructor(
       .map { it.key }
       .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
 
-    if (dependencies.count { it.isModule } == 0) {
+    if (!plugin.isV2 && dependencies.count { it.isModule } == 0) {
       registerProblem(NoModuleDependencies(descriptorPath))
     }
 
