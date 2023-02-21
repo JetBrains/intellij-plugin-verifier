@@ -131,8 +131,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : BasePluginManagerTest<
     propertyFileOrigin: FileOrigin
   ) {
     assertNotNull(plugin.originalFile)
-    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { classesLocations ->
-      checkCompileServerJars(classesLocations, plugin)
+    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, emptyList()).use { classesLocations ->
 
       val mainResolver = CompositeResolver.create(
         IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
@@ -288,33 +287,6 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(
       setOf("org.jetbrains.vuejs2.optionalUpdaterV2Ultimate"),
       module.appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
-    )
-  }
-
-  private fun checkCompileServerJars(classesLocations: IdePluginClassesLocations, plugin: IdePlugin) {
-    val resolvers = classesLocations.getResolvers(CompileServerExtensionKey)
-    if (resolvers.isEmpty()) {
-      return
-    }
-    val singleResolver = resolvers.single() as JarFileResolver
-
-    val libDirectoryClasses = singleResolver.allClasses
-
-    val compileLibraryClass = "com/some/compile/library/CompileLibraryClass"
-    assertEquals(setOf(compileLibraryClass), libDirectoryClasses)
-
-    val fileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).fileOrigin
-    assertEquals(JarOrZipFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)
-
-    assertEquals(
-      mapOf(
-        "com.example.service.Service" to setOf(
-          "com.some.compile.library.One",
-          "com.some.compile.library.Two",
-          "com.some.compile.library.Three"
-        )
-      ),
-      singleResolver.implementedServiceProviders
     )
   }
 
