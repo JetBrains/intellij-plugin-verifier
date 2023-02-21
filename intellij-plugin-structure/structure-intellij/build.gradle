@@ -4,5 +4,5 @@ dependencies {
 
   implementation 'org.jsoup:jsoup:1.15.4'
   implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-  implementation "org.glassfish.jaxb:jaxb-runtime:2.3.1"
+  implementation "org.glassfish.jaxb:jaxb-runtime:4.0.2"
 }
