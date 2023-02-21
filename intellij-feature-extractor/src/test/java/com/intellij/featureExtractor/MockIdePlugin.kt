@@ -29,12 +29,14 @@ data class MockIdePlugin(
   override val incompatibleModules: List<String> = emptyList()
   override val underlyingDocument: Document = Document(Element("idea-plugin"))
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
+  override val modulesDescriptors: List<ModuleDescriptor> = emptyList()
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
   override val untilBuild: IdeVersion? = null
   override val definedModules: Set<String> = emptySet()
   override val originalFile: Path? = null
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
+  override val isV2: Boolean = false
   override val declaredThemes = emptyList<IdeTheme>()
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
   override fun isCompatibleWithIde(ideVersion: IdeVersion) = false

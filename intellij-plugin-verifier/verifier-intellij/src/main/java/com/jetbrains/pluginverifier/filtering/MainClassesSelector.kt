@@ -59,7 +59,8 @@ class MainClassesSelector : ClassesSelector {
 
   private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> {
     return PluginXmlUtil.getAllClassesReferencedFromXml(plugin) +
-      plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.optionalPlugin) }
+      plugin.optionalDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.optionalPlugin) } +
+      plugin.modulesDescriptors.flatMap { PluginXmlUtil.getAllClassesReferencedFromXml(it.module) }
   }
 
 

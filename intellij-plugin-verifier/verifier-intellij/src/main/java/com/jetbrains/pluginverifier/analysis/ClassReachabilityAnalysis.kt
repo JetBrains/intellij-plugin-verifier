@@ -92,6 +92,7 @@ fun buildClassReachabilityGraph(
   val missingOptionalDependencies = dependenciesGraph.getDirectMissingDependencies().filter { it.dependency.isOptional }
   for (missingOptionalDependency in missingOptionalDependencies) {
     val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
+      ?: idePlugin.modulesDescriptors.find { it.dependencies.contains(missingOptionalDependency.dependency) }?.module
     if (optionalPlugin != null) {
       val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(optionalPlugin)
       for (className in optionalClasses) {
