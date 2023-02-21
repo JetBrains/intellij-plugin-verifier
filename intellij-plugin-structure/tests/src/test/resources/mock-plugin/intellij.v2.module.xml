@@ -1,5 +1,0 @@
-<idea-plugin package="com.intellij.kubernetes.helm.gotpl">
-    <extensionPoints>
-        <extensionPoint name="optionalUpdaterV2" beanClass="com.intellij.BeanClass" dynamic="true"/>
-    </extensionPoints>
-</idea-plugin>

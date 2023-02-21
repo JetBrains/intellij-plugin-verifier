@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="EpWithDefaultNs">
+        <someEP implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
+    </extensions>
+</idea-plugin>
