@@ -729,10 +729,6 @@ internal class PluginCreator private constructor(
     val html = Jsoup.parseBodyFragment(htmlDescription)
     val textDescription = html.text()
 
-    if (textDescription.length < 40) {
-      registerProblem(ShortDescription())
-    }
-
     if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
       registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
       return
@@ -740,7 +736,7 @@ internal class PluginCreator private constructor(
 
     val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
     if (latinDescriptionPart == null) {
-      registerProblem(NonLatinDescription())
+      registerProblem(ShortOrNonLatinDescription())
     }
     val links = html.select("[href],img[src]")
     links.forEach { link ->
