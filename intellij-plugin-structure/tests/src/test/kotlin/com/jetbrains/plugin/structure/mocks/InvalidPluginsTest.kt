@@ -360,12 +360,22 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `short latin description`() {
+    `test plugin xml unacceptable warnings`(
+      perfectXmlBuilder.modify {
+        description = "<description>Too short latin description bla-bla-bla</description>"
+      },
+      listOf(ShortOrNonLatinDescription())
+    )
+  }
+
+  @Test
   fun `non latin description`() {
     `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         description = "<description>Описание без английского, но достаточно длинное</description>"
       },
-      listOf(NonLatinDescription())
+      listOf(ShortOrNonLatinDescription())
     )
   }
 
@@ -432,7 +442,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
       },
-      listOf(ShortDescription(), NonLatinDescription())
+      listOf(ShortOrNonLatinDescription())
     )
   }
 
