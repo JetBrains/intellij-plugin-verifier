@@ -1,0 +1,13 @@
+{
+  "id": "chunga.changa",
+  "version": "0.1",
+  "meta": {
+    "readableName": "Chunga Changa",
+    "description": "Chunga Changa language support",
+    "vendor": "JetBrains"
+  },
+  "compatibleVersionRange": {
+    "from": "1.1.1",
+    "to": "1.21.10"
+  }
+}
