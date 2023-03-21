@@ -59,6 +59,28 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
   }
 
   @Test
+  fun `parse edu plugin stat framework lesson`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(EduPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("course_stat_framework_lesson")
+      }
+      file("courseIcon.svg", iconTestContent)
+    }
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
+    val plugin = pluginCreationSuccess.plugin
+
+    assertEquals("Reinforcement Learning Maze Solver", plugin.pluginName)
+    assertEquals(false, plugin.isPrivate)
+    val eduStat = plugin.eduStat
+    assertNotNull(eduStat)
+    assertEquals(3, eduStat!!.lessons.size)
+    assertEquals(0, eduStat.sections.size)
+    assertEquals("About", eduStat.lessons[0])
+    assertEquals("Theory", eduStat.lessons[1])
+    assertEquals("Practice", eduStat.lessons[2])
+  }
+
+  @Test
   fun `parse edu plugin stat with sections test`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
       file(EduPluginManager.DESCRIPTOR_NAME) {
