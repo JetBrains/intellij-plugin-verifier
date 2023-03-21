@@ -59,7 +59,7 @@ data class EduStat(
 
       val sections = descriptor.items.filter { it.type == ItemType.SECTION.id }
         .map { Section(it.title, it.items.map { lesson -> lesson.title }) }
-      val lessons = allItems.filter { it.type == ItemType.LESSON.id || it.type.isBlank() }.map { it.title }
+      val lessons = allItems.filter { it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank() }.map { it.title }
       val tasks = allItems.flatMap { it.taskList }.groupingBy { it.taskType }.eachCount()
 
       return EduStat(sections, lessons, tasks)
@@ -79,5 +79,6 @@ enum class TaskType(val id: String) {
 
 enum class ItemType(val id: String) {
   LESSON("lesson"),
+  FRAMEWORK("framework"),
   SECTION("section")
 }

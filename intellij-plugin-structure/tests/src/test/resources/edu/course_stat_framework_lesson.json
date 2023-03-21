@@ -1,0 +1,134 @@
+{
+  "summary" : "my summary",
+  "title" : "Reinforcement Learning Maze Solver",
+  "programming_language" : "Python",
+  "language" : "en",
+  "course_type" : "PyCharm",
+  "edu_plugin_version": "3.7-2019.3-5266",
+  "is_private": false,
+  "vendor": {
+    "name": "JetBrains s.r.o.",
+    "url": "http://jetbrains.com/"
+  },
+  "items": [
+    {
+      "title": "About",
+      "task_list": [
+        {
+          "name": "task1",
+          "task_type": "edu",
+          "files": {
+            "tmp2.py": {
+              "name": "tmp2.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task2",
+          "task_type": "choice",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task3",
+          "task_type": "choice",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        }
+      ],
+      "type": "lesson"
+    },
+    {
+      "title": "Theory",
+      "task_list": [
+        {
+          "name": "task1",
+          "task_type": "edu",
+          "files": {
+            "tmp2.py": {
+              "name": "tmp2.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task2",
+          "task_type": "choice",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task3",
+          "task_type": "choice",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        }
+      ],
+      "type": "lesson"
+    },
+    {
+      "title": "Practice",
+      "task_list": [
+        {
+          "name": "task1",
+          "task_type": "theory",
+          "files": {
+            "tmp2.py": {
+              "name": "tmp2.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task2",
+          "task_type": "ide",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        },
+        {
+          "name": "task3",
+          "task_type": "choice",
+          "files": {
+            "tmp.py": {
+              "name": "tmp.py",
+              "text": "",
+              "placeholders": []
+            }
+          }
+        }
+      ],
+      "type": "framework"
+    }
+  ],
+  "course_version": "1.1",
+  "version" : 11
+}
