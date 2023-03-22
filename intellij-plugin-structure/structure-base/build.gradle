@@ -3,7 +3,7 @@ dependencies {
   api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.7'
 
   api 'commons-io:commons-io:2.10.0'
-  implementation 'org.apache.commons:commons-compress:1.22'
+  implementation 'org.apache.commons:commons-compress:1.23.0'
   implementation 'org.tukaani:xz:1.9'
 
   //Provides English class capable of pluralizing english words.
