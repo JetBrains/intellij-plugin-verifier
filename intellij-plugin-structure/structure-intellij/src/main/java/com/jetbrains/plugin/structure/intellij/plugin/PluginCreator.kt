@@ -778,12 +778,7 @@ internal class PluginCreator private constructor(
   }
 
   private fun validateVendor(vendorBean: PluginVendorBean?) {
-    if (vendorBean == null) {
-      registerProblem(PropertyNotSpecified("vendor", descriptorPath))
-      return
-    }
-
-    if (vendorBean.url.isNullOrBlank() && vendorBean.email.isNullOrBlank() && vendorBean.name.isNullOrBlank()) {
+    if (vendorBean == null || vendorBean.name.isNullOrBlank()) {
       registerProblem(PropertyNotSpecified("vendor", descriptorPath))
       return
     }

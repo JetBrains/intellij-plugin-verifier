@@ -194,6 +194,16 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `plugin vendor name is not specified`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        vendor = "<vendor url=\"https://test.com\"></vendor>"
+      },
+      listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+    )
+  }
+
+  @Test
   fun `plugin version is not specified`() {
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
@@ -323,12 +333,12 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
     `test valid plugin xml`(
       perfectXmlBuilder.modify {
-        vendor = """<vendor url="https://vendor.url"></vendor>"""
+        vendor = """<vendor url="https://vendor.url">vendor</vendor>"""
       })
 
     `test valid plugin xml`(
       perfectXmlBuilder.modify {
-        vendor = """<vendor email="vendor@email.com"></vendor>"""
+        vendor = """<vendor email="vendor@email.com">vendor</vendor>"""
       })
   }
 
