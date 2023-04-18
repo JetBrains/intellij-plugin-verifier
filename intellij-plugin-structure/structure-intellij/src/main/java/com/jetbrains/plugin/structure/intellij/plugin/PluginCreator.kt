@@ -250,7 +250,7 @@ internal class PluginCreator private constructor(
     if (bean.dependenciesV2 != null) {
       for (dependencyBeanV2 in bean.dependenciesV2.modules) {
         if (dependencyBeanV2.moduleName != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.moduleName, false, false)
+          val dependency = PluginDependencyImpl(dependencyBeanV2.moduleName, false, true)
           dependencies += dependency
         }
       }
