@@ -4,5 +4,7 @@ interface InterfaceWithDefaultMethodUsingInternalAPI {
 
   val id: String
 
-  fun getPlaceholderCollector() : AnInternalType? = null
+  fun returningInternal() : AnInternalType? = null
+  fun internalArgsReturningInternal(anInternalType: AnInternalType, s: String) : AnInternalType? = null
+  fun internalArgsReturningVoid(anInternalType: AnInternalType, s: String) {}
 }
