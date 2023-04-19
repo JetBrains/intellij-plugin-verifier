@@ -77,7 +77,12 @@ object JvmDescriptorsPresentation {
 
   fun convertClassSignature(signature: String, binaryNameConverter: String.() -> String): String {
     require(signature.isNotEmpty()) { "Empty signature is not expected here" }
-    val visitor = runSignatureVisitor(signature)
+    val visitor: SigVisitor
+    try {
+      visitor = runSignatureVisitor(signature)
+    } catch (e: IllegalArgumentException) {
+      return "{unparseable: ${signature.toHex()}}"
+    }
     val classSignature = visitor.getClassSignature()
     val formatOptions = FormatOptions(internalNameConverter = binaryNameConverter)
     return classSignature.format(formatOptions)
@@ -125,4 +130,12 @@ object JvmDescriptorsPresentation {
     return rawParameterTypes
   }
 
+}
+
+private fun String.toHex(): String {
+  val sb: StringBuilder = StringBuilder(this.length * 3)
+  for (c in this) {
+    sb.append(String.format("%04x ", c.toInt() and 0xff))
+  }
+  return sb.toString().trim()
 }
