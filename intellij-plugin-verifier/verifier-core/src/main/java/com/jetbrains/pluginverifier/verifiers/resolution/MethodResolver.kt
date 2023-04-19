@@ -309,6 +309,7 @@ private class MethodResolveImpl(
   /**
    * A method is signature polymorphic if all of the following are true:
    * - It is declared in the java.lang.invoke.MethodHandle class.
+   *   or it is declared in the java.lang.invoke.VarHandle class.
    * - It has a single formal parameter of type Object[].
    * - It has a return type of Object.
    * - It has the ACC_VARARGS and ACC_NATIVE flags set.
@@ -316,7 +317,8 @@ private class MethodResolveImpl(
    * In Java SE 8, the only signature polymorphic methods are the invoke and invokeExact methods of the class java.lang.invoke.MethodHandle.
    */
   private fun isSignaturePolymorphic(methodNode: Method): Boolean =
-    "java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
+    ("java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
+      || "java/lang/invoke/VarHandle" == methodNode.containingClassFile.name)
       && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
       && methodNode.isVararg
       && methodNode.isNative
