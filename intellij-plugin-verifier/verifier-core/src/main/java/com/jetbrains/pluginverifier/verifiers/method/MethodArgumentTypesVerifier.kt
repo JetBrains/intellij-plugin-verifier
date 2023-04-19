@@ -6,7 +6,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
-import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isKotlinDefaultImpl
+import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isKotlinDefaultMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
@@ -14,7 +14,7 @@ import org.objectweb.asm.Type
 
 class MethodArgumentTypesVerifier : MethodVerifier {
   override fun verify(method: Method, context: VerificationContext) {
-    if (method.isKotlinDefaultImpl()) {
+    if (method.isKotlinDefaultMethod()) {
       return
     }
 

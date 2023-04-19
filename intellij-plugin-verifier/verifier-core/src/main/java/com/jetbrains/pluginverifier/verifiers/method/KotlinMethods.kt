@@ -1,11 +1,18 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
+import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 object KotlinMethods {
+  private const val capacity = 10
+  private val cache = object : LinkedHashMap<MethodLocation, Boolean>(10) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<MethodLocation, Boolean>?): Boolean {
+      return size > capacity
+    }
+  }
 
   /**
    * Identify a Kotlin default method.
@@ -44,9 +51,17 @@ object KotlinMethods {
    *     MAXSTACK = 3
    *     MAXLOCALS = 3
    * ```
+   *
+   * @see [`JvmDefault` annotation](https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/jvm/src/kotlin/jvm/JvmDefault.kt)
    */
-  fun Method.isKotlinDefaultImpl(): Boolean {
+  fun Method.isKotlinDefaultMethod(): Boolean {
     val method: Method = this
+    return cache.computeIfAbsent(method.location) {
+      return@computeIfAbsent isKotlinMethodInvokingDefaultImpls(method)
+    }
+  }
+
+  private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
     // filter non kotlin classes
     if (!method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }) {
       return false
