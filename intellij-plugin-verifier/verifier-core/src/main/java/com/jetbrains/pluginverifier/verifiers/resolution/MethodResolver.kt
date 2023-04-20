@@ -319,7 +319,8 @@ private class MethodResolveImpl(
   private fun isSignaturePolymorphic(methodNode: Method): Boolean =
     ("java/lang/invoke/MethodHandle" == methodNode.containingClassFile.name
       || "java/lang/invoke/VarHandle" == methodNode.containingClassFile.name)
-      && "([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
+      && ("([Ljava/lang/Object;)Ljava/lang/Object;" == methodNode.descriptor
+      || "([Ljava/lang/Object;)Z" == methodNode.descriptor)
       && methodNode.isVararg
       && methodNode.isNative
 
