@@ -128,7 +128,7 @@ This command is used to check IDE build against a set of plugins.
         [-ignored-problems | -ip <file>]
         [-keep-only-problems | -kop <file>]
 
-`<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
+`<IDE>` is either a path to local IDE installation, or an IDE pattern (see below in the [common options](#common-options)).
 
 If no plugins are explicitly specified, then all compatible plugins in the [Plugin Repository](https://plugins.jetbrains.com) will be verified ([options](#common-options)).
 
@@ -158,44 +158,81 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
-`<IDE>` is either a path to local IDE installation, or an IDE pattern (see below in the [common options](#common-options)) 
+`<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
 
 #### Specific options
 
 * `-suppress-internal-api-usages` will suppress internal API usages from JetBrains plugins.
-This option is used by JetBrains Marketplace by default. 
+  This option is used by JetBrains Marketplace by default.
 
-    Allowed values: 
- 
-  * `no`: all internal API usages will be reported. This is the default value.
-  * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.  
+  Allowed values:
+
+    * `no`: all internal API usages will be reported. This is the default value.
+    * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.
 
 * `-mute` will mute (ignore) a specified plugin problems.
 
-    Supported values:
+  Supported values:
 
     - `ForbiddenPluginIdPrefix`,
     - `TemplateWordInPluginId`,
     - `TemplateWordInPluginName`,
     - `ReleaseVersionAndPluginVersionMismatch`,
 
-    A comma-separated list of plugin problems is allowed, e.g.:
+  A comma-separated list of plugin problems is allowed, e.g.:
 
         -mute TemplateWordInPluginId,TemplateWordInPluginName
 
-    The switch will mute any kind of supported plugin problems — 
-    including plugin problems related to the plugin descriptor.
+  The switch will mute any kind of supported plugin problems —
+  including plugin problems related to the plugin descriptor.
 
-    Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
-    with more relaxed rules than a new plugin. 
-    This option is used to mute plugin problems that do not apply to such a plugin.
+  Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified
+  with more relaxed rules than a new plugin.
+  This option is used to mute plugin problems that do not apply to such a plugin.
 
+#### Plugin Path Specification
+
+Plugin path may be specified in multiple formats:
+
+- `id:<plugin-id>` indicates all compatible versions of _plugin-id_. Example: `id:training` denotes all versions of _IDE Features Trainer_ plugin.
+- `version:<plugin-id>:<version>` points to a specific version of _plugin-id_. Example: `version:training:231.8770.31` denotes a specific version of _IDE Features Trainer_ plugin.
+- `#<update-id>` identifies a specific plugin update identifier. Such `update-id` is coupled with a plugin ID and a plugin version.
+- `path:<path>` identifies a plugin by the path to the distribution file (usually a ZIP) in the filesystem.
+- `identifier` without any specification is resolved either as a `path:` suffix or `id:` suffix.
+- `@<file>` points to a file in a local filesystem. This file contains a list of plugin paths, separated by newline. Each line adheres to any format specified above (`id`, `version` etc.).
 
 #### Examples
 
 Check `Kotlin` plugin against IDEA Ultimate 162.2032.8, 163.1024, and 163.7277:
 
     java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 check-plugin /tmp/Kotlin /tmp/IU-162.2032.8 /tmp/IU-163.1024 /tmp/IU-163.7277
+
+Check an individual plugin packaged as a ZIP file against IDEA Ultimate 162.2032.8 on MacOS:
+
+     java -jar verifier-all.jar check-plugin ~/counter/build/distributions/counter-12.0.0.zip /tmp/IU-162.2032.8/Contents
+
+Check all versions of plugin with ID `training` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS:
+
+    java -jar verifier-all.jar check-plugin training /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
+
+Check all versions of plugin with ID `training` and version `231.8770.31` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS:
+
+    java -jar verifier-all.jar check-plugin version:training:231.8770.31 /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
+
+Check a specific plugin update by its ID against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS. The update `#323705` corresponds to the plugin `training` with version version `231.8770.31`.
+
+    java -jar verifier-all.jar check-plugin '#323705' /tmp/idea-edu-2022.2.2/Contents tmp/PC-203.7717.81.app/Contents
+
+Note that the update ID is quoted to prevent shell mangling.
+
+Check a list of plugins specified in a plaintext file `jetbrains-plugins.txt` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS.
+
+    java -jar verifier-all.jar check-plugin @jetbrains-plugins.txt /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
+
+The file `jetbrains-plugins.txt` might contain two plugin paths on separate lines.
+
+    version:com.intellij.quarkus:231.8770.17
+    #320655
 
 ### check-trunk-api
 
