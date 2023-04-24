@@ -24,6 +24,12 @@ sealed class PluginVerificationDescriptor {
 
   abstract val presentableName: String
 
+  /**
+   * Upcoming verification of a plugin against a specific IDE version.
+   * @param ideDescriptor Descriptor of IDE that is used as a compatibility target in the verification of [checkedPlugin].
+   * @param checkedPlugin Descriptor of plugin that is checked against [IdeDescriptor].
+   *
+   */
   class IDE(
     private val ideDescriptor: IdeDescriptor,
     override val classResolverProvider: DefaultClassResolverProvider,

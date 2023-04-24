@@ -19,6 +19,16 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
+/**
+ * Discovers all classes that belong to the plugin.
+ *
+ * During this process, ZIP-packaged plugins are automatically decompressed to a dedicated [extractDirectory]
+ * to enable the discovery of nested JAR files and directories.
+ * @param idePlugin a descriptor of the plugin
+ * @param extractDirectory a path that is used to deflate compressed plugins (ZIPs and JARs)
+ * @param readMode a suggested level of granularity used to discover classes
+ * @param locatorKeys a default set of locations that are available for class discovery
+ */
 class IdePluginClassesFinder private constructor(
   private val idePlugin: IdePlugin,
   private val extractDirectory: Path,

@@ -33,8 +33,15 @@ interface IdePlugin : Plugin {
 
   val modulesDescriptors: List<ModuleDescriptor>
 
+  /**
+   * Underlying plugin descriptor file parsed and resolved as XML Document.
+   */
   val underlyingDocument: Document
 
+  /**
+   * Path to the plugin file.
+   * Generally, it is either a JAR file path, a ZIP file path or a path to a directory.
+   */
   val originalFile: Path?
 
   val productDescriptor: ProductDescriptor?

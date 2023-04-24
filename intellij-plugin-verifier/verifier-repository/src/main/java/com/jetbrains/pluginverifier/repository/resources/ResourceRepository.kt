@@ -69,7 +69,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
   fun remove(key: K): Boolean
 
   /**
-   * Removes all the [availalble] [has] keys from this repository.
+   * Removes all the [available] [has] keys from this repository.
    * This method behaves as if by invoking of the following code:
    * ```
    * with(resourceRepository) {

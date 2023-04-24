@@ -8,8 +8,17 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
+/**
+ * Locates plugin classes in a specific location.
+ */
 interface ClassesLocator {
+  /**
+   * A class location type.
+   */
   val locationKey: LocationKey
 
+  /**
+   * Locates plugin classes and returns one or more [Resolver]s with class locations.
+   */
   fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver>
 }

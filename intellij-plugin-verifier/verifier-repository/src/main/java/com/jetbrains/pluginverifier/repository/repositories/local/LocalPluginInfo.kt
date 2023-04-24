@@ -10,6 +10,8 @@ import java.io.ObjectInputStream
 
 /**
  * Identifier of a local plugin.
+ *
+ * @see [LocalPluginRepository]
  */
 class LocalPluginInfo(
   val idePlugin: IdePlugin

@@ -7,7 +7,7 @@ package com.jetbrains.pluginverifier.repository
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 /**
- * Identifier of a plugin.
+ * Identifier of a plugin within the [PluginRepository].
  */
 abstract class PluginInfo(
   /**

@@ -10,9 +10,16 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
+/**
+ * Locates plugin classes located in a single JAR file.
+ */
 class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
   override val locationKey: LocationKey = JarPluginKey
 
+  /**
+   * Locates classes in a single JAR via a single [Resolver].
+   * @return a single-element list with [Resolver] of this JAR
+   */
   override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
     if (pluginFile.isJar()) {
       return listOf(JarFileResolver(pluginFile, readMode, PluginFileOrigin.SingleJar(idePlugin)))

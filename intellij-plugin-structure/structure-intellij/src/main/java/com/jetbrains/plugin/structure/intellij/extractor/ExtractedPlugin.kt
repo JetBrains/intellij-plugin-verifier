@@ -8,6 +8,11 @@ import com.jetbrains.plugin.structure.base.utils.deleteQuietly
 import java.io.Closeable
 import java.nio.file.Path
 
+/**
+ * Descriptor of a plugin that has been extracted from a compressed file, usually ZIP.
+ * @param pluginFile a path to the top-level directory of the plugin in the filesystem, after decompression
+ * @param fileToDelete a path to the directory that contains decompressed contents of the plugin file.
+ */
 data class ExtractedPlugin(
   val pluginFile: Path,
   private val fileToDelete: Path
