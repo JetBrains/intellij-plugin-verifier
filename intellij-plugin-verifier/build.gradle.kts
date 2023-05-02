@@ -7,9 +7,11 @@ plugins {
 
 val kotlin_version by extra("1.8.20")
 
-val verifierProjectVersion = project.properties.getOrDefault("verifierProjectVersion", "dev")
+val projectVersion: String by extra {
+  project.properties.getOrDefault("verifierProjectVersion", "dev").toString()
+}
 
-val isDevMode = verifierProjectVersion == "dev"
+val isDevMode = projectVersion == "dev"
 var ijStructureVersion = "dev"
 if (!isDevMode) {
   if (project.hasProperty("intellijStructureVersion")) {
@@ -20,8 +22,6 @@ if (!isDevMode) {
 }
 
 val intellijStructureVersion by extra(ijStructureVersion)
-val projectVersion by extra(verifierProjectVersion)
-
 
 allprojects {
   apply {
@@ -30,7 +30,7 @@ allprojects {
   }
 
   group = "org.jetbrains.intellij.plugins"
-  version = verifierProjectVersion
+  version = projectVersion
 
   java {
     sourceCompatibility = JavaVersion.VERSION_11
