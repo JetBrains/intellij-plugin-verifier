@@ -12,13 +12,12 @@ val projectVersion: String by extra {
 }
 
 val isDevMode = projectVersion == "dev"
-var ijStructureVersion = "dev"
-if (!isDevMode) {
-  if (project.hasProperty("intellijStructureVersion")) {
-    ijStructureVersion = project.properties["intellijStructureVersion"].toString()
-  } else {
+var ijStructureVersion = if (!isDevMode) {
+  project.properties.getOrDefault("intellijStructureVersion") {
     throw RuntimeException("Version of intellij-structure library to be used is not specified via 'intellijStructureVersion'")
   }
+} else {
+  "dev"
 }
 
 val intellijStructureVersion by extra(ijStructureVersion)
