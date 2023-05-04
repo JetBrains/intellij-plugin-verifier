@@ -30,15 +30,9 @@ allprojects {
   }
 
   repositories {
-    maven {
-      url = uri("https://repo.maven.apache.org/maven2")
-    }
-    maven {
-      url = uri("https://www.jetbrains.com/intellij-repository/releases")
-    }
-    maven {
-      url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-    }
+    maven("https://cache-redirector.jetbrains.com/intellij-repository/releases")
+    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
+    mavenCentral()
   }
   dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
