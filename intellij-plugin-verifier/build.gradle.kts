@@ -5,8 +5,6 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.8.21"
 }
 
-val kotlin_version by extra("1.8.21")
-
 val projectVersion: String by extra {
   project.properties.getOrDefault("verifierProjectVersion", "dev").toString()
 }
@@ -47,20 +45,20 @@ allprojects {
 
   dependencies {
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
-    implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
+    implementation(rootProject.libs.kotlin.stdlib.jdk8)
+    implementation(rootProject.libs.kotlin.reflect)
+    implementation(rootProject.libs.kotson)
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(rootProject.libs.junit)
 
-    implementation("org.slf4j:slf4j-api:2.0.7")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
+    implementation(rootProject.libs.slf4j.api)
+    implementation(rootProject.libs.bouncycastle.pkix)
 
-    implementation("com.intellij:annotations:12.0")
-    implementation("commons-io:commons-io:2.10.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(rootProject.libs.jetbrains.annotations)
+    implementation(rootProject.libs.commons.io)
+    implementation(rootProject.libs.gson)
   }
 
   repositories {
