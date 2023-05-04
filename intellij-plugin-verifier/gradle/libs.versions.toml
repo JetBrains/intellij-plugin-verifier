@@ -4,6 +4,7 @@ kotlin = "1.8.21"
 jetbrains-annotations = "12.0"
 
 bcpkix-jdk15on = "1.70"
+byteBuddy = "1.14.4"
 commons-compress = "1.23.0"
 commons-io = "2.10.0"
 commons-lang3 = "3.12.0"
@@ -28,6 +29,7 @@ xz = "1.9"
 
 [libraries]
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
+byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
