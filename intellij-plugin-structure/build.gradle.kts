@@ -3,11 +3,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   `maven-publish`
   signing
-  id("org.jetbrains.kotlin.jvm") version "1.8.10"
+  id("org.jetbrains.kotlin.jvm") version "1.8.21"
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
-val kotlin_version = "1.8.20"
+val kotlin_version = "1.8.21"
 
 var intellijPluginStructureVersion = "dev"
 if (project.hasProperty("structureVersion")) {
