@@ -110,11 +110,6 @@ publishing {
             }
             developers {
               developer {
-                id.set("serejke")
-                name.set("Sergey Patrikeev")
-                organization.set("JetBrains")
-              }
-              developer {
                 id.set("satamas")
                 name.set("Semyon Atamas")
                 organization.set("JetBrains")
@@ -162,6 +157,11 @@ publishing {
               developer {
                 id.set("LChernigovskaya")
                 name.set("Lidiya Chernigovskaya")
+                organization.set("JetBrains")
+              }
+              developer {
+                id.set("novotnyr")
+                name.set("Robert Novotny")
                 organization.set("JetBrains")
               }
             }
