@@ -4,38 +4,52 @@ kotlin = "1.8.21"
 jetbrains-annotations = "12.0"
 
 bcpkix-jdk15on = "1.70"
+commons-compress = "1.23.0"
 commons-io = "2.10.0"
 commons-lang3 = "3.12.0"
 spullara-cli-parser = "1.1.6"
 gson = "2.10.1"
+guava = "31.1-jre"
 jackson-module-kotlin = "2.14.2"
 jgrapht-core = "1.5.1"
 jsoup = "1.15.4"
 junit = "4.13.2"
+jetbrains-pluginRepositoryRestClient = "2.0.32"
 kotson = "2.5.0"
 logback-classic = "1.4.6"
+okhttp = "4.10.0"
+okhttp-logging-interceptor = "4.10.0"
+retrofit = "2.9.0"
+retrofit-gson = "2.9.0"
 slf4j-api = "2.0.7"
 
 shadow = "7.1.2"
+xz = "1.9"
 
 [libraries]
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
+commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
-
+jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
 kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
-
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cli-parser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cli-parser" }
+xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
