@@ -9,6 +9,8 @@ commons-lang3 = "3.12.0"
 spullara-cli-parser = "1.1.6"
 gson = "2.10.1"
 jackson-module-kotlin = "2.14.2"
+jgrapht-core = "1.5.1"
+jsoup = "1.15.4"
 junit = "4.13.2"
 kotson = "2.5.0"
 logback-classic = "1.4.6"
@@ -22,6 +24,8 @@ commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 
