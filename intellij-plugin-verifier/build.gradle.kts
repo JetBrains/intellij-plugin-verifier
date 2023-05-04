@@ -2,10 +2,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     `maven-publish`
-    id("org.jetbrains.kotlin.jvm") version "1.8.10"
+    id("org.jetbrains.kotlin.jvm") version "1.8.21"
 }
 
-val kotlin_version by extra("1.8.20")
+val kotlin_version by extra("1.8.21")
 
 val projectVersion: String by extra {
   project.properties.getOrDefault("verifierProjectVersion", "dev").toString()
