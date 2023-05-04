@@ -40,7 +40,6 @@ allprojects {
   tasks.withType<KotlinCompile> {
     kotlinOptions {
       jvmTarget = "11"
-      // FIXME novotnyr upgraded to 1.5
       apiVersion = "1.5"
       languageVersion = "1.5"
       freeCompilerArgs = listOf("-Xjvm-default=enable")
