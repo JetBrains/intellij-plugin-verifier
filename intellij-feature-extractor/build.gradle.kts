@@ -1,9 +1,9 @@
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.8.10"
+  id("org.jetbrains.kotlin.jvm") version "1.8.21"
   `maven-publish`
 }
 
-val kotlin_version = "1.8.20"
+val kotlin_version = "1.8.21"
 
 val extractorVersion = project.properties.getOrDefault("featureExtractorVersion", "dev").toString()
 
