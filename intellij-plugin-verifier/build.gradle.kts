@@ -65,10 +65,10 @@ allprojects {
   }
 
   repositories {
+    maven("https://cache-redirector.jetbrains.com/intellij-repository/releases")
+    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     mavenCentral()
     mavenLocal()
-    maven { url = uri("https://www.jetbrains.com/intellij-repository/releases") }
-    maven { url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies") }
   }
 }
 
