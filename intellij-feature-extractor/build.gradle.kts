@@ -22,8 +22,6 @@ allprojects {
     maven("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
     mavenCentral()
     mavenLocal()
-    maven { url = uri("https://www.jetbrains.com/intellij-repository/releases") }
-    maven { url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies") }
   }
 
   dependencies {
