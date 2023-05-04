@@ -1,7 +1,3 @@
-repositories {
-  mavenCentral()
-}
-
 val intellijStructureVersion : String by rootProject.extra
 
 dependencies {
