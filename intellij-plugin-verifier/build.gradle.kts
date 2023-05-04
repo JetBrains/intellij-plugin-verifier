@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    `maven-publish`
-    id("org.jetbrains.kotlin.jvm") version "1.8.21"
+  `maven-publish`
+  alias(libs.plugins.kotlin.jvm)
 }
 
 val projectVersion: String by extra {

@@ -38,4 +38,5 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api"
 spullara-cli-parser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cli-parser" }
 
 [plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
