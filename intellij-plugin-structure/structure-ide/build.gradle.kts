@@ -1,5 +1,5 @@
 
-val platformVersion = "213.7172.25"
+val platformVersion = "232.4652"
 
 dependencies {
   api(project(":structure-intellij"))
