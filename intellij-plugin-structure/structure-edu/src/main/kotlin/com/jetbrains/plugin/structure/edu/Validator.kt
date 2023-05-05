@@ -43,7 +43,9 @@ internal fun validateEduPluginBean(descriptor: EduPluginDescriptor): List<Plugin
 }
 
 private fun validateProgrammingLanguage(descriptor: EduPluginDescriptor, problems: MutableList<PluginProblem>) {
-  if (descriptor.programmingLanguageId.isNullOrBlank() || descriptor.programmingLanguage.isNullOrBlank()) {
+  val programmingLanguage = descriptor.programmingLanguageId ?: descriptor.programmingLanguage
+
+  if (programmingLanguage.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID))
     return
   }
