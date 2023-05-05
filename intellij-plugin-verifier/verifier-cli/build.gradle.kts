@@ -5,7 +5,7 @@ plugins {
 dependencies {
   api(project(":verifier-intellij"))
 
-  runtimeOnly("ch.qos.logback:logback-classic:1.4.6")
+  runtimeOnly("ch.qos.logback:logback-classic:1.4.7")
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
   implementation("com.github.spullara.cli-parser:cli-parser:1.1.6")
   implementation("org.apache.commons:commons-lang3:3.12.0")
