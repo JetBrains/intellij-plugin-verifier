@@ -1,8 +1,8 @@
 [versions]
 commons-io = "2.10.0"
-kotlin = "1.8.21"
-junit = "4.13.2"
 gson = "2.10.1"
+junit = "4.13.2"
+kotlin = "1.8.21"
 slf4j-api = "2.0.7"
 
 [libraries]
