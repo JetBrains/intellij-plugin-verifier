@@ -1,7 +1,7 @@
 dependencies {
   implementation(project(":verifier-cli"))
 
-  testRuntimeOnly("ch.qos.logback:logback-classic:1.4.6")
+  testRuntimeOnly("ch.qos.logback:logback-classic:1.4.7")
   testRuntimeOnly(project("mock-plugin"))
 
   //bytecode generation library
