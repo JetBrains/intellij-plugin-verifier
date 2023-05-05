@@ -63,8 +63,8 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
       programmingLanguage = null
     }
     checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID)) {
-      programmingLanguageId = null
-      programmingLanguage = null
+      programmingLanguageId = ""
+      programmingLanguage = ""
     }
     checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID)) {
       programmingLanguageId = "\n"
