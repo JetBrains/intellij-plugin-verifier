@@ -156,8 +156,36 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("JetBrains s.r.o.", plugin.vendor)
     assertEquals("en", plugin.language)
     assertEquals("Python", plugin.programmingLanguageId)
+    assertEquals("2.7", plugin.programmingLanguageVersion)
     assertEquals("unittest", plugin.environment)
     assertEquals("new_id", plugin.pluginId)
+    assertEquals(1, plugin.eduStat!!.lessons.size)
+    assertEquals("lesson1", plugin.eduStat!!.lessons[0])
+    assertEquals(false, plugin.isPrivate)
+    assertEquals(iconTestContent, String(plugin.icons.single().content))
+    assertTrue(pluginCreationSuccess.warnings.isEmpty())
+  }
+
+  @Test
+  fun `parse edu plugin with obsolete programming version`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(EduPluginManager.DESCRIPTOR_NAME) {
+        getMockPluginJsonContent("course_obsolete_programming_lang")
+      }
+      file("courseIcon.svg", iconTestContent)
+    }
+
+    val pluginCreationSuccess = createPluginSuccessfully(pluginFile)
+    val plugin = pluginCreationSuccess.plugin
+    assertEquals("Python Course", plugin.pluginName)
+    assertEquals("Python course.\nCreated: May 6, 2020, 11:21:51 AM.", plugin.description)
+    assertEquals("1.1", plugin.pluginVersion)
+    assertEquals("JetBrains s.r.o.", plugin.vendor)
+    assertEquals("en", plugin.language)
+    assertEquals("Test", plugin.programmingLanguageId)
+    assertNull(plugin.programmingLanguageVersion)
+    assertEquals("unittest", plugin.environment)
+    assertEquals("Python Course_JetBrains s.r.o._Test", plugin.pluginId)
     assertEquals(1, plugin.eduStat!!.lessons.size)
     assertEquals("lesson1", plugin.eduStat!!.lessons[0])
     assertEquals(false, plugin.isPrivate)
@@ -183,6 +211,7 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("JetBrains s.r.o.", plugin.vendor)
     assertEquals("en", plugin.language)
     assertEquals("Python", plugin.programmingLanguageId)
+    assertEquals("2.7", plugin.programmingLanguageVersion)
     assertEquals("unittest", plugin.environment)
     assertEquals("Python Course_JetBrains s.r.o._Python", plugin.pluginId)
     assertEquals(1, plugin.eduStat!!.lessons.size)

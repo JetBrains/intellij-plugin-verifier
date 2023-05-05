@@ -58,9 +58,18 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
 
   @Test
   fun `programming language is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = null }
-    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = "" }
-    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE)) { programmingLanguage = "\n" }
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID)) {
+      programmingLanguageId = null
+      programmingLanguage = null
+    }
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID)) {
+      programmingLanguageId = null
+      programmingLanguage = null
+    }
+    checkInvalidPlugin(PropertyNotSpecified(PROGRAMMING_LANGUAGE_ID)) {
+      programmingLanguageId = "\n"
+      programmingLanguage = "\n"
+    }
   }
 
   @Test
