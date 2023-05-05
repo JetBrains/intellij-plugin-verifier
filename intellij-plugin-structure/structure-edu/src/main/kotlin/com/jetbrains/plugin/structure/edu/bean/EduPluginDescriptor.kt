@@ -46,8 +46,13 @@ data class EduPluginDescriptor(
   val summary: String? = null,
   @JsonProperty(LANGUAGE)
   val language: String? = null,
+  @Deprecated("MP-5460")
   @JsonProperty(PROGRAMMING_LANGUAGE)
   val programmingLanguage: String? = null,
+  @JsonProperty(PROGRAMMING_LANGUAGE_ID)
+  val programmingLanguageId: String? = null,
+  @JsonProperty(PROGRAMMING_LANGUAGE_VERSION)
+  val programmingLanguageVersion: String? = null,
   @JsonProperty(ENVIRONMENT)
   val environment: String? = null,
   @JsonProperty(ITEMS)
