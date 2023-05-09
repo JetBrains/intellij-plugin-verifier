@@ -2,7 +2,7 @@
 platform = "213.7172.25"
 jetbrains-annotations = "24.0.1"
 
-kotlin = "1.8.20"
+kotlin = "1.8.21"
 
 asm = "9.5"
 commons-compress = "1.23.0"
