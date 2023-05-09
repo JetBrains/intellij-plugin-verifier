@@ -35,9 +35,9 @@ allprojects {
     mavenCentral()
   }
   dependencies {
-    implementation((rootProject.libs.kotlin.stdlib.jdk8))
-    implementation((rootProject.libs.jackson.module.kotlin))
-    implementation((rootProject.libs.kotlin.reflect))
+    implementation(rootProject.libs.kotlin.stdlib.jdk8)
+    implementation(rootProject.libs.jackson.module.kotlin)
+    implementation(rootProject.libs.kotlin.reflect)
   }
 
   val sourcesJar by tasks.registering(Jar::class) {
