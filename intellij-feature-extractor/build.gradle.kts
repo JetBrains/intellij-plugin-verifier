@@ -40,7 +40,7 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:verifier-core:$structureVersion")
 
   implementation(libs.gson)
-  implementation(libs.slf4j.api)
+  implementation(sharedLibs.slf4j.api)
   implementation(libs.commons.io)
 
   testImplementation(libs.junit)

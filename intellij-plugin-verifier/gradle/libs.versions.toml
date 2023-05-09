@@ -20,7 +20,6 @@ okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
-slf4j-api = "2.0.7"
 
 shadow = "7.1.2"
 xz = "1.9"
@@ -45,7 +44,6 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cli-parser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cli-parser" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 

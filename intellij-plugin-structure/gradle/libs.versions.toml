@@ -15,7 +15,6 @@ jsoup = "1.15.4"
 junit = "4.13.2"
 logback-classic = "1.4.6"
 semver4j = "3.1.0"
-slf4j-api = "2.0.7"
 xz = "1.9"
 
 [libraries]
@@ -42,5 +41,4 @@ platform-jps-model-impl = { group = "com.jetbrains.intellij.platform", name = "j
 platform-jps-model-serialization = { group = "com.jetbrains.intellij.platform", name = "jps-model-serialization", version.ref = "platform" }
 platform-util = { group = "com.jetbrains.intellij.platform", name = "util", version.ref = "platform" }
 semver4j = { group = "com.vdurmont", name = "semver4j", version.ref = "semver4j" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }

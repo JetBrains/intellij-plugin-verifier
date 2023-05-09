@@ -53,7 +53,7 @@ allprojects {
 
     testImplementation(rootProject.libs.junit)
 
-    implementation(rootProject.libs.slf4j.api)
+    implementation(rootProject.sharedLibs.slf4j.api)
     implementation(rootProject.libs.bouncycastle.pkix)
 
     implementation(rootProject.libs.jetbrains.annotations)
