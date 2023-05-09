@@ -11,7 +11,7 @@ dependencies {
   testImplementation(project(":structure-edu"))
   testImplementation(project(":structure-toolbox"))
   testImplementation("junit:junit:4.13.2")
-  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
+  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.0")
   testImplementation("com.google.jimfs:jimfs:1.2")
   testRuntimeOnly("ch.qos.logback:logback-classic:1.4.6")
 }
