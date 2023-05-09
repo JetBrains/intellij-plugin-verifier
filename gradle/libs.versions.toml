@@ -8,7 +8,7 @@ slf4j-api = "2.0.7"
 
 [libraries]
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
-<jsoup> = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
