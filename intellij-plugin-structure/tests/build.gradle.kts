@@ -11,7 +11,7 @@ dependencies {
   testImplementation(project(":structure-edu"))
   testImplementation(project(":structure-toolbox"))
   testImplementation(libs.junit)
-  testImplementation(libs.jackson.module.kotlin)
+  testImplementation(sharedLibs.jackson.module.kotlin)
   testImplementation(libs.jimfs)
   testRuntimeOnly(sharedLibs.logback.classic)
 }

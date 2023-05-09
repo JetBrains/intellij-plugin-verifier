@@ -34,7 +34,7 @@ allprojects {
   }
   dependencies {
     implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
-    implementation(rootProject.libs.jackson.module.kotlin)
+    implementation(rootProject.sharedLibs.jackson.module.kotlin)
     implementation(rootProject.sharedLibs.kotlin.reflect)
   }
 
