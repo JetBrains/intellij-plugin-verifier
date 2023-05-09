@@ -1,9 +1,7 @@
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.8.21"
+  alias(libs.plugins.kotlin.jvm)
   `maven-publish`
 }
-
-val kotlin_version = "1.8.21"
 
 val extractorVersion = project.properties.getOrDefault("featureExtractorVersion", "dev").toString()
 
@@ -26,7 +24,7 @@ allprojects {
   }
 
   dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
+    implementation(rootProject.libs.kotlin.stdlib)
   }
 
   java {
@@ -41,11 +39,11 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:structure-ide-classes:$structureVersion")
   implementation("org.jetbrains.intellij.plugins:verifier-core:$structureVersion")
 
-  implementation("com.google.code.gson:gson:2.10.1")
-  implementation("org.slf4j:slf4j-api:2.0.7")
-  implementation("commons-io:commons-io:2.5")
+  implementation(libs.gson)
+  implementation(libs.slf4j.api)
+  implementation(libs.commons.io)
 
-  testImplementation("junit:junit:4.13.2")
+  testImplementation(libs.junit)
   testImplementation(project(":test-classes"))
 }
 
