@@ -12,3 +12,11 @@ include("structure-toolbox")
 include("structure-ide")
 include("structure-ide-classes")
 include("tests")
+
+dependencyResolutionManagement {
+  versionCatalogs {
+    create("sharedLibs") {
+      from(files("../gradle/libs.versions.toml"))
+    }
+  }
+}

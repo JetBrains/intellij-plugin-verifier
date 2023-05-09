@@ -2,15 +2,12 @@
 commons-io = "2.10.0"
 gson = "2.10.1"
 junit = "4.13.2"
-kotlin = "1.8.21"
 slf4j-api = "2.0.7"
 
 [libraries]
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -1,5 +1,5 @@
 plugins {
-  alias(libs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.kotlin.jvm)
   `maven-publish`
 }
 
@@ -24,7 +24,7 @@ allprojects {
   }
 
   dependencies {
-    implementation(rootProject.libs.kotlin.stdlib)
+    implementation(rootProject.sharedLibs.kotlin.stdlib)
   }
 
   java {
