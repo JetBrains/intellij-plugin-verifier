@@ -13,5 +13,5 @@ dependencies {
   testImplementation(libs.junit)
   testImplementation(libs.jackson.module.kotlin)
   testImplementation(libs.jimfs)
-  testRuntimeOnly(libs.logback.classic)
+  testRuntimeOnly(sharedLibs.logback.classic)
 }

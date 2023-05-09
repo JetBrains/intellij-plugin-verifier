@@ -15,7 +15,6 @@ jsoup = "1.16.1"
 junit = "4.13.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
 kotson = "2.5.0"
-logback-classic = "1.4.7"
 okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
@@ -39,7 +38,6 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
 kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }

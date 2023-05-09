@@ -1,7 +1,7 @@
 dependencies {
   implementation(project(":verifier-cli"))
 
-  testRuntimeOnly(libs.logback.classic)
+  testRuntimeOnly(sharedLibs.logback.classic)
   testRuntimeOnly(project("mock-plugin"))
 
   //bytecode generation library

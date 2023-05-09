@@ -13,7 +13,6 @@ jdom = "2.0.6.1"
 jimfs = "1.2"
 jsoup = "1.15.4"
 junit = "4.13.2"
-logback-classic = "1.4.6"
 semver4j = "3.1.0"
 xz = "1.9"
 
@@ -35,7 +34,6 @@ jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version
 jimfs = { group = "com.google.jimfs", name = "jimfs", version.ref = "jimfs" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 platform-jps-model-core = { group = "com.jetbrains.intellij.platform", name = "jps-model", version.ref = "platform" }
 platform-jps-model-impl = { group = "com.jetbrains.intellij.platform", name = "jps-model-impl", version.ref = "platform" }
 platform-jps-model-serialization = { group = "com.jetbrains.intellij.platform", name = "jps-model-serialization", version.ref = "platform" }
