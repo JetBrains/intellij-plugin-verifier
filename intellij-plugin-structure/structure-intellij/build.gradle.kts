@@ -1,8 +1,8 @@
 dependencies {
   api(project(":structure-base"))
-  api("org.jdom:jdom2:2.0.6.1")
+  api(libs.jdom)
 
-  implementation("org.jsoup:jsoup:1.15.4")
-  implementation("javax.xml.bind:jaxb-api:2.3.1")
-  implementation("org.glassfish.jaxb:jaxb-runtime:2.3.1")
+  implementation(libs.jsoup)
+  implementation(libs.jaxb.api)
+  implementation(libs.jaxb.runtime)
 }

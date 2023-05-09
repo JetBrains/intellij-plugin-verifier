@@ -35,9 +35,9 @@ allprojects {
     mavenCentral()
   }
   dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
+    implementation((rootProject.libs.kotlin.stdlib.jdk8))
+    implementation((rootProject.libs.jackson.module.kotlin))
+    implementation((rootProject.libs.kotlin.reflect))
   }
 
   val sourcesJar by tasks.registering(Jar::class) {

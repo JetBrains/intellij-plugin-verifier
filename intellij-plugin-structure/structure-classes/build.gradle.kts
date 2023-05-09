@@ -1,13 +1,13 @@
 val asmVersion = "9.5"
 
 dependencies {
-  api("org.ow2.asm:asm:$asmVersion")
-  api("org.ow2.asm:asm-commons:$asmVersion")
-  api("org.ow2.asm:asm-util:$asmVersion")
-  api("org.ow2.asm:asm-tree:$asmVersion")
-  api("org.ow2.asm:asm-analysis:$asmVersion")
+  api(libs.asm.root)
+  api(libs.asm.commons)
+  api(libs.asm.util)
+  api(libs.asm.tree)
+  api(libs.asm.analysis)
 
   implementation(project(":structure-base"))
 
-  implementation("com.google.guava:guava:31.1-jre")
+  api(libs.guava)
 }

@@ -1,12 +1,12 @@
 dependencies {
-  api("org.jetbrains:annotations:24.0.1")
-  api("org.slf4j:slf4j-api:2.0.7")
+  api(libs.jetbrains.annotations)
+  api(libs.slf4j.api)
 
-  api("commons-io:commons-io:2.10.0")
+  api(libs.commons.io)
 
-  implementation("org.apache.commons:commons-compress:1.23.0")
-  implementation("org.tukaani:xz:1.9")
+  implementation(libs.commons.compress)
+  implementation(libs.xz)
 
   //Provides English class capable of pluralizing english words.
-  implementation("org.atteo:evo-inflector:1.3")
+  implementation(libs.evo.inflector)
 }
