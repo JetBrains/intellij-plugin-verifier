@@ -10,7 +10,6 @@ spullara-cli-parser = "1.1.6"
 gson = "2.10.1"
 guava = "31.1-jre"
 jgrapht-core = "1.5.2"
-jsoup = "1.16.1"
 junit = "4.13.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
 kotson = "2.5.0"
@@ -31,7 +30,6 @@ commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
-jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }

@@ -6,7 +6,7 @@ dependencies {
 
   api(libs.jgrapht.core)
 
-  implementation(libs.jsoup)
+  implementation(sharedLibs.jsoup)
 
   api("org.jetbrains.intellij.plugins:structure-ide-classes:$intellijStructureVersion")
 }
