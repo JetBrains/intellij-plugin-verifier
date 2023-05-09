@@ -1,11 +1,11 @@
 dependencies {
   implementation(project(":verifier-cli"))
 
-  testRuntimeOnly("ch.qos.logback:logback-classic:1.4.6")
+  testRuntimeOnly(libs.logback.classic)
   testRuntimeOnly(project("mock-plugin"))
 
   //bytecode generation library
-  implementation("net.bytebuddy:byte-buddy:1.14.4")
+  implementation(libs.byteBuddy)
 }
 
 val prepareMockPlugin by tasks.registering(Copy::class) {

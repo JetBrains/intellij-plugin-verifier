@@ -1,14 +1,14 @@
 plugins {
-  id("com.github.johnrengelman.shadow") version "7.1.2"
+  alias(libs.plugins.shadow)
 }
 
 dependencies {
   api(project(":verifier-intellij"))
 
-  runtimeOnly("ch.qos.logback:logback-classic:1.4.6")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
-  implementation("com.github.spullara.cli-parser:cli-parser:1.1.6")
-  implementation("org.apache.commons:commons-lang3:3.12.0")
+  runtimeOnly(libs.logback.classic)
+  implementation(libs.jackson.module.kotlin)
+  implementation(libs.spullara.cli.parser)
+  implementation(libs.commons.lang3)
 }
 
 val projectVersion: String by rootProject.extra
