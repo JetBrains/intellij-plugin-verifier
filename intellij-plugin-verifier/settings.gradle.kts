@@ -10,3 +10,11 @@ include("verifier-test:before-idea")
 include("verifier-test:additional-after-idea")
 include("verifier-test:additional-before-idea")
 include("verifier-test:mock-plugin")
+
+dependencyResolutionManagement {
+  versionCatalogs {
+    create("sharedLibs") {
+      from(files("../gradle/libs.versions.toml"))
+    }
+  }
+}

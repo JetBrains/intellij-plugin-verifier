@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   `maven-publish`
-  alias(libs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.kotlin.jvm)
 }
 
 val projectVersion: String by extra {
@@ -45,15 +45,15 @@ allprojects {
 
   dependencies {
 
-    implementation(rootProject.libs.kotlin.stdlib.jdk8)
-    implementation(rootProject.libs.kotlin.reflect)
+    implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
+    implementation(rootProject.sharedLibs.kotlin.reflect)
     implementation(rootProject.libs.kotson)
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
 
     testImplementation(rootProject.libs.junit)
 
-    implementation(rootProject.libs.slf4j.api)
+    implementation(rootProject.sharedLibs.slf4j.api)
     implementation(rootProject.libs.bouncycastle.pkix)
 
     implementation(rootProject.libs.jetbrains.annotations)

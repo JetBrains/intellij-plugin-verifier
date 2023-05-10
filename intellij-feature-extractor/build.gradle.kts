@@ -1,5 +1,5 @@
 plugins {
-  alias(libs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.kotlin.jvm)
   `maven-publish`
 }
 
@@ -24,7 +24,7 @@ allprojects {
   }
 
   dependencies {
-    implementation(rootProject.libs.kotlin.stdlib)
+    implementation(rootProject.sharedLibs.kotlin.stdlib)
   }
 
   java {
@@ -40,7 +40,7 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:verifier-core:$structureVersion")
 
   implementation(libs.gson)
-  implementation(libs.slf4j.api)
+  implementation(sharedLibs.slf4j.api)
   implementation(libs.commons.io)
 
   testImplementation(libs.junit)

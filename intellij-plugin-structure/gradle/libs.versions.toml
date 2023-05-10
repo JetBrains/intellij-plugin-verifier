@@ -2,22 +2,16 @@
 platform = "213.7172.25"
 jetbrains-annotations = "24.0.1"
 
-kotlin = "1.8.20"
-
 asm = "9.5"
 commons-compress = "1.23.0"
 commons-io = "2.10.0"
 evo-inflector = "1.3"
 guava = "31.1-jre"
-jackson-module-kotlin = "2.14.2"
 jaxb = "2.3.1"
 jdom = "2.0.6.1"
 jimfs = "1.2"
-jsoup = "1.15.4"
 junit = "4.13.2"
-logback-classic = "1.4.6"
 semver4j = "3.1.0"
-slf4j-api = "2.0.7"
 xz = "1.9"
 
 [libraries]
@@ -30,21 +24,15 @@ commons-compress = { group = "org.apache.commons", name = "commons-compress", ve
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 evo-inflector = { group = "org.atteo", name = "evo-inflector", version.ref = "evo-inflector" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 jaxb-api = { group = "javax.xml.bind", name = "jaxb-api", version.ref = "jaxb" }
 jaxb-runtime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version.ref = "jaxb" }
 jdom = { group = "org.jdom", name = "jdom2", version.ref = "jdom" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jimfs = { group = "com.google.jimfs", name = "jimfs", version.ref = "jimfs" }
-jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
-logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 platform-jps-model-core = { group = "com.jetbrains.intellij.platform", name = "jps-model", version.ref = "platform" }
 platform-jps-model-impl = { group = "com.jetbrains.intellij.platform", name = "jps-model-impl", version.ref = "platform" }
 platform-jps-model-serialization = { group = "com.jetbrains.intellij.platform", name = "jps-model-serialization", version.ref = "platform" }
 platform-util = { group = "com.jetbrains.intellij.platform", name = "util", version.ref = "platform" }
 semver4j = { group = "com.vdurmont", name = "semver4j", version.ref = "semver4j" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }

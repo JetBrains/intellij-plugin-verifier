@@ -1,0 +1,19 @@
+[versions]
+kotlin = "1.8.21"
+
+jackson-module-kotlin = "2.14.2"
+jsoup = "1.16.1"
+logback-classic = "1.4.7"
+slf4j-api = "2.0.7"
+
+[libraries]
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
+slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

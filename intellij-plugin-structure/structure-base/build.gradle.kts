@@ -1,6 +1,6 @@
 dependencies {
   api(libs.jetbrains.annotations)
-  api(libs.slf4j.api)
+  api(sharedLibs.slf4j.api)
 
   api(libs.commons.io)
 

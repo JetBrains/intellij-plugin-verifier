@@ -3,11 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   `maven-publish`
   signing
-  id("org.jetbrains.kotlin.jvm") version "1.8.21"
+  alias(sharedLibs.plugins.kotlin.jvm)
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
-
-val kotlin_version = "1.8.21"
 
 var intellijPluginStructureVersion = "dev"
 if (project.hasProperty("structureVersion")) {
@@ -35,9 +33,9 @@ allprojects {
     mavenCentral()
   }
   dependencies {
-    implementation((rootProject.libs.kotlin.stdlib.jdk8))
-    implementation((rootProject.libs.jackson.module.kotlin))
-    implementation((rootProject.libs.kotlin.reflect))
+    implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
+    implementation(rootProject.sharedLibs.jackson.module.kotlin)
+    implementation(rootProject.sharedLibs.kotlin.reflect)
   }
 
   val sourcesJar by tasks.registering(Jar::class) {
