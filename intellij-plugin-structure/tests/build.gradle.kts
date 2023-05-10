@@ -10,7 +10,7 @@ dependencies {
   testImplementation(project(":structure-dotnet"))
   testImplementation(project(":structure-edu"))
   testImplementation(project(":structure-toolbox"))
-  testImplementation(libs.junit)
+  testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.jackson.module.kotlin)
   testImplementation(libs.jimfs)
   testRuntimeOnly(sharedLibs.logback.classic)

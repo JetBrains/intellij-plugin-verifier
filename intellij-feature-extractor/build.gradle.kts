@@ -42,7 +42,7 @@ dependencies {
   implementation(sharedLibs.slf4j.api)
   implementation(libs.commons.io)
 
-  testImplementation(libs.junit)
+  testImplementation(sharedLibs.junit)
   testImplementation(project(":test-classes"))
 }
 

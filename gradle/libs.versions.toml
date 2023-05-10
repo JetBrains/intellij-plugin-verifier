@@ -4,6 +4,7 @@ kotlin = "1.8.21"
 jackson-module-kotlin = "2.14.2"
 jetbrains-annotations = "24.0.1"
 jsoup = "1.16.1"
+junit = "4.13.2"
 logback-classic = "1.4.7"
 shadow = "8.1.1"
 slf4j-api = "2.0.7"
@@ -14,6 +15,7 @@ spullara-cliParser = "1.1.6"
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }

@@ -63,7 +63,7 @@ tasks.withType<KotlinCompile> {
 dependencies {
     runtimeOnly(sharedLibs.logback.classic)
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(sharedLibs.junit)
     testImplementation(project(":"))
     implementation(sharedLibs.kotlin.stdlib.jdk8)
 
