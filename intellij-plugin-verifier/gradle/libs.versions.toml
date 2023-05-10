@@ -4,7 +4,6 @@ byteBuddy = "1.14.4"
 commons-compress = "1.23.0"
 commons-io = "2.10.0"
 commons-lang3 = "3.12.0"
-spullara-cli-parser = "1.1.6"
 gson = "2.10.1"
 guava = "31.1-jre"
 jgrapht-core = "1.5.2"
@@ -33,5 +32,4 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
-spullara-cli-parser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cli-parser" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
