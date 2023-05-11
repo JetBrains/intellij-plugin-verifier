@@ -26,10 +26,10 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProc
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageRegistrar
+import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiCompatibilityIssueAnalyzer
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageRegistrar
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
-import com.jetbrains.pluginverifier.usages.javaPlugin.UndeclaredDependencyOnJavaPluginProblem
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiRegistrar
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
@@ -71,6 +71,8 @@ data class PluginVerificationContext(
       JavaPluginApiUsageProcessor(this),
       PropertyUsageProcessor()
     )
+
+  private val compatibilityIssueAnalyzers = hashSetOf<CompatibilityIssueAnalyzer<*>>(JavaPluginApiCompatibilityIssueAnalyzer())
 
   val compatibilityProblems = hashSetOf<CompatibilityProblem>()
   val compatibilityWarnings = hashSetOf<CompatibilityWarning>()
@@ -120,12 +122,8 @@ data class PluginVerificationContext(
   }
 
   override fun registerJavaPluginClassUsage(javaPluginClassUsage: JavaPluginClassUsage) {
-    if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
-
-      val undeclaredJavaPluginDependencyProblem = compatibilityProblems.filterIsInstance<UndeclaredDependencyOnJavaPluginProblem>().firstOrNull()
-              ?: UndeclaredDependencyOnJavaPluginProblem().also { compatibilityProblems += it }
-      undeclaredJavaPluginDependencyProblem.javaPluginClassUsages += javaPluginClassUsage
-    }
+    compatibilityIssueAnalyzers.filterIsInstance<JavaPluginApiCompatibilityIssueAnalyzer>()
+            .map { it.analyze(this, javaPluginClassUsage) }
   }
 
   override fun registerCompatibilityWarning(warning: CompatibilityWarning) {
