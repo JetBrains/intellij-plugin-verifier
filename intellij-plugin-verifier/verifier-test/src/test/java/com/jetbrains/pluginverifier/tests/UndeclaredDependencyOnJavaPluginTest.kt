@@ -21,7 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class NoExplicitDependencyOnJavaPluginTest {
+class UndeclaredDependencyOnJavaPluginTest {
 
   @Rule
   @JvmField
@@ -77,10 +77,7 @@ class NoExplicitDependencyOnJavaPluginTest {
     // Run verification
     val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
 
-    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
-
-    // Verify expected warning is emitted
-
+    // Verify expected error is emitted
     assertEquals(
       setOf(
         """
@@ -91,8 +88,93 @@ class NoExplicitDependencyOnJavaPluginTest {
         For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
         
       """.trimIndent()
-      ), verificationResult.compatibilityWarnings.map { it.fullDescription }.toSet()
+      ), verificationResult.compatibilityProblems.map { it.fullDescription }.toSet()
     )
+
+    assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
+  }
+
+  /**
+   * Plugin uses class from Java plugin but does not declare <depends>com.intellij.modules.java</depends>
+   *
+   * IDEA
+   *    Java-plugin
+   *        ```class javaPlugin.JavaPluginException : RuntimeException() { ... }```
+   *
+   * Plugin
+   * ```
+   *    public class usage.Usage {
+   *       public void foo() {
+   *          throw new javaPlugin.JavaPluginException()
+   *       }
+   *       public void bar() {
+   *          throw new javaPlugin.JavaPluginException()
+   *       }
+   *       public void baz() {
+   *          throw new javaPlugin.JavaPluginException()
+   *       }
+   *       public void hum() {
+   *          throw new javaPlugin.JavaPluginException()
+   *       }
+   *    }
+   * ```
+   */
+  @Test
+  fun `plugin has multiple usages classes of Java plugin but does not declare dependency onto it`() {
+    // Build class files
+    val javaPluginException = ByteBuddy()
+            .subclass(RuntimeException::class.java)
+            .name("javaPlugin.JavaPluginException")
+            .make()
+
+    val usageClass = ByteBuddy()
+            .subclass(Any::class.java)
+            .name("usage.Usage")
+            .defineMethod("foo", Void.TYPE, Visibility.PUBLIC)
+            .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
+            .defineMethod("bar", Void.TYPE, Visibility.PUBLIC)
+            .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
+            .defineMethod("baz", Void.TYPE, Visibility.PUBLIC)
+            .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
+            .defineMethod("hum", Void.TYPE, Visibility.PUBLIC)
+            .intercept(ExceptionMethod.throwing(javaPluginException.typeDescription))
+            .make()
+
+    val idePlugin = buildIdePlugin {
+      dir("usage") {
+        file("Usage.class", usageClass.bytes)
+      }
+    }
+
+    val ide = buildIdeWithBundledPlugins(
+            {
+              dir("javaPlugin") {
+                file("JavaPluginException.class", javaPluginException.bytes)
+              }
+            },
+            {}
+    )
+
+    // Run verification
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+
+    // Verify expected error is emitted
+    assertEquals(
+            setOf(
+                    """
+        Plugin uses classes of Java plugin, for example
+        'javaPlugin.JavaPluginException' is used at 'usage.Usage.bar() : void'
+        'javaPlugin.JavaPluginException' is used at 'usage.Usage.baz() : void'
+        'javaPlugin.JavaPluginException' is used at 'usage.Usage.foo() : void'
+        but the plugin does not declare explicit dependency on the Java plugin, via <depends>com.intellij.modules.java</depends>. 
+        Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. 
+        For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin
+        
+      """.trimIndent()
+            ), verificationResult.compatibilityProblems.map { it.fullDescription }.toSet()
+    )
+
+    assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
   }
 
   /**

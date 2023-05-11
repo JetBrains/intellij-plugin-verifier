@@ -29,6 +29,7 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageRegistrar
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageRegistrar
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
+import com.jetbrains.pluginverifier.usages.javaPlugin.UndeclaredDependencyOnJavaPluginProblem
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiRegistrar
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
@@ -37,7 +38,6 @@ import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
 import com.jetbrains.pluginverifier.usages.properties.PropertyUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
-import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
@@ -121,9 +121,10 @@ data class PluginVerificationContext(
 
   override fun registerJavaPluginClassUsage(javaPluginClassUsage: JavaPluginClassUsage) {
     if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
-      val noJavaDependencyWarning = compatibilityWarnings.filterIsInstance<NoExplicitDependencyOnJavaPluginWarning>().firstOrNull()
-        ?: NoExplicitDependencyOnJavaPluginWarning().also { compatibilityWarnings += it }
-      noJavaDependencyWarning.javaPluginClassUsages += javaPluginClassUsage
+
+      val undeclaredJavaPluginDependencyProblem = compatibilityProblems.filterIsInstance<UndeclaredDependencyOnJavaPluginProblem>().firstOrNull()
+              ?: UndeclaredDependencyOnJavaPluginProblem().also { compatibilityProblems += it }
+      undeclaredJavaPluginDependencyProblem.javaPluginClassUsages += javaPluginClassUsage
     }
   }
 
