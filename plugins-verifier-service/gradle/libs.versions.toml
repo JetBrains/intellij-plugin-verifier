@@ -14,6 +14,7 @@ retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
 spring-boot = "2.7.5"
 spring-dependencyManagement = "1.1.0"
+teamcity-restClient = "1.14.0"
 
 [libraries]
 commons-fileupload = { group = "commons-fileupload", name = "commons-fileupload", version.ref = "commons-fileupload" }
@@ -34,6 +35,7 @@ spring-boot-devtools = { group = "org.springframework.boot", name = "spring-boot
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
 spring-boot-starter-tomcat = { group = "org.springframework.boot", name = "spring-boot-starter-tomcat", version.ref = "spring-boot" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
+teamcity-restClient = { group = "org.jetbrains.teamcity", name = "teamcity-rest-client", version.ref = "teamcity-restClient" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

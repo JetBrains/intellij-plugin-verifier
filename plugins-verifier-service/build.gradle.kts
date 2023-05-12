@@ -90,6 +90,6 @@ allprojects {
     implementation("org.jetbrains.intellij.plugins:intellij-feature-extractor:dev")
     implementation("org.jetbrains.intellij.plugins:verifier-intellij:dev")
 
-    implementation("org.jetbrains.teamcity:teamcity-rest-client:1.14.0")
+    implementation(libs.teamcity.restClient)
   }
 }
