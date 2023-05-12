@@ -1,26 +1,22 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
-package com.jetbrains.pluginverifier.warnings
+package com.jetbrains.pluginverifier.usages.javaPlugin
 
 import com.jetbrains.pluginverifier.results.presentation.ClassGenericsSignatureOption
 import com.jetbrains.pluginverifier.results.presentation.ClassOption
 import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
-import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
+import java.util.*
 
-data class NoExplicitDependencyOnJavaPluginWarning(
+class UndeclaredDependencyOnJavaPluginProblem(
   val javaPluginClassUsages: MutableSet<JavaPluginClassUsage> = hashSetOf()
-) : CompatibilityWarning() {
-
+) : CompatibilityProblem() {
   override val problemType: String
     get() = shortDescription
 
-  override val shortDescription
+  override val shortDescription: String
     get() = "Dependency on Java plugin is not specified"
 
-  override val fullDescription
+  override val fullDescription: String
     get() = buildString {
       appendLine("Plugin uses classes of Java plugin, for example")
       val deterministicUsages = javaPluginClassUsages.sortedWith(compareBy<JavaPluginClassUsage> { it.usedClass.className }.thenBy { it.usageLocation.presentableLocation })
@@ -34,4 +30,9 @@ data class NoExplicitDependencyOnJavaPluginWarning(
       appendLine("Java functionality was extracted from the IntelliJ Platform to a separate plugin in IDEA 2019.2. ")
       appendLine("For more info refer to https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin")
     }
+
+  override fun equals(other: Any?) = other is UndeclaredDependencyOnJavaPluginProblem
+          && javaPluginClassUsages == other.javaPluginClassUsages
+
+  override fun hashCode() = Objects.hash(javaPluginClassUsages)
 }

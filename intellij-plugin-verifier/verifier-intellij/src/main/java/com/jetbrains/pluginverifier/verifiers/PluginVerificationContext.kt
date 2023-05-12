@@ -26,6 +26,7 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProc
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageRegistrar
+import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiCompatibilityIssueAnalyzer
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageRegistrar
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginClassUsage
@@ -37,7 +38,6 @@ import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyRegistrar
 import com.jetbrains.pluginverifier.usages.properties.PropertyUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
-import com.jetbrains.pluginverifier.warnings.NoExplicitDependencyOnJavaPluginWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
@@ -71,6 +71,8 @@ data class PluginVerificationContext(
       JavaPluginApiUsageProcessor(this),
       PropertyUsageProcessor()
     )
+
+  private val compatibilityIssueAnalyzers = hashSetOf<CompatibilityIssueAnalyzer<*>>(JavaPluginApiCompatibilityIssueAnalyzer())
 
   val compatibilityProblems = hashSetOf<CompatibilityProblem>()
   val compatibilityWarnings = hashSetOf<CompatibilityWarning>()
@@ -120,11 +122,8 @@ data class PluginVerificationContext(
   }
 
   override fun registerJavaPluginClassUsage(javaPluginClassUsage: JavaPluginClassUsage) {
-    if (idePlugin.dependencies.none { it.id == "com.intellij.modules.java" || it.id == "com.intellij.java" }) {
-      val noJavaDependencyWarning = compatibilityWarnings.filterIsInstance<NoExplicitDependencyOnJavaPluginWarning>().firstOrNull()
-        ?: NoExplicitDependencyOnJavaPluginWarning().also { compatibilityWarnings += it }
-      noJavaDependencyWarning.javaPluginClassUsages += javaPluginClassUsage
-    }
+    compatibilityIssueAnalyzers.filterIsInstance<JavaPluginApiCompatibilityIssueAnalyzer>()
+            .map { it.analyze(this, javaPluginClassUsage) }
   }
 
   override fun registerCompatibilityWarning(warning: CompatibilityWarning) {
