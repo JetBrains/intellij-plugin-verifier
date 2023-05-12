@@ -2,10 +2,10 @@ plugins {
   war
   idea
   `maven-publish`
-  id("org.springframework.boot") version "2.7.5"
-  id("io.spring.dependency-management") version "1.1.0"
+  alias(libs.plugins.spring.boot)
+  alias(libs.plugins.spring.dependencyManagement)
   alias(sharedLibs.plugins.kotlin.jvm)
-  id("org.jetbrains.kotlin.plugin.spring") version sharedLibs.versions.kotlin
+  alias(libs.plugins.kotlin.spring) version sharedLibs.versions.kotlin
 }
 
 kotlin {
@@ -64,38 +64,29 @@ allprojects {
   }
 
   dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-      dependencies {
-        implementation("org.apache.logging.log4j:log4j-to-slf4j:2.20.0") {
-          because("we need 2.17.0")
-        }
-        implementation("org.apache.logging.log4j:log4j-api:2.20.0") {
-          because("we need 2.17.0")
-        }
-      }
-    }
-    implementation("org.springframework.boot:spring-boot-starter-actuator")
-    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
-    developmentOnly("org.springframework.boot:spring-boot-devtools")
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.spring.boot.starter.tomcat)
+    implementation(libs.spring.boot.devtools)
 
-    testImplementation("junit:junit:4.13.2")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("commons-io:commons-io:2.10.0")
-    implementation("com.github.salomonbrys.kotson:kotson:2.5.0")
-    implementation("com.google.code.gson:gson:2.10.1")
+    testImplementation(libs.junit)
+    implementation(sharedLibs.kotlin.stdlib.jdk8)
+    implementation(libs.commons.io)
+    implementation(libs.kotson)
+    implementation(libs.gson)
 
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation(libs.okhttp)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging.interceptor)
 
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
-    implementation("org.mapdb:mapdb:3.0.9")
+    implementation(libs.mapdb)
     implementation(sharedLibs.slf4j.api)
-    implementation("ch.qos.logback:logback-classic:1.2.11")
+    implementation(libs.logback.classic)
 
-    runtimeOnly("org.codehaus.groovy:groovy:3.0.16")
-    implementation("commons-fileupload:commons-fileupload:1.5")
+    runtimeOnly(libs.groovy)
+    implementation(libs.commons.fileupload)
     implementation("org.jetbrains.intellij.plugins:intellij-feature-extractor:dev")
     implementation("org.jetbrains.intellij.plugins:verifier-intellij:dev")
 
