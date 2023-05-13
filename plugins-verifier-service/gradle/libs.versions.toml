@@ -12,7 +12,7 @@ okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
-spring-boot = "2.7.5"
+spring-boot = "3.0.6"
 spring-dependencyManagement = "1.1.0"
 teamcity-restClient = "1.14.0"
 
