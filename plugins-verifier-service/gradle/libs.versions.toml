@@ -1,0 +1,43 @@
+[versions]
+commons-io = "2.10.0"
+commons-fileupload = "1.5"
+groovy = "3.0.16"
+gson = "2.10.1"
+junit = "4.13.2"
+kotson = "2.5.0"
+logback-classic = "1.2.11"
+log4j-api = "2.20.0"
+mapdb = "3.0.9"
+okhttp = "4.11.0"
+okhttp-logging-interceptor = "4.11.0"
+retrofit = "2.9.0"
+retrofit-gson = "2.9.0"
+spring-boot = "2.7.5"
+spring-dependencyManagement = "1.1.0"
+teamcity-restClient = "1.14.0"
+
+[libraries]
+commons-fileupload = { group = "commons-fileupload", name = "commons-fileupload", version.ref = "commons-fileupload" }
+commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
+groovy = { group = "org.codehaus.groovy", name = "groovy", version.ref = "groovy" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
+logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
+log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j-api" }
+log4j-toSlf4j = { group = "org.apache.logging.log4j", name = "log4j-to-slf4j", version.ref = "log4j-api" }
+mapdb = { group = "org.mapdb", name = "mapdb", version.ref = "mapdb" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
+spring-boot-devtools = { group = "org.springframework.boot", name = "spring-boot-devtools", version.ref = "spring-boot" }
+spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-starter-tomcat = { group = "org.springframework.boot", name = "spring-boot-starter-tomcat", version.ref = "spring-boot" }
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
+teamcity-restClient = { group = "org.jetbrains.teamcity", name = "teamcity-rest-client", version.ref = "teamcity-restClient" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependencyManagement = { id = "io.spring.dependency-management", version.ref = "spring-dependencyManagement" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version = "1.8.21" }
