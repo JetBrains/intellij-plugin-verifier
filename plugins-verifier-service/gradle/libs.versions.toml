@@ -1,7 +1,7 @@
 [versions]
 commons-io = "2.10.0"
 commons-fileupload = "1.5"
-groovy = "3.0.16"
+groovy = "3.0.17"
 gson = "2.10.1"
 junit = "4.13.2"
 kotson = "2.5.0"
