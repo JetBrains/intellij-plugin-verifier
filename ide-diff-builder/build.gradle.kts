@@ -74,7 +74,7 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    runtimeOnly(group = "ch.qos.logback", name = "logback-classic", version = "1.4.6")
+    runtimeOnly(group = "ch.qos.logback", name = "logback-classic", version = "1.4.7")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation(project(":"))
