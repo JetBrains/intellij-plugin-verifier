@@ -4,7 +4,7 @@ kotlin = "1.8.21"
 jackson-module-kotlin = "2.14.2"
 jsoup = "1.16.1"
 logback-classic = "1.4.7"
-shadow = "7.1.2"
+shadow = "8.1.1"
 slf4j-api = "2.0.7"
 
 [libraries]
