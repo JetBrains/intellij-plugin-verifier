@@ -17,8 +17,6 @@ okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
-
-shadow = "7.1.2"
 xz = "1.9"
 
 [libraries]
@@ -40,6 +38,3 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
 spullara-cli-parser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cli-parser" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
-
-[plugins]
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }

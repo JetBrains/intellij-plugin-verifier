@@ -1,5 +1,5 @@
 plugins {
-  alias(libs.plugins.shadow)
+  alias(sharedLibs.plugins.shadow)
 }
 
 dependencies {

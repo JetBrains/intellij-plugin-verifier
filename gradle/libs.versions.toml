@@ -4,6 +4,7 @@ kotlin = "1.8.21"
 jackson-module-kotlin = "2.14.2"
 jsoup = "1.16.1"
 logback-classic = "1.4.7"
+shadow = "7.1.2"
 slf4j-api = "2.0.7"
 
 [libraries]
@@ -17,3 +18,4 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api"
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
