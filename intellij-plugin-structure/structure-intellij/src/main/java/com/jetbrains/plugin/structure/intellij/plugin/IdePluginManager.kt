@@ -172,20 +172,21 @@ class IdePluginManager private constructor(
     val possibleResults = results.stream()
       .filter { r: PluginCreator -> r.isSuccess || hasOnlyInvalidDescriptorErrors(r) }
       .collect(Collectors.toList())
-    if (possibleResults.size > 1) {
-      val first = possibleResults[0]
-      val second = possibleResults[1]
-      val multipleDescriptorsProblem: PluginProblem = MultiplePluginDescriptors(
-        first.descriptorPath,
-        first.pluginFileName,
-        second.descriptorPath,
-        second.pluginFileName
-      )
-      return createInvalidPlugin(root, descriptorPath, multipleDescriptorsProblem)
+    return when(possibleResults.size) {
+      0 -> createInvalidPlugin(root, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
+      1 -> possibleResults[0]
+      else -> {
+        val first = possibleResults[0]
+        val second = possibleResults[1]
+        val multipleDescriptorsProblem: PluginProblem = MultiplePluginDescriptors(
+                first.descriptorPath,
+                first.pluginFileName,
+                second.descriptorPath,
+                second.pluginFileName
+        )
+        createInvalidPlugin(root, descriptorPath, multipleDescriptorsProblem)
+      }
     }
-    return if (possibleResults.size == 1) {
-      possibleResults[0]
-    } else createInvalidPlugin(root, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
   }
 
   private fun loadPluginInfoFromJarOrDirectory(
