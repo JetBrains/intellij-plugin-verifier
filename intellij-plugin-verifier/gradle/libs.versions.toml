@@ -1,5 +1,5 @@
 [versions]
-jetbrains-annotations = "12.0"
+jetbrains-annotations = "24.0.1"
 
 bcpkix-jdk15on = "1.70"
 byteBuddy = "1.14.4"
