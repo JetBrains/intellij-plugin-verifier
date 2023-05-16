@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -512,6 +513,9 @@ internal class PluginCreator private constructor(
       } else if (dependencyBean.optional == false) {
         registerProblem(SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId))
       }
+    }
+    ReusedDescriptorVerifier(descriptorPath).verify(dependencies) {
+      problems += it
     }
   }
 
