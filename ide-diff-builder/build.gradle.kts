@@ -1,8 +1,10 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(sharedLibs.plugins.kotlin.jvm)
     id("org.jetbrains.kotlin.plugin.serialization") version sharedLibs.versions.kotlin apply false
+    alias(sharedLibs.plugins.shadow)
 }
 
 allprojects {
@@ -33,31 +35,16 @@ tasks {
             attributes(manifestAttributes)
         }
     }
+    shadowJar {
+        manifest {
+            attributes(manifestAttributes)
+        }
+        archiveClassifier.set("all")
+    }
 }
 
-val fatJar by tasks.registering(Jar::class) {
-    val jar = tasks.jar.get()
-    manifest.from(jar.manifest)
-
-    archiveClassifier.set("all")
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
-    val zipsOrJars = configurations.runtimeClasspath
-        .get()
-        .map {
-            if (it.isDirectory) {
-                zipTree(it)
-            } else {
-                it
-            }
-        }
-    from(zipsOrJars)
-        .exclude(
-            "META-INF/*.SF",
-            "META-INF/*.DSA",
-            "META-INF/*.RSA"
-        )
-    with(jar)
+val fatJar by tasks.registering(ShadowJar::class) {
+    dependsOn(tasks.shadowJar)
 }
 
 artifacts {
