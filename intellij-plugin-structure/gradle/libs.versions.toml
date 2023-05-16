@@ -1,6 +1,5 @@
 [versions]
 platform = "213.7172.25"
-jetbrains-annotations = "24.0.1"
 
 asm = "9.5"
 commons-compress = "1.23.0"
@@ -27,7 +26,6 @@ guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 jaxb-api = { group = "javax.xml.bind", name = "jaxb-api", version.ref = "jaxb" }
 jaxb-runtime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version.ref = "jaxb" }
 jdom = { group = "org.jdom", name = "jdom2", version.ref = "jdom" }
-jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jimfs = { group = "com.google.jimfs", name = "jimfs", version.ref = "jimfs" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 platform-jps-model-core = { group = "com.jetbrains.intellij.platform", name = "jps-model", version.ref = "platform" }

@@ -1,5 +1,5 @@
 dependencies {
-  api(libs.jetbrains.annotations)
+  api(sharedLibs.jetbrains.annotations)
   api(sharedLibs.slf4j.api)
 
   api(libs.commons.io)
