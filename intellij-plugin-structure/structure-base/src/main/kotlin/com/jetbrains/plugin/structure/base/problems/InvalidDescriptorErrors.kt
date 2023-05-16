@@ -6,6 +6,13 @@ package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 
+/**
+ * Indicates an issue with plugin descriptor (`plugin.xml`).
+ *
+ * Such kinds of errors are treated in a special way.
+ * Although they are indicated as [errors][com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR],
+ * they do not prevent successful creation of plugin by [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager].
+ */
 abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : PluginProblem() {
   abstract val detailedMessage: String
 
