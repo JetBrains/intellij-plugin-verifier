@@ -199,7 +199,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       perfectXmlBuilder.modify {
         vendor = "<vendor url=\"https://test.com\"></vendor>"
       },
-      listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+      listOf(VendorCannotBeEmpty("plugin.xml"))
     )
   }
 
@@ -323,7 +323,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       perfectXmlBuilder.modify {
         vendor = """<vendor></vendor>"""
       },
-      listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+      listOf(VendorCannotBeEmpty("plugin.xml"))
     )
 
     `test valid plugin xml`(

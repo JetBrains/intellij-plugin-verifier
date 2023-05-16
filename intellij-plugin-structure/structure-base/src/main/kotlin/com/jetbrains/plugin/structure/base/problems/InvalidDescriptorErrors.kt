@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import java.net.URL
 
 abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : PluginProblem() {
   abstract val detailedMessage: String
@@ -44,8 +45,8 @@ class TooLongPropertyValue(
     get() = Level.ERROR
 }
 
-class PropertyNotSpecified(
-  private val propertyName: String,
+open class PropertyNotSpecified(
+  protected val propertyName: String,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
@@ -93,3 +94,19 @@ class ContainsNewlines(propertyName: String, descriptorPath: String? = null) : I
 
   override val level = Level.ERROR
 }
+
+class VendorCannotBeEmpty(descriptorPath: String? = null
+) : PropertyNotSpecified("vendor", descriptorPath) {
+
+  private val solutionHint = ProblemSolutionHint(
+          """<vendor email="joe@example.com">Joe Doe</vendor>""",
+          URL("https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__vendor")
+  )
+
+  override val detailedMessage: String
+    get() = "<$propertyName> element has no content. The vendor name or organization ID must be set. Example: ${solutionHint.example}"
+
+  override val level
+    get() = Level.ERROR
+}
+
