@@ -15,15 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-class PluginXmlValidationTest {
-
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
-  companion object {
-
-    private const val HEADER = """
+private const val HEADER = """
       <id>someId</id>
       <name>someName</name>
       <version>someVersion</version>
@@ -33,7 +25,11 @@ class PluginXmlValidationTest {
       <idea-version since-build="131.1"/>
     """
 
-  }
+class PluginXmlValidationTest {
+
+  @Rule
+  @JvmField
+  val temporaryFolder = TemporaryFolder()
 
   @Test
   fun `plugin declaring optional dependency but missing config-file`() {
@@ -54,7 +50,7 @@ class PluginXmlValidationTest {
     val warnings = pluginCreationSuccess.warnings
     assertEquals(1, warnings.size)
     val warning = warnings.filterIsInstance<OptionalDependencyConfigFileNotSpecified>()
-            .firstOrNull()
+            .singleOrNull()
     if (warning == null) {
       fail("Expected 'Optional Dependency Config File Not Specified' plugin warning")
     }
@@ -78,7 +74,7 @@ class PluginXmlValidationTest {
 
     assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
     val warning = pluginCreationFail.errorsAndWarnings.filterIsInstance<OptionalDependencyConfigFileIsEmpty>()
-            .firstOrNull()
+            .singleOrNull()
     if (warning == null) {
       fail("Expected 'Optional Dependency Config File Is Empty' plugin warning")
     }
@@ -87,7 +83,8 @@ class PluginXmlValidationTest {
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {
-      fail("This plugin should not be created, but is correct.")
+      fail("This plugin was expected to fail during creation, but the creation process was successful." +
+              " Please ensure that this is the intended behavior in the unit test.")
     }
     return pluginCreationResult as PluginCreationFail
   }
@@ -103,14 +100,5 @@ class PluginXmlValidationTest {
   private fun buildIdePlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
     return IdePluginManager.createManager().createPlugin(pluginFile)
-  }
-
-  class PluginCreationHandler {
-    fun onSuccess(result: PluginCreationSuccess<IdePlugin>): PluginCreationSuccess<IdePlugin> {
-      return result
-    }
-    fun onFailure(result: PluginCreationFail<IdePlugin>): PluginCreationFail<IdePlugin> {
-      return result
-    }
   }
 }
