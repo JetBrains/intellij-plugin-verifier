@@ -6,7 +6,7 @@ dependencies {
 
   implementation(sharedLibs.gson)
 
-  implementation(libs.guava)
+  implementation(sharedLibs.guava)
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
 

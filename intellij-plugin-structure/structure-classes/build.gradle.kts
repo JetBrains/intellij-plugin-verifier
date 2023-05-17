@@ -9,5 +9,5 @@ dependencies {
 
   implementation(project(":structure-base"))
 
-  api(libs.guava)
+  api(sharedLibs.guava)
 }
