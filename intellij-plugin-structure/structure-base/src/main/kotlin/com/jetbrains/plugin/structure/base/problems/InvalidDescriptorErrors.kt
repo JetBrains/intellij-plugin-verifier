@@ -100,3 +100,15 @@ class ContainsNewlines(propertyName: String, descriptorPath: String? = null) : I
 
   override val level = Level.ERROR
 }
+
+class ReusedDescriptorInMultipleDependencies(descriptorPath: String? = null,
+                                             private val configFile: String,
+                                             val dependencies: List<String> = listOf()) : InvalidDescriptorProblem(descriptorPath) {
+  private val dependencySummary = dependencies.joinToString(prefix = "[", postfix = "]")
+
+  override val detailedMessage: String
+    get() = "Dependencies (${dependencies.size}) reuse a config-file attribute value '$configFile': " + dependencySummary
+
+  override val level: Level
+    get() = Level.ERROR
+}
