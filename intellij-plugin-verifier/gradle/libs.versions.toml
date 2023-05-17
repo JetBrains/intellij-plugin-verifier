@@ -3,7 +3,6 @@ bcpkix-jdk15on = "1.70"
 byteBuddy = "1.14.4"
 commons-compress = "1.23.0"
 commons-lang3 = "3.12.0"
-gson = "2.10.1"
 guava = "31.1-jre"
 jgrapht-core = "1.5.2"
 junit = "4.13.2"
@@ -19,7 +18,6 @@ byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteB
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }

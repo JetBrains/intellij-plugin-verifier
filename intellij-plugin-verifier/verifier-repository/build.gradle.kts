@@ -4,7 +4,7 @@ dependencies {
   api("org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion")
   api("org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion")
 
-  implementation(libs.gson)
+  implementation(sharedLibs.gson)
 
   implementation(libs.guava)
   implementation(libs.commons.compress)

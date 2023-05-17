@@ -1,7 +1,5 @@
 [versions]
-gson = "2.10.1"
 
 [libraries]
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]

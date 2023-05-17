@@ -73,7 +73,7 @@ allprojects {
     implementation(sharedLibs.kotlin.stdlib.jdk8)
     implementation(sharedLibs.commons.io)
     implementation(sharedLibs.kotson)
-    implementation(libs.gson)
+    implementation(sharedLibs.gson)
 
     implementation(libs.okhttp)
     implementation(libs.retrofit)

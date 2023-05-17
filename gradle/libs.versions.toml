@@ -2,6 +2,7 @@
 kotlin = "1.8.21"
 
 commons-io = "2.10.0"
+gson = "2.10.1"
 jackson-module-kotlin = "2.14.2"
 jetbrains-annotations = "24.0.1"
 jsoup = "1.16.1"
@@ -15,6 +16,7 @@ xz = "1.9"
 
 [libraries]
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }

@@ -38,7 +38,7 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:structure-ide-classes:$structureVersion")
   implementation("org.jetbrains.intellij.plugins:verifier-core:$structureVersion")
 
-  implementation(libs.gson)
+  implementation(sharedLibs.gson)
   implementation(sharedLibs.slf4j.api)
   implementation(sharedLibs.commons.io)
 
