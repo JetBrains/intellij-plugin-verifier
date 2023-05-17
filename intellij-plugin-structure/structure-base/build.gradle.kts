@@ -2,7 +2,7 @@ dependencies {
   api(sharedLibs.jetbrains.annotations)
   api(sharedLibs.slf4j.api)
 
-  api(libs.commons.io)
+  api(sharedLibs.commons.io)
 
   implementation(libs.commons.compress)
   implementation(libs.xz)

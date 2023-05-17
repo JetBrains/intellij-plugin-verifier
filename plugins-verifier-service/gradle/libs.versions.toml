@@ -1,5 +1,4 @@
 [versions]
-commons-io = "2.10.0"
 commons-fileupload = "1.5"
 groovy = "3.0.17"
 gson = "2.10.1"
@@ -18,7 +17,6 @@ teamcity-restClient = "1.14.0"
 
 [libraries]
 commons-fileupload = { group = "commons-fileupload", name = "commons-fileupload", version.ref = "commons-fileupload" }
-commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 groovy = { group = "org.codehaus.groovy", name = "groovy", version.ref = "groovy" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
