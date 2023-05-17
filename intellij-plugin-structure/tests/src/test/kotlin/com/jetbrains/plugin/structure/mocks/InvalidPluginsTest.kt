@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -22,15 +21,15 @@ import java.nio.file.Paths
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
   private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
   private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
-          "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm", "WebStorm",
-          "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
+    "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm", "WebStorm",
+    "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
   )
   private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
-          "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
+    "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
   )
 
   override fun createManager(extractDirectory: Path): IdePluginManager =
-          IdePluginManager.createManager(extractDirectory)
+    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `incorrect plugin file type`() {
@@ -67,30 +66,30 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin description is empty`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              description = "<description></description>"
-            },
-            listOf(PropertyNotSpecified("description", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        description = "<description></description>"
+      },
+      listOf(PropertyNotSpecified("description", "plugin.xml"))
     )
   }
 
   @Test
   fun `plugin name is not specified`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              name = ""
-            },
-            listOf(PropertyNotSpecified("name", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        name = ""
+      },
+      listOf(PropertyNotSpecified("name", "plugin.xml"))
     )
   }
 
   @Test
   fun `plugin name contains newline`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              name = "<name>Some\nname</name>"
-            },
-            listOf(ContainsNewlines("name", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        name = "<name>Some\nname</name>"
+      },
+      listOf(ContainsNewlines("name", "plugin.xml"))
     )
   }
 
@@ -98,9 +97,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `plugin name contains newline at end`() {
     val pluginName = "Some name"
     val plugin = `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              name = "<name>$pluginName\n </name>"
-            }
+      perfectXmlBuilder.modify {
+        name = "<name>$pluginName\n </name>"
+      }
     )
     assertEquals(pluginName, plugin.plugin.pluginName)
   }
@@ -108,20 +107,20 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin id contains newline`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              id = "<id>some\nId</id>"
-            },
-            listOf(ContainsNewlines("id", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        id = "<id>some\nId</id>"
+      },
+      listOf(ContainsNewlines("id", "plugin.xml"))
     )
   }
 
   @Test
   fun `plugin id is empty`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              id = "<id></id>"
-            },
-            listOf(PropertyNotSpecified("id"))
+      perfectXmlBuilder.modify {
+        id = "<id></id>"
+      },
+      listOf(PropertyNotSpecified("id"))
     )
   }
 
@@ -129,9 +128,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `plugin id contains newline at end`() {
     val pluginId = "someId"
     val plugin = `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              id = "<id>$pluginId\n </id>"
-            }
+      perfectXmlBuilder.modify {
+        id = "<id>$pluginId\n </id>"
+      }
     )
     assertEquals(pluginId, plugin.plugin.pluginId)
   }
@@ -140,10 +139,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `plugin name is not default`() {
     for (templateName in DEFAULT_TEMPLATE_NAMES) {
       `test invalid plugin xml`(
-              perfectXmlBuilder.modify {
-                name = "<name>${templateName}</name>"
-              },
-              listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, templateName))
+        perfectXmlBuilder.modify {
+          name = "<name>${templateName}</name>"
+        },
+        listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, templateName))
       )
     }
   }
@@ -152,9 +151,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `plugin name contains template words`() {
     for (templateWord in PLUGIN_NAME_RESTRICTED_WORDS) {
       val warning = `test valid plugin xml`(
-              perfectXmlBuilder.modify {
-                name = "<name>bla ${templateWord}bla</name>"
-              }
+        perfectXmlBuilder.modify {
+          name = "<name>bla ${templateWord}bla</name>"
+        }
       ).warnings.single()
       assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
     }
@@ -165,10 +164,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     for (templateDesc in DEFAULT_TEMPLATE_DESCRIPTIONS) {
       val descriptionText = "description ${templateDesc}description description"
       `test invalid plugin xml`(
-              perfectXmlBuilder.modify {
-                description = "<description>$descriptionText</description>"
-              },
-              listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, descriptionText))
+        perfectXmlBuilder.modify {
+          description = "<description>$descriptionText</description>"
+        },
+        listOf(PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, descriptionText))
       )
     }
   }
@@ -187,48 +186,49 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin vendor is not specified`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = ""
-            },
-            listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        vendor = ""
+      },
+      listOf(PropertyNotSpecified("vendor", "plugin.xml"))
     )
   }
 
   @Test
   fun `plugin vendor name is not specified`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = "<vendor url=\"https://test.com\"></vendor>"
-            },
-            listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        vendor = "<vendor url=\"https://test.com\"></vendor>"
+      },
+      listOf(VendorCannotBeEmpty("plugin.xml"))
     )
   }
 
   @Test
   fun `plugin version is not specified`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              version = ""
-            }, listOf(PropertyNotSpecified("version", "plugin.xml")))
+      perfectXmlBuilder.modify {
+        version = ""
+      }
+      , listOf(PropertyNotSpecified("version", "plugin.xml")))
   }
 
   @Test
   fun `idea version is not specified`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = ""
-            },
-            listOf(PropertyNotSpecified("idea-version", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        ideaVersion = ""
+      },
+      listOf(PropertyNotSpecified("idea-version", "plugin.xml"))
     )
   }
 
   @Test
   fun `invalid empty dependency bean`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              depends = "<depends></depends>"
-            },
-            listOf(InvalidDependencyId("plugin.xml", ""))
+      perfectXmlBuilder.modify {
+        depends = "<depends></depends>"
+      },
+      listOf(InvalidDependencyId("plugin.xml", ""))
     )
   }
 
@@ -236,10 +236,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `invalid dependency tag containing new line characters bean`() {
     val dependencyId = "\ncom.intellij.modules.java\n"
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              depends = "<depends>$dependencyId</depends>"
-            },
-            listOf(InvalidDependencyId("plugin.xml", dependencyId))
+      perfectXmlBuilder.modify {
+        depends = "<depends>$dependencyId</depends>"
+      },
+      listOf(InvalidDependencyId("plugin.xml", dependencyId))
     )
   }
 
@@ -247,11 +247,11 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `superfluous dependency declaration`() {
     val dependencyId = "superfluousDependencyId"
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              depends += "\n"
-              depends += "<depends optional=\"false\">$dependencyId</depends>"
-            },
-            listOf(SuperfluousNonOptionalDependencyDeclaration(dependencyId))
+      perfectXmlBuilder.modify {
+        depends += "\n"
+        depends += "<depends optional=\"false\">$dependencyId</depends>"
+      },
+      listOf(SuperfluousNonOptionalDependencyDeclaration(dependencyId))
     )
   }
 
@@ -259,11 +259,11 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `config-file must be specified`() {
     val dependencyId = "someDependencyId"
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              depends += "\n"
-              depends += "<depends optional=\"true\">$dependencyId</depends>"
-            },
-            listOf(OptionalDependencyConfigFileNotSpecified(dependencyId))
+      perfectXmlBuilder.modify {
+        depends += "\n"
+        depends += "<depends optional=\"true\">$dependencyId</depends>"
+      },
+      listOf(OptionalDependencyConfigFileNotSpecified(dependencyId))
     )
   }
 
@@ -287,85 +287,85 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `invalid module bean`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              modules = listOf("")
-            },
-            listOf(InvalidModuleBean("plugin.xml"))
+      perfectXmlBuilder.modify {
+        modules = listOf("")
+      },
+      listOf(InvalidModuleBean("plugin.xml"))
     )
   }
 
   @Test
   fun `missing since build`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = "<idea-version/>"
-            },
-            listOf(SinceBuildNotSpecified("plugin.xml"))
+      perfectXmlBuilder.modify {
+        ideaVersion = "<idea-version/>"
+      },
+      listOf(SinceBuildNotSpecified("plugin.xml"))
     )
   }
 
   @Test
   fun `invalid since build`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="131."/>"""
-            },
-            listOf(InvalidSinceBuild("plugin.xml", "131."))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="131."/>"""
+      },
+      listOf(InvalidSinceBuild("plugin.xml", "131."))
     )
   }
 
   @Test
   fun `invalid until build`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="131.1" until-build="141."/>"""
-            },
-            listOf(InvalidUntilBuild("plugin.xml", "141."))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="131.1" until-build="141."/>"""
+      },
+      listOf(InvalidUntilBuild("plugin.xml", "141."))
     )
   }
 
   @Test
   fun `since build less then until `() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
-            },
-            listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
+      },
+      listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1")))
     )
   }
 
   @Test
   fun `empty vendor`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = """<vendor></vendor>"""
-            },
-            listOf(PropertyNotSpecified("vendor", "plugin.xml"))
+      perfectXmlBuilder.modify {
+        vendor = """<vendor></vendor>"""
+      },
+      listOf(VendorCannotBeEmpty("plugin.xml"))
     )
 
     `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = """<vendor>Vendor name</vendor>"""
-            })
+      perfectXmlBuilder.modify {
+        vendor = """<vendor>Vendor name</vendor>"""
+      })
 
     `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = """<vendor url="https://vendor.url">vendor</vendor>"""
-            })
+      perfectXmlBuilder.modify {
+        vendor = """<vendor url="https://vendor.url">vendor</vendor>"""
+      })
 
     `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              vendor = """<vendor email="vendor@email.com">vendor</vendor>"""
-            })
+      perfectXmlBuilder.modify {
+        vendor = """<vendor email="vendor@email.com">vendor</vendor>"""
+      })
   }
 
   @Test
   fun `wildcard in old ide`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="129.0.*"/>"""
-            },
-            listOf(InvalidSinceBuild("plugin.xml", "129.0.*"))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="129.0.*"/>"""
+      },
+      listOf(InvalidSinceBuild("plugin.xml", "129.0.*"))
     )
   }
 
@@ -373,9 +373,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `latin description`() {
     val desc = "Latin description, 1234 & ;,.!-–— () long enough"
     val plugin = `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              description = "<description>${desc.replace("&", "&amp;")}</description>"
-            }
+      perfectXmlBuilder.modify {
+        description = "<description>${desc.replace("&", "&amp;")}</description>"
+      }
     )
     assertEquals(desc, plugin.plugin.description)
     assert(plugin.unacceptableWarnings.isEmpty()) {
@@ -389,33 +389,33 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `short latin description`() {
     `test plugin xml unacceptable warnings`(
-            perfectXmlBuilder.modify {
-              description = "<description>Too short latin description bla-bla-bla</description>"
-            },
-            listOf(ShortOrNonLatinDescription())
+      perfectXmlBuilder.modify {
+        description = "<description>Too short latin description bla-bla-bla</description>"
+      },
+      listOf(ShortOrNonLatinDescription())
     )
   }
 
   @Test
   fun `non latin description`() {
     `test plugin xml unacceptable warnings`(
-            perfectXmlBuilder.modify {
-              description = "<description>Описание без английского, но достаточно длинное</description>"
-            },
-            listOf(ShortOrNonLatinDescription())
+      perfectXmlBuilder.modify {
+        description = "<description>Описание без английского, но достаточно длинное</description>"
+      },
+      listOf(ShortOrNonLatinDescription())
     )
   }
 
   @Test
   fun `http links in description`() {
     val testLinks = listOf(
-            Pair("a", "http://test_a.com"),
-            Pair("link", "http://test_link.com"),
-            Pair("img", "http://test.png")
+      Pair("a", "http://test_a.com"),
+      Pair("link", "http://test_link.com"),
+      Pair("img", "http://test.png")
     )
     val linksString = testLinks.joinToString(", ") {
       val tag = it.first
-      val attr = when (tag) {
+      val attr = when(tag) {
         "img" -> "src"
         else -> "href"
       }
@@ -431,10 +431,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       ]]>
     """.trimIndent()
     `test plugin xml unacceptable warnings`(
-            perfectXmlBuilder.modify {
-              description = "<description>$desc</description>"
-            },
-            testLinks.map { HttpLinkInDescription(it.second) }
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      },
+      testLinks.map { HttpLinkInDescription(it.second) }
     )
   }
 
@@ -455,28 +455,28 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       ]]>
     """.trimIndent()
     `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              description = "<description>$desc</description>"
-            }
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      }
     )
   }
 
   @Test
   fun `html description`() {
     `test plugin xml unacceptable warnings`(
-            perfectXmlBuilder.modify {
-              description = """<description><![CDATA[
+      perfectXmlBuilder.modify {
+        description = """<description><![CDATA[
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
-            },
-            listOf(ShortOrNonLatinDescription())
+      },
+      listOf(ShortOrNonLatinDescription())
     )
   }
 
   @Test
   fun `default values`() {
     `test invalid plugin xml`(
-            """<idea-plugin>
+      """<idea-plugin>
       <id>com.your.company.unique.plugin.id</id>
       <name>Plugin display name here</name>
       <version>1.0</version>
@@ -497,17 +497,17 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       </actions>
     </idea-plugin>
       """, listOf(
-            PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.ID, "com.your.company.unique.plugin.id"),
-            PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, "Plugin display name here"),
-            PropertyWithDefaultValue(
-                    "plugin.xml",
-                    PropertyWithDefaultValue.DefaultProperty.DESCRIPTION,
-                    "Enter short description for your plugin here. most HTML tags may be used"
-            ),
-            DefaultChangeNotes("plugin.xml"),
-            PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR, "YourCompany"),
-            PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, "https://www.yourcompany.com"),
-            PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, "support@yourcompany.com")
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.ID, "com.your.company.unique.plugin.id"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.NAME, "Plugin display name here"),
+      PropertyWithDefaultValue(
+        "plugin.xml",
+        PropertyWithDefaultValue.DefaultProperty.DESCRIPTION,
+        "Enter short description for your plugin here. most HTML tags may be used"
+      ),
+      DefaultChangeNotes("plugin.xml"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR, "YourCompany"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, "https://www.yourcompany.com"),
+      PropertyWithDefaultValue("plugin.xml", PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, "support@yourcompany.com")
     )
     )
   }
@@ -577,103 +577,103 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
-            "abracadabra",
-            listOf(UnexpectedDescriptorElements("unexpected element on line 1", "plugin.xml"))
+      "abracadabra",
+      listOf(UnexpectedDescriptorElements("unexpected element on line 1", "plugin.xml"))
     )
   }
 
   @Test
   fun `plugin specifies unresolved xinclude element`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
-              additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
-            }, listOf(XIncludeResolutionErrors("plugin.xml", "Not found document '/META-INF/missing.xml' referenced in <xi:include href=\"/META-INF/missing.xml\", xpointer=\"xpointer(/idea-plugin/*)\"/>. <xi:fallback> element is not provided. (at plugin.xml)"))
+      perfectXmlBuilder.modify {
+        ideaPluginTagOpen = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">"""
+        additionalContent = """<xi:include href="/META-INF/missing.xml" xpointer="xpointer(/idea-plugin/*)"/>"""
+      }, listOf(XIncludeResolutionErrors("plugin.xml", "Not found document '/META-INF/missing.xml' referenced in <xi:include href=\"/META-INF/missing.xml\", xpointer=\"xpointer(/idea-plugin/*)\"/>. <xi:fallback> element is not provided. (at plugin.xml)"))
     )
   }
 
   @Test
   fun `plugin specifies unresolved theme path`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              additionalContent = """
+      perfectXmlBuilder.modify {
+        additionalContent = """
             <extensions defaultExtensionNs="com.intellij">
     <themeProvider id="someId" path="/unresolved.theme.theme.json"/>
   </extensions>
           """.trimIndent()
-            }, listOf(UnableToFindTheme("plugin.xml", "/unresolved.theme.theme.json"))
+      }, listOf(UnableToFindTheme("plugin.xml", "/unresolved.theme.theme.json"))
     )
   }
 
   @Test
   fun `since or until build with year instead of branch number`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="2018.1"/>"""
-            }, listOf(ErroneousSinceBuild("plugin.xml", IdeVersion.createIdeVersion("2018.1")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="2018.1"/>"""
+      }, listOf(ErroneousSinceBuild("plugin.xml", IdeVersion.createIdeVersion("2018.1")))
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
-            }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
+        }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
     )
   }
 
   @Test
   fun `since or until build with productCode`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="IU-183.0"/>"""
-            }, listOf(ProductCodePrefixInBuild("plugin.xml"))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="IU-183.0"/>"""
+      }, listOf(ProductCodePrefixInBuild("plugin.xml"))
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="171.1" until-build="IU-183.*"/>"""
-            }, listOf(ProductCodePrefixInBuild("plugin.xml"))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="171.1" until-build="IU-183.*"/>"""
+      }, listOf(ProductCodePrefixInBuild("plugin.xml"))
     )
   }
 
   @Test
   fun `invalid product descriptor`() {
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              productDescriptor = """<product-descriptor/>"""
-            },
-            listOf(
-                    PropertyNotSpecified("code", "plugin.xml"),
-                    PropertyNotSpecified("release-date", "plugin.xml"),
-                    PropertyNotSpecified("release-version", "plugin.xml")
-            )
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor/>"""
+      },
+      listOf(
+        PropertyNotSpecified("code", "plugin.xml"),
+        PropertyNotSpecified("release-date", "plugin.xml"),
+        PropertyNotSpecified("release-version", "plugin.xml")
+      )
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              productDescriptor = """<product-descriptor code="ABC" release-date="not-date" release-version="not-int"/>"""
-            },
-            listOf(
-                    ReleaseDateWrongFormat,
-                    NotNumber("release-version", "plugin.xml")
-            )
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="not-date" release-version="not-int"/>"""
+      },
+      listOf(
+        ReleaseDateWrongFormat,
+        NotNumber("release-version", "plugin.xml")
+      )
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" eap="aaaa"/>"""
-            },
-            listOf(
-                    NotBoolean("eap", "plugin.xml")
-            )
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" eap="aaaa"/>"""
+      },
+      listOf(
+        NotBoolean("eap", "plugin.xml")
+      )
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" optional="not-bool"/>"""
-            },
-            listOf(
-                    NotBoolean("optional", "plugin.xml")
-            )
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" optional="not-bool"/>"""
+      },
+      listOf(
+        NotBoolean("optional", "plugin.xml")
+      )
     )
   }
 
@@ -685,107 +685,107 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val string65536 = "a".repeat(65536)
 
     val expectedProblems = listOf(
-            TooLongPropertyValue("plugin.xml", "id", 256, 255),
-            TooLongPropertyValue("plugin.xml", "name", 256, 64),
-            TooLongPropertyValue("plugin.xml", "version", 65, 64),
-            TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
-            TooLongPropertyValue("plugin.xml", "vendor", 256, 255),
-            TooLongPropertyValue("plugin.xml", "vendor email", 256, 255),
-            TooLongPropertyValue("plugin.xml", "vendor url", 256, 255),
-            TooLongPropertyValue("plugin.xml", "description", 65536, 65535),
-            TooLongPropertyValue("plugin.xml", "<change-notes>", 65536, 65535)
+      TooLongPropertyValue("plugin.xml", "id", 256, 255),
+      TooLongPropertyValue("plugin.xml", "name", 256, 64),
+      TooLongPropertyValue("plugin.xml", "version", 65, 64),
+      TooLongPropertyValue("plugin.xml", "plugin url", 256, 255),
+      TooLongPropertyValue("plugin.xml", "vendor", 256, 255),
+      TooLongPropertyValue("plugin.xml", "vendor email", 256, 255),
+      TooLongPropertyValue("plugin.xml", "vendor url", 256, 255),
+      TooLongPropertyValue("plugin.xml", "description", 65536, 65535),
+      TooLongPropertyValue("plugin.xml", "<change-notes>", 65536, 65535)
     )
 
     `test invalid plugin xml`(
-            perfectXmlBuilder.modify {
-              ideaPluginTagOpen = """<idea-plugin url="$string256">"""
-              id = "<id>$string256</id>"
-              name = "<name>$string256</name>"
-              version = "<version>$string65</version>"
-              vendor = """<vendor email="$string256" url="$string256">$string256</vendor>"""
-              description = "<description>$string65536</description>"
-              changeNotes = "<change-notes>$string65536</change-notes>"
-            }, expectedProblems
+      perfectXmlBuilder.modify {
+        ideaPluginTagOpen = """<idea-plugin url="$string256">"""
+        id = "<id>$string256</id>"
+        name = "<name>$string256</name>"
+        version = "<version>$string65</version>"
+        vendor = """<vendor email="$string256" url="$string256">$string256</vendor>"""
+        description = "<description>$string65536</description>"
+        changeNotes = "<change-notes>$string65536</change-notes>"
+      }, expectedProblems
     )
   }
 
   @Test
   fun `application listeners are available only since 193`() {
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
-              additionalContent = """
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
+        additionalContent = """
             <applicationListeners>
               <listener class="SomeClass" topic="SomeTopic"/>            
             </applicationListeners>
           """.trimIndent()
-            },
-            listOf(
-                    ElementAvailableOnlySinceNewerVersion(
-                            "applicationListeners",
-                            IdeVersion.createIdeVersion("193"),
-                            IdeVersion.createIdeVersion("181.1"),
-                            IdeVersion.createIdeVersion("193.1")
-                    )
-            )
+      },
+      listOf(
+        ElementAvailableOnlySinceNewerVersion(
+          "applicationListeners",
+          IdeVersion.createIdeVersion("193"),
+          IdeVersion.createIdeVersion("181.1"),
+          IdeVersion.createIdeVersion("193.1")
+        )
+      )
     )
   }
 
   @Test
   fun `project listeners are available only since 193`() {
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
-              additionalContent = """
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="181.1" until-build="193.1"/>"""
+        additionalContent = """
             <projectListeners>
               <listener class="SomeClass" topic="SomeTopic"/>            
             </projectListeners>
           """.trimIndent()
-            },
-            listOf(
-                    ElementAvailableOnlySinceNewerVersion(
-                            "projectListeners",
-                            IdeVersion.createIdeVersion("193"),
-                            IdeVersion.createIdeVersion("181.1"),
-                            IdeVersion.createIdeVersion("193.1")
-                    )
-            )
+      },
+      listOf(
+        ElementAvailableOnlySinceNewerVersion(
+          "projectListeners",
+          IdeVersion.createIdeVersion("193"),
+          IdeVersion.createIdeVersion("181.1"),
+          IdeVersion.createIdeVersion("193.1")
+        )
+      )
     )
   }
 
   @Test
   fun `application listener missing attributes`() {
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="193.1"/>"""
-              additionalContent = """
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="193.1"/>"""
+        additionalContent = """
             <applicationListeners>
               <listener irrelevantAttribute="42"/>            
             </applicationListeners>
           """.trimIndent()
-            },
-            listOf(
-                    ElementMissingAttribute("listener", "class"),
-                    ElementMissingAttribute("listener", "topic")
-            )
+      },
+      listOf(
+        ElementMissingAttribute("listener", "class"),
+        ElementMissingAttribute("listener", "topic")
+      )
     )
   }
 
   @Test
   fun `project listener missing attributes`() {
     `test plugin xml warnings`(
-            perfectXmlBuilder.modify {
-              ideaVersion = """<idea-version since-build="193.1"/>"""
-              additionalContent = """
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="193.1"/>"""
+        additionalContent = """
             <projectListeners>
               <listener irrelevantAttribute="42"/>            
             </projectListeners>
           """.trimIndent()
-            },
-            listOf(
-                    ElementMissingAttribute("listener", "class"),
-                    ElementMissingAttribute("listener", "topic")
-            )
+      },
+      listOf(
+        ElementMissingAttribute("listener", "class"),
+        ElementMissingAttribute("listener", "topic")
+      )
     )
   }
 
@@ -800,8 +800,8 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         }
 
         file(
-                "a.xml",
-                """
+          "a.xml",
+          """
                 <idea-plugin>
                   <depends optional="true" config-file="b.xml">b</depends>
                 </idea-plugin>
@@ -809,8 +809,8 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         )
 
         file(
-                "b.xml",
-                """
+          "b.xml",
+          """
                 <idea-plugin>
                   <depends optional="true" config-file="a.xml">b</depends>
                 </idea-plugin>
@@ -832,8 +832,8 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         }
 
         file(
-                "a.xml",
-                """
+          "a.xml",
+          """
                 <idea-plugin>
                   <depends></depends>
                 </idea-plugin>
@@ -845,10 +845,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val optionalDependenciesWarnings = allWarnings.filterIsInstance<OptionalDependencyDescriptorResolutionProblem>()
     assertEquals(allWarnings, optionalDependenciesWarnings)
     assertEquals(
-            listOf(
-                    OptionalDependencyDescriptorResolutionProblem("a", "a.xml", listOf(InvalidDependencyId("a.xml", "")))
-            ),
-            optionalDependenciesWarnings
+      listOf(
+        OptionalDependencyDescriptorResolutionProblem("a", "a.xml", listOf(InvalidDependencyId("a.xml", "")))
+      ),
+      optionalDependenciesWarnings
     )
   }
 

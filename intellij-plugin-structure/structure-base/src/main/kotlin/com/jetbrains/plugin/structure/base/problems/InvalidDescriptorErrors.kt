@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.ProblemSolutionHint
 
 /**
  * Indicates an issue with plugin descriptor (`plugin.xml`).
@@ -51,8 +52,8 @@ class TooLongPropertyValue(
     get() = Level.ERROR
 }
 
-class PropertyNotSpecified(
-  private val propertyName: String,
+open class PropertyNotSpecified(
+  protected val propertyName: String,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
 
@@ -110,5 +111,20 @@ class ReusedDescriptorInMultipleDependencies(descriptorPath: String? = null,
     get() = "Dependencies (${dependencies.size}) reuse a config-file attribute value '$configFile': " + dependencySummary
 
   override val level: Level
+    get() = Level.ERROR
+}
+
+class VendorCannotBeEmpty(descriptorPath: String? = null
+) : PropertyNotSpecified("vendor", descriptorPath) {
+
+  private val solutionHint = ProblemSolutionHint(
+          """<vendor email="joe@example.com">Joe Doe</vendor>""",
+          "https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__vendor"
+  )
+
+  override val detailedMessage: String
+    get() = "<$propertyName> element has no content. The vendor name or organization ID must be set. Example: ${solutionHint.example}"
+
+  override val level
     get() = Level.ERROR
 }

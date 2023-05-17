@@ -26,3 +26,10 @@ abstract class PluginProblem {
   final override fun hashCode() = Objects.hash(message, level)
 
 }
+
+/**
+ * Indicates a hint that points to the solution.
+ * @param example A code sample that shows a correct usage of the specific code or declaration.
+ * @param documentationUrl a hyperlink to the human-readable documentation describing a suggested usage.
+ */
+data class ProblemSolutionHint(val example: String?, val documentationUrl: String?)
