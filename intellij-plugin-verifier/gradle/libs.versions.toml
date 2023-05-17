@@ -13,7 +13,6 @@ okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
-xz = "1.9"
 
 [libraries]
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
@@ -30,4 +29,3 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
-xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }

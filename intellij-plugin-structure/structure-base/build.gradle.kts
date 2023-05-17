@@ -5,7 +5,7 @@ dependencies {
   api(sharedLibs.commons.io)
 
   implementation(libs.commons.compress)
-  implementation(libs.xz)
+  implementation(sharedLibs.xz)
 
   //Provides English class capable of pluralizing english words.
   implementation(libs.evo.inflector)

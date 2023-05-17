@@ -10,6 +10,7 @@ logback-classic = "1.4.7"
 shadow = "8.1.1"
 slf4j-api = "2.0.7"
 spullara-cliParser = "1.1.6"
+xz = "1.9"
 
 [libraries]
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
@@ -23,6 +24,7 @@ kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cliParser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cliParser" }
+xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

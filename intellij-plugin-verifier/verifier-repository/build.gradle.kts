@@ -8,7 +8,7 @@ dependencies {
 
   implementation(libs.guava)
   implementation(libs.commons.compress)
-  implementation(libs.xz)
+  implementation(sharedLibs.xz)
 
   implementation(libs.okhttp)
   implementation(libs.okhttp.logging.interceptor)

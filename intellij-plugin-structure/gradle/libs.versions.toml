@@ -9,7 +9,6 @@ jaxb = "2.3.1"
 jdom = "2.0.6.1"
 jimfs = "1.2"
 semver4j = "3.1.0"
-xz = "1.9"
 
 [libraries]
 asm-analysis = { group = "org.ow2.asm", name = "asm-analysis", version.ref = "asm" }
@@ -29,4 +28,3 @@ platform-jps-model-impl = { group = "com.jetbrains.intellij.platform", name = "j
 platform-jps-model-serialization = { group = "com.jetbrains.intellij.platform", name = "jps-model-serialization", version.ref = "platform" }
 platform-util = { group = "com.jetbrains.intellij.platform", name = "util", version.ref = "platform" }
 semver4j = { group = "com.vdurmont", name = "semver4j", version.ref = "semver4j" }
-xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
