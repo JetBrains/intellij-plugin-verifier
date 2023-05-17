@@ -72,7 +72,7 @@ allprojects {
     testImplementation(libs.junit)
     implementation(sharedLibs.kotlin.stdlib.jdk8)
     implementation(sharedLibs.commons.io)
-    implementation(libs.kotson)
+    implementation(sharedLibs.kotson)
     implementation(libs.gson)
 
     implementation(libs.okhttp)

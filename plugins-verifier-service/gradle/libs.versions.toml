@@ -3,7 +3,6 @@ commons-fileupload = "1.5"
 groovy = "3.0.17"
 gson = "2.10.1"
 junit = "4.13.2"
-kotson = "2.5.0"
 logback-classic = "1.2.11"
 log4j-api = "2.20.0"
 mapdb = "3.0.9"
@@ -20,7 +19,6 @@ commons-fileupload = { group = "commons-fileupload", name = "commons-fileupload"
 groovy = { group = "org.codehaus.groovy", name = "groovy", version.ref = "groovy" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j-api" }
 log4j-toSlf4j = { group = "org.apache.logging.log4j", name = "log4j-to-slf4j", version.ref = "log4j-api" }

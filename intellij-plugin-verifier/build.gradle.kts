@@ -47,7 +47,7 @@ allprojects {
 
     implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
     implementation(rootProject.sharedLibs.kotlin.reflect)
-    implementation(rootProject.libs.kotson)
+    implementation(rootProject.sharedLibs.kotson)
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
 
