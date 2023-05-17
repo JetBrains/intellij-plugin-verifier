@@ -75,7 +75,7 @@ allprojects {
     implementation(sharedLibs.kotson)
     implementation(sharedLibs.gson)
 
-    implementation(libs.okhttp)
+    implementation(sharedLibs.okhttp)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp.logging.interceptor)

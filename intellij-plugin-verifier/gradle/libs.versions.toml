@@ -7,7 +7,6 @@ guava = "31.1-jre"
 jgrapht-core = "1.5.2"
 junit = "4.13.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
-okhttp = "4.11.0"
 okhttp-logging-interceptor = "4.11.0"
 retrofit = "2.9.0"
 retrofit-gson = "2.9.0"
@@ -21,7 +20,6 @@ guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
-okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-logging-interceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }

@@ -10,7 +10,7 @@ dependencies {
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
 
-  implementation(libs.okhttp)
+  implementation(sharedLibs.okhttp)
   implementation(libs.okhttp.logging.interceptor)
   implementation(libs.retrofit)
   implementation(libs.retrofit.gson)
