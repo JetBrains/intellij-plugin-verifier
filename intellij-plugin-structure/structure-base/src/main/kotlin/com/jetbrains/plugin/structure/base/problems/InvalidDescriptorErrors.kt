@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.ProblemSolutionHint
 import java.net.URL
 
 abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : PluginProblem() {
