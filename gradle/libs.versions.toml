@@ -11,6 +11,7 @@ kotson = "2.5.0"
 logback-classic = "1.4.7"
 okhttp = "4.11.0"
 okhttp-loggingInterceptor = "4.11.0"
+retrofit = "2.9.0"
 shadow = "8.1.1"
 slf4j-api = "2.0.7"
 spullara-cliParser = "1.1.6"
@@ -30,6 +31,7 @@ kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-loggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-loggingInterceptor" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cliParser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cliParser" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }

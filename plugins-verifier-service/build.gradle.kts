@@ -76,7 +76,7 @@ allprojects {
     implementation(sharedLibs.gson)
 
     implementation(sharedLibs.okhttp)
-    implementation(libs.retrofit)
+    implementation(sharedLibs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(sharedLibs.okhttp.loggingInterceptor)
 

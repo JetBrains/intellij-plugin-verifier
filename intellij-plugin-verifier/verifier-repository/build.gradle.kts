@@ -12,7 +12,7 @@ dependencies {
 
   implementation(sharedLibs.okhttp)
   implementation(sharedLibs.okhttp.loggingInterceptor)
-  implementation(libs.retrofit)
+  implementation(sharedLibs.retrofit)
   implementation(libs.retrofit.gson)
 
   implementation(libs.jetbrains.pluginRepositoryRestClient)
