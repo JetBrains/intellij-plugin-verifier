@@ -11,7 +11,7 @@ dependencies {
   implementation(sharedLibs.xz)
 
   implementation(sharedLibs.okhttp)
-  implementation(libs.okhttp.logging.interceptor)
+  implementation(sharedLibs.okhttp.loggingInterceptor)
   implementation(libs.retrofit)
   implementation(libs.retrofit.gson)
 

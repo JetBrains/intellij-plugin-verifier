@@ -10,6 +10,7 @@ junit = "4.13.2"
 kotson = "2.5.0"
 logback-classic = "1.4.7"
 okhttp = "4.11.0"
+okhttp-loggingInterceptor = "4.11.0"
 shadow = "8.1.1"
 slf4j-api = "2.0.7"
 spullara-cliParser = "1.1.6"
@@ -28,6 +29,7 @@ kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk
 kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-loggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-loggingInterceptor" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cliParser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cliParser" }
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
