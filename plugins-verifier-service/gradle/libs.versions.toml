@@ -2,7 +2,7 @@
 commons-fileupload = "1.5"
 groovy = "3.0.17"
 logback-classic = "1.2.11"
-log4j-api = "2.20.0"
+log4j-toSlf4j = "2.0.7"
 mapdb = "3.0.9"
 spring-boot = "2.7.5"
 spring-dependencyManagement = "1.1.0"
@@ -12,8 +12,7 @@ teamcity-restClient = "1.14.0"
 commons-fileupload = { group = "commons-fileupload", name = "commons-fileupload", version.ref = "commons-fileupload" }
 groovy = { group = "org.codehaus.groovy", name = "groovy", version.ref = "groovy" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
-log4j-api = { group = "org.apache.logging.log4j", name = "log4j-api", version.ref = "log4j-api" }
-log4j-toSlf4j = { group = "org.apache.logging.log4j", name = "log4j-to-slf4j", version.ref = "log4j-api" }
+log4j-toSlf4j = { group = "org.apache.logging.log4j", name = "log4j-to-slf4j", version.ref = "log4j-toSlf4j" }
 mapdb = { group = "org.mapdb", name = "mapdb", version.ref = "mapdb" }
 spring-boot-devtools = { group = "org.springframework.boot", name = "spring-boot-devtools", version.ref = "spring-boot" }
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "spring-boot" }
