@@ -69,7 +69,7 @@ allprojects {
     implementation(libs.spring.boot.starter.tomcat)
     implementation(libs.spring.boot.devtools)
 
-    testImplementation(libs.junit)
+    testImplementation(sharedLibs.junit)
     implementation(sharedLibs.kotlin.stdlib.jdk8)
     implementation(sharedLibs.commons.io)
     implementation(sharedLibs.kotson)

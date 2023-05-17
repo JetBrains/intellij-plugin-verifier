@@ -51,7 +51,7 @@ allprojects {
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
 
-    testImplementation(rootProject.libs.junit)
+    testImplementation(rootProject.sharedLibs.junit)
 
     implementation(rootProject.sharedLibs.slf4j.api)
     implementation(rootProject.libs.bouncycastle.pkix)

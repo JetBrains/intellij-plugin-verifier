@@ -16,7 +16,7 @@ dependencies {
   implementation(sharedLibs.retrofit.gson)
 
   implementation(libs.jetbrains.pluginRepositoryRestClient)
-  testImplementation(libs.junit)
+  testImplementation(sharedLibs.junit)
 }
 
 tasks {
