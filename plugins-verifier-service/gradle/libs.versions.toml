@@ -1,5 +1,5 @@
 [versions]
-commons-io = "2.10.0"
+commons-io = "2.12.0"
 commons-fileupload = "1.5"
 groovy = "3.0.17"
 gson = "2.10.1"
