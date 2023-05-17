@@ -181,3 +181,22 @@ class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private v
   override val detailedMessage: String
     get() = "optional dependencies configuration files contain cycle: " + cyclicPath.joinToString(separator = " -> ")
 }
+
+/**
+ * Indicates optional dependency with empty config file.
+ *
+ * Example violation:
+ * ```
+ * <depends optional="true" config-file="">
+ *   com.intellij.optional.plugin.id
+ * </depends>
+ * ```
+ *
+ */
+class OptionalDependencyConfigFileIsEmpty(private val optionalDependencyId: String, descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+  override val level
+    get() = Level.ERROR
+
+  override val detailedMessage: String
+    get() = "Optional dependency declaration on '$optionalDependencyId' cannot have empty \"config-file\""
+}

@@ -8,6 +8,13 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.ProblemSolutionHint
 import java.net.URL
 
+/**
+ * Indicates an issue with plugin descriptor (`plugin.xml`).
+ *
+ * Such kinds of errors are treated in a special way.
+ * Although they are indicated as [errors][com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR],
+ * they do not prevent successful creation of plugin by [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager].
+ */
 abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : PluginProblem() {
   abstract val detailedMessage: String
 
@@ -96,6 +103,18 @@ class ContainsNewlines(propertyName: String, descriptorPath: String? = null) : I
   override val level = Level.ERROR
 }
 
+class ReusedDescriptorInMultipleDependencies(descriptorPath: String? = null,
+                                             private val configFile: String,
+                                             val dependencies: List<String> = listOf()) : InvalidDescriptorProblem(descriptorPath) {
+  private val dependencySummary = dependencies.joinToString(prefix = "[", postfix = "]")
+
+  override val detailedMessage: String
+    get() = "Dependencies (${dependencies.size}) reuse a config-file attribute value '$configFile': " + dependencySummary
+
+  override val level: Level
+    get() = Level.ERROR
+}
+
 class VendorCannotBeEmpty(descriptorPath: String? = null
 ) : PropertyNotSpecified("vendor", descriptorPath) {
 
@@ -110,4 +129,3 @@ class VendorCannotBeEmpty(descriptorPath: String? = null
   override val level
     get() = Level.ERROR
 }
-
