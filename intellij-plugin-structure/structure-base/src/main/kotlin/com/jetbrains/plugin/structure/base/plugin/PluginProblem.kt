@@ -4,7 +4,6 @@
 
 package com.jetbrains.plugin.structure.base.plugin
 
-import java.net.URL
 import java.util.*
 
 abstract class PluginProblem {
@@ -33,4 +32,4 @@ abstract class PluginProblem {
  * @param example A code sample that shows a correct usage of the specific code or declaration.
  * @param documentationUrl a hyperlink to the human-readable documentation describing a suggested usage.
  */
-data class ProblemSolutionHint(val example: String?, val documentationUrl: URL?)
+data class ProblemSolutionHint(val example: String?, val documentationUrl: String?)

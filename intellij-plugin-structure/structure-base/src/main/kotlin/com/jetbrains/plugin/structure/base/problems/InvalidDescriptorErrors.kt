@@ -6,7 +6,6 @@ package com.jetbrains.plugin.structure.base.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.ProblemSolutionHint
-import java.net.URL
 
 /**
  * Indicates an issue with plugin descriptor (`plugin.xml`).
@@ -120,7 +119,7 @@ class VendorCannotBeEmpty(descriptorPath: String? = null
 
   private val solutionHint = ProblemSolutionHint(
           """<vendor email="joe@example.com">Joe Doe</vendor>""",
-          URL("https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__vendor")
+          "https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__vendor"
   )
 
   override val detailedMessage: String
