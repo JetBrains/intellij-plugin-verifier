@@ -7,7 +7,6 @@ guava = "31.1-jre"
 jgrapht-core = "1.5.2"
 junit = "4.13.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
-retrofit-gson = "2.9.0"
 
 [libraries]
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
@@ -18,4 +17,3 @@ guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
-retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }

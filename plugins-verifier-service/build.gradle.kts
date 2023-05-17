@@ -77,7 +77,7 @@ allprojects {
 
     implementation(sharedLibs.okhttp)
     implementation(sharedLibs.retrofit)
-    implementation(libs.retrofit.gson)
+    implementation(sharedLibs.retrofit.gson)
     implementation(sharedLibs.okhttp.loggingInterceptor)
 
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
