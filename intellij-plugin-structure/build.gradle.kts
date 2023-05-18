@@ -85,89 +85,86 @@ publishing {
                            pubDesc: String): MavenPublication {
       return create<MavenPublication>(publicationName) {
         val proj = project(":$projectName")
-        val pub = this
-        with(pub) {
-          groupId = proj.group.toString()
-          artifactId = proj.name
-          version = proj.version.toString()
+        groupId = proj.group.toString()
+        artifactId = proj.name
+        version = proj.version.toString()
 
-          from(proj.components["java"])
+        from(proj.components["java"])
 
-          artifact(proj.tasks["sourcesJar"])
-          artifact(proj.tasks["javadocJar"])
+        artifact(proj.tasks["sourcesJar"])
+        artifact(proj.tasks["javadocJar"])
 
-          pom {
-            name.set(pubName)
-            description.set(pubDesc)
-            url.set("https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-structure/$projectName")
-            licenses {
-              license {
-                name.set("The Apache Software License, Version 2.0")
-                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
-              }
+        pom {
+          name.set(pubName)
+          description.set(pubDesc)
+          url.set("https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-structure/$projectName")
+          licenses {
+            license {
+              name.set("The Apache Software License, Version 2.0")
+              url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
             }
-            developers {
-              developer {
-                id.set("satamas")
-                name.set("Semyon Atamas")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("AlexanderPrendota")
-                name.set("Alexander Prendota")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("ktisha")
-                name.set("Ekaterina Smal")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("chashnikov")
-                name.set("Nikolay Chashnikov")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("chrkv")
-                name.set("Ivan Chirkov")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("Ololoshechkin")
-                name.set("Brilyantov Vadim")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("shalupov")
-                name.set("Leonid Shalupov")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("hsz")
-                name.set("Jakub Chrzanowski")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("kesarevs")
-                name.set("Kesarev Sergey")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("LChernigovskaya")
-                name.set("Lidiya Chernigovskaya")
-                organization.set("JetBrains")
-              }
-              developer {
-                id.set("novotnyr")
-                name.set("Robert Novotny")
-                organization.set("JetBrains")
-              }
+          }
+          developers {
+            developer {
+              id.set("satamas")
+              name.set("Semyon Atamas")
+              organization.set("JetBrains")
             }
-            scm {
-              connection.set("scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git")
-              developerConnection.set("scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git")
-              url.set("https://github.com/JetBrains/intellij-plugin-verifier")
+            developer {
+              id.set("AlexanderPrendota")
+              name.set("Alexander Prendota")
+              organization.set("JetBrains")
             }
+            developer {
+              id.set("ktisha")
+              name.set("Ekaterina Smal")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("chashnikov")
+              name.set("Nikolay Chashnikov")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("chrkv")
+              name.set("Ivan Chirkov")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("Ololoshechkin")
+              name.set("Brilyantov Vadim")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("shalupov")
+              name.set("Leonid Shalupov")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("hsz")
+              name.set("Jakub Chrzanowski")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("kesarevs")
+              name.set("Kesarev Sergey")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("LChernigovskaya")
+              name.set("Lidiya Chernigovskaya")
+              organization.set("JetBrains")
+            }
+            developer {
+              id.set("novotnyr")
+              name.set("Robert Novotny")
+              organization.set("JetBrains")
+            }
+          }
+          scm {
+            connection.set("scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git")
+            developerConnection.set("scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git")
+            url.set("https://github.com/JetBrains/intellij-plugin-verifier")
           }
         }
       }
