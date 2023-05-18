@@ -45,7 +45,6 @@ allprojects {
 
   dependencies {
 
-    implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
     implementation(rootProject.sharedLibs.kotlin.reflect)
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
