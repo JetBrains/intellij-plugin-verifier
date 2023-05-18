@@ -16,13 +16,31 @@ This GitHub [repository](https://github.com/JetBrains/intellij-plugin-verifier/)
 
 #### Dependencies between the projects
 
-Currently, the dependencies between the above projects are:
+The dependencies between the above projects are as follows:
 
-- **ide-diff-builder** - independent module
-- **intellij-plugin-structure** - independent module
-- **intellij-plugin-verifier** - depends on the **intellij-plugin-structure**
-- **intellij-feature-extractor** - depends on the **intellij-plugin-verifier**
-- **plugins-verifier-service** - composite build dependency on **intellij-feature-extractor**, **intellij-plugin-verifier** and **intellij-plugin-structure**.
+- `ide-diff-builder` -- independent module
+- `intellij-plugin-structure` -- independent module
+- `intellij-plugin-verifier` -- depends on the:
+  * `intellij-plugin-structure` (module `structure-intellij`)
+- `intellij-feature-extractor` -- depends on the:
+  * `intellij-plugin-verifier` (module `verifier-core`)
+  * `intellij-plugin-structure` (modules `structure-intellij-classes` and `structure-ide-classes`)
+- `plugins-verifier-service` -- composite build dependency on:
+  * `intellij-feature-extractor`,
+  * `intellij-plugin-verifier` (module `verifier-intellij`)
+
+```mermaid
+---
+title: Project Dependencies
+---
+classDiagram
+   class IdeDiffBuilder
+   PluginsVerifierService ..> IntellijFeatureExtractor: depends
+   PluginsVerifierService ..> IntellijPluginVerifier: depends on\nverifier-intellij
+   IntellijPluginVerifier ..> IntellijPluginStructure: depends on\nstructure-intellij
+   IntellijFeatureExtractor ..> IntellijPluginVerifier: depends on\nverifier-core
+   IntellijFeatureExtractor ..> IntellijPluginStructure: depends on\nstructure-intellij-classes,\nstructure-ide-classes
+```
 
 #### Configuring the local environment
 
