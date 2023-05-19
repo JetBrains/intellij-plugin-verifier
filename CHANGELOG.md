@@ -5,6 +5,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ## [next]
 
 ### Added
+
+### Fixed
+
+### Changed
+
+## v1.299 - 2023-05-19
+
+### Added
 - Improve description on empty `<vendor>` element ([MP-5490](https://youtrack.jetbrains.com/issue/MP-5490))
 - _Plugin Structure, Edu_: Add additional fields `programming_language_id` and `programming_language_version`. Field   `programming_language` is deprecated and treated as `programming_language_id` for backwards compatibility.
 - Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html) 
@@ -48,7 +56,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Support Java 17 Records ([MP-4865](https://youtrack.jetbrains.com/issue/MP-4865/Plugin-Verifier-Problems-handling-java.lang.Record))
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
-[next]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...HEAD
+[next]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...HEAD
+[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
 [1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
 [1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
 [1.289]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.288...v1.289
