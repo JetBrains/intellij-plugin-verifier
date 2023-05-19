@@ -40,7 +40,6 @@ dependencies {
 
   implementation(sharedLibs.gson)
   implementation(sharedLibs.slf4j.api)
-  implementation(sharedLibs.commons.io)
 
   testImplementation(sharedLibs.junit)
   testImplementation(project(":test-classes"))
