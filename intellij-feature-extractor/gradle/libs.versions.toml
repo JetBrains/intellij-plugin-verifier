@@ -1,11 +1,5 @@
 [versions]
-commons-io = "2.10.0"
-gson = "2.10.1"
-junit = "4.13.2"
 
 [libraries]
-commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]

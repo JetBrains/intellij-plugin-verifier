@@ -61,9 +61,9 @@ tasks.withType<KotlinCompile> {
 }
 
 dependencies {
-    runtimeOnly(group = "ch.qos.logback", name = "logback-classic", version = "1.4.7")
+    runtimeOnly(sharedLibs.logback.classic)
 
-    testImplementation("junit:junit:4.13.2")
+    testImplementation(sharedLibs.junit)
     testImplementation(project(":"))
     implementation(sharedLibs.kotlin.stdlib.jdk8)
 
@@ -72,7 +72,7 @@ dependencies {
     implementation(group = "org.jetbrains.intellij.plugins", name = "verifier-cli", version = structureVersion)
     implementation(group = "org.jetbrains.intellij.plugins", name = "structure-ide-classes", version = structureVersion)
 
-    implementation("com.github.spullara.cli-parser:cli-parser:1.1.6")
+    implementation(sharedLibs.spullara.cliParser)
     implementation("org.apache.commons:commons-text:1.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:1.0-M1-1.4.0-rc")
 }

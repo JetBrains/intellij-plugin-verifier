@@ -4,19 +4,19 @@ dependencies {
   api("org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion")
   api("org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion")
 
-  implementation(libs.gson)
+  implementation(sharedLibs.gson)
 
-  implementation(libs.guava)
+  implementation(sharedLibs.guava)
   implementation(libs.commons.compress)
-  implementation(libs.xz)
+  implementation(sharedLibs.xz)
 
-  implementation(libs.okhttp)
-  implementation(libs.okhttp.logging.interceptor)
-  implementation(libs.retrofit)
-  implementation(libs.retrofit.gson)
+  implementation(sharedLibs.okhttp)
+  implementation(sharedLibs.okhttp.loggingInterceptor)
+  implementation(sharedLibs.retrofit)
+  implementation(sharedLibs.retrofit.gson)
 
   implementation(libs.jetbrains.pluginRepositoryRestClient)
-  testImplementation(libs.junit)
+  testImplementation(sharedLibs.junit)
 }
 
 tasks {

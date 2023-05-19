@@ -69,16 +69,16 @@ allprojects {
     implementation(libs.spring.boot.starter.tomcat)
     implementation(libs.spring.boot.devtools)
 
-    testImplementation(libs.junit)
+    testImplementation(sharedLibs.junit)
     implementation(sharedLibs.kotlin.stdlib.jdk8)
-    implementation(libs.commons.io)
-    implementation(libs.kotson)
-    implementation(libs.gson)
+    implementation(sharedLibs.commons.io)
+    implementation(sharedLibs.kotson)
+    implementation(sharedLibs.gson)
 
-    implementation(libs.okhttp)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.gson)
-    implementation(libs.okhttp.logging.interceptor)
+    implementation(sharedLibs.okhttp)
+    implementation(sharedLibs.retrofit)
+    implementation(sharedLibs.retrofit.gson)
+    implementation(sharedLibs.okhttp.loggingInterceptor)
 
     //Simple map-database engine that allows to store maps on disk: https://github.com/jankotek/mapdb/
     implementation(libs.mapdb)

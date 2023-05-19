@@ -47,18 +47,18 @@ allprojects {
 
     implementation(rootProject.sharedLibs.kotlin.stdlib.jdk8)
     implementation(rootProject.sharedLibs.kotlin.reflect)
-    implementation(rootProject.libs.kotson)
+    implementation(rootProject.sharedLibs.kotson)
 
     implementation("org.jetbrains.intellij.plugins:structure-intellij:$intellijStructureVersion")
 
-    testImplementation(rootProject.libs.junit)
+    testImplementation(rootProject.sharedLibs.junit)
 
     implementation(rootProject.sharedLibs.slf4j.api)
     implementation(rootProject.libs.bouncycastle.pkix)
 
     implementation(rootProject.sharedLibs.jetbrains.annotations)
-    implementation(rootProject.libs.commons.io)
-    implementation(rootProject.libs.gson)
+    implementation(rootProject.sharedLibs.commons.io)
+    implementation(rootProject.sharedLibs.gson)
   }
 
   repositories {

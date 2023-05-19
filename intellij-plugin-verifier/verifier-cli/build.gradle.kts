@@ -7,7 +7,7 @@ dependencies {
 
   runtimeOnly(sharedLibs.logback.classic)
   implementation(sharedLibs.jackson.module.kotlin)
-  implementation(libs.spullara.cli.parser)
+  implementation(sharedLibs.spullara.cliParser)
   implementation(libs.commons.lang3)
 }
 
