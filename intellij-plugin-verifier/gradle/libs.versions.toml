@@ -2,7 +2,6 @@
 bcpkix-jdk15on = "1.70"
 byteBuddy = "1.14.4"
 commons-compress = "1.23.0"
-commons-lang3 = "3.12.0"
 jgrapht-core = "1.5.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
 
@@ -10,6 +9,5 @@ jetbrains-pluginRepositoryRestClient = "2.0.32"
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
 byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
-commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
