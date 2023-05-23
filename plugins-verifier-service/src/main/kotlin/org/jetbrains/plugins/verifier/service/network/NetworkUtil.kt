@@ -1,9 +1,9 @@
 /*
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
+package org.jetbrains.plugins.verifier.service.network
 
-package com.jetbrains.pluginverifier.network
-
+import com.jetbrains.pluginverifier.network.*
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import retrofit2.Call
@@ -22,34 +22,34 @@ import java.util.concurrent.atomic.AtomicReference
  * Throws an exception if the call has failed.
  */
 @Throws(
-  InterruptedException::class,
-  NotFound404ResponseException::class,
-  ServerInternalError500Exception::class,
-  ServerUnavailable503Exception::class,
-  NonSuccessfulResponseException::class,
-  FailedRequestException::class
+        InterruptedException::class,
+        NotFound404ResponseException::class,
+        ServerInternalError500Exception::class,
+        ServerUnavailable503Exception::class,
+        NonSuccessfulResponseException::class,
+        FailedRequestException::class
 )
 fun <T> Call<T>.executeSuccessfully(
-  timeOut: Long = 1,
-  timeOutUnit: TimeUnit = TimeUnit.HOURS
+        timeOut: Long = 1,
+        timeOutUnit: TimeUnit = TimeUnit.HOURS
 ): Response<T> = executeWithInterruptionCheck(
-  onSuccess = { success -> success },
-  onProblems = { problems ->
-    if (problems.code() == 404) {
-      throw NotFound404ResponseException(serverUrl)
-    }
-    if (problems.code() == 500) {
-      throw ServerInternalError500Exception(serverUrl)
-    }
-    if (problems.code() == 503) {
-      throw ServerUnavailable503Exception(serverUrl)
-    }
-    val message = problems.message() ?: problems.errorBody()!!.string().take(100)
-    throw NonSuccessfulResponseException(serverUrl, problems.code(), message)
-  },
-  onFailure = { error -> throw FailedRequestException(serverUrl, error) },
-  timeOut = timeOut,
-  timeOutUnit = timeOutUnit
+        onSuccess = { success -> success },
+        onProblems = { problems ->
+          if (problems.code() == 404) {
+            throw NotFound404ResponseException(serverUrl)
+          }
+          if (problems.code() == 500) {
+            throw ServerInternalError500Exception(serverUrl)
+          }
+          if (problems.code() == 503) {
+            throw ServerUnavailable503Exception(serverUrl)
+          }
+          val message = problems.message() ?: problems.errorBody()!!.string().take(100)
+          throw NonSuccessfulResponseException(serverUrl, problems.code(), message)
+        },
+        onFailure = { error -> throw FailedRequestException(serverUrl, error) },
+        timeOut = timeOut,
+        timeOutUnit = timeOutUnit
 )
 
 private val <T> Call<T>.serverUrl: String
@@ -57,11 +57,11 @@ private val <T> Call<T>.serverUrl: String
 
 @Throws(InterruptedException::class)
 private fun <T, R> Call<T>.executeWithInterruptionCheck(
-  onSuccess: (Response<T>) -> R,
-  onProblems: (Response<T>) -> R,
-  onFailure: (Throwable) -> R,
-  timeOut: Long,
-  timeOutUnit: TimeUnit
+        onSuccess: (Response<T>) -> R,
+        onProblems: (Response<T>) -> R,
+        onFailure: (Throwable) -> R,
+        timeOut: Long,
+        timeOutUnit: TimeUnit
 ): R {
   val responseRef = AtomicReference<Response<T>?>()
   val errorRef = AtomicReference<Throwable?>()
@@ -132,10 +132,10 @@ private fun <T, R> Call<T>.executeWithInterruptionCheck(
  */
 @Throws(InterruptedException::class)
 fun copyInputStreamToFileWithProgress(
-  inputStream: InputStream,
-  expectedSize: Long,
-  destinationFile: Path,
-  progress: (Double) -> Unit
+        inputStream: InputStream,
+        expectedSize: Long,
+        destinationFile: Path,
+        progress: (Double) -> Unit
 ) {
   val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
   destinationFile.createParentDirs()
@@ -143,10 +143,10 @@ fun copyInputStreamToFileWithProgress(
   progress(0.0)
   inputStream.use { input ->
     Files.newOutputStream(
-      destinationFile,
-      StandardOpenOption.CREATE,
-      StandardOpenOption.WRITE,
-      StandardOpenOption.TRUNCATE_EXISTING
+            destinationFile,
+            StandardOpenOption.CREATE,
+            StandardOpenOption.WRITE,
+            StandardOpenOption.TRUNCATE_EXISTING
     ).buffered().use { output ->
       checkIfInterrupted()
       var count: Long = 0
@@ -163,3 +163,4 @@ fun copyInputStreamToFileWithProgress(
   }
   progress(1.0)
 }
+

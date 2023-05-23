@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.executeSuccessfully
+import org.jetbrains.plugins.verifier.service.network.executeSuccessfully
 import com.jetbrains.pluginverifier.network.jsonMediaType
 import com.jetbrains.pluginverifier.network.stringMediaType
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository

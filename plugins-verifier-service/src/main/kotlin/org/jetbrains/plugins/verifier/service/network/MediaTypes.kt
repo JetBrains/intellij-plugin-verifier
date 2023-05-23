@@ -2,7 +2,7 @@
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package com.jetbrains.pluginverifier.network
+package org.jetbrains.plugins.verifier.service.network
 
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -18,12 +18,6 @@ val octetStreamMediaType: MediaType = "application/octet-stream".toMediaTypeOrNu
 val jarContentMediaType: MediaType = "application/java-archive".toMediaTypeOrNull()!!
 
 val xJarContentMediaType: MediaType = "application/x-java-archive".toMediaTypeOrNull()!!
-
-const val jsonMediaTypeValue = "application/json"
-
-const val jarContentMediaTypeValue: String = "application/java-archive"
-
-const val xJarContentMediaTypeValue: String = "application/x-java-archive"
 
 fun createStringRequestBody(string: String): RequestBody = string.toRequestBody(stringMediaType)
 

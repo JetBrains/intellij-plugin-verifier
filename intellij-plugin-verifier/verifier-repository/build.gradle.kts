@@ -17,6 +17,7 @@ dependencies {
 
   implementation(libs.jetbrains.pluginRepositoryRestClient)
   testImplementation(sharedLibs.junit)
+  testImplementation(libs.okhttp.mockwebserver)
 }
 
 tasks {

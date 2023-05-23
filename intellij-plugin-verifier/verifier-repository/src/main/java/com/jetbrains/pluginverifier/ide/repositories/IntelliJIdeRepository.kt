@@ -9,13 +9,9 @@ import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.IntelliJRepositoryIndexParser
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.executeSuccessfully
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Url
+import com.jetbrains.pluginverifier.misc.RestApiFailed
+import com.jetbrains.pluginverifier.misc.RestApiOk
+import com.jetbrains.pluginverifier.misc.RestApis
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -26,8 +22,7 @@ import java.util.concurrent.TimeUnit
  * - [snapshots](https://www.jetbrains.com/intellij-repository/snapshots)
  * - [nightly](https://www.jetbrains.com/intellij-repository/nightly) - available only with JetBrains VPN.
  */
-class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
-
+open class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
   enum class Channel(val repositoryUrl: String) {
     RELEASE("https://cache-redirector.jetbrains.com/intellij-repository/releases"),
     SNAPSHOTS("https://cache-redirector.jetbrains.com/intellij-repository/snapshots"),
@@ -61,20 +56,15 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
   }
 
   private val repositoryIndexConnector by lazy {
-    Retrofit.Builder()
-      .baseUrl("https://unused.com")
-      .addConverterFactory(GsonConverterFactory.create())
-      .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-      .build()
-      .create(RepositoryIndexConnector::class.java)
+    RepositoryIndexConnector(indexBaseUrl)
   }
 
   private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
 
   private fun updateIndex(): List<AvailableIde> {
-    val index = repositoryIndexConnector.getIndex(channel.getIndexUrl())
-    val artifacts = try {
-      index.executeSuccessfully().body()!!.artifacts
+    try {
+      val artifacts = repositoryIndexConnector.getIndex()
+      return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, channel)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       if (channel == Channel.NIGHTLY) {
@@ -82,10 +72,10 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
       }
       throw e
     }
-    return IntelliJRepositoryIndexParser().parseArtifacts(artifacts, channel)
   }
 
-  private fun Channel.getIndexUrl() = "$repositoryUrl/index.json"
+  protected open val indexBaseUrl: String
+    get() = channel.repositoryUrl
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
@@ -118,9 +108,15 @@ internal data class ArtifactJson(
   val lastModifiedUnixTimeMs: Long
 )
 
-private interface RepositoryIndexConnector {
+private class RepositoryIndexConnector(private val indexBaseUri: String) {
+  private val restApi = RestApis()
 
-  @GET
-  fun getIndex(@Url url: String): Call<ArtifactsJson>
+  fun getIndex(): List<ArtifactJson> {
+    val uri = "$indexBaseUri/index.json"
 
+    return when (val apiResult = restApi.get(uri, ArtifactsJson::class.java)) {
+      is RestApiOk<ArtifactsJson> -> apiResult.payload.artifacts
+      is RestApiFailed<*> -> emptyList()
+    }
+  }
 }

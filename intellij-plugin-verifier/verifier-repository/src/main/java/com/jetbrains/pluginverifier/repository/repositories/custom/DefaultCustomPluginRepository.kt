@@ -6,15 +6,10 @@ package com.jetbrains.pluginverifier.repository.repositories.custom
 
 import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingParser
 import com.jetbrains.plugin.structure.intellij.repository.CustomPluginRepositoryListingType
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
-import com.jetbrains.pluginverifier.network.executeSuccessfully
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Url
+import com.jetbrains.pluginverifier.misc.RestApiFailed
+import com.jetbrains.pluginverifier.misc.RestApiOk
+import com.jetbrains.pluginverifier.misc.RestApis
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 class DefaultCustomPluginRepository(
   override val repositoryUrl: URL,
@@ -23,17 +18,12 @@ class DefaultCustomPluginRepository(
   override val presentableName: String
 ) : CustomPluginRepository() {
 
-  private val repositoryConnector = Retrofit.Builder()
-    .baseUrl("https://not-used.com")
-    .client(createOkHttpClient(false, 5, TimeUnit.MINUTES))
-    .build()
-    .create(PluginListConnector::class.java)
+  private val repositoryConnector by lazy {
+    PluginListConnector(pluginsListXmlUrl)
+  }
 
   public override fun requestAllPlugins(): List<CustomPluginInfo> {
-    val xmlContent = repositoryConnector.getPluginsListXml(pluginsListXmlUrl.toExternalForm())
-      .executeSuccessfully()
-      .body()!!
-      .string()
+    val xmlContent = repositoryConnector.getPluginsListXml()
     return CustomPluginRepositoryListingParser.parseListOfPlugins(
       xmlContent,
       pluginsListXmlUrl,
@@ -57,9 +47,18 @@ class DefaultCustomPluginRepository(
 
   override fun toString() = presentableName
 
-  private interface PluginListConnector {
-    @GET
-    fun getPluginsListXml(@Url url: String): Call<ResponseBody>
-  }
+  private class PluginListConnector(private val endpointUrl: URL) {
+    private val restApis = RestApis()
 
+    fun getPluginsListXml(): XmlString {
+      return when (val apiResult = restApis.getRawString(endpointUrl.toExternalForm())) {
+        is RestApiOk<String> -> apiResult.payload
+        is RestApiFailed<*> -> "<plugin-repository />"
+      }
+    }
+  }
 }
+
+typealias XmlString = String
+
+
