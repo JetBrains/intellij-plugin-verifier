@@ -94,7 +94,6 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   private fun copyResponseTo(response: Response, file: Path) {
     checkIfInterrupted()
     response.body.use { responseBody ->
-      val expectedSize = response.contentLength
       Files.copy(responseBody, file, StandardCopyOption.REPLACE_EXISTING)
     }
   }
@@ -171,8 +170,7 @@ internal fun HttpResponse<*>.guessExtension(defaultExtension: String  = "zip"): 
     return extension
   }
 
-  //Fallback to zip, since it's the most popular one.
-  return "zip"
+  return defaultExtension
 }
 
 private fun guessExtensionByPath(path: String): String? {
