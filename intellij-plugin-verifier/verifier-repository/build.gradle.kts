@@ -10,9 +10,6 @@ dependencies {
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
 
-  implementation(sharedLibs.okhttp)
-  implementation(sharedLibs.okhttp.loggingInterceptor)
-
   implementation(libs.jetbrains.pluginRepositoryRestClient)
   testImplementation(sharedLibs.junit)
   testImplementation(libs.okhttp.mockwebserver)

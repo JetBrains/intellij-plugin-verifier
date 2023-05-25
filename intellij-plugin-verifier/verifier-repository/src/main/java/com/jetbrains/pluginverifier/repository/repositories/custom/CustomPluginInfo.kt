@@ -5,8 +5,8 @@
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.safeEquals
-import com.jetbrains.pluginverifier.misc.safeHashCode
+import com.jetbrains.pluginverifier.network.safeEquals
+import com.jetbrains.pluginverifier.network.safeHashCode
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.Downloadable
 import com.jetbrains.pluginverifier.repository.PluginInfo
