@@ -7,6 +7,8 @@ package com.jetbrains.pluginverifier.repository.downloader
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.misc.createHttpClient
 import com.jetbrains.pluginverifier.network.*
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_DISPOSITION
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_TYPE
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import java.io.InputStream
@@ -140,7 +142,7 @@ internal fun HttpResponse<*>.guessExtension(defaultExtension: String  = "zip"): 
   /**
    * Guess by Content-Disposition header.
    */
-  val contentDisposition: String? = headers().firstValue("Content-Disposition").orElse(null)
+  val contentDisposition: String? = headers().firstValue(CONTENT_DISPOSITION).orElse(null)
 
   if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
     val path = contentDisposition.substringAfter(FILENAME).substringBefore(";").removeSurrounding("\"")
@@ -153,7 +155,7 @@ internal fun HttpResponse<*>.guessExtension(defaultExtension: String  = "zip"): 
   /**
    * Guess by content type.
    */
-  val contentType = headers().firstValue("Content-Type").orElse("application/octet-stream")
+  val contentType = headers().firstValue(CONTENT_TYPE).orElse(octetStreamMediaTypeValue)
   if (contentType == jarContentMediaTypeValue || contentType == xJarContentMediaTypeValue) {
     return "jar"
   }

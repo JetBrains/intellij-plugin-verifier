@@ -19,6 +19,8 @@ val jarContentMediaType: MediaType = "application/java-archive".toMediaTypeOrNul
 
 val xJarContentMediaType: MediaType = "application/x-java-archive".toMediaTypeOrNull()!!
 
+const val octetStreamMediaTypeValue = "application/octet-stream"
+
 const val jsonMediaTypeValue = "application/json"
 
 const val jarContentMediaTypeValue: String = "application/java-archive"
