@@ -45,7 +45,7 @@ class UrlDownloaderTest {
     innerDir.resolve("some.txt").apply { writeText("42") }
     val copiedDirectory = assertSourceIsCopied(someDir, tempDirectory)
     val copiedSomeFile = copiedDirectory.resolve("inner-dir").resolve("some.txt")
-    Assert.assertTrue(copiedSomeFile.exists())
+    assertTrue(copiedSomeFile.exists())
     assertEquals("42", copiedSomeFile.readText())
   }
 

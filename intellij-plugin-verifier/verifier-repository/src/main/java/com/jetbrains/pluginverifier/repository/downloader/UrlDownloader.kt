@@ -84,7 +84,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     val extension = response.extension
     val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
     return try {
-      LOG.debug("Downloading $key to $downloadedTempFile")
+      LOG.debug("Downloading {} to {}", key, downloadedTempFile)
       copyResponseTo(response, downloadedTempFile)
       DownloadResult.Downloaded(downloadedTempFile, extension, false)
     } catch (e: Throwable) {
@@ -176,10 +176,5 @@ internal fun HttpResponse<*>.guessExtension(defaultExtension: String  = "zip"): 
 }
 
 private fun guessExtensionByPath(path: String): String? {
-  for (extension in urlPathExtensions) {
-    if (path.endsWith(".$extension")) {
-      return extension
-    }
-  }
-  return null
+  return urlPathExtensions.firstOrNull { path.endsWith(".$it") }
 }
