@@ -4,9 +4,8 @@
 
 package com.jetbrains.pluginverifier.output.teamcity
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.utils.readText
-import com.jetbrains.plugin.structure.base.utils.writeText
 import java.nio.file.Path
 
 data class TeamCityTest(val suiteName: String, val testName: String)
@@ -15,14 +14,14 @@ data class TeamCityHistory(val tests: List<TeamCityTest>) {
 
   companion object {
 
-    private val json = Gson()
+    private val json = jacksonObjectMapper()
 
     fun readFromFile(file: Path): TeamCityHistory =
-      json.fromJson(file.readText(), TeamCityHistory::class.java)
+      json.readValue(file.readText(), TeamCityHistory::class.java)
   }
 
   fun writeToFile(file: Path) {
-    file.writeText(json.toJson(this))
+    json.writeValue(file.toFile(), this)
   }
 
   fun reportOldSkippedTestsSuccessful(

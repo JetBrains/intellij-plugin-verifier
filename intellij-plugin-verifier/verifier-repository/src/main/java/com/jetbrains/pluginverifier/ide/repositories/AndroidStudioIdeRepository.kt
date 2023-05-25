@@ -4,8 +4,8 @@
 
 package com.jetbrains.pluginverifier.ide.repositories
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.base.Suppliers
-import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
@@ -71,23 +71,23 @@ private class AndroidStudioFeedConnector(private val feedBaseUri: String) {
   }
 }
 
-private data class Feed(@SerializedName("entries") val entries: List<FeedEntry>)
+private data class Feed(@JsonProperty("entries") val entries: List<FeedEntry>)
 
 private data class FeedEntry(
-        @SerializedName("build")
+        @JsonProperty("build")
         val build: String,
 
-        @SerializedName("version")
+        @JsonProperty("version")
         val version: String,
 
-        @SerializedName("package")
+        @JsonProperty("package")
         val packageInfo: PackageInfo
 )
 
 private data class PackageInfo(
-        @SerializedName("url")
+        @JsonProperty("url")
         val url: URL,
 
-        @SerializedName("os")
+        @JsonProperty("os")
         val os: String
 )

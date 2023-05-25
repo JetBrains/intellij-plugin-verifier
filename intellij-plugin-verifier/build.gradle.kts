@@ -58,7 +58,6 @@ allprojects {
 
     implementation(rootProject.sharedLibs.jetbrains.annotations)
     implementation(rootProject.sharedLibs.commons.io)
-    implementation(rootProject.sharedLibs.gson)
   }
 
   repositories {

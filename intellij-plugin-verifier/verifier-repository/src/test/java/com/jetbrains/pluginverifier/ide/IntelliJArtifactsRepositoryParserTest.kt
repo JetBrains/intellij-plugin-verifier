@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.ArtifactsJson
@@ -24,9 +24,10 @@ class IntelliJArtifactsRepositoryParserTest {
    */
   @Test
   fun `simple index parsing test`() {
-    val artifactsJson = Gson().fromJson<ArtifactsJson>(
-      IntelliJArtifactsRepositoryParserTest::class.java.getResourceAsStream("/intelliJArtifactsRepositoryIndex.json").bufferedReader()
-    )
+    val json = jacksonObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+    val jsonStream = IntelliJArtifactsRepositoryParserTest::class.java.getResourceAsStream("/intelliJArtifactsRepositoryIndex.json")
+
+    val artifactsJson = json.readValue(jsonStream, ArtifactsJson::class.java)
 
     val artifacts = IntelliJRepositoryIndexParser().parseArtifacts(artifactsJson.artifacts, IntelliJIdeRepository.Channel.RELEASE)
 

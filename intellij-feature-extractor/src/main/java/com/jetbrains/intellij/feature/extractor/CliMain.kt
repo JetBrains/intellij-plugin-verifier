@@ -4,7 +4,7 @@
 
 package com.jetbrains.intellij.feature.extractor
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
@@ -17,7 +17,7 @@ import java.nio.file.Paths
  */
 fun main(args: Array<String>) {
   require(args.size == 2) { "Usage: <plugin> <ide>" }
-  val jsonSerializer = Gson()
+  val jsonSerializer = ObjectMapper()
   val pluginFile = Paths.get(args[0])
   val ideaFile = Paths.get(args[1])
   when (val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)) {
@@ -26,10 +26,10 @@ fun main(args: Array<String>) {
       IdeResolverCreator.createIdeResolver(ide).use { ideResolver ->
         val features = FeaturesExtractor.extractFeatures(ide, ideResolver, pluginCreationResult.plugin)
         for (feature in features) {
-          println(jsonSerializer.toJson(feature))
+          println(jsonSerializer.writeValueAsString(feature))
         }
       }
     }
-    is PluginCreationFail -> "Plugin is invalid: " + pluginCreationResult.errorsAndWarnings.joinToString()
+    is PluginCreationFail -> println("Plugin is invalid: " + pluginCreationResult.errorsAndWarnings.joinToString())
   }
 }

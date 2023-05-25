@@ -4,8 +4,8 @@
 
 package com.jetbrains.pluginverifier.ide.repositories
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.google.common.base.Suppliers
-import com.google.gson.annotations.SerializedName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.IntelliJRepositoryIndexParser
@@ -84,27 +84,27 @@ open class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
 }
 
 internal data class ArtifactsJson(
-  @SerializedName("artifacts")
+  @JsonProperty("artifacts")
   val artifacts: List<ArtifactJson>
 )
 
 internal data class ArtifactJson(
-  @SerializedName("groupId")
+  @JsonProperty("groupId")
   val groupId: String,
 
-  @SerializedName("artifactId")
+  @JsonProperty("artifactId")
   val artifactId: String,
 
-  @SerializedName("version")
+  @JsonProperty("version")
   val version: String,
 
-  @SerializedName("packaging")
+  @JsonProperty("packaging")
   val packaging: String,
 
-  @SerializedName("content")
+  @JsonProperty("content")
   val content: String?,
 
-  @SerializedName("lastModifiedUnixTimeMs")
+  @JsonProperty("lastModifiedUnixTimeMs")
   val lastModifiedUnixTimeMs: Long
 )
 

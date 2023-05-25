@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.misc
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.type.CollectionType
+import com.fasterxml.jackson.databind.type.TypeFactory
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import org.bouncycastle.cms.CMSSignedData
 import java.net.URI
@@ -26,7 +29,8 @@ fun createHttpClient(timeout: Duration = Duration.ofMinutes(5)): HttpClient {
 
 class RestApis {
   private val httpClient = createHttpClient()
-  private val gson = Gson()
+  private val jackson = jacksonObjectMapper()
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
   fun getRawString(url: String, timeout: Duration = Duration.ofMinutes(5)): RestApiResult<String> {
     val request = get(url, timeout)
@@ -46,7 +50,7 @@ class RestApis {
       return RestApiFailed(response.body(), response.statusCode())
     }
     val responseJson = response.body()
-    val payloadObject = gson.fromJson(responseJson, payloadType)
+    val payloadObject = jackson.readValue(responseJson, payloadType)
     return RestApiOk(payloadObject)
   }
 
@@ -59,11 +63,8 @@ class RestApis {
       return RestApiFailed(response.body(), response.statusCode())
     }
     val responseString = response.body()
-    @Suppress("UNCHECKED_CAST")
-    val listTypeToken = TypeToken
-            .getParameterized(List::class.java, elementClass) as TypeToken<List<T>>
-
-    val list = gson.fromJson(responseString, listTypeToken)
+    val listTypeToken = TypeFactory.defaultInstance().constructCollectionType(List::class.java, elementClass)
+    val list: List<T>  = jackson.readValue(responseString, listTypeToken)
     return RestApiOk(list)
   }
 
@@ -73,8 +74,8 @@ class RestApis {
       is RestApiFailed -> return RestApiFailed(byteResult, byteResult.statusCode)
     }
     val signedContent = CMSSignedData(payloadBytes).signedContent.content as ByteArray
-    val obj = gson.fromJson(XZCompressorInputStream(signedContent.inputStream()).reader(), getTypeToken(type))
-    return RestApiOk(obj)
+    val result = jackson.readValue(XZCompressorInputStream(signedContent.inputStream()).reader(), type)
+    return RestApiOk(result)
   }
 
   fun <T> getSignedList(url: String, elementClass: Class<T>, timeout: Duration = Duration.ofMinutes(5)): RestApiResult<List<T>> {
@@ -83,7 +84,7 @@ class RestApis {
       is RestApiFailed -> return RestApiFailed(byteResult, byteResult.statusCode)
     }
     val signedContent = CMSSignedData(payloadBytes).signedContent.content as ByteArray
-    val list = gson.fromJson(XZCompressorInputStream(signedContent.inputStream()).reader(), getTypeTokenForList(elementClass))
+    val list: List<T> = jackson.readValue(XZCompressorInputStream(signedContent.inputStream()).reader(), getTypeTokenForList(elementClass))
     return RestApiOk(list)
   }
 
@@ -102,14 +103,8 @@ class RestApis {
           .timeout(timeout)
           .build()
 
-  @Suppress("UNCHECKED_CAST")
-  private fun <T> getTypeTokenForList(elementClass: Class<T>): TypeToken<List<T>> {
-    return TypeToken.getParameterized(List::class.java, elementClass) as TypeToken<List<T>>
-  }
-
-  private fun <T> getTypeToken(elementClass: Class<T>): TypeToken<T> {
-    return TypeToken.get(elementClass)
-  }
+  private fun <T> getTypeTokenForList(elementClass: Class<T>): CollectionType =
+          TypeFactory.defaultInstance().constructCollectionType(List::class.java, elementClass)
 }
 
 sealed class RestApiResult<T>
