@@ -5,7 +5,6 @@
 package org.jetbrains.plugins.verifier.service.service.features
 
 import com.google.gson.Gson
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
 import org.jetbrains.plugins.verifier.service.network.createJsonRequestBody
 import org.jetbrains.plugins.verifier.service.network.executeSuccessfully
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -13,6 +12,7 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import org.jetbrains.plugins.verifier.service.network.createOkHttpClient
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

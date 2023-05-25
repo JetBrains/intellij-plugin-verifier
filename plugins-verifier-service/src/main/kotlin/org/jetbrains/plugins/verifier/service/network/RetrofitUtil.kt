@@ -2,7 +2,7 @@
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package com.jetbrains.pluginverifier.misc
+package org.jetbrains.plugins.verifier.service.network
 
 import com.google.common.net.HttpHeaders.LOCATION
 import com.google.common.util.concurrent.ThreadFactoryBuilder
