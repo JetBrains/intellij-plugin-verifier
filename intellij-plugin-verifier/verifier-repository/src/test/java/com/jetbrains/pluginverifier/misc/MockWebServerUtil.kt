@@ -14,7 +14,7 @@ fun MockWebServer.enqueueFromClasspath(classpathResourcePath: String, clazz: Cla
 
   val resourceStream = clazz
           .getResourceAsStream(classpathResourcePath)
-          ?: throw IllegalStateException("Cannot read classpath stream '$classpathResourcePath'")
+          ?: throw IllegalStateException("Cannot read classpath resource as stream '$classpathResourcePath'")
 
   val response = MockResponse().setBody(Buffer().readFrom(resourceStream))
   this.enqueue(response)
