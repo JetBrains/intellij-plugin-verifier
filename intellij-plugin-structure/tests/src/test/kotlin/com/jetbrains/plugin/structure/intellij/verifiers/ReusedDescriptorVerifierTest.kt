@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReusedDescriptorInMultipleDependencies
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import org.junit.Assert
@@ -34,6 +35,7 @@ class ReusedDescriptorVerifierTest {
     verifier.verify(dependencies) { problem ->
       Assert.assertTrue(problem is ReusedDescriptorInMultipleDependencies)
       val p = problem as ReusedDescriptorInMultipleDependencies
+      Assert.assertEquals(WARNING, p.level)
       Assert.assertEquals(2, p.dependencies.size)
     }
   }
