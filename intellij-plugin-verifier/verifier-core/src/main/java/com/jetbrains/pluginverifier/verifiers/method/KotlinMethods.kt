@@ -7,10 +7,10 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 object KotlinMethods {
-  private const val capacity = 10
-  private val cache = object : LinkedHashMap<MethodLocation, Boolean>(10) {
+  private const val CAPACITY = 10
+  private val cache = object : LinkedHashMap<MethodLocation, Boolean>(CAPACITY) {
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<MethodLocation, Boolean>?): Boolean {
-      return size > capacity
+      return size > CAPACITY
     }
   }
 
@@ -64,6 +64,12 @@ object KotlinMethods {
   private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
     // filter non kotlin classes
     if (!method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }) {
+      return false
+    }
+
+    // Sanity check : if the method does not have bytecode
+    // this heuristic cannot run
+    if (instructions.isEmpty()) {
       return false
     }
 

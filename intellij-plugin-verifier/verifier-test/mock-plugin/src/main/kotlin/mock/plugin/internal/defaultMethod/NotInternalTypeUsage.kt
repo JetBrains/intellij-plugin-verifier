@@ -7,4 +7,6 @@ class NotInternalTypeUsage : InterfaceWithDefaultMethodUsingInternalAPI {
 
   // as plugin developer, do not override the default implementation of getPlaceholderCollector()
   // as it does use an internal type
+
+  fun zeroInstructionsMethod() {}
 }
