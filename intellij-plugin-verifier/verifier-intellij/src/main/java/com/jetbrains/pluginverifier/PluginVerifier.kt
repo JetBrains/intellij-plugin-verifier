@@ -257,9 +257,7 @@ class PluginVerifier(
     }
 
     // Kotlin package are supposed to be part of the platform
-    val kotlinPackage = "kotlin\\b(\\..+)?".toRegex()
     val packageNotFoundProblems = packageToMissingProblems
-      .filter { !it.key.matches(kotlinPackage) }
       .map { (packageName, missingClasses) ->
         PackageNotFoundProblem(packageName, missingClasses)
       }
