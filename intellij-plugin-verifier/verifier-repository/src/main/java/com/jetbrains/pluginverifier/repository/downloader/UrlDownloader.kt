@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.pluginverifier.misc.createHttpClient
 import com.jetbrains.pluginverifier.network.*
 import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_DISPOSITION
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_LENGTH
 import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_TYPE
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -134,7 +135,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
 
 private fun HttpResponse<*>.contentLength(): Long {
   return this.headers()
-          .firstValueAsLong("Content-Length")
+          .firstValueAsLong(CONTENT_LENGTH)
           .orElse(-1L)
 }
 
