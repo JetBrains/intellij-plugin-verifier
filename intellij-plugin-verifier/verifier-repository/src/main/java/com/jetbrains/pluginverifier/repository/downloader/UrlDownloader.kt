@@ -124,7 +124,7 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
         500 -> throw ServerInternalError500Exception(url)
         503 -> throw ServerUnavailable503Exception(url)
         else -> {
-          val message = response.body().bufferedReader().readLine().take(100)
+          val message = response.body().bufferedReader().readLine().take(255)
           throw NonSuccessfulResponseException(url, code, message)
         }
       }
