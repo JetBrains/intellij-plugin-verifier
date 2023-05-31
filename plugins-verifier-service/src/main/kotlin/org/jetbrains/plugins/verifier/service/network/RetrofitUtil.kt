@@ -31,7 +31,7 @@ fun createOkHttpClient(
     Dispatcher(
       Executors.newCachedThreadPool(
         ThreadFactoryBuilder()
-          .setNameFormat("ok-http-thread-%d")
+          .setNameFormat("plugin-verifier-service-http-%d")
           .setDaemon(true)
           .build()
       )

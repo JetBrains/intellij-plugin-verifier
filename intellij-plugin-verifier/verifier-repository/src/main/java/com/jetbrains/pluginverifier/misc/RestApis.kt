@@ -18,7 +18,7 @@ fun createHttpClient(timeout: Duration = Duration.ofMinutes(5)): HttpClient {
   return HttpClient.newBuilder().connectTimeout(timeout)
           .executor(Executors.newCachedThreadPool(
                   ThreadFactoryBuilder()
-                          .setNameFormat("ok-http-thread-%d")
+                          .setNameFormat("plugin-verifier-http-%d")
                           .setDaemon(true)
                           .build()
           ))
