@@ -38,6 +38,18 @@ class InternalApiUsagePluginTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
+  private val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
+    "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
+    "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
+    "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
+    "and indicates that the method is not supposed to be used in client code."
+
+  private val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
+    "is referenced in usage.Usage.delegateFortyTwo() : int. " +
+    "This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
+    "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
+    "and indicates that the class is not supposed to be used in client code."
+
   @Test
   fun `plugin class uses an internal API`() {
     val (idePlugin, ide) = prepareIde(IdeaPluginSpec("some.plugin"))
@@ -52,11 +64,6 @@ class InternalApiUsagePluginTest {
     assertEquals(3, verificationResult.internalApiUsages.size)
     val internalMethodUsages = verificationResult.internalApiUsages.filterIsInstance<InternalMethodUsage>()
     assertEquals(1, internalMethodUsages.size)
-    val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
-      "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
-      "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
-      "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
-      "and indicates that the method is not supposed to be used in client code."
     assertEquals(internalMethodUsageMsg, internalMethodUsages[0].fullDescription)
 
     val internalClassUsages = verificationResult.internalApiUsages.filterIsInstance<InternalClassUsage>()
@@ -64,11 +71,6 @@ class InternalApiUsagePluginTest {
     // ignore internal ByteBuddy delegates due to MethodDelegations
     val relevantInternalClassUsages = internalClassUsages.filterNot { u -> u.fullDescription.contains("usage.Usage.delegate$") }
     assertEquals(1, relevantInternalClassUsages.size)
-    val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
-      "is referenced in usage.Usage.delegateFortyTwo() : int. " +
-      "This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
-      "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
-      "and indicates that the class is not supposed to be used in client code."
     assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
   }
 
@@ -100,11 +102,6 @@ class InternalApiUsagePluginTest {
     val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
     assertEquals(3, ignoredUsages.size)
     val internalMethodUsages = ignoredUsages.filterIsInstance<InternalMethodUsage>()
-    val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
-            "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
-            "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
-            "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
-            "and indicates that the method is not supposed to be used in client code."
     assertEquals(internalMethodUsageMsg, internalMethodUsages[0].fullDescription)
 
     val internalClassUsages = ignoredUsages.filterIsInstance<InternalClassUsage>()
@@ -112,11 +109,6 @@ class InternalApiUsagePluginTest {
     // ignore internal ByteBuddy delegates due to MethodDelegations
     val relevantInternalClassUsages = internalClassUsages.filterNot { u -> u.fullDescription.contains("usage.Usage.delegate$") }
     assertEquals(1, relevantInternalClassUsages.size)
-    val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
-            "is referenced in usage.Usage.delegateFortyTwo() : int. " +
-            "This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
-            "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
-            "and indicates that the class is not supposed to be used in client code."
     assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
   }
 
