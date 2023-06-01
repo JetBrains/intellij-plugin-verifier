@@ -120,7 +120,7 @@ class InternalApiUsagePluginTest {
     assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
   }
 
-  private fun buildIdePlugin(
+  private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij"),
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
@@ -131,7 +131,7 @@ class InternalApiUsagePluginTest {
           """
             <idea-plugin>
               <id>someId</id>
-              <name>someName</name>
+              <name>${ideaPluginSpec.id}</name>
               <version>someVersion</version>
               ""<vendor email="vendor.com" url="url">vendor</vendor>""
               <description>this description is looooooooooong enough</description>
@@ -227,6 +227,7 @@ class InternalApiUsagePluginTest {
     return ide
   }
 
+  data class IdeaPluginSpec(val id: String)
 
   object IntellijInternalApiDump : Opcodes {
     @Throws(Exception::class)
