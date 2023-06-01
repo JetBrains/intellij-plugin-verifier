@@ -17,6 +17,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Url
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -89,7 +90,7 @@ class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
-  override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.toLowerCase()})"
+  override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.lowercase(Locale.getDefault())})"
 
 }
 
