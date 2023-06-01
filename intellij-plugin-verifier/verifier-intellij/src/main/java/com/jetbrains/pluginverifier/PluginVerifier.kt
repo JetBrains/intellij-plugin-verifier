@@ -174,13 +174,17 @@ class PluginVerifier(
     val reportedUsages = mutableSetOf<InternalApiUsage>()
     val ignoredUsages = mutableMapOf<InternalApiUsage, String>()
     for (usage in allInternalApiUsages) {
-      for (apiUsageFilter in apiUsageFilters) {
-        val shouldReport = apiUsageFilter.shouldReport(usage, context)
-        if (shouldReport is ApiUsageFilter.Result.Ignore) {
-          ignoredUsages[usage] = shouldReport.reason
-          break
-        } else {
-          reportedUsages += usage
+      if (apiUsageFilters.isEmpty()) {
+        reportedUsages += usage
+      } else {
+        for (apiUsageFilter in apiUsageFilters) {
+          val shouldReport = apiUsageFilter.shouldReport(usage, context)
+          if (shouldReport is ApiUsageFilter.Result.Ignore) {
+            ignoredUsages[usage] = shouldReport.reason
+            break
+          } else {
+            reportedUsages += usage
+          }
         }
       }
     }
