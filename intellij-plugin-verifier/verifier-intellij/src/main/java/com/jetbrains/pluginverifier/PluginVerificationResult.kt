@@ -38,6 +38,7 @@ sealed class PluginVerificationResult(
     val deprecatedUsages: Set<DeprecatedApiUsage> = emptySet(),
     val experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet(),
     val internalApiUsages: Set<InternalApiUsage> = emptySet(),
+    val ignoredInternalApiUsages: Map<InternalApiUsage, String> = emptyMap(),
     val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
     val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet(),
     val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet(),
