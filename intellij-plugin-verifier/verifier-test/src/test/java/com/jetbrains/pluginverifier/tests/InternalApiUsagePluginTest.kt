@@ -9,9 +9,14 @@ import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.usages.ApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodUsage
+import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
@@ -35,60 +40,7 @@ class InternalApiUsagePluginTest {
 
   @Test
   fun `plugin class uses an internal API`() {
-    val classLoader = this::class.java.classLoader
-    val byteBuddy = ByteBuddy()
-
-    @Suppress("UNCHECKED_CAST") val intellijInternalApiClass = Class
-            .forName("com.intellij.openapi.util.IntellijInternalApi") as Class<Annotation>
-    val intellijInternalApiAnnDesc = AnnotationDescription.Builder
-            .ofType(intellijInternalApiClass)
-            .build()
-
-    val internalApiServiceClassUdt = byteBuddy
-            .subclass(Object::class.java)
-            .name("com.intellij.openapi.InternalApiService")
-            .annotateType(intellijInternalApiAnnDesc)
-            .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
-            .make()
-
-    val internalApiClazz = internalApiServiceClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
-    val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
-
-    val usageClassUdt = byteBuddy
-            .subclass(Object::class.java)
-            .name("usage.Usage")
-            .defineMethod("delegateFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
-                    MethodDelegation
-                            .withDefaultConfiguration()
-                            .filter(named("fortyTwo")).to(internalApiService))
-            .make()
-
-    val usageClass = usageClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
-    val usage = usageClass.getDeclaredConstructor().newInstance()
-
-    val result = usageClass.getMethod("delegateFortyTwo").invoke(usage)
-    assertEquals(42, result)
-
-
-    val idePlugin = buildIdePlugin {
-      dir("usage") {
-        file("Usage.class", usageClassUdt.bytes)
-      }
-    }
-
-    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
-        dir("com") {
-          dir("intellij") {
-            dir("openapi") {
-              dir("util") {
-                file("IntellijInternalApi.class", IntellijInternalApiDump.dump())
-              }
-              file("InternalApiService.class", internalApiServiceClassUdt.bytes)
-            }
-          }
-
-        }
-    }, groovyPluginClassesBuilder = {})
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("some.plugin"))
 
     // Run verification
     val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
@@ -101,13 +53,61 @@ class InternalApiUsagePluginTest {
     val internalMethodUsages = verificationResult.internalApiUsages.filterIsInstance<InternalMethodUsage>()
     assertEquals(1, internalMethodUsages.size)
     val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
+      "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
+      "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
+      "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
+      "and indicates that the method is not supposed to be used in client code."
+    assertEquals(internalMethodUsageMsg, internalMethodUsages[0].fullDescription)
+
+    val internalClassUsages = verificationResult.internalApiUsages.filterIsInstance<InternalClassUsage>()
+    assertEquals(2, internalClassUsages.size)
+    // ignore internal ByteBuddy delegates due to MethodDelegations
+    val relevantInternalClassUsages = internalClassUsages.filterNot { u -> u.fullDescription.contains("usage.Usage.delegate$") }
+    assertEquals(1, relevantInternalClassUsages.size)
+    val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
+      "is referenced in usage.Usage.delegateFortyTwo() : int. " +
+      "This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
+      "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
+      "and indicates that the class is not supposed to be used in client code."
+    assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
+  }
+
+  @Test
+  fun `internal plugin class uses an internal API`() {
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij"))
+
+    val apiUsageFilter = object : ApiUsageFilter {
+      override fun shouldReport(apiUsage: ApiUsage, context: VerificationContext): ApiUsageFilter.Result {
+        return when {
+          apiUsage is InternalApiUsage
+            && context is PluginVerificationContext
+            && context.idePlugin.pluginId == "com.intellij" ->
+            ApiUsageFilter.Result.Ignore("Internal API usage from internal plugins is allowed.")
+          else -> ApiUsageFilter.Result.Report
+        }
+      }
+    }
+
+    // Run verification
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin,
+      apiUsageFilters = listOf(apiUsageFilter)) as PluginVerificationResult.Verified
+
+    // No warnings should be produced
+    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
+    assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
+    // Internal Plugins is not reporting internal usages. These are in the ignored usages
+    assertEquals(0, verificationResult.internalApiUsages.size)
+    val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
+    assertEquals(3, ignoredUsages.size)
+    val internalMethodUsages = ignoredUsages.filterIsInstance<InternalMethodUsage>()
+    val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
             "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
             "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
             "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
             "and indicates that the method is not supposed to be used in client code."
     assertEquals(internalMethodUsageMsg, internalMethodUsages[0].fullDescription)
 
-    val internalClassUsages = verificationResult.internalApiUsages.filterIsInstance<InternalClassUsage>()
+    val internalClassUsages = ignoredUsages.filterIsInstance<InternalClassUsage>()
     assertEquals(2, internalClassUsages.size)
     // ignore internal ByteBuddy delegates due to MethodDelegations
     val relevantInternalClassUsages = internalClassUsages.filterNot { u -> u.fullDescription.contains("usage.Usage.delegate$") }
@@ -120,6 +120,64 @@ class InternalApiUsagePluginTest {
     assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
   }
 
+  private fun prepareIde(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
+    val classLoader = this::class.java.classLoader
+    val byteBuddy = ByteBuddy()
+
+    @Suppress("UNCHECKED_CAST") val intellijInternalApiClass = Class
+      .forName("com.intellij.openapi.util.IntellijInternalApi") as Class<Annotation>
+    val intellijInternalApiAnnDesc = AnnotationDescription.Builder
+      .ofType(intellijInternalApiClass)
+      .build()
+
+    val internalApiServiceClassUdt = byteBuddy
+      .subclass(Object::class.java)
+      .name("com.intellij.openapi.InternalApiService")
+      .annotateType(intellijInternalApiAnnDesc)
+      .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
+      .make()
+
+    val internalApiClazz = internalApiServiceClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
+    val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
+
+    val usageClassUdt = byteBuddy
+      .subclass(Object::class.java)
+      .name("usage.Usage")
+      .defineMethod("delegateFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
+        MethodDelegation
+          .withDefaultConfiguration()
+          .filter(named("fortyTwo")).to(internalApiService))
+      .make()
+
+    val usageClass = usageClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
+    val usage = usageClass.getDeclaredConstructor().newInstance()
+
+    val result = usageClass.getMethod("delegateFortyTwo").invoke(usage)
+    assertEquals(42, result)
+
+
+    val idePlugin = buildIdePlugin(pluginSpec) {
+      dir("usage") {
+        file("Usage.class", usageClassUdt.bytes)
+      }
+    }
+
+    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
+      dir("com") {
+        dir("intellij") {
+          dir("openapi") {
+            dir("util") {
+              file("IntellijInternalApi.class", IntellijInternalApiDump.dump())
+            }
+            file("InternalApiService.class", internalApiServiceClassUdt.bytes)
+          }
+        }
+
+      }
+    }, groovyPluginClassesBuilder = {})
+    return idePlugin to ide
+  }
+
   private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij"),
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
@@ -130,8 +188,8 @@ class InternalApiUsagePluginTest {
         file("plugin.xml") {
           """
             <idea-plugin>
-              <id>someId</id>
-              <name>${ideaPluginSpec.id}</name>
+              <id>${ideaPluginSpec.id}</id>
+              <name>someName</name>
               <version>someVersion</version>
               ""<vendor email="vendor.com" url="url">vendor</vendor>""
               <description>this description is looooooooooong enough</description>
