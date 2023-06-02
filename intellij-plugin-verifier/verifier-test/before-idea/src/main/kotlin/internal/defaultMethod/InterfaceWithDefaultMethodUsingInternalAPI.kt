@@ -1,7 +1,6 @@
 package internal.defaultMethod
 
-interface InterfaceWithDefaultMethodUsingInternalAPI {
-
+interface InterfaceWithDefaultMethodUsingInternalAPI : TopInterfaceWithDefaultMethodUsingInternalAPI {
   val id: String
 
   fun returningInternal() : AnInternalType? = null

@@ -2,7 +2,7 @@ package mock.plugin.internal.defaultMethod
 
 import internal.defaultMethod.InterfaceWithDefaultMethodUsingInternalAPI
 
-class NotInternalTypeUsage : InterfaceWithDefaultMethodUsingInternalAPI {
+class NoInternalTypeUsage : InterfaceWithDefaultMethodUsingInternalAPI {
   override val id: String = ""
 
   // as plugin developer, do not override the default implementation of getPlaceholderCollector()

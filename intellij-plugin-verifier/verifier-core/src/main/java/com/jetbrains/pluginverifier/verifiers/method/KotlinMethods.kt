@@ -123,7 +123,18 @@ object KotlinMethods {
 
     val actualKotlinOwner = methodInsnNode.owner.substringBeforeLast("\$DefaultImpls")
 
-    // do we want to walk the whole class hierarchy?
+    // Walking the whole class hierarchy is not necessary because
+    // these methods always delegate to the immediate superinterface. E.g.
+    // ```
+    // interface A {
+    //    fun foo() {}
+    // }
+    //
+    // interface B : A
+    //
+    // class C : B
+    // ```
+    // `C.foo` will have a call to `B$DefaultImpls.foo`.
     val isAParent = method.containingClassFile.interfaces.any {
       it == actualKotlinOwner
     }
