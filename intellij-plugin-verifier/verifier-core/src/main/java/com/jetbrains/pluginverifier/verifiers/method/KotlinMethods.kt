@@ -121,7 +121,7 @@ object KotlinMethods {
       return false
     }
 
-    val actualKotlinOwner = methodInsnNode.owner.substring(0, methodInsnNode.owner.length - "\$DefaultImpls".length)
+    val actualKotlinOwner = methodInsnNode.owner.substringBeforeLast("\$DefaultImpls")
 
     // do we want to walk the whole class hierarchy?
     val isAParent = method.containingClassFile.interfaces.any {
