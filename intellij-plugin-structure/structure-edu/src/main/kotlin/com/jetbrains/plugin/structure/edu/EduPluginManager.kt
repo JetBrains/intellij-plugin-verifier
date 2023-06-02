@@ -88,8 +88,30 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
         return PluginCreationFail(beanValidationResult)
       }
       val plugin = with(descriptor) {
-        val programmingLanguage = this.programmingLanguageId ?: this.programmingLanguage
-        val pluginId = this.pluginId ?: "${this.title}_${this.vendor?.name}_$programmingLanguage"
+        /*
+          This is a workaround on complex, strange and outdated logic about xml id generation. Long story short:
+            1. There was no xml id for edu plugins, so we need to generate it by our self. The original generation alg was
+               "${this.title}_${this.vendor?.name}_$programmingLanguage".
+            2. Then, it appears that authors should be able to change the `title`. To do so, edu team introduced
+               `generated_edu_id` field in course json. The idea is to generate it the same way as described in (1) in
+               the edu plugin and only after that allow author to change the `title`.
+            3. Now, it appears that `programmingLanguage` could contain the programming language, and it's version divided
+               by space. Edu also want to split `programmingLanguage` to `programmingLanguageId` and `programmingLanguageVersion`.
+               Also, `programmingLanguageVersion` could be changed in future versions of the course, which means it
+               could also affect xml id generation.
+
+          So, the plan is:
+            1. For older versions of the course structure (with `programmingLanguage`) we will get rid of the programming
+               language version in xml id. I'll also remove the version from xml id in the database. From now on
+               `programmingLanguage` is deprecated with estimated period of 6 edu plugin releases (half of a year).
+            2. For newer versions of the course structure (with `programmingLanguageId` and `programmingLanguageVersion`)
+               we will use only `programmingLanguageId` in xml id.
+            3. We also decided to remove the part with generation xml id and to use `generated_edu_id` instead for every
+               plugin with an estimated period of 6 edu plugin releases.
+         */
+        val xmlIdSuffix = this.programmingLanguageId ?: this.programmingLanguage?.substringBefore(" ")
+        val pluginId = this.pluginId ?: "${this.title}_${this.vendor?.name}_$xmlIdSuffix"
+
         EduPlugin(
           pluginName = this.title,
           description = this.summary,
@@ -99,7 +121,8 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           descriptorVersion = this.descriptorVersion,
           pluginVersion = this.pluginVersion,
           language = this.language,
-          programmingLanguageId = programmingLanguage,
+          programmingLanguage = programmingLanguage,
+          programmingLanguageId = programmingLanguageId,
           programmingLanguageVersion = this.programmingLanguageVersion,
           environment = this.environment,
           isPrivate = this.isPrivate ?: false,
