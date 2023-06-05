@@ -2,6 +2,8 @@ package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 
+const val MIN_DESCRIPTION_LENGTH = 40
+
 class ShortOrNonLatinDescription : InvalidDescriptorProblem("description") {
 
   override val level

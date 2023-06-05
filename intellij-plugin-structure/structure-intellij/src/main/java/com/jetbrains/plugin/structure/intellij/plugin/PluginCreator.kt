@@ -54,7 +54,8 @@ internal class PluginCreator private constructor(
     val v2ModulePrefix = Regex("^intellij\\..*")
 
     // \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{40,}")
+    @Suppress("RegExpSimplifiable")
+    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
 
     private val json = jacksonObjectMapper()
 
