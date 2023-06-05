@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
+import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -81,17 +82,7 @@ class InternalApiUsagePluginTest {
   fun `internal plugin class uses an internal API`() {
     val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij"))
 
-    val apiUsageFilter = object : ApiUsageFilter {
-      override fun shouldReport(apiUsage: ApiUsage, context: VerificationContext): ApiUsageFilter.Result {
-        return when {
-          apiUsage is InternalApiUsage
-            && context is PluginVerificationContext
-            && PluginVendors.isDevelopedByJetBrains(context.idePlugin) ->
-            ApiUsageFilter.Result.Ignore("Internal API usage from internal plugins is allowed.")
-          else -> ApiUsageFilter.Result.Report
-        }
-      }
-    }
+    val apiUsageFilter = InternalApiUsageFilter()
 
     // Run verification
     val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin,
