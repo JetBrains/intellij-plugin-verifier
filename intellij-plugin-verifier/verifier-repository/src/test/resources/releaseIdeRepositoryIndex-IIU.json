@@ -1,0 +1,373 @@
+[
+  {
+    "code": "IIU",
+    "name": "IntelliJ IDEA Ultimate",
+    "releases": [
+      {
+        "date": "2023-05-18",
+        "type": "eap",
+        "version": "2023.2",
+        "majorVersion": "2023.2",
+        "patches": {
+          "mac": [
+            {
+              "fromBuild": "232.5150.116",
+              "link": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-mac.jar",
+              "size": 145843155,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-mac.jar.sha256"
+            }
+          ],
+          "unix": [
+            {
+              "fromBuild": "232.5150.116",
+              "link": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-unix.jar",
+              "size": 158329534,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-unix.jar.sha256"
+            }
+          ],
+          "win": [
+            {
+              "fromBuild": "232.5150.116",
+              "link": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-win.jar",
+              "size": 146681304,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-232.5150.116-232.6095.10-patch-win.jar.sha256"
+            }
+          ]
+        },
+        "downloads": {
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.exe",
+            "size": 786271384,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.exe.sha256"
+          },
+          "windowsARM64": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.exe",
+            "size": 769386536,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.win.zip",
+            "size": 1116169732,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.win.zip.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.dmg",
+            "size": 1056343899,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.dmg.sha256"
+          },
+          "macM1": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.dmg",
+            "size": 1048109709,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.dmg.sha256"
+          },
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.tar.gz",
+            "size": 1118716254,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10.tar.gz.sha256"
+          },
+          "linuxARM64": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.tar.gz",
+            "size": 1120080869,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.6095.10-aarch64.tar.gz.sha256"
+          },
+          "thirdPartyLibrariesJson": {
+            "link": "https://resources.jetbrains.com/storage/third-party-libraries/idea/ideaIU-232.6095.10-third-party-libraries.json",
+            "size": 444851,
+            "checksumLink": "https://resources.jetbrains.com/storage/third-party-libraries/idea/ideaIU-232.6095.10-third-party-libraries.json.sha256"
+          }
+        },
+        "notesLink": "https://youtrack.jetbrains.com/articles/IDEA-A-2100661513/IntelliJ-IDEA-2023.2-EAP-2-232.6095.10-build-Release-Notes/",
+        "licenseRequired": false,
+        "build": "232.6095.10",
+        "whatsnew": "IntelliJ IDEA 2023.2 EAP 2 is out! \n<ul> \n <li>Text search in <em>Search Everywhere</em></li> \n <li>GitLab integration</li> \n <li>New inspections and other improvements for Java development</li> \n</ul> For more details, please refer to this \n<a href=\"https://blog.jetbrains.com/idea/2023/05/intellij-idea-2023-2-eap-2/\">blog post</a>.",
+        "uninstallFeedbackLinks": {
+          "linux": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxARM64": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxWithoutJBR": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "mac": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macM1": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macWithJBR": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windows": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsARM64": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZip": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZipJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZipJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "sourcesArchive": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "thirdPartyLibrariesJson": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2"
+        }
+      },
+      {
+        "date": "2023-05-12",
+        "type": "eap",
+        "version": "2023.2",
+        "majorVersion": "2023.2",
+        "patches": {
+          "mac": [
+            {
+              "fromBuild": "231.8770.65",
+              "link": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-mac.jar",
+              "size": 376429905,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-mac.jar.sha256"
+            }
+          ],
+          "unix": [
+            {
+              "fromBuild": "231.8770.65",
+              "link": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-unix.jar",
+              "size": 378542121,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-unix.jar.sha256"
+            }
+          ],
+          "win": [
+            {
+              "fromBuild": "231.8770.65",
+              "link": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-win.jar",
+              "size": 395834456,
+              "checksumLink": "https://download.jetbrains.com/idea/IU-231.8770.65-232.5150.116-patch-win.jar.sha256"
+            }
+          ]
+        },
+        "downloads": {
+          "windows": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.exe",
+            "size": 796078424,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.exe.sha256"
+          },
+          "windowsARM64": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.exe",
+            "size": 784013016,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.exe.sha256"
+          },
+          "windowsZip": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.win.zip",
+            "size": 1128718696,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.win.zip.sha256"
+          },
+          "mac": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.dmg",
+            "size": 1068433357,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.dmg.sha256"
+          },
+          "macM1": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.dmg",
+            "size": 1060237660,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.dmg.sha256"
+          },
+          "linux": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.tar.gz",
+            "size": 1127492511,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116.tar.gz.sha256"
+          },
+          "linuxARM64": {
+            "link": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.tar.gz",
+            "size": 1128451940,
+            "checksumLink": "https://download.jetbrains.com/idea/ideaIU-232.5150.116-aarch64.tar.gz.sha256"
+          },
+          "thirdPartyLibrariesJson": {
+            "link": "https://resources.jetbrains.com/storage/third-party-libraries/idea/ideaIU-232.5150.116-third-party-libraries.json",
+            "size": 444579,
+            "checksumLink": "https://resources.jetbrains.com/storage/third-party-libraries/idea/ideaIU-232.5150.116-third-party-libraries.json.sha256"
+          }
+        },
+        "notesLink": "https://youtrack.jetbrains.com/articles/IDEA-A-2100661509/IntelliJ-IDEA-2023.2-EAP-1-232.5150.116-build-Release-Notes",
+        "licenseRequired": false,
+        "build": "232.5150.116",
+        "whatsnew": "The first IntelliJ IDEA 2023.2 EAP build is out! \n<ul> \n <li>Reworked hamburger menu in the main toolbar on Windows and Linux</li> \n <li>Updated window controls on macOS </li> \n <li>In-editor performance hints in IntelliJ Profiler</li> \n <li>Evaluation of Reactor Mono and Flux values in the debugger</li> \n <li>A new tool to instantly generate shared indexes </li> \n</ul> For more details, please refer to this \n<a href=\"https://blog.jetbrains.com/idea/2023/05/intellij-idea-2023-2-eap/\">blog post</a>.",
+        "uninstallFeedbackLinks": {
+          "linux": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxARM64": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "linuxWithoutJBR": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "mac": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macM1": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "macWithJBR": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windows": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsARM64": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZip": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZipJBR11": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "windowsZipJBR8": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "sourcesArchive": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2",
+          "thirdPartyLibrariesJson": "https://www.jetbrains.com/idea/uninstall/?edition=IU-2023.2"
+        }
+      }
+    ],
+    "forSale": true,
+    "productFamilyName": "IntelliJ IDEA",
+    "additionalLinks": [
+      {
+        "type": "youtube",
+        "name": "Take a video tour",
+        "link": "https://www.youtube.com/watch?v=GSKERVTMWqs"
+      },
+      {
+        "type": "homepage",
+        "name": "More about IntelliJ IDEA",
+        "link": "https://www.jetbrains.com/idea/"
+      },
+      {
+        "type": "whatsnew",
+        "name": "What's new in IntelliJ IDEA",
+        "link": "https://www.jetbrains.com/idea/whatsnew/"
+      },
+      {
+        "type": "documentation",
+        "name": "Documentation",
+        "link": "https://www.jetbrains.com/help/idea/discover-intellij-idea.html"
+      },
+      {
+        "type": "issuetracker",
+        "name": "Issue tracker",
+        "link": "https://youtrack.jetbrains.com/issues/IDEA"
+      },
+      {
+        "type": "blog",
+        "name": "Blog",
+        "link": "https://blog.jetbrains.com/idea"
+      },
+      {
+        "type": "twitter",
+        "name": "IntelliJ IDEA on Twitter",
+        "link": "https://twitter.com/intellijidea"
+      }
+    ],
+    "intellijProductCode": "IU",
+    "alternativeCodes": [
+      "IU"
+    ],
+    "salesCode": "II",
+    "link": "https://www.jetbrains.com/idea",
+    "description": "The Leading Java and Kotlin IDE",
+    "tags": [
+      {
+        "id": "java",
+        "name": "Java"
+      },
+      {
+        "id": "kotlin",
+        "name": "Kotlin"
+      },
+      {
+        "id": "groovy",
+        "name": "Groovy"
+      },
+      {
+        "id": "scala",
+        "name": "Scala"
+      },
+      {
+        "id": "android",
+        "name": "Android"
+      },
+      {
+        "id": "js",
+        "name": "JavaScript, TypeScript"
+      },
+      {
+        "id": "sql",
+        "name": "SQL/NoSQL"
+      },
+      {
+        "id": "databases",
+        "name": "Databases"
+      }
+    ],
+    "types": [
+      {
+        "id": "code",
+        "name": "Code"
+      }
+    ],
+    "categories": [
+      "IDE"
+    ],
+    "distributions": {
+      "linux": {
+        "name": "Linux x86_64",
+        "extension": "tar.gz"
+      },
+      "linuxARM64": {
+        "name": "Linux aarch64",
+        "extension": "tar.gz"
+      },
+      "linuxJBR11": {
+        "name": "Linux with bundled JBR 11",
+        "extension": "tar.gz"
+      },
+      "linuxJBR8": {
+        "name": "Linux with bundled JBR 8",
+        "extension": "tar.gz"
+      },
+      "linuxWithoutJBR": {
+        "name": "Linux without JBR",
+        "extension": "tar.gz"
+      },
+      "mac": {
+        "name": "macOS",
+        "extension": "dmg"
+      },
+      "macJBR11": {
+        "name": "macOS with Bundled JBR 11",
+        "extension": "dmg"
+      },
+      "macJBR8": {
+        "name": "macOS with bundled JBR 8",
+        "extension": "dmg"
+      },
+      "macM1": {
+        "name": "macOS Apple Silicon",
+        "extension": "dmg"
+      },
+      "macWithJBR": {
+        "name": "macOS with Bundled JBR",
+        "extension": "dmg"
+      },
+      "windows": {
+        "name": "Windows x64",
+        "extension": "exe"
+      },
+      "windowsARM64": {
+        "name": "Windows ARM64",
+        "extension": "exe"
+      },
+      "windowsJBR11": {
+        "name": "Windows with Bundled JBR 11",
+        "extension": "exe"
+      },
+      "windowsJBR8": {
+        "name": "Windows with Bundled JBR 8",
+        "extension": "exe"
+      },
+      "windowsZip": {
+        "name": "Windows x64 ZIP Archive",
+        "extension": "zip"
+      },
+      "windowsZipJBR11": {
+        "name": "Windows x64 ZIP Archive with Bundled JBR 11",
+        "extension": "zip"
+      },
+      "windowsZipJBR8": {
+        "name": "Windows x64 ZIP Archive with Bundled JBR 8",
+        "extension": "zip"
+      },
+      "sourcesArchive": {
+        "name": "Sources Archive",
+        "extension": "zip"
+      },
+      "thirdPartyLibrariesJson": {
+        "name": "Used Third-Party Libraries",
+        "extension": "third-party-libraries.json"
+      }
+    }
+  }
+]

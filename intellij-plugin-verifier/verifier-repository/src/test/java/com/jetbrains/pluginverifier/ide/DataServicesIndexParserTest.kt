@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.ide
 
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion.createIdeVersion
 import com.jetbrains.pluginverifier.ide.repositories.Product
@@ -18,9 +18,10 @@ class DataServicesIndexParserTest {
 
   @Test
   fun `simple index parsing test`() {
-    val products = Gson().fromJson<List<Product>>(
-      DataServicesIndexParserTest::class.java.getResourceAsStream("/releaseIdeRepositoryIndex.json").bufferedReader()
-    )
+    val json = jacksonObjectMapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false)
+    val jsonStream = DataServicesIndexParserTest::class.java.getResourceAsStream("/releaseIdeRepositoryIndex.json")
+    val productListType = json.typeFactory.constructCollectionType(List::class.java, Product::class.java)
+    val products: List<Product> = json.readValue(jsonStream, productListType)
 
     val actualIdes = DataServicesIndexParser().parseAvailableIdes(products)
     val expectedIdes = listOf(

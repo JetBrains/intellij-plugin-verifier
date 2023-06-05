@@ -6,8 +6,8 @@ package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.misc.safeEquals
-import com.jetbrains.pluginverifier.misc.safeHashCode
+import com.jetbrains.pluginverifier.network.safeEquals
+import com.jetbrains.pluginverifier.network.safeHashCode
 import java.net.URL
 import java.time.LocalDate
 import java.util.*

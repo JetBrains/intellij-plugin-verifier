@@ -5,21 +5,25 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.pluginverifier.misc.createOkHttpClient
+import com.jetbrains.pluginverifier.misc.createHttpClient
 import com.jetbrains.pluginverifier.network.*
-import okhttp3.ResponseBody
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_DISPOSITION
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_LENGTH
+import com.jetbrains.pluginverifier.network.HttpHeaders.CONTENT_TYPE
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
-import retrofit2.Call
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Streaming
-import retrofit2.http.Url
+import java.io.InputStream
+import java.net.URI
 import java.net.URL
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
+import java.nio.file.StandardCopyOption
+import java.time.Duration
+
+private const val FILENAME = "filename="
+private val urlPathExtensions = listOf("jar", "zip", "tar.gz", "tar.bz2", "txt", "html", "xml", "json")
 
 /**
  * [Downloader] of files for URLs provided with [urlProvider].
@@ -27,68 +31,15 @@ import java.util.concurrent.TimeUnit
 class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> {
 
   private companion object {
-    private const val FILENAME = "filename="
     private const val FILE_PROTOCOL = "file"
     private const val HTTP_PROTOCOL = "http"
     private const val HTTPS_PROTOCOL = "https"
 
     private val LOG = LoggerFactory.getLogger(UrlDownloader::class.java)
 
-    private val urlPathExtensions = listOf("jar", "zip", "tar.gz", "tar.bz2", "txt", "html", "xml", "json")
   }
 
-  private val downloadConnector: DownloadConnector = Retrofit.Builder()
-    //the base repository is not used because all URLs provided by [urlProvider] are absolute
-    .baseUrl("https://unnecessary.com")
-    .client(createOkHttpClient(LOG.isDebugEnabled, 5, TimeUnit.MINUTES))
-    .build()
-    .create(DownloadConnector::class.java)
-
-  private fun Response<ResponseBody>.guessExtension(): String {
-    /**
-     * Guess by Content-Disposition header.
-     */
-    val contentDisposition = headers().get("Content-Disposition")
-    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-      val path = contentDisposition.substringAfter(FILENAME).substringBefore(";").removeSurrounding("\"")
-      val extension = guessExtensionByPath(path)
-      if (extension != null) {
-        return extension
-      }
-    }
-
-    /**
-     * Guess by content type.
-     */
-    val contentType = body()!!.contentType()
-    if (contentType == jarContentMediaType || contentType == xJarContentMediaType) {
-      return "jar"
-    }
-    if (contentType == jsonMediaType) {
-      return "json"
-    }
-
-    /**
-     * Guess by URL path extension.
-     */
-    val path = raw().request.url.encodedPath
-    val extension = guessExtensionByPath(path)
-    if (extension != null) {
-      return extension
-    }
-
-    //Fallback to zip, since it's the most popular one.
-    return "zip"
-  }
-
-  private fun guessExtensionByPath(path: String): String? {
-    for (extension in urlPathExtensions) {
-      if (path.endsWith(".$extension")) {
-        return extension
-      }
-    }
-    return null
-  }
+  private val downloadConnector = DownloadConnector()
 
   @Throws(InterruptedException::class)
   override fun download(key: K, tempDirectory: Path): DownloadResult {
@@ -130,11 +81,11 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   }
 
   private fun downloadFileOrDirectory(downloadUrl: URL, tempDirectory: Path, key: K): DownloadResult {
-    val response = downloadConnector.download(downloadUrl.toExternalForm()).executeSuccessfully()
-    val extension = response.guessExtension()
+    val response = downloadConnector.download(downloadUrl.toExternalForm())
+    val extension = response.extension
     val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
     return try {
-      LOG.debug("Downloading $key to $downloadedTempFile")
+      LOG.debug("Downloading {} to {}", key, downloadedTempFile)
       copyResponseTo(response, downloadedTempFile)
       DownloadResult.Downloaded(downloadedTempFile, extension, false)
     } catch (e: Throwable) {
@@ -143,18 +94,88 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
     }
   }
 
-  private fun copyResponseTo(response: Response<ResponseBody>, file: Path) {
+  private fun copyResponseTo(response: Response, file: Path) {
     checkIfInterrupted()
-    response.body().use { responseBody ->
-      val expectedSize = responseBody!!.contentLength()
-      copyInputStreamToFileWithProgress(responseBody.byteStream(), expectedSize, file) { }
+    response.body.use { responseBody ->
+      Files.copy(responseBody, file, StandardCopyOption.REPLACE_EXISTING)
     }
   }
 
-  private interface DownloadConnector {
-    @Streaming
-    @GET
-    fun download(@Url url: String): Call<ResponseBody>
+  private data class Response(val body: InputStream, val contentLength: Long = -1, val extension: String)
+
+  private class DownloadConnector {
+    val httpClient = createHttpClient()
+
+    fun download(url: String, timeout: Duration = Duration.ofMinutes(5)): Response {
+      val httpGet = HttpRequest.newBuilder().GET()
+              .uri(URI.create(url))
+              .timeout(timeout)
+              .build()
+
+      val response: HttpResponse<InputStream> = httpClient.send(httpGet, HttpResponse.BodyHandlers.ofInputStream())
+      assertHttpOk(url, response)
+      val extension = response.guessExtension()
+      return Response(response.body(), response.contentLength(), extension)
+    }
+
+    private fun assertHttpOk(url: String, response: HttpResponse<InputStream>) {
+      when (val code = response.statusCode()) {
+        200 -> return
+        404 -> throw NotFound404ResponseException(url)
+        500 -> throw ServerInternalError500Exception(url)
+        503 -> throw ServerUnavailable503Exception(url)
+        else -> {
+          val message = response.body().bufferedReader().readLine().take(255)
+          throw NonSuccessfulResponseException(url, code, message)
+        }
+      }
+    }
+  }
+}
+
+private fun HttpResponse<*>.contentLength(): Long {
+  return this.headers()
+          .firstValueAsLong(CONTENT_LENGTH)
+          .orElse(-1L)
+}
+
+internal fun HttpResponse<*>.guessExtension(defaultExtension: String  = "zip"): String {
+  /**
+   * Guess by Content-Disposition header.
+   */
+  val contentDisposition: String? = headers().firstValue(CONTENT_DISPOSITION).orElse(null)
+
+  if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
+    val path = contentDisposition.substringAfter(FILENAME).substringBefore(";").removeSurrounding("\"")
+    val extension = guessExtensionByPath(path)
+    if (extension != null) {
+      return extension
+    }
   }
 
+  /**
+   * Guess by content type.
+   */
+  val contentType = headers().firstValue(CONTENT_TYPE).orElse(octetStreamMediaTypeValue)
+  if (contentType == jarContentMediaTypeValue || contentType == xJarContentMediaTypeValue) {
+    return "jar"
+  }
+  if (contentType == jsonMediaTypeValue) {
+    return "json"
+  }
+
+  /**
+   * Guess by URL path extension.
+   */
+  val path = this.request().uri().rawPath
+  val extension = guessExtensionByPath(path)
+  if (extension != null) {
+    return extension
+  }
+
+  return defaultExtension
+}
+
+private fun guessExtensionByPath(path: String): String? {
+  return urlPathExtensions.firstOrNull { path.endsWith(".$it") }
 }

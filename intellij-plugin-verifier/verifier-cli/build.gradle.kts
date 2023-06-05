@@ -8,7 +8,6 @@ dependencies {
   runtimeOnly(sharedLibs.logback.classic)
   implementation(sharedLibs.jackson.module.kotlin)
   implementation(sharedLibs.spullara.cliParser)
-  implementation(libs.commons.lang3)
 }
 
 val projectVersion: String by rootProject.extra

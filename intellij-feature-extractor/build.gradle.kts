@@ -38,8 +38,8 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:structure-ide-classes:$structureVersion")
   implementation("org.jetbrains.intellij.plugins:verifier-core:$structureVersion")
 
-  implementation(sharedLibs.gson)
   implementation(sharedLibs.slf4j.api)
+  implementation(sharedLibs.jackson.module.kotlin)
 
   testImplementation(sharedLibs.junit)
   testImplementation(project(":test-classes"))
