@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -85,7 +86,7 @@ class InternalApiUsagePluginTest {
         return when {
           apiUsage is InternalApiUsage
             && context is PluginVerificationContext
-            && context.idePlugin.pluginId == "com.intellij" ->
+            && PluginVendors.isDevelopedByJetBrains(context.idePlugin) ->
             ApiUsageFilter.Result.Ignore("Internal API usage from internal plugins is allowed.")
           else -> ApiUsageFilter.Result.Report
         }
