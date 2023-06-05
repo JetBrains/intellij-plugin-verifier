@@ -60,12 +60,15 @@ class PluginVerifier(
               .mapTo(hashSetOf()) { PluginStructureError(it) }
           )
         }
+
         is PluginDetailsCache.Result.FileNotFound -> {
           PluginVerificationResult.NotFound(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason)
         }
+
         is PluginDetailsCache.Result.Failed -> {
           PluginVerificationResult.FailedToDownload(verificationDescriptor.checkedPlugin, verificationDescriptor.toTarget(), cacheEntry.reason)
         }
+
         is PluginDetailsCache.Result.Provided -> {
           verify(cacheEntry.pluginDetails)
         }
@@ -253,9 +256,11 @@ class PluginVerifier(
       }
     }
 
-    val packageNotFoundProblems = packageToMissingProblems.map { (packageName, missingClasses) ->
-      PackageNotFoundProblem(packageName, missingClasses)
-    }
+    // Kotlin package are supposed to be part of the platform
+    val packageNotFoundProblems = packageToMissingProblems
+      .map { (packageName, missingClasses) ->
+        PackageNotFoundProblem(packageName, missingClasses)
+      }
 
     //Retain all individual [ClassNotFoundProblem]s.
     for (problem in classNotFoundProblems) {
@@ -286,7 +291,7 @@ class PluginVerifier(
   private fun selectClassesForCheck(pluginDetails: PluginDetails): Set<String> {
     val classesForCheck = hashSetOf<String>()
     val selectorsToUse =
-        if (excludeExternalBuildClassesSelector) classesSelectors.filterNot { it is ExternalBuildClassesSelector } else classesSelectors
+      if (excludeExternalBuildClassesSelector) classesSelectors.filterNot { it is ExternalBuildClassesSelector } else classesSelectors
     for (classesSelector in selectorsToUse) {
       classesForCheck += classesSelector.getClassesForCheck(pluginDetails.pluginClassesLocations)
     }
