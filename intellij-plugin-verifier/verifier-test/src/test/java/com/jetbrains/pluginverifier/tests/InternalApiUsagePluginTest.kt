@@ -8,17 +8,11 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.usages.ApiUsage
-import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodUsage
-import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
@@ -33,7 +27,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.lang.IllegalStateException
 import java.lang.reflect.Modifier
 
 class InternalApiUsagePluginTest {
