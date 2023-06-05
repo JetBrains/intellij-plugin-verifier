@@ -22,6 +22,7 @@ import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.checkIde.MissingCompatibleVersionProblem
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.Locale
 
 
 class TeamCityResultPrinter(
@@ -40,12 +41,12 @@ class TeamCityResultPrinter(
       val name = clazz.name.substringAfterLast(".")
       var words = name.split("(?=[A-Z])".toRegex()).dropWhile { it.isEmpty() }
       if (words.isEmpty()) {
-        return name.toLowerCase()
+        return name.lowercase(Locale.getDefault())
       }
       if (words.last() == "Problem") {
         words = words.dropLast(1)
       }
-      return words.joinToString(" ") { it.toLowerCase() }
+      return words.joinToString(" ") { it.lowercase(Locale.getDefault()) }
     }
 
     fun printInvalidPluginFiles(tcLog: TeamCityLog, invalidPluginFiles: List<InvalidPluginFile>) {

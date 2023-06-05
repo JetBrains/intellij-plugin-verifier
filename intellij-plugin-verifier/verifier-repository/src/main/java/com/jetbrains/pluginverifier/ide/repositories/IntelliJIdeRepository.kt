@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.misc.RestApiFailed
 import com.jetbrains.pluginverifier.misc.RestApiOk
 import com.jetbrains.pluginverifier.misc.RestApis
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -79,7 +80,7 @@ open class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
 
   override fun fetchIndex(): List<AvailableIde> = indexCache.get()
 
-  override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.toLowerCase()})"
+  override fun toString() = "IntelliJ Artifacts Repository (channel = ${channel.name.lowercase(Locale.getDefault())})"
 
 }
 

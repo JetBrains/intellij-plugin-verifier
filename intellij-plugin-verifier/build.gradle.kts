@@ -56,7 +56,7 @@ allprojects {
     implementation(rootProject.libs.bouncycastle.pkix)
 
     implementation(rootProject.sharedLibs.jetbrains.annotations)
-    implementation(rootProject.sharedLibs.commons.io)
+    implementation(rootProject.sharedLibs.gson)
   }
 
   repositories {

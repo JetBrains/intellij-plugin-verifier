@@ -2,13 +2,16 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
-## [next]
-
-### Added
-
-### Fixed
+## v1.301 - 2023-05-30
 
 ### Changed
+
+- This release is equivalent to 1.300.
+
+## v1.300 - 2023-05-30
+
+### Fixed
+- Dependencies in the descriptor that reference the same descriptor file trigger a warning instead of an error ([MP-5523](https://youtrack.jetbrains.com/issue/MP-5523))
 
 ## v1.299 - 2023-05-19
 

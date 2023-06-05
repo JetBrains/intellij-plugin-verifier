@@ -111,7 +111,7 @@ class ReusedDescriptorInMultipleDependencies(descriptorPath: String? = null,
     get() = "Dependencies (${dependencies.size}) reuse a config-file attribute value '$configFile': " + dependencySummary
 
   override val level: Level
-    get() = Level.ERROR
+    get() = Level.WARNING
 }
 
 class VendorCannotBeEmpty(descriptorPath: String? = null

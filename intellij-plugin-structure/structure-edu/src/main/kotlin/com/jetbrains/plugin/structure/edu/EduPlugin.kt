@@ -22,6 +22,7 @@ data class EduPlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   val descriptorVersion: Int? = null,
   val language: String? = null,
+  val programmingLanguage: String? = null,
   val programmingLanguageId: String? = null,
   val programmingLanguageVersion: String? = null,
   val environment: String? = null,

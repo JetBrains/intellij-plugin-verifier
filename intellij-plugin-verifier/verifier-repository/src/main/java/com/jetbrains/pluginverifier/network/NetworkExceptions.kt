@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.network
 
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 abstract class BaseNetworkException : RuntimeException {
@@ -50,5 +51,5 @@ class TimeOutException(
   private val timeOutUnit: TimeUnit
 ) : BaseNetworkException(serverUrl) {
   override val message
-    get() = "Request to $serverUrl hasn't been completed in $timeOut ${timeOutUnit.toString().toLowerCase()}"
+    get() = "Request to $serverUrl hasn't been completed in $timeOut ${timeOutUnit.toString().lowercase(Locale.getDefault())}"
 }

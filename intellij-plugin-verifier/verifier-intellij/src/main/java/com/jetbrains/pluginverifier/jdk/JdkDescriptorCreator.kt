@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolve
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
+import java.util.Locale
 
 object JdkDescriptorCreator {
 
@@ -89,11 +90,11 @@ object JdkDescriptorCreator {
     val optionalJars = setOf("tools.jar", "classes.jar", "jsse.jar", "javaws.jar", "jce.jar", "jfxrt.jar", "plugin.jar")
 
     val jars = jdkPath.listRecursivelyAllFilesWithExtension("jar").filter { file ->
-      val fileName = file.simpleName.toLowerCase()
+      val fileName = file.simpleName.lowercase(Locale.getDefault())
       fileName in mandatoryJars || fileName in optionalJars
     }
 
-    val missingJars = mandatoryJars - jars.map { it.simpleName.toLowerCase() }
+    val missingJars = mandatoryJars - jars.map { it.simpleName.lowercase(Locale.getDefault()) }
     require(missingJars.isEmpty()) {
       "JDK $jdkPath misses mandatory jars: ${missingJars.joinToString()}"
     }

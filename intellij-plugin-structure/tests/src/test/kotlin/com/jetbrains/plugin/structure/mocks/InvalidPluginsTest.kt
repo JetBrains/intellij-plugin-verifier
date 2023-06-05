@@ -269,17 +269,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `multiple dependencies reuse a single config-file`() {
-    `test invalid plugin xml`(
+    `test valid plugin xml`(
             perfectXmlBuilder.modify {
               depends = """
                 <depends config-file="shared.xml">com.jetbrains.module-one</depends>
                 <depends config-file="shared.xml">com.jetbrains.module-two</depends>
               """.trimIndent()
-            },
-            listOf(ReusedDescriptorInMultipleDependencies("plugin.xml", "shared.xml",
-                    listOf(
-                            "com.jetbrains.module-one", "com.jetbrains.module-two")
-            ))
+            }
     )
   }
 
