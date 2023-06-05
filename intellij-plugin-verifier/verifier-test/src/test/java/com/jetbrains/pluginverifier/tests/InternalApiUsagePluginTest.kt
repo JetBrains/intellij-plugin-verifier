@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
+import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.FixedValue
 import net.bytebuddy.implementation.MethodDelegation
@@ -30,6 +31,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.lang.IllegalStateException
 import java.lang.reflect.Modifier
 
 class InternalApiUsagePluginTest {
@@ -122,26 +124,28 @@ class InternalApiUsagePluginTest {
       .ofType(intellijInternalApiClass)
       .build()
 
+    val internalApiServiceClassName = "com.intellij.openapi.InternalApiService"
     val internalApiServiceClassUdt = byteBuddy
       .subclass(Object::class.java)
-      .name("com.intellij.openapi.InternalApiService")
+      .name(internalApiServiceClassName)
       .annotateType(intellijInternalApiAnnDesc)
       .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
       .make()
 
-    val internalApiClazz = internalApiServiceClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
+    val internalApiClazz = load(internalApiServiceClassUdt, classLoader, internalApiServiceClassName)
     val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
 
+    val usageClassName = "usage.Usage"
     val usageClassUdt = byteBuddy
       .subclass(Object::class.java)
-      .name("usage.Usage")
+      .name(usageClassName)
       .defineMethod("delegateFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
         MethodDelegation
           .withDefaultConfiguration()
           .filter(named("fortyTwo")).to(internalApiService))
       .make()
 
-    val usageClass = usageClassUdt.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
+    val usageClass = load(usageClassUdt, classLoader, usageClassName)
     val usage = usageClass.getDeclaredConstructor().newInstance()
 
     val result = usageClass.getMethod("delegateFortyTwo").invoke(usage)
@@ -168,6 +172,16 @@ class InternalApiUsagePluginTest {
       }
     }, groovyPluginClassesBuilder = {})
     return idePlugin to ide
+  }
+
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  private fun load(classDynamicType: DynamicType.Unloaded<Object>, classLoader: ClassLoader, className: String): Class<out Any> {
+    return try {
+      classDynamicType.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
+    } catch (e: IllegalStateException) {
+      // class might have already been injected into classloader from previous runs
+      classLoader.loadClass(className)
+    }
   }
 
   private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij"),
