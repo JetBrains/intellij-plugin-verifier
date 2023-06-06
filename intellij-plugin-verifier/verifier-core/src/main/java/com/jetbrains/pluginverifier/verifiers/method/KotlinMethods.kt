@@ -1,5 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.Opcodes
@@ -7,12 +9,11 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 object KotlinMethods {
-  private const val CAPACITY = 10
-  private val cache = object : LinkedHashMap<MethodLocation, Boolean>(CAPACITY) {
-    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<MethodLocation, Boolean>?): Boolean {
-      return size > CAPACITY
-    }
-  }
+  private const val CAPACITY = 100L
+
+  private val cache: Cache<MethodLocation, Boolean> = CacheBuilder.newBuilder()
+    .maximumSize(CAPACITY)
+    .build()
 
   /**
    * Identify a Kotlin default method.
@@ -56,9 +57,7 @@ object KotlinMethods {
    */
   fun Method.isKotlinDefaultMethod(): Boolean {
     val method: Method = this
-    return cache.computeIfAbsent(method.location) {
-      return@computeIfAbsent isKotlinMethodInvokingDefaultImpls(method)
-    }
+    return cache.asMap().computeIfAbsent(method.location) { isKotlinMethodInvokingDefaultImpls(method) }
   }
 
   private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
