@@ -21,3 +21,18 @@ class HttpLinkInDescription(private val link: String) : InvalidDescriptorProblem
   override val detailedMessage
     get() = "All links in description must be HTTPS: $link"
 }
+
+open class IllegalPluginId(private val illegalPluginId: String) : InvalidDescriptorProblem("id") {
+
+  override val level
+    get() = Level.UNACCEPTABLE_WARNING
+
+  override val detailedMessage
+    get() = "Plugin ID '$illegalPluginId' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+}
+
+class IllegalPluginIdPrefix(private val illegalPluginId: String, private val illegalPrefix: String) : IllegalPluginId(illegalPluginId) {
+  override val detailedMessage
+    get() = "Plugin ID '$illegalPluginId' has an illegal prefix '$illegalPrefix'. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+}
+

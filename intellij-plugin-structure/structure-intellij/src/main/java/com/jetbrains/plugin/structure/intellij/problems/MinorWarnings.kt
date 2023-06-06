@@ -37,6 +37,16 @@ class TemplateWordInPluginName(private val descriptorPath: String, private val t
 
 }
 
+class TemplateWordInPluginId(private val descriptorPath: String, private val templateWord: String) : PluginProblem() {
+
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "Plugin ID specified in $descriptorPath should not contain the word '$templateWord'"
+
+}
+
 class OptionalDependencyDescriptorResolutionProblem(
   private val dependencyId: String,
   private val configurationFile: String,
