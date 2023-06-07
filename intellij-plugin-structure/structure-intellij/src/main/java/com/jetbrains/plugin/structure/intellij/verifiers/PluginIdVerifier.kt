@@ -9,11 +9,6 @@ import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
-/*
-com.example.X and others which are clearly not "real"
-non-JB plugins: anything containing jetbrains other than "our" official plugin ID prefixes (com.intellij.X, org.jetbrains.X ?)
-non-JB plugins: anything containing our product names e.g. intellij
- */
 val DEFAULT_ILLEGAL_PREFIXES = listOf("com.example", "net.example", "org.example", "edu.example", "com.intellij", "org.jetbrains")
 
 val PRODUCT_ID_RESTRICTED_WORDS = listOf(
