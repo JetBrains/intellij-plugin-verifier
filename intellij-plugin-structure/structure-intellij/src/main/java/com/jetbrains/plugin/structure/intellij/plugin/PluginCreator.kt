@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
@@ -60,6 +61,8 @@ internal class PluginCreator private constructor(
     private val json = jacksonObjectMapper()
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+    private val pluginIdVerifier = PluginIdVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -473,7 +476,7 @@ internal class PluginCreator private constructor(
       validateBeanUrl(bean.url)
     }
     if (validateDescriptor || bean.id != null) {
-      validateId(bean.id)
+      validateId(bean, bean.id)
     }
     if (validateDescriptor || bean.name != null) {
       validateName(bean.name)
@@ -707,7 +710,7 @@ internal class PluginCreator private constructor(
 
   private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
 
-  private fun validateId(id: String?) {
+  private fun validateId(plugin: PluginBean, id: String?) {
     if (id != null) {
       when {
         id.isBlank() -> {
@@ -719,6 +722,7 @@ internal class PluginCreator private constructor(
         else -> {
           validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
           validateNewlines("id", id)
+          pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
         }
       }
     }
