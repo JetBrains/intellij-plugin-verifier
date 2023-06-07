@@ -1,11 +1,10 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.CORE_PLUGIN_ID
+import com.jetbrains.plugin.structure.intellij.plugin.SPECIAL_IDEA_PLUGIN_ID
 import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
 /*
@@ -23,7 +22,6 @@ val PRODUCT_ID_RESTRICTED_WORDS = listOf(
 class PluginIdVerifier {
 
   fun verify(plugin: PluginBean, descriptorPath: String, problemConsumer: (PluginProblem) -> Unit) {
-    val id = plugin.id ?: return
     verifyPrefix(plugin, descriptorPath, problemConsumer)
   }
 
