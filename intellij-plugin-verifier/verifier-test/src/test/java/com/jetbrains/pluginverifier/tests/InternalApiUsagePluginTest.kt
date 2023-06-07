@@ -76,7 +76,7 @@ class InternalApiUsagePluginTest {
   }
 
   @Test
-  fun `internal plugin class uses an internal API`() {
+  fun `JetBrains plugin class uses an internal API`() {
     val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij"))
 
     val apiUsageFilter = InternalApiUsageFilter()
@@ -88,7 +88,7 @@ class InternalApiUsagePluginTest {
     // No warnings should be produced
     assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
     assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
-    // Internal Plugins is not reporting internal usages. These are in the ignored usages
+    // JetBrains Plugin should not report internal usages. These are in the ignored usages
     assertEquals(0, verificationResult.internalApiUsages.size)
     val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
     assertEquals(3, ignoredUsages.size)

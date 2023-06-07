@@ -4,7 +4,8 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import org.junit.Assert
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PluginVendorsTest {
@@ -14,8 +15,8 @@ class PluginVendorsTest {
       pluginId = "com.example.thirdparty"
       vendor = "PluginIndustries s.r.o."
     }
-    val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
-    Assert.assertFalse(isInternalPlugin)
+    val isJetBrainsPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
+    assertFalse(isJetBrainsPlugin)
   }
 
   @Test
@@ -24,8 +25,8 @@ class PluginVendorsTest {
       pluginId = "com.intellij.internal"
       vendor = "JetBrains s.r.o."
     }
-    val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
-    Assert.assertTrue(isInternalPlugin)
+    val isJetBrainsPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
+    assertTrue(isJetBrainsPlugin)
   }
 
   @Test
@@ -34,8 +35,8 @@ class PluginVendorsTest {
       pluginId = "com.intellij"
       vendor = "JetBrains s.r.o., PluginIndustries s.r.o."
     }
-    val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
-    Assert.assertTrue(isInternalPlugin)
+    val isJetBrainsPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
+    assertTrue(isJetBrainsPlugin)
   }
 
   @Test
@@ -44,8 +45,8 @@ class PluginVendorsTest {
       pluginId = "com.intellij.someplugin"
       vendor = "PluginIndustries s.r.o., PluginFactory s.r.o."
     }
-    val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
-    Assert.assertFalse(isInternalPlugin)
+    val isJetBrainsPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
+    assertFalse(isJetBrainsPlugin)
   }
 
 }

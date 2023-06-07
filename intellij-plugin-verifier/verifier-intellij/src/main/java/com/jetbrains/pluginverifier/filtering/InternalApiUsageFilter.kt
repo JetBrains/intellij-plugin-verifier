@@ -16,7 +16,7 @@ class InternalApiUsageFilter : ApiUsageFilter {
       apiUsage is InternalApiUsage
         && context is PluginVerificationContext
         && PluginVendors.isDevelopedByJetBrains(context.idePlugin) ->
-        ApiUsageFilter.Result.Ignore("Internal API usage from internal plugins is allowed.")
+        ApiUsageFilter.Result.Ignore("Internal API usage from JetBrains plugins is allowed.")
       else -> ApiUsageFilter.Result.Report
     }
   }
