@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 

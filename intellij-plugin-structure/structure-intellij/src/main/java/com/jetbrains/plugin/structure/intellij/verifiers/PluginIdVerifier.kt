@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.plugin.CORE_PLUGIN_ID
