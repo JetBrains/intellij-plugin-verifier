@@ -29,10 +29,10 @@ class PluginVendorsTest {
   }
 
   @Test
-  fun `has multiple vendors and one is JetBrains`() {
+  fun `has multiple vendors and one of them is JetBrains`() {
     val idePlugin = IdePluginImpl().apply {
       pluginId = "com.intellij"
-      vendor = "JetBrains s.r.o., JetBrains"
+      vendor = "JetBrains s.r.o., PluginIndustries s.r.o."
     }
     val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
     Assert.assertTrue(isInternalPlugin)
@@ -42,7 +42,7 @@ class PluginVendorsTest {
   fun `has multiple vendors and none of those is JetBrains`() {
     val idePlugin = IdePluginImpl().apply {
       pluginId = "com.intellij.someplugin"
-      vendor = "PluginIndustries s.r.o."
+      vendor = "PluginIndustries s.r.o., PluginFactory s.r.o."
     }
     val isInternalPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
     Assert.assertFalse(isInternalPlugin)
