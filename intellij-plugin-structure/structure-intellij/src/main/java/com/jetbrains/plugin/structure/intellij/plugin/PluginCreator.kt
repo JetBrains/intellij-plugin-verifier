@@ -711,21 +711,7 @@ internal class PluginCreator private constructor(
   private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
 
   private fun validateId(plugin: PluginBean, id: String?) {
-    if (id != null) {
-      when {
-        id.isBlank() -> {
-          registerProblem(PropertyNotSpecified("id"))
-        }
-        "com.your.company.unique.plugin.id" == id -> {
-          registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
-        }
-        else -> {
-          validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
-          validateNewlines("id", id)
-          pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
-        }
-      }
-    }
+    pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
   }
 
   private fun validateName(name: String?) {

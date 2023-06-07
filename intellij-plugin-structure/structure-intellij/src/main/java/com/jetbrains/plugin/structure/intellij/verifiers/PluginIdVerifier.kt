@@ -1,10 +1,13 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.plugin.CORE_PLUGIN_ID
+import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.SPECIAL_IDEA_PLUGIN_ID
 import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
 /*
@@ -22,7 +25,25 @@ val PRODUCT_ID_RESTRICTED_WORDS = listOf(
 class PluginIdVerifier {
 
   fun verify(plugin: PluginBean, descriptorPath: String, problemConsumer: (PluginProblem) -> Unit) {
-    verifyPrefix(plugin, descriptorPath, problemConsumer)
+    val id = plugin.id ?: return
+
+    when {
+      id.isBlank() -> {
+        problemConsumer(PropertyNotSpecified("id"))
+      }
+      "com.your.company.unique.plugin.id" == id -> {
+        problemConsumer(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
+      }
+      else -> {
+        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH) {
+          problemConsumer(it)
+        }
+        validateNewlines("id", id) {
+          problemConsumer(it)
+        }
+        verifyPrefix(plugin, descriptorPath, problemConsumer)
+      }
+    }
   }
 
   private fun verifyPrefix(plugin: PluginBean, descriptorPath: String, problemConsumer: (PluginProblem) -> Unit) {
