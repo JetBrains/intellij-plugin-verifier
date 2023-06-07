@@ -70,7 +70,6 @@ allprojects {
     implementation(libs.spring.boot.devtools)
 
     testImplementation(sharedLibs.junit)
-    implementation(sharedLibs.kotlin.stdlib.jdk8)
     implementation(sharedLibs.kotson)
     implementation(sharedLibs.gson)
 

@@ -65,7 +65,6 @@ dependencies {
 
     testImplementation(sharedLibs.junit)
     testImplementation(project(":"))
-    implementation(sharedLibs.kotlin.stdlib.jdk8)
 
     val structureVersion = "dev"
     implementation(group = "org.jetbrains.intellij.plugins", name = "verifier-intellij", version = structureVersion)
