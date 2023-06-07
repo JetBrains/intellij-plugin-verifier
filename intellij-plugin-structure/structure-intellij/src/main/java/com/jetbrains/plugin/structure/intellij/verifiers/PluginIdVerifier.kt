@@ -2,13 +2,13 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.plugin.CORE_PLUGIN_ID
-import com.jetbrains.plugin.structure.intellij.plugin.SPECIAL_IDEA_PLUGIN_ID
 import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
 val DEFAULT_ILLEGAL_PREFIXES = listOf("com.example", "net.example", "org.example", "edu.example", "com.intellij", "org.jetbrains")
+
+val JETBRAINS_VENDORS = listOf("JetBrains", "JetBrains s.r.o.")
 
 val PRODUCT_ID_RESTRICTED_WORDS = listOf(
   "clion",  "datagrip", "datalore", "dataspell", "dotcover", "dotmemory", "dotpeek", "dottrace", "fleet", "goland",
@@ -50,8 +50,7 @@ class PluginIdVerifier {
   }
 
   private fun isDevelopedByJetBrains(plugin: PluginBean): Boolean {
-    return CORE_PLUGIN_ID == plugin.id ||
-      SPECIAL_IDEA_PLUGIN_ID == plugin.id
+    return JETBRAINS_VENDORS.contains(plugin.vendor.name)
   }
 
 }
