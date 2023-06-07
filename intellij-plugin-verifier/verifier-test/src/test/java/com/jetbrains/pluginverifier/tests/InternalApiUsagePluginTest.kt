@@ -53,7 +53,7 @@ class InternalApiUsagePluginTest {
 
   @Test
   fun `plugin class uses an internal API`() {
-    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("some.plugin"))
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("some.plugin", "Plugin Factory Inc."))
 
     // Run verification
     val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
@@ -77,7 +77,7 @@ class InternalApiUsagePluginTest {
 
   @Test
   fun `JetBrains plugin class uses an internal API`() {
-    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij"))
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o."))
 
     val apiUsageFilter = InternalApiUsageFilter()
 
@@ -173,7 +173,7 @@ class InternalApiUsagePluginTest {
     }
   }
 
-  private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij"),
+  private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
@@ -186,7 +186,7 @@ class InternalApiUsagePluginTest {
               <id>${ideaPluginSpec.id}</id>
               <name>someName</name>
               <version>someVersion</version>
-              ""<vendor email="vendor.com" url="url">vendor</vendor>""
+              ""<vendor email="vendor.com" url="url">${ideaPluginSpec.vendor}</vendor>""
               <description>this description is looooooooooong enough</description>
               <change-notes>these change-notes are looooooooooong enough</change-notes>
               <idea-version since-build="131.1"/>
@@ -280,7 +280,7 @@ class InternalApiUsagePluginTest {
     return ide
   }
 
-  data class IdeaPluginSpec(val id: String)
+  data class IdeaPluginSpec(val id: String, val vendor: String)
 
   object IntellijInternalApiDump : Opcodes {
     @Throws(Exception::class)
