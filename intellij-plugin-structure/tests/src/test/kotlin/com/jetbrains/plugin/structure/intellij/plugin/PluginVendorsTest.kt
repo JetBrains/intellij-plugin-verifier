@@ -10,6 +10,16 @@ import org.junit.Test
 
 class PluginVendorsTest {
   @Test
+  fun `is a JetBrains plugin by plugin ID`() {
+    val idePlugin = IdePluginImpl().apply {
+      pluginId = "com.intellij"
+      vendor = "JetBrains Department"
+    }
+    val isJetBrainsPlugin = PluginVendors.isDevelopedByJetBrains(idePlugin)
+    assertTrue(isJetBrainsPlugin)
+  }
+
+  @Test
   fun `has single vendor which is 3rd party`() {
     val idePlugin = IdePluginImpl().apply {
       pluginId = "com.example.thirdparty"
