@@ -8,6 +8,8 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
+const val PV_TESTJAVA_HOME_PROPERTY_NAME = "pluginverifier.testjava.home"
+
 object TestJdkDescriptorProvider {
   private const val JVM_HOME_DIRS = "/usr/lib/jvm"
 
@@ -15,6 +17,7 @@ object TestJdkDescriptorProvider {
 
   fun getJdkPathForTests(): Path {
     val candidates = mutableListOf<Path?>()
+    candidates.add(System.getProperty(PV_TESTJAVA_HOME_PROPERTY_NAME)?.let { filesystem.getPath(it) })
     candidates.add(System.getenv("JAVA_HOME")?.let { filesystem.getPath(it) })
     candidates.add(System.getProperty("user.home")?.let {
       filesystem.getPath(it, ".sdkman/candidates/java/current")
