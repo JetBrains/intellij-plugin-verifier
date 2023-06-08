@@ -3,7 +3,8 @@ package com.jetbrains.pluginverifier.tests.mocks
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
-import java.lang.IllegalArgumentException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -11,6 +12,8 @@ import java.nio.file.Path
 const val PV_TESTJAVA_HOME_PROPERTY_NAME = "pluginverifier.testjava.home"
 
 object TestJdkDescriptorProvider {
+  private val LOG: Logger = LoggerFactory.getLogger(TestJdkDescriptorProvider::class.java)
+
   private const val JVM_HOME_DIRS = "/usr/lib/jvm"
 
   var filesystem: FileSystem = FileSystems.getDefault()
@@ -27,7 +30,7 @@ object TestJdkDescriptorProvider {
     return candidates.filterNotNull()
       .firstOrNull(Path::exists)
       .also {
-        println("Using $it as JDK in tests")
+        LOG.info("Using $it as JDK in tests")
       }
       ?: throw IllegalArgumentException("No suitable JDK is found for the test. " +
         "Set the JAVA_HOME environment variable, " +
