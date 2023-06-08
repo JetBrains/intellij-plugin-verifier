@@ -44,7 +44,7 @@ class TemplateWordInPluginId(private val descriptorPath: String, private val tem
     get() = Level.WARNING
 
   override val message
-    get() = "Plugin ID specified in $descriptorPath should not contain the word '$templateWord'"
+    get() = "Plugin ID specified in $descriptorPath should not contain '$templateWord'"
 
 }
 
