@@ -11,8 +11,9 @@ val DEFAULT_ILLEGAL_PREFIXES = listOf("com.example", "net.example", "org.example
 val JETBRAINS_VENDORS = listOf("JetBrains", "JetBrains s.r.o.")
 
 val PRODUCT_ID_RESTRICTED_WORDS = listOf(
-  "clion",  "datagrip", "datalore", "dataspell", "dotcover", "dotmemory", "dotpeek", "dottrace", "fleet", "goland",
-  "intellij", "phpstorm", "pycharm", "resharper", "rider", "rubymine", "space", "webstorm", "youtrack",
+  "aqua", "clion",  "datagrip", "datalore",
+  "dataspell", "dotcover", "dotmemory", "dotpeek", "dottrace", "fleet", "goland",
+  "intellij", "qodana", "phpstorm", "pycharm", "resharper", "rider", "rubymine", "space", "webstorm", "youtrack",
 )
 
 class PluginIdVerifier {

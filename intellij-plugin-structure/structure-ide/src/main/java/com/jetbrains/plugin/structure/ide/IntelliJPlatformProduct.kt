@@ -25,7 +25,7 @@ enum class IntelliJPlatformProduct(
   PYCHARM_EDU("PE", "PyCharm Educational", "PyCharmEdu", "PCE"),
   PHP_STORM("PS", "PhpStorm", "PhpStorm"),
   WEB_STORM("WS", "WebStorm", "WebStorm"),
-  APPCODE("OC", "AppCode", "AppCode"),
+  APPCODE("OC", "AppCode", "AppCode", "AC"),
   CLION("CL", "CLion", "CLion"),
   DATA_GRIP("DB", "DataGrip", "DataGrip", "DG"),
   RIDER("RD", "Rider", "Rider"),
@@ -34,7 +34,9 @@ enum class IntelliJPlatformProduct(
   ANDROID_STUDIO("AI", "Android Studio", "AndroidStudio"),
   DATA_SPELL("DS", "DataSpell", "DataSpell"),
   JETBRAINS_CLIENT("JBC", "JetBrains Client", "JetBrainsClient"),
-  GATEWAY("GW", "Gateway", "Gateway");
+  GATEWAY("GW", "Gateway", "Gateway"),
+  FLEET("FL", "Fleet", "Fleet"),
+  AQUA("QA", "Aqua", "Aqua");
 
   companion object {
     fun fromProductCode(productCode: String): IntelliJPlatformProduct? =
