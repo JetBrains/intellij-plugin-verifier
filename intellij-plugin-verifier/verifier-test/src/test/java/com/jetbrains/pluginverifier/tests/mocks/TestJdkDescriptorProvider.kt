@@ -30,7 +30,7 @@ object TestJdkDescriptorProvider {
     return candidates.filterNotNull()
       .firstOrNull(Path::exists)
       .also {
-        LOG.info("Using $it as JDK in tests")
+        LOG.debug("Using {} as JDK in tests", it)
       }
       ?: throw IllegalArgumentException("No suitable JDK is found for the test. " +
         "Set the JAVA_HOME environment variable, " +
