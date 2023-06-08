@@ -6,6 +6,10 @@ dependencies {
 
   //bytecode generation library
   implementation(libs.byteBuddy)
+
+  testImplementation("uk.org.webcompere:system-stubs-junit4:2.0.2")
+  testImplementation("uk.org.webcompere:system-stubs-junit4:2.0.2")
+  testImplementation("com.google.jimfs:jimfs:1.2")
 }
 
 val prepareMockPlugin by tasks.registering(Copy::class) {
