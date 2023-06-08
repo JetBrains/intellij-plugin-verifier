@@ -80,31 +80,34 @@ class PluginIdVerifierTest {
 
     val riderPlugin = newPluginBean("vendor.rider.quickride", "Third Party Inc.")
 
+    val problemRegistrar = ProblemRegistrar {
+      problems += it
+    }
+
+    verifier.verify(riderPlugin, DESCRIPTOR_PATH, problemRegistrar)
+
+    Assert.assertEquals(1, problems.size)
+    val problem = problems[0]
+    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'rider'", problem.message)
+  }
+
+  @Test
+  fun `plugin with multiple case-sensitive names in ID is disallowed`() {
+    val problems = mutableListOf<PluginProblem>()
+
+    val riderPlugin = newPluginBean("vendor.DataLore.DataGrip", "Third Party Inc.")
+
     val problemConsumer: (PluginProblem) -> Unit = {
       problems += it
     }
     verifier.verify(riderPlugin, DESCRIPTOR_PATH, problemConsumer)
 
-    Assert.assertEquals(1, problems.size)
-    val problem = problems[0]
-    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain the word 'rider'", problem.message)
-  }
+    Assert.assertEquals(2, problems.size)
+    val dataLoreProblem = problems[0]
+    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'DataLore'", dataLoreProblem.message)
 
-  @Test
-  fun `plugin with partial product name in ID is allowed`() {
-    val problems = mutableListOf<PluginProblem>()
-
-    // contains 'space' as a product name, but this is allowed
-    val genericId = "vendor.spacetrip"
-
-    val plugin = newPluginBean(genericId, "Space Trip Vendor Inc.")
-
-    val problemConsumer: (PluginProblem) -> Unit = {
-      problems += it
-    }
-    verifier.verify(plugin, DESCRIPTOR_PATH, problemConsumer)
-
-    Assert.assertTrue(problems.isEmpty())
+    val dataGripProblem = problems[1]
+    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'DataGrip'", dataGripProblem.message)
   }
 
   private fun newPluginBean(pluginId: String, pluginVendor: String): PluginBean {

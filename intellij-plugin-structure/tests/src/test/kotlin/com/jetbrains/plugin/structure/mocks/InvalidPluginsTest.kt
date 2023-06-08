@@ -142,7 +142,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       perfectXmlBuilder.modify {
         id = "<id>com.example.plugin</id>"
       },
-    ).unacceptableWarnings.single()
+    ).warnings.single()
     assertEquals(IllegalPluginIdPrefix("com.example.plugin", "com.example"), warning)
   }
 

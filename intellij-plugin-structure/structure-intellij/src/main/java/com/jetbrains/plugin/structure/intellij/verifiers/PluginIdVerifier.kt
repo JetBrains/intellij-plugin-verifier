@@ -42,16 +42,16 @@ class PluginIdVerifier {
     }
     val id = plugin.id
     DEFAULT_ILLEGAL_PREFIXES
-      .filter(id::startsWith)
+      .filter { illegalPrefix -> id.startsWith(illegalPrefix) }
       .forEach { problemRegistrar.registerProblem(IllegalPluginIdPrefix(id, it)) }
 
     id.split('.')
-      .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent) }
+      .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }
       .forEach { idComponent -> problemRegistrar.registerProblem(TemplateWordInPluginId(descriptorPath, idComponent)) }
   }
 
   private fun isDevelopedByJetBrains(plugin: PluginBean): Boolean {
-    return JETBRAINS_VENDORS.contains(plugin.vendor.name)
+    return JETBRAINS_VENDORS.contains(plugin.vendor?.name)
   }
 
 }
