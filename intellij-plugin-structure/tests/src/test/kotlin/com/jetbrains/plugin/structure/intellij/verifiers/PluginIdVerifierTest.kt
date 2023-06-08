@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
+import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -12,23 +13,25 @@ private const val DESCRIPTOR_PATH = "plugin.xml"
 class PluginIdVerifierTest {
   private lateinit var verifier: PluginIdVerifier
 
+  private lateinit var problems: MutableList<PluginProblem>
+
+  private val problemRegistrar = ProblemRegistrar {
+    problems += it
+  }
+
   @Before
   fun setUp() {
     verifier = PluginIdVerifier()
+    problems = mutableListOf()
   }
 
   @Test
   fun `plugin by JetBrains has no issues`() {
-    val problems = mutableListOf<PluginProblem>()
+    val comIntellijPlugin = plugin("com.intellij", "JetBrains")
+    val ideaCorePlugin = plugin("IDEA CORE", "JetBrains")
 
-    val comIntellijPlugin = newPluginBean("com.intellij", "JetBrains")
-    val ideaCorePlugin = newPluginBean("IDEA CORE", "JetBrains")
-
-    val problemConsumer: (PluginProblem) -> Unit = {
-      problems += it
-    }
-    verifier.verify(comIntellijPlugin, DESCRIPTOR_PATH, problemConsumer)
-    verifier.verify(ideaCorePlugin, DESCRIPTOR_PATH, problemConsumer)
+    verifier.verify(comIntellijPlugin, DESCRIPTOR_PATH, problemRegistrar)
+    verifier.verify(ideaCorePlugin, DESCRIPTOR_PATH, problemRegistrar)
 
     Assert.assertTrue(problems.isEmpty())
   }
@@ -36,16 +39,10 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin by 3rd party is disallowed`() {
-    val problems = mutableListOf<PluginProblem>()
-
     val illegalId = "org.jetbrains"
+    val illegalPlugin = plugin(illegalId, "Third Party Inc.")
 
-    val illegalPlugin = newPluginBean(illegalId, "Third Party Inc.")
-
-    val problemConsumer: (PluginProblem) -> Unit = {
-      problems += it
-    }
-    verifier.verify(illegalPlugin, DESCRIPTOR_PATH, problemConsumer)
+    verifier.verify(illegalPlugin, DESCRIPTOR_PATH, problemRegistrar)
 
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
@@ -56,16 +53,10 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin with generic ID is disallowed`() {
-    val problems = mutableListOf<PluginProblem>()
-
     val genericId = "com.example.genericplugin"
+    val examplePlugin = plugin(genericId, "Generic Plugin Vendor Inc.")
 
-    val orgJetBrainsPlugin = newPluginBean(genericId, "Generic Plugin Vendor Inc.")
-
-    val problemConsumer: (PluginProblem) -> Unit = {
-      problems += it
-    }
-    verifier.verify(orgJetBrainsPlugin, DESCRIPTOR_PATH, problemConsumer)
+    verifier.verify(examplePlugin, DESCRIPTOR_PATH, problemRegistrar)
 
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
@@ -76,13 +67,7 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin with product name in ID is disallowed`() {
-    val problems = mutableListOf<PluginProblem>()
-
-    val riderPlugin = newPluginBean("vendor.rider.quickride", "Third Party Inc.")
-
-    val problemRegistrar = ProblemRegistrar {
-      problems += it
-    }
+    val riderPlugin = plugin("vendor.rider.quickride", "Third Party Inc.")
 
     verifier.verify(riderPlugin, DESCRIPTOR_PATH, problemRegistrar)
 
@@ -93,14 +78,8 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin with multiple case-sensitive names in ID is disallowed`() {
-    val problems = mutableListOf<PluginProblem>()
-
-    val riderPlugin = newPluginBean("vendor.DataLore.DataGrip", "Third Party Inc.")
-
-    val problemConsumer: (PluginProblem) -> Unit = {
-      problems += it
-    }
-    verifier.verify(riderPlugin, DESCRIPTOR_PATH, problemConsumer)
+    val plugin = plugin("vendor.DataLore.DataGrip", "Third Party Inc.")
+    verifier.verify(plugin, DESCRIPTOR_PATH, problemRegistrar)
 
     Assert.assertEquals(2, problems.size)
     val dataLoreProblem = problems[0]
@@ -110,12 +89,17 @@ class PluginIdVerifierTest {
     Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'DataGrip'", dataGripProblem.message)
   }
 
-  private fun newPluginBean(pluginId: String, pluginVendor: String): PluginBean {
+  private fun plugin(pluginId: String, pluginVendor: String): PluginBean {
     return PluginBean().apply {
       id = pluginId
       vendor = PluginVendorBean()
       vendor.name = pluginVendor
     }
+  }
+
+  @After
+  fun tearDown() {
+    problems.clear()
   }
 
 }
