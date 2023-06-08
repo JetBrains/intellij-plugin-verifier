@@ -4,7 +4,9 @@ byteBuddy = "1.14.5"
 commons-compress = "1.23.0"
 jgrapht-core = "1.5.2"
 jetbrains-pluginRepositoryRestClient = "2.0.32"
-okhttp-mockwebserver="4.11.0"
+okhttp-mockwebserver = "4.11.0"
+systemStubs-junit4 = "2.0.2"
+jimfs = "1.2"
 
 [libraries]
 bouncycastle-pkix = { group = "org.bouncycastle", name = "bcpkix-jdk15on", version.ref = "bcpkix-jdk15on" }
@@ -12,4 +14,7 @@ byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteB
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
 jgrapht-core = { group = "org.jgrapht", name = "jgrapht-core", version.ref = "jgrapht-core" }
 jetbrains-pluginRepositoryRestClient = { group = "org.jetbrains.intellij", name = "plugin-repository-rest-client", version.ref = "jetbrains-pluginRepositoryRestClient" }
-okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp-mockwebserver"}
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp-mockwebserver" }
+systemStubs-junit4 = { group = "uk.org.webcompere", name = "system-stubs-junit4", version.ref = "systemStubs.junit4" }
+jimfs = { group = "com.google.jimfs", name = "jimfs", version.ref = "jimfs" }
+
