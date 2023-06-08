@@ -16,14 +16,13 @@ object TestJdkDescriptorProvider {
   var filesystem: FileSystem = FileSystems.getDefault()
 
   fun getJdkPathForTests(): Path {
-    val candidates = mutableListOf<Path?>()
-    candidates.add(System.getProperty(PV_TESTJAVA_HOME_PROPERTY_NAME)?.let { filesystem.getPath(it) })
-    candidates.add(System.getenv("JAVA_HOME")?.let { filesystem.getPath(it) })
-    candidates.add(System.getProperty("user.home")?.let {
-      filesystem.getPath(it, ".sdkman/candidates/java/current")
-    })
-    candidates.add(fromJvmHomeDirs())
-    candidates.add(System.getProperty("java.home")?.let { filesystem.getPath(it) })
+    val candidates = listOf(
+      fromTestJavaHomeProperty(),
+      fromJavaHome(),
+      fromSdkMan(),
+      fromJvmHomeDirs(),
+      fromJavaHomeProperty()
+    )
 
     return candidates.filterNotNull()
       .firstOrNull(Path::exists)
@@ -36,12 +35,28 @@ object TestJdkDescriptorProvider {
         "or setup Java via SDKMan or install the JDK to the $JVM_HOME_DIRS directory")
   }
 
+  private fun fromSdkMan(): Path? {
+    return System.getProperty("user.home")?.let {
+      filesystem.getPath(it, ".sdkman/candidates/java/current")
+    }
+  }
+
+  private fun fromJavaHome()
+    = System.getenv("JAVA_HOME")?.let { filesystem.getPath(it) }
+
+  private fun fromTestJavaHomeProperty() =
+    System.getProperty(PV_TESTJAVA_HOME_PROPERTY_NAME)?.let { filesystem.getPath(it) }
+
+  private fun fromJavaHomeProperty()
+  = System.getProperty("java.home")?.let { filesystem.getPath(it) }
+
   private fun fromJvmHomeDirs(): Path? {
     val jvmHomeDir = filesystem.getPath(JVM_HOME_DIRS)
     return when {
       jvmHomeDir.exists() -> {
         jvmHomeDir.listFiles().firstOrNull { it.isDirectory }
       }
+
       else -> null
     }
   }
