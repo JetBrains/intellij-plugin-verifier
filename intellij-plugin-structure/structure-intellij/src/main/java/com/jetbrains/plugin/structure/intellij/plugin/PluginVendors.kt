@@ -1,9 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-const val CORE_PLUGIN_ID = "com.intellij"
-const val SPECIAL_IDEA_PLUGIN_ID = "IDEA CORE"
-const val VENDOR_JETBRAINS = "JetBrains"
-const val VENDOR_JETBRAINS_SRO = "JetBrains s.r.o."
 
 /**
  * Plugin Vendors that identify JetBrains-related plugins.
@@ -11,6 +7,11 @@ const val VENDOR_JETBRAINS_SRO = "JetBrains s.r.o."
  * @see com.intellij.ide.plugins.PluginManagerCore#isDeveloperByJetBrains
  */
 object PluginVendors {
+  private const val CORE_PLUGIN_ID = "com.intellij"
+  private const val SPECIAL_IDEA_PLUGIN_ID = "IDEA CORE"
+  private const val VENDOR_JETBRAINS = "JetBrains"
+  private const val VENDOR_JETBRAINS_SRO = "JetBrains s.r.o."
+
   fun isDevelopedByJetBrains(plugin: IdePlugin): Boolean {
     return CORE_PLUGIN_ID == plugin.pluginId ||
       SPECIAL_IDEA_PLUGIN_ID == plugin.pluginId ||
