@@ -3,28 +3,64 @@ package com.jetbrains.pluginverifier.tests.mocks
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
-import java.lang.IllegalArgumentException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import java.nio.file.Paths
+
+const val PV_TESTJAVA_HOME_PROPERTY_NAME = "pluginverifier.testjava.home"
 
 object TestJdkDescriptorProvider {
+  private val LOG: Logger = LoggerFactory.getLogger(TestJdkDescriptorProvider::class.java)
+
   private const val JVM_HOME_DIRS = "/usr/lib/jvm"
 
+  var filesystem: FileSystem = FileSystems.getDefault()
+
   fun getJdkPathForTests(): Path {
-    val javaHome = System.getenv("JAVA_HOME")?.let { Paths.get(it) }
-    if (javaHome != null && javaHome.exists()) {
-      return javaHome
-    }
+    val candidates = listOf(
+      fromTestJavaHomeProperty(),
+      fromJavaHome(),
+      fromSdkMan(),
+      fromJvmHomeDirs(),
+      fromJavaHomeProperty()
+    )
 
-    val jvmHomeDir = Paths.get(JVM_HOME_DIRS)
-    if (jvmHomeDir.exists()) {
-      val someJdk = jvmHomeDir.listFiles().firstOrNull { it.isDirectory }
-      if (someJdk != null) {
-        println("Using $someJdk as JDK in tests")
-        return someJdk
+    return candidates.filterNotNull()
+      .firstOrNull(Path::exists)
+      .also {
+        LOG.debug("Using {} as JDK in tests", it)
       }
-    }
+      ?: throw IllegalArgumentException("No suitable JDK is found for the test. " +
+        "Set the JAVA_HOME environment variable, " +
+        "or verify the 'java.home' property, " +
+        "or setup Java via SDKMan or install the JDK to the $JVM_HOME_DIRS directory")
+  }
 
-    throw IllegalArgumentException("No suitable JDK is found for the test. Set the JAVA_HOME environment variable or install the JDK to the $JVM_HOME_DIRS directory")
+  private fun fromSdkMan(): Path? {
+    return System.getProperty("user.home")?.let {
+      filesystem.getPath(it, ".sdkman/candidates/java/current")
+    }
+  }
+
+  private fun fromJavaHome()
+    = System.getenv("JAVA_HOME")?.let { filesystem.getPath(it) }
+
+  private fun fromTestJavaHomeProperty() =
+    System.getProperty(PV_TESTJAVA_HOME_PROPERTY_NAME)?.let { filesystem.getPath(it) }
+
+  private fun fromJavaHomeProperty()
+  = System.getProperty("java.home")?.let { filesystem.getPath(it) }
+
+  private fun fromJvmHomeDirs(): Path? {
+    val jvmHomeDir = filesystem.getPath(JVM_HOME_DIRS)
+    return when {
+      jvmHomeDir.exists() -> {
+        jvmHomeDir.listFiles().firstOrNull { it.isDirectory }
+      }
+
+      else -> null
+    }
   }
 }

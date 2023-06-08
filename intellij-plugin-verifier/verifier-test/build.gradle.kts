@@ -4,8 +4,10 @@ dependencies {
   testRuntimeOnly(sharedLibs.logback.classic)
   testRuntimeOnly(project("mock-plugin"))
 
-  //bytecode generation library
   implementation(libs.byteBuddy)
+
+  testImplementation(libs.systemStubs.junit4)
+  testImplementation(libs.jimfs)
 }
 
 val prepareMockPlugin by tasks.registering(Copy::class) {
