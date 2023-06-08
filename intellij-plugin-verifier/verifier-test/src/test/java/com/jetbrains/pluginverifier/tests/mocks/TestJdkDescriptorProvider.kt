@@ -11,9 +11,22 @@ object TestJdkDescriptorProvider {
   private const val JVM_HOME_DIRS = "/usr/lib/jvm"
 
   fun getJdkPathForTests(): Path {
-    val javaHome = System.getenv("JAVA_HOME")?.let { Paths.get(it) }
-    if (javaHome != null && javaHome.exists()) {
-      return javaHome
+    val javaHomeFromEnv = System.getenv("JAVA_HOME")?.let { Paths.get(it) }
+    if (javaHomeFromEnv != null && javaHomeFromEnv.exists()) {
+      return javaHomeFromEnv
+    }
+
+    val javaHomeFromProperty = System.getProperty("java.home")?.let { Paths.get(it) }
+    if (javaHomeFromProperty != null && javaHomeFromProperty.exists()) {
+      return javaHomeFromProperty
+    }
+
+    val javaHomeFromSdkMan = System.getProperty("user.home")?.let {
+      Paths.get(it, ".sdkman/candidates/java/current")
+    }
+
+    if (javaHomeFromSdkMan != null && javaHomeFromSdkMan.exists()) {
+      return javaHomeFromSdkMan
     }
 
     val jvmHomeDir = Paths.get(JVM_HOME_DIRS)
