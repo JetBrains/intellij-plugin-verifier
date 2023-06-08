@@ -14,8 +14,8 @@ fun verifyNewlines(propertyName: String, propertyValue: String,
   }
 }
 
-fun validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int,
-                           descriptorPath: String = PLUGIN_XML, problemRegistrar: ProblemRegistrar) {
+fun verifyPropertyLength(propertyName: String, propertyValue: String, maxLength: Int,
+                         descriptorPath: String = PLUGIN_XML, problemRegistrar: ProblemRegistrar) {
   if (propertyValue.length > maxLength) {
     problemRegistrar.registerProblem(TooLongPropertyValue(descriptorPath, propertyName, propertyValue.length, maxLength))
   }

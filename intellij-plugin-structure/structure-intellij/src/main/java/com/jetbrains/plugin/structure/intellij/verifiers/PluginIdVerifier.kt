@@ -29,7 +29,7 @@ class PluginIdVerifier {
         problemRegistrar.registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
       }
       else -> {
-        validatePropertyLength("id", id, MAX_PROPERTY_LENGTH, descriptorPath, problemRegistrar)
+        verifyPropertyLength("id", id, MAX_PROPERTY_LENGTH, descriptorPath, problemRegistrar)
         verifyNewlines("id", id, descriptorPath, problemRegistrar)
         verifyPrefix(plugin, descriptorPath, problemRegistrar)
       }
