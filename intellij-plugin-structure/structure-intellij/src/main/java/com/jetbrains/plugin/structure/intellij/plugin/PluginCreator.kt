@@ -13,7 +13,9 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -60,6 +62,8 @@ internal class PluginCreator private constructor(
     private val json = jacksonObjectMapper()
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+    private val pluginIdVerifier = PluginIdVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -473,7 +477,7 @@ internal class PluginCreator private constructor(
       validateBeanUrl(bean.url)
     }
     if (validateDescriptor || bean.id != null) {
-      validateId(bean.id)
+      validateId(bean)
     }
     if (validateDescriptor || bean.name != null) {
       validateName(bean.name)
@@ -707,21 +711,8 @@ internal class PluginCreator private constructor(
 
   private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
 
-  private fun validateId(id: String?) {
-    if (id != null) {
-      when {
-        id.isBlank() -> {
-          registerProblem(PropertyNotSpecified("id"))
-        }
-        "com.your.company.unique.plugin.id" == id -> {
-          registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.ID, id))
-        }
-        else -> {
-          validatePropertyLength("id", id, MAX_PROPERTY_LENGTH)
-          validateNewlines("id", id)
-        }
-      }
-    }
+  private fun validateId(plugin: PluginBean) {
+    pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
   }
 
   private fun validateName(name: String?) {
@@ -736,7 +727,7 @@ internal class PluginCreator private constructor(
           registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
-        validateNewlines("name", name)
+        verifyNewlines("name", name, descriptorPath, ::registerProblem)
       }
     }
   }
@@ -788,12 +779,6 @@ internal class PluginCreator private constructor(
     }
 
     validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH)
-  }
-
-  private fun validateNewlines(propertyName: String, propertyValue: String) {
-    if (propertyValue.trim().contains("\n")) {
-      registerProblem(ContainsNewlines(propertyName, descriptorPath))
-    }
   }
 
   private fun validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int) {

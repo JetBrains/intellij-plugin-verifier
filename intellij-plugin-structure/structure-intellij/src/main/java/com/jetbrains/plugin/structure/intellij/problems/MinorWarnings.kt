@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
@@ -34,6 +35,16 @@ class TemplateWordInPluginName(private val descriptorPath: String, private val t
 
   override val message
     get() = "Plugin name specified in $descriptorPath should not contain the word '$templateWord'"
+
+}
+
+class TemplateWordInPluginId(private val descriptorPath: String, private val templateWord: String) : PluginProblem() {
+
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "Plugin ID specified in $descriptorPath should not contain '$templateWord'"
 
 }
 
@@ -143,3 +154,18 @@ class SuspiciousUntilBuild(
   override val level
     get() = Level.WARNING
 }
+
+open class IllegalPluginId(private val illegalPluginId: String) : InvalidDescriptorProblem("id") {
+
+  override val level
+    get() = Level.WARNING
+
+  override val detailedMessage
+    get() = "Plugin ID '$illegalPluginId' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+}
+
+class IllegalPluginIdPrefix(private val illegalPluginId: String, private val illegalPrefix: String) : IllegalPluginId(illegalPluginId) {
+  override val detailedMessage
+    get() = "Plugin ID '$illegalPluginId' has an illegal prefix '$illegalPrefix'. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+}
+

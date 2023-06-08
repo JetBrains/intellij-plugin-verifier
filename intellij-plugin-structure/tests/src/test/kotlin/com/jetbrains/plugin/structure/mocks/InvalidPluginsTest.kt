@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
@@ -133,6 +134,28 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       }
     )
     assertEquals(pluginId, plugin.plugin.pluginId)
+  }
+
+  @Test
+  fun `plugin id has forbidden prefix`() {
+    val warning = `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        id = "<id>com.example.plugin</id>"
+      },
+    ).warnings.single()
+    assertEquals(IllegalPluginIdPrefix("com.example.plugin", "com.example"), warning)
+  }
+
+  @Test
+  fun `plugin id has template word prefix`() {
+    PRODUCT_ID_RESTRICTED_WORDS.forEach { product ->
+      val warning = `test valid plugin xml`(
+        perfectXmlBuilder.modify {
+          id = "<id>plugin.${product}.improved</id>"
+        }
+      ).warnings.single()
+      assertEquals(TemplateWordInPluginId("plugin.xml", product), warning)
+    }
   }
 
   @Test

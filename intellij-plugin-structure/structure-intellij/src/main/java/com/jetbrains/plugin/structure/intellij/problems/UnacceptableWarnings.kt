@@ -21,3 +21,4 @@ class HttpLinkInDescription(private val link: String) : InvalidDescriptorProblem
   override val detailedMessage
     get() = "All links in description must be HTTPS: $link"
 }
+
