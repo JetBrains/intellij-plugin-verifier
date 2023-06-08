@@ -477,7 +477,7 @@ internal class PluginCreator private constructor(
       validateBeanUrl(bean.url)
     }
     if (validateDescriptor || bean.id != null) {
-      validateId(bean, bean.id)
+      validateId(bean)
     }
     if (validateDescriptor || bean.name != null) {
       validateName(bean.name)
@@ -711,7 +711,7 @@ internal class PluginCreator private constructor(
 
   private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
 
-  private fun validateId(plugin: PluginBean, id: String?) {
+  private fun validateId(plugin: PluginBean) {
     pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
   }
 
