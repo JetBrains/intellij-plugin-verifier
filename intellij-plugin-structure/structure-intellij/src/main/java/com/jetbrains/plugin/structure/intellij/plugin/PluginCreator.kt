@@ -15,7 +15,7 @@ import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.validateNewlines
+import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -727,7 +727,7 @@ internal class PluginCreator private constructor(
           registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
-        validateNewlines("name", name, descriptorPath, ::registerProblem)
+        verifyNewlines("name", name, descriptorPath, ::registerProblem)
       }
     }
   }

@@ -6,9 +6,9 @@ import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 
 const val MAX_PROPERTY_LENGTH = 255
 
-fun validateNewlines(propertyName: String, propertyValue: String,
-                     descriptorPath: String = PLUGIN_XML,
-                     problemRegistrar: ProblemRegistrar) {
+fun verifyNewlines(propertyName: String, propertyValue: String,
+                   descriptorPath: String = PLUGIN_XML,
+                   problemRegistrar: ProblemRegistrar) {
   if (propertyValue.trim().contains("\n")) {
     problemRegistrar.registerProblem(ContainsNewlines(propertyName, descriptorPath))
   }

@@ -30,7 +30,7 @@ class PluginIdVerifier {
       }
       else -> {
         validatePropertyLength("id", id, MAX_PROPERTY_LENGTH, descriptorPath, problemRegistrar)
-        validateNewlines("id", id, descriptorPath, problemRegistrar)
+        verifyNewlines("id", id, descriptorPath, problemRegistrar)
         verifyPrefix(plugin, descriptorPath, problemRegistrar)
       }
     }
