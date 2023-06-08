@@ -67,13 +67,17 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin with product name in ID is disallowed`() {
-    val riderPlugin = plugin("vendor.rider.quickride", "Third Party Inc.")
+    PRODUCT_ID_RESTRICTED_WORDS.forEach {
+      val plugin = plugin("vendor.$it.quickride", "Third Party Inc.")
 
-    verifier.verify(riderPlugin, DESCRIPTOR_PATH, problemRegistrar)
+      verifier.verify(plugin, DESCRIPTOR_PATH, problemRegistrar)
 
-    Assert.assertEquals(1, problems.size)
-    val problem = problems[0]
-    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'rider'", problem.message)
+      Assert.assertEquals(1, problems.size)
+      val problem = problems[0]
+      Assert.assertEquals("Plugin ID specified in plugin.xml should not contain '$it'", problem.message)
+
+      problems.clear()
+    }
   }
 
   @Test
