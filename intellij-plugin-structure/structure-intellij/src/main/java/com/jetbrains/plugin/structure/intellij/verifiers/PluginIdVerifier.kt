@@ -42,7 +42,7 @@ class PluginIdVerifier {
     }
     val id = plugin.id
     DEFAULT_ILLEGAL_PREFIXES
-      .filter { illegalPrefix -> id.startsWith(illegalPrefix) }
+      .filter(id::startsWith)
       .forEach { problemRegistrar.registerProblem(IllegalPluginIdPrefix(id, it)) }
 
     id.split('.')
