@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier
@@ -38,6 +38,7 @@ sealed class PluginVerificationResult(
     val deprecatedUsages: Set<DeprecatedApiUsage> = emptySet(),
     val experimentalApiUsages: Set<ExperimentalApiUsage> = emptySet(),
     val internalApiUsages: Set<InternalApiUsage> = emptySet(),
+    val ignoredInternalApiUsages: Map<InternalApiUsage, String> = emptyMap(),
     val nonExtendableApiUsages: Set<NonExtendableApiUsage> = emptySet(),
     val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet(),
     val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet(),

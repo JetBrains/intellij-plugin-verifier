@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier
@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
+import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector
 import com.jetbrains.pluginverifier.filtering.MainClassesSelector
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
@@ -24,6 +25,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInheritedProcessor
@@ -45,7 +47,8 @@ class PluginVerifier(
   private val problemFilters: List<ProblemsFilter>,
   private val pluginDetailsCache: PluginDetailsCache,
   private val classFilters: List<ClassFilter>,
-  private val excludeExternalBuildClassesSelector: Boolean
+  private val excludeExternalBuildClassesSelector: Boolean,
+  private val apiUsageFilters: List<ApiUsageFilter> = emptyList(),
 ) {
 
   fun loadPluginAndVerify(): PluginVerificationResult {
@@ -120,6 +123,8 @@ class PluginVerifier(
       groupMissingClassesToMissingPackages(context.compatibilityProblems, context.classResolver)
       val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
 
+      val (reportedInternalApiUsages, ignoredInternalApiUsages) = partitionReportAndIgnoredInternalApiUsages(context.internalApiUsages, context)
+
       return with(context) {
         PluginVerificationResult.Verified(
           verificationDescriptor.checkedPlugin,
@@ -130,7 +135,8 @@ class PluginVerifier(
           compatibilityWarnings,
           deprecatedUsages,
           experimentalApiUsages,
-          internalApiUsages,
+          reportedInternalApiUsages,
+          ignoredInternalApiUsages,
           nonExtendableApiUsages,
           overrideOnlyMethodUsages,
           pluginStructureWarnings,
@@ -163,6 +169,29 @@ class PluginVerifier(
 
     return reportProblems to ignoredProblems
   }
+
+  private fun partitionReportAndIgnoredInternalApiUsages(allInternalApiUsages: Set<InternalApiUsage>, context: PluginVerificationContext): Pair<Set<InternalApiUsage>, Map<InternalApiUsage, String>> {
+    val reportedUsages = mutableSetOf<InternalApiUsage>()
+    val ignoredUsages = mutableMapOf<InternalApiUsage, String>()
+    for (usage in allInternalApiUsages) {
+      if (apiUsageFilters.isEmpty()) {
+        reportedUsages += usage
+      } else {
+        for (apiUsageFilter in apiUsageFilters) {
+          val shouldReport = apiUsageFilter.shouldReport(usage, context)
+          if (shouldReport is ApiUsageFilter.Result.Ignore) {
+            ignoredUsages[usage] = shouldReport.reason
+            break
+          } else {
+            reportedUsages += usage
+          }
+        }
+      }
+    }
+    return reportedUsages to ignoredUsages
+  }
+
+
 
   /**
    * Returns the top-most package of the given [className] that is not available in this [Resolver].

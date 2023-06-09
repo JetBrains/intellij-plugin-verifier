@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.ide.Ide
@@ -6,6 +10,7 @@ import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
+import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -26,7 +31,7 @@ import kotlin.io.path.createTempDirectory
 
 class VerificationRunner {
 
-  fun runPluginVerification(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList()): PluginVerificationResult {
+  fun runPluginVerification(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList(), apiUsageFilters: List<ApiUsageFilter> = emptyList()): PluginVerificationResult {
     val tempDownloadDir = createTempDirectory().toFile().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
@@ -51,7 +56,8 @@ class VerificationRunner {
         problemsFilters,
         pluginDetailsCache,
         listOf(DynamicallyLoadedFilter()),
-          false
+          false,
+        apiUsageFilters
       )
       pluginVerifier.loadPluginAndVerify()
     }
