@@ -2,6 +2,22 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
+## [Unreleased]
+
+### Added 
+
+- Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names. 
+- Specific plugin prefixes are discouraged and treated as warnings, such as `com.example` or `net.example`.
+- Ignore internal API usages from JetBrains plugins. Whenever a JetBrains plugin uses an internal API (`@ApiStatus.Internal` or `@IntellijInternalApi`), such usage is reported as ignored and not treated as an error or warning.
+- Use additional Java SDK locations for tests.
+
+### Changed
+
+- Workaround for JetBrains Academy plugin ID handling ([#950](https://github.com/JetBrains/intellij-plugin-verifier/pull/950))
+- Upgrade dependencies
+- Migrate to Java HTTP Client from Retrofit
+- Skip Kotlin default methods from internal usage check ([MP-5395](https://github.com/JetBrains/intellij-plugin-verifier/pull/885))
+
 ## v1.301 - 2023-05-30
 
 ### Changed
