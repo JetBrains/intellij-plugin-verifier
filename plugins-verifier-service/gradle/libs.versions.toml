@@ -23,4 +23,4 @@ teamcity-restClient = { group = "org.jetbrains.teamcity", name = "teamcity-rest-
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependencyManagement = { id = "io.spring.dependency-management", version.ref = "spring-dependencyManagement" }
-kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version = "1.8.22" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version = "1.9.0" }
