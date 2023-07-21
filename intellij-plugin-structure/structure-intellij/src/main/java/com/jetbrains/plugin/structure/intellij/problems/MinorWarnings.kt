@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.problems
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class NoModuleDependencies(private val descriptorPath: String) : PluginProblem() {
@@ -169,3 +170,16 @@ class IllegalPluginIdPrefix(private val illegalPluginId: String, private val ill
     get() = "Plugin ID '$illegalPluginId' has an illegal prefix '$illegalPrefix'. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
 }
 
+class ServiceExtensionPointPreloadNotSupported(private val serviceType: IdePluginContentDescriptor.ServiceType) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message
+    get() = "Service preloading in the 'preload' attribute is deprecated in the <${serviceType.toXmlElement()}> element. Consider migrating to the listeners. See https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
+
+  private fun IdePluginContentDescriptor.ServiceType.toXmlElement(): String = when (this) {
+    IdePluginContentDescriptor.ServiceType.PROJECT -> "projectService"
+    IdePluginContentDescriptor.ServiceType.APPLICATION -> "applicationService"
+    IdePluginContentDescriptor.ServiceType.MODULE -> "moduleService"
+  }
+}

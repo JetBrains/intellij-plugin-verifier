@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
+import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Rule
@@ -77,6 +78,37 @@ class PluginXmlValidationTest {
             .singleOrNull()
     if (warning == null) {
       fail("Expected 'Optional Dependency Config File Is Empty' plugin warning")
+    }
+  }
+
+  @Test
+  fun `plugin declaring projectService with preloading should emit a warning`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.platform</depends>
+              <extensions defaultExtensionNs="com.intellij">
+                <applicationService
+                    serviceInterface="com.example.MyAppService"
+                    serviceImplementation="com.example.MyAppServiceImpl"
+                    preload="await"
+                    />
+              </extensions>              
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val warnings = pluginCreationSuccess.warnings
+    assertEquals(1, warnings.size)
+    val warning = warnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+      .singleOrNull()
+    if (warning == null) {
+      fail("Expected 'Service Extension Point Preload Not Supported' plugin warning")
     }
   }
 
