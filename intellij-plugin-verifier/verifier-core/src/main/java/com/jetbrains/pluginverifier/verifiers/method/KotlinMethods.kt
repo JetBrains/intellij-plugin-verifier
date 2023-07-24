@@ -117,17 +117,10 @@ object KotlinMethods {
       1 // before: aload this
 
     if (candidateOpcodes.size != expectedOpcodes
-      || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this
-      || candidateOpcodes.slice(nonThisStartParameterIndex..method.methodParameters.size).any() { it.opcode != Opcodes.ALOAD } // parameters
+      || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this, always a reference
+      || candidateOpcodes.slice(nonThisStartParameterIndex..method.methodParameters.size).any() { it.opcode !in loadOpCodes } // parameters
       || candidateOpcodes[candidateOpcodes.lastIndex - 1].opcode != Opcodes.INVOKESTATIC
-      || candidateOpcodes.last().opcode !in intArrayOf(
-        Opcodes.RETURN,
-        Opcodes.ARETURN,
-        Opcodes.DRETURN,
-        Opcodes.FRETURN,
-        Opcodes.IRETURN,
-        Opcodes.LRETURN
-      )
+      || candidateOpcodes.last().opcode !in returnOpCodes
     ) {
       return false
     }
@@ -205,4 +198,21 @@ object KotlinMethods {
        && method.containingClassFile.innerClasses.any {
          (candidateOpcodes[1] as TypeInsnNode).desc == it.outerName
        }
+
+  private val returnOpCodes = intArrayOf(
+    Opcodes.RETURN,
+    Opcodes.ARETURN,
+    Opcodes.DRETURN,
+    Opcodes.FRETURN,
+    Opcodes.IRETURN,
+    Opcodes.LRETURN
+  )
+
+  private val loadOpCodes = intArrayOf(
+    Opcodes.ALOAD,
+    Opcodes.ILOAD,
+    Opcodes.DLOAD,
+    Opcodes.FLOAD,
+    Opcodes.ILOAD,
+  )
 }
