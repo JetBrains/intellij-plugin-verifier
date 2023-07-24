@@ -209,7 +209,7 @@ class ServiceExtensionPointPreloadNotSupported(private val serviceType: IdePlugi
     get() = Level.ERROR
 
   override val message
-    get() = "Service preloading is deprecated in the <${serviceType.toXmlElement()}> element. Consider removing the 'preload' attribute and migrating to the listeners, see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
+    get() = "Service preloading is deprecated in the <${serviceType.toXmlElement()}> element. Consider removing the 'preload' attribute and migrating to listeners, see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
 
   private fun IdePluginContentDescriptor.ServiceType.toXmlElement(): String = "$extensionPointPrefix." + when (this) {
     IdePluginContentDescriptor.ServiceType.PROJECT -> "projectService"

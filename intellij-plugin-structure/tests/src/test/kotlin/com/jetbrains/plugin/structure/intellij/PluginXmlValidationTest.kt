@@ -104,7 +104,7 @@ class PluginXmlValidationTest {
     assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
     val error = pluginCreationFail.errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
-    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin warning", error)
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", error)
     assertEquals(PluginProblem.Level.ERROR, error?.level)
   }
 
