@@ -157,10 +157,12 @@ object KotlinMethods {
   }
 
   /**
-   * Check when an interface extends another the Idea interface that has private types.
+   * Checks whether this method is forwarding to the DefaultImpls of the parent interface.
    *
    * In this case, Kotlin generates a default implementation `MyInterface$DefaultImpls`
-   * that calls the `ParentInterface$DefaultImpls` of the parent interface
+   * that forward the call to a `ParentInterface$DefaultImpls` of the parent interface.
+   * This forwarded is **static** and checks the type of the first parameter if
+   * it matches the parent interface.
    *
    * ```
    * // access flags 0x9
