@@ -3,14 +3,15 @@ package com.jetbrains.plugin.structure.intellij
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
+import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -75,9 +76,36 @@ class PluginXmlValidationTest {
     assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
     val warning = pluginCreationFail.errorsAndWarnings.filterIsInstance<OptionalDependencyConfigFileIsEmpty>()
             .singleOrNull()
-    if (warning == null) {
-      fail("Expected 'Optional Dependency Config File Is Empty' plugin warning")
+    assertNotNull("Expected 'Optional Dependency Config File Is Empty' plugin warning", warning)
+  }
+
+  @Test
+  fun `plugin declaring projectService with preloading should emit an error`() {
+    val pluginCreationFail = buildMalformedPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.platform</depends>
+              <extensions defaultExtensionNs="com.intellij">
+                <applicationService
+                    serviceInterface="com.example.MyAppService"
+                    serviceImplementation="com.example.MyAppServiceImpl"
+                    preload="await"
+                    />
+              </extensions>              
+            </idea-plugin>
+          """
+        }
+      }
     }
+
+    assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
+    val error = pluginCreationFail.errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+      .singleOrNull()
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", error)
+    assertEquals(PluginProblem.Level.ERROR, error?.level)
   }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {

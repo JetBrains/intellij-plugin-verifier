@@ -168,4 +168,3 @@ class IllegalPluginIdPrefix(private val illegalPluginId: String, private val ill
   override val detailedMessage
     get() = "Plugin ID '$illegalPluginId' has an illegal prefix '$illegalPrefix'. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
 }
-
