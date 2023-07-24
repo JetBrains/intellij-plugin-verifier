@@ -79,8 +79,8 @@ class PluginXmlValidationTest {
   }
 
   @Test
-  fun `plugin declaring projectService with preloading should emit an error`() {
-    val pluginCreationFail = buildMalformedPlugin {
+  fun `plugin declaring projectService with preloading should emit an unacceptable warning`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
       dir("META-INF") {
         file("plugin.xml") {
           """
@@ -100,12 +100,12 @@ class PluginXmlValidationTest {
       }
     }
 
-    val errorsAndWarnings = pluginCreationFail.errorsAndWarnings
-    assertEquals(1, errorsAndWarnings.size)
-    val error = errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+    val warnings = pluginCreationSuccess.allWarnings
+    assertEquals(1, warnings.size)
+    val error = warnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
     assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", error)
-    assertEquals(PluginProblem.Level.ERROR, error?.level)
+    assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, error?.level)
   }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
@@ -129,4 +129,7 @@ class PluginXmlValidationTest {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
     return IdePluginManager.createManager().createPlugin(pluginFile)
   }
+
+  val PluginCreationSuccess<IdePlugin>.allWarnings
+    get() = warnings + unacceptableWarnings
 }
