@@ -11,9 +11,9 @@ import org.junit.Test
 
 private const val PLUGIN_ID = "com.example.thirdparty"
 private const val PLUGIN_VENDOR = "PluginIndustries s.r.o."
-private const val MESSAGE_TEMPLATE = "Service preloading in the 'preload' attribute is deprecated in the <%s> " +
-  "element. Consider migrating to the listeners. " +
-  "See https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
+private const val MESSAGE_TEMPLATE = "Service preloading is deprecated in the <%s> " +
+  "element. Consider removing the 'preload' attribute and migrating to the listeners, " +
+  "see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
 
 class ServiceExtensionPointPreloadVerifierTest {
   private lateinit var verifier: ServiceExtensionPointPreloadVerifier
@@ -41,7 +41,7 @@ class ServiceExtensionPointPreloadVerifierTest {
     verifier.verify(idePlugin, problemRegistrar)
     assertEquals(1, problems.size)
     val problem = problems[0]
-    assertEquals(MESSAGE_TEMPLATE.format("projectService"), problem.message)
+    assertEquals(MESSAGE_TEMPLATE.format("com.intellij.projectService"), problem.message)
   }
 
   @Test
@@ -66,7 +66,7 @@ class ServiceExtensionPointPreloadVerifierTest {
     verifier.verify(idePlugin, problemRegistrar)
     assertEquals(1, problems.size)
     val problem = problems[0]
-    assertEquals(MESSAGE_TEMPLATE.format("applicationService"), problem.message)
+    assertEquals(MESSAGE_TEMPLATE.format("com.intellij.applicationService"), problem.message)
   }
 
   @Test
@@ -79,7 +79,7 @@ class ServiceExtensionPointPreloadVerifierTest {
     verifier.verify(idePlugin, problemRegistrar)
     assertEquals(1, problems.size)
     val problem = problems[0]
-    assertEquals(MESSAGE_TEMPLATE.format("moduleService"), problem.message)
+    assertEquals(MESSAGE_TEMPLATE.format("com.intellij.moduleService"), problem.message)
   }
 
 

@@ -171,13 +171,15 @@ class IllegalPluginIdPrefix(private val illegalPluginId: String, private val ill
 }
 
 class ServiceExtensionPointPreloadNotSupported(private val serviceType: IdePluginContentDescriptor.ServiceType) : PluginProblem() {
+  private val extensionPointPrefix = "com.intellij"
+
   override val level
     get() = Level.WARNING
 
   override val message
-    get() = "Service preloading in the 'preload' attribute is deprecated in the <${serviceType.toXmlElement()}> element. Consider migrating to the listeners. See https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
+    get() = "Service preloading is deprecated in the <${serviceType.toXmlElement()}> element. Consider removing the 'preload' attribute and migrating to the listeners, see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
 
-  private fun IdePluginContentDescriptor.ServiceType.toXmlElement(): String = when (this) {
+  private fun IdePluginContentDescriptor.ServiceType.toXmlElement(): String = "$extensionPointPrefix." + when (this) {
     IdePluginContentDescriptor.ServiceType.PROJECT -> "projectService"
     IdePluginContentDescriptor.ServiceType.APPLICATION -> "applicationService"
     IdePluginContentDescriptor.ServiceType.MODULE -> "moduleService"
