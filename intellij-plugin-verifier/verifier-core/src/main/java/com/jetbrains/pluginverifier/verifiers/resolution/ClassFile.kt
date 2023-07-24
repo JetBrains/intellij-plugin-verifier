@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.InnerClassNode
 
 interface ClassFile : ClassFileMember {
   override val location: ClassLocation
@@ -24,6 +25,7 @@ interface ClassFile : ClassFileMember {
   val javaVersion: Int
   val enclosingClassName: String?
 
+  val innerClasses: List<InnerClassNode>
   override val annotations: List<AnnotationNode>
 
   val isAbstract: Boolean
