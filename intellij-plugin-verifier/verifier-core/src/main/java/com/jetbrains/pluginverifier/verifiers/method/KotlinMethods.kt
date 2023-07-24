@@ -69,7 +69,7 @@ object KotlinMethods {
     if (
       // filter non kotlin classes
       !method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }
-      // Sanity check: if the method does not have bytecode, or it's a constructor or class intializer
+      // Sanity check: if the method does not have bytecode, or it's a constructor or class initializer,
       // this heuristic cannot run
       || instructions.isEmpty()
       || method.isConstructor
@@ -105,7 +105,7 @@ object KotlinMethods {
       if (isDefaultCallingDefaultOfParentInterface)
         4 // aload this + checkcast + invokestatic + (return or areturn)
           + method.methodParameters.size // aload for each parameter
-          - 1 // Skip first parameter, it's `this` or the interface (this)
+          - 1 // Skip the first parameter, it's `this` or the interface (this)
       else
         3 // aload this + invokestatic + (return or areturn)
           + method.methodParameters.size // aload for each parameter
