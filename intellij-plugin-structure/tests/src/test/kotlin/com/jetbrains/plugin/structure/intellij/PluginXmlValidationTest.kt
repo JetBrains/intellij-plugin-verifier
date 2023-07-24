@@ -10,8 +10,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -76,9 +75,7 @@ class PluginXmlValidationTest {
     assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
     val warning = pluginCreationFail.errorsAndWarnings.filterIsInstance<OptionalDependencyConfigFileIsEmpty>()
             .singleOrNull()
-    if (warning == null) {
-      fail("Expected 'Optional Dependency Config File Is Empty' plugin warning")
-    }
+    assertNotNull("Expected 'Optional Dependency Config File Is Empty' plugin warning", warning)
   }
 
   @Test
@@ -107,9 +104,7 @@ class PluginXmlValidationTest {
     assertEquals(1, warnings.size)
     val warning = warnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
-    if (warning == null) {
-      fail("Expected 'Service Extension Point Preload Not Supported' plugin warning")
-    }
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin warning", warning)
   }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
