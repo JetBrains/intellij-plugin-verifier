@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -79,8 +80,8 @@ class PluginXmlValidationTest {
   }
 
   @Test
-  fun `plugin declaring projectService with preloading should emit a warning`() {
-    val pluginCreationSuccess = buildCorrectPlugin {
+  fun `plugin declaring projectService with preloading should emit an error`() {
+    val pluginCreationFail = buildMalformedPlugin {
       dir("META-INF") {
         file("plugin.xml") {
           """
@@ -100,11 +101,11 @@ class PluginXmlValidationTest {
       }
     }
 
-    val warnings = pluginCreationSuccess.warnings
-    assertEquals(1, warnings.size)
-    val warning = warnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+    assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
+    val error = pluginCreationFail.errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
-    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin warning", warning)
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin warning", error)
+    assertEquals(PluginProblem.Level.ERROR, error?.level)
   }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
