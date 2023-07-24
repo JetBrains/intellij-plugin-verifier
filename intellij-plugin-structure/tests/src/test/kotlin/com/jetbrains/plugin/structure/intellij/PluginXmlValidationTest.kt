@@ -52,9 +52,7 @@ class PluginXmlValidationTest {
     assertEquals(1, warnings.size)
     val warning = warnings.filterIsInstance<OptionalDependencyConfigFileNotSpecified>()
             .singleOrNull()
-    if (warning == null) {
-      fail("Expected 'Optional Dependency Config File Not Specified' plugin warning")
-    }
+    assertNotNull("Expected 'Optional Dependency Config File Not Specified' plugin warning", warning)
   }
 
   @Test
@@ -73,10 +71,11 @@ class PluginXmlValidationTest {
       }
     }
 
-    assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
-    val warning = pluginCreationFail.errorsAndWarnings.filterIsInstance<OptionalDependencyConfigFileIsEmpty>()
+    val errorsAndWarnings = pluginCreationFail.errorsAndWarnings
+    assertEquals(1, errorsAndWarnings.size)
+    val error = errorsAndWarnings.filterIsInstance<OptionalDependencyConfigFileIsEmpty>()
             .singleOrNull()
-    assertNotNull("Expected 'Optional Dependency Config File Is Empty' plugin warning", warning)
+    assertNotNull("Expected 'Optional Dependency Config File Is Empty' plugin warning", error)
   }
 
   @Test
@@ -101,8 +100,9 @@ class PluginXmlValidationTest {
       }
     }
 
-    assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
-    val error = pluginCreationFail.errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+    val errorsAndWarnings = pluginCreationFail.errorsAndWarnings
+    assertEquals(1, errorsAndWarnings.size)
+    val error = errorsAndWarnings.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
     assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", error)
     assertEquals(PluginProblem.Level.ERROR, error?.level)
