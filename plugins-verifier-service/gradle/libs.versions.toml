@@ -4,7 +4,7 @@ groovy = "3.0.18"
 logback-classic = "1.2.12"
 log4j-toSlf4j = "2.0.7"
 mapdb = "3.0.9"
-spring-boot = "2.7.13"
+spring-boot = "2.7.14"
 spring-dependencyManagement = "1.1.1"
 teamcity-restClient = "1.14.0"
 
