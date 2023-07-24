@@ -111,14 +111,14 @@ object KotlinMethods {
           + method.methodParameters.size // aload for each parameter
       )
 
-    val nonThisStartParameterIndex = if (isDefaultCallingDefaultOfParentInterface)
+    val startParameterIndexExcludingExcludingSelf = if (isDefaultCallingDefaultOfParentInterface)
       2 // before: aload this + checkcast
     else
       1 // before: aload this
 
     if (candidateOpcodes.size != expectedOpcodes
       || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this, always a reference
-      || candidateOpcodes.slice(nonThisStartParameterIndex..method.methodParameters.size).any() { it.opcode !in loadOpCodes } // parameters
+      || candidateOpcodes.slice(startParameterIndexExcludingExcludingSelf..method.methodParameters.size).any() { it.opcode !in loadOpCodes } // parameters
       || candidateOpcodes[candidateOpcodes.lastIndex - 1].opcode != Opcodes.INVOKESTATIC
       || candidateOpcodes.last().opcode !in returnOpCodes
     ) {
@@ -131,14 +131,6 @@ object KotlinMethods {
     }
 
     val actualKotlinOwner = methodInsnNode.owner.substringBeforeLast("\$DefaultImpls")
-
-    // If the current class is the default implementation of a child interface
-    // then kotlin make it the inner class of 2 inner classes
-    // * `ParentInterface`
-    // * `ChildInterface`
-    // There can be more than 2 inner classes if the interface extends multiple interfaces.
-    val isImplementingAParentInterface = containingClassFile.innerClasses.size > 1
-      && isDefaultCallingDefaultOfParentInterface
 
     // Walking the whole class hierarchy is not necessary because
     // these methods always delegate to the immediate superinterface. E.g.
@@ -156,7 +148,7 @@ object KotlinMethods {
       it == actualKotlinOwner
     }
     @Suppress("RedundantIf") // for reading clarity
-    if (!isAParent && !isImplementingAParentInterface) {
+    if (!isAParent && !isDefaultCallingDefaultOfParentInterface) {
       return false
     }
 
