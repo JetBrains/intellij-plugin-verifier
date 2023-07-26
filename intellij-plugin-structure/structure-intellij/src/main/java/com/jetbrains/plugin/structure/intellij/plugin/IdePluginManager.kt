@@ -25,6 +25,11 @@ import java.nio.file.*
 import java.util.*
 import java.util.stream.Collectors
 
+/**
+ * Factory for plugins of the IntelliJ IDEA Platform.
+ *
+ * Handles plugins provided in JARs, ZIPs and directories.
+ */
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
   private val extractDirectory: Path

@@ -7,6 +7,12 @@ package com.jetbrains.plugin.structure.base.plugin
 import java.io.File
 import java.nio.file.Path
 
+/**
+ * Factory for creating product-agnostic plugins based on their artifacts stored in a [Path].
+ *
+ * Each implementation is product-specific, such as [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager]
+ * which handles plugins for IntelliJ IDEA.
+ */
 interface PluginManager<out PluginType : Plugin> {
   @Deprecated(
     message = "Use method with java.nio.Path instead of java.io.File",
