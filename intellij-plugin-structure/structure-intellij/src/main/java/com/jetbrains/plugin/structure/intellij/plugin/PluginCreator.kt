@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
@@ -102,7 +103,7 @@ internal class PluginCreator private constructor(
 
     @JvmStatic
     fun createInvalidPlugin(pluginFileName: String, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
-      require(singleProblem.level == PluginProblem.Level.ERROR) { "Only ERROR problems are allowed here" }
+      require(singleProblem.level == ERROR) { "Only ERROR problems are allowed here" }
       val pluginCreator = PluginCreator(pluginFileName, descriptorPath, null)
       pluginCreator.registerProblem(singleProblem)
       return pluginCreator
@@ -139,10 +140,7 @@ internal class PluginCreator private constructor(
       plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
       mergeContent(optionalPlugin)
     } else {
-      val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
-        .errorsAndWarnings
-        .filter { e -> e.level === PluginProblem.Level.ERROR }
-      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, errors))
+      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, pluginCreationResult.errors))
     }
   }
 
@@ -166,10 +164,7 @@ internal class PluginCreator private constructor(
         mergeContent(module)
       }
     } else {
-      val errors = (pluginCreationResult as PluginCreationFail<IdePlugin>)
-        .errorsAndWarnings
-        .filter { e -> e.level === PluginProblem.Level.ERROR }
-      registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, errors))
+      registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
     }
   }
 
@@ -712,7 +707,7 @@ internal class PluginCreator private constructor(
     problems += problem
   }
 
-  private fun hasErrors() = problems.any { it.level === PluginProblem.Level.ERROR }
+  private fun hasErrors() = problems.any { it.level === ERROR }
 
   private fun validateId(plugin: PluginBean) {
     pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
@@ -869,4 +864,9 @@ internal class PluginCreator private constructor(
     }
   }
 
+  private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
+    get() = when (this) {
+      is PluginCreationSuccess -> emptyList()
+      is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
+    }
 }
