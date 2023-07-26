@@ -33,7 +33,8 @@ import java.time.format.DateTimeParseException
 internal class PluginCreator private constructor(
   val pluginFileName: String,
   val descriptorPath: String,
-  private val parentPlugin: PluginCreator?
+  private val parentPlugin: PluginCreator?,
+  private val problemResolver: IntelliJPluginCreationResultResolver = IntelliJPluginCreationResultResolver()
 ) {
 
   companion object {
@@ -123,11 +124,7 @@ internal class PluginCreator private constructor(
     get() = !hasErrors()
 
   val pluginCreationResult: PluginCreationResult<IdePlugin>
-    get() = if (hasErrors()) {
-      PluginCreationFail(problems)
-    } else {
-      PluginCreationSuccess<IdePlugin>(plugin, problems)
-    }
+    get() = problemResolver.resolve(plugin, problems)
 
   fun addOptionalDescriptor(
     pluginDependency: PluginDependency,
