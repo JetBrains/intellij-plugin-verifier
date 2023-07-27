@@ -8,13 +8,25 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
+/**
+ * Resolves a collection of [plugin problems][PluginProblem] to the [result of plugin creation][PluginCreationResult],
+ * which is either a success or a failure.
+ *
+ * @see com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+ */
 interface PluginCreationResultResolver {
   fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin>
 
   fun isError(problem: PluginProblem): Boolean = problem.level == ERROR
 }
 
-
+/**
+ * Resolves a collection of [plugin problems][PluginProblem] to the [result of plugin creation][PluginCreationResult]
+ * by consulting an allow-list of supported plugin problems that are considered errors.
+ *
+ * Non-listed errors are treated as an error with fail-fast mechanism, and they are wrapped into a single
+ * [BlocklistedPluginError].
+ */
 class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     val errors = problems.filter { it.level == ERROR }
