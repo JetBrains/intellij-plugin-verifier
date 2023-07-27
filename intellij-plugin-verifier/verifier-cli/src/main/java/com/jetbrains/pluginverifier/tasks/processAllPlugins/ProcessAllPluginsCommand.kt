@@ -18,9 +18,9 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * `processAllPlugins` command allows to run some processing of all plugins from the Marketplace.
+ * `processAllPlugins` command allows to run some processing of all plugins from JetBrains Marketplace.
  *
- * `countUsagesOfExtensionPoints` goal counts usages of IDE extension points inside all the Marketplace plugins and saves it as a .json file
+ * `countUsagesOfExtensionPoints` goal counts usages of IDE extension points inside all the JetBrains Marketplace plugins and saves it as a .json file
  *
  * ```java -jar verifier.jar processAllPlugins countUsagesOfExtensionPoints <IDE path> <IDE plugins path> <output.json>```
  */
@@ -73,7 +73,7 @@ class CountUsagesOfExtensionPointsParameters(
   val outputJson: Path
 ) : TaskParameters {
   override val presentableText
-    get() = "Count usages of IDE ${ideDescriptor.ideVersion} extension points inside all compatible plugins available in the Marketplace"
+    get() = "Count usages of IDE ${ideDescriptor.ideVersion} extension points inside all compatible plugins available in JetBrains Marketplace"
 
   override fun createTask() = CountUsagesOfExtensionPointsTask(this)
 

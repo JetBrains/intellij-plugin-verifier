@@ -1,6 +1,6 @@
 ### IntelliJ Plugin Structure
 Library used to parse configuration of JetBrains Plugins and validate its correctness.
-It is used by [gradle-intellij-plugin](https://github.com/JetBrains/gradle-intellij-plugin), [Marketplace](https://plugins.jetbrains.com/)
+It is used by [gradle-intellij-plugin](https://github.com/JetBrains/gradle-intellij-plugin), [JetBrains Marketplace](https://plugins.jetbrains.com/)
 and the [IntelliJ Plugin Verifier](https://github.com/JetBrains/intellij-plugin-verifier).
 
 The library detects configuration mistakes and produces corresponding warnings like `Description is too short` or 

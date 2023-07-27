@@ -1,5 +1,5 @@
 ### IntelliJ Feature Extractor
-This is a tool used by the [Marketplace](https://plugins.jetbrains.com/) to determine a set of supported plugin's features.
+This is a tool used by [JetBrains Marketplace](https://plugins.jetbrains.com/) to determine a set of supported plugin's features.
 
 The features are specified using IntelliJ API. In most cases the features are specified as string constants. The tool extracts the constant values from class files
 using bytecode analysis.

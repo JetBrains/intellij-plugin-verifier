@@ -13,7 +13,7 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 
 /**
- * Base class for all repositories configured for special plugins not available in the Marketplace.
+ * Base class for all repositories configured for special plugins not available in JetBrains Marketplace.
  */
 abstract class CustomPluginRepository : PluginRepository {
 

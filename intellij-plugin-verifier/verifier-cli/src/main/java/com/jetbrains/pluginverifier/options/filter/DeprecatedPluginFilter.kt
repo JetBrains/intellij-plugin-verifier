@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateIn
 
 /**
  * [PluginFilter] that excludes from verification plugins
- * that are marked with "deprecated" tag in the Plugin Repository.
+ * that are marked with "deprecated" tag in JetBrains Marketplace.
  *
  * Plugins marked with such tags are not maintained by their authors anymore,
  * and it doesn't make sense to report API incompatibilities with these plugins.

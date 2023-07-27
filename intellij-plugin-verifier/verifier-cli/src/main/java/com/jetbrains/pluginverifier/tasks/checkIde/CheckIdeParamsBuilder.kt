@@ -71,7 +71,7 @@ class CheckIdeParamsBuilder(
   /**
    * For all unique plugins' IDs to be verified determines
    * whether there are versions of these plugins
-   * available in the Plugin Repository that are compatible
+   * available in JetBrains Marketplace that are compatible
    * with [ideVersion], and returns [MissingCompatibleVersionProblem]s
    * for plugins IDs that don't have ones.
    */
@@ -86,7 +86,7 @@ class CheckIdeParamsBuilder(
         val buildForCommunity = findVersionCompatibleWithCommunityEdition(it, ideVersion) as? UpdateInfo
         if (buildForCommunity != null) {
           val details = "\nNote: there is an update (#" + buildForCommunity.updateId + ") compatible with IDEA Community Edition, " +
-            "but the Plugin repository does not offer to install it if you run the IDEA Ultimate."
+            "but JetBrains Marketplace does not offer to install it if you run the IDEA Ultimate."
           MissingCompatibleVersionProblem(it, ideVersion, details)
         } else {
           MissingCompatibleVersionProblem(it, ideVersion, null)
