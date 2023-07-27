@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
  *
  * Existence of a compatible plugin version may be important for JetBrains plugins
  * when the next IDE EAP is published: all the JetBrains plugins must
- * be published to the Plugin Repository to make the EAP useful.
+ * be published to JetBrains Marketplace to make the EAP useful.
  */
 data class MissingCompatibleVersionProblem(
   val pluginId: String,
@@ -20,5 +20,5 @@ data class MissingCompatibleVersionProblem(
 ) {
 
   override fun toString() = "For plugin '$pluginId' there are no versions compatible with $ideVersion " +
-    "in the Plugin Repository" + if (details != null) " $details" else ""
+    "in JetBrains Marketplace" + if (details != null) " $details" else ""
 }

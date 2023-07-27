@@ -12,7 +12,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 /**
- * Utility class used to filter verifications that should be sent to the Marketplace.
+ * Utility class used to filter verifications that should be sent to JetBrains Marketplace.
  */
 class VerificationResultFilter {
 

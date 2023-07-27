@@ -7,7 +7,7 @@
 package com.jetbrains.pluginverifier.response
 
 /*
-These classes must be synced with JSON schema expected by the Marketplace.
+These classes must be synced with JSON schema expected by JetBrains Marketplace.
 Incompatible changes to the classes (e.g. fields renames or removals) are prohibited!
 Compatible additions of new fields are allowed.
  */

@@ -12,7 +12,7 @@ import java.net.URL
 import java.util.*
 
 /**
- * Identifier of a plugin hosted on the public Plugin Repository [MarketplaceRepository].
+ * Identifier of a plugin hosted on the public JetBrains Marketplace [MarketplaceRepository].
  */
 class UpdateInfo(
   pluginId: String,

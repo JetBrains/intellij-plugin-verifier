@@ -38,7 +38,7 @@ class FeatureExtractorService(
     val updatesToExtract = try {
       featureServiceProtocol.getUpdatesToExtract()
     } catch (e: ServerUnavailable503Exception) {
-      logger.info("Marketplace ${e.serverUrl} is currently unavailable (HTTP 503)")
+      logger.info("JetBrains Marketplace ${e.serverUrl} is currently unavailable (HTTP 503)")
       return
     }
 
@@ -99,15 +99,15 @@ class FeatureExtractorService(
       logger.info("Plugin $updateInfo is processed: $result")
       try {
         featureServiceProtocol.sendExtractedFeatures(this)
-        logger.info("Features of $updateInfo have been successfully sent to the Marketplace.")
+        logger.info("Features of $updateInfo have been successfully sent to JetBrains Marketplace.")
       } catch (e: ServerUnavailable503Exception) {
-        logger.info("Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
+        logger.info("JetBrains Marketplace ${e.serverUrl} is currently unavailable. Stop all the scheduled updates.")
         pauseFeaturesExtraction()
       } catch (e: Exception) {
         e.rethrowIfInterrupted()
-        //TODO: remove this check when the Marketplace is fixed.
+        //TODO: remove this check when JetBrains Marketplace is fixed.
         if (e is NonSuccessfulResponseException && e.responseCode == 409) {
-          logger.info("Marketplace is still responding HTTP 409: Conflict on attempt to send update results")
+          logger.info("JetBrains Marketplace is still responding HTTP 409: Conflict on attempt to send update results")
         } else {
           logger.error("Failed to send features result for $updateInfo", e)
         }

@@ -185,7 +185,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   }
 
   override val presentableName
-    get() = "Marketplace ${repositoryURL.toExternalForm()}"
+    get() = "JetBrains Marketplace ${repositoryURL.toExternalForm()}"
 
   override fun toString() = presentableName
 
@@ -195,7 +195,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
     //In the late future this will need to be updated. Currently, there are ~= 4000 plugins in the repository available.
     // This magic constant is the limit of the Elastic Search used in the Plugin Search Service.
-    // Contact Marketplace team for details.
+    // Contact JetBrains Marketplace team for details.
     private const val MAX_AVAILABLE_PLUGINS_IN_REPOSITORY = 10000
   }
 }

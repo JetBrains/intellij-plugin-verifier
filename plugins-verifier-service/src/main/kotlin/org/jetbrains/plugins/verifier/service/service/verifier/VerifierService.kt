@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
  * This service periodically accesses the plugin repository, fetches plugins which should be verified,
  * and sends the verification reports.
  *
- * [Plugin verifier integration with the Plugins Repository](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
+ * [Plugin verifier integration with JetBrains Marketplace](https://confluence.jetbrains.com/display/PLREP/plugin-verifier+integration+with+the+plugins.jetbrains.com)
  */
 class VerifierService(
   taskManager: TaskManager,
@@ -50,7 +50,7 @@ class VerifierService(
     val allScheduledVerifications = try {
       verifierServiceProtocol.requestScheduledVerifications()
     } catch (e: ServerUnavailable503Exception) {
-      logger.info("Do not schedule new verifications and pause the service because the Marketplace is currently unavailable")
+      logger.info("Do not schedule new verifications and pause the service because JetBrains Marketplace is currently unavailable")
       pauseVerification()
       return
     }
@@ -112,7 +112,7 @@ class VerifierService(
   }
 
   /**
-   * Temporarily pause verifications because the Marketplace
+   * Temporarily pause verifications because JetBrains Marketplace
    * cannot process its results at the moment.
    *
    * Cancel all the scheduled verifications in order to avoid unnecessary work.
@@ -135,7 +135,7 @@ class VerifierService(
         logger.info("Verification result has been successfully sent for $scheduledVerification")
       } catch (e: ServerUnavailable503Exception) {
         logger.info(
-          "Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
+          "JetBrains Marketplace $pluginRepository is currently unavailable (HTTP 503). " +
             "Stop all the scheduled verification tasks."
         )
         pauseVerification()
