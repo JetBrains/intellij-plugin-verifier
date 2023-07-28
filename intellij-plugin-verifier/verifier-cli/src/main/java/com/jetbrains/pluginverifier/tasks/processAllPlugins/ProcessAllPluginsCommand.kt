@@ -20,7 +20,7 @@ import java.nio.file.Paths
 /**
  * `processAllPlugins` command allows to run some processing of all plugins from JetBrains Marketplace.
  *
- * `countUsagesOfExtensionPoints` goal counts usages of IDE extension points inside all the JetBrains Marketplace plugins and saves it as a .json file
+ * `countUsagesOfExtensionPoints` goal counts usages of IDE extension points inside all JetBrains Marketplace plugins and saves it as a .json file
  *
  * ```java -jar verifier.jar processAllPlugins countUsagesOfExtensionPoints <IDE path> <IDE plugins path> <output.json>```
  */

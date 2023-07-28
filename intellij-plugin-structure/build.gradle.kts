@@ -171,16 +171,16 @@ publishing {
 
     configurePublication("BasePublication", "structure-base", "JetBrains Plugins Structure Base", "Base library for parsing JetBrains plugins. Used by other JetBrains Plugins structure libraries.")
     configurePublication("ClassesPublication", "structure-classes", "JetBrains Plugins Structure Classes", "Base library for resolving class files and resources. Used by other JetBrains Plugins Structure Classes libraries.")
-    configurePublication("IntellijPublication", "structure-intellij", "JetBrains Plugins Structure IntelliJ", "Library for parsing JetBrains IDE plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
+    configurePublication("IntellijPublication", "structure-intellij", "JetBrains Plugins Structure IntelliJ", "Library for parsing JetBrains IDE plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
     configurePublication("IntellijClassesPublication", "structure-intellij-classes", "JetBrains Plugins Structure IntelliJ Classes", "Library for resolving class files and resources of JetBrains plugins.")
     configurePublication("IdePublication", "structure-ide", "JetBrains Plugins Structure IntelliJ IDE", "Library for resolving class files and resources of IntelliJ Platform IDEs.")
     configurePublication("IdeClassesPublication", "structure-ide-classes", "JetBrains Plugins Structure IntelliJ IDE Classes", "Library for resolving class files and resources of IntelliJ Platform IDEs.")
-    configurePublication("TeamCityPublication", "structure-teamcity", "JetBrains Plugins Structure TeamCity", "Library for parsing JetBrains TeamCity plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
-    configurePublication("DotNetPublication", "structure-dotnet", "JetBrains Plugins Structure DotNet", "Library for parsing JetBrains DotNet plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
-    configurePublication("HubPublication", "structure-hub", "JetBrains Plugins Structure Hub", "Library for parsing JetBrains Hub widgets. Can be used to verify that widget complies with the JetBrains Marketplace requirements.")
-    configurePublication("EduPublication", "structure-edu", "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
-    configurePublication("FleetPublication", "structure-fleet", "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
-    configurePublication("ToolboxPublication", "structure-toolbox", "JetBrains Plugins Structure Toolbox", "Library for parsing JetBrains Toolbox plugins. Can be used to verify that plugin complies with the JetBrains Marketplace requirements.")
+    configurePublication("TeamCityPublication", "structure-teamcity", "JetBrains Plugins Structure TeamCity", "Library for parsing JetBrains TeamCity plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    configurePublication("DotNetPublication", "structure-dotnet", "JetBrains Plugins Structure DotNet", "Library for parsing JetBrains DotNet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    configurePublication("HubPublication", "structure-hub", "JetBrains Plugins Structure Hub", "Library for parsing JetBrains Hub widgets. Can be used to verify that widget complies with JetBrains Marketplace requirements.")
+    configurePublication("EduPublication", "structure-edu", "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    configurePublication("FleetPublication", "structure-fleet", "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    configurePublication("ToolboxPublication", "structure-toolbox", "JetBrains Plugins Structure Toolbox", "Library for parsing JetBrains Toolbox plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
   }
 }
 
