@@ -23,7 +23,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   private val pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
 
-  //This mapping never changes. Updates in Marketplace repository have constant plugin ID.
+  //This mapping never changes. Updates in JetBrains Marketplace have constant plugin ID.
   private val updateIdToPluginIdMapping = ConcurrentHashMap<Int, Int>()
 
   private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = CacheBuilder.newBuilder()
