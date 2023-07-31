@@ -26,9 +26,9 @@ import java.util.*
 import java.util.stream.Collectors
 
 /**
- * Factory for plugins of the IntelliJ IDEA Platform.
+ * Factory for plugin of the IntelliJ IDEA Platform.
  *
- * Handles plugins provided in JARs, ZIPs and directories.
+ * Handles the plugin provided in JAR, ZIP or directory.
  */
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,

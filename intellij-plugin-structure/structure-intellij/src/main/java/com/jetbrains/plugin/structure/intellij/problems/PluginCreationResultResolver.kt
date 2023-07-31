@@ -42,9 +42,12 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     }
   }
 
-  override fun isError(problem: PluginProblem): Boolean = problems.contains(problem::class)
+  override fun isError(problem: PluginProblem): Boolean = intellijPluginErrorProblems.contains(problem::class)
 
-  private val problems = listOf(
+  /**
+   * Explicit list of all IntelliJ [PluginProblem][plugin problems] with level set to [ERROR].
+   */
+  private val intellijPluginErrorProblems = listOf(
     PropertyWithDefaultValue::class,
     InvalidDependencyId::class,
     InvalidModuleBean::class,

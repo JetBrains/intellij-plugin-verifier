@@ -11,8 +11,7 @@ import org.jdom2.Element
 import java.nio.file.Path
 
 /**
- * Represents a plugin for IntelliJ IDEA platform backed by one or more `plugin.xml`
- * descriptors.
+ * Represents a plugin for IntelliJ IDEA platform backed by a single `plugin.xml` descriptor.
  */
 interface IdePlugin : Plugin {
   val sinceBuild: IdeVersion?
