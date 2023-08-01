@@ -25,6 +25,11 @@ import java.nio.file.*
 import java.util.*
 import java.util.stream.Collectors
 
+/**
+ * Factory for plugin of the IntelliJ Platform.
+ *
+ * Handles the plugin provided in JAR, ZIP or directory.
+ */
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
   private val extractDirectory: Path
