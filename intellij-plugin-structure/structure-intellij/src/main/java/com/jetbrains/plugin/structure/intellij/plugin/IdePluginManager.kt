@@ -26,7 +26,7 @@ import java.util.*
 import java.util.stream.Collectors
 
 /**
- * Factory for plugin of the IntelliJ IDEA Platform.
+ * Factory for plugin of the IntelliJ Platform.
  *
  * Handles the plugin provided in JAR, ZIP or directory.
  */
