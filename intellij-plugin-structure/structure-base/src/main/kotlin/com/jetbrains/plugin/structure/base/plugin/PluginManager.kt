@@ -11,7 +11,7 @@ import java.nio.file.Path
  * Factory for creating product-agnostic plugins based on their artifacts stored in a [Path].
  *
  * Each implementation is product-specific, such as [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager]
- * which handles plugins for IntelliJ IDEA.
+ * which handles plugins for IntelliJ Platform IDEs.
  */
 interface PluginManager<out PluginType : Plugin> {
   @Deprecated(
