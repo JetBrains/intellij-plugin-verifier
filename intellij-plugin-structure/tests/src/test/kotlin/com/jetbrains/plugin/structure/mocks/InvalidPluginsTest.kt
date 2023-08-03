@@ -773,6 +773,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `status bar widget factory extension must declare an ID`() {
+    `test plugin xml unacceptable warnings`(
+      perfectXmlBuilder.modify {
+        additionalContent = """
+            <extensions defaultExtensionNs="com.intellij">
+              <statusBarWidgetFactory />
+            </extensions>
+        """.trimIndent()
+      }, listOf(StatusBarWidgetFactoryExtensionPointIdMissing())
+    )
+  }
+
+  @Test
   fun `application listener missing attributes`() {
     `test plugin xml warnings`(
       perfectXmlBuilder.modify {

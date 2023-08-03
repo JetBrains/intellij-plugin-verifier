@@ -14,10 +14,7 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
+import com.jetbrains.plugin.structure.intellij.verifiers.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -620,6 +617,7 @@ internal class PluginCreator private constructor(
     }
 
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
+    StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
   }
 
   private fun resolveDocumentAndValidateBean(
