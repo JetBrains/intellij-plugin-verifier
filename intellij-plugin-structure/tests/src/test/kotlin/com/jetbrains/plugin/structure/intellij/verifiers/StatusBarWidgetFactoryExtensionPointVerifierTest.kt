@@ -45,7 +45,7 @@ class StatusBarWidgetFactoryExtensionPointVerifierTest {
     verifier.verify(idePlugin, problemRegistrar)
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
-    Assert.assertEquals(MESSAGE_TEMPLATE.format("com.intellij.projectService"), problem.message)
+    Assert.assertEquals(MESSAGE_TEMPLATE, problem.message)
   }
 
   @Test
