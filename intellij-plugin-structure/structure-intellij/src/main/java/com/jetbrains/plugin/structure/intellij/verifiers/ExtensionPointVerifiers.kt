@@ -39,9 +39,10 @@ class StatusBarWidgetFactoryExtensionPointVerifier {
   fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
     val statusBarWidgetFactories = plugin.extensions[extensionPointName] ?: emptyList()
     statusBarWidgetFactories.forEach {
+      val implementation = it.getAttribute("implementation")?.value ?: "N/A"
       val extensionId = it.getAttribute("id")
       if (extensionId == null) {
-        problemRegistrar.registerProblem(StatusBarWidgetFactoryExtensionPointIdMissing())
+        problemRegistrar.registerProblem(StatusBarWidgetFactoryExtensionPointIdMissing(implementation))
       }
     }
   }

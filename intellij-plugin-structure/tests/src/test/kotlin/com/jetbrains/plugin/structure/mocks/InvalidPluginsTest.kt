@@ -774,14 +774,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `status bar widget factory extension must declare an ID`() {
+    val implementation = "com.example.MyStatusBarWidgetFactory"
     `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         additionalContent = """
             <extensions defaultExtensionNs="com.intellij">
-              <statusBarWidgetFactory />
+              <statusBarWidgetFactory implementation="$implementation" />
             </extensions>
         """.trimIndent()
-      }, listOf(StatusBarWidgetFactoryExtensionPointIdMissing())
+      }, listOf(StatusBarWidgetFactoryExtensionPointIdMissing(implementation))
     )
   }
 

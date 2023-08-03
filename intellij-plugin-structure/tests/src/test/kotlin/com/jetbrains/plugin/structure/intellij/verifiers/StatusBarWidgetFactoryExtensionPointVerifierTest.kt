@@ -9,8 +9,10 @@ import org.junit.Test
 
 private const val PLUGIN_ID = "com.example.thirdparty"
 private const val PLUGIN_VENDOR = "PluginIndustries s.r.o."
+private const val EP_IMPLEMENTATION = "com.example.MyStatusBarWidgetFactory"
+
 private const val MESSAGE_TEMPLATE = "Extension Point in the <com.intellij.statusBarWidgetFactory> element " +
-  "must have 'id' attribute set. " +
+  "must have 'id' attribute set for the [$EP_IMPLEMENTATION] implementation. " +
   "Furthermore, it must match the value returned from the getId() method of the implementation."
 
 class StatusBarWidgetFactoryExtensionPointVerifierTest {
@@ -31,7 +33,9 @@ class StatusBarWidgetFactoryExtensionPointVerifierTest {
 
   @Test
   fun `status bar widget factory extension does not declare ID`() {
-    val epElement = Element("statusBarWidgetFactory")
+    val epElement = Element("statusBarWidgetFactory").apply {
+      setAttribute("implementation", EP_IMPLEMENTATION)
+    }
 
     val idePlugin = IdePluginImpl().apply {
       pluginId = PLUGIN_ID
@@ -45,9 +49,10 @@ class StatusBarWidgetFactoryExtensionPointVerifierTest {
   }
 
   @Test
-  fun `status bar widget factory extension correctly declares ID`() {
+  fun `status bar widget factory extension correctly declares ID and implementation`() {
     val epElement = Element("statusBarWidgetFactory").apply {
       setAttribute("id", "$PLUGIN_ID.MyStatusBarWidgetFactory")
+      setAttribute("implementation", EP_IMPLEMENTATION)
     }
 
     val idePlugin = IdePluginImpl().apply {
