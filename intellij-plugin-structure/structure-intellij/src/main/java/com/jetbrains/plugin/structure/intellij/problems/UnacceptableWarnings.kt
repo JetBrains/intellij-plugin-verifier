@@ -48,6 +48,5 @@ class StatusBarWidgetFactoryExtensionPointIdMissing(private val implementationCl
 
   override val message
     get() = "Extension Point in the <${extensionPointPrefix}.statusBarWidgetFactory> element " +
-      "must have 'id' attribute set for the [$implementationClassFqn] implementation. " +
-      "Furthermore, it must match the value returned from the getId() method of the implementation."
+      "must have 'id' attribute set with same value returned from the getId() method of the $implementationClassFqn implementation."
 }
