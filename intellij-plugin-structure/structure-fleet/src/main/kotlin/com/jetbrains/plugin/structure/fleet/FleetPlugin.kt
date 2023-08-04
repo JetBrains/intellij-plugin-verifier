@@ -9,17 +9,18 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 
 data class FleetPlugin(
-  override val pluginId: String,
-  override val pluginVersion: String,
-  override val pluginName: String? = null,
-  override val icons: List<PluginIcon> = emptyList(),
-  override val description: String? = null,
-  override val vendor: String? = null,
-  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
+        override val pluginId: String,
+        override val pluginVersion: String,
+  override val pluginName: String?,
+  override val icons: List<PluginIcon>,
+  override val description: String?,
+  override val vendor: String?,
+  val humanVisible: Boolean,
+  override val thirdPartyDependencies: List<ThirdPartyDependency>,
   val frontendOnly: Boolean? = null,
-  val compatibleShipVersionRange: FleetShipVersionRange,
-  val descriptorFileName: String,
-  val files: List<PluginFile>
+        val compatibleShipVersionRange: FleetShipVersionRange,
+        val descriptorFileName: String,
+        val files: List<PluginFile>
 ) : Plugin {
   override val changeNotes: String? = null
   override val vendorEmail: String? = null

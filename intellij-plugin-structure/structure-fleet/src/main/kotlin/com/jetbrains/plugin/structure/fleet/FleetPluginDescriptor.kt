@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.fleet
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
@@ -164,7 +164,9 @@ data class FleetMeta(
   @JsonProperty("vendor")
   val vendor: String? = null,
   @JsonProperty("frontend-only")
-  val frontendOnly: Boolean? = null
+  val frontendOnly: Boolean? = null,
+  @JsonProperty("visible")
+  val humanVisible: Boolean? = null
 )
 
 data class FleetShipVersionRange(
