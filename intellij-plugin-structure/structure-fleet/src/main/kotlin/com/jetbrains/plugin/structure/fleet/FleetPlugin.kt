@@ -11,12 +11,13 @@ import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 data class FleetPlugin(
   override val pluginId: String,
   override val pluginVersion: String,
-  override val pluginName: String? = null,
-  override val icons: List<PluginIcon> = emptyList(),
-  override val description: String? = null,
-  override val vendor: String? = null,
-  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
+  override val pluginName: String?,
+  override val icons: List<PluginIcon>,
+  override val description: String?,
+  override val vendor: String?,
+  override val thirdPartyDependencies: List<ThirdPartyDependency>,
   val frontendOnly: Boolean? = null,
+  val humanVisible: Boolean,
   val compatibleShipVersionRange: FleetShipVersionRange,
   val descriptorFileName: String,
   val files: List<PluginFile>

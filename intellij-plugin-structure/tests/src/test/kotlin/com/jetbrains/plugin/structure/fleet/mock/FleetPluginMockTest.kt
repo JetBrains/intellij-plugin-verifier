@@ -122,6 +122,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   }
 
   private fun testMockConfigs(plugin: FleetPlugin) {
+    assertEquals(false, plugin.humanVisible)
     assertEquals("fleet.language.css", plugin.pluginId)
     assertEquals("CSS", plugin.pluginName)
     assertEquals("JetBrains", plugin.vendor)

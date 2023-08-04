@@ -6,7 +6,8 @@
     "frontend-only": true,
     "readableName": "CSS",
     "description": "CSS language support",
-    "vendor": "JetBrains"
+    "vendor": "JetBrains",
+    "visible": false
   },
   "compatibleShipVersionRange": {
     "from": "1.1000.1",
