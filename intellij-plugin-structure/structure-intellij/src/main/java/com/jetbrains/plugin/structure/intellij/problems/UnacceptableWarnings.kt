@@ -39,3 +39,14 @@ class ServiceExtensionPointPreloadNotSupported(private val serviceType: IdePlugi
     IdePluginContentDescriptor.ServiceType.MODULE -> "moduleService"
   }
 }
+
+class StatusBarWidgetFactoryExtensionPointIdMissing(private val implementationClassFqn: String) : PluginProblem() {
+  private val extensionPointName = "com.intellij.statusBarWidgetFactory"
+
+  override val level
+    get() = Level.UNACCEPTABLE_WARNING
+
+  override val message
+    get() = "Extension Point in the <${extensionPointName}> element " +
+      "must have 'id' attribute set with same value returned from the getId() method of the $implementationClassFqn implementation."
+}

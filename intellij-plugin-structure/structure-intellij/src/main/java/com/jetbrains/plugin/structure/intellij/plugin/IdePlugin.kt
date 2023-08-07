@@ -18,6 +18,13 @@ interface IdePlugin : Plugin {
 
   val untilBuild: IdeVersion?
 
+  /**
+   * Declared extensions which access the corresponding extension points
+   *
+   * Key represents the fully qualified extension point, such as `com.intellij.appStarter`.
+   * Value is a list of JDOM [elements][Element] corresponding to the extensions of this extension point.
+   * Such elements contain raw extension properties, usually as XML attributes.
+   */
   val extensions: Map<String, List<Element>>
 
   val appContainerDescriptor: IdePluginContentDescriptor
