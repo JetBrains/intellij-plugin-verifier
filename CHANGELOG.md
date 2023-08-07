@@ -9,7 +9,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names. 
 - Specific plugin prefixes are discouraged and treated as warnings, such as `com.example` or `net.example`.
 - Ignore internal API usages from JetBrains plugins. Whenever a JetBrains plugin uses an internal API (`@ApiStatus.Internal` or `@IntellijInternalApi`), such usage is reported as ignored and not treated as an error or warning.
+- Treat service preloading as an error ([#975](https://github.com/JetBrains/intellij-plugin-verifier/pull/975))
+- Treat `statusBarWidgetFactory` missing an ID as an error ([#980](https://github.com/JetBrains/intellij-plugin-verifier/pull/980)))
 - Use additional Java SDK locations for tests.
+- Establish a safety net for plugin errors that fail-fast ([#977](https://github.com/JetBrains/intellij-plugin-verifier/pull/977)))
 
 ### Changed
 
