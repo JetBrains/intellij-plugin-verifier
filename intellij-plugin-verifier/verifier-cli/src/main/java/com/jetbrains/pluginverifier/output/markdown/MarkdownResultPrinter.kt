@@ -82,57 +82,41 @@ private operator fun Markdown.plus(result: PluginVerificationResult.Verified) {
 }
 
 private fun PluginVerificationResult.Verified.printVerificationResult(markdown: Markdown) = with(markdown) {
-  if (pluginStructureWarnings.isNotEmpty()) {
-    h2("Plugin structure warnings (${pluginStructureWarnings.size}): ")
-    for (warning in pluginStructureWarnings) {
-      unorderedListItem(warning.message)
-    }
-    unorderedListEnd()
+  printVerificationResult(this@printVerificationResult, "Plugin structure warnings", pluginStructureWarnings) {
+    "" to it.message
   }
 
-  val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
-  if (directMissingDependencies.isNotEmpty()) {
-    h2("Missing dependencies: ")
-    for (missingDependency in directMissingDependencies) {
-      unorderedListItem("${missingDependency.dependency}: ${missingDependency.missingReason}")
-    }
+  printVerificationResult(this@printVerificationResult, "Missing dependencies", dependenciesGraph.getDirectMissingDependencies()) {
+    "" to "${it.dependency}: ${it.missingReason}"
   }
 
-  if (compatibilityWarnings.isNotEmpty()) {
-    h2("Compatibility warnings (${compatibilityWarnings.size}): ")
-    appendShortAndFullDescriptions(compatibilityWarnings.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Compatibility warnings", compatibilityWarnings) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (compatibilityProblems.isNotEmpty()) {
-    h2("Compatibility problems (${compatibilityProblems.size}): ")
-    appendShortAndFullDescriptions(compatibilityProblems.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Compatibility problems", compatibilityProblems) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (deprecatedUsages.isNotEmpty()) {
-    h2("Deprecated API usages (${deprecatedUsages.size}): ")
-    appendShortAndFullDescriptions(deprecatedUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Deprecated API usages", deprecatedUsages) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (experimentalApiUsages.isNotEmpty()) {
-    h2("Experimental API usages (${experimentalApiUsages.size}): ")
-    appendShortAndFullDescriptions(experimentalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Experimental API usages", experimentalApiUsages) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (internalApiUsages.isNotEmpty()) {
-    h2("Internal API usages (${internalApiUsages.size}): ")
-    appendShortAndFullDescriptions(internalApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Internal API usages", internalApiUsages) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (overrideOnlyMethodUsages.isNotEmpty()) {
-    h2("Override-only API usages (${overrideOnlyMethodUsages.size}): ")
-    appendShortAndFullDescriptions(overrideOnlyMethodUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Override-only API usages", overrideOnlyMethodUsages) {
+    it.shortDescription to it.fullDescription
   }
 
-  if (nonExtendableApiUsages.isNotEmpty()) {
-    h2("Non-extendable API usages (${nonExtendableApiUsages.size}): ")
-    appendShortAndFullDescriptions(nonExtendableApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
+  printVerificationResult(this@printVerificationResult, "Non-extendable API usages", nonExtendableApiUsages) {
+    it.shortDescription to it.fullDescription
   }
-
 
   val dynaStatus = "Dynamic Plugin Status"
   when (val dynamicPluginStatus = dynamicPluginStatus) {
@@ -140,12 +124,24 @@ private fun PluginVerificationResult.Verified.printVerificationResult(markdown: 
     is DynamicPluginStatus.NotDynamic -> h2(dynaStatus) + paragraph("Plugin probably cannot be enabled or disabled without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
     null -> Unit
   }
+}
 
+private fun <T> Markdown.printVerificationResult(verificationResult: PluginVerificationResult.Verified,
+                                                                        title: String, items: Set<T>,
+                                                                        descriptionPropertyExtractor: (T) -> Pair<String, String>) {
+  if (items.isNotEmpty()) {
+    h2("$title (${items.size}): ")
+    val shortToFullDescriptions = items.map(descriptionPropertyExtractor)
+      .groupBy({ it.first }, { it.second })
+    appendShortAndFullDescriptions(shortToFullDescriptions)
+  }
 }
 
 private fun Markdown.appendShortAndFullDescriptions(shortToFullDescriptions: Map<String, List<String>>) {
   shortToFullDescriptions.forEach { (shortDescription, fullDescriptions) ->
-    h3(shortDescription)
+    if (shortDescription.isNotEmpty()) {
+      h3(shortDescription)
+    }
     for (fullDescription in fullDescriptions) {
       fullDescription.lines().forEach { line ->
         unorderedListItem(line)

@@ -1,12 +1,15 @@
 package com.jetbrains.pluginverifier.output.markdown
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus.MaybeDynamic
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -14,6 +17,7 @@ import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.modifiers.Modifiers.Modifier.PUBLIC
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -21,7 +25,10 @@ import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInherited
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.PrintWriter
@@ -98,7 +105,40 @@ class MarkdownOutputTest {
   }
 
   @Test
-  fun `plugin has internal API usages problems`() {
+  fun `plugin has structural problems`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+
+
+    val structureWarnings = setOf(
+      PluginStructureWarning(NoModuleDependencies(IdePluginManager.PLUGIN_XML))
+    )
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, pluginStructureWarnings = structureWarnings)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible. 1 plugin configuration defect
+          
+          ## Plugin structure warnings (1): 
+          
+          * Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+
+
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
+
+  @Test
+  fun `plugin has internal API usage problems`() {
     val dependenciesGraph = DependenciesGraph(
       verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
       vertices = emptyList(),
@@ -133,6 +173,122 @@ class MarkdownOutputTest {
   }
 
   @Test
+  fun `plugin has non-extendable API usages problems`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+
+    val nonExtendableClass = ClassLocation("NonExtendableClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+    val extendingClass = ClassLocation("ExtendingClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+
+    val nonExtendableApiUsages = setOf(
+      NonExtendableTypeInherited(nonExtendableClass, extendingClass)
+    )
+
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, nonExtendableApiUsages = nonExtendableApiUsages)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+        # Plugin pluginId 1.0 against 232.0
+        
+        Compatible. 1 non-extendable API usage violation
+        
+        ## Non-extendable API usages (1): 
+        
+        ### Non-extendable class NonExtendableClass is extended
+        
+        * Non-extendable class NonExtendableClass is extended by ExtendingClass. This class is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable, which indicates that the class is not supposed to be extended. See documentation of the @ApiStatus.NonExtendable for more info.
+
+
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
+
+  @Test
+  fun `plugin has experimental API usage problems`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+
+    val experimentalClass = ClassLocation("ExperimentalClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+    val extendingClass = ClassLocation("ExtendingClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+    val usageLocation = MethodLocation(
+      extendingClass,
+      "someMethod",
+      "()V",
+      emptyList(),
+      null,
+      Modifiers.of(PUBLIC)
+    )
+
+    val experimentalApiUsages = setOf(
+      ExperimentalClassUsage(experimentalClass.toReference(), experimentalClass, usageLocation)
+    )
+
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, experimentalApiUsages = experimentalApiUsages)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible. 1 usage of experimental API
+          
+          ## Experimental API usages (1): 
+          
+          ### Experimental API class ExperimentalClass reference
+          
+          * Experimental API class ExperimentalClass is referenced in ExtendingClass.someMethod() : void. This class can be changed in a future release leading to incompatibilities
+          
+
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
+
+  @Test
+  fun `plugin has missing dependencies`() {
+    val pluginDependency = DependencyNode(PLUGIN_ID, PLUGIN_VERSION)
+    val expectedDependency = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
+
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = pluginDependency,
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = mapOf(pluginDependency to setOf(expectedDependency))
+    )
+
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+        # Plugin pluginId 1.0 against 232.0
+        
+        Compatible
+        
+        ## Missing dependencies (1): 
+        
+        * MissingPlugin (optional): Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
+        
+        
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
+
+  @Test
   fun `plugin is dynamic`() {
     val dependenciesGraph = DependenciesGraph(
       verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
@@ -148,13 +304,13 @@ class MarkdownOutputTest {
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
-# Plugin pluginId 1.0 against 232.0
-
-Compatible
-
-## Dynamic Plugin Status
-
-Plugin can probably be enabled or disabled without IDE restart
+        # Plugin pluginId 1.0 against 232.0
+        
+        Compatible
+        
+        ## Dynamic Plugin Status
+        
+        Plugin can probably be enabled or disabled without IDE restart
 
 
       """.trimIndent()
