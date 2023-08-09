@@ -72,17 +72,22 @@ class MarkdownOutputTest {
     val expected = """
       # Plugin pluginId 1.0 against 232.0
       
-      2 compatibility problems
+      4 compatibility problems
       
-      ## Compatibility problems (2): 
+      ## Compatibility problems (4): 
       
       ### Incompatible change of super interface com.jetbrains.plugin.Parent to class
       
       * Class com.jetbrains.plugin.Child has a *super interface* com.jetbrains.plugin.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
       
+      ### Incompatible change of super interface com.jetbrains.plugin.pkg.Parent to class
+      
+      * Class com.jetbrains.plugin.pkg.Child has a *super interface* com.jetbrains.plugin.pkg.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
+      
       ### Invocation of unresolved method org.some.deleted.Class.foo() : void
       
       * Method SomeClass.someMethod() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
+      * Method VioletClass.produceViolet() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
 
 
       """.trimIndent()
@@ -94,7 +99,7 @@ fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
   object : PluginInfo(pluginId, pluginId, version, null, null, null) {}
 
 fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
-  setOf(superInterfaceBecameClassProblem(), methodNotFoundProblem())
+  setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInVioletClass())
 
 fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
   val child = ClassLocation("com.jetbrains.plugin.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
@@ -102,10 +107,26 @@ fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
   return SuperInterfaceBecameClassProblem(child, clazz)
 }
 
+fun superInterfaceBecameClassProblemInOtherLocation(): SuperInterfaceBecameClassProblem {
+  val child = ClassLocation("com.jetbrains.plugin.pkg.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+  val clazz = ClassLocation("com.jetbrains.plugin.pkg.Parent", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+  return SuperInterfaceBecameClassProblem(child, clazz)
+}
+
+
 //FIXME consolidate with DocumentedProblemsReportingTest
 val mockMethodLocation = MethodLocation(
   ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
   "someMethod",
+  "()V",
+  emptyList(),
+  null,
+  Modifiers.of(PUBLIC)
+)
+
+val mockMethodLocationInVioletClass = MethodLocation(
+  ClassLocation("VioletClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
+  "produceViolet",
   "()V",
   emptyList(),
   null,
@@ -125,6 +146,24 @@ fun methodNotFoundProblem(): MethodNotFoundProblem {
   return MethodNotFoundProblem(
     MethodReference(deletedClassRef, "foo", "()V"),
     mockMethodLocation,
+    Instruction.INVOKE_VIRTUAL,
+    JAVA_LANG_OBJECT_HIERARCHY
+  )
+}
+
+fun methodNotFoundProblemInVioletClass(): MethodNotFoundProblem {
+  //FIXME consolidate with DocumentedProblemsReportingTest
+  val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
+    "java/lang/Object",
+    false,
+    null,
+    emptyList()
+  )
+
+  val deletedClassRef = ClassReference("org/some/deleted/Class")
+  return MethodNotFoundProblem(
+    MethodReference(deletedClassRef, "foo", "()V"),
+    mockMethodLocationInVioletClass,
     Instruction.INVOKE_VIRTUAL,
     JAVA_LANG_OBJECT_HIERARCHY
   )
