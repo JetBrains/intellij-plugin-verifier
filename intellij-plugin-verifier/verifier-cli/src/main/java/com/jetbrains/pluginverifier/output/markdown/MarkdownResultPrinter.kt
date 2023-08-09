@@ -1,8 +1,17 @@
 package com.jetbrains.pluginverifier.output.markdown
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.output.ResultPrinter
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
+import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
+import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import java.io.PrintWriter
 
 class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter {
@@ -82,41 +91,15 @@ private operator fun Markdown.plus(result: PluginVerificationResult.Verified) {
 }
 
 private fun Markdown.printVerificationResult(result: PluginVerificationResult.Verified) = with(result) {
-  printVerificationResult("Plugin structure warnings", pluginStructureWarnings) {
-    "" to it.message
-  }
-
-  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies()) {
-    "" to "${it.dependency}: ${it.missingReason}"
-  }
-
-  printVerificationResult("Compatibility warnings", compatibilityWarnings) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Compatibility problems", compatibilityProblems) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Deprecated API usages", deprecatedUsages) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Experimental API usages", experimentalApiUsages) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Internal API usages", internalApiUsages) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Override-only API usages", overrideOnlyMethodUsages) {
-    it.shortDescription to it.fullDescription
-  }
-
-  printVerificationResult("Non-extendable API usages", nonExtendableApiUsages) {
-    it.shortDescription to it.fullDescription
-  }
+  printVerificationResult("Plugin structure warnings", pluginStructureWarnings, PluginStructureWarning::describe)
+  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies(), MissingDependency::describe)
+  printVerificationResult("Compatibility warnings", compatibilityWarnings, CompatibilityWarning::describe)
+  printVerificationResult("Compatibility problems", compatibilityProblems, CompatibilityProblem::describe)
+  printVerificationResult("Deprecated API usages", deprecatedUsages, DeprecatedApiUsage::describe)
+  printVerificationResult("Experimental API usages", experimentalApiUsages, ExperimentalApiUsage::describe)
+  printVerificationResult("Internal API usages", internalApiUsages, InternalApiUsage::describe)
+  printVerificationResult("Override-only API usages", overrideOnlyMethodUsages, OverrideOnlyMethodUsage::describe)
+  printVerificationResult("Non-extendable API usages", nonExtendableApiUsages, NonExtendableApiUsage::describe)
 
   val dynaStatus = "Dynamic Plugin Status"
   when (val dynamicPluginStatus = dynamicPluginStatus) {
@@ -150,3 +133,12 @@ private fun Markdown.appendShortAndFullDescriptions(shortToFullDescriptions: Map
   }
 }
 
+fun PluginStructureWarning.describe() = "" to message
+fun MissingDependency.describe() = "" to "$dependency: $missingReason"
+fun CompatibilityWarning.describe() = shortDescription to fullDescription
+fun CompatibilityProblem.describe() = shortDescription to fullDescription
+fun DeprecatedApiUsage.describe() = shortDescription to fullDescription
+fun ExperimentalApiUsage.describe() = shortDescription to fullDescription
+fun InternalApiUsage.describe() = shortDescription to fullDescription
+fun OverrideOnlyMethodUsage.describe() = shortDescription to fullDescription
+fun NonExtendableApiUsage.describe() = shortDescription to fullDescription
