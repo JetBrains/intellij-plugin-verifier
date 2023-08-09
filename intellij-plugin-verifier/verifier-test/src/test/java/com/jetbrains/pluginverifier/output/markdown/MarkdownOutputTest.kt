@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus.MaybeDynamic
 import com.jetbrains.pluginverifier.jdk.JdkVersion
+import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -30,9 +31,11 @@ import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInherited
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.io.Writer
 
 private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"
@@ -40,6 +43,15 @@ private const val PLUGIN_VERSION = "1.0"
 class MarkdownOutputTest {
   private val pluginInfo = mockPluginInfo(PLUGIN_ID, PLUGIN_VERSION)
   private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
+
+  private lateinit var out: StringWriter
+  private lateinit var resultPrinter: ResultPrinter
+
+  @Before
+  fun setUp() {
+    out = StringWriter()
+    resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+  }
 
   @Test
   fun `plugin is compatible`() {
@@ -50,9 +62,6 @@ class MarkdownOutputTest {
       missingDependencies = emptyMap()
     )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
-
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -62,7 +71,7 @@ class MarkdownOutputTest {
       
       
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -75,8 +84,6 @@ class MarkdownOutputTest {
     )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, mockCompatibilityProblems())
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -101,7 +108,7 @@ class MarkdownOutputTest {
 
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -119,8 +126,6 @@ class MarkdownOutputTest {
     )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, pluginStructureWarnings = structureWarnings)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -134,7 +139,7 @@ class MarkdownOutputTest {
 
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -152,8 +157,6 @@ class MarkdownOutputTest {
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, internalApiUsages = internalApiUsages)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -169,7 +172,7 @@ class MarkdownOutputTest {
 
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -190,8 +193,6 @@ class MarkdownOutputTest {
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, nonExtendableApiUsages = nonExtendableApiUsages)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -207,7 +208,7 @@ class MarkdownOutputTest {
 
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -236,8 +237,6 @@ class MarkdownOutputTest {
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, experimentalApiUsages = experimentalApiUsages)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -253,7 +252,7 @@ class MarkdownOutputTest {
           
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -270,8 +269,6 @@ class MarkdownOutputTest {
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -285,7 +282,7 @@ class MarkdownOutputTest {
         
         
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
 
   @Test
@@ -299,8 +296,6 @@ class MarkdownOutputTest {
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, dynamicPluginStatus = MaybeDynamic)
 
-    val out = StringWriter()
-    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
     resultPrinter.printResults(listOf(verificationResult))
 
     val expected = """
@@ -314,8 +309,10 @@ class MarkdownOutputTest {
 
 
       """.trimIndent()
-    assertEquals(expected, out.buffer.toString())
+    assertEquals(expected, output())
   }
+
+  private fun output() = out.buffer.toString()
 }
 
 fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
