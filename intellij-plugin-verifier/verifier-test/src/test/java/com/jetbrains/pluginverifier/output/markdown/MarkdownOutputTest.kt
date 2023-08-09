@@ -6,6 +6,8 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus.MaybeDynamic
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
@@ -19,6 +21,7 @@ import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.PrintWriter
@@ -38,7 +41,7 @@ class MarkdownOutputTest {
       vertices = emptyList(),
       edges = emptyList(),
       missingDependencies = emptyMap()
-      )
+    )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
 
     val out = StringWriter()
@@ -93,6 +96,70 @@ class MarkdownOutputTest {
       """.trimIndent()
     assertEquals(expected, out.buffer.toString())
   }
+
+  @Test
+  fun `plugin has internal API usages problems`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+
+    val internalApiUsages = setOf(
+      InternalClassUsage(ClassReference("com.jetbrains.InternalClass"), internalApiClassLocation, mockMethodLocationInVioletClass)
+    )
+
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, internalApiUsages = internalApiUsages)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+        # Plugin pluginId 1.0 against 232.0
+        
+        Compatible. 1 usage of internal API
+        
+        ## Internal API usages (1): 
+        
+        ### Internal class InternalApiRegistrar reference
+        
+        * Internal class InternalApiRegistrar is referenced in VioletClass.produceViolet() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
+
+
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
+
+  @Test
+  fun `plugin is dynamic`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, dynamicPluginStatus = MaybeDynamic)
+
+    val out = StringWriter()
+    val resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    resultPrinter.printResults(listOf(verificationResult))
+
+    val expected = """
+# Plugin pluginId 1.0 against 232.0
+
+Compatible
+
+## Dynamic Plugin Status
+
+Plugin can probably be enabled or disabled without IDE restart
+
+
+      """.trimIndent()
+    assertEquals(expected, out.buffer.toString())
+  }
 }
 
 fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
@@ -124,8 +191,11 @@ val mockMethodLocation = MethodLocation(
   Modifiers.of(PUBLIC)
 )
 
+private val violetClassLocation = ClassLocation("VioletClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+private val internalApiClassLocation = ClassLocation("InternalApiRegistrar", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+
 val mockMethodLocationInVioletClass = MethodLocation(
-  ClassLocation("VioletClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
+  violetClassLocation,
   "produceViolet",
   "()V",
   emptyList(),
