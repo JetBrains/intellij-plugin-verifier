@@ -78,43 +78,43 @@ class Markdown(private val out: PrintWriter) {
 }
 
 private operator fun Markdown.plus(result: PluginVerificationResult.Verified) {
-  result.printVerificationResult(this)
+  printVerificationResult(result)
 }
 
-private fun PluginVerificationResult.Verified.printVerificationResult(markdown: Markdown) = with(markdown) {
-  printVerificationResult(this@printVerificationResult, "Plugin structure warnings", pluginStructureWarnings) {
+private fun Markdown.printVerificationResult(result: PluginVerificationResult.Verified) = with(result) {
+  printVerificationResult("Plugin structure warnings", pluginStructureWarnings) {
     "" to it.message
   }
 
-  printVerificationResult(this@printVerificationResult, "Missing dependencies", dependenciesGraph.getDirectMissingDependencies()) {
+  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies()) {
     "" to "${it.dependency}: ${it.missingReason}"
   }
 
-  printVerificationResult(this@printVerificationResult, "Compatibility warnings", compatibilityWarnings) {
+  printVerificationResult("Compatibility warnings", compatibilityWarnings) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Compatibility problems", compatibilityProblems) {
+  printVerificationResult("Compatibility problems", compatibilityProblems) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Deprecated API usages", deprecatedUsages) {
+  printVerificationResult("Deprecated API usages", deprecatedUsages) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Experimental API usages", experimentalApiUsages) {
+  printVerificationResult("Experimental API usages", experimentalApiUsages) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Internal API usages", internalApiUsages) {
+  printVerificationResult("Internal API usages", internalApiUsages) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Override-only API usages", overrideOnlyMethodUsages) {
+  printVerificationResult("Override-only API usages", overrideOnlyMethodUsages) {
     it.shortDescription to it.fullDescription
   }
 
-  printVerificationResult(this@printVerificationResult, "Non-extendable API usages", nonExtendableApiUsages) {
+  printVerificationResult("Non-extendable API usages", nonExtendableApiUsages) {
     it.shortDescription to it.fullDescription
   }
 
@@ -126,9 +126,8 @@ private fun PluginVerificationResult.Verified.printVerificationResult(markdown: 
   }
 }
 
-private fun <T> Markdown.printVerificationResult(verificationResult: PluginVerificationResult.Verified,
-                                                                        title: String, items: Set<T>,
-                                                                        descriptionPropertyExtractor: (T) -> Pair<String, String>) {
+private fun <T> Markdown.printVerificationResult(title: String,
+                                                 items: Set<T>, descriptionPropertyExtractor: (T) -> Pair<String, String>) {
   if (items.isNotEmpty()) {
     h2("$title (${items.size}): ")
     val shortToFullDescriptions = items.map(descriptionPropertyExtractor)
