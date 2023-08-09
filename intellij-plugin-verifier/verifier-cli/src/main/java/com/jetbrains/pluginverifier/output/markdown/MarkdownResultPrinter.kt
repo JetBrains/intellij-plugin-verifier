@@ -17,7 +17,8 @@ class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
   private fun printResult(pluginVerificationResult: PluginVerificationResult, markdown: Markdown) {
     with(pluginVerificationResult) {
-      markdown.h1("Plugin $plugin against $verificationTarget: $verificationVerdict")
+      markdown.h1("Plugin $plugin against $verificationTarget")
+      markdown.paragraph(verificationVerdict)
       if (this is PluginVerificationResult.Verified) {
         markdown + this
       }
@@ -45,12 +46,16 @@ class Markdown(private val out: PrintWriter) {
   }
 
   fun h3(header: String) {
-    out.println("## $header")
+    out.println("### $header")
     out.println()
   }
 
   fun unorderedListItem(content: String) {
     out.println("* $content")
+  }
+
+  fun unorderedListEnd() {
+    out.println()
   }
 
   fun paragraph(content: String): Markdown {
@@ -82,6 +87,7 @@ private fun PluginVerificationResult.Verified.printVerificationResult(markdown: 
     for (warning in pluginStructureWarnings) {
       unorderedListItem(warning.message)
     }
+    unorderedListEnd()
   }
 
   val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
@@ -145,6 +151,7 @@ private fun Markdown.appendShortAndFullDescriptions(shortToFullDescriptions: Map
         unorderedListItem(line)
       }
     }
+    unorderedListEnd()
   }
 }
 
