@@ -12,10 +12,13 @@ import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityTest
+import com.jetbrains.pluginverifier.output.useHtml
+import com.jetbrains.pluginverifier.output.useMarkdown
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
@@ -40,8 +43,14 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
 
-      HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
-      HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
+      if(outputOptions.useHtml()) {
+        HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
+        HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
+      }
+      if (outputOptions.useMarkdown()) {
+        MarkdownResultPrinter.create(baseTarget, outputOptions).printResults(baseResults)
+        MarkdownResultPrinter.create(newTarget, outputOptions).printResults(newResults)
+      }
     }
   }
 
