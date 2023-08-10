@@ -5,8 +5,10 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.output.OutputFormat
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -29,6 +31,11 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
 
       results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
         HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
+        if (outputOptions.outputFormats.contains(OutputFormat.MARKDOWN)) {
+          MarkdownResultPrinter.create(verificationTarget, outputOptions).use {
+            it.printResults(resultsOfIde)
+          }
+        }
       }
     }
   }

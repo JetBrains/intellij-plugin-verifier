@@ -1,8 +1,11 @@
 package com.jetbrains.pluginverifier.output.markdown
 
+import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
@@ -13,8 +16,17 @@ import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import java.io.PrintWriter
+import java.nio.file.Files
 
-class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter {
+class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter, AutoCloseable {
+
+  companion object {
+    fun create(verificationTarget: PluginVerificationTarget, outputOptions: OutputOptions): MarkdownResultPrinter {
+      val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.markdown")
+      val writer = PrintWriter(Files.newBufferedWriter(reportHtmlFile.create()))
+      return MarkdownResultPrinter(writer)
+    }
+  }
 
   override fun printResults(results: List<PluginVerificationResult>) {
     markdown(out) {
@@ -32,6 +44,10 @@ class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter {
         markdown + this
       }
     }
+  }
+
+  override fun close() {
+    out.close()
   }
 
 }

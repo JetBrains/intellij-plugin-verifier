@@ -35,7 +35,6 @@ import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
 import java.io.StringWriter
-import java.io.Writer
 
 private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"

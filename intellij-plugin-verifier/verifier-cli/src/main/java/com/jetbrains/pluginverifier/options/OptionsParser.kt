@@ -14,6 +14,8 @@ import com.jetbrains.pluginverifier.ide.IdeDownloader
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
+import com.jetbrains.pluginverifier.output.DEFAULT_OUTPUT_FORMATS
+import com.jetbrains.pluginverifier.output.OutputFormat
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -54,11 +56,23 @@ object OptionsParser {
     println("Verification reports directory: $verificationReportsDirectory")
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
+    val outputFormats = opts.outputFormats.mapNotNull {
+      try {
+        OutputFormat.valueOf(it.uppercase())
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Unsupported verification report output format '$it'. Skipping")
+        null
+      }
+    }.ifEmpty {
+      LOG.warn("No supported output formats were set. Falling back to the default set")
+      DEFAULT_OUTPUT_FORMATS
+    }
     return OutputOptions(
       verificationReportsDirectory,
       teamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-      previousTcHistory
+      previousTcHistory,
+      outputFormats
     )
   }
 
