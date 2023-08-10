@@ -56,17 +56,7 @@ object OptionsParser {
     println("Verification reports directory: $verificationReportsDirectory")
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
-    val outputFormats = opts.outputFormats.mapNotNull {
-      try {
-        OutputFormat.valueOf(it.uppercase())
-      } catch (e: IllegalArgumentException) {
-        LOG.warn("Unsupported verification report output format '$it'. Skipping")
-        null
-      }
-    }.ifEmpty {
-      LOG.warn("No supported output formats were set. Falling back to the default set")
-      DEFAULT_OUTPUT_FORMATS
-    }
+    val outputFormats = parseOutputFormats(opts)
     return OutputOptions(
       verificationReportsDirectory,
       teamCityLog,
@@ -74,6 +64,34 @@ object OptionsParser {
       previousTcHistory,
       outputFormats
     )
+  }
+
+  private fun parseOutputFormats(opts: CmdOpts): List<OutputFormat> {
+    val (exclusions, inclusions) = opts.outputFormats.partition { it.trim().startsWith("-") }
+
+
+    val includedFormats = inclusions.mapNotNull {
+      try {
+        OutputFormat.valueOf(it.uppercase())
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Unsupported verification report output format '$it'. Skipping")
+        null
+      }
+    }.ifEmpty { DEFAULT_OUTPUT_FORMATS }
+
+    val excludedFormats = exclusions.map { it.removePrefix("-") }
+      .mapNotNull {
+        try {
+          OutputFormat.valueOf(it.uppercase())
+        } catch (e: IllegalArgumentException) {
+          LOG.warn("Unsupported verification report output format '$it' specified for exclusion.")
+          null
+        }
+      }.toSet()
+     return (includedFormats - excludedFormats).ifEmpty {
+       LOG.warn("No supported output formats were set. Falling back to the default set")
+       DEFAULT_OUTPUT_FORMATS
+     }
   }
 
   fun createIdeDescriptor(ide: String, opts: CmdOpts): IdeDescriptor {

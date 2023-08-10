@@ -36,4 +36,24 @@ class OptionsParserTest {
       assertEquals(listOf(OutputFormat.PLAIN, OutputFormat.HTML), outputFormats)
     }
   }
+
+  @Test
+  fun `verification output format is empty and excludes plaintext`() {
+    val opts = CmdOpts(outputFormats = arrayOf("-plain"))
+    val options = OptionsParser.parseOutputOptions(opts)
+    with(options) {
+      assertEquals(1, outputFormats.size)
+      assertEquals(listOf(OutputFormat.HTML), outputFormats)
+    }
+  }
+
+  @Test
+  fun `verification output format is specified and excludes plaintext`() {
+    val opts = CmdOpts(outputFormats = arrayOf("-html", "plain"))
+    val options = OptionsParser.parseOutputOptions(opts)
+    with(options) {
+      assertEquals(1, outputFormats.size)
+      assertEquals(listOf(OutputFormat.PLAIN), outputFormats)
+    }
+  }
 }

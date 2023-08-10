@@ -250,7 +250,15 @@ Here is the full syntax of the command:
 
     The output format of the verification reports. 
     Supported formats are: `plain` (console output), `html` and `markdown`
-    By default `plain` and `html` output formats are enabled. 
+    By default, `plain` and `html` output formats are enabled.
+    Multiple output formats are supported, separated by a comma.
+
+    Output format that starts with a `-` (dash) will be suppressed: either from the default 
+    set of output formats or from the specified output formats.
+
+    For example, `plain,markdown` will enable console output and the Markdown verification reports.
+
+    Setting the `-plain` will disable console output but retain the default HTML output.
 
 * `-runtime-dir (-r)`
 
