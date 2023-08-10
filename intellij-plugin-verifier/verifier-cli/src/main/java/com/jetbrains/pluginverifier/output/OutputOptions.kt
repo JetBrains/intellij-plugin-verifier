@@ -37,3 +37,8 @@ data class OutputOptions(
   }
 
 }
+
+fun OutputOptions.usePlainOutput() = this.outputFormats.contains(OutputFormat.PLAIN)
+fun OutputOptions.useHtml() = this.outputFormats.contains(OutputFormat.HTML)
+fun OutputOptions.useMarkdown() = this.outputFormats.contains(OutputFormat.MARKDOWN)
+

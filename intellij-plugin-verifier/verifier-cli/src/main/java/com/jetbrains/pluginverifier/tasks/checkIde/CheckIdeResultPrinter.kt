@@ -6,14 +6,16 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.output.OutputFormat
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
+import com.jetbrains.pluginverifier.output.useHtml
+import com.jetbrains.pluginverifier.output.useMarkdown
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.output.usePlainOutput
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -29,11 +31,15 @@ class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResult
         val teamCityHistory = printTcLog(outputOptions.teamCityGroupType, this, outputOptions.teamCityLog)
         outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
-        printOnStdOut(this)
+        if (outputOptions.usePlainOutput()) {
+          printOnStdOut(this)
+        }
       }
 
-      HtmlResultPrinter(ide, outputOptions).printResults(results)
-      if (outputOptions.outputFormats.contains(OutputFormat.MARKDOWN)) {
+      if (outputOptions.useHtml()) {
+        HtmlResultPrinter(ide, outputOptions).printResults(results)
+      }
+      if (outputOptions.useMarkdown()) {
         MarkdownResultPrinter.create(ide, outputOptions).use {
           it.printResults(results)
         }

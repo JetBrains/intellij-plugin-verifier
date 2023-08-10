@@ -5,8 +5,7 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.output.OutputFormat
-import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
@@ -26,12 +25,16 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
         val teamCityHistory = printTcLog(true, outputOptions.teamCityLog, outputOptions.teamCityGroupType)
         outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
-        printOnStdout(this)
+        if (outputOptions.usePlainOutput()) {
+          printOnStdout (this)
+        }
       }
 
       results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
-        HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
-        if (outputOptions.outputFormats.contains(OutputFormat.MARKDOWN)) {
+        if(outputOptions.useHtml()) {
+          HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
+        }
+        if (outputOptions.useMarkdown()) {
           MarkdownResultPrinter.create(verificationTarget, outputOptions).use {
             it.printResults(resultsOfIde)
           }
