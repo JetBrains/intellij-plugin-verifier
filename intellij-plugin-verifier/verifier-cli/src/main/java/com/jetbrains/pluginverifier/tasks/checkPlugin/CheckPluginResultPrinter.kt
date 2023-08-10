@@ -64,7 +64,7 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       }
     }.distinct().size
     if (totalProblemsNumber > 0) {
-      tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
+      tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 1) "s" else ""} found")
     }
   }
 
