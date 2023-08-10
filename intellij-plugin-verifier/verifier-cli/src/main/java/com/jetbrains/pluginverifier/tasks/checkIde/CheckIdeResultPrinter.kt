@@ -6,8 +6,10 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.output.OutputFormat
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -31,6 +33,11 @@ class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResult
       }
 
       HtmlResultPrinter(ide, outputOptions).printResults(results)
+      if (outputOptions.outputFormats.contains(OutputFormat.MARKDOWN)) {
+        MarkdownResultPrinter.create(ide, outputOptions).use {
+          it.printResults(results)
+        }
+      }
     }
   }
 
