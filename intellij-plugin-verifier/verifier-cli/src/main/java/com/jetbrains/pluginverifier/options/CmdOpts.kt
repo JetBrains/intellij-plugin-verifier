@@ -11,7 +11,7 @@ open class CmdOpts(
   @set:Argument("verification-reports-dir", alias = "vrd", description = "The directory where the verification report files will reside")
   var verificationReportsDir: String? = null,
 
-  @set:Argument("output-formats", alias="f", description = "Output format of the verification report files. Supported formats are 'stream' (stdout), 'html' and 'markdown'")
+  @set:Argument("verification-reports-formats", alias="vrf", description = "Output format of the verification report files. Supported formats are 'stream' (stdout), 'html' and 'markdown'")
   var outputFormats: Array<String> = arrayOf(OutputFormat.STREAM.code(), OutputFormat.HTML.code()),
 
   @set:Argument("ignored-problems", alias = "ip", description = "The problems specified in this file will be ignored. The file must contain lines in form <plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>")
