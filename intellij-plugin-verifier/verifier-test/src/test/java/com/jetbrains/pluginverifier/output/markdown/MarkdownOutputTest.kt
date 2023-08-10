@@ -90,7 +90,7 @@ class MarkdownOutputTest {
       
       4 compatibility problems
       
-      ## Compatibility problems (4): 
+      ## Compatibility problems (4)
       
       ### Incompatible change of super interface com.jetbrains.plugin.Parent to class
       
@@ -132,7 +132,7 @@ class MarkdownOutputTest {
           
           Compatible. 1 plugin configuration defect
           
-          ## Plugin structure warnings (1): 
+          ## Plugin structure warnings (1)
           
           * Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
 
@@ -163,7 +163,7 @@ class MarkdownOutputTest {
         
         Compatible. 1 usage of internal API
         
-        ## Internal API usages (1): 
+        ## Internal API usages (1)
         
         ### Internal class InternalApiRegistrar reference
         
@@ -199,7 +199,7 @@ class MarkdownOutputTest {
         
         Compatible. 1 non-extendable API usage violation
         
-        ## Non-extendable API usages (1): 
+        ## Non-extendable API usages (1)
         
         ### Non-extendable class NonExtendableClass is extended
         
@@ -243,7 +243,7 @@ class MarkdownOutputTest {
           
           Compatible. 1 usage of experimental API
           
-          ## Experimental API usages (1): 
+          ## Experimental API usages (1)
           
           ### Experimental API class ExperimentalClass reference
           
@@ -275,7 +275,7 @@ class MarkdownOutputTest {
         
         Compatible
         
-        ## Missing dependencies (1): 
+        ## Missing dependencies (1)
         
         * MissingPlugin (optional): Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
         

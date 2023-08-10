@@ -128,7 +128,7 @@ private fun Markdown.printVerificationResult(result: PluginVerificationResult.Ve
 private fun <T> Markdown.printVerificationResult(title: String,
                                                  items: Set<T>, descriptionPropertyExtractor: (T) -> Pair<String, String>) {
   if (items.isNotEmpty()) {
-    h2("$title (${items.size}): ")
+    h2("$title (${items.size})")
     val shortToFullDescriptions = items.map(descriptionPropertyExtractor)
       .groupBy({ it.first }, { it.second })
     appendShortAndFullDescriptions(shortToFullDescriptions)
