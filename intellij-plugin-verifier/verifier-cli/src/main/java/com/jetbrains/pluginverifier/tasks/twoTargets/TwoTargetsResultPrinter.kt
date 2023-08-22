@@ -43,7 +43,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
 
-      if(outputOptions.useHtml()) {
+      if (outputOptions.useHtml()) {
         HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
         HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
       }

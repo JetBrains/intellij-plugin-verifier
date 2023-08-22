@@ -31,7 +31,7 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       }
 
       results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
-        if(outputOptions.useHtml()) {
+        if (outputOptions.useHtml()) {
           HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
         }
         if (outputOptions.useMarkdown()) {
