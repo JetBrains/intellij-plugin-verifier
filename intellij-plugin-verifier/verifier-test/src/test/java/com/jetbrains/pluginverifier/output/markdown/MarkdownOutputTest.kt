@@ -40,7 +40,7 @@ private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"
 
 class MarkdownOutputTest {
-  private val pluginInfo = mockPluginInfo(PLUGIN_ID, PLUGIN_VERSION)
+  private val pluginInfo = mockPluginInfo()
   private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
 
   private lateinit var out: StringWriter
@@ -102,7 +102,7 @@ class MarkdownOutputTest {
       
       ### Invocation of unresolved method org.some.deleted.Class.foo() : void
       
-      * Method SomeClass.someMethod() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
+      * Method SomeClassUsingDeletedClass.someMethodReferencingDeletedClass() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
       * Method SampleStuffFactory.produceStuff() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
 
 
@@ -118,7 +118,6 @@ class MarkdownOutputTest {
       edges = emptyList(),
       missingDependencies = emptyMap()
     )
-
 
     val structureWarnings = setOf(
       PluginStructureWarning(NoModuleDependencies(IdePluginManager.PLUGIN_XML))
@@ -314,8 +313,8 @@ class MarkdownOutputTest {
   private fun output() = out.buffer.toString()
 }
 
-private fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
-  object : PluginInfo(pluginId, pluginId, version, null, null, null) {}
+private fun mockPluginInfo(): PluginInfo =
+  object : PluginInfo(PLUGIN_ID, PLUGIN_ID, PLUGIN_VERSION, null, null, null) {}
 
 private fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
   setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInSampleStuffFactoryClass())
@@ -332,14 +331,11 @@ private fun superInterfaceBecameClassProblemInOtherLocation(): SuperInterfaceBec
   return SuperInterfaceBecameClassProblem(child, clazz)
 }
 
-//FIXME consolidate with DocumentedProblemsReportingTest
-private val mockMethodLocation = MethodLocation(
-  ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
-  "someMethod",
-  "()V",
-  emptyList(),
+private val javaLangObjectClassHierarchy = ClassHierarchy(
+  "java/lang/Object",
+  false,
   null,
-  Modifiers.of(PUBLIC)
+  emptyList()
 )
 
 private val sampleStuffFactoryLocation = ClassLocation("SampleStuffFactory", null, Modifiers.of(PUBLIC), SomeFileOrigin)
@@ -355,38 +351,30 @@ private val mockMethodLocationInSampleStuffFactory = MethodLocation(
 )
 
 private fun methodNotFoundProblem(): MethodNotFoundProblem {
-  //FIXME consolidate with DocumentedProblemsReportingTest
-  val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
-    "java/lang/Object",
-    false,
-    null,
-    emptyList()
-  )
-
   val deletedClassRef = ClassReference("org/some/deleted/Class")
+  val referencingMethodLocation = MethodLocation(
+    ClassLocation("SomeClassUsingDeletedClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
+    "someMethodReferencingDeletedClass",
+    "()V",
+    emptyList(),
+    null,
+    Modifiers.of(PUBLIC)
+  )
   return MethodNotFoundProblem(
     MethodReference(deletedClassRef, "foo", "()V"),
-    mockMethodLocation,
+    referencingMethodLocation,
     Instruction.INVOKE_VIRTUAL,
-    JAVA_LANG_OBJECT_HIERARCHY
+    javaLangObjectClassHierarchy
   )
 }
 
 private fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
-  //FIXME consolidate with DocumentedProblemsReportingTest
-  val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
-    "java/lang/Object",
-    false,
-    null,
-    emptyList()
-  )
-
   val deletedClassRef = ClassReference("org/some/deleted/Class")
   return MethodNotFoundProblem(
     MethodReference(deletedClassRef, "foo", "()V"),
     mockMethodLocationInSampleStuffFactory,
     Instruction.INVOKE_VIRTUAL,
-    JAVA_LANG_OBJECT_HIERARCHY
+    javaLangObjectClassHierarchy
   )
 }
 
