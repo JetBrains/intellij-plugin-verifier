@@ -314,27 +314,26 @@ class MarkdownOutputTest {
   private fun output() = out.buffer.toString()
 }
 
-fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
+private fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
   object : PluginInfo(pluginId, pluginId, version, null, null, null) {}
 
-fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
+private fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
   setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInSampleStuffFactoryClass())
 
-fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
+private fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
   val child = ClassLocation("com.jetbrains.plugin.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
   val clazz = ClassLocation("com.jetbrains.plugin.Parent", null, Modifiers.of(PUBLIC), SomeFileOrigin)
   return SuperInterfaceBecameClassProblem(child, clazz)
 }
 
-fun superInterfaceBecameClassProblemInOtherLocation(): SuperInterfaceBecameClassProblem {
+private fun superInterfaceBecameClassProblemInOtherLocation(): SuperInterfaceBecameClassProblem {
   val child = ClassLocation("com.jetbrains.plugin.pkg.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
   val clazz = ClassLocation("com.jetbrains.plugin.pkg.Parent", null, Modifiers.of(PUBLIC), SomeFileOrigin)
   return SuperInterfaceBecameClassProblem(child, clazz)
 }
 
-
 //FIXME consolidate with DocumentedProblemsReportingTest
-val mockMethodLocation = MethodLocation(
+private val mockMethodLocation = MethodLocation(
   ClassLocation("SomeClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
   "someMethod",
   "()V",
@@ -346,7 +345,7 @@ val mockMethodLocation = MethodLocation(
 private val sampleStuffFactoryLocation = ClassLocation("SampleStuffFactory", null, Modifiers.of(PUBLIC), SomeFileOrigin)
 private val internalApiClassLocation = ClassLocation("InternalApiRegistrar", null, Modifiers.of(PUBLIC), SomeFileOrigin)
 
-val mockMethodLocationInSampleStuffFactory = MethodLocation(
+private val mockMethodLocationInSampleStuffFactory = MethodLocation(
   sampleStuffFactoryLocation,
   "produceStuff",
   "()V",
@@ -355,7 +354,7 @@ val mockMethodLocationInSampleStuffFactory = MethodLocation(
   Modifiers.of(PUBLIC)
 )
 
-fun methodNotFoundProblem(): MethodNotFoundProblem {
+private fun methodNotFoundProblem(): MethodNotFoundProblem {
   //FIXME consolidate with DocumentedProblemsReportingTest
   val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
     "java/lang/Object",
@@ -373,7 +372,7 @@ fun methodNotFoundProblem(): MethodNotFoundProblem {
   )
 }
 
-fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
+private fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
   //FIXME consolidate with DocumentedProblemsReportingTest
   val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
     "java/lang/Object",
@@ -390,7 +389,6 @@ fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
     JAVA_LANG_OBJECT_HIERARCHY
   )
 }
-
 
 private object SomeFileOrigin : FileOrigin {
   override val parent: FileOrigin? = null
