@@ -14,14 +14,6 @@ import com.jetbrains.pluginverifier.results.presentation.formatClassLocation
 import com.jetbrains.pluginverifier.usages.formatUsageLocation
 import java.util.*
 
-/**
- *  Indicates a type that is not supposed to be extended, usually due to the
- *  `org.jetbrains.annotations.ApiStatus.NonExtendable` annotation being present.
- *
- *  @see NonExtendableTypeInheritedProcessor
- *  @param apiElement A type that is not supposed to be extended, inherited or implemented
- *  @param usageLocation location which is extending, inheriting or implemented the discouraged type.
- */
 class NonExtendableTypeInherited(
   override val apiElement: ClassLocation,
   override val usageLocation: ClassLocation
