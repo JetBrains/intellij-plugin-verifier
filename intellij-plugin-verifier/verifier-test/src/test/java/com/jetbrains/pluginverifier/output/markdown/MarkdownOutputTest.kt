@@ -103,7 +103,7 @@ class MarkdownOutputTest {
       ### Invocation of unresolved method org.some.deleted.Class.foo() : void
       
       * Method SomeClass.someMethod() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
-      * Method VioletClass.produceViolet() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
+      * Method SampleStuffFactory.produceStuff() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
 
 
       """.trimIndent()
@@ -151,7 +151,7 @@ class MarkdownOutputTest {
     )
 
     val internalApiUsages = setOf(
-      InternalClassUsage(ClassReference("com.jetbrains.InternalClass"), internalApiClassLocation, mockMethodLocationInVioletClass)
+      InternalClassUsage(ClassReference("com.jetbrains.InternalClass"), internalApiClassLocation, mockMethodLocationInSampleStuffFactory)
     )
 
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, internalApiUsages = internalApiUsages)
@@ -167,7 +167,7 @@ class MarkdownOutputTest {
         
         ### Internal class InternalApiRegistrar reference
         
-        * Internal class InternalApiRegistrar is referenced in VioletClass.produceViolet() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
+        * Internal class InternalApiRegistrar is referenced in SampleStuffFactory.produceStuff() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
 
 
       """.trimIndent()
@@ -318,7 +318,7 @@ fun mockPluginInfo(pluginId: String, version: String): PluginInfo =
   object : PluginInfo(pluginId, pluginId, version, null, null, null) {}
 
 fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
-  setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInVioletClass())
+  setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInSampleStuffFactoryClass())
 
 fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
   val child = ClassLocation("com.jetbrains.plugin.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
@@ -343,12 +343,12 @@ val mockMethodLocation = MethodLocation(
   Modifiers.of(PUBLIC)
 )
 
-private val violetClassLocation = ClassLocation("VioletClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
+private val sampleStuffFactoryLocation = ClassLocation("SampleStuffFactory", null, Modifiers.of(PUBLIC), SomeFileOrigin)
 private val internalApiClassLocation = ClassLocation("InternalApiRegistrar", null, Modifiers.of(PUBLIC), SomeFileOrigin)
 
-val mockMethodLocationInVioletClass = MethodLocation(
-  violetClassLocation,
-  "produceViolet",
+val mockMethodLocationInSampleStuffFactory = MethodLocation(
+  sampleStuffFactoryLocation,
+  "produceStuff",
   "()V",
   emptyList(),
   null,
@@ -373,7 +373,7 @@ fun methodNotFoundProblem(): MethodNotFoundProblem {
   )
 }
 
-fun methodNotFoundProblemInVioletClass(): MethodNotFoundProblem {
+fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
   //FIXME consolidate with DocumentedProblemsReportingTest
   val JAVA_LANG_OBJECT_HIERARCHY = ClassHierarchy(
     "java/lang/Object",
@@ -385,7 +385,7 @@ fun methodNotFoundProblemInVioletClass(): MethodNotFoundProblem {
   val deletedClassRef = ClassReference("org/some/deleted/Class")
   return MethodNotFoundProblem(
     MethodReference(deletedClassRef, "foo", "()V"),
-    mockMethodLocationInVioletClass,
+    mockMethodLocationInSampleStuffFactory,
     Instruction.INVOKE_VIRTUAL,
     JAVA_LANG_OBJECT_HIERARCHY
   )
