@@ -74,7 +74,7 @@ object OptionsParser {
       try {
         OutputFormat.valueOf(it.uppercase())
       } catch (e: IllegalArgumentException) {
-        LOG.warn("Unsupported verification report output format '$it'. Skipping")
+        LOG.warn("Unsupported verification report output format '$it'. Skipping this output format.")
         null
       }
     }.ifEmpty { DEFAULT_OUTPUT_FORMATS }
@@ -84,7 +84,7 @@ object OptionsParser {
         try {
           OutputFormat.valueOf(it.uppercase())
         } catch (e: IllegalArgumentException) {
-          LOG.warn("Unsupported verification report output format '$it' specified for exclusion.")
+          LOG.warn("Unsupported verification report output format '$it' specified for exclusion. Ignoring this output format.")
           null
         }
       }.toSet()

@@ -18,8 +18,18 @@ class OptionsParserTest {
   }
 
   @Test
+  fun `verification output format is parsed with multiple unknown formats`() {
+    val opts = CmdOpts(outputFormats = arrayOf("unexpected-broken-format", "-another-unexpected-broken-format"))
+    val options = OptionsParser.parseOutputOptions(opts)
+    with(options) {
+      assertEquals(2, outputFormats.size)
+      assertEquals(listOf(OutputFormat.PLAIN, OutputFormat.HTML), outputFormats)
+    }
+  }
+
+  @Test
   fun `verification output format is parsed with unknown formats`() {
-    val opts = CmdOpts(outputFormats = arrayOf("plain", "html", "chocolate"))
+    val opts = CmdOpts(outputFormats = arrayOf("plain", "html", "unexpected-broken-format"))
     val options = OptionsParser.parseOutputOptions(opts)
     with(options) {
       assertEquals(2, outputFormats.size)
