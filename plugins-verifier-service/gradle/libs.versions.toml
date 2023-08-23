@@ -1,6 +1,6 @@
 [versions]
 commons-fileupload = "1.5"
-groovy = "3.0.18"
+groovy = "3.0.19"
 logback-classic = "1.2.12"
 log4j-toSlf4j = "2.0.7"
 mapdb = "3.0.9"
