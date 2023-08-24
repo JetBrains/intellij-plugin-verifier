@@ -5,6 +5,8 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
@@ -27,6 +29,14 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       } else {
         if (outputOptions.usePlainOutput()) {
           printOnStdout (this)
+        }
+      }
+
+      if (hasOnlyPluginsWithInvalidFiles()) {
+        for ((ideDescriptor, invalidPlugins) in ideDescriptorsWithInvalidPlugins) {
+          MarkdownResultPrinter.create(ideDescriptor.toVerificationTarget(), outputOptions).use {
+            it.printInvalidPluginFiles(invalidPlugins)
+          }
         }
       }
 
@@ -80,5 +90,10 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       printWriter.flush()
     }
   }
+
+  private fun CheckPluginResult.hasOnlyPluginsWithInvalidFiles() =
+    results.isEmpty() && invalidPluginFiles.isNotEmpty()
+
+  private fun IdeDescriptor.toVerificationTarget() = PluginVerificationTarget.IDE(ideVersion, jdkVersion)
 
 }

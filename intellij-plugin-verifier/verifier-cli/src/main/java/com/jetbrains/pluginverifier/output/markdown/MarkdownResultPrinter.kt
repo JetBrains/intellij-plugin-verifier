@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -32,6 +33,34 @@ class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter, AutoC
     markdown(out) {
       results.forEach {
         printResult(it, this)
+      }
+    }
+  }
+
+  fun printInvalidPluginFiles(invalidPluginFiles: List<InvalidPluginFile>) {
+    markdown(out) {
+      when (invalidPluginFiles.size) {
+        0 -> return@markdown
+        1 -> {
+          h1("Invalid plugin")
+          paragraph("The following file specified for the verification is not a valid plugin.")
+        }
+        else -> {
+          h1("Invalid plugins")
+          out.println("The following files specified for the verification are not valid plugins.")
+        }
+      }
+      if (invalidPluginFiles.isNotEmpty()) {
+        for ((pluginFile, pluginErrors) in invalidPluginFiles) {
+          h2("${pluginFile.fileName}")
+          paragraph("Full path: `$pluginFile`")
+          if (pluginErrors.isNotEmpty()) {
+            for (pluginError in pluginErrors) {
+              unorderedListItem("$pluginError")
+            }
+            unorderedListEnd()
+          }
+        }
       }
     }
   }

@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.output.markdown
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginId
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -12,7 +13,6 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus.MaybeDynamic
 import com.jetbrains.pluginverifier.jdk.JdkVersion
-import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
 import com.jetbrains.pluginverifier.results.instruction.Instruction
@@ -26,6 +26,7 @@ import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInherited
@@ -35,6 +36,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
 import java.io.StringWriter
+import kotlin.io.path.Path
 
 private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"
@@ -44,7 +46,7 @@ class MarkdownOutputTest {
   private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
 
   private lateinit var out: StringWriter
-  private lateinit var resultPrinter: ResultPrinter
+  private lateinit var resultPrinter: MarkdownResultPrinter
 
   @Before
   fun setUp() {
@@ -306,6 +308,30 @@ class MarkdownOutputTest {
         Plugin can probably be enabled or disabled without IDE restart
 
 
+      """.trimIndent()
+    assertEquals(expected, output())
+  }
+
+  @Test
+  fun `plugin has structural problems with invalid plugin ID`() {
+    val invalidPluginFiles = listOf(
+      InvalidPluginFile(Path("plugin.zip"), listOf(IllegalPluginId("com.example.intellij")))
+    )
+
+    resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
+
+    val expected = """
+        # Invalid plugin
+        
+        The following file specified for the verification is not a valid plugin.
+        
+        ## plugin.zip
+        
+        Full path: `plugin.zip`
+        
+        * Invalid plugin descriptor 'id': Plugin ID 'com.example.intellij' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id
+        
+        
       """.trimIndent()
     assertEquals(expected, output())
   }
