@@ -83,7 +83,6 @@ allprojects {
     implementation(sharedLibs.slf4j.api)
     implementation(libs.logback.classic)
 
-    runtimeOnly(libs.groovy)
     implementation(libs.commons.fileupload)
     implementation("org.jetbrains.intellij.plugins:intellij-feature-extractor:dev")
     implementation("org.jetbrains.intellij.plugins:verifier-intellij:dev")
@@ -91,3 +90,4 @@ allprojects {
     implementation(libs.teamcity.restClient)
   }
 }
+
