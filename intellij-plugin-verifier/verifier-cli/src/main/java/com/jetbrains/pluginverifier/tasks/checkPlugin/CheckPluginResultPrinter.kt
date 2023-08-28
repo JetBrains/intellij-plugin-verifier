@@ -93,6 +93,11 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
     }
   }
 
+  /**
+   * Indicates that there is at least one plugin with structural plugin problems.
+   * In that case, the verification will not take place at all and only structural
+   * problems will be reported.
+   */
   private fun CheckPluginResult.hasOnlyPluginsWithInvalidFiles() =
     results.isEmpty() && invalidPluginFiles.isNotEmpty()
 
