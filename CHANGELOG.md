@@ -4,6 +4,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ## [Unreleased]
 
+### Added
+
+- Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981)) 
+
 ### Changed
 
 - Upgrade dependencies
