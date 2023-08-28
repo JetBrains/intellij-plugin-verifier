@@ -15,7 +15,8 @@ data class OutputOptions(
   private val verificationReportsDirectory: Path,
   val teamCityLog: TeamCityLog?,
   val teamCityGroupType: TeamCityResultPrinter.GroupBy,
-  val previousTcHistory: TeamCityHistory?
+  val previousTcHistory: TeamCityHistory?,
+  val outputFormats: List<OutputFormat> = DEFAULT_OUTPUT_FORMATS
 ) {
 
   fun getTargetReportDirectory(verificationTarget: PluginVerificationTarget): Path = when (verificationTarget) {
@@ -36,3 +37,8 @@ data class OutputOptions(
   }
 
 }
+
+fun OutputOptions.usePlainOutput() = this.outputFormats.contains(OutputFormat.PLAIN)
+fun OutputOptions.useHtml() = this.outputFormats.contains(OutputFormat.HTML)
+fun OutputOptions.useMarkdown() = this.outputFormats.contains(OutputFormat.MARKDOWN)
+

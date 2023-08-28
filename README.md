@@ -246,6 +246,21 @@ Here is the full syntax of the command:
     The path to the directory where verification reports will be saved.
     By default, it is equal to `<current working dir>/verification-<timestamp>`.
 
+* `-verification-reports-formats (-vrf)`
+
+    The output format of the verification reports. 
+    Supported formats are: `plain` (console output), `html` and `markdown`
+    By default, `plain` and `html` output formats are enabled.
+    Multiple output formats are supported, separated by a comma.
+
+    Output format that starts with a `-` (dash) will be suppressed: either from the default 
+    set of output formats or from the specified output formats.
+
+    Examples:
+
+    * `plain,markdown` will enable console output and the Markdown verification reports.
+    * `-plain` will disable console output, but retain the default HTML output.
+
 * `-runtime-dir (-r)`
 
     The path to the directory containing Java runtime jar.

@@ -14,6 +14,8 @@ import com.jetbrains.pluginverifier.ide.IdeDownloader
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
+import com.jetbrains.pluginverifier.output.DEFAULT_OUTPUT_FORMATS
+import com.jetbrains.pluginverifier.output.OutputFormat
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -54,12 +56,42 @@ object OptionsParser {
     println("Verification reports directory: $verificationReportsDirectory")
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
+    val outputFormats = parseOutputFormats(opts)
     return OutputOptions(
       verificationReportsDirectory,
       teamCityLog,
       TeamCityResultPrinter.GroupBy.parse(opts.teamCityGroupType),
-      previousTcHistory
+      previousTcHistory,
+      outputFormats
     )
+  }
+
+  private fun parseOutputFormats(opts: CmdOpts): List<OutputFormat> {
+    val (exclusions, inclusions) = opts.outputFormats.partition { it.trim().startsWith("-") }
+
+
+    val includedFormats = inclusions.mapNotNull {
+      try {
+        OutputFormat.valueOf(it.uppercase())
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Unsupported verification report output format '$it'. Skipping this output format.")
+        null
+      }
+    }.ifEmpty { DEFAULT_OUTPUT_FORMATS }
+
+    val excludedFormats = exclusions.map { it.removePrefix("-") }
+      .mapNotNull {
+        try {
+          OutputFormat.valueOf(it.uppercase())
+        } catch (e: IllegalArgumentException) {
+          LOG.warn("Unsupported verification report output format '$it' specified for exclusion. Ignoring this output format.")
+          null
+        }
+      }.toSet()
+     return (includedFormats - excludedFormats).ifEmpty {
+       LOG.warn("No supported output formats were set. Falling back to the default set")
+       DEFAULT_OUTPUT_FORMATS
+     }
   }
 
   fun createIdeDescriptor(ide: String, opts: CmdOpts): IdeDescriptor {

@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import com.jetbrains.pluginverifier.tasks.TaskParameters
 
 class CheckPluginParams(
-  private val ideDescriptors: List<IdeDescriptor>,
+  internal val ideDescriptors: List<IdeDescriptor>,
   val problemsFilters: List<ProblemsFilter>,
   val verificationDescriptors: List<PluginVerificationDescriptor>,
   val invalidPluginFiles: List<InvalidPluginFile>,

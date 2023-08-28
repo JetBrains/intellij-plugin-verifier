@@ -38,7 +38,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
       }
 
       val results = runSeveralVerifiers(reportage, verifiers)
-      return CheckPluginResult(invalidPluginFiles, results)
+      val ideDescriptorsWithInvalidPluginFiles = ideDescriptors.associateWith { invalidPluginFiles }
+      return CheckPluginResult(invalidPluginFiles, results, ideDescriptorsWithInvalidPluginFiles)
     }
   }
 

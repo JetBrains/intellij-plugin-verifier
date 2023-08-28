@@ -5,8 +5,11 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
+import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
@@ -24,11 +27,30 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
         val teamCityHistory = printTcLog(true, outputOptions.teamCityLog, outputOptions.teamCityGroupType)
         outputOptions.postProcessTeamCityTests(teamCityHistory)
       } else {
-        printOnStdout(this)
+        if (outputOptions.usePlainOutput()) {
+          printOnStdout (this)
+        }
+      }
+
+      if (hasOnlyPluginsWithInvalidFiles()) {
+        for ((ideDescriptor, invalidPlugins) in ideDescriptorsWithInvalidPlugins) {
+          if (outputOptions.useMarkdown()) {
+            MarkdownResultPrinter.create(ideDescriptor.toVerificationTarget(), outputOptions).use {
+              it.printInvalidPluginFiles(invalidPlugins)
+            }
+          }
+        }
       }
 
       results.groupBy { it.verificationTarget }.forEach { (verificationTarget, resultsOfIde) ->
-        HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
+        if (outputOptions.useHtml()) {
+          HtmlResultPrinter(verificationTarget, outputOptions).printResults(resultsOfIde)
+        }
+        if (outputOptions.useMarkdown()) {
+          MarkdownResultPrinter.create(verificationTarget, outputOptions).use {
+            it.printResults(resultsOfIde)
+          }
+        }
       }
     }
   }
@@ -57,7 +79,7 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       }
     }.distinct().size
     if (totalProblemsNumber > 0) {
-      tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 0) "s" else ""} found")
+      tcLog.buildStatusFailure("$totalProblemsNumber problem${if (totalProblemsNumber > 1) "s" else ""} found")
     }
   }
 
@@ -70,5 +92,15 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
       printWriter.flush()
     }
   }
+
+  /**
+   * Indicates that there is at least one plugin with structural plugin problems.
+   * In that case, the verification will not take place at all and only structural
+   * problems will be reported.
+   */
+  private fun CheckPluginResult.hasOnlyPluginsWithInvalidFiles() =
+    results.isEmpty() && invalidPluginFiles.isNotEmpty()
+
+  private fun IdeDescriptor.toVerificationTarget() = PluginVerificationTarget.IDE(ideVersion, jdkVersion)
 
 }
