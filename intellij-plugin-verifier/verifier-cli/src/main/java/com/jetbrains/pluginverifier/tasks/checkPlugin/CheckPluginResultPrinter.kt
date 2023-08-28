@@ -34,8 +34,10 @@ class CheckPluginResultPrinter(private val pluginRepository: PluginRepository) :
 
       if (hasOnlyPluginsWithInvalidFiles()) {
         for ((ideDescriptor, invalidPlugins) in ideDescriptorsWithInvalidPlugins) {
-          MarkdownResultPrinter.create(ideDescriptor.toVerificationTarget(), outputOptions).use {
-            it.printInvalidPluginFiles(invalidPlugins)
+          if(outputOptions.useMarkdown()) {
+            MarkdownResultPrinter.create(ideDescriptor.toVerificationTarget(), outputOptions).use {
+              it.printInvalidPluginFiles(invalidPlugins)
+            }
           }
         }
       }
