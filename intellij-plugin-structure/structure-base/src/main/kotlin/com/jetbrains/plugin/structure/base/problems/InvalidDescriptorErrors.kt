@@ -25,18 +25,20 @@ abstract class InvalidDescriptorProblem(private val descriptorPath: String?) : P
 class InvalidPluginIDProblem(private val id: String) : PluginProblem() {
   override val message
     get() = "Plugin id contains unsupported symbols: $id."
+
   override val level
     get() = Level.ERROR
 }
 
 class UnexpectedDescriptorElements(
-  override val detailedMessage: String,
+  private val lineNumber: Int,
   descriptorPath: String? = null
 ) : InvalidDescriptorProblem(descriptorPath) {
+  override val details: String
+    get() = "Unexpected element" + if (lineNumber == -1) "s" else " on line $lineNumber"
 
   override val level
     get() = Level.ERROR
-
 }
 
 class TooLongPropertyValue(

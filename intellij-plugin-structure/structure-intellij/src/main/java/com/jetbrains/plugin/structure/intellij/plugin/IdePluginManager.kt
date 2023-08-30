@@ -115,10 +115,8 @@ class IdePluginManager private constructor(
       plugin.setThirdPartyDependencies(dependencies)
       plugin
     } catch (e: JDOMParseException) {
-      val lineNumber = e.lineNumber
-      val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       LOG.info("Unable to parse plugin descriptor $descriptorPath of plugin $descriptorFile", e)
-      createInvalidPlugin(pluginDirectory, descriptorPath, UnexpectedDescriptorElements(message, descriptorPath))
+      createInvalidPlugin(pluginDirectory, descriptorPath, UnexpectedDescriptorElements(e.lineNumber, descriptorPath))
     } catch (e: Exception) {
       LOG.info("Unable to read plugin descriptor $descriptorPath of plugin $descriptorFile", e)
       createInvalidPlugin(pluginDirectory, descriptorPath, UnableToReadDescriptor(descriptorPath, descriptorPath))

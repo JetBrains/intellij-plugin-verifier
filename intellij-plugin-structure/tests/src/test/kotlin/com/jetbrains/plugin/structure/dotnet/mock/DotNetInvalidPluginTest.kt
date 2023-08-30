@@ -56,7 +56,7 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
       "abracadabra",
-      listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
+      listOf(UnexpectedDescriptorElements(1))
     )
   }
 
