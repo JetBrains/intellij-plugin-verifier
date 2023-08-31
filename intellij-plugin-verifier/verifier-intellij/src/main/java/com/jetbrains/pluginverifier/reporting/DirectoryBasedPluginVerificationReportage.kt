@@ -49,7 +49,10 @@ import java.nio.file.Paths
  *                 ...
  * ```
  */
-class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvider: (PluginVerificationTarget) -> Path) : PluginVerificationReportage {
+class DirectoryBasedPluginVerificationReportage(
+  private val pluginVerificationReportageResultAggregator: PluginVerificationReportageAggregator = PluginVerificationReportageAggregator { _, _ -> },
+  private val targetDirectoryProvider: (PluginVerificationTarget) -> Path,
+  ) : PluginVerificationReportage {
 
   private val verificationLogger = LoggerFactory.getLogger("verification")
   private val messageReporters = listOf(LogReporter<String>(verificationLogger))
@@ -101,7 +104,8 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
   @Synchronized
   override fun reportVerificationResult(pluginVerificationResult: PluginVerificationResult) {
     with(pluginVerificationResult) {
-      val directory = targetDirectoryProvider(verificationTarget)
+      val verificationTargetDirectory = targetDirectoryProvider(verificationTarget)
+      val directory = verificationTargetDirectory
         .resolve("plugins")
         .resolve(createPluginVerificationDirectory(plugin))
 
@@ -122,9 +126,11 @@ class DirectoryBasedPluginVerificationReportage(private val targetDirectoryProvi
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
           IgnoredProblemsReporter(directory, verificationTarget).useReporter(problemIgnoredEvents)
+          pluginVerificationReportageResultAggregator.handleVerificationResult(this, verificationTargetDirectory)
         }
         is PluginVerificationResult.InvalidPlugin -> {
           reportVerificationDetails(directory, "invalid-plugin.txt", pluginStructureErrors)
+          pluginVerificationReportageResultAggregator.handleVerificationResult(this, verificationTargetDirectory)
         }
         is PluginVerificationResult.NotFound -> Unit
         is PluginVerificationResult.FailedToDownload -> Unit
