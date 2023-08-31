@@ -2,7 +2,6 @@ package com.jetbrains.pluginverifier.reporting
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.DefaultDescription
-import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginId
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -11,17 +10,12 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.tests.mocks.MockLogger
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.slf4j.Marker
-import org.slf4j.event.Level
-import org.slf4j.helpers.AbstractLogger
 import kotlin.io.path.createTempDirectory
-import kotlin.math.log
-import com.jetbrains.pluginverifier.tests.mocks.MockLogger
 
 private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"
