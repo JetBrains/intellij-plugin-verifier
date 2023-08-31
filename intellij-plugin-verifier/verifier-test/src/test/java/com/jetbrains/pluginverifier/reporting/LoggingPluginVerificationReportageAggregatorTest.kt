@@ -19,6 +19,8 @@ import kotlin.io.path.createTempDirectory
 
 private const val PLUGIN_ID = "pluginId"
 private const val PLUGIN_VERSION = "1.0"
+private const val ANOTHER_PLUGIN_ID = "anotherPluginId"
+private const val ANOTHER_PLUGIN_VERSION = "2.0"
 
 class LoggingPluginVerificationReportageAggregatorTest {
   private lateinit var loggingPluginVerificationReportageAggregator: LoggingPluginVerificationReportageAggregator
@@ -26,6 +28,9 @@ class LoggingPluginVerificationReportageAggregatorTest {
 
   private val pluginInfo = mockPluginInfo()
   private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
+
+  private val anotherPluginInfo = anotherMockPluginInfo()
+  private val anotherVerificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("231"), JdkVersion("11", null))
 
   @Before
   fun setUp() {
@@ -65,7 +70,48 @@ class LoggingPluginVerificationReportageAggregatorTest {
     assertEquals("Verification reports for $PLUGIN_ID $PLUGIN_VERSION saved to $targetDirectory", logEntry.messagePattern)
   }
 
+  @Test
+  fun `verification results are emitted from multiple plugins`() {
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
+    val targetDirectory = createTempDirectory()
+
+    val anotherDependenciesGraph = DependenciesGraph(
+      verifiedPlugin = DependencyNode(ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_VERSION),
+      vertices = emptyList(),
+      edges = emptyList(),
+      missingDependencies = emptyMap()
+    )
+    val anotherVerificationResult = PluginVerificationResult.Verified(anotherPluginInfo, anotherVerificationTarget, anotherDependenciesGraph)
+    val anotherTargetDirectory = createTempDirectory()
+
+    // run the verifications for the first plugin
+    loggingPluginVerificationReportageAggregator.handleVerificationResult(verificationResult, targetDirectory)
+
+    // run the verifications for another plugin
+    loggingPluginVerificationReportageAggregator.handleVerificationResult(anotherVerificationResult, anotherTargetDirectory)
+
+    // aggregate the reportages for both plugins
+    loggingPluginVerificationReportageAggregator.handleAggregatedReportage()
+
+    assertEquals(2, mockLogger.loggingEvents.size)
+    val logEntry = mockLogger.loggingEvents[0]
+    assertEquals("Verification reports for $PLUGIN_ID $PLUGIN_VERSION saved to $targetDirectory", logEntry.messagePattern)
+
+    val anotherLogEntry = mockLogger.loggingEvents[1]
+    assertEquals("Verification reports for $ANOTHER_PLUGIN_ID $ANOTHER_PLUGIN_VERSION saved to $anotherTargetDirectory", anotherLogEntry.messagePattern)
+  }
+
+
   private fun mockPluginInfo(): PluginInfo =
     object : PluginInfo(PLUGIN_ID, PLUGIN_ID, PLUGIN_VERSION, null, null, null) {}
+
+  private fun anotherMockPluginInfo(): PluginInfo =
+    object : PluginInfo(ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_VERSION, null, null, null) {}
 
 }
