@@ -11,15 +11,16 @@ import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.ResultPrinter
 import java.io.PrintWriter
 import java.nio.file.Files
 
 class HtmlResultPrinter(
   private val verificationTarget: PluginVerificationTarget,
   private val outputOptions: OutputOptions
-) {
+): ResultPrinter {
 
-  fun printResults(results: List<PluginVerificationResult>) {
+  override fun printResults(results: List<PluginVerificationResult>) {
     val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
     PrintWriter(Files.newBufferedWriter(reportHtmlFile.create())).use {
       val htmlBuilder = HtmlBuilder(it)

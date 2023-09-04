@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
+import com.jetbrains.pluginverifier.reporting.LoggingPluginVerificationReportageAggregator
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
@@ -115,7 +116,8 @@ object PluginVerifierMain {
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
     val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
 
-    DirectoryBasedPluginVerificationReportage { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+    val reportageAggregator = LoggingPluginVerificationReportageAggregator()
+    DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
       val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
       val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
         runner.getParametersBuilder(
@@ -134,6 +136,7 @@ object PluginVerifierMain {
       val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
       taskResultsPrinter.printResults(taskResult, outputOptions)
       reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+      reportageAggregator.handleAggregatedReportage()
     }
   }
 
