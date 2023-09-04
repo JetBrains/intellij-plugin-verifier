@@ -317,7 +317,7 @@ Here is the full syntax of the command:
     Specifies which subsystems of IDE should be checked.
     Available options: `all` (default), `android-only`, `without-android`.
 
-* `-ignore-problems (-ip)`
+* `-ignored-problems (-ip)`
 
     A file that contains a list of problems that will be ignored in report. 
     The file must contain lines in form `<plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>`
