@@ -67,8 +67,10 @@ object OptionsParser {
   }
 
   private fun parseOutputFormats(opts: CmdOpts): List<OutputFormat> {
+    if (opts.outputFormats.isExplicitlyEmpty()) {
+      return emptyList()
+    }
     val (exclusions, inclusions) = opts.outputFormats.partition { it.trim().startsWith("-") }
-
 
     val includedFormats = inclusions.mapNotNull {
       try {
@@ -263,4 +265,12 @@ object OptionsParser {
 
     return KeepOnlyProblemsFilter(keepOnlyConditions)
   }
+
+  /**
+   * Indicates that array has a single element -- an empty string.
+   * This is to handle array-like arguments passed from CLI.
+   */
+  private fun Array<String>.isExplicitlyEmpty(): Boolean = size == 1 && first().isEmpty()
+
 }
+

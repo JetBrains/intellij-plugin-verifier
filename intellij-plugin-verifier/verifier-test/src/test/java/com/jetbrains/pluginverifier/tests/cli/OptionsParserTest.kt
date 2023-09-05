@@ -3,7 +3,8 @@ package com.jetbrains.pluginverifier.tests.cli
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputFormat
-import org.junit.Assert.assertEquals
+import com.sampullara.cli.Args
+import org.junit.Assert.*
 import org.junit.Test
 
 class OptionsParserTest {
@@ -58,12 +59,39 @@ class OptionsParserTest {
   }
 
   @Test
-  fun `verification output format is specified and excludes plaintext`() {
-    val opts = CmdOpts(outputFormats = arrayOf("-html", "plain"))
+  fun `verification output format is specified, but empty string is provided to indicate no output formats`() {
+    val args = arrayOf("-verification-reports-formats", "")
+    val opts = CmdOpts()
+    Args.parse(opts, args, false)
+
     val options = OptionsParser.parseOutputOptions(opts)
     with(options) {
-      assertEquals(1, outputFormats.size)
-      assertEquals(listOf(OutputFormat.PLAIN), outputFormats)
+      assertTrue(outputFormats.isEmpty())
     }
   }
+
+  @Test
+  fun `verification output format is specified, but no value is provided`() {
+    val illegalArgumentException = assertThrows(IllegalArgumentException::class.java) {
+      val args = arrayOf("-verification-reports-formats")
+      val opts = CmdOpts()
+      Args.parse(opts, args, false)
+    }
+    assertEquals("Must have a value for non-boolean argument verification-reports-formats", illegalArgumentException.message)
+  }
+
+  @Test
+  fun `no verification output format is specified, so revert to defaults`() {
+    val args = arrayOf("")
+
+    val opts = CmdOpts()
+    Args.parse(opts, args, false)
+
+    val options = OptionsParser.parseOutputOptions(opts)
+    with(options) {
+      assertEquals(2, outputFormats.size)
+      assertEquals(listOf(OutputFormat.PLAIN, OutputFormat.HTML), outputFormats)
+    }
+  }
+
 }
