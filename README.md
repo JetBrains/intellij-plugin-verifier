@@ -324,8 +324,8 @@ Here is the full syntax of the command:
 
 * `-keep-only-problems (-kop)`
 
-    A file that contains patterns of problems that will be reflected in report. All other problems will be ignored.
-    The file must contain lines in form: `<problem_description_regexp_pattern>`
+    A file that contains patterns of problems that will be reflected in report. All other problems will be ignored. Applied to short problem description.
+    The file must contain lines in form: `<plugin_xml_id_regexp_pattern>:<plugin_version_regexp_pattern>:<problem_description_regexp_pattern>`
 
 ## Technical details
 
