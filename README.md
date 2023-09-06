@@ -260,6 +260,9 @@ Here is the full syntax of the command:
 
     * `plain,markdown` will enable console output and the Markdown verification reports.
     * `-plain` will disable console output, but retain the default HTML output.
+    * `""` (literal empty string) will disable all verification report formats. 
+    This will essentially suppress console output, leaving only logging messages.
+    
 
 * `-runtime-dir (-r)`
 

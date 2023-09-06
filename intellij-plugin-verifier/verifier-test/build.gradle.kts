@@ -8,6 +8,8 @@ dependencies {
 
   testImplementation(libs.systemStubs.junit4)
   testImplementation(libs.jimfs)
+
+  testImplementation(sharedLibs.spullara.cliParser)
 }
 
 val prepareMockPlugin by tasks.registering(Copy::class) {
