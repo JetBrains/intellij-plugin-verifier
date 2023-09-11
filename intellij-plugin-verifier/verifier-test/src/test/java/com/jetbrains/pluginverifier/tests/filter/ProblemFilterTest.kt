@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.filtering.KeepOnlyProblemsFilter
 import com.jetbrains.pluginverifier.tests.VerificationRunner
 import com.jetbrains.pluginverifier.tests.findMockIdePath
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -41,7 +41,7 @@ class ProblemFilterTest {
     @Test
     fun `check only problems matching keep-only-problems filter found`() {
         val filterRegex = ".*kotlin.*".toRegex()
-        val keepOnlyProblemsFilter = listOf(KeepOnlyProblemsFilter(listOf(KeepOnlyCondition(filterRegex))))
+        val keepOnlyProblemsFilter = listOf(KeepOnlyProblemsFilter(listOf(KeepOnlyCondition(null, null, filterRegex))))
         val verificationResult = verificationRunner.runPluginVerification(
             ide,
             plugin,
@@ -50,8 +50,15 @@ class ProblemFilterTest {
 
         val compProblemsDescriptions = verificationResult.compatibilityProblems.map { it.shortDescription }
 
-        Assert.assertTrue("Not only expected '$filterRegex' problems found among compatibility problems: $compProblemsDescriptions}",
-            compProblemsDescriptions.all { it.contains(filterRegex) }
+        assertArrayEquals("Compatibility problems by keep-only-filter '$filterRegex' are not as expected",
+            listOf(
+                "Abstract method defaults.kotlin.I.noDefault() : int is not implemented",
+                "Invocation of unresolved method kotlinDefault.KotlinDefault.bar\$default(KotlinDefault, int, int, Object) : void",
+                "Invocation of unresolved method kotlinDefault.KotlinDefault.bar(int) : void",
+                "Invocation of unresolved method kotlinDefault.KotlinDefault.foo\$default(KotlinDefault, int, int, Object) : void",
+                "Invocation of unresolved method kotlinDefault.KotlinDefault.foo(int) : void"
+            ).toTypedArray(),
+            compProblemsDescriptions.sorted().toTypedArray()
         )
     }
 }
