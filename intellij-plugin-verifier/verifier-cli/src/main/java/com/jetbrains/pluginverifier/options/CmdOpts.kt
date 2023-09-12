@@ -70,7 +70,7 @@ open class CmdOpts(
   var keepOnlyProblemsFile: String? = null,
 
   @set:Argument(
-    "suppress-internal-api",
+    "suppress-internal-api-usages",
     description = "Suppress internal API usage checks. Available options: no (default), internal-plugins."
   )
   var suppressInternalApiUsageWarnings: String? = "no"
