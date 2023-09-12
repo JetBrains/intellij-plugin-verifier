@@ -23,7 +23,8 @@ import java.nio.file.Paths
 class CheckPluginParamsBuilder(
   val pluginRepository: PluginRepository,
   val reportage: PluginVerificationReportage,
-  val pluginDetailsCache: PluginDetailsCache
+  val pluginDetailsCache: PluginDetailsCache,
+  private val ideDescriptorParser: IdeDescriptorParser = DefaultIdeDescriptorParser(reportage)
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
@@ -33,11 +34,7 @@ class CheckPluginParamsBuilder(
         "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963"
     }
 
-    val ideDescriptors = freeArgs.drop(1).map {
-      reportage.logVerificationStage("Reading IDE $it")
-      OptionsParser.createIdeDescriptor(it, opts)
-    }
-
+    val ideDescriptors = ideDescriptorParser.parseIdeDescriptors(opts, freeArgs)
     val ideVersions = ideDescriptors.map { it.ideVersion }
     val pluginsSet = PluginsSet()
     // pluginsParsing will modify [pluginsSet] in-place.
@@ -105,4 +102,17 @@ class CheckPluginParamsBuilder(
   }
 
 
+}
+
+fun interface IdeDescriptorParser {
+  fun parseIdeDescriptors(opts: CmdOpts, freeArgs: List<String>): List<IdeDescriptor>
+}
+
+class DefaultIdeDescriptorParser(private val reportage: PluginVerificationReportage,) : IdeDescriptorParser {
+  override fun parseIdeDescriptors(opts: CmdOpts, freeArgs: List<String>): List<IdeDescriptor> {
+    return freeArgs.drop(1).map {
+      reportage.logVerificationStage("Reading IDE $it")
+      OptionsParser.createIdeDescriptor(it, opts)
+    }
+  }
 }
