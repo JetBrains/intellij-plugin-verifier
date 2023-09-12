@@ -93,8 +93,7 @@ class CheckPluginParamsBuilder(
     )
   }
 
-
-  internal val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
+  private val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
     get() = if (suppressInternalApiUsageWarnings?.equals(INTERNAL_PLUGINS_API_USAGE_MODE) == true) {
       IGNORE_IN_INTERNAL_PLUGINS
     } else {
