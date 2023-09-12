@@ -44,8 +44,8 @@ class TemplateWordInPluginName(
 }
 
 class TemplateWordInPluginId(
-  templateWord: String,
-  descriptorPath: String
+  descriptorPath: String,
+  templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The plugin id should not contain the word '$templateWord'."

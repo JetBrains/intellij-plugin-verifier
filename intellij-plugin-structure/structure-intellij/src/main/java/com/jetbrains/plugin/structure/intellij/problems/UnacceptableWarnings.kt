@@ -52,14 +52,14 @@ class StatusBarWidgetFactoryExtensionPointIdMissing(private val implementationCl
     get() = Level.UNACCEPTABLE_WARNING
 
   override val message
-    get() = "The extension point in the <${extensionPointName}> element must have 'id' attribute set with same value " +
-            "returned from the getId() method of the $implementationClassFqn implementation."
+    get() = "The extension point in the <${extensionPointName}> element must have 'id' attribute set with the same " +
+            "value returned from the getId() method of the $implementationClassFqn implementation."
 }
 
-class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "Plugin has no dependencies. Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
+) {
   override val level
     get() = Level.UNACCEPTABLE_WARNING
-
-  override val message
-    get() = "Plugin has no dependencies. Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
 }

@@ -39,9 +39,8 @@ class ReusedDescriptorVerifierTest {
       val p = problem as ReusedDescriptorInMultipleDependencies
       Assert.assertEquals(WARNING, p.level)
       Assert.assertEquals(2, p.dependencies.size)
-      val expectedMessage = "Invalid plugin descriptor 'plugin.xml': " +
-              "Dependencies (2) reuse a config-file attribute value 'reused-config-file': " +
-              "[$reusingDependency1, $reusingDependency2]"
+      val expectedMessage = "Invalid plugin descriptor 'plugin.xml'. Multiple dependencies (2) use the same config-file " +
+                            "attribute value 'reused-config-file': [$reusingDependency1, $reusingDependency2]."
       Assert.assertEquals(expectedMessage, p.message)
     }
   }

@@ -75,6 +75,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     UnexpectedPluginZipStructure::class,
 
     IncorrectPluginFile::class,
+    IncorrectZipOrJarFile::class,
     PluginFileSizeIsTooLarge::class,
     UnableToExtractZip::class,
 

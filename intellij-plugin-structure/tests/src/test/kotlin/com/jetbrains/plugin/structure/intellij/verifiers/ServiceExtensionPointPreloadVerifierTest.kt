@@ -11,9 +11,8 @@ import org.junit.Test
 
 private const val PLUGIN_ID = "com.example.thirdparty"
 private const val PLUGIN_VENDOR = "PluginIndustries s.r.o."
-private const val MESSAGE_TEMPLATE = "Service preloading is deprecated in the <%s> " +
-  "element. Consider removing the 'preload' attribute and migrating to listeners, " +
-  "see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html"
+private const val MESSAGE_TEMPLATE = "Service preloading is deprecated in the <%s> element. Remove the 'preload' " +
+  "attribute and migrate to listeners, see https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html."
 
 class ServiceExtensionPointPreloadVerifierTest {
   private lateinit var verifier: ServiceExtensionPointPreloadVerifier
