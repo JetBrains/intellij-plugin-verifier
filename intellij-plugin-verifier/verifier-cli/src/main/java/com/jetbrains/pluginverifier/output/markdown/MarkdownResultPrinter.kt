@@ -19,11 +19,13 @@ import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import java.io.PrintWriter
 import java.nio.file.Files
 
+private const val REPORT_FILE_NAME = "report.markdown"
+
 class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter, AutoCloseable {
 
   companion object {
     fun create(verificationTarget: PluginVerificationTarget, outputOptions: OutputOptions): MarkdownResultPrinter {
-      val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.markdown")
+      val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve(REPORT_FILE_NAME)
       val writer = PrintWriter(Files.newBufferedWriter(reportHtmlFile.create()))
       return MarkdownResultPrinter(writer)
     }
