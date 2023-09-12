@@ -67,5 +67,11 @@ open class CmdOpts(
     alias = "kop",
     description = "Only the problems matching lines in this file will be reflected in report. The file must contain lines in form: <problem_description_regexp_pattern>"
   )
-  var keepOnlyProblemsFile: String? = null
+  var keepOnlyProblemsFile: String? = null,
+
+  @set:Argument(
+    "suppress-internal-api",
+    description = "Suppress internal API usage checks. Available options: none (default), internal-plugins."
+  )
+  var suppressInternalApiUsageWarnings: String? = "none"
 )

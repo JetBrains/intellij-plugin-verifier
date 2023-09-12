@@ -18,6 +18,8 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.FULL
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_INTERNAL_PLUGINS
 import java.nio.file.Paths
 
 class CheckPluginParamsBuilder(
@@ -84,9 +86,18 @@ class CheckPluginParamsBuilder(
       problemsFilters,
       verificationDescriptors,
       pluginsSet.invalidPluginFiles,
-      opts.excludeExternalBuildClassesSelector
+      opts.excludeExternalBuildClassesSelector,
+      opts.internalApiVerificationMode
     )
   }
+
+
+  internal val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
+    get() = if (suppressInternalApiUsageWarnings?.equals("internal-plugins") == true) {
+      IGNORE_IN_INTERNAL_PLUGINS
+    } else {
+      FULL
+    }
 
   /**
    * Creates the [DependencyFinder] that firstly tries to resolve the dependency among the verified plugins.
@@ -100,8 +111,6 @@ class CheckPluginParamsBuilder(
     val ideDependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return CompositeDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }
-
-
 }
 
 fun interface IdeDescriptorParser {
