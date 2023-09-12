@@ -22,6 +22,8 @@ import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMod
 import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_INTERNAL_PLUGINS
 import java.nio.file.Paths
 
+const val INTERNAL_PLUGINS_API_USAGE_MODE = "internal-plugins"
+
 class CheckPluginParamsBuilder(
   val pluginRepository: PluginRepository,
   val reportage: PluginVerificationReportage,
@@ -93,7 +95,7 @@ class CheckPluginParamsBuilder(
 
 
   internal val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
-    get() = if (suppressInternalApiUsageWarnings?.equals("internal-plugins") == true) {
+    get() = if (suppressInternalApiUsageWarnings?.equals(INTERNAL_PLUGINS_API_USAGE_MODE) == true) {
       IGNORE_IN_INTERNAL_PLUGINS
     } else {
       FULL
