@@ -177,7 +177,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           name = "<name>bla ${templateWord}bla</name>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginName(templateWord, "plugin.xml"), warning)
+      assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
     }
   }
 

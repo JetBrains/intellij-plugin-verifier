@@ -720,7 +720,7 @@ internal class PluginCreator private constructor(
       else -> {
         val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
         if (templateWord != null) {
-          registerProblem(TemplateWordInPluginName(templateWord, descriptorPath))
+          registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
         verifyNewlines("name", name, descriptorPath, ::registerProblem)

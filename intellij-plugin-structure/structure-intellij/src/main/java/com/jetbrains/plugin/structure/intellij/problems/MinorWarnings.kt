@@ -33,8 +33,8 @@ class DefaultChangeNotes(descriptorPath: String) : InvalidDescriptorProblem(
 }
 
 class TemplateWordInPluginName(
-  templateWord: String,
-  descriptorPath: String
+  descriptorPath: String,
+  templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The plugin name should not contain the word '$templateWord'."
