@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 import java.io.PrintWriter
 import java.nio.file.Files
 
-private const val REPORT_FILE_NAME = "report.markdown"
+private const val REPORT_FILE_NAME = "report.md"
 
 class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter, AutoCloseable {
 
