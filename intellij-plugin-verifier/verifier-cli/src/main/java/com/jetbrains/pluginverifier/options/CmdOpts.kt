@@ -71,7 +71,7 @@ open class CmdOpts(
 
   @set:Argument(
     "suppress-internal-api",
-    description = "Suppress internal API usage checks. Available options: none (default), internal-plugins."
+    description = "Suppress internal API usage checks. Available options: no (default), internal-plugins."
   )
-  var suppressInternalApiUsageWarnings: String? = "none"
+  var suppressInternalApiUsageWarnings: String? = "no"
 )
