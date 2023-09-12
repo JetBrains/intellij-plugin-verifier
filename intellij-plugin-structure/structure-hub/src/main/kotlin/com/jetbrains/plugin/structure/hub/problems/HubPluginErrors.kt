@@ -7,31 +7,28 @@ package com.jetbrains.plugin.structure.hub.problems
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 
-class HubIconInvalidUrl(private val iconUrl: String?) : InvalidDescriptorProblem(HubPluginManager.DESCRIPTOR_NAME) {
-
-  override val detailedMessage
-    get() = "icon is not found by $iconUrl"
-
+class HubIconInvalidUrl(iconUrl: String?) : InvalidDescriptorProblem(
+  descriptorPath = HubPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The plugin icon is not found by $iconUrl."
+) {
   override val level
     get() = Level.ERROR
 
 }
 
-class HubDependenciesNotSpecified : InvalidDescriptorProblem(HubPluginManager.DESCRIPTOR_NAME) {
-
-  override val detailedMessage
-    get() = "dependencies are not specified"
-
+class HubDependenciesNotSpecified : InvalidDescriptorProblem(
+  descriptorPath = HubPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "Widget dependencies are not specified."
+) {
   override val level
     get() = Level.ERROR
 
 }
 
-class HubProductsNotSpecified : InvalidDescriptorProblem(HubPluginManager.DESCRIPTOR_NAME) {
-
-  override val detailedMessage
-    get() = "products are not specified"
-
+class HubProductsNotSpecified : InvalidDescriptorProblem(
+  descriptorPath = HubPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "Products compatibility is not specified."
+) {
   override val level
     get() = Level.ERROR
 

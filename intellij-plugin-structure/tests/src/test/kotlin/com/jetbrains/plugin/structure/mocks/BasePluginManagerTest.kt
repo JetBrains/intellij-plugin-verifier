@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
 import java.nio.file.Path

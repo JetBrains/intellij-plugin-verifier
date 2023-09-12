@@ -85,7 +85,7 @@ class ToolboxPluginManager private constructor(private val extractDirectory: Pat
       val icons = loadIconFromDir(pluginDir)
       val iconNames = icons.map { it.fileName }.toSet()
 
-      val fileChecker = FileChecker(descriptor.id)
+      val fileChecker = FileChecker()
       val files = Files.list(pluginDir).toList().mapNotNull { file ->
         val fileName = file.fileName.toString()
         if (file.isFile && fileName !in iconNames && fileChecker.addFile(file)) {

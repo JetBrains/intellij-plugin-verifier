@@ -4,8 +4,6 @@
 
 package com.jetbrains.plugin.structure.base.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-
 abstract class PluginDescriptorResolutionError : PluginProblem() {
   override val level
     get() = Level.ERROR
@@ -13,7 +11,7 @@ abstract class PluginDescriptorResolutionError : PluginProblem() {
 
 class PluginDescriptorIsNotFound(private val descriptorPath: String) : PluginDescriptorResolutionError() {
   override val message
-    get() = "Plugin descriptor '$descriptorPath' is not found"
+    get() = "The plugin descriptor '$descriptorPath' is not found."
 }
 
 class MultiplePluginDescriptors(
@@ -42,6 +40,6 @@ class MultiplePluginDescriptors(
         firstDescriptorPath to firstDescriptorContainingFileName
       }
 
-      return "Found multiple plugin descriptors '$path1' from '$file1' and '$path2' from '$file2'"
+      return "Found multiple plugin descriptors '$path1' from '$file1' and '$path2' from '$file2'."
     }
 }

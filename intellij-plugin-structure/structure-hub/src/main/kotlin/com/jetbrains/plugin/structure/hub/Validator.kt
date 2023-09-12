@@ -5,16 +5,12 @@
 package com.jetbrains.plugin.structure.hub
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.hub.HubPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.hub.bean.HubPluginManifest
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.asSequence
@@ -89,7 +85,7 @@ fun validateHubPluginDirectory(pluginDirectory: Path): PluginCreationFail<HubPlu
   Files.walk(pluginDirectory).use { filesIterator ->
     val maxHubFileNum = Settings.HUB_PLUGIN_MAX_FILES_NUMBER.getAsInt()
     if (filesIterator.asSequence().take(maxHubFileNum + 1).count() > maxHubFileNum) {
-      return PluginCreationFail(HubZipFileTooManyFilesError())
+      return PluginCreationFail(TooManyFiles(maxHubFileNum.toLong()))
     }
     return null
   }

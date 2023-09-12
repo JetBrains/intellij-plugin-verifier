@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.utils.*

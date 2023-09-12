@@ -4,13 +4,15 @@
 
 package com.jetbrains.plugin.structure.teamcity
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager.Companion.DESCRIPTOR_NAME
 import com.jetbrains.plugin.structure.teamcity.beans.TeamcityPluginBean
 import com.jetbrains.plugin.structure.teamcity.problems.ForbiddenWordInPluginName
+
+val PLUGIN_NAME_FORBIDDEN_WORDS = listOf("teamcity", "plugin")
 
 internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginProblem> {
   val problems = arrayListOf<PluginProblem>()
@@ -20,12 +22,12 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   }
 
   val beanDisplayName = bean.info?.displayName
-  if (beanDisplayName == null || beanDisplayName.isBlank()) {
+  if (beanDisplayName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("display-name"))
   } else {
-    val hasForbiddenWords = ForbiddenWordInPluginName.forbiddenWords.any { beanDisplayName.contains(it, ignoreCase = true) }
+    val hasForbiddenWords = PLUGIN_NAME_FORBIDDEN_WORDS.any { beanDisplayName.contains(it, ignoreCase = true) }
     if (hasForbiddenWords) {
-      problems.add(ForbiddenWordInPluginName)
+      problems.add(ForbiddenWordInPluginName(PLUGIN_NAME_FORBIDDEN_WORDS))
     }
   }
   val name = bean.info?.name

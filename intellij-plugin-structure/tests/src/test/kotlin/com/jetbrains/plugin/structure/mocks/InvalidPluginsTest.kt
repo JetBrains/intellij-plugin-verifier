@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -35,7 +34,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `incorrect plugin file type`() {
     val incorrect = temporaryFolder.newFile("incorrect.txt")
-    assertProblematicPlugin(incorrect, listOf(createIncorrectIntellijFileProblem(incorrect.simpleName)))
+    assertProblematicPlugin(incorrect, listOf(IncorrectZipOrJarFile(incorrect.simpleName)))
   }
 
   @Test
@@ -143,7 +142,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         id = "<id>com.example.plugin</id>"
       },
     ).warnings.single()
-    assertEquals(IllegalPluginIdPrefix("com.example.plugin", "com.example"), warning)
+    assertEquals(DefaultPluginIdPrefix("com.example.plugin", "com.example"), warning)
   }
 
   @Test
@@ -178,7 +177,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           name = "<name>bla ${templateWord}bla</name>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
+      assertEquals(TemplateWordInPluginName(templateWord, "plugin.xml"), warning)
     }
   }
 
@@ -597,7 +596,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
       "abracadabra",
-      listOf(UnexpectedDescriptorElements("unexpected element on line 1", "plugin.xml"))
+      listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
     )
   }
 
@@ -672,7 +671,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         productDescriptor = """<product-descriptor code="ABC" release-date="not-date" release-version="not-int"/>"""
       },
       listOf(
-        ReleaseDateWrongFormat,
+        ReleaseDateWrongFormat("plugin.xml"),
         NotNumber("release-version", "plugin.xml")
       )
     )

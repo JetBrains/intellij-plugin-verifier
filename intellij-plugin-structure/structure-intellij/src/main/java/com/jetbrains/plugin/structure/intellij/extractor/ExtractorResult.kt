@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.extractor
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
 sealed class ExtractorResult {
   data class Success(val extractedPlugin: ExtractedPlugin) : ExtractorResult()

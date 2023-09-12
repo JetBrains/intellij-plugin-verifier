@@ -7,10 +7,7 @@ package com.jetbrains.plugin.structure.edu
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile

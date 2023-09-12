@@ -4,48 +4,54 @@
 
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
+import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
-class NoModuleDependencies(private val descriptorPath: String) : PluginProblem() {
+class NoModuleDependencies(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The plugin configuration file does not include any module dependency tags. So, the plugin is " +
+                    "assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. Please note that plugins should " +
+                    "declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality."
+) {
   override val level
     get() = Level.WARNING
 
-  override val message
-    get() = "Plugin descriptor $descriptorPath does not include any module dependency tags. " +
-      "The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. " +
-      "See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
+  override val hint = ProblemSolutionHint(
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
+  )
 }
 
-class DefaultChangeNotes(private val descriptorPath: String) : PluginProblem() {
-
+class DefaultChangeNotes(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The changed-notes parameter contains the default value 'Add change notes here' or 'most HTML tags may be used'."
+) {
   override val level
     get() = Level.WARNING
-
-  override val message
-    get() = "Default value in plugin descriptor $descriptorPath: <change-notes> shouldn't have 'Add change notes here' or 'most HTML tags may be used'"
 }
 
-class TemplateWordInPluginName(private val descriptorPath: String, private val templateWord: String) : PluginProblem() {
-
+class TemplateWordInPluginName(
+  templateWord: String,
+  descriptorPath: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The plugin name should not contain the word '$templateWord'."
+) {
   override val level
     get() = Level.WARNING
-
-  override val message
-    get() = "Plugin name specified in $descriptorPath should not contain the word '$templateWord'"
-
 }
 
-class TemplateWordInPluginId(private val descriptorPath: String, private val templateWord: String) : PluginProblem() {
-
+class TemplateWordInPluginId(
+  templateWord: String,
+  descriptorPath: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The plugin id should not contain the word '$templateWord'."
+) {
   override val level
     get() = Level.WARNING
-
-  override val message
-    get() = "Plugin ID specified in $descriptorPath should not contain '$templateWord'"
-
 }
 
 class OptionalDependencyDescriptorResolutionProblem(
@@ -60,7 +66,7 @@ class OptionalDependencyDescriptorResolutionProblem(
   override val message: String
     get() {
       val descriptorResolutionError = errors.filterIsInstance<PluginDescriptorResolutionError>().firstOrNull()
-      val prefix = "Configuration file '$configurationFile' for optional dependency '$dependencyId'"
+      val prefix = "The configuration file '$configurationFile' for optional dependency '$dependencyId'"
       return if (descriptorResolutionError != null) {
         "$prefix failed to be resolved: ${descriptorResolutionError.message}"
       } else {
@@ -81,7 +87,7 @@ class ModuleDescriptorResolutionProblem(
   override val message: String
     get() {
       val descriptorResolutionError = errors.filterIsInstance<PluginDescriptorResolutionError>().firstOrNull()
-      val prefix = "Configuration file '$configurationFile' for module '$moduleName'"
+      val prefix = "The configuration file '$configurationFile' for module '$moduleName'"
       return if (descriptorResolutionError != null) {
         "$prefix failed to be resolved: ${descriptorResolutionError.message}"
       } else {
@@ -95,7 +101,7 @@ data class DuplicatedDependencyWarning(val dependencyId: String) : PluginProblem
     get() = Level.WARNING
 
   override val message: String
-    get() = "Duplicated dependency on '$dependencyId'"
+    get() = "There is a duplicated dependency on '$dependencyId'. Remove this dependency by updating the plugin.xml file."
 }
 
 class SuperfluousNonOptionalDependencyDeclaration(private val dependencyId: String) : PluginProblem() {
@@ -103,7 +109,9 @@ class SuperfluousNonOptionalDependencyDeclaration(private val dependencyId: Stri
     get() = Level.WARNING
 
   override val message
-    get() = "Dependency declaration <depends optional=\"false\">$dependencyId</dependency> is superfluous. Dependencies are mandatory by default."
+    get() = "Dependency declaration <depends optional=\"false\">$dependencyId</dependency> is superfluous. " +
+            "Dependencies are mandatory by default. Update the plugin.xml file and remove optional=\"false\" attribute " +
+            "from the dependency parameters."
 }
 
 class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId: String) : PluginProblem() {
@@ -111,7 +119,8 @@ class OptionalDependencyConfigFileNotSpecified(private val optionalDependencyId:
     get() = Level.WARNING
 
   override val message
-    get() = "Optional dependency declaration on '$optionalDependencyId' should specify \"config-file\""
+    get() = "Optional dependency declaration on '$optionalDependencyId' should specify \"config-file\". Declare " +
+            "config-file attribute in addition to optional dependency in the plugin.xml file."
 }
 
 class ElementAvailableOnlySinceNewerVersion(
@@ -124,11 +133,12 @@ class ElementAvailableOnlySinceNewerVersion(
     get() = Level.WARNING
 
   override val message
-    get() = "Element <$elementName> is available only since ${availableSinceBuild.asStringWithoutProductCode()} but the plugin can be installed in " +
+    get() = "The <$elementName> element is available only since ${availableSinceBuild.asStringWithoutProductCode()} " +
+            "but the plugin can be installed in " +
       if (pluginUntilBuild != null) {
-        pluginSinceBuild.asStringWithoutProductCode() + "—" + pluginUntilBuild.asStringWithoutProductCode()
+        pluginSinceBuild.asStringWithoutProductCode() + "—" + pluginUntilBuild.asStringWithoutProductCode() + "."
       } else {
-        pluginSinceBuild.asStringWithoutProductCode() + "+"
+        pluginSinceBuild.asStringWithoutProductCode() + "+."
       }
 }
 
@@ -140,31 +150,37 @@ class ElementMissingAttribute(
     get() = Level.WARNING
 
   override val message
-    get() = "Element <$elementName> must specify attribute $attributeName"
+    get() = "The <$elementName> element must specify attribute $attributeName. To define an application-level listener, " +
+            "add the <applicationListeners> section to your plugin.xml along with <topic> and <class> attributes."
 }
 
 
 class SuspiciousUntilBuild(
   private val untilBuild: String
 ) : PluginProblem() {
+  override val hint = ProblemSolutionHint(
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
   override val message: String
-    get() = "Probably incorrect until build value: $untilBuild. If you want your plugin to be compatible with all future IDEs, you can leave this field empty. " +
-      "For detailed info refer to https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+    get() = "The <until-build> '$untilBuild' does not represent the actual build number. If you want your plugin to " +
+            "be compatible with all future IDEs, you can leave this field empty. However, we highly recommend " +
+            "setting it to the latest available IDE version."
 
   override val level
     get() = Level.WARNING
 }
 
-open class IllegalPluginId(private val illegalPluginId: String) : InvalidDescriptorProblem("id") {
-
+class DefaultPluginIdPrefix(
+  pluginId: String,
+  prefix: String
+) : InvalidDescriptorProblem(
+  descriptorPath = "id",
+  detailedMessage = "The plugin ID '$pluginId' has a default prefix '$prefix' that is not allowed."
+) {
   override val level
     get() = Level.WARNING
 
-  override val detailedMessage
-    get() = "Plugin ID '$illegalPluginId' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
-}
-
-class IllegalPluginIdPrefix(private val illegalPluginId: String, private val illegalPrefix: String) : IllegalPluginId(illegalPluginId) {
-  override val detailedMessage
-    get() = "Plugin ID '$illegalPluginId' has an illegal prefix '$illegalPrefix'. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+  override val hint = ProblemSolutionHint(
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
+  )
 }

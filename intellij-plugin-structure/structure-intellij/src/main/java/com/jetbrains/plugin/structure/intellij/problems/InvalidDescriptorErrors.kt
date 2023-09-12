@@ -4,16 +4,19 @@
 
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
+import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class PropertyWithDefaultValue(
   descriptorPath: String,
-  private val property: DefaultProperty,
-  private val value: String
-) : InvalidDescriptorProblem(descriptorPath) {
-
+  property: DefaultProperty,
+  value: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "One of the parameters matches the default value. Please ensure that ${property.propertyName} " +
+                    "is not equal to the default value '$value'."
+) {
   enum class DefaultProperty(val propertyName: String) {
     ID("<id>"),
     NAME("<name>"),
@@ -23,78 +26,82 @@ class PropertyWithDefaultValue(
     DESCRIPTION("<description>")
   }
 
-  override val detailedMessage: String
-    get() = "${property.propertyName} must not be equal to default value: '$value'"
-
   override val level
     get() = Level.ERROR
 }
 
-class InvalidDependencyId(descriptorPath: String, private val invalidPluginId: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "dependency id is invalid: '${invalidPluginId.trim()}' cannot be empty and must not contain new line characters"
-
+class InvalidDependencyId(descriptorPath: String, invalidPluginId: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The dependency ID is invalid. '${invalidPluginId.trim()}' cannot be empty and must not contain " +
+                    "newline characters."
+) {
   override val level
     get() = Level.ERROR
 }
 
-class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "module is empty. It must be specified as <module value=\"my.module\"/>"
-
+class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <module value> parameter is empty. It must be specified as <module value=\"my.module\"/>."
+) {
   override val level
     get() = Level.ERROR
 }
 
-class SinceBuildNotSpecified(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "since build is not specified"
-
+class SinceBuildNotSpecified(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> parameter is not specified in the plugin.xml file."
+) {
   override val level
     get() = Level.ERROR
 }
 
 class InvalidSinceBuild(
   descriptorPath: String,
-  private val sinceBuild: String
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "invalid since build: $sinceBuild"
-
+  sinceBuild: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> parameter ($sinceBuild) format is invalid. Ensure it is greater than <130>, " +
+                    "it doesn't end with a dot star suffix <.*> and represents the actual build numbers."
+) {
   override val level
     get() = Level.ERROR
 }
 
 class InvalidUntilBuild(
   descriptorPath: String,
-  private val untilBuild: String
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "invalid until build: $untilBuild"
-
+  untilBuild: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <until-build> parameter ($untilBuild) format is invalid. Ensure it represents the actual build numbers."
+) {
   override val level
     get() = Level.ERROR
 }
 
 class SinceBuildGreaterThanUntilBuild(
   descriptorPath: String,
-  private val sinceBuild: IdeVersion,
-  private val untilBuild: IdeVersion
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "since build $sinceBuild is greater than until build $untilBuild"
-
+  sinceBuild: IdeVersion,
+  untilBuild: IdeVersion
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> parameter ($sinceBuild) must not be greater than the <until-build> parameter ($untilBuild)."
+) {
   override val level
     get() = Level.ERROR
 }
 
 class ErroneousSinceBuild(
   descriptorPath: String,
-  val sinceBuild: IdeVersion
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "since build '$sinceBuild' must match the multi-part build number format '<branch>.<build_number>.<version>', for example '182.4132.789'. " +
-      "For detailed info refer to https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  sinceBuild: IdeVersion
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> parameter ($sinceBuild) does not match the multi-part build number format " +
+                    "<branch>.<build_number>.<version>, for example, '182.4132.789'."
+) {
+  override val hint = ProblemSolutionHint(
+    example = "since-build=\"182.4132.789\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
 
   override val level: Level
     get() = Level.ERROR
@@ -102,84 +109,73 @@ class ErroneousSinceBuild(
 
 class ErroneousUntilBuild(
   descriptorPath: String,
-  val untilBuild: IdeVersion
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "until build '$untilBuild' must match the multi-part build number format, for example '182.4132.789' or '182.*'. " +
-      "For detailed info refer to https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  untilBuild: IdeVersion
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <until-build> parameter ($untilBuild) does not match the multi-part build number format " +
+                    "<branch>.<build_number>.<version>, for example, '182.4132.789'."
+) {
+  override val hint = ProblemSolutionHint(
+    example = "until-build=\"182.4132.789\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
 
   override val level: Level
     get() = Level.ERROR
 }
 
-class ProductCodePrefixInBuild(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "'since-build' and 'until-build' shouldn't contain product code prefix"
-
+class ProductCodePrefixInBuild(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> and <until-build> parameters must not contain product code prefix."
+) {
   override val level: Level
     get() = Level.ERROR
 }
 
-class XIncludeResolutionErrors(descriptorPath: String, private val details: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "failed to resolve <xi:include>. ${details.capitalize()}"
-
+class XIncludeResolutionErrors(descriptorPath: String, error: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "Failed to resolve <xi:include> statement in the plugin.xml file. ${error.capitalize()}."
+) {
   override val level
     get() = Level.ERROR
 }
 
-class TooLongPropertyValue(
+class ReleaseDateWrongFormat(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-date> parameter must be of YYYYMMDD format (type: integer)."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
+class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The theme description file cannot be found by the path '$themePath'. Ensure the theme description " +
+                    "file is present and follows the JSON open-standard file format of key-value pairs."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
+class UnableToReadTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The theme description file cannot be read by the path '$themePath'. Ensure the theme description " +
+                    "file is present and follows the JSON open-standard file format of key-value pairs."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
+class OptionalDependencyDescriptorCycleProblem(
   descriptorPath: String,
-  private val propertyName: String,
-  private val propertyValueLength: Int,
-  private val maxLength: Int
-) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "value of property '$propertyName' is too long. Its length is $propertyValueLength which is more than maximum $maxLength characters long"
-
+  cyclicPath: List<String>
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The declared optional dependencies configuration files contain cycle: " +
+          cyclicPath.joinToString(separator = " -> ", postfix = ".")
+) {
   override val level
     get() = Level.ERROR
-}
-
-class DefaultDescription(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
-
-  override val level
-    get() = Level.ERROR
-
-  override val detailedMessage
-    get() = "value of <description> must not have default 'Enter short description for your plugin here.' or 'most HTML tags may be used'"
-}
-
-object ReleaseDateWrongFormat : PluginProblem() {
-  override val level
-    get() = Level.ERROR
-
-  override val message
-    get() = "Property <release-date> must be of YYYYMMDD format"
-}
-
-class UnableToFindTheme(descriptorPath: String, private val themePath: String) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "unable to find theme by path '$themePath'"
-
-  override val level
-    get() = Level.ERROR
-}
-
-class UnableToReadTheme(descriptorPath: String, private val themePath: String, private val details: String?) : InvalidDescriptorProblem(descriptorPath) {
-  override val detailedMessage: String
-    get() = "unable to read theme by path '$themePath'" + (details?.let { ": $details" } ?: "")
-
-  override val level
-    get() = Level.ERROR
-}
-
-class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private val cyclicPath: List<String>) : InvalidDescriptorProblem(descriptorPath) {
-  override val level
-    get() = Level.ERROR
-
-  override val detailedMessage: String
-    get() = "optional dependencies configuration files contain cycle: " + cyclicPath.joinToString(separator = " -> ")
 }
 
 /**
@@ -193,10 +189,10 @@ class OptionalDependencyDescriptorCycleProblem(descriptorPath: String, private v
  * ```
  *
  */
-class OptionalDependencyConfigFileIsEmpty(private val optionalDependencyId: String, descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+class OptionalDependencyConfigFileIsEmpty(optionalDependencyId: String, descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "Optional dependency declaration on '$optionalDependencyId' cannot have empty \"config-file\"."
+) {
   override val level
     get() = Level.ERROR
-
-  override val detailedMessage: String
-    get() = "Optional dependency declaration on '$optionalDependencyId' cannot have empty \"config-file\""
 }

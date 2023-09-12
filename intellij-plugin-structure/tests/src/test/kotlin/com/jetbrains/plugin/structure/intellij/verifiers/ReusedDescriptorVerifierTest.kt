@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.WARNING
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReusedDescriptorInMultipleDependencies
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import org.junit.Assert

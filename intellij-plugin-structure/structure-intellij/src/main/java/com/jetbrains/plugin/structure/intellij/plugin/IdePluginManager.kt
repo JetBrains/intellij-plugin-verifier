@@ -11,7 +11,6 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extract
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
-import com.jetbrains.plugin.structure.intellij.problems.createIncorrectIntellijFileProblem
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -337,7 +336,7 @@ class IdePluginManager private constructor(
   }
 
   private fun getInvalidPluginFileCreator(pluginFileName: String, descriptorPath: String): PluginCreator {
-    return createInvalidPlugin(pluginFileName, descriptorPath, createIncorrectIntellijFileProblem(pluginFileName))
+    return createInvalidPlugin(pluginFileName, descriptorPath, IncorrectZipOrJarFile(pluginFileName))
   }
 
   companion object {
