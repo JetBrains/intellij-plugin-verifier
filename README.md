@@ -158,7 +158,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 #### Specific options
 
 * `-suppress-internal-api-usages` will suppress internal API usages from JetBrains plugins.
-This option is used by JetBrains MarketPlace by default. 
+This option is used by JetBrains Marketplace by default. 
 
     Allowed values: 
  
