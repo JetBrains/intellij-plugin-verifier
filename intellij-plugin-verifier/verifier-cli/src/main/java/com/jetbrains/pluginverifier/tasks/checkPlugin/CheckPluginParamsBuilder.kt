@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRep
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.FULL
-import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_INTERNAL_PLUGINS
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS
 import java.nio.file.Paths
 
 const val JETBRAINS_PLUGINS_API_USAGE_MODE = "jetbrains-plugins"
@@ -95,7 +95,7 @@ class CheckPluginParamsBuilder(
 
   private val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
     get() = if (suppressInternalApiUsageWarnings?.equals(JETBRAINS_PLUGINS_API_USAGE_MODE) == true) {
-      IGNORE_IN_INTERNAL_PLUGINS
+      IGNORE_IN_JETBRAINS_PLUGINS
     } else {
       FULL
     }

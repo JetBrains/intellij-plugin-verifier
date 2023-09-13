@@ -47,7 +47,7 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
   }
 
   private val CheckPluginParams.resolveApiUsageFilters: List<ApiUsageFilter>
-    get() = if (internalApiVerificationMode == InternalApiVerificationMode.IGNORE_IN_INTERNAL_PLUGINS) {
+    get() = if (internalApiVerificationMode == InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS) {
       listOf(InternalApiUsageFilter())
     } else {
       emptyList()

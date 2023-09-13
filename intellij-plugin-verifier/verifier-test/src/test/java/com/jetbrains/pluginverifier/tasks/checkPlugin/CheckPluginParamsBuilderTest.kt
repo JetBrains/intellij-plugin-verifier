@@ -42,6 +42,6 @@ class CheckPluginParamsBuilderTest {
     val params = CheckPluginParamsBuilder(pluginRepository, pluginVerificationReportage, pluginDetailsCache, ideDescriptorParser)
       .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))
 
-    assertEquals(InternalApiVerificationMode.IGNORE_IN_INTERNAL_PLUGINS, params.internalApiVerificationMode)
+    assertEquals(InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS, params.internalApiVerificationMode)
   }
 }
