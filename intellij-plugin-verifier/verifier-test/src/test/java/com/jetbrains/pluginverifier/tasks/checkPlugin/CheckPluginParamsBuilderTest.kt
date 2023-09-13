@@ -31,7 +31,7 @@ class CheckPluginParamsBuilderTest {
   @Test
   fun `internal API switch is parsed`() {
     val cmdOpts = CmdOpts().apply {
-      suppressInternalApiUsageWarnings = INTERNAL_PLUGINS_API_USAGE_MODE
+      suppressInternalApiUsageWarnings = JETBRAINS_PLUGINS_API_USAGE_MODE
     }
 
     val ideDescriptorParser = IdeDescriptorParser { _, _ -> emptyList() }
