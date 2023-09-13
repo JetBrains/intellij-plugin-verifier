@@ -18,12 +18,17 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.FULL
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS
 import java.nio.file.Paths
+
+const val JETBRAINS_PLUGINS_API_USAGE_MODE = "jetbrains-plugins"
 
 class CheckPluginParamsBuilder(
   val pluginRepository: PluginRepository,
   val reportage: PluginVerificationReportage,
-  val pluginDetailsCache: PluginDetailsCache
+  val pluginDetailsCache: PluginDetailsCache,
+  private val ideDescriptorParser: IdeDescriptorParser = DefaultIdeDescriptorParser(reportage)
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
@@ -33,11 +38,7 @@ class CheckPluginParamsBuilder(
         "java -jar verifier.jar check-plugin #14986 ~/EAPs/idea-IU-117.963"
     }
 
-    val ideDescriptors = freeArgs.drop(1).map {
-      reportage.logVerificationStage("Reading IDE $it")
-      OptionsParser.createIdeDescriptor(it, opts)
-    }
-
+    val ideDescriptors = ideDescriptorParser.parseIdeDescriptors(opts, freeArgs)
     val ideVersions = ideDescriptors.map { it.ideVersion }
     val pluginsSet = PluginsSet()
     // pluginsParsing will modify [pluginsSet] in-place.
@@ -87,9 +88,17 @@ class CheckPluginParamsBuilder(
       problemsFilters,
       verificationDescriptors,
       pluginsSet.invalidPluginFiles,
-      opts.excludeExternalBuildClassesSelector
+      opts.excludeExternalBuildClassesSelector,
+      opts.internalApiVerificationMode
     )
   }
+
+  private val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
+    get() = if (suppressInternalApiUsageWarnings?.equals(JETBRAINS_PLUGINS_API_USAGE_MODE) == true) {
+      IGNORE_IN_JETBRAINS_PLUGINS
+    } else {
+      FULL
+    }
 
   /**
    * Creates the [DependencyFinder] that firstly tries to resolve the dependency among the verified plugins.
@@ -103,6 +112,17 @@ class CheckPluginParamsBuilder(
     val ideDependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
     return CompositeDependencyFinder(listOf(localFinder, ideDependencyFinder))
   }
+}
 
+fun interface IdeDescriptorParser {
+  fun parseIdeDescriptors(opts: CmdOpts, freeArgs: List<String>): List<IdeDescriptor>
+}
 
+class DefaultIdeDescriptorParser(private val reportage: PluginVerificationReportage,) : IdeDescriptorParser {
+  override fun parseIdeDescriptors(opts: CmdOpts, freeArgs: List<String>): List<IdeDescriptor> {
+    return freeArgs.drop(1).map {
+      reportage.logVerificationStage("Reading IDE $it")
+      OptionsParser.createIdeDescriptor(it, opts)
+    }
+  }
 }

@@ -16,7 +16,8 @@ class CheckPluginParams(
   val problemsFilters: List<ProblemsFilter>,
   val verificationDescriptors: List<PluginVerificationDescriptor>,
   val invalidPluginFiles: List<InvalidPluginFile>,
-  val excludeExternalBuildClassesSelector: Boolean
+  val excludeExternalBuildClassesSelector: Boolean,
+  val internalApiVerificationMode: InternalApiVerificationMode = InternalApiVerificationMode.FULL
 ) : TaskParameters {
 
   override val presentableText
@@ -31,4 +32,16 @@ class CheckPluginParams(
     ideDescriptors.forEach { it.closeLogged() }
   }
 
+}
+
+enum class InternalApiVerificationMode {
+  /**
+   * Full verification of internal API usages for all plugins.
+   */
+  FULL,
+
+  /**
+   * JetBrains plugins that use internal APIs will not be reported.
+   */
+  IGNORE_IN_JETBRAINS_PLUGINS
 }

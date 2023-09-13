@@ -6,6 +6,8 @@ package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
+import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -33,7 +35,8 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
           problemsFilters,
           pluginDetailsCache,
           listOf(DynamicallyLoadedFilter()),
-          excludeExternalBuildClassesSelector
+          excludeExternalBuildClassesSelector,
+          parameters.resolveApiUsageFilters
         )
       }
 
@@ -43,4 +46,10 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
     }
   }
 
+  private val CheckPluginParams.resolveApiUsageFilters: List<ApiUsageFilter>
+    get() = if (internalApiVerificationMode == InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS) {
+      listOf(InternalApiUsageFilter())
+    } else {
+      emptyList()
+    }
 }

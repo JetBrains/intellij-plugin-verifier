@@ -149,10 +149,21 @@ This command is used to check one or more plugins against one or more IDEs ([opt
         [-team-city | -tc ]
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
+        [-suppress-internal-api-usages no|jetbrains-plugins]
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
 `<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
+
+#### Specific options
+
+* `-suppress-internal-api-usages` will suppress internal API usages from JetBrains plugins.
+This option is used by JetBrains Marketplace by default. 
+
+    Allowed values: 
+ 
+  * `no`: all internal API usages will be reported. This is the default value.
+  * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.  
 
 #### Examples
 
