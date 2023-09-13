@@ -7,9 +7,12 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 - Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981)) 
+- Add command-line option to suppress internal API usages by internal plugins. ([#999](https://github.com/JetBrains/intellij-plugin-verifier/pull/999)) 
+- Add plugin pattern possibility for -keep-only-problems filter  [#995](https://github.com/JetBrains/intellij-plugin-verifier/pull/995) 
 
 ### Changed
 
+- Show verification report directory at the end of verification in CLI ([#991](https://github.com/JetBrains/intellij-plugin-verifier/pull/991))
 - Upgrade dependencies
 
 ## v1.303 - 2023-08-08
