@@ -41,7 +41,7 @@ enum class InternalApiVerificationMode {
   FULL,
 
   /**
-   * Internal plugins that use internal APIs will not be reported.
+   * JetBrains plugins that use internal APIs will not be reported.
    */
   IGNORE_IN_JETBRAINS_PLUGINS
 }
