@@ -14,6 +14,8 @@ data class ToolboxPluginDescriptor(
   val id: String? = null,
   @JsonProperty("version")
   val version: String? = null,
+  @JsonProperty("apiVersion")
+  val apiVersion: String? = null,
   @JsonProperty("compatibleVersionRange")
   val compatibleVersionRange: ToolboxVersionRange? = null,
   @JsonProperty("meta")
@@ -51,41 +53,39 @@ data class ToolboxPluginDescriptor(
       problems.add(PropertyNotSpecified("vendor"))
     }
 
-    when {
-      compatibleVersionRange == null -> {
-        problems.add(PropertyNotSpecified("compatibleVersionRange"))
+    if (apiVersion.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified("apiVersion"))
+    } else {
+      val apiSemver = parseVersionOrNull(apiVersion)
+      if (apiSemver == null) {
+        problems.add(ToolboxInvalidVersion("apiVersion", apiVersion))
+      } else {
+        problems.addAll(validateVersion("apiVersion", apiSemver))
       }
+    }
 
-      compatibleVersionRange.from.isNullOrBlank() -> {
+    if (compatibleVersionRange != null) {
+      val fromSemver = if (compatibleVersionRange.from.isNullOrBlank()) {
         problems.add(PropertyNotSpecified("compatibleVersionRange.from"))
+        null
+      } else {
+        val fromParsed = parseVersionOrNull(compatibleVersionRange.from)
+        if (fromParsed == null) {
+          problems.add(ToolboxInvalidVersion("from", compatibleVersionRange.from))
+        } else {
+          problems.addAll(validateVersion("from", fromParsed))
+        }
+        fromParsed
       }
 
-      compatibleVersionRange.to.isNullOrBlank() -> {
-        problems.add(PropertyNotSpecified("compatibleVersionRange.to"))
-      }
-
-      else -> {
-        val fromSemver = parseVersionOrNull(compatibleVersionRange.from)
-        val toSemver = parseVersionOrNull(compatibleVersionRange.to)
-        when {
-          fromSemver == null -> {
-            problems.add(ToolboxInvalidVersion("from", compatibleVersionRange.from))
-          }
-
-          toSemver == null -> {
-            problems.add(ToolboxInvalidVersion("to", compatibleVersionRange.to))
-          }
-
-          fromSemver.isGreaterThan(toSemver) -> {
+      if (!compatibleVersionRange.to.isNullOrBlank()) {
+        val toParsed = parseVersionOrNull(compatibleVersionRange.to)
+        if (toParsed == null) {
+          problems.add(ToolboxInvalidVersion("to", compatibleVersionRange.to))
+        } else {
+          problems.addAll(validateVersion("to", toParsed))
+          if (fromSemver != null && compatibleVersionRange.from != null && fromSemver.isGreaterThan(toParsed)) {
             problems.add(ToolboxInvalidVersionRange(compatibleVersionRange.from, compatibleVersionRange.to))
-          }
-
-          else -> {
-            val fromVersionProblems = validateVersion("from", fromSemver)
-            problems.addAll(fromVersionProblems)
-            if (fromVersionProblems.isEmpty()) {
-              problems.addAll(validateVersion("to", toSemver))
-            }
           }
         }
       }
@@ -130,7 +130,9 @@ data class ToolboxMeta(
   @JsonProperty("description")
   val description: String? = null,
   @JsonProperty("vendor")
-  val vendor: String? = null
+  val vendor: String? = null,
+  @JsonProperty("url")
+  val url: String? = null,
 )
 
 data class ToolboxVersionRange(
