@@ -5,9 +5,11 @@
 package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_FAIL
+import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_PASS
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import java.io.PrintWriter
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
@@ -91,8 +93,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
 
     when (val dynamicPluginStatus = dynamicPluginStatus) {
-      is DynamicPluginStatus.MaybeDynamic -> appendLine("${INDENT}Plugin can probably be enabled or disabled without IDE restart")
-      is DynamicPluginStatus.NotDynamic -> appendLine("${INDENT}Plugin probably cannot be enabled or disabled without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+      is DynamicPluginStatus.MaybeDynamic -> appendLine(INDENT + DYNAMIC_PLUGIN_PASS)
+      is DynamicPluginStatus.NotDynamic -> appendLine(INDENT + DYNAMIC_PLUGIN_FAIL + ": " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
       null -> Unit
     }
 
