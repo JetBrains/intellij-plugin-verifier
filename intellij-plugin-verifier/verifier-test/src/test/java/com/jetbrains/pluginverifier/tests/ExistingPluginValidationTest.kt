@@ -8,26 +8,23 @@ import com.jetbrains.plugin.structure.intellij.problems.DelegatingPluginCreation
 import com.jetbrains.plugin.structure.intellij.problems.ExistingPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.slf4j.LoggerFactory
 
 class ExistingPluginValidationTest : BasePluginTest() {
   @Test
   fun `plugin is not built due to missing ID but such problem is filtered`() {
-    val header = header("")
+    val ideaPlugin = ideaPlugin(pluginId = "")
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = object: DelegatingPluginCreationResultResolver(delegateResolver) {
       private val logger = LoggerFactory.getLogger("verification.structure")
 
       override fun doResolve(plugin: IdePlugin, problems: List<PluginProblem>): ResolutionResult {
-        return if (problems.isEmpty()) {
-          ResolutionResult.Resolved(PluginCreationSuccess(plugin, problems))
-        } else {
-          problems.forEach {
-            logger.info("Plugin problem will be ignored by the problem resolver: $it")
-          }
-          ResolutionResult.Resolved(PluginCreationSuccess(plugin, emptyList()))
+        problems.forEach {
+          logger.info("Plugin problem will be ignored by the problem resolver: $it")
         }
+        return ResolutionResult.Resolved(PluginCreationSuccess(plugin, emptyList()))
       }
     }
 
@@ -36,18 +33,18 @@ class ExistingPluginValidationTest : BasePluginTest() {
         file("plugin.xml") {
           """
             <idea-plugin>
-              $header
+              $ideaPlugin
             </idea-plugin>
           """
         }
       }
     }
-    Assert.assertTrue(result is PluginCreationSuccess)
+    assertTrue(result is PluginCreationSuccess)
   }
 
   @Test
   fun `plugin is not built due to unsupported prefix ID but such problem is filtered`() {
-    val header = header("com.example")
+    val header = ideaPlugin("com.example")
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = ExistingPluginCreationResultResolver(delegateResolver)
 
@@ -62,12 +59,12 @@ class ExistingPluginValidationTest : BasePluginTest() {
         }
       }
     }
-    Assert.assertTrue(result is PluginCreationSuccess)
+    assertTrue(result is PluginCreationSuccess)
   }
 
   @Test
   fun `plugin is not built due to two problems, one is filtered`() {
-    val header = header("com.example", "")
+    val header = ideaPlugin("com.example", "")
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = ExistingPluginCreationResultResolver(delegateResolver)
 
@@ -82,12 +79,12 @@ class ExistingPluginValidationTest : BasePluginTest() {
         }
       }
     }
-    Assert.assertTrue(result is PluginCreationFail)
+    assertTrue(result is PluginCreationFail)
     val pluginCreationFail = result as PluginCreationFail
     Assert.assertEquals(1, pluginCreationFail.errorsAndWarnings.size)
   }
 
-  private fun header(pluginId: String = "someid", pluginName: String = "someName") = """
+  private fun ideaPlugin(pluginId: String = "someid", pluginName: String = "someName") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>someVersion</version>
