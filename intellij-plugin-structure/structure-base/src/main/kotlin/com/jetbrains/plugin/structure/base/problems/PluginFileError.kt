@@ -28,7 +28,7 @@ class IncorrectZipOrJarFile(
 
 class UnableToExtractZip : PluginFileError() {
   override val message
-    get() = "The plugin archive file cannot be extracted: please use Gradle or Plugin DevKit to build the plugin distribution."
+    get() = "The plugin archive file cannot be extracted."
 }
 
 class PluginFileSizeIsTooLarge(private val sizeLimit: Long) : PluginFileError() {
