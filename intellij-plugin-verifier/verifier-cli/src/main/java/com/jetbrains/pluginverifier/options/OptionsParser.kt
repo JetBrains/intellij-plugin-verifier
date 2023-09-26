@@ -112,6 +112,15 @@ object OptionsParser {
     return IdeDescriptor.create(idePath, defaultJdkPath, null)
   }
 
+  fun createPluginParsingConfiguration(opts: CmdOpts): PluginParsingConfiguration {
+     val submissionType = when (opts.submissionType) {
+      "existing" -> SubmissionType.EXISTING
+      "new" -> SubmissionType.NEW
+      else -> SubmissionType.NEW
+    }
+    return PluginParsingConfiguration(submissionType)
+  }
+
   private val ideLatestRegexp = Regex("\\[latest(-([A-Z]+))?]")
   private val ideLatestReleaseRegexp = Regex("\\[latest-release(-([A-Z]+))?]")
 

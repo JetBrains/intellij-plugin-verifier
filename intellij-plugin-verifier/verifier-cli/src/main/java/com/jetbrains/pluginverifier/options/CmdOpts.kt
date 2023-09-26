@@ -73,5 +73,12 @@ open class CmdOpts(
     "suppress-internal-api-usages",
     description = "Suppress internal API usage checks. Available options: no (default), jetbrains-plugins."
   )
-  var suppressInternalApiUsageWarnings: String? = "no"
+  var suppressInternalApiUsageWarnings: String? = "no",
+
+  @set:Argument(
+  "submission-type",
+  description = "Suppress internal API usage checks. Available options: no (default), jetbrains-plugins."
+  )
+  var submissionType: String? = "new"
+
 )
