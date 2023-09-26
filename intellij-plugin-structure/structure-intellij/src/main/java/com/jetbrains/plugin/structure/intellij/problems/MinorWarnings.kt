@@ -26,7 +26,7 @@ class NoModuleDependencies(descriptorPath: String) : InvalidDescriptorProblem(
 
 class DefaultChangeNotes(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The changed-notes parameter contains the default value 'Add change notes here' or 'most HTML tags may be used'."
+  detailedMessage = "The change-notes parameter contains the default value 'Add change notes here' or 'most HTML tags may be used'."
 ) {
   override val level
     get() = Level.WARNING
