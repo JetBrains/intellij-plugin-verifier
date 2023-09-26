@@ -9,6 +9,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -26,7 +29,8 @@ import java.nio.file.Paths
 class PluginsParsing(
   private val pluginRepository: PluginRepository,
   private val reportage: PluginVerificationReportage,
-  private val pluginsSet: PluginsSet
+  private val pluginsSet: PluginsSet,
+  private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
 
   /**
@@ -207,7 +211,9 @@ class PluginsParsing(
     }
 
     reportage.logVerificationStage("Reading plugin to check from $pluginFile")
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile, validateDescriptor)
+    val pluginCreationResult = IdePluginManager
+      .createManager()
+      .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver)
     with(pluginCreationResult) {
       when (this) {
         is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
@@ -218,5 +224,15 @@ class PluginsParsing(
       }
     }
   }
+
+  private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
+    get() {
+      val defaultResolver = IntelliJPluginCreationResultResolver()
+      return if (pluginSubmissionType == SubmissionType.EXISTING) {
+        LevelRemappingPluginCreationResultResolver(defaultResolver)
+      } else {
+        defaultResolver
+      }
+    }
 
 }
