@@ -200,3 +200,11 @@ class OptionalDependencyConfigFileIsEmpty(private val optionalDependencyId: Stri
   override val detailedMessage: String
     get() = "Optional dependency declaration on '$optionalDependencyId' cannot have empty \"config-file\""
 }
+
+class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(descriptorPath) {
+  override val level
+    get() = Level.ERROR
+
+  override val detailedMessage
+    get() = "Plugin has no dependencies. Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
+}
