@@ -17,27 +17,27 @@ class PluginZipIsEmpty : PluginFileError() {
 class PluginZipContainsUnknownFile(private val fileName: String) : PluginFileError() {
   override val message
     get() = "The plugin archive file contains an unexpected file '$fileName'. It must contain a directory. " +
-            "The plugin .jar file should be placed in the </lib> folder within the plugin's root directory, " +
+            "The plugin .jar file should be placed in the 'lib' folder within the plugin's root directory, " +
             "along with all the required bundled libraries."
 }
 
 class PluginZipContainsSingleJarInRoot(private val fileName: String) : PluginFileError() {
   override val message
     get() = "The plugin archive file contains a single .jar file in the root folder '$fileName. The plugin .jar file " +
-            "should be placed in the </lib> folder within the plugin's root directory, along with all the required " +
+            "should be placed in the 'lib' folder within the plugin's root directory, along with all the required " +
             "bundled libraries. "
 }
 
 class UnexpectedPluginZipStructure : PluginFileError() {
   override val message
-    get() = "Unexpected plugin archive file structure. The plugin .jar file should be placed in the </lib> folder " +
+    get() = "Unexpected plugin archive file structure. The plugin .jar file should be placed in the 'lib' folder " +
             "within the plugin's root directory, along with all the required bundled libraries."
 }
 
 class PluginZipContainsMultipleFiles(private val fileNames: List<String>) : PluginFileError() {
   override val message
     get() = "The plugin root directory must not contain multiple files: ${fileNames.joinToString()}. The plugin .jar " +
-            "file should be placed in the </lib> folder within the plugin's root directory, along with all the " +
+            "file should be placed in the 'lib' folder within the plugin's root directory, along with all the " +
             "required bundled libraries."
 }
 
@@ -48,5 +48,5 @@ class UnableToReadPluginFile(private val reason: String) : PluginFileError() {
 
 class PluginLibDirectoryIsEmpty : PluginFileError() {
   override val message
-    get() = "The <lib> directory must not be empty. Ensure that the libraries are defined correctly."
+    get() = "The 'lib' directory must not be empty. Ensure that the libraries are defined correctly."
 }

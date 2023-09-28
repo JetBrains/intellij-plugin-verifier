@@ -159,7 +159,7 @@ class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDesc
 
 class UnableToReadTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The theme description file cannot be read by the path '$themePath'. Ensure the theme description " +
+  detailedMessage = "The theme description file cannot be read from the path '$themePath'. Ensure the theme description " +
                     "file is present and follows the JSON open-standard file format of key-value pairs."
 ) {
   override val level
@@ -171,7 +171,7 @@ class OptionalDependencyDescriptorCycleProblem(
   cyclicPath: List<String>
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The declared optional dependencies configuration files contain cycle: " +
+  detailedMessage = "The declared optional dependencies configuration files contain a cycle: " +
           cyclicPath.joinToString(separator = " -> ", postfix = ".")
 ) {
   override val level
