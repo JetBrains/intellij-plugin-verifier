@@ -17,7 +17,7 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     return when (val pluginCreationResult = delegatedResolver.resolve(plugin, problems)) {
       is PluginCreationSuccess -> remapSuccess(pluginCreationResult)
-      is PluginCreationFail -> remapFailure(pluginCreationResult)
+      is PluginCreationFail -> remapFailure(plugin, pluginCreationResult)
     }
   }
 
@@ -27,9 +27,14 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
     }
   }
 
-  private fun remapFailure(pluginCreationResult: PluginCreationFail<IdePlugin>): PluginCreationResult<IdePlugin> {
+  private fun remapFailure(plugin: IdePlugin, pluginCreationResult: PluginCreationFail<IdePlugin>): PluginCreationResult<IdePlugin> {
     return with(pluginCreationResult) {
-      copy(errorsAndWarnings = remapErrorsAndWarnings(this.errorsAndWarnings))
+      val remappedErrorsAndWarnings = remapErrorsAndWarnings(errorsAndWarnings)
+      if (remappedErrorsAndWarnings.hasNoErrors()) {
+        return PluginCreationSuccess(plugin, remappedErrorsAndWarnings)
+      } else {
+        copy(errorsAndWarnings = remapErrorsAndWarnings(this.errorsAndWarnings))
+      }
     }
   }
 
@@ -55,5 +60,9 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
 
   override fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem {
     return remapPluginProblemLevel(problem)
+  }
+
+  private fun List<PluginProblem>.hasNoErrors(): Boolean = none {
+    it.level == PluginProblem.Level.ERROR
   }
 }
