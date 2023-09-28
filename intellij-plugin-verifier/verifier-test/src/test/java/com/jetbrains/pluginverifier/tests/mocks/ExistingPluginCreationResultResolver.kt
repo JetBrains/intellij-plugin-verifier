@@ -1,7 +1,10 @@
-package com.jetbrains.plugin.structure.intellij.problems
+package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.problems.DelegatingPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
