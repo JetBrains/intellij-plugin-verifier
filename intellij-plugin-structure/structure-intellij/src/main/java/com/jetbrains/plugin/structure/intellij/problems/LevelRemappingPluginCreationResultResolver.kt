@@ -52,4 +52,8 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
     }
     return pluginProblem
   }
+
+  override fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem {
+    return remapPluginProblemLevel(problem)
+  }
 }

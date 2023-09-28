@@ -18,6 +18,8 @@ interface PluginCreationResultResolver {
   fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin>
 
   fun isError(problem: PluginProblem): Boolean = problem.level == ERROR
+
+  fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem = problem
 }
 
 /**
