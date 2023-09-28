@@ -170,12 +170,12 @@ class SuspiciousUntilBuild(
     get() = Level.WARNING
 }
 
-class DefaultPluginIdPrefix(
+class ForbiddenPluginIdPrefix(
   pluginId: String,
   prefix: String
 ) : InvalidDescriptorProblem(
   descriptorPath = "id",
-  detailedMessage = "The plugin ID '$pluginId' has a default prefix '$prefix' that is not allowed."
+  detailedMessage = "The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed."
 ) {
   override val level
     get() = Level.WARNING

@@ -142,7 +142,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         id = "<id>com.example.plugin</id>"
       },
     ).warnings.single()
-    assertEquals(DefaultPluginIdPrefix("com.example.plugin", "com.example"), warning)
+    assertEquals(ForbiddenPluginIdPrefix("com.example.plugin", "com.example"), warning)
   }
 
   @Test
