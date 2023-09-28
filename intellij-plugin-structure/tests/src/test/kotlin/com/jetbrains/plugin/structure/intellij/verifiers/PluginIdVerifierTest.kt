@@ -47,7 +47,7 @@ class PluginIdVerifierTest {
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'id'. The plugin ID '$illegalId' has a default prefix 'org.jetbrains' that is not allowed.",
+      "Invalid plugin descriptor 'id'. The plugin ID '$illegalId' has a prefix 'org.jetbrains' that is not allowed.",
       problem.message
     )
   }
@@ -62,7 +62,7 @@ class PluginIdVerifierTest {
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'id'. The plugin ID '$genericId' has a default prefix 'com.example' that is not allowed.",
+      "Invalid plugin descriptor 'id'. The plugin ID '$genericId' has a prefix 'com.example' that is not allowed.",
       problem.message
     )
   }
