@@ -718,7 +718,15 @@ internal class PluginCreator private constructor(
     problems += problem
   }
 
-  private fun hasErrors() = problems.any { it.level === ERROR }
+  private fun hasErrors(): Boolean {
+    return problems
+      .map {
+        problemResolver.classify(plugin, it)
+      }
+      .any {
+        it.level === ERROR
+      }
+  }
 
   private fun validateId(plugin: PluginBean) {
     pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
