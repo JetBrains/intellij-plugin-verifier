@@ -590,7 +590,7 @@ internal class PluginCreator private constructor(
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
     if (!plugin.isV2) {
-      if (dependencies.size == 0) {
+      if (dependencies.isEmpty()) {
         registerProblem(NoDependencies(descriptorPath))
       }
       if (dependencies.count { it.isModule } == 0) {
