@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-class DurationMeasuringPluginVerificationReportageTest {
+class DurationMeasuringPluginVerificationTest {
 
   @Test
   fun `run duration on function`() {
