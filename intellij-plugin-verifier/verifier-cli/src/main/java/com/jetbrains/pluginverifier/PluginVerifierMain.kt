@@ -140,8 +140,8 @@ object PluginVerifierMain {
         val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
         taskResultsPrinter.printResults(taskResult, outputOptions)
         reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
-        reportage.reportVerificationDuration(this)
         reportageAggregator.handleAggregatedReportage()
+        reportage.reportVerificationDuration(this)
       }
     }
   }
