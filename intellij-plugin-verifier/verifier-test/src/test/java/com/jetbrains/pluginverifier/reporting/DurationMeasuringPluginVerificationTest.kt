@@ -11,13 +11,14 @@ class DurationMeasuringPluginVerificationTest {
 
   @Test
   fun `run duration on function`() {
+    val sleepDuration = 5L
     measurePluginVerification {
       MockPluginVerificationReportage().run {
-        TimeUnit.MILLISECONDS.sleep(5)
+        TimeUnit.MILLISECONDS.sleep(sleepDuration)
         MockTaskResult()
       }
     }.run {
-      assertTrue(this.duration.nano > 0)
+      assertTrue(this.duration.nano > sleepDuration)
     }
   }
 }
