@@ -29,6 +29,8 @@ import com.jetbrains.pluginverifier.tasks.checkPlugin.CheckPluginRunner
 import com.jetbrains.pluginverifier.tasks.checkPluginApi.CheckPluginApiRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.processAllPlugins.ProcessAllPluginsCommand
+import com.jetbrains.pluginverifier.tasks.profiling.MeasuredResult
+import com.jetbrains.pluginverifier.tasks.profiling.measurePluginVerification
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
 import java.net.URL
@@ -118,25 +120,29 @@ object PluginVerifierMain {
 
     val reportageAggregator = LoggingPluginVerificationReportageAggregator()
     DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
-      val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
-      val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
-        runner.getParametersBuilder(
-          pluginRepository,
-          pluginDetailsCache,
-          reportage
-        ).build(opts, freeArgs).use { parameters ->
-          reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
+      measurePluginVerification {
+        val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
+        val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
+          runner.getParametersBuilder(
+            pluginRepository,
+            pluginDetailsCache,
+            reportage
+          ).build(opts, freeArgs).use { parameters ->
+            reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-          parameters
-            .createTask()
-            .execute(reportage, pluginDetailsCache)
+            parameters
+              .createTask()
+              .execute(reportage, pluginDetailsCache)
+          }
         }
+        taskResult
+      }.run {
+        val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
+        taskResultsPrinter.printResults(taskResult, outputOptions)
+        reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+        reportage.reportVerificationDuration(this)
+        reportageAggregator.handleAggregatedReportage()
       }
-
-      val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
-      taskResultsPrinter.printResults(taskResult, outputOptions)
-      reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
-      reportageAggregator.handleAggregatedReportage()
     }
   }
 
@@ -157,6 +163,10 @@ object PluginVerifierMain {
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloadedAmount.to(SpaceUnit.BYTE).toLong())
       outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.total.space.used", totalSpaceUsed.to(SpaceUnit.BYTE).toLong())
     }
+  }
+
+  private fun PluginVerificationReportage.reportVerificationDuration(measuredResult: MeasuredResult) {
+    logVerificationStage("Total time spent in plugin verification: ${measuredResult.duration.formatDuration()}")
   }
 
   private fun getDiskSpaceSetting(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
