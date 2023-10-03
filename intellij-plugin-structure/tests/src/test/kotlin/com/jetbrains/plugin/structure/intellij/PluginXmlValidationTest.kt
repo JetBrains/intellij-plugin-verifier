@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
@@ -106,6 +107,27 @@ class PluginXmlValidationTest {
       .singleOrNull()
     assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", error)
     assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, error?.level)
+  }
+
+  @Test
+  fun `non-v2 plugin without dependencies error`() {
+    val pluginCreationFail = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val unacceptableWarnings = pluginCreationFail.unacceptableWarnings
+    assertEquals(1, unacceptableWarnings.size)
+    val unacceptableWarning = unacceptableWarnings.filterIsInstance<NoDependencies>()
+      .singleOrNull()
+    assertNotNull("Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html", unacceptableWarning)
   }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {

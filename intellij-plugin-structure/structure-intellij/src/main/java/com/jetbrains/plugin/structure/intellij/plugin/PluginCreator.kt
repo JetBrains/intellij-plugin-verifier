@@ -589,16 +589,20 @@ internal class PluginCreator private constructor(
 
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
+    if (!plugin.isV2) {
+      if (dependencies.isEmpty()) {
+        registerProblem(NoDependencies(descriptorPath))
+      }
+      if (dependencies.count { it.isModule } == 0) {
+        registerProblem(NoModuleDependencies(descriptorPath))
+      }
+    }
     dependencies.map { it.id }
       .groupingBy { it }
       .eachCount()
       .filterValues { it > 1 }
       .map { it.key }
       .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
-
-    if (!plugin.isV2 && dependencies.count { it.isModule } == 0) {
-      registerProblem(NoModuleDependencies(descriptorPath))
-    }
 
     val sinceBuild = plugin.sinceBuild
     val untilBuild = plugin.untilBuild
