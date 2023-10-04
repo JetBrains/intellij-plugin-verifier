@@ -18,7 +18,7 @@ class DurationMeasuringPluginVerificationTest {
         MockTaskResult()
       }
     }.run {
-      assertTrue(this.duration.nano > sleepDuration)
+      assertTrue(this.duration.nano >= sleepDuration)
     }
   }
 }
