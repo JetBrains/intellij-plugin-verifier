@@ -77,7 +77,7 @@ open class CmdOpts(
 
   @set:Argument(
   "submission-type",
-  description = "Suppress internal API usage checks. Available options: no (default), jetbrains-plugins."
+  description = "Set the plugin submission type for verifications. Available options: new (a first-time submission for new plugins with stricter set of verification rules), existing (a plugin that has been already submitted and validated with a relaxed set of rules)."
   )
   var submissionType: String? = "new"
 
