@@ -74,7 +74,9 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val erroneousSinceBuild = "1.*"
     val header = ideaPlugin("com.example", sinceBuild = erroneousSinceBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver)
+    val problemResolver = LevelRemappingPluginCreationResultResolver(
+      delegateResolver,
+      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.WARNING))
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -107,7 +109,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val erroneousUntilBuild = "1000"
     val header = ideaPlugin("plugin.with.two.problems", sinceBuild = erroneousSinceBuild, untilBuild = erroneousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver)
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver,
+      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.WARNING))
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {

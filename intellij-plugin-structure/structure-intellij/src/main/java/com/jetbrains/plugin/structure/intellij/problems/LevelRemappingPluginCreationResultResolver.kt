@@ -8,11 +8,12 @@ import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
 
-class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver) : PluginCreationResultResolver {
+class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver,
+                                                 private val additionalLevelRemapping: Map<KClass<*>, PluginProblem.Level> = emptyMap()
+  ) : PluginCreationResultResolver {
 
-  private val remappedLevel: Map<KClass<*>, PluginProblem.Level> = mapOf(
-    IllegalPluginIdPrefix::class to PluginProblem.Level.WARNING,
-    InvalidSinceBuild::class to PluginProblem.Level.WARNING)
+  private val remappedLevel: Map<KClass<*>, PluginProblem.Level> = additionalLevelRemapping +
+    mapOf(IllegalPluginIdPrefix::class to PluginProblem.Level.WARNING)
 
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     return when (val pluginCreationResult = delegatedResolver.resolve(plugin, problems)) {
