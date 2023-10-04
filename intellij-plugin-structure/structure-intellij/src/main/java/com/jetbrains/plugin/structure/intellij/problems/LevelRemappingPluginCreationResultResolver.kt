@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
 
 class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver,
-                                                 private val additionalLevelRemapping: Map<KClass<*>, PluginProblem.Level> = emptyMap()
+                                                 additionalLevelRemapping: Map<KClass<*>, PluginProblem.Level> = emptyMap()
   ) : PluginCreationResultResolver {
 
   private val remappedLevel: Map<KClass<*>, PluginProblem.Level> = additionalLevelRemapping +
