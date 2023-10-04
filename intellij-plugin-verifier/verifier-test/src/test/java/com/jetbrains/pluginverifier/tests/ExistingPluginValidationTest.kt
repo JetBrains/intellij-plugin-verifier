@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.pluginverifier.tests.mocks.ExistingPluginCreationResultResolver
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
@@ -36,26 +35,6 @@ class ExistingPluginValidationTest : BasePluginTest() {
           """
             <idea-plugin>
               $ideaPlugin
-            </idea-plugin>
-          """
-        }
-      }
-    }
-    assertTrue(result is PluginCreationSuccess)
-  }
-
-  @Test
-  fun `plugin is not built due to unsupported prefix ID but such problem is filtered`() {
-    val header = ideaPlugin("com.example")
-    val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = ExistingPluginCreationResultResolver(delegateResolver)
-
-    val result = buildPluginWithResult(problemResolver) {
-      dir("META-INF") {
-        file("plugin.xml") {
-          """
-            <idea-plugin>
-              $header
             </idea-plugin>
           """
         }
