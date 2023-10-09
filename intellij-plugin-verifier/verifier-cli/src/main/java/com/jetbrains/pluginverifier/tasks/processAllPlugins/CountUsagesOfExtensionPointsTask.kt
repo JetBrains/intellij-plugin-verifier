@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.processAllPlugins
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.pluginverifier.getConcurrencyLevel

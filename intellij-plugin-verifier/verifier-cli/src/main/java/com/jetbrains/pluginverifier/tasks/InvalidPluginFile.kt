@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.tasks
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import java.nio.file.Path
 
 /**
