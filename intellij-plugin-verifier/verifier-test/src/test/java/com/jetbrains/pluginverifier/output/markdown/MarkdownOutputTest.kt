@@ -135,7 +135,7 @@ class MarkdownOutputTest {
           
           ## Plugin structure warnings (1)
           
-          * Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+          * Invalid plugin descriptor 'plugin.xml'. The plugin configuration file does not include any module dependency tags. So, the plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. Please note that plugins should declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality.
 
 
       """.trimIndent()
@@ -331,7 +331,7 @@ class MarkdownOutputTest {
         
         Full path: `plugin.zip`
         
-        * Invalid plugin descriptor 'id': The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
+        * Invalid plugin descriptor 'id'. The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
         
         
       """.trimIndent()
