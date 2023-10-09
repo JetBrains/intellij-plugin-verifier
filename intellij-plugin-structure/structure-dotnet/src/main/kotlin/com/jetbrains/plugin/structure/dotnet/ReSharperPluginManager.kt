@@ -4,8 +4,6 @@
 
 package com.jetbrains.plugin.structure.dotnet
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
@@ -100,9 +98,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
       val plugin = createPluginFromValidBean(bean, descriptorContent, thirdPartyDependencies)
       return PluginCreationSuccess(plugin, beanValidationResult)
     } catch (e: SAXParseException) {
-      val lineNumber = e.lineNumber
-      val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
-      return PluginCreationFail(UnexpectedDescriptorElements(message))
+      return PluginCreationFail(UnexpectedDescriptorElements(e.lineNumber))
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       LOG.info("Unable to read plugin descriptor: ${descriptorFile.fileName}", e)

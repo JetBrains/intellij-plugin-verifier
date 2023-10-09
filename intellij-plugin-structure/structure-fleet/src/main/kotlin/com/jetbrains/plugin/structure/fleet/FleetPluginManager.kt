@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExcee
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile

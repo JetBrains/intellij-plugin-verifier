@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.base.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-
 fun validatePropertyLength(
   descriptor: String,
   propertyName: String,

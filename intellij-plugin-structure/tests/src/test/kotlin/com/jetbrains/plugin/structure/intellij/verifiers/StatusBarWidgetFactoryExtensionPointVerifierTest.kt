@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import org.jdom2.Element
 import org.junit.Assert
@@ -11,8 +11,8 @@ private const val PLUGIN_ID = "com.example.thirdparty"
 private const val PLUGIN_VENDOR = "PluginIndustries s.r.o."
 private const val EP_IMPLEMENTATION = "com.example.MyStatusBarWidgetFactory"
 
-private const val MESSAGE_TEMPLATE = "Extension Point in the <com.intellij.statusBarWidgetFactory> element " +
-  "must have 'id' attribute set with same value returned from the getId() method of the $EP_IMPLEMENTATION implementation."
+private const val MESSAGE_TEMPLATE = "The extension point in the <com.intellij.statusBarWidgetFactory> element must have " +
+  "'id' attribute set with the same value returned from the getId() method of the $EP_IMPLEMENTATION implementation."
 
 
 class StatusBarWidgetFactoryExtensionPointVerifierTest {

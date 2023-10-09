@@ -4,7 +4,6 @@
 
 package com.jetbrains.plugin.structure.base.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import org.apache.commons.io.FileUtils
 
 abstract class PluginFileError : PluginProblem() {
@@ -17,15 +16,44 @@ class IncorrectPluginFile(
   private val expectedFileType: String
 ) : PluginFileError() {
   override val message
-    get() = "Incorrect plugin file $fileName. Must be a $expectedFileType"
+    get() = "The plugin archive contains an unexpected file $fileName: it must be a $expectedFileType."
+}
+
+class IncorrectZipOrJarFile(
+  private val fileName: String
+) : PluginFileError() {
+  override val message
+    get() = "The plugin archive contains an unexpected file $fileName: it must be .zip, .jar or a directory."
 }
 
 class UnableToExtractZip : PluginFileError() {
   override val message
-    get() = "Unable to extract plugin zip file"
+    get() = "The plugin archive file cannot be extracted."
 }
 
 class PluginFileSizeIsTooLarge(private val sizeLimit: Long) : PluginFileError() {
   override val message
-    get() = "Plugin file size is too large. Maximum allowed size is " + FileUtils.byteCountToDisplaySize(sizeLimit)
+    get() = "The plugin file size exceeds the maximum limit of ${FileUtils.byteCountToDisplaySize(sizeLimit)}: ensure " +
+            "that the plugin file is compressed and meets the maximum size limit."
+}
+
+class TooManyFiles(private val filesLimit: Long) : PluginProblem() {
+  override val message: String
+    get() = "The plugin has more files than allowed: $filesLimit."
+
+  override val level = Level.ERROR
+}
+
+class FileTooBig(val file: String, private val fileSizeLimit: Long) : PluginProblem() {
+  override val message: String
+    get() = "The file $file is bigger than max allowed size: $fileSizeLimit."
+
+  override val level = Level.ERROR
+}
+
+class MissedFile(val file: String) : PluginProblem() {
+  override val message: String
+    get() = "The file $file is missed."
+
+  override val level = Level.ERROR
 }

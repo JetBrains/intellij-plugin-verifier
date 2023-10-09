@@ -1,16 +1,12 @@
 package com.jetbrains.plugin.structure.dotnet.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidDependencyVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.NullIdDependencyError
 import com.jetbrains.plugin.structure.dotnet.problems.createIncorrectDotNetPluginFileProblem
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
@@ -56,7 +52,7 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
   fun `completely invalid plugin descriptor`() {
     `test invalid plugin xml`(
       "abracadabra",
-      listOf(UnexpectedDescriptorElements("unexpected element on line 1"))
+      listOf(UnexpectedDescriptorElements(1))
     )
   }
 

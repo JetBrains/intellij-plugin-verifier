@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.base.plugin
 
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+
 sealed class PluginCreationResult<out PluginType : Plugin>
 
 data class PluginCreationFail<out PluginType : Plugin>(val errorsAndWarnings: List<PluginProblem>) : PluginCreationResult<PluginType>() {

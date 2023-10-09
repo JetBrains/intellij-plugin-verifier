@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.dotnet.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.dotnet.DotNetDependency
 import com.jetbrains.plugin.structure.dotnet.ReSharperPlugin

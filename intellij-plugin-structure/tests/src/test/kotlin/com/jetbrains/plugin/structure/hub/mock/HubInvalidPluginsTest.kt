@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.hub.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -11,9 +8,7 @@ import com.jetbrains.plugin.structure.hub.HubPlugin
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.hub.problems.HubDependenciesNotSpecified
 import com.jetbrains.plugin.structure.hub.problems.HubProductsNotSpecified
-import com.jetbrains.plugin.structure.hub.problems.HubZipFileTooManyFilesError
 import com.jetbrains.plugin.structure.hub.problems.createIncorrectHubPluginFile
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test
@@ -117,7 +112,7 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
         file("file_$i.txt", "$i")
       }
     }
-    assertProblematicPlugin(pluginFile, listOf(HubZipFileTooManyFilesError()))
+    assertProblematicPlugin(pluginFile, listOf(TooManyFiles(1000L)))
   }
 
   @Test

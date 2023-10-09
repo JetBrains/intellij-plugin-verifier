@@ -3,8 +3,8 @@ package com.jetbrains.plugin.structure.intellij.problems
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
@@ -60,7 +60,6 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     ProductCodePrefixInBuild::class,
     XIncludeResolutionErrors::class,
     TooLongPropertyValue::class,
-    DefaultDescription::class,
     ReleaseDateWrongFormat::class,
     UnableToFindTheme::class,
     UnableToReadTheme::class,
@@ -76,12 +75,12 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     UnexpectedPluginZipStructure::class,
 
     IncorrectPluginFile::class,
+    IncorrectZipOrJarFile::class,
     PluginFileSizeIsTooLarge::class,
     UnableToExtractZip::class,
 
     InvalidPluginIDProblem::class,
     UnexpectedDescriptorElements::class,
-    TooLongPropertyValue::class,
     PropertyNotSpecified::class,
     NotBoolean::class,
 

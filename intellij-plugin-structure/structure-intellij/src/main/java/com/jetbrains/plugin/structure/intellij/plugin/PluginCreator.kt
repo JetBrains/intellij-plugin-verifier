@@ -6,13 +6,12 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -389,7 +388,7 @@ internal class PluginCreator private constructor(
     val preload = extensionElement.readServicePreloadMode()
     val client = extensionElement.readServiceClient()
     //TODO: add OS extraction
-    var os: IdePluginContentDescriptor.Os? = null
+    val os: IdePluginContentDescriptor.Os? = null
     return IdePluginContentDescriptor.ServiceDescriptor(
       serviceInterface,
       serviceImplementation,
@@ -543,7 +542,7 @@ internal class PluginCreator private constructor(
       try {
         LocalDate.parse(releaseDate, releaseDateFormatter)
       } catch (e: DateTimeParseException) {
-        registerProblem(ReleaseDateWrongFormat)
+        registerProblem(ReleaseDateWrongFormat(descriptorPath))
       }
     }
   }
@@ -662,7 +661,7 @@ internal class PluginCreator private constructor(
             val themeJson = it.resourceStream.reader().readText()
             json.readValue(themeJson, IdeTheme::class.java)
           } catch (e: Exception) {
-            registerProblem(UnableToReadTheme(descriptorPath, themePath, e.localizedMessage))
+            registerProblem(UnableToReadTheme(descriptorPath, themePath))
             return null
           }
           themes.add(theme)
@@ -671,7 +670,7 @@ internal class PluginCreator private constructor(
           registerProblem(UnableToFindTheme(descriptorPath, themePath))
         }
         is ResourceResolver.Result.Failed -> {
-          registerProblem(UnableToReadTheme(descriptorPath, themePath, resolvedTheme.exception.localizedMessage))
+          registerProblem(UnableToReadTheme(descriptorPath, themePath))
         }
       }
     }
