@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.output.markdown
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginId
+import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -314,8 +314,10 @@ class MarkdownOutputTest {
 
   @Test
   fun `plugin has structural problems with invalid plugin ID`() {
+    val pluginId = "com.example.intellij"
+    val prefix = "com.example"
     val invalidPluginFiles = listOf(
-      InvalidPluginFile(Path("plugin.zip"), listOf(IllegalPluginId("com.example.intellij")))
+      InvalidPluginFile(Path("plugin.zip"), listOf(ForbiddenPluginIdPrefix(pluginId, prefix)))
     )
 
     resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
@@ -329,7 +331,7 @@ class MarkdownOutputTest {
         
         Full path: `plugin.zip`
         
-        * Invalid plugin descriptor 'id': Plugin ID 'com.example.intellij' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id
+        * Invalid plugin descriptor 'id': The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
         
         
       """.trimIndent()
