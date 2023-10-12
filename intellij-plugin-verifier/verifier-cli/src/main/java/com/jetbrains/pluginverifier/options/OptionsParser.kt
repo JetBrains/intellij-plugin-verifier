@@ -51,7 +51,7 @@ object OptionsParser {
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions {
     val verificationReportsDirectory = getVerificationReportsDirectory(opts)
-    println(VERIFICATION_REPORTS_DIRECTORY.formatMessage(verificationReportsDirectory))
+    println(VERIFICATION_REPORTS_DIRECTORY.format(verificationReportsDirectory))
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
     val outputFormats = parseOutputFormats(opts)
