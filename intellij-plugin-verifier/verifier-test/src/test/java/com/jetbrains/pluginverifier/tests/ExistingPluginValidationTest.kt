@@ -136,8 +136,38 @@ class ExistingPluginValidationTest : BasePluginTest() {
   }
 
   @Test
-  fun `plugin is not built due to 'error' and 'unacceptable warning' `() {
+  fun `plugin is built with two problems and 'error' is reclassified to 'unacceptable warning' thus being successful`() {
+    val erroneousSinceBuild = "1.*"
 
+    val header = ideaPlugin("plugin.with.error.and.unacceptable.warning",
+      sinceBuild = erroneousSinceBuild,
+      description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
+
+    val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
+      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.UNACCEPTABLE_WARNING))
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertTrue(result is PluginCreationSuccess)
+    val success = result as PluginCreationSuccess
+    assertEquals(2, success.unacceptableWarnings.size)
+    val reclassifiedProblems = success.unacceptableWarnings
+      .filter { ReclassifiedPluginProblem::class.isInstance(it) }
+      .map { it as ReclassifiedPluginProblem }
+      .map { it.unwrapped }
+
+    assertEquals(1, reclassifiedProblems.size)
+    assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
   }
 
   private fun ideaPlugin(pluginId: String = "someid",
