@@ -107,13 +107,19 @@ class IdePluginManager private constructor(
   ): PluginCreator {
     val descriptorFile = pluginDirectory.resolve(META_INF).resolve(descriptorPath.withPathSeparatorOf(pluginDirectory))
     return if (!descriptorFile.exists()) {
-      loadPluginInfoFromLibDirectory(pluginDirectory, descriptorPath, validateDescriptor, resourceResolver, parentPlugin, problemResolver)
+      loadPluginInfoFromLibDirectory(pluginDirectory,
+        descriptorPath,
+        validateDescriptor,
+        resourceResolver,
+        parentPlugin,
+        problemResolver)
     } else try {
       val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
       val icons = loadIconsFromDir(pluginDirectory)
       val dependencies = getThirdPartyDependenciesFromDir(pluginDirectory)
       val plugin = createPlugin(
-        pluginDirectory.simpleName, descriptorPath, parentPlugin, validateDescriptor, document, descriptorFile,
+        pluginDirectory.simpleName, descriptorPath, parentPlugin,
+        validateDescriptor, document, descriptorFile,
         resourceResolver, problemResolver
       )
       plugin.setIcons(icons)
@@ -211,13 +217,21 @@ class IdePluginManager private constructor(
     val systemIndependentDescriptorPath = descriptorPath.toSystemIndependentName()
     return when {
       pluginFile.isDirectory -> {
-        loadPluginInfoFromDirectory(pluginFile, systemIndependentDescriptorPath, validateDescriptor,
-          resourceResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromDirectory(pluginFile,
+          systemIndependentDescriptorPath,
+          validateDescriptor,
+          resourceResolver,
+          parentPlugin,
+          problemResolver)
       }
 
       pluginFile.isJar() -> {
-        loadPluginInfoFromJarFile(pluginFile, systemIndependentDescriptorPath, validateDescriptor,
-          resourceResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromJarFile(pluginFile,
+          systemIndependentDescriptorPath,
+          validateDescriptor,
+          resourceResolver,
+          parentPlugin,
+          problemResolver)
       }
 
       else -> throw IllegalArgumentException()
