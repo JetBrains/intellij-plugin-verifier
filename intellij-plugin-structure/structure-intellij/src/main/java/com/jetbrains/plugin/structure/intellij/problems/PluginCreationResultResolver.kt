@@ -18,6 +18,12 @@ interface PluginCreationResultResolver {
   fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin>
 
   fun isError(problem: PluginProblem): Boolean = problem.level == ERROR
+
+  /**
+   * Allows remapping a specific plugin problem to another problem.
+   * Typically, this is used to change a [PluginProblem.Level] in specific scenarios.
+   */
+  fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem = problem
 }
 
 /**

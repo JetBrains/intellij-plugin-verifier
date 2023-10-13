@@ -30,7 +30,7 @@ internal class PluginCreator private constructor(
   val pluginFileName: String,
   val descriptorPath: String,
   private val parentPlugin: PluginCreator?,
-  private val problemResolver: IntelliJPluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+  private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
 ) {
 
   companion object {
@@ -86,8 +86,24 @@ internal class PluginCreator private constructor(
       document: Document,
       documentPath: Path,
       pathResolver: ResourceResolver
+    ): PluginCreator = createPlugin(pluginFileName, descriptorPath,
+                                    parentPlugin, validateDescriptor,
+                                    document, documentPath,
+                                    pathResolver,
+                                    IntelliJPluginCreationResultResolver())
+
+    @JvmStatic
+    fun createPlugin(
+      pluginFileName: String,
+      descriptorPath: String,
+      parentPlugin: PluginCreator?,
+      validateDescriptor: Boolean,
+      document: Document,
+      documentPath: Path,
+      pathResolver: ResourceResolver,
+      problemResolver: PluginCreationResultResolver
     ): PluginCreator {
-      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin)
+      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver)
       pluginCreator.resolveDocumentAndValidateBean(
         document, documentPath, descriptorPath, pathResolver, validateDescriptor
       )
@@ -705,7 +721,15 @@ internal class PluginCreator private constructor(
     problems += problem
   }
 
-  private fun hasErrors() = problems.any { it.level === ERROR }
+  private fun hasErrors(): Boolean {
+    return problems
+      .map {
+        problemResolver.classify(plugin, it)
+      }
+      .any {
+        it.level === ERROR
+      }
+  }
 
   private fun validateId(plugin: PluginBean) {
     pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)

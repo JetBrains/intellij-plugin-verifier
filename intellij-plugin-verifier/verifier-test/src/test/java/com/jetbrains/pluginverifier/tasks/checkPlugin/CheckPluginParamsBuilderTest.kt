@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.SubmissionType
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -44,4 +45,22 @@ class CheckPluginParamsBuilderTest {
 
     assertEquals(InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS, params.internalApiVerificationMode)
   }
+
+  @Test
+  fun `existing plugin verification is parsed`() {
+    val cmdOpts = CmdOpts().apply {
+      submissionType = "existing"
+    }
+
+    val ideDescriptorParser = IdeDescriptorParser { _, _ -> emptyList() }
+
+    val somePluginZipFile = createTempFile(suffix = ".zip")
+    val someIde = createTempDirectory("idea-IU-117.963")
+
+    val params = CheckPluginParamsBuilder(pluginRepository, pluginVerificationReportage, pluginDetailsCache, ideDescriptorParser)
+      .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))
+
+    assertEquals(SubmissionType.EXISTING, params.pluginSubmissionType)
+  }
+
 }

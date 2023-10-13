@@ -40,9 +40,10 @@ class CheckPluginParamsBuilder(
 
     val ideDescriptors = ideDescriptorParser.parseIdeDescriptors(opts, freeArgs)
     val ideVersions = ideDescriptors.map { it.ideVersion }
+    val pluginParsingConfiguration = OptionsParser.createPluginParsingConfiguration(opts)
     val pluginsSet = PluginsSet()
     // pluginsParsing will modify [pluginsSet] in-place.
-    val pluginsParsing = PluginsParsing(pluginRepository, reportage, pluginsSet)
+    val pluginsParsing = PluginsParsing(pluginRepository, reportage, pluginsSet, pluginParsingConfiguration)
 
     val pluginToTestArg = freeArgs[0]
     when {
