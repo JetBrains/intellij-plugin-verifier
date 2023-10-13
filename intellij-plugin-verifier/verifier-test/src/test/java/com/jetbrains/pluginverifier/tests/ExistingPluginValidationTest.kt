@@ -143,12 +143,13 @@ class ExistingPluginValidationTest : BasePluginTest() {
   private fun ideaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
                          sinceBuild: String = "131.1",
-                         untilBuild: String = "231.1") = """
+                         untilBuild: String = "231.1",
+                         description: String = "this description is looooooooooong enough") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>someVersion</version>
     ""<vendor email="vendor.com" url="url">vendor</vendor>""
-    <description>this description is looooooooooong enough</description>
+    <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
