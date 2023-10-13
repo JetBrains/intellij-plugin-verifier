@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
@@ -17,15 +18,14 @@ class ExistingPluginValidationTest : BasePluginTest() {
   @Test
   fun `plugin is not built due to missing ID but such problem is filtered`() {
     val ideaPlugin = ideaPlugin(pluginId = "")
-    val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = object: DelegatingPluginCreationResultResolver(delegateResolver) {
+    val problemResolver = object : PluginCreationResultResolver {
       private val logger = LoggerFactory.getLogger("verification.structure")
 
-      override fun doResolve(plugin: IdePlugin, problems: List<PluginProblem>): ResolutionResult {
+      override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
         problems.forEach {
           logger.info("Plugin problem will be ignored by the problem resolver: $it")
         }
-        return ResolutionResult.Resolved(PluginCreationSuccess(plugin, emptyList()))
+        return PluginCreationSuccess(plugin, emptyList())
       }
     }
 
