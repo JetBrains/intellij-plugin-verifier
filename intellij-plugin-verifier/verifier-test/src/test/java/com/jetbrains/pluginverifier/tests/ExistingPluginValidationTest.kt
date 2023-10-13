@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -66,7 +66,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val reclassifiedPluginProblem = pluginCreated.warnings.first()
     assertEquals(PluginProblem.Level.WARNING, reclassifiedPluginProblem.level)
     assertTrue(reclassifiedPluginProblem is ReclassifiedPluginProblem)
-    assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is IllegalPluginIdPrefix)
+    assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is ForbiddenPluginIdPrefix)
   }
 
   @Test
@@ -98,7 +98,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       .map { it.unwrapped }
 
     assertEquals(2, reclassifiedProblems.size)
-    assertThat("Reclassified problems contains an 'IllegalPluginIdPrefix' plugin problem ", reclassifiedProblems.find { IllegalPluginIdPrefix::class.isInstance(it) } != null)
+    assertThat("Reclassified problems contains an 'IllegalPluginIdPrefix' plugin problem ", reclassifiedProblems.find { ForbiddenPluginIdPrefix::class.isInstance(it) } != null)
     assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
   }
 
