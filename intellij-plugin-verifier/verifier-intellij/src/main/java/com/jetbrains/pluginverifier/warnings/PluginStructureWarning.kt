@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.warnings
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
 data class PluginStructureWarning(private val pluginProblem: PluginProblem) {
 

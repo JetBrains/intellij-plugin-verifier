@@ -14,9 +14,7 @@ import com.jetbrains.pluginverifier.ide.IdeDownloader
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
-import com.jetbrains.pluginverifier.output.DEFAULT_OUTPUT_FORMATS
-import com.jetbrains.pluginverifier.output.OutputFormat
-import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.*
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -53,7 +51,7 @@ object OptionsParser {
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions {
     val verificationReportsDirectory = getVerificationReportsDirectory(opts)
-    println("Verification reports directory: $verificationReportsDirectory")
+    println(VERIFICATION_REPORTS_DIRECTORY.format(verificationReportsDirectory))
     val teamCityLog = if (opts.needTeamCityLog) TeamCityLog(System.out) else null
     val previousTcHistory = opts.previousTcTestsFile?.let { Paths.get(it) }?.let { TeamCityHistory.readFromFile(it) }
     val outputFormats = parseOutputFormats(opts)
@@ -103,7 +101,7 @@ object OptionsParser {
       Paths.get(ide)
     }
     require(ideFile.isDirectory) { "IDE must reside in a directory: $ideFile" }
-    LOG.info("Reading IDE from $ideFile")
+    LOG.info(READING_IDE_FROM.format(ideFile))
     return createIdeDescriptor(ideFile, opts)
   }
 

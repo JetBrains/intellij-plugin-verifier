@@ -3,7 +3,7 @@ package com.jetbrains.pluginverifier.output.markdown
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginId
+import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -135,7 +135,7 @@ class MarkdownOutputTest {
           
           ## Plugin structure warnings (1)
           
-          * Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+          * Invalid plugin descriptor 'plugin.xml'. The plugin configuration file does not include any module dependency tags. So, the plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. Please note that plugins should declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality.
 
 
       """.trimIndent()
@@ -314,8 +314,10 @@ class MarkdownOutputTest {
 
   @Test
   fun `plugin has structural problems with invalid plugin ID`() {
+    val pluginId = "com.example.intellij"
+    val prefix = "com.example"
     val invalidPluginFiles = listOf(
-      InvalidPluginFile(Path("plugin.zip"), listOf(IllegalPluginId("com.example.intellij")))
+      InvalidPluginFile(Path("plugin.zip"), listOf(ForbiddenPluginIdPrefix(pluginId, prefix)))
     )
 
     resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
@@ -329,7 +331,7 @@ class MarkdownOutputTest {
         
         Full path: `plugin.zip`
         
-        * Invalid plugin descriptor 'id': Plugin ID 'com.example.intellij' is not valid. See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id
+        * Invalid plugin descriptor 'id'. The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
         
         
       """.trimIndent()

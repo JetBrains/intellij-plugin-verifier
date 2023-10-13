@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.problems.IllegalPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
@@ -43,7 +43,7 @@ class PluginIdVerifier {
     val id = plugin.id
     DEFAULT_ILLEGAL_PREFIXES
       .filter(id::startsWith)
-      .forEach { problemRegistrar.registerProblem(IllegalPluginIdPrefix(id, it)) }
+      .forEach { problemRegistrar.registerProblem(ForbiddenPluginIdPrefix(id, it)) }
 
     id.split('.')
       .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }

@@ -1,14 +1,14 @@
 package com.jetbrains.plugin.structure.edu.mock
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
 import com.jetbrains.plugin.structure.edu.problems.UnsupportedLanguage
 import com.jetbrains.plugin.structure.edu.problems.createIncorrectEduPluginFile
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Test

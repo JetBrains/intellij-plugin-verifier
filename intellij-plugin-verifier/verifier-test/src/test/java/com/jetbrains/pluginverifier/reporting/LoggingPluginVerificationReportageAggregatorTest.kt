@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.reporting
 
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.problems.DefaultDescription
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -59,7 +59,7 @@ class LoggingPluginVerificationReportageAggregatorTest {
 
   @Test
   fun `verification results are aggregated on failed verification`() {
-    val pluginStructureErrors = setOf(PluginStructureError(DefaultDescription(IdePluginManager.PLUGIN_XML)))
+    val pluginStructureErrors = setOf(PluginStructureError(InvalidPluginIDProblem(IdePluginManager.PLUGIN_XML)))
     val verificationResult = PluginVerificationResult.InvalidPlugin(pluginInfo, verificationTarget, pluginStructureErrors)
     val targetDirectory = createTempDirectory()
     loggingPluginVerificationReportageAggregator.handleVerificationResult(verificationResult, targetDirectory)

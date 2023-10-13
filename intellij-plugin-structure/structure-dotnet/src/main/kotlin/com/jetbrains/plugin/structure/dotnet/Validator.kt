@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.dotnet
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MAX_DOT_NET_RELEASE_NOTES_LENGTH
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
@@ -28,7 +28,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
 
   if (bean.getAllDependencies().any { it.id == "Wave" }) {
     if (id != null && !id.contains('.')) {
-      problems.add(InvalidIdError)
+      problems.add(InvalidIdError())
     }
   }
 

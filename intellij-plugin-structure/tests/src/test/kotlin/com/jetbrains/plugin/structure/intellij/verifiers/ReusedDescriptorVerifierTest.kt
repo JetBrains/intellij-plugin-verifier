@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem.Level.WARNING
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReusedDescriptorInMultipleDependencies
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import org.junit.Assert
@@ -39,9 +39,8 @@ class ReusedDescriptorVerifierTest {
       val p = problem as ReusedDescriptorInMultipleDependencies
       Assert.assertEquals(WARNING, p.level)
       Assert.assertEquals(2, p.dependencies.size)
-      val expectedMessage = "Invalid plugin descriptor 'plugin.xml': " +
-              "Dependencies (2) reuse a config-file attribute value 'reused-config-file': " +
-              "[$reusingDependency1, $reusingDependency2]"
+      val expectedMessage = "Invalid plugin descriptor 'plugin.xml'. Multiple dependencies (2) use the same config-file " +
+                            "attribute value 'reused-config-file': [$reusingDependency1, $reusingDependency2]."
       Assert.assertEquals(expectedMessage, p.message)
     }
   }

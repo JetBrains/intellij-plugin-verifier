@@ -2,6 +2,17 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
+## v1.305 - 2023-10-11
+
+### Added
+
+### Changed
+
+- Improve wording and description on plugin verification problems ([MP-5524](https://youtrack.jetbrains.com/issue/MP-5524/Update-wording-for-error-descriptions), [#1000](https://github.com/JetBrains/intellij-plugin-verifier/pull/1000))
+- Report an unacceptable warning when the plugin is not v2 and doesn't have dependencies
+- Support API version in the Toolbox plugin descriptor ([#1004](https://github.com/JetBrains/intellij-plugin-verifier/pull/1004))
+- Upgrade dependencies
+
 ## v1.304 - 2023-09-13
 
 ### Added

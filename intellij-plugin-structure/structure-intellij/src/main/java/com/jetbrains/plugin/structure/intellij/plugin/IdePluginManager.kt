@@ -13,7 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
-import com.jetbrains.plugin.structure.intellij.problems.createIncorrectIntellijFileProblem
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -126,10 +125,8 @@ class IdePluginManager private constructor(
       plugin.setThirdPartyDependencies(dependencies)
       plugin
     } catch (e: JDOMParseException) {
-      val lineNumber = e.lineNumber
-      val message = if (lineNumber != -1) "unexpected element on line $lineNumber" else "unexpected elements"
       LOG.info("Unable to parse plugin descriptor $descriptorPath of plugin $descriptorFile", e)
-      createInvalidPlugin(pluginDirectory, descriptorPath, UnexpectedDescriptorElements(message, descriptorPath))
+      createInvalidPlugin(pluginDirectory, descriptorPath, UnexpectedDescriptorElements(e.lineNumber, descriptorPath))
     } catch (e: Exception) {
       LOG.info("Unable to read plugin descriptor $descriptorPath of plugin $descriptorFile", e)
       createInvalidPlugin(pluginDirectory, descriptorPath, UnableToReadDescriptor(descriptorPath, descriptorPath))
@@ -368,7 +365,7 @@ class IdePluginManager private constructor(
   }
 
   private fun getInvalidPluginFileCreator(pluginFileName: String, descriptorPath: String): PluginCreator {
-    return createInvalidPlugin(pluginFileName, descriptorPath, createIncorrectIntellijFileProblem(pluginFileName))
+    return createInvalidPlugin(pluginFileName, descriptorPath, IncorrectZipOrJarFile(pluginFileName))
   }
 
   companion object {

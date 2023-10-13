@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
 import com.jetbrains.pluginverifier.misc.retry
+import com.jetbrains.pluginverifier.output.READING_PLUGIN_FROM
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
@@ -210,7 +211,7 @@ class PluginsParsing(
       throw RuntimeException("Plugin file '$pluginFile' with absolute path '${pluginFile.toAbsolutePath()}' doesn't exist")
     }
 
-    reportage.logVerificationStage("Reading plugin to check from $pluginFile")
+    reportage.logVerificationStage(READING_PLUGIN_FROM.format(pluginFile))
     val pluginCreationResult = IdePluginManager
       .createManager()
       .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver)

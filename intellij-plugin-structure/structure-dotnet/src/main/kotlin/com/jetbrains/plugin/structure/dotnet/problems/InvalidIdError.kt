@@ -4,24 +4,24 @@
 
 package com.jetbrains.plugin.structure.dotnet.problems
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
-object InvalidIdError : PluginProblem() {
+class InvalidIdError : PluginProblem() {
   override val level = Level.ERROR
-  override val message = "The id parameter in metadata must consist of two parts (company and a plugin name) separated by dot"
+  override val message = "The id parameter in metadata must consist of two parts (company and a plugin name) separated by dot."
 }
 
 class InvalidVersionError(version: String) : PluginProblem() {
   override val level = Level.ERROR
-  override val message = "Package version $version doesn't represent valid NuGet version"
+  override val message = "Package version $version doesn't represent valid NuGet version."
 }
 
 class NullIdDependencyError : PluginProblem() {
   override val level = Level.ERROR
-  override val message = "Dependency should have a name"
+  override val message = "The declared dependency must have an ID."
 }
 
 class InvalidDependencyVersionError(version: String, message: String) : PluginProblem() {
   override val level = Level.ERROR
-  override val message = "Dependency version $version doesn't represent valid NuGet version: $message"
+  override val message = "Dependency version $version doesn't represent valid NuGet version: $message."
 }

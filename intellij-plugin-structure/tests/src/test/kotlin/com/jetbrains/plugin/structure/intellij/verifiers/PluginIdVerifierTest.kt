@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
 import org.junit.After
@@ -46,9 +46,10 @@ class PluginIdVerifierTest {
 
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
-    Assert.assertEquals("Invalid plugin descriptor 'id': " +
-      "Plugin ID '$illegalId' has an illegal prefix 'org.jetbrains'. " +
-      "See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id", problem.message)
+    Assert.assertEquals(
+      "Invalid plugin descriptor 'id'. The plugin ID '$illegalId' has a prefix 'org.jetbrains' that is not allowed.",
+      problem.message
+    )
   }
 
   @Test
@@ -60,9 +61,10 @@ class PluginIdVerifierTest {
 
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
-    Assert.assertEquals("Invalid plugin descriptor 'id': " +
-      "Plugin ID '$genericId' has an illegal prefix 'com.example'. " +
-      "See https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id", problem.message)
+    Assert.assertEquals(
+      "Invalid plugin descriptor 'id'. The plugin ID '$genericId' has a prefix 'com.example' that is not allowed.",
+      problem.message
+    )
   }
 
   @Test
@@ -74,7 +76,7 @@ class PluginIdVerifierTest {
 
       Assert.assertEquals(1, problems.size)
       val problem = problems[0]
-      Assert.assertEquals("Plugin ID specified in plugin.xml should not contain '$it'", problem.message)
+      Assert.assertEquals("Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word '$it'.", problem.message)
 
       problems.clear()
     }
@@ -87,10 +89,16 @@ class PluginIdVerifierTest {
 
     Assert.assertEquals(2, problems.size)
     val dataLoreProblem = problems[0]
-    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'DataLore'", dataLoreProblem.message)
+    Assert.assertEquals(
+      "Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word 'DataLore'.",
+      dataLoreProblem.message
+    )
 
     val dataGripProblem = problems[1]
-    Assert.assertEquals("Plugin ID specified in plugin.xml should not contain 'DataGrip'", dataGripProblem.message)
+    Assert.assertEquals(
+      "Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word 'DataGrip'.",
+      dataGripProblem.message
+    )
   }
 
   private fun plugin(pluginId: String, pluginVendor: String): PluginBean {

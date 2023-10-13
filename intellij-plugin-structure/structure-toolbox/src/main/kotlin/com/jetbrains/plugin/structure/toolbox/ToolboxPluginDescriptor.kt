@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.toolbox
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
@@ -165,35 +165,31 @@ const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
 const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
 const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
 
-class ToolboxInvalidVersion(private val versionName: String, private val version: String) : InvalidDescriptorProblem(
-  ToolboxPluginManager.DESCRIPTOR_NAME
+class ToolboxInvalidVersion(versionName: String, version: String) : InvalidDescriptorProblem(
+  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The `compatibleVersionRange.$versionName` version should be formatted as semver [$version]."
 ) {
-  override val detailedMessage: String
-    get() = "$versionName version should be formatted as semver [$version]"
-
   override val level
     get() = Level.ERROR
 }
 
-class ToolboxInvalidVersionRange(private val from: String, private val to: String) : InvalidDescriptorProblem(
-  ToolboxPluginManager.DESCRIPTOR_NAME
+class ToolboxInvalidVersionRange(from: String, to: String) : InvalidDescriptorProblem(
+  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The `compatibleVersionRange.from` build $from is greater than `compatibleVersionRange.to` build $to."
 ) {
-  override val detailedMessage: String
-    get() = "from build $from is greater than to build $to"
-
   override val level
     get() = Level.ERROR
 }
 
 class ToolboxErroneousVersion(
-  private val versionName: String,
-  private val partName: String,
-  private val version: String,
-  private val limit: Int,
-) : InvalidDescriptorProblem(ToolboxPluginManager.DESCRIPTOR_NAME) {
-  override val detailedMessage: String
-    get() = "$partName part of $versionName version is too big [$version]. Max value is $limit"
-
+  versionName: String,
+  partName: String,
+  version: String,
+  limit: Int
+) : InvalidDescriptorProblem(
+  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The $partName part of `compatibleVersionRange.$versionName` version is too big [$version]. Max value is $limit."
+) {
   override val level: Level
     get() = Level.ERROR
 }

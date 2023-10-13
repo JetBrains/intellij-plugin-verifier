@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.PLUGIN_XML
-import com.jetbrains.plugin.structure.intellij.problems.TooLongPropertyValue
 
 const val MAX_PROPERTY_LENGTH = 255
 

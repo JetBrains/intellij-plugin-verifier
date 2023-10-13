@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.fleet
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
@@ -165,31 +165,34 @@ const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
 const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
 const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
 
-class FleetInvalidShipVersion(private val versionName: String, private val version: String) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
-  override val detailedMessage: String
-    get() = "$versionName version should be formatted as semver [$version]"
-
+class FleetInvalidShipVersion(
+  versionName: String,
+  version: String
+) : InvalidDescriptorProblem(
+  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The `compatibleShipVersionRange.$versionName` version should be formatted as semver [$version]."
+) {
   override val level
     get() = Level.ERROR
 }
 
-class FleetInvalidShipVersionRange(private val from: String, private val to: String) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
-  override val detailedMessage: String
-    get() = "from build $from is greater than to build $to"
-
+class FleetInvalidShipVersionRange(from: String, to: String) : InvalidDescriptorProblem(
+  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The `compatibleShipVersionRange.from` build $from is greater than `compatibleShipVersionRange.to` build $to."
+) {
   override val level
     get() = Level.ERROR
 }
 
 class FleetErroneousShipVersion(
-  private val versionName: String,
-  private val partName: String,
-  private val version: String,
-  private val limit: Int,
-) : InvalidDescriptorProblem(FleetPluginManager.DESCRIPTOR_NAME) {
-  override val detailedMessage: String
-    get() = "$partName part of $versionName version is too big [$version]. Max value is $limit"
-
+  versionName: String,
+  partName: String,
+  version: String,
+  limit: Int
+) : InvalidDescriptorProblem(
+  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+  detailedMessage = "The $partName part of `compatibleShipVersionRange.$versionName` version is too big [$version]. Max value is $limit."
+) {
   override val level: Level
     get() = Level.ERROR
 }

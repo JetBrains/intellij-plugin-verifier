@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.zipBombs
 
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
