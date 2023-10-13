@@ -135,8 +135,15 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
   }
 
+  @Test
+  fun `plugin is not built due to 'error' and 'unacceptable warning' `() {
 
-  private fun ideaPlugin(pluginId: String = "someid", pluginName: String = "someName", sinceBuild: String = "131.1", untilBuild: String = "231.1") = """
+  }
+
+  private fun ideaPlugin(pluginId: String = "someid",
+                         pluginName: String = "someName",
+                         sinceBuild: String = "131.1",
+                         untilBuild: String = "231.1") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>someVersion</version>
