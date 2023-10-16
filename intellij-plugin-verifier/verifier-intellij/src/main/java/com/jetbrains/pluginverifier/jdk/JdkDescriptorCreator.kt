@@ -12,7 +12,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolve
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
-import java.util.Locale
+import java.util.*
 
 object JdkDescriptorCreator {
 
@@ -58,8 +58,8 @@ object JdkDescriptorCreator {
 
   private fun readFullVersion(jdkPath: Path): String? {
     val linuxOrWindowsRelease = jdkPath.resolve("release")
-    val maxOsRelease = jdkPath.resolve("Contents").resolve("Home").resolve("release")
-    for (releasePath in listOf(linuxOrWindowsRelease, maxOsRelease)) {
+    val macOsRelease = jdkPath.resolve("Contents").resolve("Home").resolve("release")
+    for (releasePath in listOf(linuxOrWindowsRelease, macOsRelease)) {
       if (releasePath.exists()) {
         val properties = releasePath.readLines().associate {
           val list = it.split("=")
