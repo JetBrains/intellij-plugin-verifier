@@ -5,15 +5,12 @@
 package com.jetbrains.pluginverifier.jdk
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
-import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.net.URI
-import java.net.URLClassLoader
 import java.nio.file.*
 import java.util.*
 import java.util.stream.Collectors
@@ -41,7 +38,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   init {
     val fileSystem = try {
-      getOrCreateJrtFileSystem(jdkPath)
+      getJrtFileSystem(jdkPath)
     } catch (e: Exception) {
       throw RuntimeException("Unable to read content from jrt:/ file system.", e)
     }
@@ -67,37 +64,8 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     }
   }
 
-  private fun getOrCreateJrtFileSystem(jdkPath: Path): FileSystem {
-    val javaVersion = System.getProperty("java.version")?.substringBefore(".")?.toIntOrNull()
-    val jrtFsJars = listOf(
-      jdkPath.resolve("lib").resolve("jrt-fs.jar"),
-      jdkPath.resolve("Contents").resolve("Home").resolve("lib").resolve("jrt-fs.jar")
-    )
-    val jrtJar = jrtFsJars.find { it.exists() }
-
-    requireNotNull(jrtJar) { "Invalid JDK. Neither of .jars exist: " + jrtFsJars.joinToString() }
-
-    val classLoader = URLClassLoader(arrayOf(jrtJar.toUri().toURL()))
-
-    return if (javaVersion == null || javaVersion < 17) {
-      try {
-        FileSystems.getFileSystem(JRT_SCHEME_URI)
-      } catch (e: Exception) {
-        try {
-          val fileSystem = FileSystems.newFileSystem(JRT_SCHEME_URI, hashMapOf("java.home" to jdkPath.toString()), classLoader)
-          closeableResources += classLoader
-          fileSystem
-        } catch (e: FileSystemAlreadyExistsException) {
-          classLoader.closeLogged()
-
-          //File system might be already created concurrently. Try to get existing file system again.
-          FileSystems.getFileSystem(JRT_SCHEME_URI)
-        }
-      }
-    }
-    else {
-      FileSystems.newFileSystem(JRT_SCHEME_URI, hashMapOf("java.home" to jdkPath.toString()), classLoader)
-    }
+  private fun getJrtFileSystem(javaHome: Path): FileSystem {
+    return FileSystems.newFileSystem(JRT_SCHEME_URI, mapOf("java.home" to javaHome.toString()))
   }
 
   private fun getModuleName(classPath: Path): String =
