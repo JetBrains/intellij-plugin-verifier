@@ -18,6 +18,7 @@ object JdkDescriptorCreator {
 
   fun createBundledJdkDescriptor(ide: Ide, readMode: Resolver.ReadMode = Resolver.ReadMode.FULL): JdkDescriptor? {
     val bundledJdkPath = listOf(
+      ide.idePath.resolve("jbr").resolve("Contents").resolve("Home"),
       ide.idePath.resolve("jbr"),
       ide.idePath.resolve("jre64")
     ).find { it.isDirectory } ?: return null
