@@ -4,12 +4,10 @@
 
 package com.jetbrains.pluginverifier.jdk
 
-import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
-import java.io.Closeable
 import java.net.URI
 import java.nio.file.*
 import java.util.*
@@ -33,8 +31,6 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   private val nameSeparator: String
 
   private val modulesPath: Path
-
-  private val closeableResources = arrayListOf<Closeable>()
 
   init {
     val fileSystem = try {
@@ -133,6 +129,6 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   }
 
   override fun close() {
-    closeableResources.closeAll()
+    // no-op
   }
 }
