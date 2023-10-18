@@ -1,9 +1,6 @@
 package mock.plugin.deprecated;
 
-import deprecated.DeprecatedClass;
-import deprecated.DeprecatedField;
-import deprecated.DeprecatedMethod;
-import deprecated.DeprecatedWithCommentClass;
+import deprecated.*;
 
 public class DeprecatedUser {
   /*expected(DEPRECATED)
@@ -13,6 +10,15 @@ public class DeprecatedUser {
   */
   public void clazz() {
     new DeprecatedClass();
+  }
+
+  /*expected(DEPRECATED)
+  Deprecated class deprecated.KotlinDeprecatedClass reference
+
+  Deprecated class deprecated.KotlinDeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.kotlinClazz() : void
+  */
+  public void kotlinClazz() {
+    new KotlinDeprecatedClass();
   }
 
   /*expected(DEPRECATED)
