@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.usages.deprecated
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import org.objectweb.asm.tree.AnnotationNode
 
 /**
  * Extracts [DeprecationInfo] for the following cases:
@@ -15,6 +16,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
  * 2) @Deprecated (Java 8)
  * 3) @Deprecated (Java 9) and `forRemoval = true | false`
  * 4) @ScheduledForRemoval, `inVersion` is specified or not
+ * 5) @Deprecated (Kotlin) for non-hidden deprecation levels
  */
 val ClassFileMember.deprecationInfo: DeprecationInfo?
   get() {
@@ -31,9 +33,35 @@ val ClassFileMember.deprecationInfo: DeprecationInfo?
       return DeprecationInfo(forRemoval, null)
     }
 
+    val kotlinDeprecated = annotations.findAnnotation("kotlin/Deprecated")
+    if (kotlinDeprecated != null) {
+      val deprecationLevel = kotlinDeprecated.getEnumValue<DeprecationLevel>("level")
+      if (deprecationLevel == DeprecationLevel.HIDDEN) {
+        return null
+      }
+    }
+
     return if (isDeprecated) {
       DeprecationInfo(false, null)
     } else {
       null
     }
   }
+
+private inline fun <reified T : Enum<T>> AnnotationNode.getEnumValue(name: String): T? {
+  val annValue = getAnnotationValue(name)
+  // see org.objectweb.asm.tree.AnnotationNode.values semantics
+  return if (annValue is Array<*> && annValue.size == 2)  {
+    enumValueOOrNull<T>(annValue[1] as String)
+  } else {
+    null
+  }
+}
+
+private inline fun <reified T : Enum<T>> enumValueOOrNull(name: String): T? {
+  return try {
+    enumValueOf<T>(name)
+  } catch (e: IllegalArgumentException) {
+    null
+  }
+}

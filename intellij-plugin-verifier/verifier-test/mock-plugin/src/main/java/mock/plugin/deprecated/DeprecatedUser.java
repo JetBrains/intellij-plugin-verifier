@@ -22,6 +22,15 @@ public class DeprecatedUser {
   }
 
   /*expected(DEPRECATED)
+  Deprecated class deprecated.KotlinDeprecatedClass reference
+
+  Deprecated class deprecated.KotlinDeprecatedClass is referenced in mock.plugin.deprecated.DeprecatedUser.kotlinDeprecatedClazzWithHiddenDeprecatedConstructor() : void
+  */
+  public void kotlinDeprecatedClazzWithHiddenDeprecatedConstructor() {
+    new KotlinDeprecatedClass(0);
+  }
+
+  /*expected(DEPRECATED)
   Deprecated class deprecated.DeprecatedWithCommentClass reference
 
   Deprecated class deprecated.DeprecatedWithCommentClass is referenced in mock.plugin.deprecated.DeprecatedUser.clazzWithComment() : void
