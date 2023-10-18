@@ -32,32 +32,32 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   private val modulesPath: Path
 
+  private val fileSystem: FileSystem
+
   init {
-    val fileSystem = try {
+    fileSystem = try {
       getJrtFileSystem(jdkPath)
     } catch (e: Exception) {
       throw RuntimeException("Unable to read content from jrt:/ file system.", e)
     }
 
-    fileSystem.use {
-      nameSeparator = fileSystem.separator
-      modulesPath = fileSystem.getPath("/modules")
+    nameSeparator = fileSystem.separator
+    modulesPath = fileSystem.getPath("/modules")
 
-      classNameToModuleName = Files.walk(modulesPath).use { stream ->
-        stream
-          .filter { p -> p.fileName.toString().endsWith(".class") }
-          .collect(
-            Collectors.toMap(
-              { p -> getClassName(p) },
-              { p -> getModuleName(p) },
-              { one, _ -> one }
-            )
+    classNameToModuleName = Files.walk(modulesPath).use { stream ->
+      stream
+        .filter { p -> p.fileName.toString().endsWith(".class") }
+        .collect(
+          Collectors.toMap(
+            { p -> getClassName(p) },
+            { p -> getModuleName(p) },
+            { one, _ -> one }
           )
-      }
+        )
+    }
 
-      for (className in classNameToModuleName.keys) {
-        packageSet.addPackagesOfClass(className)
-      }
+    for (className in classNameToModuleName.keys) {
+      packageSet.addPackagesOfClass(className)
     }
   }
 
@@ -129,6 +129,6 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   }
 
   override fun close() {
-    // no-op
+    fileSystem.close()
   }
 }
