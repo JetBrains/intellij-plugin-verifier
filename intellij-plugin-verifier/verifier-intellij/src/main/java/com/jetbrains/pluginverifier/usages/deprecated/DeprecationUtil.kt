@@ -52,13 +52,13 @@ private inline fun <reified T : Enum<T>> AnnotationNode.getEnumValue(name: Strin
   val annValue = getAnnotationValue(name)
   // see org.objectweb.asm.tree.AnnotationNode.values semantics
   return if (annValue is Array<*> && annValue.size == 2)  {
-    enumValueOOrNull<T>(annValue[1] as String)
+    enumValueOrNull<T>(annValue[1] as String)
   } else {
     null
   }
 }
 
-private inline fun <reified T : Enum<T>> enumValueOOrNull(name: String): T? {
+private inline fun <reified T : Enum<T>> enumValueOrNull(name: String): T? {
   return try {
     enumValueOf<T>(name)
   } catch (e: IllegalArgumentException) {
