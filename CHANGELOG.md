@@ -2,6 +2,21 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
+## [Unreleased]
+
+### Added
+
+- Show total duration of plugin verification in CLI ([#1009](https://github.com/JetBrains/intellij-plugin-verifier/pull/1009))
+- Distinguish between new and existing plugins. Existing plugins have a less strict set of verification rules ([#1008](https://github.com/JetBrains/intellij-plugin-verifier/pull/1008))
+
+### Fixed
+
+- Use a proper value for verification reports directory instead of placeholder
+
+### Changed
+
+- Upgrade dependencies
+
 ## v1.305 - 2023-10-11
 
 ### Added
