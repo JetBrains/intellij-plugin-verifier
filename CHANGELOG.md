@@ -8,6 +8,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 - Show total duration of plugin verification in CLI ([#1009](https://github.com/JetBrains/intellij-plugin-verifier/pull/1009))
 - Distinguish between new and existing plugins. Existing plugins have a less strict set of verification rules ([#1008](https://github.com/JetBrains/intellij-plugin-verifier/pull/1008))
+- Respect `DeprecationLevel.HIDDEN` in Kotlin `@Deprecated` annotation ([MP-6006](https://youtrack.jetbrains.com/issue/MP-6006), [#1016](https://github.com/JetBrains/intellij-plugin-verifier/pull/1016))
 
 ### Fixed
 
