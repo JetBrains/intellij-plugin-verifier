@@ -74,24 +74,6 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
-  fun `api version is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = null) }
-    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = "") }
-    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = "\n") }
-  }
-
-  @Test
-  fun `api version is valid`() {
-    checkInvalidPlugin(ToolboxInvalidVersion("apiVersion", "123")) { it.copy(apiVersion = "123") }
-
-    checkInvalidPlugin(ToolboxErroneousVersion("apiVersion", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(apiVersion = "7450.1.2") }
-    checkInvalidPlugin(ToolboxErroneousVersion("apiVersion", "minor", "1.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(apiVersion = "1.8192.2") }
-    checkInvalidPlugin(ToolboxErroneousVersion("apiVersion", "patch", "1.1000.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(apiVersion = "1.1000.16384") }
-
-    checkValidPlugin { it.copy(apiVersion = "7449.8191.16383") }
-  }
-
-  @Test
   fun `compatibility range is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("compatibleVersionRange.from")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = null)) }
     checkInvalidPlugin(PropertyNotSpecified("compatibleVersionRange.from")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "")) }
@@ -107,12 +89,12 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
     checkInvalidPlugin(ToolboxErroneousVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "7450.1.2")) }
     checkInvalidPlugin(ToolboxErroneousVersion("from", "minor", "0.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "0.8192.2")) }
     checkInvalidPlugin(ToolboxErroneousVersion("to", "minor", "1.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.8192.2")) }
-    checkInvalidPlugin(ToolboxErroneousVersion("from", "patch", "1.2.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.2.16384")) }
-    checkInvalidPlugin(ToolboxErroneousVersion("to", "patch", "1.1000.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.1000.16384")) }
+    checkInvalidPlugin(ToolboxErroneousVersion("from", "patch", "1.2.1048577", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.2.1048577")) }
+    checkInvalidPlugin(ToolboxErroneousVersion("to", "patch", "1.1000.1048577", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.1000.1048577")) }
 
     checkInvalidPlugin(ToolboxInvalidVersionRange(from = "1.1000.1", to = "1.1000.0")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
 
-    checkValidPlugin { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7449.8191.16383", to = "7449.8191.16383")) }
+    checkValidPlugin { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7449.8191.1048575", to = "7449.8191.1048575")) }
   }
 
 

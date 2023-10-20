@@ -14,8 +14,6 @@ data class ToolboxPluginDescriptor(
   val id: String? = null,
   @JsonProperty("version")
   val version: String? = null,
-  @JsonProperty("apiVersion")
-  val apiVersion: String? = null,
   @JsonProperty("compatibleVersionRange")
   val compatibleVersionRange: ToolboxVersionRange? = null,
   @JsonProperty("meta")
@@ -51,17 +49,6 @@ data class ToolboxPluginDescriptor(
 
     if (meta?.vendor.isNullOrBlank()) {
       problems.add(PropertyNotSpecified("vendor"))
-    }
-
-    if (apiVersion.isNullOrBlank()) {
-      problems.add(PropertyNotSpecified("apiVersion"))
-    } else {
-      val apiSemver = parseVersionOrNull(apiVersion)
-      if (apiSemver == null) {
-        problems.add(ToolboxInvalidVersion("apiVersion", apiVersion))
-      } else {
-        problems.addAll(validateVersion("apiVersion", apiSemver))
-      }
     }
 
     if (compatibleVersionRange != null) {
@@ -158,12 +145,12 @@ data class ToolboxVersionRange(
   }
 }
 
-private const val VERSION_PATCH_LENGTH = 14
+private const val VERSION_PATCH_LENGTH = 20
 private const val VERSION_MINOR_LENGTH = 13
 
 const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
 const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
-const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
+const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 1048575
 
 class ToolboxInvalidVersion(versionName: String, version: String) : InvalidDescriptorProblem(
   descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
