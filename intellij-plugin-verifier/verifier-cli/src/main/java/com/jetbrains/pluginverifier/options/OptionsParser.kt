@@ -106,7 +106,11 @@ object OptionsParser {
   }
 
   fun createIdeDescriptor(idePath: Path, opts: CmdOpts): IdeDescriptor {
-    val defaultJdkPath = opts.runtimeDir?.let { Paths.get(it) }
+    val defaultJdkPath = opts.runtimeDir?.let {
+      Paths.get(it).also {
+        LOG.info("Using Java runtime from $it")
+      }
+    }
     return IdeDescriptor.create(idePath, defaultJdkPath, null)
   }
 
