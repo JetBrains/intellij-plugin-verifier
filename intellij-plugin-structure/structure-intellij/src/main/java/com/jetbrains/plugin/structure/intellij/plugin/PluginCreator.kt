@@ -6,8 +6,9 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
@@ -136,7 +137,9 @@ internal class PluginCreator private constructor(
     get() = !hasErrors()
 
   val pluginCreationResult: PluginCreationResult<IdePlugin>
-    get() = problemResolver.resolve(plugin, problems)
+    get() = problemResolver.resolve(plugin, problems).add(telemetry)
+
+  val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
   fun addOptionalDescriptor(
     pluginDependency: PluginDependency,
@@ -891,4 +894,11 @@ internal class PluginCreator private constructor(
       is PluginCreationSuccess -> emptyList()
       is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
     }
+}
+
+private fun PluginCreationResult<IdePlugin>.add(telemetry: MutablePluginTelemetry): PluginCreationResult<IdePlugin> {
+  return when (this) {
+    is PluginCreationSuccess -> this.copy(telemetry = telemetry.toImmutable())
+    is PluginCreationFail -> this
+  }
 }
