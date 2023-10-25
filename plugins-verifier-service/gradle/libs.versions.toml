@@ -2,7 +2,7 @@
 commons-fileupload = "1.5"
 groovy = "3.0.19"
 logback-classic = "1.2.12"
-log4j-toSlf4j = "2.21.0"
+log4j-toSlf4j = "2.21.1"
 mapdb = "3.0.10"
 spring-boot = "2.7.17"
 spring-dependencyManagement = "1.1.3"
