@@ -277,8 +277,9 @@ Here is the full syntax of the command:
 
 * `-runtime-dir (-r)`
 
-    The path to the directory containing Java runtime jar.
-    If not specified, the JDK from 'JAVA_HOME' will be chosen.
+    The path to the directory containing Java runtime JAR files (JDK).
+    If not specified, the embedded JDK from the provided `IDE` parameter will be used.  
+    If the IDE does not contain an embedded JDK, the `JAVA_HOME` environment variable will be used to resolve the Java runtime.
 
 * `-external-prefixes (-ex-prefixes)`
 

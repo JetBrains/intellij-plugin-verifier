@@ -6,17 +6,16 @@ package com.jetbrains.pluginverifier.ide
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptor
-import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider.Result.Found
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import java.io.Closeable
 import java.nio.file.Path
-import java.nio.file.Paths
 
 /**
  * Holds IDE objects necessary for verification.
@@ -47,6 +46,8 @@ data class IdeDescriptor(
   }
 
   companion object {
+    private val jdkDescriptorProvider = DefaultJdkDescriptorProvider()
+
     /**
      * Creates [IdeDescriptor] for specified [idePath].
      * [ideFileLock] will be released when this [IdeDescriptor] is closed.
@@ -59,23 +60,12 @@ data class IdeDescriptor(
       val ide = IdeManager.createManager().createIde(idePath)
       val ideResolver = IdeResolverCreator.createIdeResolver(ide)
       ideResolver.closeOnException {
-        val jdkDescriptor = JdkDescriptorCreator.createBundledJdkDescriptor(ide)
-          ?: createDefaultJdkDescriptor(defaultJdkPath)
-        return IdeDescriptor(ide, ideResolver, jdkDescriptor, ideFileLock)
+        when (val result = jdkDescriptorProvider.getJdkDescriptor(ide, defaultJdkPath)) {
+          is Found -> return IdeDescriptor(ide, ideResolver, result.jdkDescriptor, ideFileLock)
+          else -> throw IllegalStateException("No suitable JDK was found")
+        }
       }
     }
-
-    private fun createDefaultJdkDescriptor(defaultJdkPath: Path?): JdkDescriptor {
-      val jdkPath = defaultJdkPath ?: run {
-        val javaHome = System.getenv("JAVA_HOME")
-        requireNotNull(javaHome) { "JAVA_HOME is not specified" }
-        println("Using Java from JAVA_HOME: $javaHome")
-        Paths.get(javaHome)
-      }
-      require(jdkPath.isDirectory) { "Invalid JDK path: $jdkPath" }
-      return JdkDescriptorCreator.createJdkDescriptor(jdkPath)
-    }
-
   }
 
 }
