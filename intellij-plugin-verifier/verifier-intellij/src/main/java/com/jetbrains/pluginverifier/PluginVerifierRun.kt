@@ -4,8 +4,11 @@
 
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFICATION_TIME
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import java.time.Duration
 
 fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<PluginVerifier>): List<PluginVerificationResult> {
   if (verifiers.isEmpty()) {
@@ -18,6 +21,7 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
       "Finished ${progressData.finishedNumber} of ${progressData.totalNumber} verifications (in ${String.format("%.1f", progressData.elapsedTime.toDouble() / 1000)} s): " +
         "${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}"
     )
+    reportage.reportTelemetry(result.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(progressData.elapsedTime)))
   }
 
   val tasks = verifiers.map { verifier ->
