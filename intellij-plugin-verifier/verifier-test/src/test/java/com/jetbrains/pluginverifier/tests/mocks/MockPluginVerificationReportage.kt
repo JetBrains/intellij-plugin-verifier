@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.mocks
 
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
@@ -12,6 +13,8 @@ class MockPluginVerificationReportage : PluginVerificationReportage {
     Unit
 
   override fun reportVerificationResult(pluginVerificationResult: PluginVerificationResult) = Unit
+
+  override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) = Unit
 
   override fun close() = Unit
 }

@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.reporting
 
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -75,6 +76,10 @@ class DirectoryBasedPluginVerificationReportage(
     reason: String
   ) {
     ignoredPluginsReporters.forEach { it.report(PluginIgnoredEvent(pluginInfo, verificationTarget, reason)) }
+  }
+
+  override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
+    System.err.println(pluginInfo.toString() + " " + telemetry.toString())
   }
 
   /**
