@@ -12,6 +12,8 @@ class PluginTelemetry internal constructor(telemetry: MutablePluginTelemetry) {
 
   constructor() : this(MutablePluginTelemetry())
 
+  constructor(vararg pairs: Pair<String, Any>) : this(MutablePluginTelemetry(*pairs))
+
   val pluginSize: Bytes
     get() = data[PLUGIN_SIZE] as Bytes
 

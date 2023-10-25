@@ -10,8 +10,12 @@ const val PLUGIN_SIZE = "plugin.size"
 const val PARSING_DURATION = "plugin.parsing.duration"
 const val UNKNOWN_SIZE: Bytes = -1
 
-class MutablePluginTelemetry {
+class MutablePluginTelemetry() {
   private val data = mutableMapOf<String, Any>()
+
+  constructor(vararg pairs: Pair<String, Any>) : this() {
+    data.putAll(pairs)
+  }
 
   var pluginSize: Bytes
     get() = data[PLUGIN_SIZE] as Bytes
