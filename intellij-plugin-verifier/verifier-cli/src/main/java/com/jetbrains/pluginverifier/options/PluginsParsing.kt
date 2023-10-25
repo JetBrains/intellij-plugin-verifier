@@ -6,8 +6,10 @@ package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
@@ -19,6 +21,7 @@ import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.output.READING_PLUGIN_FROM
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.nio.file.Path
@@ -217,13 +220,21 @@ class PluginsParsing(
       .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver)
     with(pluginCreationResult) {
       when (this) {
-        is PluginCreationSuccess -> pluginsSet.scheduleLocalPlugin(plugin)
+        is PluginCreationSuccess -> {
+          pluginsSet.scheduleLocalPlugin(plugin).also {
+            reportLocalPluginTelemetry(plugin, telemetry)
+          }
+        }
         is PluginCreationFail -> {
           reportage.logVerificationStage("Plugin is invalid in $pluginFile: ${errorsAndWarnings.joinToString()}")
           pluginsSet.invalidPluginFiles.add(InvalidPluginFile(pluginFile, errorsAndWarnings))
         }
       }
     }
+  }
+
+  private fun reportLocalPluginTelemetry(plugin: IdePlugin, telemetry: PluginTelemetry) {
+    reportage.reportTelemetry(LocalPluginInfo(plugin), telemetry)
   }
 
   private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
