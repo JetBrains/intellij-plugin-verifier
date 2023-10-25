@@ -21,4 +21,8 @@ class PluginTelemetry internal constructor(telemetry: MutablePluginTelemetry) {
   operator fun get(key: String): Any? {
     return data[key]
   }
+
+  override fun toString(): String {
+    return data.toString()
+  }
 }
