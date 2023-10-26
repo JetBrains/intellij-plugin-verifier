@@ -12,12 +12,8 @@ class TelemetryAggregator {
     telemetries.merge(pluginInfo.coordinate, telemetry) { existing, new ->
       MutablePluginTelemetry()
         .apply {
-          existing.toMap().forEach { (t, u) ->
-            this[t] = u
-          }
-          new.toMap().forEach { (t, u) ->
-            this[t] = u
-          }
+          putAll(existing.toMap())
+          putAll(new.toMap())
         }
         .toImmutable()
     }

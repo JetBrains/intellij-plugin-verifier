@@ -38,6 +38,10 @@ class MutablePluginTelemetry() {
     data[key] = value
   }
 
+  fun putAll(map: Map<String, Any>) {
+    data.putAll(map)
+  }
+
   val rawData: Map<String, Any>
     get() = data.toMap()
 
