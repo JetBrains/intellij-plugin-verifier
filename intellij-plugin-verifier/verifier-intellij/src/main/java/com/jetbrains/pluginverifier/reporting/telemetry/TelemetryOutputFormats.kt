@@ -9,10 +9,12 @@ fun PluginTelemetry.toPlainString(): String {
   val telemetry = this
   return buildString {
     appendLine("Descriptor parsed in: ${parsingDuration.formatDuration()}")
+    appendLine("Descriptor parsed (raw ms): ${parsingDuration.toMillis()}")
     appendLine("Plugin size (bytes): $pluginSize")
     telemetry[PLUGIN_VERIFICATION_TIME]?.let {
       if (it is Duration) {
         appendLine("Verification time: ${it.formatDuration()}")
+        appendLine("Verification time (raw ms): ${it.toMillis()}")
       }
     }
   }
