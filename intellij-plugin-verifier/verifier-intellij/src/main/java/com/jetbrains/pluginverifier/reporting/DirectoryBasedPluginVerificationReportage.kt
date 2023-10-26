@@ -130,7 +130,7 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
-          reportTelemetryDetails(directory, "telemetry.txt", telemetryAggregator[plugin])
+          reportVerificationDetails(directory, "telemetry.txt", telemetryAggregator[plugin].orEmpty()) { it.toPlainString() }
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
@@ -155,11 +155,8 @@ class DirectoryBasedPluginVerificationReportage(
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
   }
+}
 
-  @Suppress("SameParameterValue")
-  private fun reportTelemetryDetails(directory: Path, fileName: String, pluginTelemetry: PluginTelemetry?) {
-    pluginTelemetry?.let {
-      reportVerificationDetails(directory, fileName, listOf(pluginTelemetry)) { it.toPlainString() }
-    }
-  }
+private fun PluginTelemetry?.orEmpty(): List<PluginTelemetry> {
+  return if (this != null) listOf(this) else emptyList()
 }
