@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.*
 import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
+import com.jetbrains.pluginverifier.reporting.telemetry.toPlainString
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.slf4j.LoggerFactory
@@ -129,16 +130,7 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
-          telemetryAggregator[plugin].let { telemetries ->
-            if (telemetries.isNotEmpty()) {
-              reportVerificationDetails(directory, "telemetry.txt", telemetries) { telemetry ->
-                buildString {
-                  appendLine("Plugin Descriptor parsed in: ${telemetry.parsingDuration}")
-                  appendLine("Plugin Size in: ${telemetry.pluginSize}")
-                }
-              }
-            }
-          }
+          reportTelemetryDetails(directory, "telemetry.txt", telemetryAggregator[plugin])
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
@@ -162,5 +154,12 @@ class DirectoryBasedPluginVerificationReportage(
     lineProvider: (T) -> String = { it.toString() }
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
+  }
+
+  @Suppress("SameParameterValue")
+  private fun reportTelemetryDetails(directory: Path, fileName: String, pluginTelemetries: List<PluginTelemetry>) {
+    if (pluginTelemetries.isNotEmpty()) {
+      reportVerificationDetails(directory, fileName, pluginTelemetries) { it.toPlainString() }
+    }
   }
 }
