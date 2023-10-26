@@ -4,8 +4,6 @@ import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.pluginverifier.repository.PluginInfo
 
-private typealias PluginCoordinate = String
-
 class TelemetryAggregator {
 
   private val telemetries: MutableMap<PluginCoordinate, PluginTelemetry> = mutableMapOf()
