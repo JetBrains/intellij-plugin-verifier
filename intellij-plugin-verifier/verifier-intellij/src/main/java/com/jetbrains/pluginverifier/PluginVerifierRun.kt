@@ -21,12 +21,12 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
       "Finished ${progressData.finishedNumber} of ${progressData.totalNumber} verifications (in ${String.format("%.1f", progressData.elapsedTime.toDouble() / 1000)} s): " +
         "${result.verificationTarget} against ${result.plugin}: ${result.verificationVerdict}"
     )
-    reportage.reportTelemetry(result.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(progressData.elapsedTime)))
   }
 
   val tasks = verifiers.map { verifier ->
     ExecutorWithProgress.Task(verifier.verificationDescriptor.toString()) {
       val verificationResult = verifier.loadPluginAndVerify()
+      reportage.reportTelemetry(verificationResult.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(0)))
       reportage.reportVerificationResult(verificationResult)
       verificationResult
     }

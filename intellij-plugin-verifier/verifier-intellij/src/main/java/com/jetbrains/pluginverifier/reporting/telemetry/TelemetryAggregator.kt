@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.reporting.telemetry
 
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.pluginverifier.repository.PluginInfo
 
@@ -7,18 +8,29 @@ private typealias PluginCoordinate = String
 
 class TelemetryAggregator {
 
-  private val telemetries: MutableMap<PluginCoordinate, List<PluginTelemetry>> = mutableMapOf()
+  private val telemetries: MutableMap<PluginCoordinate, PluginTelemetry> = mutableMapOf()
 
   fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
-    telemetries.merge(pluginInfo.coordinate, listOf(telemetry)) { existing, new -> existing + new }
+    telemetries.merge(pluginInfo.coordinate, telemetry) { existing, new ->
+      MutablePluginTelemetry()
+        .apply {
+          existing.toMap().forEach { (t, u) ->
+            this[t] = u
+          }
+          new.toMap().forEach { (t, u) ->
+            this[t] = u
+          }
+        }
+        .toImmutable()
+    }
   }
 
-  operator fun get(id: String, version: String): List<PluginTelemetry> {
-    return telemetries[PluginCoordinate(id, version)].orEmpty()
+  operator fun get(id: String, version: String): PluginTelemetry? {
+    return telemetries[PluginCoordinate(id, version)]
   }
 
-  operator fun get(plugin: PluginInfo): List<PluginTelemetry> {
-    return telemetries[plugin.coordinate].orEmpty()
+  operator fun get(plugin: PluginInfo): PluginTelemetry? {
+    return telemetries[plugin.coordinate]
   }
 
   private data class PluginCoordinate(val id: String, val version: String)

@@ -27,4 +27,8 @@ class PluginTelemetry internal constructor(telemetry: MutablePluginTelemetry) {
   override fun toString(): String {
     return data.toString()
   }
+
+  fun toMap(): Map<String, Any> {
+    return data.toMap()
+  }
 }

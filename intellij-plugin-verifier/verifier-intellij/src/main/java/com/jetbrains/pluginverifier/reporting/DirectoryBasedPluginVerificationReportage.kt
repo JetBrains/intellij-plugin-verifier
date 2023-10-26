@@ -157,9 +157,9 @@ class DirectoryBasedPluginVerificationReportage(
   }
 
   @Suppress("SameParameterValue")
-  private fun reportTelemetryDetails(directory: Path, fileName: String, pluginTelemetries: List<PluginTelemetry>) {
-    if (pluginTelemetries.isNotEmpty()) {
-      reportVerificationDetails(directory, fileName, pluginTelemetries) { it.toPlainString() }
+  private fun reportTelemetryDetails(directory: Path, fileName: String, pluginTelemetry: PluginTelemetry?) {
+    pluginTelemetry?.let {
+      reportVerificationDetails(directory, fileName, listOf(pluginTelemetry)) { it.toPlainString() }
     }
   }
 }
