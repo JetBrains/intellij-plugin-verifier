@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphP
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.*
+import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.slf4j.LoggerFactory
@@ -52,6 +53,7 @@ import java.nio.file.Paths
  */
 class DirectoryBasedPluginVerificationReportage(
   private val pluginVerificationReportageResultAggregator: PluginVerificationReportageAggregator = PluginVerificationReportageAggregator { _, _ -> },
+  private val telemetryAggregator: TelemetryAggregator = TelemetryAggregator(),
   private val targetDirectoryProvider: (PluginVerificationTarget) -> Path,
   ) : PluginVerificationReportage {
 
@@ -79,7 +81,7 @@ class DirectoryBasedPluginVerificationReportage(
   }
 
   override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
-    System.err.println(pluginInfo.toString() + " " + telemetry.toString())
+    telemetryAggregator.reportTelemetry(pluginInfo, telemetry)
   }
 
   /**
@@ -127,6 +129,16 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
+          telemetryAggregator[plugin].let { telemetries ->
+            if (telemetries.isNotEmpty()) {
+              reportVerificationDetails(directory, "telemetry.txt", telemetries) { telemetry ->
+                buildString {
+                  appendLine("Plugin Descriptor parsed in: ${telemetry.parsingDuration}")
+                  appendLine("Plugin Size in: ${telemetry.pluginSize}")
+                }
+              }
+            }
+          }
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
