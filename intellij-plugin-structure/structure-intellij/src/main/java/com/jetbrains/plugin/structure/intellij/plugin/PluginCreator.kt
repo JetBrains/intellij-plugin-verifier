@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
@@ -896,9 +897,9 @@ internal class PluginCreator private constructor(
     }
 }
 
-private fun PluginCreationResult<IdePlugin>.add(telemetry: MutablePluginTelemetry): PluginCreationResult<IdePlugin> {
+private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {
   return when (this) {
-    is PluginCreationSuccess -> this.copy(telemetry = telemetry.toImmutable())
+    is PluginCreationSuccess -> this.copy(telemetry = telemetry)
     is PluginCreationFail -> this
   }
 }
