@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.*
+import java.time.Duration
 import java.util.*
 import java.util.stream.Collectors
 import kotlin.system.measureTimeMillis
@@ -373,7 +374,7 @@ class IdePluginManager private constructor(
 
   private fun PluginCreator.setTelemetry(pluginFile: Path, pluginCreationDurationInMillis: Long) {
     with(telemetry) {
-      parsingDuration = java.time.Duration.ofMillis(pluginCreationDurationInMillis)
+      parsingDuration = Duration.ofMillis(pluginCreationDurationInMillis)
       pluginSize = pluginFile.pluginSize
     }
   }
