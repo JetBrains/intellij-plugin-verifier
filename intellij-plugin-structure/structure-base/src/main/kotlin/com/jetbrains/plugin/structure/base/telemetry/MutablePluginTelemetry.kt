@@ -11,41 +11,29 @@ const val PARSING_DURATION = "plugin.parsing.duration"
 const val PLUGIN_VERIFICATION_TIME = "plugin.verification.duration"
 const val UNKNOWN_SIZE: Bytes = -1
 
-class MutablePluginTelemetry() {
-  private val data = mutableMapOf<String, Any>()
+class MutablePluginTelemetry : PluginTelemetry() {
 
-  constructor(vararg pairs: Pair<String, Any>) : this() {
-    data.putAll(pairs)
-  }
-
-  var pluginSize: Bytes
+  override var pluginSize: Bytes
     get() = data[PLUGIN_SIZE] as Bytes
     set(value) {
       data[PLUGIN_SIZE] = value
     }
 
-  var parsingDuration: Duration
+  override var parsingDuration: Duration
     get() = data[PARSING_DURATION] as Duration
     set(value) {
       data[PARSING_DURATION] = value
     }
 
-  operator fun get(key: String): Any? {
-    return data[key]
-  }
-
   operator fun set(key: String, value: Any) {
     data[key] = value
   }
 
-  fun putAll(map: Map<String, Any>) {
-    data.putAll(map)
+  fun merge(telemetry: PluginTelemetry) {
+    data.putAll(telemetry.toMap())
   }
 
-  val rawData: Map<String, Any>
-    get() = data.toMap()
-
   fun toImmutable(): PluginTelemetry {
-    return PluginTelemetry(this)
+    return PluginTelemetry(data)
   }
 }
