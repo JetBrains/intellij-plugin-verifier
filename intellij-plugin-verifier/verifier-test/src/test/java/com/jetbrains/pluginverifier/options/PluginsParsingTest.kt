@@ -1,13 +1,9 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
-import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
-import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
-import com.jetbrains.pluginverifier.tests.mocks.MockPluginVerificationReportage
+import com.jetbrains.pluginverifier.tests.mocks.TelemetryVerificationReportage
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -61,18 +57,6 @@ class PluginsParsingTest {
 
   private fun buildPluginZip(pluginContentBuilder: ContentBuilder.() -> Unit): Path {
     return buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
-  }
-
-  private class TelemetryVerificationReportage(private val delegate: MockPluginVerificationReportage = MockPluginVerificationReportage()) : PluginVerificationReportage by delegate {
-    private val telemetryAggregator = TelemetryAggregator()
-
-    override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
-      telemetryAggregator.reportTelemetry(pluginInfo, telemetry)
-    }
-
-    operator fun get(plugin: PluginInfo): PluginTelemetry? {
-      return telemetryAggregator[plugin]
-    }
   }
 
   private val HEADER = """
