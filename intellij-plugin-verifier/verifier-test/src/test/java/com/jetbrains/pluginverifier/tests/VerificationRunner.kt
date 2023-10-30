@@ -31,7 +31,8 @@ import kotlin.io.path.createTempDirectory
 
 class VerificationRunner {
 
-  fun getPluginVerifier(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList(), apiUsageFilters: List<ApiUsageFilter> = emptyList()): PluginVerifier {
+  fun withPluginVerifier(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList(), apiUsageFilters: List<ApiUsageFilter> = emptyList(),
+                         pluginVerifierHandler: (PluginVerifier) -> PluginVerificationResult): PluginVerificationResult {
     val tempDownloadDir = createTempDirectory().toFile().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
 
@@ -51,7 +52,7 @@ class VerificationRunner {
       )
       val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
 
-      return@use PluginVerifier(
+      val pluginVerifier = PluginVerifier(
         verificationDescriptor,
         problemsFilters,
         pluginDetailsCache,
@@ -59,12 +60,13 @@ class VerificationRunner {
         false,
         apiUsageFilters
       )
+      pluginVerifierHandler(pluginVerifier)
     }
   }
 
   fun runPluginVerification(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList(), apiUsageFilters: List<ApiUsageFilter> = emptyList()): PluginVerificationResult {
-    val verificationRunner = getPluginVerifier(ide, idePlugin, problemsFilters, apiUsageFilters)
-    return verificationRunner.loadPluginAndVerify()
+    return withPluginVerifier(ide, idePlugin, problemsFilters, apiUsageFilters) {
+      it.loadPluginAndVerify()
+    }
   }
-
 }

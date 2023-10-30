@@ -68,10 +68,10 @@ class PluginVerifierTelemetryTest {
 
   private fun runVerification(ide: Ide, idePlugin: IdePlugin): MeasuredVerificationResult {
     val reportage = TelemetryVerificationReportage()
-    val pluginVerifier = VerificationRunner().getPluginVerifier(ide, idePlugin)
-    runSeveralVerifiers(reportage, listOf(pluginVerifier))
-
-    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+    val verificationResult = VerificationRunner().withPluginVerifier(ide, idePlugin, pluginVerifierHandler = {
+      val pluginVerificationResults = runSeveralVerifiers(reportage, listOf(it))
+      pluginVerificationResults.first()
+    })
     val telemetry = reportage[LocalPluginInfo(idePlugin)] ?: PluginTelemetry()
     return MeasuredVerificationResult(verificationResult, telemetry)
   }
@@ -142,6 +142,6 @@ class PluginVerifierTelemetryTest {
     return ide
   }
 
-  private data class MeasuredVerificationResult(val verificationResult: PluginVerificationResult.Verified,
+  private data class MeasuredVerificationResult(val verificationResult: PluginVerificationResult,
                                                 val telemetry: PluginTelemetry)
 }
