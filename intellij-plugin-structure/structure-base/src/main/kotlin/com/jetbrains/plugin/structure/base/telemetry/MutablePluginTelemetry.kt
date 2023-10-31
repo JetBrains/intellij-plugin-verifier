@@ -6,6 +6,8 @@ package com.jetbrains.plugin.structure.base.telemetry
 import com.jetbrains.plugin.structure.base.utils.Bytes
 import java.time.Duration
 
+const val PLUGIN_ID = "plugin.id"
+const val PLUGIN_VERSION = "plugin.version"
 const val PLUGIN_SIZE = "plugin.size"
 const val PARSING_DURATION = "plugin.parsing.duration"
 const val PLUGIN_VERIFICATION_TIME = "plugin.verification.duration"
