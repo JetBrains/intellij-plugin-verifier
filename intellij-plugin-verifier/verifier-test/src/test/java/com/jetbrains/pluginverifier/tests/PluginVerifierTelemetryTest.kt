@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFICATION_TIME
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
@@ -15,6 +16,8 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.runSeveralVerifiers
 import com.jetbrains.pluginverifier.tests.mocks.TelemetryVerificationReportage
+import net.bytebuddy.ByteBuddy
+import net.bytebuddy.dynamic.DynamicType
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -61,6 +64,37 @@ class PluginVerifierTelemetryTest {
     }
   }
 
+  @Test
+  fun `plugin verification classes`() {
+    val pluginClasses = ByteBuddy()
+      .subclass(Any::class.java)
+      .name("javaPlugin.JavaClass")
+      .make()
+
+    checkPlugin(
+      buildPluginWithXml(pluginClasses) {
+        """
+          <idea-plugin>
+            $HEADER
+          </idea-plugin>
+        """
+      }
+    ).let {
+      val pluginVerificationDuration = it.telemetry[PLUGIN_VERIFICATION_TIME]
+      if (pluginVerificationDuration !is Duration) {
+        fail("Plugin telemetry must contain the '$PLUGIN_VERIFICATION_TIME' value")
+      } else {
+        assertTrue(pluginVerificationDuration.toMillis() > 0)
+      }
+      val verifiedClassCount = it.telemetry[PLUGIN_VERIFIED_CLASSES_COUNT]
+      if (verifiedClassCount !is Int) {
+        fail("Plugin telemetry must contain the '$PLUGIN_VERIFICATION_TIME' value as an integer, but found " + verifiedClassCount?.javaClass)
+      } else {
+        assertEquals(1, verifiedClassCount)
+      }
+    }
+  }
+
   private fun checkPlugin(idePlugin: IdePlugin): MeasuredVerificationResult {
     val ide = buildIde()
     return runVerification(ide, idePlugin)
@@ -76,10 +110,13 @@ class PluginVerifierTelemetryTest {
     return MeasuredVerificationResult(verificationResult, telemetry)
   }
 
-  private fun buildPluginWithXml(pluginXmlContent: () -> String): IdePlugin {
+  private fun buildPluginWithXml(classContent: DynamicType.Unloaded<Any>? = null, pluginXmlContent: () -> String): IdePlugin {
     return buildPlugin {
       dir("META-INF") {
         file("plugin.xml", pluginXmlContent())
+      }
+      classContent?.let {
+        clazz(it)
       }
     }
   }
@@ -144,4 +181,13 @@ class PluginVerifierTelemetryTest {
 
   private data class MeasuredVerificationResult(val verificationResult: PluginVerificationResult,
                                                 val telemetry: PluginTelemetry)
+
+  private fun ContentBuilder.clazz(cls: DynamicType.Unloaded<Any>) {
+    val clsDesc = cls.typeDescription
+    clsDesc.`package`?.let { pkg ->
+      dir(pkg.name) {
+        file(clsDesc.simpleName + ".class", cls.bytes)
+      }
+    }
+  }
 }

@@ -31,6 +31,9 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
         verificationResult = verifier.loadPluginAndVerify()
       }.let { verificationTime ->
         reportage.reportTelemetry(verificationResult.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(verificationTime)))
+        if (verificationResult is PluginVerificationResult.Verified) {
+          reportage.reportTelemetry(verificationResult.plugin, verificationResult.telemetry)
+        }
         reportage.reportVerificationResult(verificationResult)
         verificationResult
       }
