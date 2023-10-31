@@ -4,6 +4,9 @@
 
 package com.jetbrains.pluginverifier.reporting
 
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_ID
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERSION
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
@@ -130,7 +133,7 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
-          reportVerificationDetails(directory, "telemetry.txt", telemetryAggregator[plugin].orEmpty()) { it.toPlainString() }
+          reportVerificationDetails(directory, "telemetry.txt", telemetryAggregator[plugin].withPluginIdAndVersion(this).orEmpty()) { it.toPlainString() }
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
@@ -154,6 +157,16 @@ class DirectoryBasedPluginVerificationReportage(
     lineProvider: (T) -> String = { it.toString() }
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
+  }
+}
+
+private fun PluginTelemetry?.withPluginIdAndVersion(verifiedResult: PluginVerificationResult.Verified): PluginTelemetry? {
+  return this?.let {
+    return MutablePluginTelemetry().apply {
+      merge(it)
+      set(PLUGIN_ID, verifiedResult.plugin.pluginId)
+      set(PLUGIN_VERSION, verifiedResult.plugin.version)
+    }
   }
 }
 
