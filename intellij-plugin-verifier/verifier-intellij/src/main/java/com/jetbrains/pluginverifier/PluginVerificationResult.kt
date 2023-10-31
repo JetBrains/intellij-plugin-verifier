@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
@@ -43,7 +44,8 @@ sealed class PluginVerificationResult(
     val overrideOnlyMethodUsages: Set<OverrideOnlyMethodUsage> = emptySet(),
     val pluginStructureWarnings: Set<PluginStructureWarning> = emptySet(),
     //Applicable only for PluginVerificationTarget.IDE
-    val dynamicPluginStatus: DynamicPluginStatus? = null
+    val dynamicPluginStatus: DynamicPluginStatus? = null,
+    val telemetry: PluginTelemetry = PluginTelemetry()
   ) : PluginVerificationResult(plugin, verificationTarget) {
 
     val hasDirectMissingMandatoryDependencies: Boolean
