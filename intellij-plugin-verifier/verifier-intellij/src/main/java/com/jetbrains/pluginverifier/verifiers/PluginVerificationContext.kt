@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
 import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
@@ -12,8 +14,10 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.telemetry.TelemetryRegistrar
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiRegistrar
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
@@ -56,7 +60,8 @@ data class PluginVerificationContext(
   OverrideOnlyRegistrar,
   InternalApiUsageRegistrar,
   NonExtendableApiRegistrar,
-  JavaPluginApiUsageRegistrar {
+  JavaPluginApiUsageRegistrar,
+  TelemetryRegistrar {
 
   override val classResolver
     get() = allResolver
@@ -82,12 +87,16 @@ data class PluginVerificationContext(
   val nonExtendableApiUsages = hashSetOf<NonExtendableApiUsage>()
   val overrideOnlyMethodUsages = hashSetOf<OverrideOnlyMethodUsage>()
   val pluginStructureWarnings = hashSetOf<PluginStructureWarning>()
+  private val _telemetry = MutablePluginTelemetry()
+  val telemetry: PluginTelemetry
+    get() = _telemetry
 
   override val problemRegistrar
     get() = this
 
   override val warningRegistrar
     get() = this
+
 
   override fun registerProblem(problem: CompatibilityProblem) {
     compatibilityProblems += problem
@@ -130,6 +139,10 @@ data class PluginVerificationContext(
     compatibilityWarnings += warning
   }
 
+  override fun reportTelemetry(pluginInfo: PluginInfo, reportedTelemetry: PluginTelemetry) {
+    _telemetry.merge(reportedTelemetry)
+  }
+
   fun registerPluginStructureWarning(warning: PluginStructureWarning) {
     pluginStructureWarnings += warning
   }
@@ -148,4 +161,5 @@ data class PluginVerificationContext(
     }
     return false
   }
+
 }
