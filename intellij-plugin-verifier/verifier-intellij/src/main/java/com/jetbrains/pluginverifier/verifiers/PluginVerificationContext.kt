@@ -139,8 +139,8 @@ data class PluginVerificationContext(
     compatibilityWarnings += warning
   }
 
-  override fun reportTelemetry(pluginInfo: PluginInfo, reportedTelemetry: PluginTelemetry) {
-    _telemetry.merge(reportedTelemetry)
+  override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
+    _telemetry.merge(telemetry)
   }
 
   fun registerPluginStructureWarning(warning: PluginStructureWarning) {
