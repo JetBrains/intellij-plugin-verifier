@@ -10,29 +10,34 @@ const val TELEMETRY_FILE = "telemetry.txt"
 
 class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
   fun run() {
-    val ideDirs = verificationOutputDir.toFile().listFiles { child: File ->
+    val ideDirs: Array<File> = verificationOutputDir.toFile().listFiles { child: File ->
       child.isDirectory && IdeVersion.createIdeVersionIfValid(child.name) != null
-    }
-    for (ideDir in ideDirs) {
-      val pluginDir = ideDir.pluginDir
-      if (pluginDir != null) {
-        processPluginsDir(pluginDir, IdeVersion.createIdeVersion(ideDir.name))
+    } ?: emptyArray()
+
+    ideDirs.forEach { ideDir ->
+      val pluginsDir = ideDir.pluginDir
+      if (pluginsDir != null) {
+        val verificationReports = processPluginsDir(pluginsDir, IdeVersion.createIdeVersion(ideDir.name))
+        verificationReports.forEach {
+          println(it)
+        }
       }
     }
   }
 
-  private fun processPluginsDir(pluginDir: File, ideVersion: IdeVersion) {
-    pluginDir.walkBottomUp().filter {
+  private fun processPluginsDir(pluginDir: File, ideVersion: IdeVersion): Sequence<VerificationDir> {
+    return pluginDir.walkBottomUp().filter {
       it.name == TELEMETRY_FILE
     }.take(20)
-      .map {
-        it to it.path.removePrefix(pluginDir.path + File.separator)
+      .map { file ->
+        file to file.path.removePrefix(pluginDir.path + File.separator)
       }
       .map { (file, name) ->
         val components = name.split(File.separator)
-        file to parse(components, ideVersion, file)
+        parse(components, ideVersion, file)
       }
-      .forEach { println(it) }
+      .filterNotNull()
+
   }
 
   private data class VerificationDir(val ideVersion: IdeVersion, val pluginIdAndVersion: PluginIdAndVersion, val telemetry: PluginTelemetry)
