@@ -9,7 +9,7 @@ import java.nio.file.Path
 const val TELEMETRY_FILE = "telemetry.txt"
 
 class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
-  fun run() {
+  fun run(verificationResultHandler: (VerificationDir) -> Unit = {}) {
     val ideDirs: Array<File> = verificationOutputDir.toFile().listFiles { child: File ->
       child.isDirectory && IdeVersion.createIdeVersionIfValid(child.name) != null
     } ?: emptyArray()
@@ -17,10 +17,8 @@ class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
     ideDirs.forEach { ideDir ->
       val pluginsDir = ideDir.pluginDir
       if (pluginsDir != null) {
-        val verificationReports = processPluginsDir(pluginsDir, IdeVersion.createIdeVersion(ideDir.name))
-        verificationReports.forEach {
-          println(it)
-        }
+        processPluginsDir(pluginsDir, IdeVersion.createIdeVersion(ideDir.name))
+          .forEach(verificationResultHandler)
       }
     }
   }
@@ -40,7 +38,7 @@ class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
 
   }
 
-  private data class VerificationDir(val ideVersion: IdeVersion, val pluginIdAndVersion: PluginIdAndVersion, val telemetry: PluginTelemetry)
+  data class VerificationDir(val ideVersion: IdeVersion, val pluginIdAndVersion: PluginIdAndVersion, val telemetry: PluginTelemetry)
 
   private fun parse(components: List<String>, ideVersion: IdeVersion, telemetryFile: File): VerificationDir? {
     if (components.size != 3) {
@@ -56,7 +54,6 @@ class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
     get() = this.listFiles { child: File ->
       child.name == "plugins"
     }?.firstOrNull()
-
 }
 
 fun main(args: Array<String>) {
@@ -65,5 +62,7 @@ fun main(args: Array<String>) {
   }
 
   val path = Path.of(args.first())
-  TelemetryAggregatorCli(path).run()
+  TelemetryAggregatorCli(path).run {
+    println(it)
+  }
 }
