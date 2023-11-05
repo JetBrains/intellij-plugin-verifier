@@ -42,7 +42,7 @@ class TelemetryTest {
       }
     }
     with(pluginCreationSuccess.telemetry) {
-      assertTrue(pluginSize > 0)
+      assertTrue(archiveFileSize > 0)
       assertFalse(parsingDuration.isNegative)
     }
   }

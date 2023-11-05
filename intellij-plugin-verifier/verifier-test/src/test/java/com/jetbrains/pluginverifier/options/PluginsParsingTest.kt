@@ -40,7 +40,7 @@ class PluginsParsingTest {
     val pluginInfo = plugins.pluginsToCheck.first()
     val telemetry = reportage[pluginInfo]
     if (telemetry != null) {
-      assertTrue(telemetry.pluginSize > 0)
+      assertTrue(telemetry.archiveFileSize > 0)
       assertTrue(telemetry.parsingDuration.toMillis() > 0)
     } else {
       fail("Plugin telemetry not found for $pluginInfo")

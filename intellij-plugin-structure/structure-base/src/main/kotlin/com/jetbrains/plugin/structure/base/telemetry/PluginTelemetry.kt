@@ -14,8 +14,8 @@ open class PluginTelemetry {
     data.putAll(pairs)
   }
 
-  open val pluginSize: Bytes
-    get() = data[PLUGIN_SIZE] as Bytes
+  open val archiveFileSize: Bytes
+    get() = data[ARCHIVE_FILE_SIZE] as Bytes
 
   open val parsingDuration: Duration
     get() = data[PARSING_DURATION] as Duration

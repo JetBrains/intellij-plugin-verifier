@@ -375,7 +375,7 @@ class IdePluginManager private constructor(
   private fun PluginCreator.setTelemetry(pluginFile: Path, pluginCreationDurationInMillis: Long) {
     with(telemetry) {
       parsingDuration = Duration.ofMillis(pluginCreationDurationInMillis)
-      pluginSize = pluginFile.pluginSize
+      archiveFileSize = pluginFile.pluginSize
     }
   }
 

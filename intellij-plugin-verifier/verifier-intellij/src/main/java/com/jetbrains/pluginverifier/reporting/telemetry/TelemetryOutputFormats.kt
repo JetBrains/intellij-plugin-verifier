@@ -11,7 +11,7 @@ fun PluginTelemetry.toPlainString(): String {
     appendLine(telemetry, PLUGIN_VERSION, "Plugin Version")
     appendLine("Descriptor parsed in: ${parsingDuration.formatDuration()}")
     appendLine("Descriptor parsed (raw ms): ${parsingDuration.toMillis()}")
-    appendLine("Plugin size (bytes): $pluginSize")
+    appendLine("Plugin size (bytes): $archiveFileSize")
     appendLine(telemetry, PLUGIN_VERIFIED_CLASSES_COUNT, "Verified classes in plugin artifact")
     telemetry[PLUGIN_VERIFICATION_TIME]?.let {
       if (it is Duration) {

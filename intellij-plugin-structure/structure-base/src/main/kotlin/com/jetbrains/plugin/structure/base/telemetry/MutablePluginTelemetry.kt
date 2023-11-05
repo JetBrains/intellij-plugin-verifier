@@ -8,7 +8,7 @@ import java.time.Duration
 
 const val PLUGIN_ID = "plugin.id"
 const val PLUGIN_VERSION = "plugin.version"
-const val PLUGIN_SIZE = "plugin.size"
+const val ARCHIVE_FILE_SIZE = "plugin.archive.file.size"
 const val PARSING_DURATION = "plugin.parsing.duration"
 const val PLUGIN_VERIFICATION_TIME = "plugin.verification.duration"
 const val PLUGIN_VERIFIED_CLASSES_COUNT = "plugin.verification.verified.classes.count"
@@ -16,10 +16,10 @@ const val UNKNOWN_SIZE: Bytes = -1
 
 class MutablePluginTelemetry : PluginTelemetry() {
 
-  override var pluginSize: Bytes
-    get() = data[PLUGIN_SIZE] as Bytes
+  override var archiveFileSize: Bytes
+    get() = data[ARCHIVE_FILE_SIZE] as Bytes
     set(value) {
-      data[PLUGIN_SIZE] = value
+      data[ARCHIVE_FILE_SIZE] = value
     }
 
   override var parsingDuration: Duration
