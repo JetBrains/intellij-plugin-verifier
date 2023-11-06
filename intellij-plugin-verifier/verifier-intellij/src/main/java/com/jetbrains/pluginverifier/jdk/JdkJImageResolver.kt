@@ -84,6 +84,11 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override val allBundleNameSet
     get() = ResourceBundleNameSet(emptyMap())
 
+  /**
+   * Resolve class with specified binary name.
+   *
+   * The class name must be slash separated, e.g. `java/lang/String`.
+   */
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
