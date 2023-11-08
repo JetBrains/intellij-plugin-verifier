@@ -24,10 +24,17 @@ class MutablePluginTelemetry : PluginTelemetry() {
       data[ARCHIVE_FILE_SIZE] = value
     }
 
-  override var parsingDuration: Duration
-    get() = data[PARSING_DURATION] as Duration
+  override var parsingDuration: Duration?
+    get() {
+      val parsingDurationVal = data[PARSING_DURATION]
+      return parsingDurationVal as? Duration
+    }
     set(value) {
-      data[PARSING_DURATION] = value
+      if (value != null) {
+        data[PARSING_DURATION] = value
+      } else {
+        data.remove(PARSING_DURATION)
+      }
     }
 
   operator fun set(key: String, value: Any) {

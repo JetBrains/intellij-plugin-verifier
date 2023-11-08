@@ -13,6 +13,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.time.Duration
 
 private const val HEADER = """
       <id>someId</id>
@@ -44,7 +45,7 @@ class TelemetryTest {
     }
     with(pluginCreationSuccess.telemetry) {
       assertTrue(archiveFileSize > 0)
-      assertFalse(parsingDuration.isNegative)
+      assertFalse(parsingDuration.isZeroOrPositive())
     }
   }
 
@@ -53,6 +54,13 @@ class TelemetryTest {
     val telemetry = MutablePluginTelemetry()
     val archiveFileSize = telemetry.archiveFileSize
     assertEquals(UNKNOWN_SIZE, archiveFileSize)
+  }
+
+  @Test
+  fun `duration is not set but retrieved`() {
+    val telemetry = MutablePluginTelemetry()
+    val parsingDuration = telemetry.parsingDuration
+    assertTrue(parsingDuration.isZeroOrPositive())
   }
 
   private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
@@ -66,5 +74,9 @@ class TelemetryTest {
   private fun buildIdePlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
     return IdePluginManager.createManager().createPlugin(pluginFile)
+  }
+
+  fun Duration?.isZeroOrPositive(): Boolean {
+    return if (this != null) !this.isNegative else false
   }
 }
