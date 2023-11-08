@@ -2,13 +2,14 @@ package com.jetbrains.plugin.structure.intellij
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.UNKNOWN_SIZE
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import org.junit.Assert
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -45,6 +46,13 @@ class TelemetryTest {
       assertTrue(archiveFileSize > 0)
       assertFalse(parsingDuration.isNegative)
     }
+  }
+
+  @Test
+  fun `archive file size is not set but retrieved`() {
+    val telemetry = MutablePluginTelemetry()
+    val archiveFileSize = telemetry.archiveFileSize
+    assertEquals(UNKNOWN_SIZE, archiveFileSize)
   }
 
   private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {

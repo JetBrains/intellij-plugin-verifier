@@ -17,7 +17,9 @@ const val UNKNOWN_SIZE: Bytes = -1
 class MutablePluginTelemetry : PluginTelemetry() {
 
   override var archiveFileSize: Bytes
-    get() = data[ARCHIVE_FILE_SIZE] as Bytes
+    get() {
+      return data.getOrDefault(ARCHIVE_FILE_SIZE, UNKNOWN_SIZE) as Bytes
+    }
     set(value) {
       data[ARCHIVE_FILE_SIZE] = value
     }
