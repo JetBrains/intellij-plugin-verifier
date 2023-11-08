@@ -5,6 +5,8 @@
 package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
@@ -97,7 +99,9 @@ class PluginVerifier(
       context.findMistakenlyBundledIdeClasses(pluginResolver)
       context.findDependenciesCycles(dependenciesGraph)
 
-      val classesToCheck = selectClassesForCheck(pluginDetails)
+      val classesToCheck = selectClassesForCheck(pluginDetails).also {
+        it.reportTelemetry(pluginDetails, context)
+      }
 
       BytecodeVerifier(
         classFilters,
@@ -140,7 +144,8 @@ class PluginVerifier(
           nonExtendableApiUsages,
           overrideOnlyMethodUsages,
           pluginStructureWarnings,
-          DynamicPlugins.getDynamicPluginStatus(this)
+          DynamicPlugins.getDynamicPluginStatus(this),
+          context.telemetry
         )
       }
     }
@@ -327,6 +332,11 @@ class PluginVerifier(
     return classesForCheck
   }
 
+  private fun Set<String>.reportTelemetry(pluginDetails: PluginDetails, context: PluginVerificationContext) {
+    context.reportTelemetry(pluginDetails.pluginInfo, MutablePluginTelemetry().apply {
+      set(PLUGIN_VERIFIED_CLASSES_COUNT, this@reportTelemetry.size)
+    })
+  }
 }
 
 /**

@@ -4,8 +4,12 @@
 
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFICATION_TIME
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.ExecutorWithProgress
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import java.time.Duration
+import kotlin.system.measureTimeMillis
 
 fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<PluginVerifier>): List<PluginVerificationResult> {
   if (verifiers.isEmpty()) {
@@ -22,9 +26,17 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
 
   val tasks = verifiers.map { verifier ->
     ExecutorWithProgress.Task(verifier.verificationDescriptor.toString()) {
-      val verificationResult = verifier.loadPluginAndVerify()
-      reportage.reportVerificationResult(verificationResult)
-      verificationResult
+      val verificationResult: PluginVerificationResult
+      measureTimeMillis {
+        verificationResult = verifier.loadPluginAndVerify()
+      }.let { verificationTime ->
+        reportage.reportTelemetry(verificationResult.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(verificationTime)))
+        if (verificationResult is PluginVerificationResult.Verified) {
+          reportage.reportTelemetry(verificationResult.plugin, verificationResult.telemetry)
+        }
+        reportage.reportVerificationResult(verificationResult)
+        verificationResult
+      }
     }
   }
   return executor.executeTasks(tasks)

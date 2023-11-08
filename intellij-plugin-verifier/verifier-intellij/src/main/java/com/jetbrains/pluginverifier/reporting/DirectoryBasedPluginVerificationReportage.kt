@@ -4,6 +4,10 @@
 
 package com.jetbrains.pluginverifier.reporting
 
+import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_ID
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERSION
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.PluginVerificationResult
@@ -12,6 +16,8 @@ import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphP
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.*
+import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
+import com.jetbrains.pluginverifier.reporting.telemetry.toPlainString
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import org.slf4j.LoggerFactory
@@ -51,6 +57,7 @@ import java.nio.file.Paths
  */
 class DirectoryBasedPluginVerificationReportage(
   private val pluginVerificationReportageResultAggregator: PluginVerificationReportageAggregator = PluginVerificationReportageAggregator { _, _ -> },
+  private val telemetryAggregator: TelemetryAggregator = TelemetryAggregator(),
   private val targetDirectoryProvider: (PluginVerificationTarget) -> Path,
   ) : PluginVerificationReportage {
 
@@ -75,6 +82,10 @@ class DirectoryBasedPluginVerificationReportage(
     reason: String
   ) {
     ignoredPluginsReporters.forEach { it.report(PluginIgnoredEvent(pluginInfo, verificationTarget, reason)) }
+  }
+
+  override fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
+    telemetryAggregator.reportTelemetry(pluginInfo, telemetry)
   }
 
   /**
@@ -122,6 +133,7 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
+          reportVerificationDetails(directory, "telemetry.txt", telemetryAggregator[plugin].withPluginIdAndVersion(this).orEmpty()) { it.toPlainString() }
 
           val problemIgnoredEvents = ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
           problemIgnoredEvents.forEach { allIgnoredProblemsReporter.report(it) }
@@ -146,4 +158,18 @@ class DirectoryBasedPluginVerificationReportage(
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
   }
+}
+
+private fun PluginTelemetry?.withPluginIdAndVersion(verifiedResult: PluginVerificationResult.Verified): PluginTelemetry? {
+  return this?.let {
+    return MutablePluginTelemetry().apply {
+      merge(it)
+      set(PLUGIN_ID, verifiedResult.plugin.pluginId)
+      set(PLUGIN_VERSION, verifiedResult.plugin.version)
+    }
+  }
+}
+
+private fun PluginTelemetry?.orEmpty(): List<PluginTelemetry> {
+  return if (this != null) listOf(this) else emptyList()
 }

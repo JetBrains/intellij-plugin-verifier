@@ -23,8 +23,10 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.file.*
+import java.time.Duration
 import java.util.*
 import java.util.stream.Collectors
+import kotlin.system.measureTimeMillis
 
 /**
  * Factory for plugin of the IntelliJ Platform.
@@ -345,27 +347,36 @@ class IdePluginManager private constructor(
   ): PluginCreator {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
     val pluginCreator: PluginCreator
-    if (pluginFile.isZip()) {
-      pluginCreator = extractZipAndCreatePlugin(
-        pluginFile,
-        descriptorPath,
-        validateDescriptor,
-        myResourceResolver,
-        problemResolver
-      )
-    } else if (pluginFile.isJar() || pluginFile.isDirectory) {
-      pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null, problemResolver)
-      resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-      resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-    } else {
-      pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
-    }
-    pluginCreator.setOriginalFile(pluginFile)
+    measureTimeMillis {
+      if (pluginFile.isZip()) {
+        pluginCreator = extractZipAndCreatePlugin(
+          pluginFile,
+          descriptorPath,
+          validateDescriptor,
+          myResourceResolver,
+          problemResolver
+        )
+      } else if (pluginFile.isJar() || pluginFile.isDirectory) {
+        pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null, problemResolver)
+        resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+        resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+      } else {
+        pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
+      }
+      pluginCreator.setOriginalFile(pluginFile)
+    }.let { pluginCreationDuration -> pluginCreator.setTelemetry(pluginFile, pluginCreationDuration)}
     return pluginCreator
   }
 
   private fun getInvalidPluginFileCreator(pluginFileName: String, descriptorPath: String): PluginCreator {
     return createInvalidPlugin(pluginFileName, descriptorPath, IncorrectZipOrJarFile(pluginFileName))
+  }
+
+  private fun PluginCreator.setTelemetry(pluginFile: Path, pluginCreationDurationInMillis: Long) {
+    with(telemetry) {
+      parsingDuration = Duration.ofMillis(pluginCreationDurationInMillis)
+      archiveFileSize = pluginFile.pluginSize
+    }
   }
 
   companion object {

@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.telemetry.UNKNOWN_SIZE
 import org.slf4j.LoggerFactory
 import java.io.*
 import java.nio.charset.Charset
@@ -14,6 +15,8 @@ import java.util.stream.Collectors
 import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
+
+typealias Bytes = Long
 
 fun Path.isZip(): Boolean = this.hasExtension("zip")
 
@@ -155,3 +158,6 @@ val Path.extension: String
 
 val Path.length: Long
   get() = Files.size(this)
+
+val Path.pluginSize: Bytes
+  get() = if (isZip() || isJar()) Files.size(this) else UNKNOWN_SIZE

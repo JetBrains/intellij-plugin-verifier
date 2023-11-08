@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.reporting
 
+import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -29,4 +30,8 @@ interface PluginVerificationReportage : Closeable {
    */
   fun reportVerificationResult(pluginVerificationResult: PluginVerificationResult)
 
+  /**
+   * Report plugin telemetry data
+   */
+  fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry)
 }
