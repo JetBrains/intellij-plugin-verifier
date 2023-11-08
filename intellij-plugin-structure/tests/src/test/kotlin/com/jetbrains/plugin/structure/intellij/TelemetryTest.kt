@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -46,7 +45,7 @@ class TelemetryTest {
     }
     with(pluginCreationSuccess.telemetry) {
       assertTrue(archiveFileSize > 0)
-      assertFalse(parsingDuration.isZeroOrPositive())
+      assertTrue(parsingDuration.isZeroOrPositive())
     }
   }
 
@@ -61,7 +60,7 @@ class TelemetryTest {
   fun `duration is not set but retrieved`() {
     val telemetry = MutablePluginTelemetry()
     val parsingDuration = telemetry.parsingDuration
-    assertTrue(parsingDuration.isZeroOrPositive())
+    assertNull(parsingDuration)
   }
 
   @Test
@@ -75,7 +74,7 @@ class TelemetryTest {
   private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationSuccess) {
-      Assert.fail("This plugin has not been created. Creation failed with error(s).")
+      fail("This plugin has not been created. Creation failed with error(s).")
     }
     return pluginCreationResult as PluginCreationSuccess
   }
