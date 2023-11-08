@@ -9,8 +9,10 @@ fun PluginTelemetry.toPlainString(): String {
   return buildString {
     appendLine(telemetry, PLUGIN_ID, "Plugin ID")
     appendLine(telemetry, PLUGIN_VERSION, "Plugin Version")
-    appendLine("Descriptor parsed in: ${parsingDuration.formatDuration()}")
-    appendLine("Descriptor parsed (raw ms): ${parsingDuration.toMillis()}")
+    parsingDuration?.let {
+      appendLine("Descriptor parsed in: ${it.formatDuration()}")
+      appendLine("Descriptor parsed (raw ms): ${it.toMillis()}")
+    }
     appendLine("Plugin size (bytes): $archiveFileSize")
     appendLine(telemetry, PLUGIN_VERIFIED_CLASSES_COUNT, "Verified classes in plugin artifact")
     telemetry[PLUGIN_VERIFICATION_TIME]?.let {

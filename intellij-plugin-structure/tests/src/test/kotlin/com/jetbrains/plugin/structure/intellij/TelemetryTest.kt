@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
 import com.jetbrains.plugin.structure.base.telemetry.UNKNOWN_SIZE
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -62,6 +63,14 @@ class TelemetryTest {
     val parsingDuration = telemetry.parsingDuration
     assertTrue(parsingDuration.isZeroOrPositive())
   }
+
+  @Test
+  fun `verified number of classes is not set but retrieved`() {
+    val telemetry = MutablePluginTelemetry()
+    val verifiedClassesCount = telemetry[PLUGIN_VERIFIED_CLASSES_COUNT]
+    assertNull(verifiedClassesCount)
+  }
+
 
   private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
