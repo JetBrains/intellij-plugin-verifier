@@ -3,10 +3,11 @@ package com.jetbrains.pluginverifier.reporting.telemetry
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import java.util.concurrent.ConcurrentHashMap
 
 class TelemetryAggregator {
 
-  private val telemetries: MutableMap<PluginCoordinate, PluginTelemetry> = mutableMapOf()
+  private val telemetries: MutableMap<PluginCoordinate, PluginTelemetry> = ConcurrentHashMap()
 
   fun reportTelemetry(pluginInfo: PluginInfo, telemetry: PluginTelemetry) {
     telemetries.merge(pluginInfo.coordinate, telemetry) { existing, new ->
