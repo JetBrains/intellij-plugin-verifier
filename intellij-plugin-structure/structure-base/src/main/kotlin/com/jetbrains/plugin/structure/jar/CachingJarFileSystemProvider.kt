@@ -12,32 +12,16 @@ import java.util.concurrent.ConcurrentHashMap
 class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
   private val fsCache: MutableMap<URI, FileSystem> = ConcurrentHashMap()
 
+  private val delegateJarFileSystemProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
+
   override fun getFileSystem(jarPath: Path): FileSystem {
     val jarUri = jarPath.toJarFileUri()
     try {
-      return fsCache.computeIfAbsent(jarUri) { getOrCreateFileSystem(jarPath) }
+      return fsCache.computeIfAbsent(jarUri) { delegateJarFileSystemProvider.getFileSystem(jarPath) }
     } catch (e: Throwable) {
       throw JarArchiveCannotBeOpenException(jarPath, jarUri, e)
     }
   }
-
-  private fun getOrCreateFileSystem(jarPath: Path): FileSystem {
-    val standardFileBasedJarFsProvider = UriJarFileSystemProvider { it.toJarFileUri() }
-    val jarSchemaPrefixingFsProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
-    for (provider in listOf(standardFileBasedJarFsProvider, jarSchemaPrefixingFsProvider)) {
-      val fs = try {
-        provider.getFileSystem(jarPath)
-      } catch (e: Throwable) {
-        null
-      }
-      if (fs != null) {
-        return fs
-      }
-    }
-    throw JarArchiveException("Filesystem cannot be retrieved for <$jarPath>. " +
-      "No JAR filesystem provider was able to resolve the [" + jarPath + "]")
-  }
-
 
   override fun close() {
     fsCache.clear()
