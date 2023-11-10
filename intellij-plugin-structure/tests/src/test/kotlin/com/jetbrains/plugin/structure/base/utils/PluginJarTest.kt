@@ -1,5 +1,11 @@
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.PLUGIN_XML
+import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.JarArchiveException
+import com.jetbrains.plugin.structure.jar.META_INF
+import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
+import com.jetbrains.plugin.structure.jar.PluginJar
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -44,7 +50,7 @@ class PluginJarTest {
   fun `plugin descriptor is open as a result`() {
     PluginJar(jarPath).use { jar ->
       val result = jar.getPluginDescriptor()
-      if (result is PluginDescriptorResult.Found) {
+      if (result is Found) {
         assertTrue(result.reader.readText().isNotEmpty())
       } else {
         fail("Plugin descriptor reader cannot be open. Reader must be non-null")
@@ -71,7 +77,7 @@ class PluginJarTest {
 
   @Test
   fun `descriptor path is resolved with different FS provider`() {
-    val fsProvider = UriJarFileSystemProvider()
+    val fsProvider = CachingJarFileSystemProvider()
     PluginJar(jarPath, fsProvider).use { jar ->
       val descriptorPath = jar.resolveDescriptorPath()
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
@@ -80,7 +86,7 @@ class PluginJarTest {
 
   @Test
   fun `descriptor path is resolved with different FS provider and nonexistent file`() {
-    val fsProvider = UriJarFileSystemProvider()
+    val fsProvider = CachingJarFileSystemProvider()
     PluginJar(jarPath, fsProvider).use { jar ->
       val descriptorPath = jar.resolveDescriptorPath(nonexistentFileName)
       assertNull(descriptorPath)
