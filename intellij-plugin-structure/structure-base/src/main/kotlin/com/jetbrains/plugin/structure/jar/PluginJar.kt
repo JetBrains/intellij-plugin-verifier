@@ -4,10 +4,10 @@ import com.jetbrains.plugin.structure.base.plugin.IconTheme
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
-import com.jetbrains.plugin.structure.base.utils.*
-import java.io.BufferedReader
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.readBytes
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import java.io.File
-import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystem
@@ -30,19 +30,6 @@ class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = De
       descriptor
     } else {
       null
-    }
-  }
-
-  /**
-   * Open a new [buffered reader][BufferedReader] over this JAR archive plugin descriptor.
-   * The caller must handle the closing of this buffered reader.
-   *
-   * @return the buffered reader or `null` when the descriptor path cannot be resolved in this JAR file.
-   */
-  @Throws(IOException::class)
-  fun openDescriptor(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH, charset: Charset = StandardCharsets.UTF_8): BufferedReader? {
-    return resolveDescriptorPath((descriptorPath))?.let {
-      Files.newBufferedReader(it, charset)
     }
   }
 

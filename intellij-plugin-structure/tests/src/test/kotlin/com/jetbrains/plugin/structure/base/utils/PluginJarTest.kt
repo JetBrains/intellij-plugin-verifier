@@ -1,11 +1,8 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.PLUGIN_XML
-import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.JarArchiveException
-import com.jetbrains.plugin.structure.jar.META_INF
+import com.jetbrains.plugin.structure.jar.*
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
-import com.jetbrains.plugin.structure.jar.PluginJar
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
@@ -35,18 +32,6 @@ class PluginJarTest {
   }
 
   @Test
-  fun `plugin descriptor is open as a reader`() {
-    PluginJar(jarPath).use { jar ->
-      val reader = jar.openDescriptor()
-      if (reader == null) {
-        fail("Plugin descriptor reader cannot be open. Reader must be non-null")
-        return
-      }
-      assertTrue(reader.readText().isNotEmpty())
-    }
-  }
-
-  @Test
   fun `plugin descriptor is open as a result`() {
     PluginJar(jarPath).use { jar ->
       val result = jar.getPluginDescriptor()
@@ -68,10 +53,10 @@ class PluginJarTest {
   }
 
   @Test
-  fun `nonexistent plugin descriptor cannot be open as a reader`() {
+  fun `nonexistent plugin descriptor cannot be resolved`() {
     PluginJar(jarPath).use { jar ->
-      val reader = jar.openDescriptor("nonexistent-descriptor.xml")
-      assertNull(reader)
+      val pluginDescriptor = jar.getPluginDescriptor("nonexistent-descriptor.xml")
+      assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
     }
   }
 
