@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.toEmptyPathUri
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -40,10 +41,4 @@ class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
   override fun close() {
     fsCache.clear()
   }
-
-  private fun URI.toEmptyPathUri(): URI {
-    val rootUri = resolve("/")
-    return URI(rootUri.toString().removeSuffix("/"))
-  }
-
 }
