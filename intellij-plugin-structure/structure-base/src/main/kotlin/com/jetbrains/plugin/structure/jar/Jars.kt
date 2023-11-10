@@ -5,6 +5,7 @@ import java.nio.file.Path
 
 const val JAR_FILE_SCHEMA = "jar:file"
 const val FILE_SCHEMA = "file"
+const val JAR_SCHEME = "jar"
 
 /**
  * Converts the file-based Path to the `jar:file` schema URI prefix.
