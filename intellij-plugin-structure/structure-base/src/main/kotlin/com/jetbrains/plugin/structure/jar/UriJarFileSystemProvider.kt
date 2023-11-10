@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -15,6 +17,9 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
   override fun getFileSystem(jarPath: Path): FileSystem {
     val jarUri = pathToUri(jarPath)
     return try {
+      if (!jarPath.isZip() && !jarPath.isJar()) {
+        throw JarArchiveCannotBeOpenException(jarPath, "must end with '.zip' or '.jar'")
+      }
       try {
         FileSystems.getFileSystem(jarUri).also {
           log.debug("Reusing JAR filesystem from JVM cache <{}>", jarUri)
@@ -24,9 +29,10 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
           log.debug("JAR filesystem not found. Creating a new one for <{}>", jarUri)
         }
       }
+    } catch (e: JarArchiveCannotBeOpenException) {
+      throw e
     } catch (e: Throwable) {
       throw JarArchiveCannotBeOpenException(jarUri, e)
     }
   }
-
 }
