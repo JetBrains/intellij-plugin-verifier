@@ -13,11 +13,11 @@ class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
   private val fsCache: MutableMap<URI, FileSystem> = ConcurrentHashMap()
 
   override fun getFileSystem(jarPath: Path): FileSystem {
+    val jarUri = jarPath.toJarFileUri()
     try {
-      val jarUri = jarPath.toJarFileUri()
       return fsCache.computeIfAbsent(jarUri) { getOrCreateFileSystem(jarPath) }
     } catch (e: Throwable) {
-      throw JarArchiveCannotBeOpenException(jarPath, e)
+      throw JarArchiveCannotBeOpenException(jarPath, jarUri, e)
     }
   }
 
