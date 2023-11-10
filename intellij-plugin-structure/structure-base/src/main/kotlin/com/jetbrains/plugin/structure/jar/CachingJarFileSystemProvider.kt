@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.toEmptyPathUri
+import com.jetbrains.plugin.structure.base.utils.withSuperScheme
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -23,8 +23,8 @@ class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
 
   private fun getOrCreateFileSystem(jarPath: Path): FileSystem {
     val standardFileBasedJarFsProvider = UriJarFileSystemProvider { it.toJarFileUri() }
-    val inMemoryJarFsProvider = UriJarFileSystemProvider { it.toJarFileUri().toEmptyPathUri() }
-    for (provider in listOf(standardFileBasedJarFsProvider, inMemoryJarFsProvider)) {
+    val jarSchemaPrefixingFsProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
+    for (provider in listOf(standardFileBasedJarFsProvider, jarSchemaPrefixingFsProvider)) {
       val fs = try {
         provider.getFileSystem(jarPath)
       } catch (e: Throwable) {
@@ -34,7 +34,8 @@ class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
         return fs
       }
     }
-    throw JarArchiveException("Filesystem cannot be retrieved for <$jarPath>")
+    throw JarArchiveException("Filesystem cannot be retrieved for <$jarPath>. " +
+      "No JAR filesystem provider was able to resolve the [" + jarPath + "]")
   }
 
 
