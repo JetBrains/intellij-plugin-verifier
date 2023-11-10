@@ -18,6 +18,7 @@ import java.nio.file.Paths
 const val META_INF = "META-INF"
 const val PLUGIN_XML = "plugin.xml"
 val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
+const val JAR_SCHEME = "jar"
 
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
