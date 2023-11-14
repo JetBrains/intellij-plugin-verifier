@@ -13,9 +13,9 @@ const val TELEMETRY_FILE = "telemetry.txt"
 interface VerificationResultHandler {
   fun beforeVerificationResult() {}
 
-  fun onVerificationResult(verificationResultDir: TelemetryAggregatorCli.LocatedTelemetry) {}
+  fun onVerificationResult(verificationResult: TelemetryAggregatorCli.LocatedTelemetry) {}
 
-  fun afterVerificationResult() { }
+  fun afterVerificationResult() {}
 }
 
 class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
@@ -41,8 +41,8 @@ class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
     return pluginDir.walkBottomUp().filter {
       it.name == TELEMETRY_FILE
     }.map { file ->
-        file to file.path.removePrefix(pluginDir.path + File.separator)
-      }
+      file to file.path.removePrefix(pluginDir.path + File.separator)
+    }
       .map { (file, name) ->
         val components = name.split(File.separator)
         parse(components, ideVersion, file)
@@ -69,7 +69,7 @@ class TelemetryAggregatorCli(private val verificationOutputDir: Path) {
     }?.firstOrNull()
 }
 
-class CsvVerificationResultHandler(val csvOutputFile: File) : VerificationResultHandler, AutoCloseable {
+class CsvVerificationResultHandler(csvOutputFile: File) : VerificationResultHandler, AutoCloseable {
   private val SEPARATOR = ","
 
   private val columns = listOf("IDE version", "Plugin ID", "Plugin Version",
@@ -87,9 +87,9 @@ class CsvVerificationResultHandler(val csvOutputFile: File) : VerificationResult
       verificationResult.ideVersion.toString(),
       verificationResult.pluginIdAndVersion.pluginId,
       verificationResult.pluginIdAndVersion.version,
-      nullSafeGet { verificationResult.telemetry.pluginSize.asString() },
+      nullSafeGet { verificationResult.telemetry.archiveFileSize.asString() },
       verificationResult.telemetry[PLUGIN_VERIFICATION_TIME].asString(),
-      nullSafeGet {verificationResult.telemetry.parsingDuration.asString() }
+      nullSafeGet { verificationResult.telemetry.parsingDuration.asString() }
     )
 
     writer.appendLine(values.joinToString(SEPARATOR))
@@ -130,7 +130,8 @@ fun main(args: Array<String>) {
       val csvOutputFile = File(args[1])
       CsvVerificationResultHandler(csvOutputFile)
     }
-    else -> object : VerificationResultHandler{}
+
+    else -> object : VerificationResultHandler {}
   }
 
   TelemetryAggregatorCli(path).run(verificationResultHandler)
