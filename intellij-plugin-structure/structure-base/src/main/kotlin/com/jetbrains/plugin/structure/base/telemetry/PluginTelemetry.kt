@@ -15,7 +15,7 @@ open class PluginTelemetry {
   }
 
   open val archiveFileSize: Bytes
-    get() = data[ARCHIVE_FILE_SIZE] as Bytes
+    get() = data.getOrDefault(ARCHIVE_FILE_SIZE, UNKNOWN_SIZE) as Bytes
 
   open val parsingDuration: Duration?
     get() = data[PARSING_DURATION] as Duration?
