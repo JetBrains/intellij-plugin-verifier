@@ -2,17 +2,18 @@ package com.jetbrains.pluginverifier.telemetry
 
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFICATION_TIME
 import com.jetbrains.pluginverifier.telemetry.parsing.VerificationResultHandler
-import java.io.File
+import java.nio.file.Path
 import java.time.Duration
+import kotlin.io.path.bufferedWriter
 
-class CsvVerificationResultHandler(csvOutputFile: File) : VerificationResultHandler, AutoCloseable {
+class CsvVerificationResultHandler(csvOutput: Path) : VerificationResultHandler, AutoCloseable {
   private val SEPARATOR = ","
 
   private val columns = listOf("IDE version", "Plugin ID", "Plugin Version",
     "Plugin Size", "Verification Time",
     "Description Parsing Time")
 
-  private val writer = csvOutputFile.bufferedWriter()
+  private val writer = csvOutput.bufferedWriter()
 
   override fun beforeVerificationResult() {
     writer.appendLine(columns.joinToString(SEPARATOR))
@@ -23,9 +24,9 @@ class CsvVerificationResultHandler(csvOutputFile: File) : VerificationResultHand
       verificationSpecificTelemetry.ideVersion.toString(),
       verificationSpecificTelemetry.pluginIdAndVersion.pluginId,
       verificationSpecificTelemetry.pluginIdAndVersion.version,
-      nullSafeGet { verificationSpecificTelemetry.telemetry.archiveFileSize.asString() },
+      verificationSpecificTelemetry.telemetry.archiveFileSize.asString(),
       verificationSpecificTelemetry.telemetry[PLUGIN_VERIFICATION_TIME].asString(),
-      nullSafeGet { verificationSpecificTelemetry.telemetry.parsingDuration.asString() }
+      verificationSpecificTelemetry.telemetry.parsingDuration.asString()
     )
 
     writer.appendLine(values.joinToString(SEPARATOR))
@@ -38,15 +39,6 @@ class CsvVerificationResultHandler(csvOutputFile: File) : VerificationResultHand
     return when (this) {
       is Duration -> toMillis().toString()
       else -> toString()
-    }
-  }
-
-  // FIXME replace with runCatching
-  private fun nullSafeGet(function: () -> String): String {
-    return try {
-      function()
-    } catch (e: NullPointerException) {
-      ""
     }
   }
 
