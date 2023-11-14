@@ -29,7 +29,7 @@ fun PluginTelemetry.fromPlainStringTelemetry(): PluginTelemetry {
       newTelemetry[PLUGIN_VERIFICATION_TIME] = it
     }
     bytes("Plugin size (bytes)") {
-      newTelemetry.pluginSize = it
+      newTelemetry.archiveFileSize = it
     }
   }
 }
