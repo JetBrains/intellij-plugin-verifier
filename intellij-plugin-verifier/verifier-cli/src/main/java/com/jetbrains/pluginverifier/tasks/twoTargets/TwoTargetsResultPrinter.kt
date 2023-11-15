@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.tasks.twoTargets
@@ -285,15 +285,15 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
   private val documentationNote: String
     get() = """
       If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.
-      If the problem is documented, it will be ignored by Plugin Verifier on the next verification. Note that TeamCity investigation may not disappear immediately.
-      If an investigation is not closed automatically, mark the investigation as "Fixed". 
+      If the problem is documented, it will be ignored by Plugin Verifier on the next verification run. Note that TeamCity investigation may not disappear immediately.
+      If an investigation is not closed automatically, mark the investigation as "Fixed" manually. 
       
       To document the change do the following:
       1) Open https://plugins.jetbrains.com/docs/intellij/api-changes-list.html
-      2) Open a page corresponding to the current year, for example 'Changes in 2020.*'
+      2) Open a page corresponding to the affected release(s), for example 'Changes in 2023.*'
       3) Click 'Edit Page' at the right upper corner to navigate to GitHub.
-      4) Read tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
-      5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct. See supported patterns at the top.
+      4) Read the tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
+      5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct, see supported patterns at the top.
       6) Provide the commit message and open a pull request.
     """.trimIndent()
 
