@@ -7,7 +7,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * File system provider that mainains open file systems in an internal cache.
+ * File system provider that maintains open file systems in an internal cache.
  */
 class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
   private val fsCache: MutableMap<URI, FileSystem> = ConcurrentHashMap()
