@@ -65,7 +65,7 @@ class IdePluginManager private constructor(
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
               }
             } catch (e: Exception) {
-              LOG.info("Unable to read file $descriptorPath", e)
+              LOG.warn("Unable to read file $descriptorPath", e)
               val message = e.localizedMessage
               createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
