@@ -17,7 +17,7 @@ class PluginJarTest {
 
   @Test
   fun `descriptor path is resolved`() {
-    PluginJar(jarPath).use { jar ->
+    PluginJar(jarPath).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath()
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -25,7 +25,7 @@ class PluginJarTest {
 
   @Test
   fun `descriptor path is resolved with explicit path`() {
-    PluginJar(jarPath).use { jar ->
+    PluginJar(jarPath).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath(META_INF + File.separator + PLUGIN_XML)
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -33,7 +33,7 @@ class PluginJarTest {
 
   @Test
   fun `plugin descriptor is open as a result`() {
-    PluginJar(jarPath).use { jar ->
+    PluginJar(jarPath).let { jar ->
       val result = jar.getPluginDescriptor()
       if (result is Found) {
         assertTrue(result.reader.readText().isNotEmpty())
@@ -54,7 +54,7 @@ class PluginJarTest {
 
   @Test
   fun `nonexistent plugin descriptor cannot be resolved`() {
-    PluginJar(jarPath).use { jar ->
+    PluginJar(jarPath).let { jar ->
       val pluginDescriptor = jar.getPluginDescriptor("nonexistent-descriptor.xml")
       assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
     }
@@ -63,7 +63,7 @@ class PluginJarTest {
   @Test
   fun `descriptor path is resolved with different FS provider`() {
     val fsProvider = CachingJarFileSystemProvider()
-    PluginJar(jarPath, fsProvider).use { jar ->
+    PluginJar(jarPath, fsProvider).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath()
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -72,7 +72,7 @@ class PluginJarTest {
   @Test
   fun `descriptor path is resolved with different FS provider and nonexistent file`() {
     val fsProvider = CachingJarFileSystemProvider()
-    PluginJar(jarPath, fsProvider).use { jar ->
+    PluginJar(jarPath, fsProvider).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath(nonexistentFileName)
       assertNull(descriptorPath)
     }

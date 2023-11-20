@@ -21,7 +21,7 @@ val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
 
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
-class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) : AutoCloseable {
+class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) {
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath)
 
   fun resolveDescriptorPath(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH): Path? {
@@ -54,10 +54,6 @@ class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = De
   fun getThirdPartyDependencies(): List<ThirdPartyDependency> {
     val path = jarFileSystem.getPath(META_INF, THIRD_PARTY_LIBRARIES_FILE_NAME)
     return parseThirdPartyDependenciesByPath(path)
-  }
-
-  override fun close() {
-    //FIXME close? jarFileSystem.closeLogged()
   }
 
   private fun toCanonicalPath(descriptorPath: String): String {
