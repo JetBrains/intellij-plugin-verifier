@@ -3,21 +3,38 @@ package com.jetbrains.plugin.structure.base.utils
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.PLUGIN_XML
 import com.jetbrains.plugin.structure.jar.*
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.nio.file.Path
 
 
-class PluginJarTest {
+@RunWith(Parameterized::class)
+class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
   private val nonexistentFileName = "!n0n3xist3nt.jar"
   private val nonexistentPath = Path.of(nonexistentFileName)
 
   private val jarPath = Path.of("src/test/resources/resolver-jars/sample-jar-with-descriptor.jar")
 
+  companion object {
+    @Parameters
+    @JvmStatic
+    fun fsProviders(): Array<Array<JarFileSystemProvider>> {
+      return arrayOf(
+        arrayOf(DefaultJarFileSystemProvider()),
+        arrayOf(CachingJarFileSystemProvider())
+      )
+    }
+  }
+
   @Test
   fun `descriptor path is resolved`() {
-    PluginJar(jarPath).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath()
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -25,7 +42,7 @@ class PluginJarTest {
 
   @Test
   fun `descriptor path is resolved with explicit path`() {
-    PluginJar(jarPath).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).let { jar ->
       val descriptorPath = jar.resolveDescriptorPath(META_INF + File.separator + PLUGIN_XML)
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -33,7 +50,7 @@ class PluginJarTest {
 
   @Test
   fun `plugin descriptor is open as a result`() {
-    PluginJar(jarPath).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).let { jar ->
       val result = jar.getPluginDescriptor()
       if (result is Found) {
         assertTrue(result.reader.readText().isNotEmpty())
@@ -47,34 +64,16 @@ class PluginJarTest {
   @Test
   fun `nonexistent plugin JAR path is provided`() {
     val jarArchiveException = assertThrows(JarArchiveException::class.java) {
-      PluginJar(nonexistentPath)
+      PluginJar(nonexistentPath, fileSystemProvider)
     }
-    assertEquals("JAR file cannot be open at [!n0n3xist3nt.jar]", jarArchiveException.message)
+    assertThat(jarArchiveException.message, containsString("JAR file cannot be open at [!n0n3xist3nt.jar]"))
   }
 
   @Test
   fun `nonexistent plugin descriptor cannot be resolved`() {
-    PluginJar(jarPath).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).let { jar ->
       val pluginDescriptor = jar.getPluginDescriptor("nonexistent-descriptor.xml")
       assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
-    }
-  }
-
-  @Test
-  fun `descriptor path is resolved with different FS provider`() {
-    val fsProvider = CachingJarFileSystemProvider()
-    PluginJar(jarPath, fsProvider).let { jar ->
-      val descriptorPath = jar.resolveDescriptorPath()
-      assertEquals("META-INF/plugin.xml", descriptorPath.toString())
-    }
-  }
-
-  @Test
-  fun `descriptor path is resolved with different FS provider and nonexistent file`() {
-    val fsProvider = CachingJarFileSystemProvider()
-    PluginJar(jarPath, fsProvider).let { jar ->
-      val descriptorPath = jar.resolveDescriptorPath(nonexistentFileName)
-      assertNull(descriptorPath)
     }
   }
 }
