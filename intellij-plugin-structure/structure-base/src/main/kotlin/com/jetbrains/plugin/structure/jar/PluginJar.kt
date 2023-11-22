@@ -20,7 +20,7 @@ val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
 
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
-class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) {
+class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()): AutoCloseable {
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath)
 
   fun resolveDescriptorPath(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH): Path? {
@@ -60,4 +60,8 @@ class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = De
   }
 
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
+
+  override fun close() {
+    jarFileSystemProvider.close(jarPath)
+  }
 }

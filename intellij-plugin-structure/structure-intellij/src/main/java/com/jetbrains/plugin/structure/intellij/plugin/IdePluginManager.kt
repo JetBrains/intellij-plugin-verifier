@@ -55,7 +55,7 @@ class IdePluginManager private constructor(
   ): PluginCreator {
 
     return try {
-      PluginJar(jarFile, fileSystemProvider).let { jar ->
+      PluginJar(jarFile, fileSystemProvider).use { jar ->
         when (val descriptor = jar.getPluginDescriptor("$META_INF/$descriptorPath")) {
           is Found -> {
             try {
