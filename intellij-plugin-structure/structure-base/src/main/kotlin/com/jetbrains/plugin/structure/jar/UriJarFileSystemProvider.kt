@@ -11,7 +11,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 
 class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri() }) : JarFileSystemProvider {
-  private val log: Logger = LoggerFactory.getLogger(CachingJarFileSystemProvider::class.java)
+  private val log: Logger = LoggerFactory.getLogger(UriJarFileSystemProvider::class.java)
 
   @Throws(JarArchiveCannotBeOpenException::class)
   override fun getFileSystem(jarPath: Path): FileSystem {
