@@ -35,4 +35,8 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
       throw JarArchiveCannotBeOpenException(jarUri, e)
     }
   }
+
+  override fun close(jarPath: Path) {
+    // do nothing
+  }
 }

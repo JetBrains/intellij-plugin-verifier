@@ -6,4 +6,6 @@ import java.nio.file.Path
 interface JarFileSystemProvider {
   @Throws(JarArchiveException::class)
   fun getFileSystem(jarPath: Path): FileSystem
+
+  fun close(jarPath: Path)
 }

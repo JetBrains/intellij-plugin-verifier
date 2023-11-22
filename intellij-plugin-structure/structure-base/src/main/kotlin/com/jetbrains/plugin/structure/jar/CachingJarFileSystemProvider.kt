@@ -23,6 +23,14 @@ class CachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
     }
   }
 
+  override fun close(jarPath: Path) {
+    val jarUri = jarPath.toJarFileUri()
+    fsCache[jarUri]?.let { fs ->
+      fs.close()
+      fsCache.remove(jarUri)
+    }
+  }
+
   override fun close() {
     fsCache.clear()
   }
