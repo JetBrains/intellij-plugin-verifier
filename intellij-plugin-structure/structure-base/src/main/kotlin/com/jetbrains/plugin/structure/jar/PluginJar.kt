@@ -9,8 +9,6 @@ import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.readBytes
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import java.io.File
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,7 +32,7 @@ class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = De
     }
   }
 
-  fun getPluginDescriptor(descriptorPathValue: String = PLUGIN_XML_RESOURCE_PATH, charset: Charset = StandardCharsets.UTF_8): PluginDescriptorResult {
+  fun getPluginDescriptor(descriptorPathValue: String = PLUGIN_XML_RESOURCE_PATH): PluginDescriptorResult {
     val descriptorPath = resolveDescriptorPath(descriptorPathValue) ?: return PluginDescriptorResult.NotFound
     return PluginDescriptorResult.Found(descriptorPath, descriptorPath.inputStream().buffered())
   }
