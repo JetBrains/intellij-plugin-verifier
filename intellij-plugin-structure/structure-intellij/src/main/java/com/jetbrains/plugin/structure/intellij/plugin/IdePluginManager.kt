@@ -65,7 +65,7 @@ class IdePluginManager private constructor(
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
               }
             } catch (e: Exception) {
-              LOG.warn("Unable to read file $descriptorPath", e)
+              LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
               val message = e.localizedMessage
               createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
@@ -74,7 +74,7 @@ class IdePluginManager private constructor(
         }
       }
     } catch (e: JarArchiveCannotBeOpenException) {
-      LOG.warn("Unable to extract $jarFile (searching for $descriptorPath): ${e.getShortExceptionMessage()}")
+      LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
       createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
     }
   }
