@@ -1,16 +1,16 @@
 package com.jetbrains.plugin.structure.jar
 
 import java.io.Closeable
-import java.io.Reader
+import java.io.InputStream
 import java.nio.file.Path
 
 sealed class PluginDescriptorResult {
   data class Found(
     val path: Path,
-    val reader: Reader
+    val inputStream: InputStream
   ) : PluginDescriptorResult(), Closeable {
     override fun close() {
-      reader.close()
+      inputStream.close()
     }
   }
 

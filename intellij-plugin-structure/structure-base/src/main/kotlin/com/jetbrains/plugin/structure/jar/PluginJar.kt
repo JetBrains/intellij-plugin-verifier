@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.readBytes
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import java.io.File
@@ -35,7 +36,7 @@ class PluginJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = De
 
   fun getPluginDescriptor(descriptorPathValue: String = PLUGIN_XML_RESOURCE_PATH, charset: Charset = StandardCharsets.UTF_8): PluginDescriptorResult {
     val descriptorPath = resolveDescriptorPath(descriptorPathValue) ?: return PluginDescriptorResult.NotFound
-    return PluginDescriptorResult.Found(descriptorPath, Files.newBufferedReader(descriptorPath, charset))
+    return PluginDescriptorResult.Found(descriptorPath, descriptorPath.inputStream().buffered())
   }
 
   fun getIcons(): List<PluginIcon> {

@@ -80,7 +80,7 @@ class IdePluginManager private constructor(
   }
 
   private fun Found.loadXml(): Document {
-    return reader.use {
+    return inputStream.use {
       JDOMUtil.loadDocument(it)
     }
   }
