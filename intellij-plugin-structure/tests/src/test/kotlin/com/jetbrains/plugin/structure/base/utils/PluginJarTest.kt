@@ -53,7 +53,7 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
     PluginJar(jarPath, fileSystemProvider).let { jar ->
       val result = jar.getPluginDescriptor()
       if (result is Found) {
-        assertTrue(result.reader.readText().isNotEmpty())
+        assertTrue(result.inputStream.bufferedReader().readText().isNotEmpty())
       } else {
         fail("Plugin descriptor reader cannot be open. Reader must be non-null")
         return
