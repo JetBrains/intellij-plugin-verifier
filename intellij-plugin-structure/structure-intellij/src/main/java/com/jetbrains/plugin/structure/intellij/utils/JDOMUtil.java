@@ -13,8 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.xml.sax.InputSource;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
@@ -73,6 +71,18 @@ public class JDOMUtil {
 
   private static boolean attEqual(@NotNull Attribute a1, @NotNull Attribute a2) {
     return a1.getName().equals(a2.getName()) && a1.getValue().equals(a2.getValue());
+  }
+
+  /**
+   * Read JDOM XML documents from a reader. It is assumed that the reader is UTF-8 encoded.
+   * @param reader UTF-8 encoded reader
+   * @return a JDOM document read from the reader
+   */
+  @NotNull
+  public static Document loadDocument(@NotNull Reader reader) throws JDOMException, IOException {
+    SAXBuilder saxBuilder = new SAXBuilder();
+    saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
+    return saxBuilder.build(reader);
   }
 
   @NotNull

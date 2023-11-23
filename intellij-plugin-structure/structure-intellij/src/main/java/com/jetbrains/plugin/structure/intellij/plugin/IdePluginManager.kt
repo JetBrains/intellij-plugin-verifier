@@ -18,6 +18,9 @@ import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.*
+import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
+import org.jdom2.Document
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -40,6 +43,8 @@ class IdePluginManager private constructor(
 
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
+  private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
+
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
     descriptorPath: String,
@@ -48,57 +53,39 @@ class IdePluginManager private constructor(
     parentPlugin: PluginCreator?,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
-    val zipFs = try {
-      FileSystems.newFileSystem(jarFile, IdePluginManager::class.java.classLoader)
-    } catch (e: Throwable) {
-      LOG.warn("Unable to extract $jarFile (searching for $descriptorPath): ${e.getShortExceptionMessage()}")
-      return createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
-    }
-    try {
-      zipFs.use { jarFileSystem ->
-        val entryName = "$META_INF/$descriptorPath"
-        val entry = jarFileSystem.getPath(toCanonicalPath(entryName))
-        return if (Files.exists(entry)) {
-          try {
-            val document = Files.newInputStream(entry).use { JDOMUtil.loadDocument(it) }
-            val icons = getIconsFromJarFile(jarFileSystem)
-            val dependencies = getThirdPartyDependenciesFromJarFile(jarFileSystem)
-            val plugin = createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, document, entry, resourceResolver, problemResolver)
-            plugin.setIcons(icons)
-            plugin.setThirdPartyDependencies(dependencies)
-            plugin
-          } catch (e: Exception) {
-            LOG.info("Unable to read file $descriptorPath", e)
-            val message = e.localizedMessage
-            createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
+
+    return try {
+      PluginJar(jarFile, fileSystemProvider).use { jar ->
+        when (val descriptor = jar.getPluginDescriptor("$META_INF/$descriptorPath")) {
+          is Found -> {
+            try {
+              val descriptorXml = descriptor.loadXml()
+              createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
+                setIcons(jar.getIcons())
+                setThirdPartyDependencies(jar.getThirdPartyDependencies())
+              }
+            } catch (e: Exception) {
+              LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
+              val message = e.localizedMessage
+              createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
+            }
           }
-        } else {
-          createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
+          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
         }
       }
-    } catch (e: Exception) {
-      LOG.warn("Unable to read $jarFile in search of $descriptorPath: ${e.message}")
-      return createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
+    } catch (e: JarArchiveCannotBeOpenException) {
+      LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
+      createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
     }
   }
 
-  private fun getThirdPartyDependenciesFromJarFile(jarFileSystem: FileSystem): List<ThirdPartyDependency> {
-    val path = jarFileSystem.getPath(META_INF, THIRD_PARTY_LIBRARIES_FILE_NAME)
-    return parseThirdPartyDependenciesByPath(path)
+  private fun Found.loadXml(): Document {
+    return inputStream.use {
+      JDOMUtil.loadDocument(it)
+    }
   }
 
-  private fun getIconsFromJarFile(jarFileSystem: FileSystem): List<PluginIcon> =
-    IconTheme.values().mapNotNull { theme ->
-      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
-      val iconPath = jarFileSystem.getPath(META_INF, getIconFileName(theme))
-      if (iconPath.exists()) {
-        PluginIcon(theme, iconPath.readBytes(), iconEntryName)
-      } else {
-        null
-      }
-    }
-
-  private fun loadPluginInfoFromDirectory(
+   private fun loadPluginInfoFromDirectory(
     pluginDirectory: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
@@ -213,6 +200,7 @@ class IdePluginManager private constructor(
     parentPlugin: PluginCreator?,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
+    LOG.debug("Loading {} with descriptor [{}]", pluginFile, descriptorPath)
     val systemIndependentDescriptorPath = descriptorPath.toSystemIndependentName()
     return when {
       pluginFile.isDirectory -> {
@@ -424,10 +412,6 @@ class IdePluginManager private constructor(
           errorsAndWarnings.all { it.level !== PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
         }
       }
-    }
-
-    private fun toCanonicalPath(descriptorPath: String): String {
-      return Paths.get(descriptorPath.toSystemIndependentName()).normalize().toString()
     }
 
     private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"

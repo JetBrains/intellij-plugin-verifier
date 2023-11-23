@@ -24,6 +24,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
@@ -98,6 +99,7 @@ class CheckTrunkApiParamsBuilder(
     releasePluginsSet.addPluginFilter(releaseIgnoreInLocalRepositoryFilter)
     releasePluginsSet.addPluginFilter(releaseBundledFilter)
 
+    reportage.logVerificationStage("Scheduling ${releaseCompatibleVersions.size} plugins for verification against major IDE")
     releasePluginsSet.schedulePlugins(releaseCompatibleVersions)
 
     val trunkIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(trunkLocalRepository)
@@ -108,6 +110,7 @@ class CheckTrunkApiParamsBuilder(
     trunkPluginsSet.addPluginFilter(trunkBundledFilter)
 
     //Verify the same plugin versions as for the release IDE.
+    reportage.logVerificationStage("Scheduling ${releaseCompatibleVersions.size} plugins for verification against trunk IDE")
     trunkPluginsSet.schedulePlugins(releaseCompatibleVersions)
 
     //For plugins that are not compatible with the trunk IDE verify their latest versions, too.
@@ -125,7 +128,14 @@ class CheckTrunkApiParamsBuilder(
     }
     trunkPluginsSet.schedulePlugins(latestCompatibleVersions)
 
-    val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedBy { (it as UpdateInfo).updateId }
+    val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedWith { plugin, anotherPlugin ->
+      when {
+        plugin is UpdateInfo && anotherPlugin is UpdateInfo -> plugin.updateId.compareTo(anotherPlugin.updateId)
+        plugin is LocalPluginInfo && anotherPlugin is LocalPluginInfo -> plugin.pluginId.compareTo(anotherPlugin.pluginId)
+        else -> 0
+      }
+    }
+
     if (releasePluginsToCheck.isNotEmpty()) {
       reportage.logVerificationStage(
         "The following updates will be checked with both ${trunkIdeDescriptor.ideVersion} and #${releaseIdeDescriptor.ideVersion}:\n" +
