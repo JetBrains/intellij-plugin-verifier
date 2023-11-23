@@ -43,7 +43,7 @@ class IdePluginManager private constructor(
 
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
-  private val fileSystemProvider: JarFileSystemProvider = CachingJarFileSystemProvider()
+  private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
