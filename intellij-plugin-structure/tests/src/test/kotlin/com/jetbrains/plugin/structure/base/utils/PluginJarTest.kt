@@ -27,14 +27,15 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
     fun fsProviders(): Array<Array<JarFileSystemProvider>> {
       return arrayOf(
         arrayOf(DefaultJarFileSystemProvider()),
-        arrayOf(CachingJarFileSystemProvider())
+        arrayOf(CachingJarFileSystemProvider()),
+        arrayOf(SingletonCachingJarFileSystemProvider)
       )
     }
   }
 
   @Test
   fun `descriptor path is resolved`() {
-    PluginJar(jarPath, fileSystemProvider).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).use { jar ->
       val descriptorPath = jar.resolveDescriptorPath()
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -42,7 +43,7 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
 
   @Test
   fun `descriptor path is resolved with explicit path`() {
-    PluginJar(jarPath, fileSystemProvider).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).use { jar ->
       val descriptorPath = jar.resolveDescriptorPath(META_INF + File.separator + PLUGIN_XML)
       assertEquals("META-INF/plugin.xml", descriptorPath.toString())
     }
@@ -50,7 +51,7 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
 
   @Test
   fun `plugin descriptor is open as a result`() {
-    PluginJar(jarPath, fileSystemProvider).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).use { jar ->
       val result = jar.getPluginDescriptor()
       if (result is Found) {
         assertTrue(result.inputStream.bufferedReader().readText().isNotEmpty())
@@ -71,7 +72,7 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
 
   @Test
   fun `nonexistent plugin descriptor cannot be resolved`() {
-    PluginJar(jarPath, fileSystemProvider).let { jar ->
+    PluginJar(jarPath, fileSystemProvider).use { jar ->
       val pluginDescriptor = jar.getPluginDescriptor("nonexistent-descriptor.xml")
       assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
     }
