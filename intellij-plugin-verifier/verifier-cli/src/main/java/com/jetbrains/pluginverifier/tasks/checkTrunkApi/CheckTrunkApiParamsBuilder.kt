@@ -99,6 +99,7 @@ class CheckTrunkApiParamsBuilder(
     releasePluginsSet.addPluginFilter(releaseIgnoreInLocalRepositoryFilter)
     releasePluginsSet.addPluginFilter(releaseBundledFilter)
 
+    reportage.logVerificationStage("Scheduling ${releaseCompatibleVersions.size} plugins for verification against major IDE")
     releasePluginsSet.schedulePlugins(releaseCompatibleVersions)
 
     val trunkIgnoreInLocalRepositoryFilter = IgnorePluginsAvailableInOtherRepositoryFilter(trunkLocalRepository)
@@ -109,6 +110,7 @@ class CheckTrunkApiParamsBuilder(
     trunkPluginsSet.addPluginFilter(trunkBundledFilter)
 
     //Verify the same plugin versions as for the release IDE.
+    reportage.logVerificationStage("Scheduling ${releaseCompatibleVersions.size} plugins for verification against trunk IDE")
     trunkPluginsSet.schedulePlugins(releaseCompatibleVersions)
 
     //For plugins that are not compatible with the trunk IDE verify their latest versions, too.
