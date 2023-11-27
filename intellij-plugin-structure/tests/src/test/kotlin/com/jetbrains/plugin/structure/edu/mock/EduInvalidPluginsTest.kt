@@ -3,7 +3,6 @@ package com.jetbrains.plugin.structure.edu.mock
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.edu.*
 import com.jetbrains.plugin.structure.edu.bean.EduVendor
@@ -101,13 +100,7 @@ class EduInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   }
 
   private fun checkInvalidPlugin(problem: PluginProblem, descriptor: EduPluginJsonBuilder.() -> Unit) {
-    val pluginFile = buildZipFile(temporaryFolder.newFolder().resolve("course.zip")) {
-      file(EduPluginManager.DESCRIPTOR_NAME) {
-        val builder = perfectEduPluginBuilder
-        builder.descriptor()
-        builder.asString()
-      }
-    }
+    val pluginFile = buildEduPlugin(temporaryFolder.newFolder().resolve("course.zip"), descriptor)
     assertProblematicPlugin(pluginFile, listOf(problem))
   }
 }

@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.edu.EduPlugin
 import com.jetbrains.plugin.structure.edu.EduPluginManager
+import com.jetbrains.plugin.structure.edu.ItemType
 import com.jetbrains.plugin.structure.edu.TaskType
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -220,6 +221,67 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(false, plugin.isPrivate)
     assertEquals(iconTestContent, String(plugin.icons.single().content))
     assertTrue(pluginCreationSuccess.warnings.isEmpty())
+  }
+
+  @Test
+  fun `check presentable name for sections and lessons with custom name`() {
+    val lesson = EduItem(
+      type = ItemType.LESSON.id,
+      title = "lesson",
+      customName = "lesson custom name",
+    )
+    val section = EduItem(
+      type = ItemType.SECTION.id,
+      title = "section",
+      customName = "section custom name",
+      items = listOf(lesson)
+    )
+
+    val result = createPluginSuccessfully(buildEduPlugin(temporaryFolder.newFolder().resolve("course.zip")) {
+      items = listOf(section)
+    })
+    assertNotNull("Edu stats were not parsed", result.plugin.eduStat)
+    val stats = result.plugin.eduStat!!
+
+    assertEquals(
+      "Section's title should be equal to custom name if it's present",
+      section.customName, stats.sections.firstOrNull()?.title
+    )
+
+    assertEquals("Lesson's title should be equal to custom name if it's present",
+      lesson.customName, stats.lessons.firstOrNull()
+    )
+  }
+
+  @Test
+  fun `check presentable name for sections and lessons without custom name`() {
+    val lesson = EduItem(
+      type = ItemType.LESSON.id,
+      title = "lesson",
+      customName = " ",
+    )
+    val section = EduItem(
+      type = ItemType.SECTION.id,
+      title = "section",
+      customName = " ",
+      items = listOf(lesson)
+    )
+
+    val result = createPluginSuccessfully(buildEduPlugin(temporaryFolder.newFolder().resolve("course.zip")) {
+      items = listOf(section)
+    })
+    assertNotNull("Edu stats were not parsed", result.plugin.eduStat)
+    val stats = result.plugin.eduStat!!
+
+    assertEquals(
+      "Section's title should be equal to title if custom name is blank",
+      section.title, stats.sections.firstOrNull()?.title
+    )
+
+    assertEquals(
+      "Lesson's title should be equal to title if custom name is blank",
+      lesson.title, stats.lessons.firstOrNull()
+    )
   }
 
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {

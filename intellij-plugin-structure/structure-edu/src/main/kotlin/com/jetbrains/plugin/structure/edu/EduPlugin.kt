@@ -60,8 +60,10 @@ data class EduStat(
       val allItems = descriptor.items.flatMap { it.items } + descriptor.items
 
       val sections = descriptor.items.filter { it.type == ItemType.SECTION.id }
-        .map { Section(it.title, it.items.map { lesson -> lesson.title }) }
-      val lessons = allItems.filter { it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank() }.map { it.title }
+        .map { Section(it.presentableName, it.items.map { lesson -> lesson.presentableName }) }
+      val lessons = allItems.filter {
+        it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank()
+      }.map { it.presentableName }
       val tasks = allItems.flatMap { it.taskList }.groupingBy { it.taskType }.eachCount()
 
       return EduStat(sections, lessons, tasks)
