@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.edu
 
 const val TITLE = "title"
+const val CUSTOM_NAME = "custom_name"
 const val TYPE = "type"
 const val NAME = "name"
 const val SUMMARY = "summary"

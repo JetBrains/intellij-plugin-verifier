@@ -12,21 +12,31 @@ import com.jetbrains.plugin.structure.edu.*
 data class EduTask(
   @JsonProperty(NAME)
   val name: String = "",
+  @JsonProperty(CUSTOM_NAME)
+  val customName: String = "",
   @JsonProperty(TASK_TYPE)
   var taskType: String = ""
-)
+) {
+  val presentableName: String
+    get() = customName.takeIf { it.isNotBlank() } ?: name
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class EduItem(
   @JsonProperty(TITLE)
   val title: String = "",
+  @JsonProperty(CUSTOM_NAME)
+  val customName: String = "",
   @JsonProperty(TYPE)
   val type: String = "",
   @JsonProperty(ITEMS)
   val items: List<EduItem> = mutableListOf(),
   @JsonProperty(TASK_LIST)
   var taskList: List<EduTask> = mutableListOf()
-)
+) {
+  val presentableName: String
+    get() = customName.takeIf { it.isNotBlank() } ?: title
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class EduVendor(
