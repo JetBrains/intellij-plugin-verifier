@@ -2,6 +2,25 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
+## v1.307 - 2023-11-27
+
+### Added
+
+- Simplify JRT filesystem handling to make Plugin Verifier compatible with Java 17 ([#1013](https://github.com/JetBrains/intellij-plugin-verifier/pull/1013))
+- Collect telemetry data when verifying plugins 
+- Use custom name field for EDU sections and lessons ([#1039](https://github.com/JetBrains/intellij-plugin-verifier/pull/1039))
+
+### Changed
+
+- Speedup on IDE JAR and directory scanning ([#1030](https://github.com/JetBrains/intellij-plugin-verifier/pull/1030))
+- Remove `apiVersion` from Toolbox plugin descriptor and revert to just using the compatibility range
+- Upgrade dependencies
+
+### Fixed
+
+- Clarify `-runtime-dir` switch semantics  ([#1020](https://github.com/JetBrains/intellij-plugin-verifier/pull/1020))
+- Improve the instructional message on TeamCity runs when checking trunk API
+
 ## v1.306 - 2023-10-19
 
 ### Added
