@@ -9,5 +9,5 @@ dependencies {
 
   implementation(project(":structure-base"))
 
-  api(sharedLibs.guava)
+  api(sharedLibs.caffeine)
 }

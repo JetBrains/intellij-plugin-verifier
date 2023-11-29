@@ -5,13 +5,12 @@
 package com.jetbrains.pluginverifier.ide.repositories
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.common.base.Suppliers
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.DataServicesIndexParser
 import com.jetbrains.pluginverifier.misc.RestApiFailed
 import com.jetbrains.pluginverifier.misc.RestApiOk
 import com.jetbrains.pluginverifier.misc.RestApis
-import java.util.concurrent.TimeUnit
+import com.jetbrains.pluginverifier.repository.cache.memoize
 
 private const val DATA_SERVICES_URL = "https://data.services.jetbrains.com"
 
@@ -24,7 +23,7 @@ class ReleaseIdeRepository(private val dataServicesUrl: String = DATA_SERVICES_U
     DataServicesConnector(dataServicesUrl)
   }
 
-  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 5, TimeUnit.MINUTES)
+  private val indexCache = memoize { updateIndex() }
 
   private fun updateIndex(): List<AvailableIde> {
     val products = dataServicesConnector.getProducts()

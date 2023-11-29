@@ -5,16 +5,15 @@
 package com.jetbrains.pluginverifier.ide.repositories
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.ide.IntelliJRepositoryIndexParser
 import com.jetbrains.pluginverifier.misc.RestApiFailed
 import com.jetbrains.pluginverifier.misc.RestApiOk
 import com.jetbrains.pluginverifier.misc.RestApis
+import com.jetbrains.pluginverifier.repository.cache.memoize
 import java.io.IOException
-import java.util.Locale
-import java.util.concurrent.TimeUnit
+import java.util.*
 
 /**
  * Provides index of IDE builds available for downloading,
@@ -60,7 +59,7 @@ open class IntelliJIdeRepository(private val channel: Channel) : IdeRepository {
     RepositoryIndexConnector(indexBaseUrl)
   }
 
-  private val indexCache = Suppliers.memoizeWithExpiration<List<AvailableIde>>(this::updateIndex, 1, TimeUnit.MINUTES)
+  private val indexCache = memoize(expirationInMinutes = 1) { updateIndex() }
 
   private fun updateIndex(): List<AvailableIde> {
     try {

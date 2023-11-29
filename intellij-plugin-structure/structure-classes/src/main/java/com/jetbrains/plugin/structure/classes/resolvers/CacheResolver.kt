@@ -4,9 +4,8 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -19,18 +18,14 @@ class CacheResolver(
   private data class BundleCacheKey(val baseName: String, val locale: Locale)
 
   private val classCache: LoadingCache<String, ResolutionResult<ClassNode>> =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .maximumSize(cacheSize.toLong())
-      .build(object : CacheLoader<String, ResolutionResult<ClassNode>>() {
-        override fun load(key: String) = delegate.resolveClass(key)
-      })
+      .build { key -> delegate.resolveClass(key) }
 
   private val propertyBundleCache: LoadingCache<BundleCacheKey, ResolutionResult<PropertyResourceBundle>> =
-    CacheBuilder.newBuilder()
+    Caffeine.newBuilder()
       .maximumSize(cacheSize.toLong())
-      .build(object : CacheLoader<BundleCacheKey, ResolutionResult<PropertyResourceBundle>>() {
-        override fun load(key: BundleCacheKey) = delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale)
-      })
+      .build { key -> delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale) }
 
   override val allClasses
     get() = delegate.allClasses

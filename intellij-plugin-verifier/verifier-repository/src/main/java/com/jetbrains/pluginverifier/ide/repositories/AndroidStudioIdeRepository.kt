@@ -5,16 +5,15 @@
 package com.jetbrains.pluginverifier.ide.repositories
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.misc.RestApiFailed
 import com.jetbrains.pluginverifier.misc.RestApiOk
 import com.jetbrains.pluginverifier.misc.RestApis
+import com.jetbrains.pluginverifier.repository.cache.memoize
 import java.net.URL
 import java.time.LocalDate
-import java.util.concurrent.TimeUnit
 
 private const val FEED_URL = "https://download.jetbrains.com/toolbox/feeds"
 
@@ -24,7 +23,9 @@ class AndroidStudioIdeRepository(private val feedUrl: String = FEED_URL) : IdeRe
     AndroidStudioFeedConnector(feedUrl)
   }
 
-  private val indexCache = Suppliers.memoizeWithExpiration(this::updateIndex, 5, TimeUnit.MINUTES)
+  private val indexCache = memoize {
+    updateIndex()
+  }
 
   private fun updateIndex(): List<AvailableIde> {
     val feedEntries = feedConnector.getFeed()

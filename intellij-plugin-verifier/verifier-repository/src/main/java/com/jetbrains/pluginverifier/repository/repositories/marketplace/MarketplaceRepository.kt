@@ -4,9 +4,8 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.marketplace
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.LoadingCache
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
@@ -26,14 +25,12 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   //This mapping never changes. Updates in JetBrains Marketplace have constant plugin ID.
   private val updateIdToPluginIdMapping = ConcurrentHashMap<Int, Int>()
 
-  private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = CacheBuilder.newBuilder()
+  private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = Caffeine.newBuilder()
     .expireAfterWrite(5, TimeUnit.MINUTES)
-    .build(object : CacheLoader<Pair<PluginId, UpdateId>, Optional<UpdateInfo>>() {
-      override fun load(key: Pair<PluginId, UpdateId>): Optional<UpdateInfo> {
-        //Loading is required => this key is outdated => will request in batch and put to the cache.
-        return Optional.empty()
-      }
-    })
+    .build {
+      //Loading is required => this key is outdated => will request in batch and put to the cache.
+      Optional.empty()
+    }
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> =
     getLastCompatiblePlugins(ideVersion, "")
