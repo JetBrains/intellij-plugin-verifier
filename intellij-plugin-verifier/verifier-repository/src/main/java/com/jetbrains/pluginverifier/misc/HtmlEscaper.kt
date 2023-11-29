@@ -69,7 +69,7 @@ class HtmlEscaper {
             val result = lookupMap[subSeq.toString()]
             if (result != null) {
                 writer.write(result.toString())
-                return Character.codePointCount(subSeq, 0, subSeq.length)
+                return codePointCount(subSeq, 0, subSeq.length)
             }
         }
         return 0
