@@ -4,7 +4,6 @@
 
 package com.jetbrains.pluginverifier.misc
 
-import com.google.common.html.HtmlEscapers
 import java.io.PrintWriter
 
 class HtmlBuilder(val output: PrintWriter) {
@@ -140,7 +139,7 @@ class HtmlBuilder(val output: PrintWriter) {
   fun style(type: String = "", block: () -> Unit) = tag("style", block, mapOf("type" to type))
 
   operator fun String.unaryPlus() {
-    output.append(HtmlEscapers.htmlEscaper().escape(this))
+    output.append(this.escapeHtml4())
   }
 
 }
