@@ -393,6 +393,7 @@ internal class PluginCreator private constructor(
       "controller" -> IdePluginContentDescriptor.ClientKind.CONTROLLER
       "owner" -> IdePluginContentDescriptor.ClientKind.OWNER
       "remote" -> IdePluginContentDescriptor.ClientKind.REMOTE
+      "frontend" -> IdePluginContentDescriptor.ClientKind.FRONTEND
       null -> null
       else -> null.also { LOG.error("Unknown client value: '${getAttributeValue("client")}'") }
     }
