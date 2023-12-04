@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.readBytes
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.FileSystem
 import java.nio.file.Files
@@ -21,6 +23,8 @@ val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
 class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()): AutoCloseable {
+  private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
+
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath)
 
   fun resolveDescriptorPath(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH): Path? {
@@ -38,15 +42,24 @@ class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: Ja
   }
 
   fun getIcons(): List<PluginIcon> {
-    return IconTheme.values().mapNotNull { theme ->
-      val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+    val (defaultThemes, additionalThemes) = IconTheme.values().partition { it == IconTheme.DEFAULT }
+    check(defaultThemes.size == 1)
+    val defaultIcon = getIcon(defaultThemes.first())
+    if (defaultIcon == null) {
+      LOG.debug("Default icon not found (plugin archive {})", jarPath)
+      return emptyList()
+    }
+    return listOf(defaultIcon) + additionalThemes.mapNotNull { getIcon(it) }
+  }
 
-      val iconPath = jarFileSystem.getPath(META_INF, getIconFileName(theme))
-      if (iconPath.exists()) {
-        PluginIcon(theme, iconPath.readBytes(), iconEntryName)
-      } else {
-        null
-      }
+  private fun getIcon(theme: IconTheme): PluginIcon? {
+    val iconEntryName = "$META_INF/${getIconFileName(theme)}"
+
+    val iconPath = jarFileSystem.getPath(META_INF, getIconFileName(theme))
+    return if (iconPath.exists()) {
+      PluginIcon(theme, iconPath.readBytes(), iconEntryName)
+    } else {
+      null
     }
   }
 
