@@ -79,6 +79,8 @@ open class CmdOpts(
   "submission-type",
   description = "Set the plugin submission type for verifications. Available options: new (a first-time submission for new plugins with stricter set of verification rules), existing (a plugin that has been already submitted and validated with a relaxed set of rules)."
   )
-  var submissionType: String? = "new"
+  var submissionType: String? = "new",
 
+  @set:Argument("no-logos", alias = "no-icons", description = "Do not read plugin logos (icons) when parsing plugin descriptor and metadata")
+  var ignoreLogos: Boolean = false
 )

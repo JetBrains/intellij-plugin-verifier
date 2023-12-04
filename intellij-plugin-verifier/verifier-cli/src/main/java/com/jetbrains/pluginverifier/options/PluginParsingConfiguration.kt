@@ -7,4 +7,4 @@ enum class SubmissionType {
   EXISTING
 }
 
-data class PluginParsingConfiguration(val pluginSubmissionType: SubmissionType = NEW)
+data class PluginParsingConfiguration(val pluginSubmissionType: SubmissionType = NEW, val readPluginLogos: Boolean = true)

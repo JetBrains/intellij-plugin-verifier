@@ -26,6 +26,7 @@ import com.jetbrains.pluginverifier.repository.repositories.marketplace.Marketpl
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.nio.file.Path
 import java.nio.file.Paths
+import com.jetbrains.plugin.structure.intellij.plugin.PluginParsingConfiguration as StructurePluginParsingConfiguration
 
 /**
  * Utility class used to fill [pluginsSet] with a list of plugins to check.
@@ -215,9 +216,10 @@ class PluginsParsing(
     }
 
     reportage.logVerificationStage(READING_PLUGIN_FROM.format(pluginFile))
+    val structureParsingConfiguration = configuration.toStructureParsingConfiguration(validateDescriptor)
     val pluginCreationResult = IdePluginManager
       .createManager()
-      .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver)
+      .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver, parsingConfiguration = structureParsingConfiguration)
     with(pluginCreationResult) {
       when (this) {
         is PluginCreationSuccess -> {
@@ -247,4 +249,9 @@ class PluginsParsing(
       }
     }
 
+  private fun PluginParsingConfiguration.toStructureParsingConfiguration(validateDescriptor: Boolean) : StructurePluginParsingConfiguration {
+    return StructurePluginParsingConfiguration(
+      validateDescriptor,
+      readPluginLogos)
+  }
 }

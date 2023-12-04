@@ -120,7 +120,8 @@ object OptionsParser {
       "new" -> SubmissionType.NEW
       else -> SubmissionType.NEW
     }
-    return PluginParsingConfiguration(submissionType)
+    val readPluginLogos = !opts.ignoreLogos
+    return PluginParsingConfiguration(submissionType, readPluginLogos)
   }
 
   private val ideLatestRegexp = Regex("\\[latest(-([A-Z]+))?]")

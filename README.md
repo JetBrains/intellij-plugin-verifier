@@ -342,6 +342,10 @@ Here is the full syntax of the command:
     A file that contains patterns of problems that will be reflected in report. All other problems will be ignored. Applied to short problem description.
     The file must contain lines in form: `<plugin_xml_id_regexp_pattern>:<plugin_version_regexp_pattern>:<problem_description_regexp_pattern>`
 
+* `-no-logos`
+
+    Do not read [plugin logos](https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html) from the plugin archive. 
+
 ## Technical details
 
 Plugin Verifier uses the following paths for operational purposes:
