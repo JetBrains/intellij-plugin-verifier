@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.*
@@ -10,10 +10,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -51,9 +48,9 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     DuplicatedDependencyWarning("duplicatedDependencyId"),
   )
 
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> Path): IdePlugin {
+  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFactory: IdePuginFactory = ::defaultPluginFactory, pluginFileBuilder: () -> Path): IdePlugin {
     val pluginFile = pluginFileBuilder()
-    val successResult = createPluginSuccessfully(pluginFile)
+    val successResult = createPluginSuccessfully(pluginFile, pluginFactory)
     val (plugin, warnings) = successResult
     assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
     assertEquals(pluginFile, plugin.originalFile)
@@ -557,6 +554,36 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     assertEquals(lang, plugin.extensions.values.first().first().attributes.first().value)
   }
 
+  @Test
+  fun `icons are loaded`() {
+    val plugin = buildPluginSuccess(expectedWarnings) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("somePackage", somePackageDir)
+        dir("properties", propertiesDir)
+      }
+    }
+    assertEquals(1, plugin.icons.size)
+  }
+
+  @Test
+  fun `icon loading is skipped`() {
+    val doNotLoadIcons = PluginParsingConfiguration(loadIcons = false)
+    val pluginFactory: IdePuginFactory = {
+      createPlugin(it, parsingConfiguration = doNotLoadIcons)
+    }
+    val plugin = buildPluginSuccess(expectedWarnings, pluginFactory) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF", metaInfDir)
+        dir("optionalsDir", optionalsDir)
+        dir("somePackage", somePackageDir)
+        dir("properties", propertiesDir)
+      }
+    }
+    assertEquals(0, plugin.icons.size)
+  }
+
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
@@ -819,3 +846,5 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
 }
+
+typealias IdePuginFactory = PluginFactory<IdePlugin, IdePluginManager>

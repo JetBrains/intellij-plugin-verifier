@@ -10,8 +10,9 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
 
   abstract fun createManager(extractDirectory: Path): M
 
-  fun createPluginSuccessfully(pluginFile: Path): PluginCreationSuccess<P> {
-    val pluginCreationResult = createManager(temporaryFolder.newFolder("extract")).createPlugin(pluginFile)
+  fun createPluginSuccessfully(pluginFile: Path, pluginFactory: PluginFactory<P, M> = ::defaultPluginFactory): PluginCreationSuccess<P> {
+    val pluginManager = createManager(temporaryFolder.newFolder("extract"))
+    val pluginCreationResult = createPlugin(pluginManager, pluginFile, pluginFactory)
     if (pluginCreationResult is PluginCreationFail) {
       Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString())
     }
@@ -28,4 +29,14 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
     Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
     return creationFail
   }
+
+  protected fun createPlugin(pluginManager: M, pluginArtifactPath: Path, pluginFactory: PluginFactory<P, M>): PluginCreationResult<P> {
+    return pluginFactory.invoke(pluginManager, pluginArtifactPath)
+  }
+
+  protected fun defaultPluginFactory(pluginManager: M, pluginArtifactPath: Path): PluginCreationResult<P> {
+    return pluginManager.createPlugin(pluginArtifactPath)
+  }
 }
+
+typealias PluginFactory<P, M> = M.(pluginArtifactPath: Path) -> PluginCreationResult<P>
