@@ -51,7 +51,8 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    parsingConfiguration: PluginParsingConfiguration
   ): PluginCreator {
 
     return try {
@@ -61,7 +62,9 @@ class IdePluginManager private constructor(
             try {
               val descriptorXml = descriptor.loadXml()
               createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
-                setIcons(jar.getIcons())
+                if (parsingConfiguration.loadIcons) {
+                  setIcons(jar.getIcons())
+                }
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
               }
             } catch (e: Exception) {
@@ -86,12 +89,13 @@ class IdePluginManager private constructor(
   }
 
    private fun loadPluginInfoFromDirectory(
-    pluginDirectory: Path,
-    descriptorPath: String,
-    validateDescriptor: Boolean,
-    resourceResolver: ResourceResolver,
-    parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+     pluginDirectory: Path,
+     descriptorPath: String,
+     validateDescriptor: Boolean,
+     resourceResolver: ResourceResolver,
+     parentPlugin: PluginCreator?,
+     problemResolver: PluginCreationResultResolver,
+     parsingConfiguration: PluginParsingConfiguration
   ): PluginCreator {
     val descriptorFile = pluginDirectory.resolve(META_INF).resolve(descriptorPath.withPathSeparatorOf(pluginDirectory))
     return if (!descriptorFile.exists()) {
@@ -100,17 +104,20 @@ class IdePluginManager private constructor(
         validateDescriptor,
         resourceResolver,
         parentPlugin,
-        problemResolver)
+        problemResolver,
+        parsingConfiguration
+        )
     } else try {
       val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
-      val icons = loadIconsFromDir(pluginDirectory)
       val dependencies = getThirdPartyDependenciesFromDir(pluginDirectory)
       val plugin = createPlugin(
         pluginDirectory.simpleName, descriptorPath, parentPlugin,
         validateDescriptor, document, descriptorFile,
         resourceResolver, problemResolver
       )
-      plugin.setIcons(icons)
+      if (parsingConfiguration.loadIcons) {
+        plugin.setIcons(loadIconsFromDir(pluginDirectory))
+      }
       plugin.setThirdPartyDependencies(dependencies)
       plugin
     } catch (e: JDOMParseException) {
@@ -146,7 +153,8 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    parsingConfiguration: PluginParsingConfiguration
   ): PluginCreator {
     val libDir = root.resolve("lib")
     if (!libDir.isDirectory) {
@@ -163,10 +171,10 @@ class IdePluginManager private constructor(
     for (file in files) {
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
-        loadPluginInfoFromJarFile(file, descriptorPath, validateDescriptor, compositeResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromJarFile(file, descriptorPath, validateDescriptor, compositeResolver, parentPlugin, problemResolver, parsingConfiguration)
       } else if (file.isDirectory) {
         //Use the common resource resolver, which is unaware of lib's jar files.
-        loadPluginInfoFromDirectory(file, descriptorPath, validateDescriptor, resourceResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromDirectory(file, descriptorPath, validateDescriptor, resourceResolver, parentPlugin, problemResolver, parsingConfiguration)
       } else {
         continue
       }
@@ -198,7 +206,8 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    parsingConfiguration: PluginParsingConfiguration
   ): PluginCreator {
     LOG.debug("Loading {} with descriptor [{}]", pluginFile, descriptorPath)
     val systemIndependentDescriptorPath = descriptorPath.toSystemIndependentName()
@@ -209,7 +218,8 @@ class IdePluginManager private constructor(
           validateDescriptor,
           resourceResolver,
           parentPlugin,
-          problemResolver)
+          problemResolver,
+          parsingConfiguration)
       }
 
       pluginFile.isJar() -> {
@@ -218,25 +228,27 @@ class IdePluginManager private constructor(
           validateDescriptor,
           resourceResolver,
           parentPlugin,
-          problemResolver)
+          problemResolver,
+          parsingConfiguration)
       }
 
       else -> throw IllegalArgumentException()
     }
   }
 
-  private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
+  private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, parsingConfiguration: PluginParsingConfiguration, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
-      resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, problemResolver, pluginCreator)
+      resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, problemResolver, pluginCreator, parsingConfiguration)
     }
   }
 
-  private fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
+  private fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, parsingConfiguration: PluginParsingConfiguration, problemResolver: PluginCreationResultResolver) {
     if (currentPlugin.isSuccess) {
       val contentModules = currentPlugin.contentModules
       for (module in contentModules) {
         val configFile = module.configFile
-        val moduleCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configFile, false, resourceResolver, currentPlugin, problemResolver)
+        val moduleCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configFile, false, resourceResolver, currentPlugin,
+          problemResolver, parsingConfiguration)
         currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
       }
     }
@@ -255,6 +267,7 @@ class IdePluginManager private constructor(
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     mainPlugin: PluginCreator,
+    pluginParsingConfiguration: PluginParsingConfiguration
   ) {
     if (!visitedConfigurationFiles.add(currentPlugin.descriptorPath)) {
       return
@@ -268,9 +281,9 @@ class IdePluginManager private constructor(
         mainPlugin.registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFilesCycle)
         return
       }
-      val optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver, currentPlugin, problemResolver)
+      val optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver, currentPlugin, problemResolver, pluginParsingConfiguration)
       currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
-      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, mainPlugin)
+      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, mainPlugin, pluginParsingConfiguration)
     }
     path.removeLast()
   }
@@ -280,7 +293,8 @@ class IdePluginManager private constructor(
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    parsingConfiguration: PluginParsingConfiguration
   ): PluginCreator {
     val extractorResult = try {
       extractPlugin(pluginFile, extractDirectory)
@@ -291,9 +305,9 @@ class IdePluginManager private constructor(
     return when (extractorResult) {
       is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
         if (extractedFile.isJar() || extractedFile.isDirectory) {
-          val pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver)
-          resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver, problemResolver)
-          resolveContentModules(extractedFile, pluginCreator, myResourceResolver, problemResolver)
+          val pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver, parsingConfiguration)
+          resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver, parsingConfiguration, problemResolver)
+          resolveContentModules(extractedFile, pluginCreator, myResourceResolver, parsingConfiguration, problemResolver)
           pluginCreator
         } else {
           getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
@@ -308,11 +322,20 @@ class IdePluginManager private constructor(
 
   fun createPlugin(
     pluginFile: Path,
+    descriptorPath: String = PLUGIN_XML,
+    parsingConfiguration: PluginParsingConfiguration = PluginParsingConfiguration()
+  ): PluginCreationResult<IdePlugin> {
+    return createPlugin(pluginFile, parsingConfiguration.validateDescriptor, descriptorPath, parsingConfiguration)
+  }
+
+  fun createPlugin(
+    pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String = PLUGIN_XML,
+    parsingConfiguration: PluginParsingConfiguration = PluginParsingConfiguration(),
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
   ): PluginCreationResult<IdePlugin> {
-    val pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, problemResolver)
+    val pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, parsingConfiguration, problemResolver)
     return pluginCreator.pluginCreationResult
   }
 
@@ -320,9 +343,10 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     ideVersion: IdeVersion,
     descriptorPath: String,
+    pluginParsingConfiguration: PluginParsingConfiguration = PluginParsingConfiguration(),
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
   ): PluginCreationResult<IdePlugin> {
-    val pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, problemResolver)
+    val pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, pluginParsingConfiguration, problemResolver)
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
     return pluginCreator.pluginCreationResult
   }
@@ -331,6 +355,7 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String,
+    parsingConfiguration: PluginParsingConfiguration,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
     require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
@@ -342,12 +367,13 @@ class IdePluginManager private constructor(
           descriptorPath,
           validateDescriptor,
           myResourceResolver,
-          problemResolver
+          problemResolver,
+          parsingConfiguration
         )
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
-        pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null, problemResolver)
-        resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-        resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+        pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null, problemResolver, parsingConfiguration)
+        resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, parsingConfiguration, problemResolver)
+        resolveContentModules(pluginFile, pluginCreator, myResourceResolver, parsingConfiguration, problemResolver)
       } else {
         pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
       }
