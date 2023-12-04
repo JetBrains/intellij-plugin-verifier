@@ -64,8 +64,8 @@ class PluginIconsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   @Test
   fun `icon loading is skipped`() {
     val doNotLoadIcons = PluginParsingConfiguration(loadIcons = false)
-    val pluginFactory = PluginFactory { pluginManager, pluginArtifactPath ->
-      pluginManager.createPlugin(pluginArtifactPath, parsingConfiguration = doNotLoadIcons)
+    val pluginFactory: PluginFactory = {
+      createPlugin(it, parsingConfiguration = doNotLoadIcons)
     }
     val plugin = buildPluginSuccess(expectedWarnings, pluginFactory) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
@@ -81,7 +81,7 @@ class PluginIconsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFactory: PluginFactory? = null, pluginFileBuilder: () -> Path): IdePlugin {
     val pluginFile = pluginFileBuilder()
 
-    val aPluginFactory = pluginFactory ?: DefaultPluginFactory
+    val aPluginFactory = pluginFactory ?: ::defaultPluginFactory
     val successResult = doCreatePluginSuccessfully(pluginFile, aPluginFactory)
     val (plugin, warnings) = successResult
     assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
@@ -91,20 +91,22 @@ class PluginIconsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
   fun doCreatePluginSuccessfully(pluginArtifactPath: Path, pluginFactory: PluginFactory): PluginCreationSuccess<IdePlugin> {
     val pluginManager = createManager(temporaryFolder.newFolder("extract"))
-    val pluginCreationResult = pluginFactory.create(pluginManager, pluginArtifactPath)
+    val pluginCreationResult = createPlugin(pluginManager, pluginArtifactPath, pluginFactory)
     if (pluginCreationResult is PluginCreationFail) {
       Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString())
     }
     return pluginCreationResult as PluginCreationSuccess<IdePlugin>
   }
-}
 
-fun interface PluginFactory {
-  fun create(idePluginManager: IdePluginManager, pluginArtifactPath: Path): PluginCreationResult<IdePlugin>
-}
+  private fun createPlugin(pluginManager: IdePluginManager, pluginArtifactPath: Path, pluginFactory: PluginFactory): PluginCreationResult<IdePlugin> {
+    return pluginFactory.invoke(pluginManager, pluginArtifactPath)
+  }
 
-object DefaultPluginFactory: PluginFactory {
-  override fun create(idePluginManager: IdePluginManager, pluginArtifactPath: Path): PluginCreationResult<IdePlugin> {
-    return idePluginManager.createPlugin(pluginArtifactPath)
+  private fun defaultPluginFactory(pluginManager: IdePluginManager, pluginArtifactPath: Path): PluginCreationResult<IdePlugin> {
+    return pluginManager.createPlugin(pluginArtifactPath)
   }
 }
+
+typealias PluginFactory = IdePluginManager.(pluginArtifactPath: Path) -> PluginCreationResult<IdePlugin>
+
+
