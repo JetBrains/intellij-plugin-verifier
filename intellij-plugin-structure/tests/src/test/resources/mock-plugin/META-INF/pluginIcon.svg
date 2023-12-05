@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <g fill="none" fill-rule="evenodd">
+    <polygon fill="#EEF0F4" fill-rule="nonzero" points="7 21 7 59 40 78 73 59 73 21 40 2"/>
+    <polygon fill="#FCFCFC" fill-rule="nonzero" points="7 21 40 40 40 2"/>
+    <polygon fill="#D8DCE6" fill-rule="nonzero" points="40 40 7 21 7 59"/>
+    <polygon fill="#DFE3EB" fill-rule="nonzero" points="40 40 7 59 40 78"/>
+    <polygon fill="#E6E9F0" fill-rule="nonzero" points="40 40 40 78 73 59"/>
+    <polygon fill="#F0F2F5" fill-rule="nonzero" points="73 21 40 40 73 59"/>
+    <polygon fill="#F5F5F5" fill-rule="nonzero" points="40 2 40 40 73 21"/>
+  </g>
+</svg>
