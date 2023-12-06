@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.*
@@ -51,9 +51,9 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     DuplicatedDependencyWarning("duplicatedDependencyId"),
   )
 
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> Path): IdePlugin {
+  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFactory: IdePluginFactory = ::defaultPluginFactory, pluginFileBuilder: () -> Path): IdePlugin {
     val pluginFile = pluginFileBuilder()
-    val successResult = createPluginSuccessfully(pluginFile)
+    val successResult = createPluginSuccessfully(pluginFile, pluginFactory)
     val (plugin, warnings) = successResult
     assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
     assertEquals(pluginFile, plugin.originalFile)
@@ -819,3 +819,5 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
 }
+
+typealias IdePluginFactory = PluginFactory<IdePlugin, IdePluginManager>
