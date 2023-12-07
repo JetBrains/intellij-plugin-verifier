@@ -22,8 +22,9 @@ val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
 
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
+private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
+
 class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()): AutoCloseable {
-  private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
 
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath)
 
