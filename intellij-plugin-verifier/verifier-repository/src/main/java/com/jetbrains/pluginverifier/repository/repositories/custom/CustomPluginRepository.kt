@@ -4,20 +4,19 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.custom
 
-import com.google.common.base.Suppliers
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.cache.memoize
 import com.jetbrains.pluginverifier.repository.repositories.VERSION_COMPARATOR
 import java.net.URL
-import java.util.concurrent.TimeUnit
 
 /**
  * Base class for all repositories configured for special plugins not available in JetBrains Marketplace.
  */
 abstract class CustomPluginRepository : PluginRepository {
 
-  private val allPluginsCache = Suppliers.memoizeWithExpiration({ requestAllPlugins() }, 1, TimeUnit.MINUTES)
+  private val allPluginsCache = memoize(expirationInMinutes = 1) { requestAllPlugins() }
 
   protected abstract fun requestAllPlugins(): List<CustomPluginInfo>
 

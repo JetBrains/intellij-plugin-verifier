@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.type.CollectionType
 import com.fasterxml.jackson.databind.type.TypeFactory
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.google.common.util.concurrent.ThreadFactoryBuilder
+import com.jetbrains.pluginverifier.network.threadFactory
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import org.bouncycastle.cms.CMSSignedData
 import java.net.URI
@@ -17,10 +17,7 @@ import java.util.concurrent.Executors
 fun createHttpClient(timeout: Duration = Duration.ofMinutes(5)): HttpClient {
   return HttpClient.newBuilder().connectTimeout(timeout)
           .executor(Executors.newCachedThreadPool(
-                  ThreadFactoryBuilder()
-                          .setNameFormat("plugin-verifier-http-%d")
-                          .setDaemon(true)
-                          .build()
+            threadFactory("plugin-verifier-http-%d", daemon = true)
           ))
           .followRedirects(HttpClient.Redirect.NORMAL)
           .build()

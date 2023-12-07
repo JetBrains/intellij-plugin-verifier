@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.verifiers.method
 
-import com.google.common.cache.Cache
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.Opcodes
@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.MethodInsnNode
 object KotlinMethods {
   private const val CAPACITY = 100L
 
-  private val cache: Cache<MethodLocation, Boolean> = CacheBuilder.newBuilder()
+  private val cache: Cache<MethodLocation, Boolean> = Caffeine.newBuilder()
     .maximumSize(CAPACITY)
     .build()
 
