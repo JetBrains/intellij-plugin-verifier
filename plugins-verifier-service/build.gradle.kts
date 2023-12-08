@@ -34,7 +34,7 @@ allprojects {
   idea {
     module {
       inheritOutputDirs = false
-      outputDir = File("$buildDir/classes/main")
+      outputDir = layout.buildDirectory.file("classes/main").get().asFile
     }
   }
 
