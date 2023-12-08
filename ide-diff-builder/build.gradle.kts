@@ -81,14 +81,14 @@ val copyMockIdes by tasks.registering(Copy::class) {
         ":mock-old-ide:prepareIde",
         ":mock-new-ide:prepareIde"
     )
-    into("$buildDir/mock-ides")
+    into(layout.buildDirectory.dir("mock-ides"))
 
     val oldIde = copySpec {
-        from(File(project("mock-old-ide").buildDir, "mock-ide"))
+        from(project("mock-old-ide").layout.buildDirectory.dir("mock-ide"))
         into("old-ide")
     }
     val newIde = copySpec {
-        from(File(project("mock-new-ide").buildDir, "mock-ide"))
+        from(project("mock-new-ide").layout.buildDirectory.dir("mock-ide"))
         into("new-ide")
     }
     with(oldIde, newIde)
