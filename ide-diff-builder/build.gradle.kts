@@ -39,7 +39,7 @@ tasks {
         manifest {
             attributes(manifestAttributes)
         }
-        archiveClassifier.set("all")
+        archiveClassifier = "all"
     }
 }
 

@@ -39,14 +39,14 @@ allprojects {
 
   val sourcesJar by tasks.registering(Jar::class) {
     dependsOn("classes")
-    archiveClassifier.set("sources")
+    archiveClassifier = "sources"
     from(sourceSets.main.get().allSource)
   }
 
   val javadocJar by tasks.registering(Jar::class) {
     val javadoc = tasks.javadoc
     dependsOn(javadoc)
-    archiveClassifier.set("javadoc")
+    archiveClassifier = "javadoc"
     from(javadoc)
   }
 
@@ -70,8 +70,8 @@ val mavenCentralPassword = findProperty("mavenCentralPassword")?.toString()
 nexusPublishing {
   this.repositories {
     sonatype {
-      username.set(mavenCentralUsername)
-      password.set(mavenCentralPassword)
+      username = mavenCentralUsername
+      password = mavenCentralPassword
     }
   }
 }
@@ -94,76 +94,76 @@ publishing {
         artifact(proj.tasks["javadocJar"])
 
         pom {
-          name.set(pubName)
-          description.set(pubDesc)
-          url.set("https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-structure/$projectName")
+          name = pubName
+          description = pubDesc
+          url = "https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-structure/$projectName"
           licenses {
             license {
-              name.set("The Apache Software License, Version 2.0")
-              url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+              name = "The Apache Software License, Version 2.0"
+              url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
             }
           }
           developers {
             developer {
-              id.set("satamas")
-              name.set("Semyon Atamas")
-              organization.set("JetBrains")
+              id = "satamas"
+              name = "Semyon Atamas"
+              organization = "JetBrains"
             }
             developer {
-              id.set("AlexanderPrendota")
-              name.set("Alexander Prendota")
-              organization.set("JetBrains")
+              id = "AlexanderPrendota"
+              name = "Alexander Prendota"
+              organization = "JetBrains"
             }
             developer {
-              id.set("ktisha")
-              name.set("Ekaterina Smal")
-              organization.set("JetBrains")
+              id = "ktisha"
+              name = "Ekaterina Smal"
+              organization = "JetBrains"
             }
             developer {
-              id.set("chashnikov")
-              name.set("Nikolay Chashnikov")
-              organization.set("JetBrains")
+              id = "chashnikov"
+              name = "Nikolay Chashnikov"
+              organization = "JetBrains"
             }
             developer {
-              id.set("chrkv")
-              name.set("Ivan Chirkov")
-              organization.set("JetBrains")
+              id = "chrkv"
+              name = "Ivan Chirkov"
+              organization = "JetBrains"
             }
             developer {
-              id.set("Ololoshechkin")
-              name.set("Brilyantov Vadim")
-              organization.set("JetBrains")
+              id = "Ololoshechkin"
+              name = "Brilyantov Vadim"
+              organization = "JetBrains"
             }
             developer {
-              id.set("shalupov")
-              name.set("Leonid Shalupov")
-              organization.set("JetBrains")
+              id = "shalupov"
+              name = "Leonid Shalupov"
+              organization = "JetBrains"
             }
             developer {
-              id.set("hsz")
-              name.set("Jakub Chrzanowski")
-              organization.set("JetBrains")
+              id = "hsz"
+              name = "Jakub Chrzanowski"
+              organization = "JetBrains"
             }
             developer {
-              id.set("kesarevs")
-              name.set("Kesarev Sergey")
-              organization.set("JetBrains")
+              id = "kesarevs"
+              name = "Kesarev Sergey"
+              organization = "JetBrains"
             }
             developer {
-              id.set("LChernigovskaya")
-              name.set("Lidiya Chernigovskaya")
-              organization.set("JetBrains")
+              id = "LChernigovskaya"
+              name = "Lidiya Chernigovskaya"
+              organization = "JetBrains"
             }
             developer {
-              id.set("novotnyr")
-              name.set("Robert Novotny")
-              organization.set("JetBrains")
+              id = "novotnyr"
+              name = "Robert Novotny"
+              organization = "JetBrains"
             }
           }
           scm {
-            connection.set("scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git")
-            developerConnection.set("scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git")
-            url.set("https://github.com/JetBrains/intellij-plugin-verifier")
+            connection = "scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git"
+            developerConnection = "scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git"
+            url = "https://github.com/JetBrains/intellij-plugin-verifier"
           }
         }
       }

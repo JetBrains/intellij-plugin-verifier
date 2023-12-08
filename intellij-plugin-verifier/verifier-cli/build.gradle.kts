@@ -36,7 +36,7 @@ tasks {
     manifest {
       attributes("Main-Class" to "com.jetbrains.pluginverifier.PluginVerifierMain")
     }
-    archiveClassifier.set("all")
+    archiveClassifier = "all"
     //Exclude resources/dlls and other stuff coming from the dependencies.
     exclude(
         "/win32/**",

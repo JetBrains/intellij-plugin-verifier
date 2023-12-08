@@ -29,8 +29,8 @@ val additionalAfterIdeaBuildDir = project("additional-after-idea").layout.buildD
 val prepareResourcesJar by tasks.registering(Jar::class) {
   dependsOn(tasks.getByPath("after-idea:processResources"))
   from(afterIdeaBuildDir.file("resources/main/brokenPlugins.txt"))
-  destinationDirectory.set(layout.buildDirectory)
-  archiveFileName.set("resources.jar")
+  destinationDirectory = layout.buildDirectory
+  archiveFileName = "resources.jar"
 }
 
 /**
