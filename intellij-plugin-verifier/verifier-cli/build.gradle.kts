@@ -13,10 +13,12 @@ dependencies {
 val projectVersion: String by rootProject.extra
 
 val versionTxt by tasks.registering {
-  val versionTxt = File(buildDir, "intellij-plugin-verifier-version.txt")
+  val versionTxt = layout.buildDirectory.file("intellij-plugin-verifier-version.txt")
   outputs.file(versionTxt)
   doLast {
-    versionTxt.writeText(projectVersion)
+    versionTxt.orNull?.asFile?.run {
+      writeText(projectVersion)
+    }
   }
 }
 
