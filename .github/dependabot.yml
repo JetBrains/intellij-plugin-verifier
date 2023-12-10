@@ -67,10 +67,6 @@ updates:
     ignore:
       - dependency-name: "structure-*"
   - package-ecosystem: "gradle"
-    directory: "/plugins-verifier-service/"
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "gradle"
     directory: "/ide-diff-builder/mock-old-ide/"
     schedule:
       interval: "daily"
