@@ -727,13 +727,9 @@ internal class PluginCreator private constructor(
   }
 
   private fun hasErrors(): Boolean {
-    return problems
-      .map {
-        problemResolver.classify(plugin, it)
-      }
-      .any {
-        it.level === ERROR
-      }
+    return problemResolver.classify(plugin, problems).any {
+      it.level == ERROR
+    }
   }
 
   private fun validateId(plugin: PluginBean) {
