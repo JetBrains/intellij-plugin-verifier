@@ -5,14 +5,17 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
 import org.hamcrest.CoreMatchers.instanceOf
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.slf4j.LoggerFactory
+
 
 class ExistingPluginValidationTest : BasePluginTest() {
   @Test
@@ -74,9 +77,10 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val erroneousSinceBuild = "1.*"
     val header = ideaPlugin("com.example", sinceBuild = erroneousSinceBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
+
     val problemResolver = LevelRemappingPluginCreationResultResolver(
       delegateResolver,
-      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.WARNING))
+      additionalLevelRemapping = warning<InvalidSinceBuild>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -102,6 +106,33 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
   }
 
+  @Test
+  fun `plugin is built with forbidden word in plugin id but such problem is ignored`() {
+    val header = ideaPlugin("com.vendor.qodana.plugin")
+
+    val remappingProblemResolver = LevelRemappingPluginCreationResultResolver(
+      IntelliJPluginCreationResultResolver(),
+      additionalLevelRemapping = ignore<TemplateWordInPluginId>())
+
+    val result = buildPluginWithResult(remappingProblemResolver, pluginOf(header))
+    assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
+    val pluginCreated = result as PluginCreationSuccess
+    assertThat(pluginCreated.warnings, `is`(emptyList()))
+  }
+
+  @Test
+  fun `plugin is built with forbidden word in plugin id`() {
+    val header = ideaPlugin("com.vendor.qodana.plugin")
+
+    val problemResolver = IntelliJPluginCreationResultResolver()
+    val result = buildPluginWithResult(problemResolver, pluginOf(header))
+    assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
+    val pluginCreated = result as PluginCreationSuccess
+    assertEquals(1, pluginCreated.warnings.size)
+
+    val warning = pluginCreated.warnings.first()
+    assertThat(warning, instanceOf(TemplateWordInPluginId::class.java))
+  }
 
   @Test
   fun `plugin is not built due to two different plugin problems with 'error' severity but one level is remapped`() {
@@ -110,7 +141,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val header = ideaPlugin("plugin.with.two.problems", sinceBuild = erroneousSinceBuild, untilBuild = erroneousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver,
-      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.WARNING))
+      additionalLevelRemapping = warning<InvalidSinceBuild>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -144,7 +175,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
-      additionalLevelRemapping = mapOf(InvalidSinceBuild::class to PluginProblem.Level.UNACCEPTABLE_WARNING))
+      additionalLevelRemapping = unacceptableWarning<InvalidSinceBuild>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -168,6 +199,18 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     assertEquals(1, reclassifiedProblems.size)
     assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
+  }
+
+  private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
+    dir("META-INF") {
+      file("plugin.xml") {
+        """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+      }
+    }
   }
 
   private fun ideaPlugin(pluginId: String = "someid",
