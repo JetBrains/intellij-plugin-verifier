@@ -11,7 +11,10 @@ This GitHub [repository](https://github.com/JetBrains/intellij-plugin-verifier/)
 
 Deprecated projects:
 
-4) [plugins-verifier-service](plugins-verifier-service) (`plugins-verifier-service/README.md`). This project has been superseded by another implementation.
+4) [plugins-verifier-service](plugins-verifier-service) (`plugins-verifier-service/README.md`). 
+This project has been superseded by another implementation.
+The only used feature is `org.jetbrains.plugins.verifier.service.service.features.FeatureExtractorService`
+referenced by JetBrains Marketplace project.
 
     Originally, this was an HTTP server responsible for:
    * Running the _intellij-plugin-verifier_ tool for plugins from the JetBrains Plugin Repository against a set of predefined IDEs and sending the verification results for storage to the repository.

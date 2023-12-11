@@ -4,7 +4,7 @@
 
 The _Plugin Verifier Service_ is deprecated and no longer under active development.
 
-It has been replaced by a different implementation.
+It has been replaced by a different implementation, except a single usage of `FeatureExtractorService`.
 
 ## About Project
 Service used to off-load heavy verification tasks from [JetBrains Marketplace](https://plugins.jetbrains.com/):
