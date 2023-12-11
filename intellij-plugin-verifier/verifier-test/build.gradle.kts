@@ -14,13 +14,13 @@ dependencies {
 
 val prepareMockPlugin by tasks.registering(Copy::class) {
   dependsOn(":verifier-test:mock-plugin:build")
-  into("$buildDir/mocks")
-  val mockPluginBuildDir = project("mock-plugin").buildDir
-  from(File(mockPluginBuildDir, "libs/mock-plugin-1.0.jar"))
+  into(layout.buildDirectory.dir("mocks"))
+  val mockPluginBuildDir = project("mock-plugin").layout.buildDirectory
+  from(mockPluginBuildDir.file("libs/mock-plugin-1.0.jar"))
 }
 
-val afterIdeaBuildDir = project("after-idea").buildDir
-val additionalAfterIdeaBuildDir = project("additional-after-idea").buildDir
+val afterIdeaBuildDir = project("after-idea").layout.buildDirectory
+val additionalAfterIdeaBuildDir = project("additional-after-idea").layout.buildDirectory
 
 /**
  * Creates resources.jar file with brokenPlugins.txt file inside.
@@ -28,9 +28,9 @@ val additionalAfterIdeaBuildDir = project("additional-after-idea").buildDir
 
 val prepareResourcesJar by tasks.registering(Jar::class) {
   dependsOn(tasks.getByPath("after-idea:processResources"))
-  from("$afterIdeaBuildDir/resources/main/brokenPlugins.txt")
-  destinationDirectory.set(buildDir)
-  archiveFileName.set("resources.jar")
+  from(afterIdeaBuildDir.file("resources/main/brokenPlugins.txt"))
+  destinationDirectory = layout.buildDirectory
+  archiveFileName = "resources.jar"
 }
 
 /**
@@ -44,14 +44,14 @@ val prepareResourcesJar by tasks.registering(Jar::class) {
 
 val prepareAfterIdea by tasks.registering(Copy::class) {
   dependsOn(":verifier-test:after-idea:build", ":verifier-test:additional-after-idea:build", prepareResourcesJar)
-  into("$buildDir/mocks/after-idea")
+  into(layout.buildDirectory.file("mocks/after-idea"))
 
   val ideaJar = copySpec {
-    from("$afterIdeaBuildDir/libs/after-idea-1.0.jar")
+    from(afterIdeaBuildDir.file("libs/after-idea-1.0.jar"))
     into("lib")
   }
   val additionalJar = copySpec {
-    from("$additionalAfterIdeaBuildDir/libs/additional-after-idea-1.0.jar")
+    from(additionalAfterIdeaBuildDir.file("libs/additional-after-idea-1.0.jar"))
     into("lib")
   }
 
@@ -61,7 +61,7 @@ val prepareAfterIdea by tasks.registering(Copy::class) {
   }
 
   val buildTxt = copySpec {
-    from("$afterIdeaBuildDir/resources/main/build.txt")
+    from(afterIdeaBuildDir.file("resources/main/build.txt"))
     into(".")
   }
   with(ideaJar, additionalJar, resourcesJar, buildTxt)

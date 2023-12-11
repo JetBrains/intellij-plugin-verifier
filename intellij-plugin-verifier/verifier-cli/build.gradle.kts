@@ -13,10 +13,12 @@ dependencies {
 val projectVersion: String by rootProject.extra
 
 val versionTxt by tasks.registering {
-  val versionTxt = File(buildDir, "intellij-plugin-verifier-version.txt")
+  val versionTxt = layout.buildDirectory.file("intellij-plugin-verifier-version.txt")
   outputs.file(versionTxt)
   doLast {
-    versionTxt.writeText(projectVersion)
+    versionTxt.orNull?.asFile?.run {
+      writeText(projectVersion)
+    }
   }
 }
 
@@ -34,7 +36,7 @@ tasks {
     manifest {
       attributes("Main-Class" to "com.jetbrains.pluginverifier.PluginVerifierMain")
     }
-    archiveClassifier.set("all")
+    archiveClassifier = "all"
     //Exclude resources/dlls and other stuff coming from the dependencies.
     exclude(
         "/win32/**",
