@@ -3,9 +3,8 @@ package com.jetbrains.plugin.structure.intellij.problems
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
 /**
@@ -24,6 +23,14 @@ interface PluginCreationResultResolver {
    * Typically, this is used to change a [PluginProblem.Level] in specific scenarios.
    */
   fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem = problem
+
+  /**
+   * Allows remapping a specific collection of plugin problems to another collection of plugin problems.
+   * Typically, this is used to change a [PluginProblem.Level] in specific scenarios.
+   *
+   * Note that the result collection might be smaller than the original collection due to ignored problems.
+   */
+  fun classify(plugin: IdePlugin, problems: List<PluginProblem>): List<PluginProblem> = problems
 }
 
 /**
