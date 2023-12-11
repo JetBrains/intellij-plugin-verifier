@@ -178,17 +178,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       additionalLevelRemapping = warning<HttpLinkInDescription>() + ignore<InvalidSinceBuild>()
     )
 
-    val result = buildPluginWithResult(problemResolver) {
-      dir("META-INF") {
-        file("plugin.xml") {
-          """
-            <idea-plugin>
-              $header
-            </idea-plugin>
-          """
-        }
-      }
-    }
+    val result = buildPluginWithResult(problemResolver, pluginOf(header))
 
     // InvalidSinceBuild is an ignored ERROR, hence leading to a creation success
     assertTrue(result is PluginCreationSuccess)
