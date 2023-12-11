@@ -167,6 +167,48 @@ class ExistingPluginValidationTest : BasePluginTest() {
   }
 
   @Test
+  fun `plugin is built with two problems - an unacceptable warning and an error and both are remapped`() {
+    val erroneousSinceBuild = "1.*"
+
+    val header = ideaPlugin("plugin.with.error.and.unacceptable.warning",
+      sinceBuild = erroneousSinceBuild,
+      description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
+
+    val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
+      additionalLevelRemapping = warning<HttpLinkInDescription>() + ignore<InvalidSinceBuild>()
+    )
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    // InvalidSinceBuild is an ignored ERROR, hence leading to a creation success
+    assertTrue(result is PluginCreationSuccess)
+    val success = result as PluginCreationSuccess
+
+    // HttpLinkInDescription has a decreased severity from UNACCEPTABLE_WARNING to the WARNING
+    assertEquals(1, success.warnings.size)
+    val reclassifiedProblems = success.warnings
+      .filter { ReclassifiedPluginProblem::class.isInstance(it) }
+      .map { it as ReclassifiedPluginProblem }
+      .map { it.unwrapped }
+
+    assertEquals(1, reclassifiedProblems.size)
+    assertThat("Reclassified problems contains an 'HttpLinkInDescription' plugin problem ", reclassifiedProblems.find { HttpLinkInDescription::class.isInstance(it) } != null)
+
+    assertThat(success.unacceptableWarnings, `is`(emptyList()))
+
+  }
+
+  @Test
   fun `plugin is built with two problems and 'error' is reclassified to 'unacceptable warning' thus being successful`() {
     val erroneousSinceBuild = "1.*"
 
