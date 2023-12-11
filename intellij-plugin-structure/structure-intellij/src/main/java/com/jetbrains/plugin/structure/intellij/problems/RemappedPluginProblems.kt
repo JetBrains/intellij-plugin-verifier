@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 sealed class RemappedLevel
 
 object IgnoredLevel : RemappedLevel()
-class StandardLevel(val originalLevel: PluginProblem.Level) : RemappedLevel()
+data class StandardLevel(val originalLevel: PluginProblem.Level) : RemappedLevel()
 
 inline fun <reified T : PluginProblem> unacceptableWarning(): Map<KClass<*>, RemappedLevel> {
   return mapOf(T::class to StandardLevel(PluginProblem.Level.UNACCEPTABLE_WARNING))
