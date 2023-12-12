@@ -9,11 +9,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
 
 class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver,
-                                                 additionalLevelRemapping: Map<KClass<*>, PluginProblem.Level> = emptyMap()
+                                                 additionalLevelRemapping: Map<KClass<*>, RemappedLevel> = emptyMap()
   ) : PluginCreationResultResolver {
 
-  private val remappedLevel: Map<KClass<*>, PluginProblem.Level> = additionalLevelRemapping +
-    mapOf(ForbiddenPluginIdPrefix::class to PluginProblem.Level.WARNING)
+  private val remappedLevel: Map<KClass<*>, RemappedLevel> = additionalLevelRemapping
 
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     return when (val pluginCreationResult = delegatedResolver.resolve(plugin, problems)) {
@@ -40,27 +39,29 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
   }
 
   private fun remapWarnings(warnings: List<PluginProblem>): List<PluginProblem> {
-    return warnings.map(::remapPluginProblemLevel)
+    return warnings.mapNotNull(::remapPluginProblemLevel)
   }
 
   private fun remapUnacceptableWarnings(unacceptableWarnings: List<PluginProblem>): List<PluginProblem> {
-    return unacceptableWarnings.map(::remapPluginProblemLevel)
+    return unacceptableWarnings.mapNotNull(::remapPluginProblemLevel)
   }
 
   private fun remapErrorsAndWarnings(errorsAndWarnings: List<PluginProblem>): List<PluginProblem> {
-    return errorsAndWarnings.map(::remapPluginProblemLevel)
+    return errorsAndWarnings.mapNotNull(::remapPluginProblemLevel)
   }
 
-  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem {
-    val remappedLevel = remappedLevel[pluginProblem::class]
-    if (remappedLevel != null) {
-      return ReclassifiedPluginProblem(remappedLevel, pluginProblem)
+  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem?{
+    return when (val remappedLevel = remappedLevel[pluginProblem::class]) {
+      is StandardLevel -> ReclassifiedPluginProblem(remappedLevel.originalLevel, pluginProblem)
+      is IgnoredLevel -> null
+      null -> pluginProblem
     }
-    return pluginProblem
   }
 
-  override fun classify(plugin: IdePlugin, problem: PluginProblem): PluginProblem {
-    return remapPluginProblemLevel(problem)
+  override fun classify(plugin: IdePlugin, problems: List<PluginProblem>): List<PluginProblem> {
+    return problems.mapNotNull {
+      remapPluginProblemLevel(it)
+    }
   }
 
   private fun List<PluginProblem>.hasNoErrors(): Boolean = none {
