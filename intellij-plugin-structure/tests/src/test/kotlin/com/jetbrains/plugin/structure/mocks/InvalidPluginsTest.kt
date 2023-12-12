@@ -884,5 +884,20 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
   }
 
-
+  @Test
+  fun `plugin has unknown value in service client`() {
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        additionalContent = """
+              <extensions defaultExtensionNs="com.intellij">
+                <applicationService
+                    serviceInterface="com.example.MyAppService"
+                    serviceImplementation="com.example.MyAppServiceImpl"
+                    client="xxx"/>
+              </extensions>
+          """.trimIndent()
+      },
+      listOf(UnknownServiceClientValue("plugin.xml", "xxx"))
+    )
+  }
 }

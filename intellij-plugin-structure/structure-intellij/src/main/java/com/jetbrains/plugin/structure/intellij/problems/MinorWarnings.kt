@@ -184,3 +184,11 @@ class ForbiddenPluginIdPrefix(
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id"
   )
 }
+
+class UnknownServiceClientValue(descriptorPath: String, serviceClient: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "Plugin has unknown service client value: '$serviceClient'"
+) {
+  override val level
+    get() = Level.WARNING
+}

@@ -395,7 +395,9 @@ internal class PluginCreator private constructor(
       "remote" -> IdePluginContentDescriptor.ClientKind.REMOTE
       "frontend" -> IdePluginContentDescriptor.ClientKind.FRONTEND
       null -> null
-      else -> null.also { LOG.error("Unknown client value: '${getAttributeValue("client")}'") }
+      else -> null.also {
+        registerProblem(UnknownServiceClientValue(descriptorPath, getAttributeValue("client")))
+      }
     }
 
   private fun readServiceDescriptor(extensionElement: Element, epName: String): IdePluginContentDescriptor.ServiceDescriptor {
