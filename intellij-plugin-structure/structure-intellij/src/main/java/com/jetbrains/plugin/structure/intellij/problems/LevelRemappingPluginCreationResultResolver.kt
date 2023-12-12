@@ -12,8 +12,7 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
                                                  additionalLevelRemapping: Map<KClass<*>, RemappedLevel> = emptyMap()
   ) : PluginCreationResultResolver {
 
-  private val remappedLevel: Map<KClass<*>, RemappedLevel> = additionalLevelRemapping +
-    warning<ForbiddenPluginIdPrefix>()
+  private val remappedLevel: Map<KClass<*>, RemappedLevel> = additionalLevelRemapping
 
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     return when (val pluginCreationResult = delegatedResolver.resolve(plugin, problems)) {
