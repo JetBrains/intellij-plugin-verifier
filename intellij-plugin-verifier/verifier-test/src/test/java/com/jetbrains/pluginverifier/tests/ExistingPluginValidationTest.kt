@@ -50,7 +50,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
   fun `plugin is not built due to unsupported prefix ID but such problem level is remapped`() {
     val header = ideaPlugin("com.example")
     val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver)
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, warning<ForbiddenPluginIdPrefix>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -80,7 +80,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(
       delegateResolver,
-      additionalLevelRemapping = warning<InvalidSinceBuild>())
+      additionalLevelRemapping = warning<InvalidSinceBuild>() + warning<ForbiddenPluginIdPrefix>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
