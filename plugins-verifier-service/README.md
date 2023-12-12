@@ -1,4 +1,12 @@
 ## Plugin Verifier Service
+
+## Deprecation Notice
+
+The _Plugin Verifier Service_ is deprecated and no longer under active development.
+
+It has been replaced by a different implementation, except a single usage of `FeatureExtractorService`.
+
+## About Project
 Service used to off-load heavy verification tasks from [JetBrains Marketplace](https://plugins.jetbrains.com/):
 - verify newly uploaded plugins against IDE builds using the *IntelliJ Plugin Verifier* tool (see `/intellij-plugin-verifier`)
 - extract supported plugin features using the *IntelliJ Feature Extractor* tool (see `/intellij-feature-extractor`)

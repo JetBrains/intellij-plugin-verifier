@@ -27,7 +27,6 @@ Plugin Verifier accepts as its input a plugin `P` and an IDE build `X` to check 
      - `non-extendable-api-usages.txt`
      - `plugin-structure-warnings.txt`
    - displayed as TeamCity failed tests (`TeamCityResultPrinter`)
-   - converted to JSON and sent to [JetBrains Marketplace](https://plugins.jetbrains.com/) by the Plugin Verifier Service
 
 #### How to verify plugin locally
 
