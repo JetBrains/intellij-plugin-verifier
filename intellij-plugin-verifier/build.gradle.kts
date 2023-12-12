@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   `maven-publish`
   alias(sharedLibs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.nexus.publish)
 }
 
 val projectVersion: String by extra {
