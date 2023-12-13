@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   `maven-publish`
+  signing
   alias(sharedLibs.plugins.kotlin.jvm)
   alias(sharedLibs.plugins.nexus.publish)
 }
@@ -86,6 +87,25 @@ subprojects {
   }
 }
 
+val mavenCentralUsername = findProperty("mavenCentralUsername")?.toString()
+val mavenCentralPassword = findProperty("mavenCentralPassword")?.toString()
+
+nexusPublishing {
+  repositories {
+    sonatype {
+      username = mavenCentralUsername
+      password = mavenCentralPassword
+    }
+  }
+}
+
+object Publications {
+  const val cli = "VerifierCli"
+  const val core = "VerifierCore"
+  const val intellij = "VerifierIntelliJ"
+  const val repository = "Repository"
+}
+
 publishing {
   publications {
     fun configurePublication(publicationName: String, projectName: String): MavenPublication {
@@ -100,11 +120,11 @@ publishing {
       }
     }
     project(":verifier-cli").afterEvaluate {
-      configurePublication("VerifierCliPublication", ":verifier-cli")
+      configurePublication(Publications.cli, ":verifier-cli")
     }
-    configurePublication("VerifierCorePublication", ":verifier-core")
-    configurePublication("VerifierIntelliJPublication", ":verifier-intellij")
-    configurePublication("RepositoryPublication", ":verifier-repository")
+    configurePublication(Publications.core, ":verifier-core")
+    configurePublication(Publications.intellij, ":verifier-intellij")
+    configurePublication(Publications.repository, ":verifier-repository")
   }
 
   repositories {
@@ -115,6 +135,21 @@ publishing {
         password = if(project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
       }
     }
+  }
+}
+
+signing {
+  isRequired = mavenCentralUsername != null
+  if (isRequired) {
+    val signingKey = findProperty("signingKey").toString()
+    val signingPassword = findProperty("signingPassword").toString()
+
+    useInMemoryPgpKeys(signingKey, signingPassword)
+
+    sign(publishing.publications[Publications.cli])
+    sign(publishing.publications[Publications.core])
+    sign(publishing.publications[Publications.intellij])
+    sign(publishing.publications[Publications.repository])
   }
 }
 
