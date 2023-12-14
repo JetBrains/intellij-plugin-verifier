@@ -87,8 +87,8 @@ subprojects {
   }
 }
 
-val mavenCentralUsername = findProperty("mavenCentralUsername")?.toString()
-val mavenCentralPassword = findProperty("mavenCentralPassword")?.toString()
+val mavenCentralUsername: String? by project
+val mavenCentralPassword: String? by project
 
 nexusPublishing {
   repositories {
@@ -141,8 +141,8 @@ publishing {
 signing {
   isRequired = mavenCentralUsername != null
   if (isRequired) {
-    val signingKey = findProperty("signingKey").toString()
-    val signingPassword = findProperty("signingPassword").toString()
+    val signingKey: String? by project
+    val signingPassword: String? by project
 
     useInMemoryPgpKeys(signingKey, signingPassword)
 
