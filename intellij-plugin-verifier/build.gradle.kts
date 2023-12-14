@@ -100,15 +100,17 @@ nexusPublishing {
 }
 
 object Publications {
-  const val cli = "VerifierCli"
-  const val core = "VerifierCore"
-  const val intellij = "VerifierIntelliJ"
-  const val repository = "Repository"
+  val cli = Pub(":verifier-cli", "VerifierCli")
+  val core = Pub(":verifier-core", "VerifierCore")
+  val intellij = Pub(":verifier-intellij", "VerifierIntelliJ")
+  val repository = Pub(":verifier-repository", "Repository")
+  data class Pub(val project: String, val name: String)
 }
 
 publishing {
   publications {
-    fun configurePublication(publicationName: String, projectName: String): MavenPublication {
+    fun configurePublication(publication: Publications.Pub): MavenPublication {
+      val (projectName, publicationName) = publication
       return create<MavenPublication>(publicationName) {
         val proj = project(":$projectName")
         groupId = proj.group.toString()
@@ -119,12 +121,10 @@ publishing {
         artifact(proj.tasks["sourcesJar"])
       }
     }
-    project(":verifier-cli").afterEvaluate {
-      configurePublication(Publications.cli, ":verifier-cli")
-    }
-    configurePublication(Publications.core, ":verifier-core")
-    configurePublication(Publications.intellij, ":verifier-intellij")
-    configurePublication(Publications.repository, ":verifier-repository")
+    configurePublication(Publications.cli)
+    configurePublication(Publications.core)
+    configurePublication(Publications.intellij)
+    configurePublication(Publications.repository)
   }
 
   repositories {
@@ -146,10 +146,10 @@ signing {
 
     useInMemoryPgpKeys(signingKey, signingPassword)
 
-    sign(publishing.publications[Publications.cli])
-    sign(publishing.publications[Publications.core])
-    sign(publishing.publications[Publications.intellij])
-    sign(publishing.publications[Publications.repository])
+    sign(publishing.publications[Publications.cli.name])
+    sign(publishing.publications[Publications.core.name])
+    sign(publishing.publications[Publications.intellij.name])
+    sign(publishing.publications[Publications.repository.name])
   }
 }
 
