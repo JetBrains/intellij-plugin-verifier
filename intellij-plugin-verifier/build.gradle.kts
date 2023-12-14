@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.gradle.api.publish.Publication as GradlePublication
 
 plugins {
   `maven-publish`
@@ -99,32 +100,21 @@ nexusPublishing {
   }
 }
 
-object Publications {
-  val cli = Pub(":verifier-cli", "VerifierCli")
-  val core = Pub(":verifier-core", "VerifierCore")
-  val intellij = Pub(":verifier-intellij", "VerifierIntelliJ")
-  val repository = Pub(":verifier-repository", "Repository")
-  data class Pub(val project: String, val name: String)
+data class Publication(val project: String, val name: String) {
+  companion object {
+    val cli = Publication(":verifier-cli", "VerifierCli")
+    val core = Publication(":verifier-core", "VerifierCore")
+    val intellij = Publication(":verifier-intellij", "VerifierIntelliJ")
+    val repository = Publication(":verifier-repository", "Repository")
+  }
 }
 
 publishing {
   publications {
-    fun configurePublication(publication: Publications.Pub): MavenPublication {
-      val (projectName, publicationName) = publication
-      return create<MavenPublication>(publicationName) {
-        val proj = project(":$projectName")
-        groupId = proj.group.toString()
-        artifactId = proj.name
-        version = proj.version.toString()
-
-        from(proj.components["java"])
-        artifact(proj.tasks["sourcesJar"])
-      }
-    }
-    configurePublication(Publications.cli)
-    configurePublication(Publications.core)
-    configurePublication(Publications.intellij)
-    configurePublication(Publications.repository)
+    publish(Publication.cli)
+    publish(Publication.core)
+    publish(Publication.intellij)
+    publish(Publication.repository)
   }
 
   repositories {
@@ -146,10 +136,10 @@ signing {
 
     useInMemoryPgpKeys(signingKey, signingPassword)
 
-    sign(publishing.publications[Publications.cli.name])
-    sign(publishing.publications[Publications.core.name])
-    sign(publishing.publications[Publications.intellij.name])
-    sign(publishing.publications[Publications.repository.name])
+    sign(Publication.cli)
+    sign(Publication.core)
+    sign(Publication.intellij)
+    sign(Publication.repository)
   }
 }
 
@@ -165,3 +155,23 @@ tasks {
   }
 }
 
+fun PublicationContainer.publish(publication: Publication) {
+  val (projectName, publicationName) = publication
+  create<MavenPublication>(publicationName) {
+    val proj = project(":$projectName")
+    groupId = proj.group.toString()
+    artifactId = proj.name
+    version = proj.version.toString()
+
+    from(proj.components["java"])
+    artifact(proj.tasks["sourcesJar"])
+  }
+}
+
+operator fun PublicationContainer.get(publication: Publication): GradlePublication {
+  return publishing.publications[publication.name]
+}
+
+fun SigningExtension.sign(publication: Publication) {
+  sign(publishing.publications[publication])
+}
