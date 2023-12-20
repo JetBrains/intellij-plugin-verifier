@@ -100,12 +100,20 @@ nexusPublishing {
   }
 }
 
-data class Publication(val project: String, val name: String) {
+data class Publication(val project: String, val name: String, val readableName: String, val description: String) {
   companion object {
-    val cli = Publication(":verifier-cli", "VerifierCli")
-    val core = Publication(":verifier-core", "VerifierCore")
-    val intellij = Publication(":verifier-intellij", "VerifierIntelliJ")
-    val repository = Publication(":verifier-repository", "Repository")
+    val cli = Publication("verifier-cli", "VerifierCli",
+      "JetBrains Plugin Verifier CLI",
+      "Command-line interface for JetBrains Plugin Verifier with set of high-level tasks for plugin and IDE validation")
+    val core = Publication("verifier-core", "VerifierCore",
+      "JetBrains Plugin Verifier Core",
+      "Core classes of JetBrains Plugin Verifier with verification rules, general usage detection and bytecode verification engine")
+    val intellij = Publication("verifier-intellij", "VerifierIntelliJ",
+      "JetBrains Plugin Verifier IntelliJ",
+      "JetBrains Plugin Verifier Classes for IntelliJ Platform integration with API usage detection and reporting.")
+    val repository = Publication("verifier-repository", "Repository",
+      "JetBrains Plugin Verifier Repository Integration",
+      "JetBrains Plugin Verifier integration with JetBrains Marketplace plugin repository")
   }
 }
 
@@ -165,6 +173,80 @@ fun PublicationContainer.publish(publication: Publication) {
 
     from(proj.components["java"])
     artifact(proj.tasks["sourcesJar"])
+
+    pom {
+      name = publication.readableName
+      description = publication.description
+      url = "https://github.com/JetBrains/intellij-plugin-verifier/tree/master/intellij-plugin-verifier/$projectName"
+      licenses {
+        license {
+          name = "The Apache Software License, Version 2.0"
+          url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+      }
+      developers {
+        developer {
+          id = "satamas"
+          name = "Semyon Atamas"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "AlexanderPrendota"
+          name = "Alexander Prendota"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "ktisha"
+          name = "Ekaterina Smal"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "chashnikov"
+          name = "Nikolay Chashnikov"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "chrkv"
+          name = "Ivan Chirkov"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "Ololoshechkin"
+          name = "Brilyantov Vadim"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "shalupov"
+          name = "Leonid Shalupov"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "hsz"
+          name = "Jakub Chrzanowski"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "kesarevs"
+          name = "Kesarev Sergey"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "LChernigovskaya"
+          name = "Lidiya Chernigovskaya"
+          organization = "JetBrains"
+        }
+        developer {
+          id = "novotnyr"
+          name = "Robert Novotny"
+          organization = "JetBrains"
+        }
+      }
+      scm {
+        connection = "scm:git:git://github.com/JetBrains/intellij-plugin-verifier.git"
+        developerConnection = "scm:git:ssh://github.com/JetBrains/intellij-plugin-verifier.git"
+        url = "https://github.com/JetBrains/intellij-plugin-verifier"
+      }
+    }
   }
 }
 
