@@ -16,13 +16,18 @@ class IdePluginManagerCreationTest {
   @Test
   fun `IDE plugin manager is created with default JAR file system provider`() {
     val pluginManager = IdePluginManager.createManager()
-    val pluginCreationResult = pluginManager.createPlugin(jarPath)
-    assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
+    testSamplePluginSuccessfulCreation(pluginManager)
   }
 
   @Test
   fun `IDE plugin manager is created with explicit JAR file system provider`() {
-    val pluginManager = IdePluginManager.createManager(DefaultResourceResolver, Settings.EXTRACT_DIRECTORY.getAsPath(), DefaultJarFileSystemProvider())
+    val pluginManager = IdePluginManager.createManager(DefaultResourceResolver,
+      Settings.EXTRACT_DIRECTORY.getAsPath(),
+      DefaultJarFileSystemProvider())
+    testSamplePluginSuccessfulCreation(pluginManager)
+  }
+
+  private fun testSamplePluginSuccessfulCreation(pluginManager: IdePluginManager) {
     val pluginCreationResult = pluginManager.createPlugin(jarPath)
     assertThat(pluginCreationResult, instanceOf(PluginCreationSuccess::class.java))
   }
