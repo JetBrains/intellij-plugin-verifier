@@ -38,12 +38,11 @@ import kotlin.system.measureTimeMillis
  */
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
-  private val extractDirectory: Path
+  private val extractDirectory: Path,
+  private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : PluginManager<IdePlugin> {
 
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
-
-  private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
@@ -387,6 +386,10 @@ class IdePluginManager private constructor(
     @JvmStatic
     fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path): IdePluginManager =
       IdePluginManager(resourceResolver, extractDirectory)
+
+    @JvmStatic
+    fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path, fileSystemProvider: JarFileSystemProvider): IdePluginManager =
+      IdePluginManager(resourceResolver, extractDirectory, fileSystemProvider)
 
     @Deprecated(
       message = "Use factory method with java.nio.Path",
