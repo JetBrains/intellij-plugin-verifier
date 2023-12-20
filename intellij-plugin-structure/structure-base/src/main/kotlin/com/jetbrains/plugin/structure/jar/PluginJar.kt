@@ -26,7 +26,9 @@ private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
 
 class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()): AutoCloseable {
 
-  private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath)
+  private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath).also {
+    LOG.debug("Provider '{}' created file system for [{}]", jarFileSystemProvider.javaClass.name, jarPath)
+  }
 
   fun resolveDescriptorPath(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH): Path? {
     val descriptor = jarFileSystem.getPath(toCanonicalPath(descriptorPath))
