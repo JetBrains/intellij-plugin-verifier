@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.version;
 
+import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils;
 import com.jetbrains.plugin.structure.base.utils.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class IdeVersion implements Version<IdeVersion> {
+  public static final IdeVersion maxVersion =
+    IdeVersion.createIdeVersion(CompatibilityUtils.MAX_BRANCH_VALUE - 1 + "." + (CompatibilityUtils.MAX_BUILD_VALUE - 1));
 
   /**
    * Tries to parse specified string as IDE version and throws an {@link IllegalArgumentException}

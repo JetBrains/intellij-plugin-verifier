@@ -5,9 +5,9 @@ import java.util.ArrayList
 
 class CompatibilityUtils {
   companion object {
-    private const val MAX_BRANCH_VALUE = 1000
+    const val MAX_BRANCH_VALUE = 1000
+    const val MAX_BUILD_VALUE = 100000
     private const val MAX_COMPONENT_VALUE = 10000
-    private const val MAX_BUILD_VALUE = 100000
     private val NUMBERS_OF_NINES by lazy { initNumberOfNines() }
 
     fun versionAsLong(vararg components: Int): Long {
@@ -23,6 +23,10 @@ class CompatibilityUtils {
       return longVersion
     }
 
+    @Deprecated(
+      message = "Use IdeVersion.maxVersion.asLong()",
+      replaceWith = ReplaceWith("IdeVersion.maxVersion.asLong()")
+    )
     fun getMaxVersionAsLong(): Long {
       return branchBuildAsLong(MAX_BRANCH_VALUE - 1, MAX_BUILD_VALUE - 1)
     }
