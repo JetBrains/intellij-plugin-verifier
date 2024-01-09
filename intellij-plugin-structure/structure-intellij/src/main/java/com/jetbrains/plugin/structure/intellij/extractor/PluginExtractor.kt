@@ -5,17 +5,20 @@
 package com.jetbrains.plugin.structure.intellij.extractor
 
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.problems.*
-import java.nio.file.FileSystems
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 
 object PluginExtractor {
-  private val zipPathMatcher = FileSystems.getDefault().getPathMatcher("glob:*/lib/*.jar")
+  private const val JAR_IN_PLUGIN_DEPENDENCIES_GLOB = "glob:*/lib/*.jar"
+
+  private val LOG = LoggerFactory.getLogger(PluginExtractor::class.java)
 
   fun extractPlugin(pluginFile: Path, extractDirectory: Path): ExtractorResult {
     Files.createDirectories(extractDirectory)
@@ -54,7 +57,7 @@ object PluginExtractor {
           fail(PluginZipContainsSingleJarInRoot(singleFile.simpleName), extractedPlugin)
         } else if (singleFile.isDirectory) {
           val allFiles = extractedPlugin.listAllFiles()
-          if (allFiles.any { zipPathMatcher.matches(it) }) {
+          if (allFiles.any { isJarInZip(it) }) {
             success(singleFile, extractedPlugin)
           } else {
             fail(UnexpectedPluginZipStructure(), extractedPlugin)
@@ -67,4 +70,14 @@ object PluginExtractor {
     }
   }
 
+  private fun isJarInZip(path: Path): Boolean {
+    val pathFs = path.fileSystem
+    return try {
+      val pathMatcher: PathMatcher? = pathFs.getPathMatcher(JAR_IN_PLUGIN_DEPENDENCIES_GLOB)
+      pathMatcher?.matches(path) ?: false
+    } catch (e: Throwable) {
+      LOG.warn("Cannot determine whether '$JAR_IN_PLUGIN_DEPENDENCIES_GLOB' is supported by the filesystem [{}]", pathFs.javaClass.name)
+      false
+    }
+  }
 }
