@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   `maven-publish`
   alias(sharedLibs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.changelog)
 }
 
 val projectVersion: String by extra {
@@ -129,3 +130,9 @@ tasks {
   }
 }
 
+changelog {
+  version = projectVersion.also { println(it) }
+  headerParserRegex = Regex("""(\d+\.\d+)""")
+  groups = listOf("Added", "Changed", "Fixed")
+  path = file("../CHANGELOG.md").canonicalPath
+}
