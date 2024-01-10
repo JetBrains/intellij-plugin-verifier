@@ -10,6 +10,7 @@ jsoup = "1.16.1"
 junit = "4.13.2"
 kotson = "2.5.0"
 logback-classic = "1.4.7"
+nexus-publish = "1.3.0"
 okhttp = "4.11.0"
 okhttp-loggingInterceptor = "4.11.0"
 retrofit = "2.9.0"
@@ -42,3 +43,4 @@ xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
+nexus-publish = { id = "io.github.gradle-nexus.publish-plugin", version.ref = "nexus-publish" }
