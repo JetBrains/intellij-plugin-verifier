@@ -2,6 +2,14 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
+## Unreleased
+
+### Added
+
+### Changed
+
+### Fixed
+
 ## 1.307 - 2023-11-27
 
 ### Added
