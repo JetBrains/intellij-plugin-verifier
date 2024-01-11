@@ -4,7 +4,7 @@ plugins {
   `maven-publish`
   signing
   alias(sharedLibs.plugins.kotlin.jvm)
-  id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+  alias(sharedLibs.plugins.nexus.publish)
 }
 
 var intellijPluginStructureVersion = "dev"
@@ -68,7 +68,7 @@ val mavenCentralUsername = findProperty("mavenCentralUsername")?.toString()
 val mavenCentralPassword = findProperty("mavenCentralPassword")?.toString()
 
 nexusPublishing {
-  this.repositories {
+  repositories {
     sonatype {
       username = mavenCentralUsername
       password = mavenCentralPassword
