@@ -131,7 +131,7 @@ tasks {
 }
 
 changelog {
-  version = projectVersion.also { println(it) }
+  version = projectVersion
   headerParserRegex = Regex("""(\d+\.\d+)""")
   groups = listOf("Added", "Changed", "Fixed")
   path = file("../CHANGELOG.md").canonicalPath
