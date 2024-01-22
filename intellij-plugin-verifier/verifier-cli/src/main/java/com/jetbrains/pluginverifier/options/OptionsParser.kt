@@ -37,7 +37,7 @@ object OptionsParser {
   private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
     val reportDirectory = Paths.get(opts.verificationReportsDir ?: newVerificationDirectoryName())
     if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
-      LOG.info("Delete the verification directory ${reportDirectory.toAbsolutePath()} because it isn't empty")
+      LOG.info("The verification directory ${reportDirectory.toAbsolutePath()} is being deleted because it is not empty.")
       reportDirectory.deleteLogged()
     }
     reportDirectory.createDir()
