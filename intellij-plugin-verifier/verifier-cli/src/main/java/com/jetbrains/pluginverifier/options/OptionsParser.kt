@@ -35,18 +35,18 @@ object OptionsParser {
   private val TIMESTAMP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH.mm.ss")
 
   private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
-    val reportDirectory = opts.verificationReportsDir?.let { Paths.get(it) }
-    if (reportDirectory != null) {
-      if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
-        LOG.info("Delete the verification directory ${reportDirectory.toAbsolutePath()} because it isn't empty")
-        reportDirectory.deleteLogged()
-      }
-      reportDirectory.createDir()
-      return reportDirectory
+    val reportDirectory = Paths.get(opts.verificationReportsDir ?: newVerificationDirectoryName())
+    if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
+      LOG.info("Delete the verification directory ${reportDirectory.toAbsolutePath()} because it isn't empty")
+      reportDirectory.deleteLogged()
     }
+    reportDirectory.createDir()
+    return reportDirectory
+  }
+
+  private fun newVerificationDirectoryName(): String {
     val nowTime = TIMESTAMP_DATE_FORMAT.format(LocalDateTime.now())
-    val directoryName = ("verification-$nowTime").replaceInvalidFileNameCharacters()
-    return Paths.get(directoryName).createDir()
+    return "verification-$nowTime".replaceInvalidFileNameCharacters()
   }
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions {
