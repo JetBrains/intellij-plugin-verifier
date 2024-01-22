@@ -25,14 +25,14 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object OptionsParser {
 
   private val LOG = LoggerFactory.getLogger(OptionsParser::class.java)
 
-  private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
+  private val TIMESTAMP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH.mm.ss")
 
   private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
     val reportDirectory = opts.verificationReportsDir?.let { Paths.get(it) }
@@ -44,7 +44,7 @@ object OptionsParser {
       reportDirectory.createDir()
       return reportDirectory
     }
-    val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
+    val nowTime = TIMESTAMP_DATE_FORMAT.format(LocalDateTime.now())
     val directoryName = ("verification-$nowTime").replaceInvalidFileNameCharacters()
     return Paths.get(directoryName).createDir()
   }
