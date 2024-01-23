@@ -25,28 +25,28 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.text.SimpleDateFormat
-import java.util.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object OptionsParser {
 
   private val LOG = LoggerFactory.getLogger(OptionsParser::class.java)
 
-  private val TIMESTAMP_DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd 'at' HH.mm.ss")
+  private val TIMESTAMP_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd 'at' HH.mm.ss")
 
   private fun getVerificationReportsDirectory(opts: CmdOpts): Path {
-    val reportDirectory = opts.verificationReportsDir?.let { Paths.get(it) }
-    if (reportDirectory != null) {
-      if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
-        LOG.info("Delete the verification directory ${reportDirectory.toAbsolutePath()} because it isn't empty")
-        reportDirectory.deleteLogged()
-      }
-      reportDirectory.createDir()
-      return reportDirectory
+    val reportDirectory = Paths.get(opts.verificationReportsDir ?: newVerificationDirectoryName())
+    if (reportDirectory.exists() && reportDirectory.listFiles().isNotEmpty()) {
+      LOG.info("The verification directory ${reportDirectory.toAbsolutePath()} is being deleted because it is not empty.")
+      reportDirectory.deleteLogged()
     }
-    val nowTime = TIMESTAMP_DATE_FORMAT.format(Date())
-    val directoryName = ("verification-$nowTime").replaceInvalidFileNameCharacters()
-    return Paths.get(directoryName).createDir()
+    reportDirectory.createDir()
+    return reportDirectory
+  }
+
+  private fun newVerificationDirectoryName(): String {
+    val nowTime = TIMESTAMP_DATE_FORMAT.format(LocalDateTime.now())
+    return "verification-$nowTime".replaceInvalidFileNameCharacters()
   }
 
   fun parseOutputOptions(opts: CmdOpts): OutputOptions {
