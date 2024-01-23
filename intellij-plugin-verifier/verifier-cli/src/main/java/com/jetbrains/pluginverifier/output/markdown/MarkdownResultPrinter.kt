@@ -6,6 +6,7 @@ import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins.simplifiedReasonsNotToLoadUnloadWithoutRestart
+import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_FAIL
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -154,7 +155,7 @@ private fun Markdown.printVerificationResult(result: PluginVerificationResult.Ve
     is DynamicPluginStatus.MaybeDynamic -> h2(dynaStatus) + paragraph("Plugin can probably be enabled or disabled without IDE restart")
     is DynamicPluginStatus.NotDynamic -> {
       h2(dynaStatus) +
-        paragraph("Plugin probably cannot be enabled or disabled without IDE restart")
+        paragraph(DYNAMIC_PLUGIN_FAIL)
         dynamicPluginStatus.simplifiedReasonsNotToLoadUnloadWithoutRestart().forEach {
           unorderedListItem(it)
         }
