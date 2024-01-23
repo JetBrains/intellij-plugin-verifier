@@ -14,7 +14,7 @@ import org.jdom2.Element
  * Utility methods that determine whether a plugin can be dynamically enabled/disabled [DynamicPluginStatus].
  */
 object DynamicPlugins {
-  private const val MESSAGE = "Plugin probably cannot be enabled or disabled without IDE restart"
+  const val MESSAGE = "Plugin probably cannot be enabled or disabled without IDE restart"
   fun getDynamicPluginStatus(context: PluginVerificationContext): DynamicPluginStatus? {
     val verificationDescriptor = context.verificationDescriptor
     val idePlugin = context.idePlugin
@@ -75,6 +75,12 @@ object DynamicPlugins {
     }
 
     return null
+  }
+
+  fun DynamicPluginStatus.NotDynamic.simplifiedReasonsNotToLoadUnloadWithoutRestart(): List<String> {
+    return reasonsNotToLoadUnloadWithoutRestart.map { reason ->
+      reason.removePrefix("$MESSAGE because it ").capitalize()
+    }
   }
 
   private fun formatListOfNames(names: List<String>): String =

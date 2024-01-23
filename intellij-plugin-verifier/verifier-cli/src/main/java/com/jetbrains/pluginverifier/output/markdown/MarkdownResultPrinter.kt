@@ -5,6 +5,7 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dymamic.DynamicPlugins.simplifiedReasonsNotToLoadUnloadWithoutRestart
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -151,7 +152,14 @@ private fun Markdown.printVerificationResult(result: PluginVerificationResult.Ve
   val dynaStatus = "Dynamic Plugin Status"
   when (val dynamicPluginStatus = dynamicPluginStatus) {
     is DynamicPluginStatus.MaybeDynamic -> h2(dynaStatus) + paragraph("Plugin can probably be enabled or disabled without IDE restart")
-    is DynamicPluginStatus.NotDynamic -> h2(dynaStatus) + paragraph("Plugin probably cannot be enabled or disabled without IDE restart: " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+    is DynamicPluginStatus.NotDynamic -> {
+      h2(dynaStatus) +
+        paragraph("Plugin probably cannot be enabled or disabled without IDE restart")
+        dynamicPluginStatus.simplifiedReasonsNotToLoadUnloadWithoutRestart().forEach {
+          unorderedListItem(it)
+        }
+        unorderedListEnd()
+    }
     null -> Unit
   }
 }
