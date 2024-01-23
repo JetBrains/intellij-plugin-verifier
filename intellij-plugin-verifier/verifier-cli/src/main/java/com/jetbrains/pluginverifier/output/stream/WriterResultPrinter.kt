@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_PASS
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
+import java.util.*
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
@@ -108,7 +109,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
   private fun DynamicPluginStatus.NotDynamic.shortToFullDescriptions(): Map<String, List<String>> {
     val justReasonRestrictions = reasonsNotToLoadUnloadWithoutRestart.map { reason ->
-      reason.removePrefix(DynamicPlugins.MESSAGE + " because ").capitalize()
+      reason.removePrefix(DynamicPlugins.MESSAGE + " because ")
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
     return justReasonRestrictions.associateWith { emptyList<String>() }
   }

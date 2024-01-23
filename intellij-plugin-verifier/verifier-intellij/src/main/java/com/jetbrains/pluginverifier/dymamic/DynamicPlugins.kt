@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import org.jdom2.Element
+import java.util.*
 
 /**
  * Utility methods that determine whether a plugin can be dynamically enabled/disabled [DynamicPluginStatus].
@@ -79,7 +80,8 @@ object DynamicPlugins {
 
   fun DynamicPluginStatus.NotDynamic.simplifiedReasonsNotToLoadUnloadWithoutRestart(): List<String> {
     return reasonsNotToLoadUnloadWithoutRestart.map { reason ->
-      reason.removePrefix("$MESSAGE because it ").capitalize()
+      reason.removePrefix("$MESSAGE because it ")
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
   }
 
