@@ -2,7 +2,15 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
-## v1.307 - 2023-11-27
+## Unreleased
+
+### Added
+
+### Changed
+
+### Fixed
+
+## 1.307 - 2023-11-27
 
 ### Added
 
@@ -21,7 +29,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Clarify `-runtime-dir` switch semantics  ([#1020](https://github.com/JetBrains/intellij-plugin-verifier/pull/1020))
 - Improve the instructional message on TeamCity runs when checking trunk API
 
-## v1.306 - 2023-10-19
+## 1.306 - 2023-10-19
 
 ### Added
 
@@ -37,7 +45,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 - Upgrade dependencies
 
-## v1.305 - 2023-10-11
+## 1.305 - 2023-10-11
 
 ### Added
 
@@ -48,7 +56,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Support API version in the Toolbox plugin descriptor ([#1004](https://github.com/JetBrains/intellij-plugin-verifier/pull/1004))
 - Upgrade dependencies
 
-## v1.304 - 2023-09-13
+## 1.304 - 2023-09-13
 
 ### Added
 
@@ -61,7 +69,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Show verification report directory at the end of verification in CLI ([#991](https://github.com/JetBrains/intellij-plugin-verifier/pull/991))
 - Upgrade dependencies
 
-## v1.303 - 2023-08-08
+## 1.303 - 2023-08-08
 
 ### Added 
 
@@ -80,18 +88,18 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Migrate to Java HTTP Client from Retrofit
 - Skip Kotlin default methods from internal usage check ([MP-5395](https://github.com/JetBrains/intellij-plugin-verifier/pull/885))
 
-## v1.301 - 2023-05-30
+## 1.301 - 2023-05-30
 
 ### Changed
 
 - This release is equivalent to 1.300.
 
-## v1.300 - 2023-05-30
+## 1.300 - 2023-05-30
 
 ### Fixed
 - Dependencies in the descriptor that reference the same descriptor file trigger a warning instead of an error ([MP-5523](https://youtrack.jetbrains.com/issue/MP-5523))
 
-## v1.299 - 2023-05-19
+## 1.299 - 2023-05-19
 
 ### Added
 - Improve description on empty `<vendor>` element ([MP-5490](https://youtrack.jetbrains.com/issue/MP-5490))

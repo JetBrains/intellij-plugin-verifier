@@ -5,6 +5,7 @@ plugins {
   `maven-publish`
   signing
   alias(sharedLibs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.changelog)
   alias(sharedLibs.plugins.nexus.publish)
 }
 
@@ -256,4 +257,11 @@ operator fun PublicationContainer.get(publication: Publication): GradlePublicati
 
 fun SigningExtension.sign(publication: Publication) {
   sign(publishing.publications[publication])
+}
+
+changelog {
+  version = projectVersion
+  headerParserRegex = Regex("""(\d+\.\d+)""")
+  groups = listOf("Added", "Changed", "Fixed")
+  path = file("../CHANGELOG.md").canonicalPath
 }
