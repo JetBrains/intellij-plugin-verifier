@@ -291,7 +291,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       To document the change do the following:
       1) Open https://plugins.jetbrains.com/docs/intellij/api-changes-list.html
       2) Open a page corresponding to the affected release(s), for example 'Changes in 2023.*'
-      3) Click 'Edit Page' at the right upper corner to navigate to GitHub.
+      3) Click 'Edit Page' (just below page title) to navigate to GitHub.
       4) Read the tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
       5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct, see supported patterns at the top.
       6) Provide the commit message and open a pull request.
