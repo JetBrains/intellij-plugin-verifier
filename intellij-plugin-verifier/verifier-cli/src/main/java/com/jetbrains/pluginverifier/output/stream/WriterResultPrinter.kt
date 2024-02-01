@@ -6,11 +6,13 @@ package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
+import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_FAIL
 import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_PASS
 import com.jetbrains.pluginverifier.output.ResultPrinter
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.io.PrintWriter
+import java.util.*
 
 class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
 
@@ -92,12 +94,25 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
       appendShortAndFullDescriptions(nonExtendableApiUsages.groupBy({ it.shortDescription }, { it.fullDescription }))
     }
 
+    val dynamicPluginStatusHeading = "Dynamic Plugin Eligibility"
     when (val dynamicPluginStatus = dynamicPluginStatus) {
-      is DynamicPluginStatus.MaybeDynamic -> appendLine(INDENT + DYNAMIC_PLUGIN_PASS)
-      is DynamicPluginStatus.NotDynamic -> appendLine(INDENT + DYNAMIC_PLUGIN_FAIL + ": " + dynamicPluginStatus.reasonsNotToLoadUnloadWithoutRestart.joinToString())
+      is DynamicPluginStatus.MaybeDynamic -> appendLine("$dynamicPluginStatusHeading:").appendLine(INDENT + DYNAMIC_PLUGIN_PASS)
+      is DynamicPluginStatus.NotDynamic -> {
+        val restrictions = dynamicPluginStatus.shortToFullDescriptions()
+        val heading = "$dynamicPluginStatusHeading (negative due to ${restrictions.size} restrictions):"
+        appendLine(heading).appendLine(INDENT + DYNAMIC_PLUGIN_FAIL)
+        appendShortAndFullDescriptions(restrictions)
+      }
       null -> Unit
     }
+  }
 
+  private fun DynamicPluginStatus.NotDynamic.shortToFullDescriptions(): Map<String, List<String>> {
+    val justReasonRestrictions = reasonsNotToLoadUnloadWithoutRestart.map { reason ->
+      reason.removePrefix(DynamicPlugins.MESSAGE + " because ")
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+    return justReasonRestrictions.associateWith { emptyList<String>() }
   }
 
   private fun StringBuilder.appendShortAndFullDescriptions(shortToFullDescriptions: Map<String, List<String>>) {
