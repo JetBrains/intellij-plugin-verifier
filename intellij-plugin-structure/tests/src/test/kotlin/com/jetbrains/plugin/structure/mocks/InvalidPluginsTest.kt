@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -351,6 +350,20 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1")))
     )
   }
+
+  @Test
+  fun `since build contains wildcard `() {
+    val specifiedVersion = "131.*"
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="234.*"/>"""
+      },
+      listOf(
+        SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(specifiedVersion))
+      )
+    )
+  }
+
 
   @Test
   fun `empty vendor`() {

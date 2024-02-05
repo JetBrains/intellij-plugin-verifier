@@ -90,6 +90,22 @@ class SinceBuildGreaterThanUntilBuild(
     get() = Level.ERROR
 }
 
+class SinceBuildCannotContainWildcard(
+  descriptorPath: String,
+  sinceBuild: IdeVersion,
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <since-build> parameter ($sinceBuild) must not contain a wildcard (dot-star suffix .*)."
+) {
+  override val level
+    get() = Level.WARNING
+
+  override val hint = ProblemSolutionHint(
+    example = "<since-build>241</vendor>",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
+}
+
 class ErroneousSinceBuild(
   descriptorPath: String,
   sinceBuild: IdeVersion
