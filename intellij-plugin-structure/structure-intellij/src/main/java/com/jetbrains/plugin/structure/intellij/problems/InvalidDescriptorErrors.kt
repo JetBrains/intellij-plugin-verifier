@@ -60,8 +60,8 @@ class InvalidSinceBuild(
   sinceBuild: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <since-build> parameter ($sinceBuild) format is invalid. Ensure it is greater than <130>, " +
-                    "it doesn't end with a dot star suffix <.*> and represents the actual build numbers."
+  detailedMessage = "The <since-build> parameter ($sinceBuild) format is invalid. Ensure it is greater than <130> " +
+                    "and represents the actual build numbers."
 ) {
   override val level
     get() = Level.ERROR
@@ -95,7 +95,7 @@ class SinceBuildCannotContainWildcard(
   sinceBuild: IdeVersion,
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <since-build> parameter ($sinceBuild) must not contain a wildcard (dot-star suffix .*)."
+  detailedMessage = "The <since-build> parameter ($sinceBuild) must not contain a wildcard (dot-star suffix) '.*')."
 ) {
   override val level
     get() = Level.WARNING

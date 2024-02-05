@@ -229,8 +229,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         version = ""
-      }
-      , listOf(PropertyNotSpecified("version", "plugin.xml")))
+      }, listOf(PropertyNotSpecified("version", "plugin.xml")))
   }
 
   @Test
@@ -291,12 +290,12 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `multiple dependencies reuse a single config-file`() {
     `test valid plugin xml`(
-            perfectXmlBuilder.modify {
-              depends = """
+      perfectXmlBuilder.modify {
+        depends = """
                 <depends config-file="shared.xml">com.jetbrains.module-one</depends>
                 <depends config-file="shared.xml">com.jetbrains.module-two</depends>
               """.trimIndent()
-            }
+      }
     )
   }
 
@@ -392,11 +391,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `wildcard in old ide`() {
+    val wildcardSinceBuild = "129.0.*"
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        ideaVersion = """<idea-version since-build="129.0.*"/>"""
+        ideaVersion = """<idea-version since-build="$wildcardSinceBuild"/>"""
       },
-      listOf(InvalidSinceBuild("plugin.xml", "129.0.*"))
+      listOf(
+        InvalidSinceBuild("plugin.xml", wildcardSinceBuild),
+        SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(wildcardSinceBuild))
+      )
     )
   }
 
@@ -446,7 +449,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
     val linksString = testLinks.joinToString(", ") {
       val tag = it.first
-      val attr = when(tag) {
+      val attr = when (tag) {
         "img" -> "src"
         else -> "href"
       }
@@ -645,9 +648,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
 
     `test invalid plugin xml`(
-        perfectXmlBuilder.modify {
-          ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
-        }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
+      }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
     )
   }
 
