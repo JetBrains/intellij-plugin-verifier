@@ -1,7 +1,7 @@
-# intellij-plugin-verifier
+# IntelliJ Plugin Verifier
 
 [![official JetBrains project](https://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
-[![Twitter Follow](https://img.shields.io/twitter/follow/JBPlatform?style=flat&logo=twitter)](https://twitter.com/JBPlatform)
+[![X Follow](https://img.shields.io/badge/follow-%40JBPlatform-1DA1F2?logo=x)](https://twitter.com/JBPlatform)
 [![Slack](https://img.shields.io/badge/Slack-%23intellij--plugin--verifier-blue)](https://plugins.jetbrains.com/slack)
 
 [![IDE Diff Builder](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml/badge.svg)](https://github.com/JetBrains/intellij-plugin-verifier/actions/workflows/ide-diff-builder.yml)
@@ -17,7 +17,7 @@ The IntelliJ Platform API can occasionally change between releases, so binary in
 
 > **Note**
 >
-> In most cases, intellij-plugin-verifier will be used via `runPluginVerifier` task from Gradle IntelliJ Plugin, see [Integration](#integration).
+> In most cases, IntelliJ Plugin Verifier will be used via `runPluginVerifier` task from Gradle IntelliJ Plugin, see [Integration](#integration).
 
 Example problems the Plugin Verifier can detect:
 
