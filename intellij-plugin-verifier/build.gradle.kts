@@ -270,6 +270,10 @@ changelog {
   path = file("../CHANGELOG.md").canonicalPath
 }
 
+/**
+ * Writes a changelog for the most recently released version.
+ * The 'CHANGELOG.md' set in the 'changelog' plugin is used as a source
+ */
 abstract class MostRecentVersionChangelog : BaseChangelogTask() {
   @TaskAction
   fun run() {
@@ -287,7 +291,7 @@ abstract class MostRecentVersionChangelog : BaseChangelogTask() {
   }
 
   private val changelogWriter: BufferedWriter
-  get() = project.layout.buildDirectory.file("changelog.md").get().asFile.bufferedWriter()
+    get() = project.layout.buildDirectory.file("changelog.md").get().asFile.bufferedWriter()
 }
 
 tasks.register<MostRecentVersionChangelog>("mostRecentVersionChangelog") {
