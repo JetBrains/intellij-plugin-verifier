@@ -278,15 +278,16 @@ abstract class MostRecentVersionChangelog : BaseChangelogTask() {
   @TaskAction
   fun run() {
     with(changelog.get()) {
-      val markdown = releasedItems.first()
+      releasedItems.first()
         .withHeader(false)
         .let {
           renderItem(it, Changelog.OutputType.MARKDOWN)
         }
-
-      changelogWriter.use { writer ->
-        writer.append(markdown)
-      }
+        .let { changelogItem ->
+          changelogWriter.use {
+            it.append(changelogItem)
+          }
+        }
     }
   }
 
