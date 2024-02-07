@@ -1,4 +1,8 @@
+import org.jetbrains.changelog.Changelog
+import org.jetbrains.changelog.ChangelogPluginExtension
+import org.jetbrains.changelog.tasks.BaseChangelogTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.io.BufferedWriter
 import org.gradle.api.publish.Publication as GradlePublication
 
 plugins {
@@ -130,8 +134,8 @@ publishing {
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier")
       credentials {
-        username = if(project.hasProperty("publishUser")) project.properties["publishUser"].toString() else System.getenv("PUBLISH_USER")
-        password = if(project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
+        username = if (project.hasProperty("publishUser")) project.properties["publishUser"].toString() else System.getenv("PUBLISH_USER")
+        password = if (project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
       }
     }
   }
@@ -264,4 +268,30 @@ changelog {
   headerParserRegex = Regex("""(\d+\.\d+)""")
   groups = listOf("Added", "Changed", "Fixed")
   path = file("../CHANGELOG.md").canonicalPath
+}
+
+abstract class MostRecentVersionChangelog : BaseChangelogTask() {
+  @TaskAction
+  fun run() {
+    with(changelog.get()) {
+      val markdown = releasedItems.first()
+        .withHeader(false)
+        .let {
+          renderItem(it, Changelog.OutputType.MARKDOWN)
+        }
+
+      changelogWriter.use { writer ->
+        writer.append(markdown)
+      }
+    }
+  }
+
+  private val changelogWriter: BufferedWriter
+  get() = project.layout.buildDirectory.file("changelog.md").get().asFile.bufferedWriter()
+}
+
+tasks.register<MostRecentVersionChangelog>("mostRecentVersionChangelog") {
+  val extension = project.extensions.getByType<ChangelogPluginExtension>()
+  changelog.convention(extension.instance)
+  outputs.upToDateWhen { false }
 }
