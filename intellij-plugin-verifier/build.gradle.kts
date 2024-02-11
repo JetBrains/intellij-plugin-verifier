@@ -2,7 +2,6 @@ import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.ChangelogPluginExtension
 import org.jetbrains.changelog.tasks.BaseChangelogTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.io.BufferedWriter
 import org.gradle.api.publish.Publication as GradlePublication
 
 plugins {
@@ -275,6 +274,9 @@ changelog {
  * The 'CHANGELOG.md' set in the 'changelog' plugin is used as a source
  */
 abstract class MostRecentVersionChangelog : BaseChangelogTask() {
+  @get:OutputFile
+  abstract val changelogOutputFile: RegularFileProperty
+
   @TaskAction
   fun run() {
     with(changelog.get()) {
@@ -284,19 +286,16 @@ abstract class MostRecentVersionChangelog : BaseChangelogTask() {
           renderItem(it, Changelog.OutputType.MARKDOWN)
         }
         .let { changelogItem ->
-          changelogWriter.use {
-            it.append(changelogItem)
-          }
+          changelogOutputFile.asFile
+            .get().writeText(changelogItem)
         }
     }
   }
-
-  private val changelogWriter: BufferedWriter
-    get() = project.layout.buildDirectory.file("changelog.md").get().asFile.bufferedWriter()
 }
 
 tasks.register<MostRecentVersionChangelog>("mostRecentVersionChangelog") {
   val extension = project.extensions.getByType<ChangelogPluginExtension>()
   changelog.convention(extension.instance)
+  changelogOutputFile.convention(project.layout.buildDirectory.file("changelog.md"))
   outputs.upToDateWhen { false }
 }
