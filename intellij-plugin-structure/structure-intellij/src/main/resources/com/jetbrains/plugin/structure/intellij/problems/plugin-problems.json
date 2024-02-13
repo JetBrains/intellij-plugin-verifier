@@ -1,0 +1,24 @@
+{
+  "existing-plugin" : [
+    {
+      "ForbiddenPluginIdPrefix": "ignore"
+    },
+    {
+      "TemplateWordInPluginId": "ignore"
+    },
+    {
+      "TemplateWordInPluginName": "ignore"
+    }
+  ],
+  "new-plugin" : [
+    {
+      "ForbiddenPluginIdPrefix": "error"
+    },
+    {
+      "TemplateWordInPluginId": "error"
+    },
+    {
+      "TemplateWordInPluginName": "error"
+    }
+  ]
+}
