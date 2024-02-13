@@ -11,17 +11,12 @@ import java.net.URL
 class PluginProblemsLoader(private val pluginProblemsJsonUrl: URL) {
   private val json = ObjectMapper()
 
-  private var _pluginProblemSetCollection = mutableSetOf<PluginProblemSet>()
-
-  val pluginProblemSetCollection: Set<PluginProblemSet>
-    get() = _pluginProblemSetCollection
-
-  fun load() {
+  fun load(): PluginProblemLevelRemappingDefinitions {
     try {
-      val result: Map<String, Map<String, String>> = json.readValue(pluginProblemsJsonUrl)
+      val rawRemapping: Map<String, Map<String, String>> = json.readValue(pluginProblemsJsonUrl)
 
-      _pluginProblemSetCollection = result.map { (problemSetName: String, problems: Map<String, String>) ->
-        val levelMapping = problems.mapNotNull { (problemId, problemLevel) ->
+      return rawRemapping.map { (problemSetName: String, problemRemapping: Map<String, String>) ->
+        val levelMapping = problemRemapping.mapNotNull { (problemId, problemLevel) ->
           when (problemLevel) {
             "ignore" -> PluginProblemLevel.Ignored(problemId)
             "warning" -> PluginProblemLevel.Warning(problemId)
@@ -30,7 +25,11 @@ class PluginProblemsLoader(private val pluginProblemsJsonUrl: URL) {
           }
         }.toSet()
         PluginProblemSet(problemSetName, levelMapping)
-      }.toMutableSet()
+      }
+        .toSet()
+        .let {
+          PluginProblemLevelRemappingDefinitions(it)
+        }
     } catch (e: IOException) {
       throw IOException("Cannot load plugin problems definitions from <$pluginProblemsJsonUrl>", e)
     } catch (e: StreamReadException) {
@@ -51,8 +50,13 @@ class PluginProblemsLoader(private val pluginProblemsJsonUrl: URL) {
 
 data class PluginProblemSet(val name: String, val problems: Set<PluginProblemLevel>)
 
-operator fun Set<PluginProblemSet>.get(setName: String): PluginProblemSet? {
-  return this.find {
-    it.name == setName
+class PluginProblemLevelRemappingDefinitions(private val pluginProblemSetCollection: Set<PluginProblemSet>) {
+  val size: Int
+    get() = pluginProblemSetCollection.size
+
+  operator fun get(setName: String): PluginProblemSet? {
+    return pluginProblemSetCollection.find {
+      it.name == setName
+    }
   }
 }

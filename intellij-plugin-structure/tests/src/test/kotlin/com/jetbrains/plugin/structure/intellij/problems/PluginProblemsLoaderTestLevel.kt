@@ -15,19 +15,18 @@ class PluginProblemsLoaderTestLevel {
   @Test
   fun `plugin problems are loaded from JSON`() {
     val pluginProblemsLoader = PluginProblemsLoader("plugin-problems.json".asUrl())
-    pluginProblemsLoader.load()
+    val levelRemappings =  pluginProblemsLoader.load()
 
-    val collections = pluginProblemsLoader.pluginProblemSetCollection
-    assertThat(collections.size, `is`(2));
+    assertThat(levelRemappings.size, `is`(2));
 
-    val existingPluginProblemSet = collections["existing-plugin"]
+    val existingPluginProblemSet = levelRemappings["existing-plugin"]
     assertNotNull(existingPluginProblemSet)
     existingPluginProblemSet?.let {
       val ignoredProblems = it.problems.filterIsInstance<Ignored>()
       assertThat(ignoredProblems.size, `is`(3))
     }
 
-    val newPluginProblemSet = collections["new-plugin"]
+    val newPluginProblemSet = levelRemappings["new-plugin"]
     assertNotNull(newPluginProblemSet)
     newPluginProblemSet?.let {
       val errors = it.problems.filterIsInstance<Error>()
