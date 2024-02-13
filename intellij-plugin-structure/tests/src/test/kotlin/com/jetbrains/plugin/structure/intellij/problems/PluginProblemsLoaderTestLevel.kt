@@ -14,7 +14,7 @@ import java.net.URL
 class PluginProblemsLoaderTestLevel {
   @Test
   fun `plugin problems are loaded from JSON`() {
-    val pluginProblemsLoader = PluginProblemsLoader("plugin-problems.json".asUrl())
+    val pluginProblemsLoader = PluginProblemsLoader(PLUGIN_PROBLEMS_FILE_NAME.asUrl())
     val levelRemappings =  pluginProblemsLoader.load()
 
     assertThat(levelRemappings.size, `is`(2));
@@ -32,6 +32,13 @@ class PluginProblemsLoaderTestLevel {
       val errors = it.problems.filterIsInstance<Error>()
       assertThat(errors.size, `is`(3))
     }
+  }
+
+  @Test
+  fun `plugin problems are loaded from JSON in classpath`() {
+    val pluginProblemsLoader = PluginProblemsLoader.fromClassPath()
+    val levelRemappings =  pluginProblemsLoader.load()
+    assertThat(levelRemappings.size, `is`(2));
   }
 
   @Test
