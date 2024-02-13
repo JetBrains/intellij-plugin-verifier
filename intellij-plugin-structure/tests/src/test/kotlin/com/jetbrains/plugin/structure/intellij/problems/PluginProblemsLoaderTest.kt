@@ -21,12 +21,6 @@ class PluginProblemsLoaderTest {
     }
   }
 
-  private fun String.asUrl(): URL {
-    val jsonUrl = PluginProblemsLoader::class::java.javaClass.getResource(this)
-    if (jsonUrl === null) {
-      throw IOException("JSON URL cannot be found at <$this>")
-    } else {
-      return jsonUrl
-    }
-  }
+  private fun String.asUrl(): URL = PluginProblemsLoader::class.java.getResource(this)
+    ?: throw IOException("JSON URL cannot be found at <$this>")
 }
