@@ -72,7 +72,7 @@ class PluginParsingConfigurationResolutionTest {
   fun `existing plugin configuration with custom remapping definition`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
-      object : PluginProblemLevelRemappingDefinitionManager {
+      object : ProblemLevelRemappingManager {
         override fun initialize() = Definitions().apply {
           this["existing-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
         }

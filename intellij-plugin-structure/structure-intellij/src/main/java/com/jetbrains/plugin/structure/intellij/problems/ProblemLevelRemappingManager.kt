@@ -10,30 +10,30 @@ import java.io.IOException
 import java.net.URL
 import kotlin.reflect.KClass
 
-interface PluginProblemLevelRemappingDefinitionManager {
+interface ProblemLevelRemappingManager {
   fun initialize(): Definitions
 }
 
 fun interface PluginProblemLevelRemappingDefinitionManagerProvider {
-  operator fun invoke(): PluginProblemLevelRemappingDefinitionManager
+  operator fun invoke(): ProblemLevelRemappingManager
 }
 
 object ClassPathJsonProblemLevelRemapperProvider: PluginProblemLevelRemappingDefinitionManagerProvider {
-  override operator fun invoke(): JsonUrlPluginProblemLevelRemappingDefinitionManager {
-    val pluginProblemsJsonUrl = JsonUrlPluginProblemLevelRemappingDefinitionManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
+  override operator fun invoke(): JsonUrlProblemLevelRemappingManager {
+    val pluginProblemsJsonUrl = JsonUrlProblemLevelRemappingManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
       ?: throw IOException("Plugin problem level remapping definition cannot be found at <$this>")
-    return JsonUrlPluginProblemLevelRemappingDefinitionManager(pluginProblemsJsonUrl)
+    return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
   }
 }
 
-fun levelRemappingFromClassPathJson(): JsonUrlPluginProblemLevelRemappingDefinitionManager {
+fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
   return ClassPathJsonProblemLevelRemapperProvider()
 }
 
 private const val INTELLIJ_PROBLEMS_PACKAGE_NAME = "com.jetbrains.plugin.structure.intellij.problems"
 const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
 
-class JsonUrlPluginProblemLevelRemappingDefinitionManager(private val pluginProblemsJsonUrl: URL) : PluginProblemLevelRemappingDefinitionManager {
+class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
   private val json = ObjectMapper()
 
   @Throws(IOException::class)

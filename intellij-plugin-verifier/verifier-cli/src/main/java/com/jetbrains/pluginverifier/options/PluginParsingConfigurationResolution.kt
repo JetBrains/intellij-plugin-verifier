@@ -11,7 +11,7 @@ private const val EXISTING_PLUGIN_REMAPPING_SET = "existing-plugin"
 
 class PluginParsingConfigurationResolution {
   fun resolveProblemLevelMapping(configuration: PluginParsingConfiguration,
-                                 problemLevelRemapperFactory: () -> PluginProblemLevelRemappingDefinitionManager): PluginCreationResultResolver {
+                                 problemLevelRemapperFactory: () -> ProblemLevelRemappingManager): PluginCreationResultResolver {
     val defaultResolver = IntelliJPluginCreationResultResolver()
     return if (configuration.pluginSubmissionType == SubmissionType.EXISTING) {
       val problemLevelRemapping = try {

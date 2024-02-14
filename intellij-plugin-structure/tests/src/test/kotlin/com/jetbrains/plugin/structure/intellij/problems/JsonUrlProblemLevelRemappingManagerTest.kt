@@ -8,10 +8,10 @@ import org.junit.Test
 import java.io.IOException
 import java.net.URL
 
-class JsonUrlPluginProblemLevelRemappingDefinitionManagerTest {
+class JsonUrlProblemLevelRemappingManagerTest {
   @Test
   fun `plugin problems are loaded from JSON`() {
-    val definitionManager = JsonUrlPluginProblemLevelRemappingDefinitionManager(PLUGIN_PROBLEMS_FILE_NAME.asUrl())
+    val definitionManager = JsonUrlProblemLevelRemappingManager(PLUGIN_PROBLEMS_FILE_NAME.asUrl())
     val levelRemappings =  definitionManager.load()
 
     assertThat(levelRemappings.size, `is`(2))
@@ -41,11 +41,11 @@ class JsonUrlPluginProblemLevelRemappingDefinitionManagerTest {
   @Test
   fun `plugin problems are loaded from unavailable JSON`() {
     Assert.assertThrows(IOException::class.java) {
-      val pluginProblemsLoader = JsonUrlPluginProblemLevelRemappingDefinitionManager("nonexistent-file.json".asUrl())
+      val pluginProblemsLoader = JsonUrlProblemLevelRemappingManager("nonexistent-file.json".asUrl())
       pluginProblemsLoader.load()
     }
   }
 
-  private fun String.asUrl(): URL = JsonUrlPluginProblemLevelRemappingDefinitionManager::class.java.getResource(this)
+  private fun String.asUrl(): URL = JsonUrlProblemLevelRemappingManager::class.java.getResource(this)
     ?: throw IOException("JSON URL cannot be found at <$this>")
 }
