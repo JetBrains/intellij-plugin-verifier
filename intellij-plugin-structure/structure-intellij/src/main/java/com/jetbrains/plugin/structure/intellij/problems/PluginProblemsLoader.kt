@@ -51,12 +51,17 @@ class PluginProblemsLoader(private val pluginProblemsJsonUrl: URL) {
   }
 
   companion object {
+    @Throws(IOException::class)
     fun fromClassPath(): PluginProblemsLoader {
       val pluginProblemsJsonUrl = PluginProblemsLoader::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
         ?: throw IOException("Plugin problem level remapping definition cannot be found at <$this>")
       return PluginProblemsLoader(pluginProblemsJsonUrl)
     }
   }
+}
+
+fun emptyProblemLevelRemapping(name: String): PluginProblemSet {
+  return PluginProblemSet(name, emptySet())
 }
 
 data class PluginProblemSet(val name: String, val problems: Set<PluginProblemLevel>)
