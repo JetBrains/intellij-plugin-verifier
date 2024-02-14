@@ -17,7 +17,7 @@ class PluginProblemsLoaderTestLevel {
     val pluginProblemsLoader = PluginProblemsLoader(PLUGIN_PROBLEMS_FILE_NAME.asUrl())
     val levelRemappings =  pluginProblemsLoader.load()
 
-    assertThat(levelRemappings.size, `is`(2));
+    assertThat(levelRemappings.size, `is`(2))
 
     val existingPluginProblemSet = levelRemappings["existing-plugin"]
     assertNotNull(existingPluginProblemSet)
@@ -38,7 +38,7 @@ class PluginProblemsLoaderTestLevel {
   fun `plugin problems are loaded from JSON in classpath`() {
     val pluginProblemsLoader = PluginProblemsLoader.fromClassPath()
     val levelRemappings =  pluginProblemsLoader.load()
-    assertThat(levelRemappings.size, `is`(2));
+    assertThat(levelRemappings.size, `is`(2))
   }
 
   @Test
