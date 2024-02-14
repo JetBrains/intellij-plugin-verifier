@@ -17,7 +17,9 @@ class PluginParsingConfigurationResolution {
         val pluginProblemsLoader = pluginProblemsLoaderFactory.getPluginProblemsLoader()
         val problemLevelRemappingDefinitions = pluginProblemsLoader.load()
         val pluginProblemSet = problemLevelRemappingDefinitions["existing-plugin"]
-          ?: emptyProblemLevelRemapping("existing-plugin")
+          ?: emptyProblemLevelRemapping("existing-plugin").also {
+            LOG.warn(("Plugin problem remapping definition 'existing-plugin' was not found. Problems will not be remapped"))
+          }
         val parser = RemappedPluginProblemLevelParser()
         val remapping = parser.parse(pluginProblemSet)
         remapping
