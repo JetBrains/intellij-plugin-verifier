@@ -102,3 +102,7 @@ class LevelRemappingDefinition(val name: String, private val d: Map<KClass<out A
     return d.filterValues { it == level }.map { it.key }
   }
 }
+
+fun emptyLevelRemapping(name: String): LevelRemappingDefinition {
+  return LevelRemappingDefinition(name, emptyMap())
+}
