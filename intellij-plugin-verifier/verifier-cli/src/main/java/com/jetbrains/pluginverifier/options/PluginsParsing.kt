@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -22,14 +22,9 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-
-private val LOG: Logger = LoggerFactory.getLogger(PluginsParsing::class.java)
 
 /**
  * Utility class used to fill [pluginsSet] with a list of plugins to check.
@@ -40,6 +35,8 @@ class PluginsParsing(
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
+
+  private val pluginParsingConfigurationResolution = PluginParsingConfigurationResolution()
 
   /**
    * Parses command line options and add specified plugins compatible with [ideVersion].
@@ -242,26 +239,6 @@ class PluginsParsing(
   }
 
   private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
-    get() {
-      val defaultResolver = IntelliJPluginCreationResultResolver()
-      return if (pluginSubmissionType == SubmissionType.EXISTING) {
-        val problemLevelRemapping = try {
-          val pluginProblemsLoader = PluginProblemsLoader.fromClassPath()
-          val problemLevelRemappingDefinitions = pluginProblemsLoader.load()
-          val pluginProblemSet = problemLevelRemappingDefinitions["existing-plugin"]
-            ?: emptyProblemLevelRemapping("existing-plugin")
-          val parser = RemappedPluginProblemLevelParser()
-          val remapping = parser.parse(pluginProblemSet)
-          remapping
-        } catch (e: IOException) {
-          LOG.error(e.message, e)
-          emptyMap()
-        }
-
-        LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
-      } else {
-        defaultResolver
-      }
-    }
+    get() = pluginParsingConfigurationResolution.resolveLevelRemapping(this)
 
 }
