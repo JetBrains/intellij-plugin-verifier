@@ -13,6 +13,7 @@ const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
 class PluginProblemsLoader(private val pluginProblemsJsonUrl: URL) {
   private val json = ObjectMapper()
 
+  @Throws(IOException::class)
   fun load(): PluginProblemLevelRemappingDefinitions {
     try {
       val rawRemapping: Map<String, Map<String, String>> = json.readValue(pluginProblemsJsonUrl)
