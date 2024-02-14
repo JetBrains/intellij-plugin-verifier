@@ -7,6 +7,8 @@ import java.io.IOException
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginParsingConfigurationResolution::class.java)
 
+private const val EXISTING_PLUGIN_REMAPPING_SET = "existing-plugin"
+
 class PluginParsingConfigurationResolution {
   fun resolveProblemLevelMapping(configuration: PluginParsingConfiguration,
                                  problemLevelRemapperFactory: () -> PluginProblemLevelRemappingDefinitionManager): PluginCreationResultResolver {
@@ -15,9 +17,10 @@ class PluginParsingConfigurationResolution {
       val problemLevelRemapping = try {
         val problemLevelRemapper = problemLevelRemapperFactory()
         val levelRemappings = problemLevelRemapper.initialize()
-        val existingPluginLevelRemapping = levelRemappings["existing-plugin"]
-          ?: emptyLevelRemapping("existing-plugin").also {
-            LOG.warn(("Plugin problem remapping definition 'existing-plugin' was not found. Problems will not be remapped"))
+        val existingPluginLevelRemapping = levelRemappings[EXISTING_PLUGIN_REMAPPING_SET]
+          ?: emptyLevelRemapping(EXISTING_PLUGIN_REMAPPING_SET).also {
+            LOG.warn(("Plugin problem remapping definition '$EXISTING_PLUGIN_REMAPPING_SET' was not found. " +
+              "Problem levels will not be remapped"))
           }
         existingPluginLevelRemapping
       } catch (e: IOException) {
