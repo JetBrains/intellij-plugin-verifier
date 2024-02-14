@@ -1,0 +1,66 @@
+package com.jetbrains.pluginverifier.options
+
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.PLUGIN_XML
+import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
+import com.jetbrains.pluginverifier.options.SubmissionType.NEW
+import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
+import junit.framework.TestCase.assertTrue
+import org.hamcrest.CoreMatchers.instanceOf
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Before
+import org.junit.Test
+
+class PluginParsingConfigurationResolutionTest {
+  private lateinit var configurationResolution: PluginParsingConfigurationResolution
+
+  @Before
+  fun setUp() {
+    configurationResolution = PluginParsingConfigurationResolution()
+  }
+
+  @Test
+  fun `new plugin configuration is resolved`() {
+    val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
+    val creationResultResolver = configurationResolution.resolveLevelRemapping(config)
+
+    val pluginId = "mock-plugin"
+    val plugin = MockIdePlugin(pluginId)
+
+    val errors = listOf(
+      ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
+    )
+    val warnings = listOf(SuspiciousUntilBuild("999"))
+    val creationResult = creationResultResolver.resolve(plugin, errors + warnings)
+    assertThat(creationResult, instanceOf(PluginCreationFail::class.java))
+    val creationFail = creationResult as PluginCreationFail
+    assertThat(creationFail.errorsAndWarnings.size, `is`(2))
+  }
+
+  @Test
+  fun `existing plugin configuration is resolved`() {
+    val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
+    val creationResultResolver = configurationResolution.resolveLevelRemapping(config)
+
+    assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
+    val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
+
+    val pluginId = "mock-plugin"
+    val plugin = MockIdePlugin(pluginId)
+
+    val problemsThatShouldBeIgnored = listOf(
+      ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
+      TemplateWordInPluginId(pluginId, "forbiddenTemplateWord"),
+      TemplateWordInPluginName(pluginId, "forbiddenTempalteWord"),
+    )
+    val warnings = listOf(SuspiciousUntilBuild("999"))
+    val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeIgnored + warnings)
+    assertTrue(creationResult is PluginCreationSuccess)
+    val creationSuccess = creationResult as PluginCreationSuccess
+    assertThat(creationSuccess.warnings.size, `is`(1))
+  }
+}
