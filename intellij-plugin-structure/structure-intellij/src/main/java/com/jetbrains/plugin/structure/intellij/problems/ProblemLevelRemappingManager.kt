@@ -11,7 +11,7 @@ import java.net.URL
 import kotlin.reflect.KClass
 
 interface ProblemLevelRemappingManager {
-  fun initialize(): Definitions
+  fun initialize(): LevelRemappingDefinitions
 }
 
 fun interface PluginProblemLevelRemappingDefinitionManagerProvider {
@@ -40,8 +40,8 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
   override fun initialize() = load()
 
   @Throws(IOException::class)
-  fun load(): Definitions {
-    val definitions = Definitions()
+  fun load(): LevelRemappingDefinitions {
+    val definitions = LevelRemappingDefinitions()
     try {
       val rawRemapping: Map<String, Map<String, String>> = json.readValue(pluginProblemsJsonUrl)
 
@@ -83,7 +83,7 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
   }
 }
 
-class Definitions {
+class LevelRemappingDefinitions {
   private val definitions = mutableMapOf<String, LevelRemappingDefinition>()
 
   operator fun set(name: String, remapping: Map<KClass<out Any>, RemappedLevel>) {
