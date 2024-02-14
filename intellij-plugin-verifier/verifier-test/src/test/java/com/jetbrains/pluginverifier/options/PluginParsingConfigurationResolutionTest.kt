@@ -14,22 +14,25 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
+import java.net.URL
 
 class PluginParsingConfigurationResolutionTest {
   private lateinit var configurationResolution: PluginParsingConfigurationResolution
 
+  private val pluginId = "mock-plugin"
+  private lateinit var plugin: MockIdePlugin
+
   @Before
   fun setUp() {
     configurationResolution = PluginParsingConfigurationResolution()
+    plugin = MockIdePlugin(pluginId)
+
   }
 
   @Test
   fun `new plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
     val creationResultResolver = configurationResolution.resolveLevelRemapping(config)
-
-    val pluginId = "mock-plugin"
-    val plugin = MockIdePlugin(pluginId)
 
     val errors = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
@@ -49,18 +52,50 @@ class PluginParsingConfigurationResolutionTest {
     assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
 
-    val pluginId = "mock-plugin"
-    val plugin = MockIdePlugin(pluginId)
-
     val problemsThatShouldBeIgnored = listOf(
       ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
       TemplateWordInPluginId(pluginId, "forbiddenTemplateWord"),
-      TemplateWordInPluginName(pluginId, "forbiddenTempalteWord"),
+      TemplateWordInPluginName(pluginId, "forbiddenTemplateWord"),
     )
     val warnings = listOf(SuspiciousUntilBuild("999"))
     val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeIgnored + warnings)
     assertTrue(creationResult is PluginCreationSuccess)
     val creationSuccess = creationResult as PluginCreationSuccess
     assertThat(creationSuccess.warnings.size, `is`(1))
+  }
+
+  @Test
+  fun `existing plugin configuration with custom remapping definition`() {
+    val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
+    val pluginProblemsLoaderFactory = object : PluginProblemsLoaderFactory {
+      override fun getPluginProblemsLoader(): PluginProblemsLoader {
+        // FIXME why such weird URL?
+        return object : PluginProblemsLoader(URL("https://example.com")) {
+          override fun load(): PluginProblemLevelRemappingDefinitions {
+            return PluginProblemLevelRemappingDefinitions(
+              setOf(
+                PluginProblemSet("existing-plugin",
+                  setOf(PluginProblemLevel.Warning("ErroneousSinceBuild"))
+                )
+              )
+            )
+          }
+        }
+      }
+    }
+
+    val creationResultResolver = configurationResolution.resolveLevelRemapping(config, pluginProblemsLoaderFactory)
+
+    assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
+    val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
+
+    val problemsThatShouldBeRemapped = listOf(
+      ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
+    )
+    val warnings = listOf(SuspiciousUntilBuild("999"))
+    val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeRemapped + warnings)
+    assertTrue(creationResult is PluginCreationSuccess)
+    val creationSuccess = creationResult as PluginCreationSuccess
+    assertThat(creationSuccess.warnings.size, `is`(2))
   }
 }
