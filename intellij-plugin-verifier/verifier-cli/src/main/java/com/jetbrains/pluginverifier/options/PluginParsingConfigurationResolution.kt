@@ -8,11 +8,13 @@ import java.io.IOException
 private val LOG: Logger = LoggerFactory.getLogger(PluginParsingConfigurationResolution::class.java)
 
 class PluginParsingConfigurationResolution {
-  fun resolveLevelRemapping(configuration: PluginParsingConfiguration): PluginCreationResultResolver {
+  fun resolveLevelRemapping(configuration: PluginParsingConfiguration,
+                            pluginProblemsLoaderFactory: PluginProblemsLoaderFactory
+                            = ClassPathPluginProblemsLoaderFactory): PluginCreationResultResolver {
     val defaultResolver = IntelliJPluginCreationResultResolver()
     return if (configuration.pluginSubmissionType == SubmissionType.EXISTING) {
       val problemLevelRemapping = try {
-        val pluginProblemsLoader = PluginProblemsLoader.fromClassPath()
+        val pluginProblemsLoader = pluginProblemsLoaderFactory.getPluginProblemsLoader()
         val problemLevelRemappingDefinitions = pluginProblemsLoader.load()
         val pluginProblemSet = problemLevelRemappingDefinitions["existing-plugin"]
           ?: emptyProblemLevelRemapping("existing-plugin")
