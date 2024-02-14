@@ -20,7 +20,7 @@ fun interface PluginProblemLevelRemappingDefinitionManagerProvider {
 
 object ClassPathJsonProblemLevelRemapperProvider: PluginProblemLevelRemappingDefinitionManagerProvider {
   override operator fun invoke(): JsonUrlPluginProblemLevelRemappingDefinitionManager {
-    val pluginProblemsJsonUrl = PluginProblemsLoader::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
+    val pluginProblemsJsonUrl = JsonUrlPluginProblemLevelRemappingDefinitionManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
       ?: throw IOException("Plugin problem level remapping definition cannot be found at <$this>")
     return JsonUrlPluginProblemLevelRemappingDefinitionManager(pluginProblemsJsonUrl)
   }
@@ -31,6 +31,7 @@ fun levelRemappingFromClassPathJson(): JsonUrlPluginProblemLevelRemappingDefinit
 }
 
 private const val INTELLIJ_PROBLEMS_PACKAGE_NAME = "com.jetbrains.plugin.structure.intellij.problems"
+const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
 
 class JsonUrlPluginProblemLevelRemappingDefinitionManager(private val pluginProblemsJsonUrl: URL) : PluginProblemLevelRemappingDefinitionManager {
   private val json = ObjectMapper()

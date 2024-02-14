@@ -46,6 +46,6 @@ class JsonUrlPluginProblemLevelRemappingDefinitionManagerTest {
     }
   }
 
-  private fun String.asUrl(): URL = PluginProblemsLoader::class.java.getResource(this)
+  private fun String.asUrl(): URL = JsonUrlPluginProblemLevelRemappingDefinitionManager::class.java.getResource(this)
     ?: throw IOException("JSON URL cannot be found at <$this>")
 }

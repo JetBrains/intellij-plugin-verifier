@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.options
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
@@ -14,7 +15,6 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Before
 import org.junit.Test
-import java.net.URL
 
 class PluginParsingConfigurationResolutionTest {
   private lateinit var configurationResolution: PluginParsingConfigurationResolution
@@ -32,7 +32,9 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `new plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
-    val creationResultResolver = configurationResolution.resolveLevelRemapping(config)
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
+      levelRemappingFromClassPathJson()
+    }
 
     val errors = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
@@ -47,7 +49,9 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `existing plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
-    val creationResultResolver = configurationResolution.resolveLevelRemapping(config)
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
+      levelRemappingFromClassPathJson()
+    }
 
     assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
@@ -67,24 +71,13 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `existing plugin configuration with custom remapping definition`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
-    val pluginProblemsLoaderFactory = object : PluginProblemsLoaderFactory {
-      override fun getPluginProblemsLoader(): PluginProblemsLoader {
-        // FIXME why such weird URL?
-        return object : PluginProblemsLoader(URL("https://example.com")) {
-          override fun load(): PluginProblemLevelRemappingDefinitions {
-            return PluginProblemLevelRemappingDefinitions(
-              setOf(
-                PluginProblemSet("existing-plugin",
-                  setOf(PluginProblemLevel.Warning("ErroneousSinceBuild"))
-                )
-              )
-            )
-          }
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
+      object : PluginProblemLevelRemappingDefinitionManager {
+        override fun initialize() = Definitions().apply {
+          this["existing-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
         }
       }
     }
-
-    val creationResultResolver = configurationResolution.resolveLevelRemapping(config, pluginProblemsLoaderFactory)
 
     assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
