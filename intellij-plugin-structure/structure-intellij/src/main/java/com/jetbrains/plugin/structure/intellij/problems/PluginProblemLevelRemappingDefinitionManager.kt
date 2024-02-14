@@ -10,7 +10,9 @@ import java.io.IOException
 import java.net.URL
 import kotlin.reflect.KClass
 
-interface PluginProblemLevelRemappingDefinitionManager
+interface PluginProblemLevelRemappingDefinitionManager {
+  fun initialize(): Definitions
+}
 
 fun interface PluginProblemLevelRemappingDefinitionManagerProvider {
   operator fun invoke(): PluginProblemLevelRemappingDefinitionManager
@@ -32,6 +34,9 @@ private const val INTELLIJ_PROBLEMS_PACKAGE_NAME = "com.jetbrains.plugin.structu
 
 class JsonUrlPluginProblemLevelRemappingDefinitionManager(private val pluginProblemsJsonUrl: URL) : PluginProblemLevelRemappingDefinitionManager {
   private val json = ObjectMapper()
+
+  @Throws(IOException::class)
+  override fun initialize() = load()
 
   @Throws(IOException::class)
   fun load(): Definitions {
