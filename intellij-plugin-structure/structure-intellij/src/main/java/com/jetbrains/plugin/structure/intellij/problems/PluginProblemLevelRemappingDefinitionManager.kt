@@ -85,19 +85,19 @@ class JsonUrlPluginProblemLevelRemappingDefinitionManager(private val pluginProb
 class Definitions {
   private val definitions = mutableMapOf<String, LevelRemappingDefinition>()
 
-  operator fun set(problemSetName: String, remapping: Map<KClass<out Any>, RemappedLevel>) {
-    definitions[problemSetName] = LevelRemappingDefinition(remapping)
+  operator fun set(name: String, remapping: Map<KClass<out Any>, RemappedLevel>) {
+    definitions[name] = LevelRemappingDefinition(name, remapping)
   }
 
-  operator fun get(problemSetName: String): LevelRemappingDefinition? {
-    return definitions[problemSetName]
+  operator fun get(name: String): LevelRemappingDefinition? {
+    return definitions[name]
   }
 
   val size: Int
     get() = definitions.size
 }
 
-class LevelRemappingDefinition(private val d: Map<KClass<out Any>, RemappedLevel> = emptyMap()) : Map<KClass<out Any>, RemappedLevel> by d {
+class LevelRemappingDefinition(val name: String, private val d: Map<KClass<out Any>, RemappedLevel> = emptyMap()) : Map<KClass<out Any>, RemappedLevel> by d {
   fun findProblemsByLevel(level: RemappedLevel): List<KClass<out Any>> {
     return d.filterValues { it == level }.map { it.key }
   }
