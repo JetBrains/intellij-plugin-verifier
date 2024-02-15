@@ -91,4 +91,25 @@ class PluginParsingConfigurationResolutionTest {
     val creationSuccess = creationResult as PluginCreationSuccess
     assertThat(creationSuccess.warnings.size, `is`(2))
   }
+
+  @Test
+  fun `new plugin configuration with custom remapping definition`() {
+    val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
+      object : ProblemLevelRemappingManager {
+        override fun initialize() = LevelRemappingDefinitions().apply {
+          this["new-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
+        }
+      }
+    }
+
+    val problemsThatShouldBeRemapped = listOf(
+      ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
+    )
+    val warnings = listOf(SuspiciousUntilBuild("999"))
+    val creationResult = creationResultResolver.resolve(plugin, problemsThatShouldBeRemapped + warnings)
+    assertThat(creationResult, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = creationResult as PluginCreationSuccess
+    assertThat(creationSuccess.warnings.size, `is`(2))
+  }
 }
