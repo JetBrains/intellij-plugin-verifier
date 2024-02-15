@@ -83,7 +83,7 @@ class PluginParsingConfigurationResolutionTest {
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
 
     val problemsThatShouldBeRemapped = listOf(
-      ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
+      ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
     )
     val warnings = listOf(SuspiciousUntilBuild("999"))
     val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeRemapped + warnings)
