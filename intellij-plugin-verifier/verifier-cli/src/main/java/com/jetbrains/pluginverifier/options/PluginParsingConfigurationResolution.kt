@@ -7,7 +7,7 @@ import java.io.IOException
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginParsingConfigurationResolution::class.java)
 
-private const val EXISTING_PLUGIN_REMAPPING_SET = "existing-plugin"
+const val EXISTING_PLUGIN_REMAPPING_SET = "existing-plugin"
 
 class PluginParsingConfigurationResolution {
   fun resolveProblemLevelMapping(configuration: PluginParsingConfiguration,
