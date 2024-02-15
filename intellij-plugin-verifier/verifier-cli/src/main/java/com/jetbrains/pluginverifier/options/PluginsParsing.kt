@@ -240,8 +240,6 @@ class PluginsParsing(
   }
 
   private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
-    get() = pluginParsingConfigurationResolution.resolveProblemLevelMapping(this) {
-      levelRemappingFromClassPathJson()
-    }
+    get() = pluginParsingConfigurationResolution.resolveProblemLevelMapping(this, levelRemappingFromClassPathJson())
 
 }

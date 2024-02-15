@@ -14,20 +14,10 @@ interface ProblemLevelRemappingManager {
   fun initialize(): LevelRemappingDefinitions
 }
 
-fun interface PluginProblemLevelRemappingDefinitionManagerProvider {
-  operator fun invoke(): ProblemLevelRemappingManager
-}
-
-object ClassPathJsonProblemLevelRemapperProvider: PluginProblemLevelRemappingDefinitionManagerProvider {
-  override operator fun invoke(): JsonUrlProblemLevelRemappingManager {
-    val pluginProblemsJsonUrl = JsonUrlProblemLevelRemappingManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
-      ?: throw IOException("Plugin problem level remapping definition cannot be found at <$this>")
-    return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
-  }
-}
-
 fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
-  return ClassPathJsonProblemLevelRemapperProvider()
+  val pluginProblemsJsonUrl = JsonUrlProblemLevelRemappingManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
+    ?: throw IOException("Plugin problem level remapping definition cannot be found at <$PLUGIN_PROBLEMS_FILE_NAME>")
+  return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
 }
 
 private const val INTELLIJ_PROBLEMS_PACKAGE_NAME = "com.jetbrains.plugin.structure.intellij.problems"

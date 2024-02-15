@@ -13,28 +13,28 @@ const val NEW_PLUGIN_REMAPPING_SET = "new-plugin"
 
 class PluginParsingConfigurationResolution {
   fun resolveProblemLevelMapping(configuration: PluginParsingConfiguration,
-                                 problemLevelRemapperFactory: () -> ProblemLevelRemappingManager): PluginCreationResultResolver {
+                                 problemLevelMappingManager: ProblemLevelRemappingManager): PluginCreationResultResolver {
     return when (configuration.pluginSubmissionType) {
-      EXISTING -> getPluginCreationResultResolver(EXISTING_PLUGIN_REMAPPING_SET, problemLevelRemapperFactory)
-      NEW -> getPluginCreationResultResolver(NEW_PLUGIN_REMAPPING_SET, problemLevelRemapperFactory)
+      EXISTING -> getPluginCreationResultResolver(EXISTING_PLUGIN_REMAPPING_SET, problemLevelMappingManager)
+      NEW -> getPluginCreationResultResolver(NEW_PLUGIN_REMAPPING_SET, problemLevelMappingManager)
     }
   }
 
-  private fun getPluginCreationResultResolver(levelRemappingDefinitionName: String, problemLevelRemapperFactory: () -> ProblemLevelRemappingManager): LevelRemappingPluginCreationResultResolver {
-    val defaultResolver = IntelliJPluginCreationResultResolver()
-    val problemLevelRemapping = runCatching {
-      val problemLevelRemapper = problemLevelRemapperFactory()
-      val levelRemappings = problemLevelRemapper.initialize()
-      val existingPluginLevelRemapping = levelRemappings[levelRemappingDefinitionName]
-        ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
-          LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
-            "Problem levels will not be remapped"))
-        }
-      existingPluginLevelRemapping
-    }.getOrElse {
-      LOG.error(it.message, it)
-      emptyMap()
-    }
-    return LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
+}
+
+private fun getPluginCreationResultResolver(levelRemappingDefinitionName: String, problemLevelMappingManager: ProblemLevelRemappingManager): LevelRemappingPluginCreationResultResolver {
+  val defaultResolver = IntelliJPluginCreationResultResolver()
+  val problemLevelRemapping = runCatching {
+    val levelRemappings = problemLevelMappingManager.initialize()
+    val existingPluginLevelRemapping = levelRemappings[levelRemappingDefinitionName]
+      ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
+        LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
+          "Problem levels will not be remapped"))
+      }
+    existingPluginLevelRemapping
+  }.getOrElse {
+    LOG.error(it.message, it)
+    emptyMap()
   }
+  return LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
 }

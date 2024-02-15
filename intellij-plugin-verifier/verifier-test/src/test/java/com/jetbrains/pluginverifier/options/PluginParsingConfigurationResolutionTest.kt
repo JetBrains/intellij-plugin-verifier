@@ -32,9 +32,8 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `new plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
-      levelRemappingFromClassPathJson()
-    }
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
+      levelRemappingFromClassPathJson())
 
     val errors = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
@@ -49,9 +48,8 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `existing plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
-      levelRemappingFromClassPathJson()
-    }
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
+      levelRemappingFromClassPathJson())
 
     assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
@@ -71,13 +69,12 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `existing plugin configuration with custom remapping definition`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
-      object : ProblemLevelRemappingManager {
-        override fun initialize() = LevelRemappingDefinitions().apply {
-          this[EXISTING_PLUGIN_REMAPPING_SET] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
-        }
+    val levelMapper = object : ProblemLevelRemappingManager {
+      override fun initialize() = LevelRemappingDefinitions().apply {
+        this[EXISTING_PLUGIN_REMAPPING_SET] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
       }
     }
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config, levelMapper)
 
     assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
     val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
@@ -95,13 +92,12 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `new plugin configuration with custom remapping definition`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config) {
-      object : ProblemLevelRemappingManager {
-        override fun initialize() = LevelRemappingDefinitions().apply {
-          this["new-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
-        }
+    val levelMapper = object : ProblemLevelRemappingManager {
+      override fun initialize() = LevelRemappingDefinitions().apply {
+        this["new-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
       }
     }
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config, levelMapper)
 
     val problemsThatShouldBeRemapped = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
