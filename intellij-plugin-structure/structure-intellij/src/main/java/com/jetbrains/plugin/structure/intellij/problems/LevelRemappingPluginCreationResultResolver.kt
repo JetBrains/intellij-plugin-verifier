@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.UNACCEPTABLE_WARNING
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
@@ -23,7 +25,12 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
 
   private fun remapSuccess(pluginCreationResult: PluginCreationSuccess<IdePlugin>): PluginCreationResult<IdePlugin> {
     return with(pluginCreationResult) {
-      copy(warnings = remapWarnings(warnings), unacceptableWarnings = remapUnacceptableWarnings(unacceptableWarnings))
+      val allRemappedProblems = remapWarnings(warnings) + remapUnacceptableWarnings(unacceptableWarnings)
+      if (allRemappedProblems.hasNoErrors()) {
+        copy(warnings = allRemappedProblems.warnings(), unacceptableWarnings = allRemappedProblems.unacceptableWarnings())
+      } else {
+        PluginCreationFail(allRemappedProblems)
+      }
     }
   }
 
@@ -67,4 +74,7 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
   private fun List<PluginProblem>.hasNoErrors(): Boolean = none {
     it.level == PluginProblem.Level.ERROR
   }
+
+  private fun List<PluginProblem>.warnings() = filter { it.level == WARNING }
+  private fun List<PluginProblem>.unacceptableWarnings() = filter { it.level == UNACCEPTABLE_WARNING }
 }
