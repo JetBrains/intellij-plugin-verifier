@@ -284,7 +284,10 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
 
   private val documentationNote: String
     get() = """
-      If this incompatible change can't be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.
+      Please fix the compatibility problem by keeping the old API as deprecated.
+      Only if it is hard to do this, document the change on 'Incompatible Changes in IntelliJ Platform and Plugins API Page' (see the 'API Evolution Guide' available at https://youtrack.jetbrains.com/articles/IJPL-A-123 for more details).      
+      
+      If this incompatible change cannot be reverted, it must be documented on 'Incompatible Changes in IntelliJ Platform and Plugins API Page'.
       If the problem is documented, it will be ignored by Plugin Verifier on the next verification run. Note that TeamCity investigation may not disappear immediately.
       If an investigation is not closed automatically, mark the investigation as "Fixed" manually. 
       
