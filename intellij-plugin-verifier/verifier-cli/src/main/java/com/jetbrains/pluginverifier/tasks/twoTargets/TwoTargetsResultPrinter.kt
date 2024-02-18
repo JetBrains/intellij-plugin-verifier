@@ -288,13 +288,14 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       If the problem is documented, it will be ignored by Plugin Verifier on the next verification run. Note that TeamCity investigation may not disappear immediately.
       If an investigation is not closed automatically, mark the investigation as "Fixed" manually. 
       
-      To document the change do the following:
+      To document the change, do the following:
       1) Open https://plugins.jetbrains.com/docs/intellij/api-changes-list.html
       2) Open a page corresponding to the affected release(s), for example 'Changes in 2023.*'
       3) Click 'Edit Page' (just below page title) to navigate to GitHub.
-      4) Read the tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
-      5) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct, see supported patterns at the top.
-      6) Provide the commit message and open a pull request.
+      4) Fork the 'intellij-sdk-docs' repository to propose changes. 
+      5) Read the tutorial on how to document breaking changes at the top, which starts with <!-- Before documenting a breaking API change ... --> 
+      6) Add a documenting pattern (the first line) and the change reason (the second line starting with ':'). The pattern must be syntactically correct, see supported patterns at the top.
+      7) Provide a commit message and optionally an extended description. Then, propose changes and subsequently create a pull request with documented changes. 
     """.trimIndent()
 
   private fun createCompatibilityNote(
