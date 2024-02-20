@@ -251,12 +251,6 @@ class CheckTrunkApiParamsBuilder(
 }
 
 class CheckTrunkApiOpts {
-  @set:Argument("major-ide-version", alias = "miv", description = "The IDE version with which to compare API problems. This IDE will be downloaded from the IDE builds repository: https://www.jetbrains.com/intellij-repository/releases/.")
-  var majorIdeVersion: String? = null
-
-  @set:Argument("save-major-ide-file", alias = "smif", description = "Whether to save a downloaded release IDE in cache directory for use in later verifications")
-  var saveMajorIdeFile: Boolean = false
-
   @set:Argument("major-ide-path", alias = "mip", description = "The path to release (major) IDE build with which to compare API problems in trunk (master) IDE build.")
   var majorIdePath: String? = null
 

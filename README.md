@@ -214,7 +214,6 @@ Here is the full syntax of the command:
     check-trunk-api <trunk IDE>
         [-runtime-dir | -r <file>]
         [-major-ide-path | -mip <file>]
-        [-major-ide-version | -miv <IDE version>]
         [-external-prefixes <':'-separated list>]
         [-subsystems-to-check | -subsystems]
         [-release-jetbrains-plugins | -rjbp <path>]
@@ -226,11 +225,6 @@ Here is the full syntax of the command:
 * `-major-ide-path (-mip)`
 
     The path to the major IDE release build to compare API problems of the trunk (master) IDE build.
-
-* `-major-ide-version (-miv)`
-
-    The IDE version with which to compare API problems.
-    This IDE will be downloaded from the [IntelliJ Release repository](https://www.jetbrains.com/intellij-repository/releases).
 
 * `-release-jetbrains-plugins (-rjbp)`
 
