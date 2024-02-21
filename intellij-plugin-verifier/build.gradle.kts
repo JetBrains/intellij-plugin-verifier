@@ -1,3 +1,6 @@
+import org.jetbrains.changelog.Changelog
+import org.jetbrains.changelog.ChangelogPluginExtension
+import org.jetbrains.changelog.tasks.BaseChangelogTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.gradle.api.publish.Publication as GradlePublication
 
@@ -130,8 +133,8 @@ publishing {
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier")
       credentials {
-        username = if(project.hasProperty("publishUser")) project.properties["publishUser"].toString() else System.getenv("PUBLISH_USER")
-        password = if(project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
+        username = if (project.hasProperty("publishUser")) project.properties["publishUser"].toString() else System.getenv("PUBLISH_USER")
+        password = if (project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
       }
     }
   }
@@ -264,4 +267,35 @@ changelog {
   headerParserRegex = Regex("""(\d+\.\d+)""")
   groups = listOf("Added", "Changed", "Fixed")
   path = file("../CHANGELOG.md").canonicalPath
+}
+
+/**
+ * Writes a changelog for the most recently released version.
+ * The 'CHANGELOG.md' set in the 'changelog' plugin is used as a source
+ */
+abstract class MostRecentVersionChangelog : BaseChangelogTask() {
+  @get:OutputFile
+  abstract val changelogOutputFile: RegularFileProperty
+
+  @TaskAction
+  fun run() {
+    with(changelog.get()) {
+      releasedItems.first()
+        .withHeader(false)
+        .let {
+          renderItem(it, Changelog.OutputType.MARKDOWN)
+        }
+        .let { changelogItem ->
+          changelogOutputFile.asFile
+            .get().writeText(changelogItem)
+        }
+    }
+  }
+}
+
+tasks.register<MostRecentVersionChangelog>("mostRecentVersionChangelog") {
+  val extension = project.extensions.getByType<ChangelogPluginExtension>()
+  changelog.convention(extension.instance)
+  changelogOutputFile.convention(project.layout.buildDirectory.file("changelog.md"))
+  outputs.upToDateWhen { false }
 }
