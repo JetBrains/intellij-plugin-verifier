@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 import java.net.URL
@@ -44,6 +45,19 @@ class JsonUrlProblemLevelRemappingManagerTest {
       val pluginProblemsLoader = JsonUrlProblemLevelRemappingManager("nonexistent-file.json".asUrl())
       pluginProblemsLoader.load()
     }
+  }
+
+  @Test
+  fun `plugin problems are loaded from JSON in classpath with nonexistent plugin problem name`() {
+    val levelMappingManager = JsonUrlProblemLevelRemappingManager("plugin-problems-incorrect-class.json".asUrl())
+    val levelRemappings =  levelMappingManager.load()
+    assertThat(levelRemappings.size, `is`(1))
+    val remappingName = "existing-plugin"
+    val remapping = levelRemappings[remappingName]
+    if (remapping == null) {
+      throw AssertionError("Remapping '$remappingName' not found")
+    }
+    assertTrue(remapping.isEmpty())
   }
 
   private fun String.asUrl(): URL = JsonUrlProblemLevelRemappingManager::class.java.getResource(this)

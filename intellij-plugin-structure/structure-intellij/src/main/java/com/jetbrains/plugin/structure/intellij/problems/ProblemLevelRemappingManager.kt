@@ -19,7 +19,10 @@ fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
   return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
 }
 
-private const val INTELLIJ_PROBLEMS_PACKAGE_NAME = "com.jetbrains.plugin.structure.intellij.problems"
+private val PLUGIN_PROBLEM_PACKAGES = listOf(
+  "com.jetbrains.plugin.structure.intellij.problems",
+  "com.jetbrains.plugin.structure.base.problems"
+)
 const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
 
 class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
@@ -64,12 +67,14 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
    * Example: `ForbiddenPluginIdPrefix` to `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
    */
   private fun resolveClass(problemId: String): KClass<out Any>? {
-    val fqn = "$INTELLIJ_PROBLEMS_PACKAGE_NAME.$problemId"
-    return runCatching {
-      val pluginProblemJavaClass = Class.forName(fqn, false, this.javaClass.getClassLoader())
-      val kotlin = pluginProblemJavaClass.kotlin
-      kotlin
-    }.getOrNull()
+    return PLUGIN_PROBLEM_PACKAGES.mapNotNull { pkg ->
+      val fqn = "$pkg.$problemId"
+      runCatching {
+        val pluginProblemJavaClass = Class.forName(fqn, false, this.javaClass.getClassLoader())
+        val kotlin = pluginProblemJavaClass.kotlin
+        kotlin
+      }.getOrNull()
+    }.firstOrNull()
   }
 }
 
