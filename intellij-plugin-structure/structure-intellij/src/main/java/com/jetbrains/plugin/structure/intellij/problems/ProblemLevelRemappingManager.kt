@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.databind.DatabindException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
-import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.*
 import java.io.IOException
 import java.net.URL
 import kotlin.reflect.KClass
@@ -41,6 +40,7 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
           when (problemLevel) {
             "ignore" -> pluginProblemKClass to IgnoredLevel
             "warning" -> pluginProblemKClass to StandardLevel(WARNING)
+            "unacceptable-warning" -> pluginProblemKClass to StandardLevel(UNACCEPTABLE_WARNING)
             "error" -> pluginProblemKClass to StandardLevel(ERROR)
             else -> null
           }
