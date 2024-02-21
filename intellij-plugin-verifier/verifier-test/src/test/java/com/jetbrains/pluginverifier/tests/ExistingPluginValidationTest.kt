@@ -75,7 +75,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `plugin is built, it has two different plugin problems and both are remapped`() {
-    val erroneousSinceBuild = "1.*"
+    val erroneousSinceBuild = "1.1"
     val header = ideaPlugin("com.example", sinceBuild = erroneousSinceBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
 
@@ -137,7 +137,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `plugin is not built due to two different plugin problems with 'error' severity but one level is remapped`() {
-    val erroneousSinceBuild = "1.*"
+    val erroneousSinceBuild = "1.0"
     val erroneousUntilBuild = "1000"
     val header = ideaPlugin("plugin.with.two.problems", sinceBuild = erroneousSinceBuild, untilBuild = erroneousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
@@ -169,7 +169,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `plugin is built with two problems - an unacceptable warning and an error and both are remapped`() {
-    val erroneousSinceBuild = "1.*"
+    val erroneousSinceBuild = "1.1"
 
     val header = ideaPlugin("plugin.with.error.and.unacceptable.warning",
       sinceBuild = erroneousSinceBuild,
