@@ -42,8 +42,7 @@ Example problems the Plugin Verifier can detect:
 
 ## Installation
 
-Download the latest available `verifier-cli-<version>-all.jar` from the [JetBrains Package Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/) or from the
-[Maven Central](https://repo1.maven.org/maven2/org/jetbrains/intellij/plugins/verifier-cli/).
+Download the latest available `verifier-cli-<version>-all.jar` from the [JetBrains Package Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/) or from [Maven Central](https://repo1.maven.org/maven2/org/jetbrains/intellij/plugins/verifier-cli/).
 
 As an alternative, use `curl` to download the JAR archive from the command-line:
 
@@ -96,7 +95,7 @@ All the verification results are printed and saved in the following ways:
    | `dependencies.txt`              | Dependencies of the plugin used during verification.                               | Plugin is valid   | 
    | `compatibility-warnings.txt`    | Compatibility warnings of this plugin with the IDE.                                | `> 0`             |
    | `compatibility-problems.txt`    | Compatibility problems of this plugin with the IDE.                                | `> 0`             |
-   | `deprecated-usages.txt`         | Descriptions of "Deprecated API is used" cases.                                    | `> 0`             | 
+   | `deprecated-usages.txt`         | Descriptions of "Deprecated API is used" cases.                                    | `> 0`             |
    | `experimental-api-usages.txt`   | Descriptions of "Experimental API is used" cases.                                  | `> 0`             |
    | `internal-api-usages.txt`       | Descriptions of "Internal API is used" cases.                                      | `> 0`             |
    | `override-only-usages.txt`      | Descriptions of "Override-only API is used incorrectly" cases.                     | `> 0`             |
@@ -118,7 +117,7 @@ This command is used to check IDE build against a set of plugins.
 
     check-ide
         <IDE>
-        [-runtime-dir | -r <fil e>]
+        [-runtime-dir | -r <file>]
         [-plugins-to-check-file | -ptcf <file>]
         [-plugins-to-check-all-builds | -p-all < ':'-separated list>]
         [-plugins-to-check-last-builds | -p-last < ':'-separated list>]
