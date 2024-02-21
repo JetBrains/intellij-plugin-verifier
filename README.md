@@ -42,7 +42,8 @@ Example problems the Plugin Verifier can detect:
 
 ## Installation
 
-Download the latest available `verifier-cli-<version>-all.jar` from [Maven Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/), or use the below `curl` script:
+Download the latest available `verifier-cli-<version>-all.jar` from the [JetBrains Package Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/) or from the
+[Maven Central](https://repo1.maven.org/maven2/org/jetbrains/intellij/plugins/verifier-cli/).
 
     curl -L --output verifier-all.jar https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
 
