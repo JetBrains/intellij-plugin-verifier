@@ -45,11 +45,15 @@ Example problems the Plugin Verifier can detect:
 Download the latest available `verifier-cli-<version>-all.jar` from the [JetBrains Package Repository](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/) or from the
 [Maven Central](https://repo1.maven.org/maven2/org/jetbrains/intellij/plugins/verifier-cli/).
 
-    curl -L --output verifier-all.jar https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
+As an alternative, use `curl` to download the JAR archive from the command-line:
 
-Where `<version>` is the latest version, which you can find in the package [page](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/).
+    curl -L -o verifier-all.jar https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/<version>/verifier-cli-<version>-all.jar
 
-It is also possible to reply on the GitHub API that provides the latest available release as JSON response, which can be handled using `jq` command, like:
+The `<version>` is the latest version, which you can find in the package [page](https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier/org/jetbrains/intellij/plugins/verifier-cli/) or in the [GitHub Releases](https://github.com/JetBrains/intellij-plugin-verifier/releases).
+
+You can use the GitHub API to retrieve the most recent release information. 
+The resulting JSON response can be parsed using the `jq` tool. 
+Following this, the artifact URL can be supplied to `curl` for download.
 
     curl -s https://api.github.com/repos/JetBrains/intellij-plugin-verifier/releases/latest \
         | jq -r '.assets[].browser_download_url' \
@@ -63,7 +67,8 @@ The Plugin Verifier can be run using the command line:
 
 Command is one of `check-plugin`, `check-ide` or `check-trunk-api`.
 
-Plugin Verifier versions starting with 1.260 require Java 11, before that Java 8 was enough.
+Beginning with version 1.260, the Plugin Verifier requires Java 11.
+Prior to this version, Java 8 is required.
 
 ## Results
 
@@ -91,7 +96,7 @@ All the verification results are printed and saved in the following ways:
    | `dependencies.txt`              | Dependencies of the plugin used during verification.                               | Plugin is valid   | 
    | `compatibility-warnings.txt`    | Compatibility warnings of this plugin with the IDE.                                | `> 0`             |
    | `compatibility-problems.txt`    | Compatibility problems of this plugin with the IDE.                                | `> 0`             |
-   | `deprecated-usages.txt`         | Descriptions of "Deprecated API is used" cases.                                    | `> 0`             |
+   | `deprecated-usages.txt`         | Descriptions of "Deprecated API is used" cases.                                    | `> 0`             | 
    | `experimental-api-usages.txt`   | Descriptions of "Experimental API is used" cases.                                  | `> 0`             |
    | `internal-api-usages.txt`       | Descriptions of "Internal API is used" cases.                                      | `> 0`             |
    | `override-only-usages.txt`      | Descriptions of "Override-only API is used incorrectly" cases.                     | `> 0`             |
@@ -113,7 +118,7 @@ This command is used to check IDE build against a set of plugins.
 
     check-ide
         <IDE>
-        [-runtime-dir | -r <file>]
+        [-runtime-dir | -r <fil e>]
         [-plugins-to-check-file | -ptcf <file>]
         [-plugins-to-check-all-builds | -p-all < ':'-separated list>]
         [-plugins-to-check-last-builds | -p-last < ':'-separated list>]
