@@ -845,7 +845,10 @@ internal class PluginCreator private constructor(
       if (sinceBuildParsed == null) {
         registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
       } else {
-        if (sinceBuildParsed.baselineVersion < 130 && sinceBuild.endsWith(".*")) {
+        if (sinceBuild.endsWith(".*")) {
+          registerProblem(SinceBuildCannotContainWildcard(descriptorPath, sinceBuildParsed))
+        }
+        if (sinceBuildParsed.baselineVersion < 130) {
           registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
         }
         if (sinceBuildParsed.baselineVersion > 999) {
