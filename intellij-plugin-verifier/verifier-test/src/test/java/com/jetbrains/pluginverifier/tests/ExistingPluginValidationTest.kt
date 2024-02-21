@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -231,6 +232,33 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     assertEquals(1, reclassifiedProblems.size)
     assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
+  }
+
+  @Test
+  fun `plugin is not built due to a warning and such problem level is escalated to an error`() {
+    val suspiciousUntilBuild = "404"
+    val header = ideaPlugin("com.example", untilBuild = suspiciousUntilBuild)
+    val delegateResolver = IntelliJPluginCreationResultResolver()
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, error<SuspiciousUntilBuild>())
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertThat(result, instanceOf(PluginCreationFail::class.java))
+    val creationFailure = result as PluginCreationFail
+    assertEquals(2, creationFailure.errorsAndWarnings.size)
+    val reclassifiedPluginProblem = creationFailure.errorsAndWarnings.first { it.level == ERROR }
+    assertEquals(ERROR, reclassifiedPluginProblem.level)
+    assertThat(reclassifiedPluginProblem, instanceOf(ReclassifiedPluginProblem::class.java))
+    assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is SuspiciousUntilBuild)
   }
 
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
