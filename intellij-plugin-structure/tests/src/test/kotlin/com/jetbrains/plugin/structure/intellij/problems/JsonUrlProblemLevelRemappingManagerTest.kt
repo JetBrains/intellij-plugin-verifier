@@ -60,6 +60,16 @@ class JsonUrlProblemLevelRemappingManagerTest {
     assertTrue(remapping.isEmpty())
   }
 
+  @Test
+  fun `plugin problems are loaded from JSON in classpath with short plugin problem names`() {
+    val levelMappingManager = JsonUrlProblemLevelRemappingManager("plugin-problems-short-names.json".asUrl())
+    val remappingDefinitions =  levelMappingManager.load()
+    assertThat(remappingDefinitions.size, `is`(1))
+    val remappingName = "existing-plugin"
+    val remapping = remappingDefinitions[remappingName] ?: throw AssertionError("Remapping '$remappingName' not found")
+    assertThat(remapping.size, `is`(2))
+  }
+
   private fun String.asUrl(): URL = JsonUrlProblemLevelRemappingManager::class.java.getResource(this)
     ?: throw IOException("JSON URL cannot be found at <$this>")
 }

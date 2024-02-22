@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DatabindException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.*
+import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URL
 import kotlin.reflect.KClass
@@ -19,11 +20,11 @@ fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
   return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
 }
 
-private val PLUGIN_PROBLEM_PACKAGES = listOf(
-  "com.jetbrains.plugin.structure.intellij.problems",
-  "com.jetbrains.plugin.structure.base.problems"
-)
+private const val PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX = "com.jetbrains.plugin.structure."
+
 const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
+
+private val LOG = LoggerFactory.getLogger(JsonUrlProblemLevelRemappingManager::class.java)
 
 class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
   private val json = ObjectMapper()
@@ -62,19 +63,28 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
 
 
   /**
-   * Resolves the problem ID to a fully qualified class name.
+   * Resolves the problem ID to a fully qualified Kotlin class.
    *
-   * Example: `ForbiddenPluginIdPrefix` to `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
+   * The following formats are supported:
+   *
+   * - Fully qualified problem ID which corresponds to a class name, such as
+   *    `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
+   * - Problem ID which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
+   *    package prefix, such as `intellij.problems.ForbiddenPluginIdPrefix`.
    */
   private fun resolveClass(problemId: String): KClass<out Any>? {
-    return PLUGIN_PROBLEM_PACKAGES.mapNotNull { pkg ->
-      val fqn = "$pkg.$problemId"
-      runCatching {
-        val pluginProblemJavaClass = Class.forName(fqn, false, this.javaClass.getClassLoader())
-        val kotlin = pluginProblemJavaClass.kotlin
-        kotlin
-      }.getOrNull()
-    }.firstOrNull()
+    val fqProblemId = if (problemId.startsWith(PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX)) {
+      problemId
+    } else {
+      PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX + problemId
+    }
+    return runCatching {
+      val pluginProblemJavaClass = Class.forName(fqProblemId, false, this.javaClass.getClassLoader())
+      val kotlin = pluginProblemJavaClass.kotlin
+      kotlin
+    }.onFailure { t ->
+      LOG.warn("Problem ID '$problemId' could not be resolved to a fully qualified class corresponding to a plugin problem: {}", t.message)
+    }.getOrNull()
   }
 }
 
