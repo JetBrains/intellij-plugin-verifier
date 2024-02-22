@@ -1,0 +1,5 @@
+{
+  "existing-plugin": {
+    "NonexistentClass": "ignore"
+  }
+}

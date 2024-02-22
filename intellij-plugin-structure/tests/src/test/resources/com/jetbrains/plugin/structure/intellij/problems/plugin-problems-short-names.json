@@ -1,0 +1,6 @@
+{
+  "existing-plugin": {
+    "intellij.problems.ForbiddenPluginIdPrefix": "ignore",
+    "intellij.problems.TemplateWordInPluginId": "ignore"
+  }
+}

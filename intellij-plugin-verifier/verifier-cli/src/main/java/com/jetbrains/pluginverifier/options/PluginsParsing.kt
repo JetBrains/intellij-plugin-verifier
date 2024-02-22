@@ -11,9 +11,8 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.levelRemappingFromClassPathJson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -27,6 +26,7 @@ import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
 import java.nio.file.Path
 import java.nio.file.Paths
 
+
 /**
  * Utility class used to fill [pluginsSet] with a list of plugins to check.
  */
@@ -36,6 +36,8 @@ class PluginsParsing(
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
+
+  private val pluginParsingConfigurationResolution = PluginParsingConfigurationResolution()
 
   /**
    * Parses command line options and add specified plugins compatible with [ideVersion].
@@ -238,13 +240,6 @@ class PluginsParsing(
   }
 
   private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
-    get() {
-      val defaultResolver = IntelliJPluginCreationResultResolver()
-      return if (pluginSubmissionType == SubmissionType.EXISTING) {
-        LevelRemappingPluginCreationResultResolver(defaultResolver)
-      } else {
-        defaultResolver
-      }
-    }
+    get() = pluginParsingConfigurationResolution.resolveProblemLevelMapping(this, levelRemappingFromClassPathJson())
 
 }
