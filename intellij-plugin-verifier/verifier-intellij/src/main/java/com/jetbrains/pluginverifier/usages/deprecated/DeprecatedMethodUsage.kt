@@ -38,7 +38,7 @@ class DeprecatedMethodUsage(
       append(" is invoked in " + usageLocation.formatUsageLocation())
       if (deprecationInfo.forRemoval) {
         append(". This " + apiElement.elementType.presentableName + " will be removed in ")
-        append(deprecationInfo.untilVersion ?: " a future release")
+        append(deprecationInfo.untilVersion ?: "a future release")
       }
     }
 

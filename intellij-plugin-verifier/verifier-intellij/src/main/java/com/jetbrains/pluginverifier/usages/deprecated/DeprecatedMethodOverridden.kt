@@ -40,7 +40,7 @@ class DeprecatedMethodOverridden(
       append(" is overridden in class ${usageLocation.hostClass.formatClassLocation(FULL_NAME, NO_GENERICS)}")
       if (deprecationInfo.forRemoval) {
         append(". This method will be removed in ")
-        append(deprecationInfo.untilVersion ?: " a future release")
+        append(deprecationInfo.untilVersion ?: "a future release")
       }
     }
 
