@@ -2,6 +2,8 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -70,4 +72,10 @@ private fun Method.findInSuperClass(superClass: ClassFileAsm): Method? {
       null
     }
   }
+}
+
+fun isCallOfSuperMethod(callerMethod: Method, calledMethod: Method, instructionNode: AbstractInsnNode): Boolean {
+  return callerMethod.name == calledMethod.name
+    && callerMethod.descriptor == calledMethod.descriptor
+    && instructionNode.opcode == Opcodes.INVOKESPECIAL
 }

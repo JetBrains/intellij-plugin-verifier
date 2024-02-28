@@ -11,17 +11,15 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
-import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.FieldInsnNode
-import org.objectweb.asm.tree.MethodInsnNode
-import org.objectweb.asm.tree.VarInsnNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcessor::class.java)
 
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
+
+  private val anActionUpdateMethodAllowedFilter = AnActionUpdateMethodAllowedUsageFilter()
 
   override fun processMethodInvocation(
     methodReference: MethodReference,
@@ -30,29 +28,30 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     callerMethod: Method,
     context: VerificationContext
   ) {
-    if (resolvedMethod.isOverrideOnlyMethod(context) && !isAllowedOverrideOnlyUsage(callerMethod, resolvedMethod, instructionNode)) {
+
+
+    if (resolvedMethod.isOverrideOnlyMethod(context)
+      && !isAllowedOverrideOnlyUsage(methodReference, resolvedMethod, instructionNode, callerMethod, context))
+    {
       overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
         OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, callerMethod.location)
       )
     }
   }
 
-  private fun isAllowedOverrideOnlyUsage(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
+  private fun isAllowedOverrideOnlyUsage(methodReference: MethodReference,
+                                         resolvedMethod: Method,
+                                         instructionNode: AbstractInsnNode,
+                                         callerMethod: Method,
+                                         context: VerificationContext): Boolean {
     return isCallOfSuperConstructor(callerMethod, resolvedMethod)
-      || isAnActionUpdateSuperCall(callerMethod, resolvedMethod, instructionNode)
-      || isAnActionUpdateDelegateCall(callerMethod, resolvedMethod, instructionNode)
+      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(methodReference, resolvedMethod, instructionNode, callerMethod, context)
   }
 
   private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =
     resolvedMethod.isConstructor
       && callerMethod.isConstructor
       && callerMethod.containingClassFile.superName == resolvedMethod.containingClassFile.name
-
-  private fun isCallOfSuperMethod(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
-    return callerMethod.name == resolvedMethod.name
-      && callerMethod.descriptor == resolvedMethod.descriptor
-      && instructionNode.opcode == Opcodes.INVOKESPECIAL
-  }
 
   private fun Method.isOverrideOnlyMethod(context: VerificationContext): Boolean =
     annotations.findAnnotation(overrideOnlyAnnotationName) != null
@@ -81,36 +80,12 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"
   }
 
-  private fun isAnActionUpdateSuperCall(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
-    return (resolvedMethod.name == "update"
-      && resolvedMethod.descriptor == "(Lcom/intellij/openapi/actionSystem/AnActionEvent;)V"
-      && isCallOfSuperMethod(callerMethod, resolvedMethod, instructionNode))
-  }
 
-  private fun isAnActionUpdateDelegateCall(callerMethod: Method, resolvedMethod: Method, instruction: AbstractInsnNode): Boolean {
-    val isCallingAnActionUpdateMethod =  resolvedMethod.name == "update"
-      && resolvedMethod.descriptor == "(Lcom/intellij/openapi/actionSystem/AnActionEvent;)V"
 
-    // MethodIns
-    // VarIns
-    // FieldIns
-    var ins = instruction
-    val callAnActionUpdateMethod = ins.narrow<MethodInsnNode>() ?: return false
-    ins = ins.previous
-    val loadAnActionEventUpdateMethodParameter = ins.narrow<VarInsnNode>() ?: return false
-    ins = ins.previous
-    val getAnActionDelegateField = ins.narrow<FieldInsnNode>() ?: return false
 
-    // field 'delegate': Lcom/intellij/openapi/actionSystem/AnAction;
-    //    field delegate must be a subclass of `AnAction`
-    // callAnActionUpdateMethod must be: name = 'update', desc = '(Lcom/intellij/openapi/actionSystem/AnActionEvent;)V'
 
-    return false
-  }
 
-  private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
-    return if (this is T) this else null
-  }
+
 }
 
 
