@@ -14,6 +14,8 @@ fun Method.isOverriding(anotherMethod: Method): Boolean =
     && sameParametersAndReturnType(this, anotherMethod)
     && sameOrBroaderVisibility(this, anotherMethod)
 
+data class MethodInClass(val method: Method, val klass: ClassFile)
+
 private fun nonStaticAndNonFinal(anotherMethod: Method) = !anotherMethod.isStatic && !anotherMethod.isFinal
 
 private fun sameName(method: Method, anotherMethod: Method) = method.name == anotherMethod.name
@@ -34,14 +36,22 @@ private val Method.visibilityRating: Int
     else -> -1
   }
 
-fun Method.search(resolver: Resolver, matchHandler: (ClassFile, Method) -> Unit) {
+fun Method.searchParentOverrides(resolver: Resolver): List<MethodInClass> {
+  return mutableListOf<MethodInClass>().apply {
+    searchParentOverrides(resolver) { klass: ClassFile, method: Method ->
+      add(MethodInClass(method, klass))
+    }
+  }
+}
+
+fun Method.searchParentOverrides(resolver: Resolver, matchHandler: (ClassFile, Method) -> Unit) {
   var superClassFqn = containingClassFile.superName ?: return
   while (true) {
-    val superClass = when(val resolvedClass = resolver.resolveClass(superClassFqn)) {
+    val superClass = when (val resolvedClass = resolver.resolveClass(superClassFqn)) {
       is ResolutionResult.Found<ClassNode> -> ClassFileAsm(resolvedClass.value, resolvedClass.fileOrigin)
       else -> return
     }
-    findInSuperClass(superClass)?.let {overriddenMethod ->
+    findInSuperClass(superClass)?.let { overriddenMethod ->
       matchHandler(superClass, overriddenMethod)
     }
     superClassFqn = superClass.superName ?: return
