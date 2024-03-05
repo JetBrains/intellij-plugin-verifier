@@ -3,6 +3,7 @@
   "id": "fleet.language.css",
   "version": "1.0.0-SNAPSHOT",
   "meta": {
+    "frontend-only": true,
     "readableName": "CSS",
     "description": "CSS language support",
     "vendor": "JetBrains"

@@ -128,5 +128,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("CSS language support", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertEquals(FleetShipVersionRange("1.1000.1", "1.1001.10"), plugin.compatibleShipVersionRange)
+    assertEquals(true, plugin.frontendOnly)
   }
 }

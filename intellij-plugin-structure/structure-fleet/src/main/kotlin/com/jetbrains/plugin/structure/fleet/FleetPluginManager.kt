@@ -112,6 +112,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
         vendor = descriptor.meta?.vendor,
         icons = icons,
         descriptorFileName = DESCRIPTOR_NAME,
+        frontendOnly = descriptor.meta?.frontendOnly,
         thirdPartyDependencies = parseThirdPartyDependenciesByPath(pluginDir.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)),
         files = files
       )
