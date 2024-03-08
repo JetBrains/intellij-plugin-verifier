@@ -50,7 +50,8 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    hasDotNetDirectory: Boolean = false
   ): PluginCreator {
 
     return try {
@@ -62,6 +63,7 @@ class IdePluginManager private constructor(
               createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
                 setIcons(jar.getIcons())
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
+                setDotNetPartExists(hasDotNetDirectory)
               }
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
@@ -90,7 +92,8 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    hasDotNetDirectory: Boolean = false
   ): PluginCreator {
     val descriptorFile = pluginDirectory.resolve(META_INF).resolve(descriptorPath.withPathSeparatorOf(pluginDirectory))
     return if (!descriptorFile.exists()) {
@@ -104,14 +107,15 @@ class IdePluginManager private constructor(
       val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
       val icons = loadIconsFromDir(pluginDirectory)
       val dependencies = getThirdPartyDependenciesFromDir(pluginDirectory)
-      val plugin = createPlugin(
+      createPlugin(
         pluginDirectory.simpleName, descriptorPath, parentPlugin,
         validateDescriptor, document, descriptorFile,
         resourceResolver, problemResolver
-      )
-      plugin.setIcons(icons)
-      plugin.setThirdPartyDependencies(dependencies)
-      plugin
+      ).apply {
+          setIcons(icons)
+          setThirdPartyDependencies(dependencies)
+          setDotNetPartExists(hasDotNetDirectory)
+      }
     } catch (e: JDOMParseException) {
       LOG.info("Unable to parse plugin descriptor $descriptorPath of plugin $descriptorFile", e)
       createInvalidPlugin(pluginDirectory, descriptorPath, UnexpectedDescriptorElements(e.lineNumber, descriptorPath))
@@ -148,6 +152,7 @@ class IdePluginManager private constructor(
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
     val libDir = root.resolve("lib")
+    val hasDotNetDirectory = root.resolve("dotnet").exists()
     if (!libDir.isDirectory) {
       return createInvalidPlugin(root, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
     }
@@ -162,10 +167,26 @@ class IdePluginManager private constructor(
     for (file in files) {
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
-        loadPluginInfoFromJarFile(file, descriptorPath, validateDescriptor, compositeResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromJarFile(
+            jarFile = file,
+            descriptorPath = descriptorPath,
+            validateDescriptor = validateDescriptor,
+            resourceResolver = compositeResolver,
+            parentPlugin = parentPlugin,
+            problemResolver = problemResolver,
+            hasDotNetDirectory = hasDotNetDirectory
+        )
       } else if (file.isDirectory) {
         //Use the common resource resolver, which is unaware of lib's jar files.
-        loadPluginInfoFromDirectory(file, descriptorPath, validateDescriptor, resourceResolver, parentPlugin, problemResolver)
+        loadPluginInfoFromDirectory(
+            pluginDirectory = file,
+            descriptorPath = descriptorPath,
+            validateDescriptor = validateDescriptor,
+            resourceResolver = resourceResolver,
+            parentPlugin = parentPlugin,
+            problemResolver = problemResolver,
+            hasDotNetDirectory = hasDotNetDirectory
+        )
       } else {
         continue
       }
