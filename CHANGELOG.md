@@ -6,7 +6,22 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Publish Plugin Verifier to Maven Central
+- Structure: Support _frontend_ client types
+- Provide dynamic format for plugin problem level remapping ([#1060](https://github.com/JetBrains/intellij-plugin-verifier/pull/1060))
+- When remapping plugin problem severity level, allow to ignore a problem. ([#1047](https://github.com/JetBrains/intellij-plugin-verifier/pull/1047))
+- When remapping plugin problem severity level, allow to escalate to an _error_. ([#1061](https://github.com/JetBrains/intellij-plugin-verifier/pull/1061))
+- Changelog is maintained with [Gradle Changelog Plugin](https://github.com/JetBrains/gradle-changelog-plugin)
+- Structure: Allow `frontend-only` field for Fleet plugins ([#1069](https://github.com/JetBrains/intellij-plugin-verifier/pull/1069))
+
 ### Changed
+
+- Remove Guava dependency ([#1040](https://github.com/JetBrains/intellij-plugin-verifier/pull/1040))
+- Structure: Do not search for additional logos when primary logo is not found ([#1044](https://github.com/JetBrains/intellij-plugin-verifier/pull/1044))
+- Remove `--major-ide-version` command-line switch as it was not used anywhere ([#1058](https://github.com/JetBrains/intellij-plugin-verifier/pull/1058))
+- Upgrade dependencies
+- Build with Gradle 8.6
+- Deprecate _Plugin Verifier Service_ module in the repository
 
 ### Fixed
 
@@ -15,7 +30,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 - Simplify JRT filesystem handling to make Plugin Verifier compatible with Java 17 ([#1013](https://github.com/JetBrains/intellij-plugin-verifier/pull/1013))
-- Collect telemetry data when verifying plugins 
+- Collect telemetry data when verifying plugins
 - Use custom name field for EDU sections and lessons ([#1039](https://github.com/JetBrains/intellij-plugin-verifier/pull/1039))
 
 ### Changed
@@ -60,9 +75,9 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
-- Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981)) 
-- Add command-line option to suppress internal API usages by internal plugins. ([#999](https://github.com/JetBrains/intellij-plugin-verifier/pull/999)) 
-- Add plugin pattern possibility for -keep-only-problems filter  [#995](https://github.com/JetBrains/intellij-plugin-verifier/pull/995) 
+- Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981))
+- Add command-line option to suppress internal API usages by internal plugins. ([#999](https://github.com/JetBrains/intellij-plugin-verifier/pull/999))
+- Add plugin pattern possibility for -keep-only-problems filter  [#995](https://github.com/JetBrains/intellij-plugin-verifier/pull/995)
 
 ### Changed
 
@@ -71,9 +86,9 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ## 1.303 - 2023-08-08
 
-### Added 
+### Added
 
-- Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names. 
+- Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names.
 - Specific plugin prefixes are discouraged and treated as warnings, such as `com.example` or `net.example`.
 - Ignore internal API usages from JetBrains plugins. Whenever a JetBrains plugin uses an internal API (`@ApiStatus.Internal` or `@IntellijInternalApi`), such usage is reported as ignored and not treated as an error or warning.
 - Treat service preloading as an error ([#975](https://github.com/JetBrains/intellij-plugin-verifier/pull/975))
@@ -104,7 +119,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 - Improve description on empty `<vendor>` element ([MP-5490](https://youtrack.jetbrains.com/issue/MP-5490))
 - _Plugin Structure, Edu_: Add additional fields `programming_language_id` and `programming_language_version`. Field   `programming_language` is deprecated and treated as `programming_language_id` for backwards compatibility.
-- Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html) 
+- Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html)
 
 ### Fixed
 
