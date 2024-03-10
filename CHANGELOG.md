@@ -160,7 +160,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Support Java 17 Records ([MP-4865](https://youtrack.jetbrains.com/issue/MP-4865/Plugin-Verifier-Problems-handling-java.lang.Record))
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
-[next]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...HEAD
+[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.307...HEAD
+[1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
+[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
+[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
+[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
+[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
+[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
+[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
 [1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
 [1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
 [1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
