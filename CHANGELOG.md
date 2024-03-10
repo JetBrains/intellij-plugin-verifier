@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.351 - 2024-03-10
+
+### Added
+
 - Publish Plugin Verifier to Maven Central
 - Structure: Support _frontend_ client types
 - Provide dynamic format for plugin problem level remapping ([#1060](https://github.com/JetBrains/intellij-plugin-verifier/pull/1060))
@@ -159,14 +167,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
 [Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.307...HEAD
-[1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
-[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
-[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
-[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
-[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
-[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
-[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
-[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
-[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
-[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
 [1.289]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.288...v1.289
+[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
+[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
+[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
+[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
+[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
+[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
+[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
+[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
+[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
+[1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
