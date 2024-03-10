@@ -23,8 +23,6 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Build with Gradle 8.6
 - Deprecate _Plugin Verifier Service_ module in the repository
 
-### Fixed
-
 ## [1.307] - 2023-11-27
 
 ### Added
@@ -61,8 +59,6 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Upgrade dependencies
 
 ## [1.305] - 2023-10-11
-
-### Added
 
 ### Changed
 
@@ -112,18 +108,19 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ## [1.300] - 2023-05-30
 
 ### Fixed
+
 - Dependencies in the descriptor that reference the same descriptor file trigger a warning instead of an error ([MP-5523](https://youtrack.jetbrains.com/issue/MP-5523))
 
 ## [1.299] - 2023-05-19
 
 ### Added
+
 - Improve description on empty `<vendor>` element ([MP-5490](https://youtrack.jetbrains.com/issue/MP-5490))
 - _Plugin Structure, Edu_: Add additional fields `programming_language_id` and `programming_language_version`. Field   `programming_language` is deprecated and treated as `programming_language_id` for backwards compatibility.
 - Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html)
 
-### Fixed
-
 ### Changed
+
 - Increase severity for _does not declare explicit dependency on Java plugin_ to an error ([MP-5434](https://youtrack.jetbrains.com/issue/MP-5434)). See [Java functionality extracted as a plugin](https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin) blog post.
 - Treat optional dependency with an empty `config-file` as an error ([MP-4919](https://youtrack.jetbrains.com/issue/MP-4919))
 - Dependencies in the descriptor cannot reference the same descriptor file anymore ([MP-3391](https://youtrack.jetbrains.com/issue/MP-3391))
@@ -141,6 +138,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - _Plugin Structure_: Support V2 plugin modules.
 
 ### Fixed
+
 - _Verifier_: Work around unparseable class signatures in plugins
 
 ### Changed
