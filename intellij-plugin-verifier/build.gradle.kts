@@ -185,6 +185,7 @@ fun PublicationContainer.publish(publication: Publication) {
 
     from(proj.components["java"])
     artifact(proj.tasks["sourcesJar"])
+    artifact(proj.tasks["javadocJar"])
 
     pom {
       name = publication.readableName
