@@ -79,8 +79,16 @@ subprojects {
     from(sourceSets.main.get().allSource)
   }
 
+  val javadocJar by tasks.registering(Jar::class) {
+    val javadoc = tasks.javadoc
+    dependsOn(javadoc)
+    archiveClassifier = "javadoc"
+    from(javadoc)
+  }
+
   artifacts {
     archives(sourcesJar)
+    archives(javadocJar)
   }
 
   tasks {
