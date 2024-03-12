@@ -50,7 +50,7 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
   }
 
   private fun isInvokedMethodAllowed(callerMethod: Method, invokedMethod: Method): Boolean {
-    return callerMethod.name == invokedMethod.name && callerMethod.descriptor == invokedMethod.descriptor
+    return callerMethod.matches(invokedMethod)
   }
 
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {

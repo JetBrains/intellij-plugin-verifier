@@ -10,4 +10,4 @@ const val anActionClass: BinaryClassName = "com/intellij/openapi/actionSystem/An
 
 class AnActionUpdateMethodAllowedUsageFilter(
   private val delegate: ApiUsageFilter
-  = OverrideOnlyMethodAllowedUsageFilter(anActionUpdateMethodDescriptor)) : ApiUsageFilter by delegate
+  = OverrideOnlyMethodAllowedUsageFilter()) : ApiUsageFilter by delegate
