@@ -16,8 +16,20 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
                                      invocationInstruction: AbstractInsnNode,
                                      callerMethod: Method,
                                      context: VerificationContext): Boolean {
-    return isSuperCall(callerMethod, invokedMethod, invocationInstruction)
-      || isDelegateCall(callerMethod, invokedMethod, invocationInstruction, context)
+
+    val superCall = isSuperCall(callerMethod, invokedMethod, invocationInstruction)
+
+    val invocationPredicate = object : InvocationPredicate {
+      override fun accept(caller: Method, callee: Method): Boolean {
+        return callee.matches(allowedMethodDescriptor)
+      }
+
+      override fun accept(caller: Method, callee: MethodInsnNode): Boolean {
+        return callee.matches(allowedMethodDescriptor)
+      }
+    }
+    val delegateCall = isDelegateCall(callerMethod, invokedMethod, invocationInstruction, context, invocationPredicate)
+    return superCall || delegateCall
   }
 
   private fun isSuperCall(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
@@ -29,8 +41,10 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
   private fun isDelegateCall(callerMethod: Method,
                              invokedMethod: Method,
                              invocationInstruction: AbstractInsnNode,
-                             context: VerificationContext): Boolean = with(context.classResolver) {
-    val isCallingAllowedMethod = invokedMethod.matches(allowedMethodDescriptor)
+                             context: VerificationContext,
+                             invocationPredicate: InvocationPredicate
+                             ): Boolean = with(context.classResolver) {
+    val isCallingAllowedMethod = invocationPredicate.accept(callerMethod, invokedMethod)
     if (!isCallingAllowedMethod) {
       return false
     }
@@ -52,7 +66,7 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
     if (!isSubclass) {
       return false
     }
-    if (!callMethod.matches(allowedMethodDescriptor)) {
+    if (!invocationPredicate.accept(callerMethod, callMethod)) {
       return false
     }
     return true
@@ -74,4 +88,9 @@ fun Method.matches(methodDescriptor: MethodDescriptor): Boolean =
 
 fun MethodInsnNode.matches(methodDescriptor: MethodDescriptor): Boolean =
   MethodDescriptor(name, desc) == methodDescriptor
+
+interface InvocationPredicate {
+  fun accept(caller: Method, callee: Method): Boolean = true
+  fun accept(caller: Method, callee: MethodInsnNode): Boolean = true
+}
 
