@@ -68,7 +68,7 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
                                          callerMethod: Method,
                                          context: VerificationContext): Boolean {
     return isCallOfSuperConstructor(callerMethod, invokedMethod)
-      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(invokedMethodReference, invokedMethod, invocationInstruction, callerMethod, context)
+      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
   }
 
   private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =

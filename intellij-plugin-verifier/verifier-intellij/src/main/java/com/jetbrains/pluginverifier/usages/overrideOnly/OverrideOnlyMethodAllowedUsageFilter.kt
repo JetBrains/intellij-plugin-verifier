@@ -1,7 +1,6 @@
 package com.jetbrains.pluginverifier.usages.overrideOnly
 
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
 import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
@@ -13,13 +12,12 @@ import org.objectweb.asm.tree.*
 class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: MethodDescriptor,
                                            private val superclassName: BinaryClassName) : ApiUsageFilter {
 
-  override fun allowMethodInvocation(methodReference: MethodReference,
-                                     resolvedMethod: Method,
-                                     instructionNode: AbstractInsnNode,
+  override fun allowMethodInvocation(invokedMethod: Method,
+                                     invocationInstruction: AbstractInsnNode,
                                      callerMethod: Method,
                                      context: VerificationContext): Boolean {
-    return isSuperCall(callerMethod, resolvedMethod, instructionNode)
-      || isDelegateCall(resolvedMethod, instructionNode, context)
+    return isSuperCall(callerMethod, invokedMethod, invocationInstruction)
+      || isDelegateCall(invokedMethod, invocationInstruction, context)
   }
 
   private fun isSuperCall(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
@@ -28,15 +26,15 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
   }
 
   @Suppress("UNUSED_VARIABLE")
-  private fun isDelegateCall(resolvedMethod: Method,
-                             instruction: AbstractInsnNode,
+  private fun isDelegateCall(invokedMethod: Method,
+                             invocationInstruction: AbstractInsnNode,
                              context: VerificationContext): Boolean = with(context.classResolver) {
-    val isCallingAllowedMethod = resolvedMethod.matches(allowedMethodDescriptor)
+    val isCallingAllowedMethod = invokedMethod.matches(allowedMethodDescriptor)
     if (!isCallingAllowedMethod) {
       return false
     }
 
-    var ins = instruction
+    var ins = invocationInstruction
     val callMethod = ins.narrow<MethodInsnNode>() ?: return false
     ins = ins.previous
     val loadMethodParameter = ins.narrow<VarInsnNode>() ?: return false
