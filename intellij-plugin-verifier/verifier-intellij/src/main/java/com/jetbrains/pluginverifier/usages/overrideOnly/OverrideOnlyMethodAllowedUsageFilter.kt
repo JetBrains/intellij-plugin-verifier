@@ -17,7 +17,7 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
                                      callerMethod: Method,
                                      context: VerificationContext): Boolean {
     return isSuperCall(callerMethod, invokedMethod, invocationInstruction)
-      || isDelegateCall(invokedMethod, invocationInstruction, context)
+      || isDelegateCall(callerMethod, invokedMethod, invocationInstruction, context)
   }
 
   private fun isSuperCall(callerMethod: Method, resolvedMethod: Method, instructionNode: AbstractInsnNode): Boolean {
@@ -25,8 +25,9 @@ class OverrideOnlyMethodAllowedUsageFilter(private val allowedMethodDescriptor: 
       && isCallOfSuperMethod(callerMethod, resolvedMethod, instructionNode))
   }
 
-  @Suppress("UNUSED_VARIABLE")
-  private fun isDelegateCall(invokedMethod: Method,
+  @Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+  private fun isDelegateCall(callerMethod: Method,
+                             invokedMethod: Method,
                              invocationInstruction: AbstractInsnNode,
                              context: VerificationContext): Boolean = with(context.classResolver) {
     val isCallingAllowedMethod = invokedMethod.matches(allowedMethodDescriptor)
