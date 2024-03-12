@@ -39,13 +39,36 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     }
   }
 
-  private fun isAllowedOverrideOnlyUsage(methodReference: MethodReference,
-                                         resolvedMethod: Method,
-                                         instructionNode: AbstractInsnNode,
+  /**
+   * Detects if this is an allowed method invocation.
+   * In other words, if this is an allowed scenario where the invocation of such method is allowed and will not
+   * be reported as a plugin problem.
+   *
+   * Example:
+   * ```
+   *   public void usages(OverrideOnlyMethodOwner owner1,) {
+   *     owner1.overrideOnlyMethod();
+   *   }
+   * ```
+   * Description:
+   * - Both _Invoked Method Reference_ and _Invoked Method_ will refer to the `overrideOnlyMethod`.
+   * - _Invocation Instruction_ will refer to the JVM bytecode instruction which will invoke the `overrideOnlyMethod`.
+   * In this sample, this will be `182/invokevirtual` opcode.
+   * - _Caller Method_ refers to the `usages()` method
+   * @param invokedMethodReference a reference to the `OverrideOnly` method that is being invoked
+   * @param invokedMethod the `OverrideOnly` method that is being invoked
+   * @param invocationInstruction low-level JVM invocation instruction used to invoke the `OverrideOnly` method
+   * @param callerMethod the method in which the invocation of `OverrideOnly` method occurs.
+   * @param context the verification context with additional metadata and data
+   *
+   */
+  private fun isAllowedOverrideOnlyUsage(invokedMethodReference: MethodReference,
+                                         invokedMethod: Method,
+                                         invocationInstruction: AbstractInsnNode,
                                          callerMethod: Method,
                                          context: VerificationContext): Boolean {
-    return isCallOfSuperConstructor(callerMethod, resolvedMethod)
-      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(methodReference, resolvedMethod, instructionNode, callerMethod, context)
+    return isCallOfSuperConstructor(callerMethod, invokedMethod)
+      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(invokedMethodReference, invokedMethod, invocationInstruction, callerMethod, context)
   }
 
   private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =
