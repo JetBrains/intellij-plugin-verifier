@@ -23,8 +23,5 @@ class OverrideOnlyMethodAllowedUsageFilter : ApiUsageFilter {
 
 data class MethodDescriptor(private val methodName: String, private val descriptor: String)
 
-fun Method.matches(methodDescriptor: MethodDescriptor): Boolean =
-  MethodDescriptor(name, descriptor) == methodDescriptor
-
 fun Method.matches(method: Method): Boolean =
   MethodDescriptor(name, descriptor) == MethodDescriptor(method.name, method.descriptor)
