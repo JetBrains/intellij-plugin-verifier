@@ -15,9 +15,9 @@ class OverrideOnlyMethodAllowedUsageFilter : ApiUsageFilter {
                                      callerMethod: Method,
                                      context: VerificationContext): Boolean {
 
-    val isSupercall = isSuperclassCall.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+    val isSuperCall = isSuperclassCall.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
     val isDelegateCall = isDelegateCall.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
-    return isSupercall || isDelegateCall
+    return isSuperCall || isDelegateCall
   }
 }
 
