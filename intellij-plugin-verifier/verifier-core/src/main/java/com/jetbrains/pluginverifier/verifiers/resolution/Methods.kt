@@ -11,6 +11,12 @@ import org.slf4j.LoggerFactory
 
 private val LOG: Logger = LoggerFactory.getLogger(Method::class.java)
 
+/**
+ * Indicates a binary class name where packages are delimited by '/' instead of '.'.
+ * This is in line with Java Language Specification.
+ */
+typealias BinaryClassName = String
+
 fun Method.isOverriding(anotherMethod: Method): Boolean =
   nonStaticAndNonFinal(anotherMethod)
     && sameName(this, anotherMethod)
