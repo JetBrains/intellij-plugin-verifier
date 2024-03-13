@@ -19,7 +19,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
-  private val anActionUpdateMethodAllowedFilter = AnActionUpdateMethodAllowedUsageFilter()
+  private val allowedOverrideOnlyUsageFilter = OverrideOnlyMethodAllowedUsageFilter()
 
   override fun processMethodInvocation(
     methodReference: MethodReference,
@@ -68,7 +68,7 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
                                          callerMethod: Method,
                                          context: VerificationContext): Boolean {
     return isCallOfSuperConstructor(callerMethod, invokedMethod)
-      || anActionUpdateMethodAllowedFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+      || allowedOverrideOnlyUsageFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
   }
 
   private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =
