@@ -21,6 +21,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
+    CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
     DelegateCallOnOverrideOnlyUsageFilter(),
     SuperclassCallOnOverrideOnlyUsageFilter()
   )
@@ -71,14 +72,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
                                          invocationInstruction: AbstractInsnNode,
                                          callerMethod: Method,
                                          context: VerificationContext): Boolean {
-    return isCallOfSuperConstructor(callerMethod, invokedMethod)
-      || allowedOverrideOnlyUsageFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+    return allowedOverrideOnlyUsageFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
   }
-
-  private fun isCallOfSuperConstructor(callerMethod: Method, resolvedMethod: Method) =
-    resolvedMethod.isConstructor
-      && callerMethod.isConstructor
-      && callerMethod.containingClassFile.superName == resolvedMethod.containingClassFile.name
 
   private fun Method.isOverrideOnlyMethod(context: VerificationContext): Boolean =
     annotations.findAnnotation(overrideOnlyAnnotationName) != null
