@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodInsnNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -83,3 +84,11 @@ fun isCallOfSuperMethod(callerMethod: Method, calledMethod: Method, instructionN
     && callerMethod.descriptor == calledMethod.descriptor
     && instructionNode.opcode == Opcodes.INVOKESPECIAL
 }
+
+data class MethodDescriptor(private val methodName: String, private val descriptor: String)
+
+fun Method.matches(method: Method): Boolean =
+  MethodDescriptor(name, descriptor) == MethodDescriptor(method.name, method.descriptor)
+
+fun MethodInsnNode.matches(method: Method): Boolean =
+  MethodDescriptor(name, desc) == MethodDescriptor(method.name, method.descriptor)
