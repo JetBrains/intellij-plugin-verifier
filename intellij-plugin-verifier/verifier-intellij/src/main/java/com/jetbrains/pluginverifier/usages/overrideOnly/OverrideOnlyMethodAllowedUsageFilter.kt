@@ -4,6 +4,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
 
 class OverrideOnlyMethodAllowedUsageFilter : ApiUsageFilter {
 
@@ -25,3 +26,6 @@ data class MethodDescriptor(private val methodName: String, private val descript
 
 fun Method.matches(method: Method): Boolean =
   MethodDescriptor(name, descriptor) == MethodDescriptor(method.name, method.descriptor)
+
+fun MethodInsnNode.matches(method: Method): Boolean =
+  MethodDescriptor(name, desc) == MethodDescriptor(method.name, method.descriptor)
