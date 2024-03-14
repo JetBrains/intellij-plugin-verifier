@@ -69,7 +69,9 @@ class IdePluginManager private constructor(
               createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
           }
-          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
+          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
+            LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarFile, descriptor)
+          }
         }
       }
     } catch (e: JarArchiveCannotBeOpenException) {
