@@ -414,10 +414,17 @@ class IdePluginManager private constructor(
         is PluginCreationSuccess<*> -> false
         is PluginCreationFail<*> -> {
           val errorsAndWarnings = pluginCreationResult.errorsAndWarnings
-          errorsAndWarnings.all { it.level !== PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
+          errorsAndWarnings.all { it.level !== PluginProblem.Level.ERROR || it.isInvalidDescriptorProblem }
         }
       }
     }
+
+    private val PluginProblem.isInvalidDescriptorProblem: Boolean
+      get() = if (this is ReclassifiedPluginProblem) {
+        unwrapped is InvalidDescriptorProblem
+      } else {
+        this is InvalidDescriptorProblem
+      }
 
     private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
   }
