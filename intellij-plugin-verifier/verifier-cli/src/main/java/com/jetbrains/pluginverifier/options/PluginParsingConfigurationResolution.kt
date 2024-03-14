@@ -26,12 +26,12 @@ private fun getPluginCreationResultResolver(levelRemappingDefinitionName: String
   val defaultResolver = IntelliJPluginCreationResultResolver()
   val problemLevelRemapping = runCatching {
     val levelRemappings = problemLevelMappingManager.initialize()
-    val existingPluginLevelRemapping = levelRemappings[levelRemappingDefinitionName]
+    val levelRemappingDefinition = levelRemappings[levelRemappingDefinitionName]
       ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
         LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
           "Problem levels will not be remapped"))
       }
-    existingPluginLevelRemapping
+    levelRemappingDefinition
   }.getOrElse {
     LOG.error(it.message, it)
     emptyMap()
