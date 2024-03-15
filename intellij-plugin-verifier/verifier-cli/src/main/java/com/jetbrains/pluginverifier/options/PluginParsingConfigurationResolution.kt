@@ -16,25 +16,20 @@ class PluginParsingConfigurationResolution {
                                  problemLevelMappingManager: ProblemLevelRemappingManager): PluginCreationResultResolver {
     return when (configuration.pluginSubmissionType) {
       EXISTING -> getPluginCreationResultResolver(EXISTING_PLUGIN_REMAPPING_SET, problemLevelMappingManager)
+        .withJetBrainsPluginProblemLevelRemapping()
+
       NEW -> getPluginCreationResultResolver(NEW_PLUGIN_REMAPPING_SET, problemLevelMappingManager)
+        .withJetBrainsPluginProblemLevelRemapping()
     }
   }
-
 }
 
-private fun getPluginCreationResultResolver(levelRemappingDefinitionName: String, problemLevelMappingManager: ProblemLevelRemappingManager): LevelRemappingPluginCreationResultResolver {
+private fun getPluginCreationResultResolver(levelRemappingDefinitionName: String, problemLevelMappingManager: ProblemLevelRemappingManager): PluginCreationResultResolver {
   val defaultResolver = IntelliJPluginCreationResultResolver()
-  val problemLevelRemapping = runCatching {
-    val levelRemappings = problemLevelMappingManager.initialize()
-    val levelRemappingDefinition = levelRemappings[levelRemappingDefinitionName]
-      ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
-        LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
-          "Problem levels will not be remapped"))
-      }
-    levelRemappingDefinition
-  }.getOrElse {
-    LOG.error(it.message, it)
-    emptyMap()
-  }
-  return LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
+  val problemLevelRemapping = problemLevelMappingManager.getLevelRemapping(levelRemappingDefinitionName)
+  val levelRemappingResolver = LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
+  return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = levelRemappingResolver)
 }
+
+private fun PluginCreationResultResolver.withJetBrainsPluginProblemLevelRemapping() =
+  JetBrainsPluginCreationResultResolver.fromClassPathJson(this)
