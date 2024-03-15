@@ -88,6 +88,21 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
   }
 }
 
+fun ProblemLevelRemappingManager.getLevelRemapping(levelRemappingDefinitionName: String): LevelRemappingDefinition {
+  return runCatching {
+    val levelRemappings = initialize()
+    val levelRemappingDefinition = levelRemappings[levelRemappingDefinitionName]
+      ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
+        LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
+          "Problem levels will not be remapped"))
+      }
+    levelRemappingDefinition
+  }.getOrElse {
+    LOG.error(it.message, it)
+    emptyLevelRemapping(levelRemappingDefinitionName)
+  }
+}
+
 class LevelRemappingDefinitions {
   private val definitions = mutableMapOf<String, LevelRemappingDefinition>()
 
