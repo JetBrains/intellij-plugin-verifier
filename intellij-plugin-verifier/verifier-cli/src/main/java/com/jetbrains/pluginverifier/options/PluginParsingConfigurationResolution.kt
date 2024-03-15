@@ -3,10 +3,6 @@ package com.jetbrains.pluginverifier.options
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import com.jetbrains.pluginverifier.options.SubmissionType.NEW
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-private val LOG: Logger = LoggerFactory.getLogger(PluginParsingConfigurationResolution::class.java)
 
 const val EXISTING_PLUGIN_REMAPPING_SET = "existing-plugin"
 const val NEW_PLUGIN_REMAPPING_SET = "new-plugin"
