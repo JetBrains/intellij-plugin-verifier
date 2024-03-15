@@ -15,7 +15,7 @@ class JsonUrlProblemLevelRemappingManagerTest {
     val definitionManager = JsonUrlProblemLevelRemappingManager(PLUGIN_PROBLEMS_FILE_NAME.asUrl())
     val levelRemappings =  definitionManager.load()
 
-    assertThat(levelRemappings.size, `is`(2))
+    assertThat(levelRemappings.size, `is`(3))
 
     val existingPluginLevelRemapping = levelRemappings["existing-plugin"]
     Assert.assertNotNull(existingPluginLevelRemapping)
@@ -36,7 +36,7 @@ class JsonUrlProblemLevelRemappingManagerTest {
   fun `plugin problems are loaded from JSON in classpath`() {
     val levelMappingManager = levelRemappingFromClassPathJson()
     val levelRemappings =  levelMappingManager.load()
-    assertThat(levelRemappings.size, `is`(2))
+    assertThat(levelRemappings.size, `is`(3))
   }
 
   @Test
