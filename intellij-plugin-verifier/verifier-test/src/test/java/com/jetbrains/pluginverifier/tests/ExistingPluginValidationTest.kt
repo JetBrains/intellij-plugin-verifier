@@ -261,6 +261,37 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is SuspiciousUntilBuild)
   }
 
+  @Test
+  fun `internal plugin is build despite having an descriptor error because it is remapped`() {
+    // Intentional JetBrains plugin that contains a forbidden word in the plugin name
+    val header = ideaPlugin("com.jetbrains.SomePlugin", "IDEA Fountain", vendor = "JetBrains")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
+
+    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val problemResolver = JetBrainsPluginCreationResultResolver(
+      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+      jetBrainsPluginLevelRemapping)
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = result as PluginCreationSuccess
+
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+    assertThat(creationSuccess.warnings.size, `is`(0))
+  }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
@@ -275,13 +306,14 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   private fun ideaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
+                         vendor: String = "vendor",
                          sinceBuild: String = "131.1",
                          untilBuild: String = "231.1",
                          description: String = "this description is looooooooooong enough") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>someVersion</version>
-    ""<vendor email="vendor.com" url="url">vendor</vendor>""
+    ""<vendor email="vendor.com" url="url">$vendor</vendor>""
     <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
