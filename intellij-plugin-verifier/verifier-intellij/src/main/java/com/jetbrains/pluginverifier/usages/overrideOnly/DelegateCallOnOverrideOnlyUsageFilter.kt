@@ -57,7 +57,6 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
    *
    * @return the class name of the discovered class.
    */
-  //
   private fun Method.getSuperClassName(resolver: Resolver): BinaryClassName {
     val topMostClass = searchParentOverrides(resolver).lastOrNull() ?: return containingClassFile.name
     return topMostClass.klass.name
