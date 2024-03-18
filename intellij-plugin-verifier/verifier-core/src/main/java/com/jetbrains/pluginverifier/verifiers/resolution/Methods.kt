@@ -51,11 +51,11 @@ private val Method.visibilityRating: Int
  * Search for all methods in the parent hierarchy that the receiver overrides.
  * @return list of methods, sorted from bottom-to-top in the inheritance hierarchy.
  */
-fun Method.searchParentOverrides(resolver: Resolver, ignoreJavaLangObject: Boolean = true): List<MethodInClass> {
+fun Method.searchParentOverrides(resolver: Resolver): List<MethodInClass> {
   return mutableListOf<MethodInClass>().apply {
     searchParentOverrides(resolver) { klass: ClassFile, method: Method ->
       when {
-        klass.name == JAVA_LANG_OBJECT && ignoreJavaLangObject -> Unit
+        klass.name == JAVA_LANG_OBJECT -> Unit
         else -> add(MethodInClass(method, klass))
       }
     }

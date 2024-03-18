@@ -9,8 +9,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 import java.nio.file.Path
 
-const val JAVA_LANG_OBJECT: BinaryClassName = "java/lang/Object"
-
 class MethodsTest {
   @Test
   fun testSearchParentOverrides() {
@@ -34,13 +32,8 @@ class MethodsTest {
       val classFile = ClassFileAsm(observerClassResult.value, observerClassResult.fileOrigin)
       val method: Method = MethodAsm(classFile, toStringMethod)
 
-      val methodOverrides = method.searchParentOverrides(resolver, ignoreJavaLangObject = false)
-      assertThat(methodOverrides.size, `is`(1))
-      val javaLangObjectToString = methodOverrides.first()
-      assertThat(javaLangObjectToString.klass.name, `is`(JAVA_LANG_OBJECT))
-
-      val nonJavaLangObjectMethodOverrides = method.searchParentOverrides(resolver)
-      assertThat(nonJavaLangObjectMethodOverrides.size, `is`(0))
+      val methodOverrides = method.searchParentOverrides(resolver)
+      assertThat(methodOverrides.size, `is`(0))
     }
   }
 
