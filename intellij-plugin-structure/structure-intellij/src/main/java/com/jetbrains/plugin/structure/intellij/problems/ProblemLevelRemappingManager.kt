@@ -103,6 +103,13 @@ fun ProblemLevelRemappingManager.getLevelRemapping(levelRemappingDefinitionName:
   }
 }
 
+fun ProblemLevelRemappingManager.newDefaultResolver(levelRemappingDefinitionName: String): PluginCreationResultResolver {
+  val defaultResolver = IntelliJPluginCreationResultResolver()
+  val problemLevelRemapping = getLevelRemapping(levelRemappingDefinitionName)
+  val levelRemappingResolver = LevelRemappingPluginCreationResultResolver(defaultResolver, additionalLevelRemapping = problemLevelRemapping)
+  return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = levelRemappingResolver)
+}
+
 class LevelRemappingDefinitions {
   private val definitions = mutableMapOf<String, LevelRemappingDefinition>()
 
