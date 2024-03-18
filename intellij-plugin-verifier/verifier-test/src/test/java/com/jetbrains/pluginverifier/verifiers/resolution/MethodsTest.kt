@@ -34,12 +34,12 @@ class MethodsTest {
       val classFile = ClassFileAsm(observerClassResult.value, observerClassResult.fileOrigin)
       val method: Method = MethodAsm(classFile, toStringMethod)
 
-      val methodOverrides = method.searchParentOverrides(resolver)
+      val methodOverrides = method.searchParentOverrides(resolver, ignoreJavaLangObject = false)
       assertThat(methodOverrides.size, `is`(1))
       val javaLangObjectToString = methodOverrides.first()
       assertThat(javaLangObjectToString.klass.name, `is`(JAVA_LANG_OBJECT))
 
-      val nonJavaLangObjectMethodOverrides = method.searchParentOverrides(resolver, ignoreJavaLangObject = true)
+      val nonJavaLangObjectMethodOverrides = method.searchParentOverrides(resolver)
       assertThat(nonJavaLangObjectMethodOverrides.size, `is`(0))
     }
   }
