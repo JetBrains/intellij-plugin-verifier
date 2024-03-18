@@ -17,6 +17,8 @@ private val LOG: Logger = LoggerFactory.getLogger(Method::class.java)
  */
 typealias BinaryClassName = String
 
+const val JAVA_LANG_OBJECT: BinaryClassName = "java/lang/Object"
+
 fun Method.isOverriding(anotherMethod: Method): Boolean =
   nonStaticAndNonFinal(anotherMethod)
     && sameName(this, anotherMethod)
@@ -49,10 +51,13 @@ private val Method.visibilityRating: Int
  * Search for all methods in the parent hierarchy that the receiver overrides.
  * @return list of methods, sorted from bottom-to-top in the inheritance hierarchy.
  */
-fun Method.searchParentOverrides(resolver: Resolver): List<MethodInClass> {
+fun Method.searchParentOverrides(resolver: Resolver, ignoreJavaLangObject: Boolean = false): List<MethodInClass> {
   return mutableListOf<MethodInClass>().apply {
     searchParentOverrides(resolver) { klass: ClassFile, method: Method ->
-      add(MethodInClass(method, klass))
+      when {
+        klass.name == JAVA_LANG_OBJECT && ignoreJavaLangObject -> Unit
+        else -> add(MethodInClass(method, klass))
+      }
     }
   }
 }
