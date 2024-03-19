@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.UNACCEPTABLE_WARNING
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
 
@@ -56,8 +57,8 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
     return errorsAndWarnings.mapNotNull(::remapPluginProblemLevel)
   }
 
-  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem?{
-    val problem = if (unwrapRemappedProblems && pluginProblem is ReclassifiedPluginProblem)  {
+  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem? {
+    val problem = if (unwrapRemappedProblems) {
       pluginProblem.unwrapped
     } else {
       pluginProblem
