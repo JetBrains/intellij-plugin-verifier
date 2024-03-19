@@ -81,7 +81,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(
       delegateResolver,
-      additionalLevelRemapping = warning<InvalidSinceBuild>() + warning<ForbiddenPluginIdPrefix>())
+      warning<InvalidSinceBuild>() + warning<ForbiddenPluginIdPrefix>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -113,7 +113,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     val remappingProblemResolver = LevelRemappingPluginCreationResultResolver(
       IntelliJPluginCreationResultResolver(),
-      additionalLevelRemapping = ignore<TemplateWordInPluginId>())
+      ignore<TemplateWordInPluginId>())
 
     val result = buildPluginWithResult(remappingProblemResolver, pluginOf(header))
     assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
@@ -141,8 +141,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val erroneousUntilBuild = "1000"
     val header = ideaPlugin("plugin.with.two.problems", sinceBuild = erroneousSinceBuild, untilBuild = erroneousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver,
-      additionalLevelRemapping = warning<InvalidSinceBuild>())
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, warning<InvalidSinceBuild>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -176,7 +175,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
-      additionalLevelRemapping = warning<HttpLinkInDescription>() + ignore<InvalidSinceBuild>()
+      warning<HttpLinkInDescription>() + ignore<InvalidSinceBuild>()
     )
 
     val result = buildPluginWithResult(problemResolver, pluginOf(header))
@@ -208,7 +207,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
-      additionalLevelRemapping = unacceptableWarning<InvalidSinceBuild>())
+      unacceptableWarning<InvalidSinceBuild>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
