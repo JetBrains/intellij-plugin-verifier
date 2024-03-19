@@ -7,14 +7,14 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.UNACCEPTABLE_WARNING
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.WARNING
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlin.reflect.KClass
 
 class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver,
-                                                 additionalLevelRemapping: Map<KClass<*>, RemappedLevel> = emptyMap()
+                                                 private val remappedLevel: Map<KClass<*>, RemappedLevel> = emptyMap(),
+                                                 private val unwrapRemappedProblems: Boolean = false
   ) : PluginCreationResultResolver {
-
-  private val remappedLevel: Map<KClass<*>, RemappedLevel> = additionalLevelRemapping
 
   override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
     return when (val pluginCreationResult = delegatedResolver.resolve(plugin, problems)) {
@@ -57,8 +57,14 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
     return errorsAndWarnings.mapNotNull(::remapPluginProblemLevel)
   }
 
-  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem?{
-    return when (val remappedLevel = remappedLevel[pluginProblem::class]) {
+  private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem? {
+    val problem = if (unwrapRemappedProblems) {
+      pluginProblem.unwrapped
+    } else {
+      pluginProblem
+    }
+
+    return when (val remappedLevel = remappedLevel[problem::class]) {
       is StandardLevel -> ReclassifiedPluginProblem(remappedLevel.originalLevel, pluginProblem)
       is IgnoredLevel -> null
       null -> pluginProblem
