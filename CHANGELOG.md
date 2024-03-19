@@ -6,9 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Introduce a set of plugin problem remappings for JetBrains plugins ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388)) 
+
 ### Changed
 
 ### Fixed
+
+- Fix case when reclassified plugin problem level might not be used properly, leading to a plugin descriptor discovery issue. ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388))
+- Unwrap plugin problem which have reclassified problem level. ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388))
 
 ## 1.364 - 2024-03-10
 
