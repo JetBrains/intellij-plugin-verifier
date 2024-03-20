@@ -7,8 +7,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 - Introduce a set of plugin problem remappings for JetBrains plugins ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388)) 
-
-### Changed
+- Indicate if an IntelliJ plugin contains a `dotnet` directory ([#1070](https://github.com/JetBrains/intellij-plugin-verifier/pull/1070), [MP-6371](https://youtrack.jetbrains.com/issue/MP-6371))
+- Allow `OverrideOnly` method calls for delegation and wrapping in the same class hierarchy ([#1068](https://github.com/JetBrains/intellij-plugin-verifier/pull/1068), [MP-6077](https://youtrack.jetbrains.com/issue/MP-6076/ApiStatus.OverrideOnly-allow-delegation-wrapping), [IDEA-336988](https://youtrack.jetbrains.com/issue/IDEA-336988/Action-System-add-ApiStatus.OverrideOnly-in-relevant-API))
 
 ### Fixed
 
