@@ -223,6 +223,24 @@ internal class PluginCreator private constructor(
     plugin.hasDotNetPart = hasDotNetPart
   }
 
+  /**
+   * Create an instance of an invalid plugin with the most basic information.
+   *
+   * This allows creating a bare-bones plugin with invalid data.
+   * Plugin problems associated with this invalid data might be reclassified by the [problem resolver](#problemResolver).
+   */
+  private fun newInvalidPlugin(bean: PluginBean, document: Document): InvalidPlugin {
+    return InvalidPlugin(document).apply {
+      pluginId = bean.id?.trim()
+      pluginName = bean.name?.trim()
+      bean.vendor?.let {
+        vendor = if (it.name != null) it.name.trim() else null
+        vendorUrl = it.url
+        vendorEmail = it.email
+      }
+    }
+  }
+
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean, document: Document) {
     pluginName = bean.name?.trim()
     pluginId = bean.id?.trim() ?: pluginName
@@ -660,7 +678,7 @@ internal class PluginCreator private constructor(
     val document = resolveXIncludesOfDocument(originalDocument, documentName, pathResolver, documentPath) ?: return
     val bean = readDocumentIntoXmlBean(document) ?: return
     validatePluginBean(bean, validateDescriptor)
-    if (hasErrors()) {
+    if (hasPluginBeanErrors(bean, document)) {
       return
     }
 
@@ -734,6 +752,31 @@ internal class PluginCreator private constructor(
 
   private fun hasErrors(): Boolean {
     return problemResolver.classify(plugin, problems).any {
+      it.level == ERROR
+    }
+  }
+
+  /**
+   * Checks if the _bean_ has any core plugin bean errors in the plugin descriptor.
+   *
+   * Such core errors are field validation errors (missing fields, empty values).
+   * If any such core error is found, an instance of invalid plugin with the most
+   * basic information is created and filtered by [problem resolver](problemResolver).
+   *
+   * This enables problem resolver to intentionally ignore core plugin bean errors
+   * and reclassify these errors into warnings or even ignore them.
+   *
+   * The usual example is an internal JetBrains plugin that might violate rules for
+   * allowed field values in the plugin descriptor.
+   *
+   * @see validatePluginBean
+   */
+  private fun hasPluginBeanErrors(bean: PluginBean, document: Document): Boolean {
+    if (problems.isEmpty()) {
+      return false
+    }
+    val invalidPlugin = newInvalidPlugin(bean, document)
+    return problemResolver.classify(invalidPlugin, problems).any {
       it.level == ERROR
     }
   }

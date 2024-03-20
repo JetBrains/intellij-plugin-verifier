@@ -2,20 +2,46 @@
 
 Releases prior to January 2023 are tracked on the project GitHub [Releases Page](https://github.com/JetBrains/intellij-plugin-verifier/releases).
 
-## Unreleased
+## [Unreleased]
 
 ### Added
+
+- Introduce a set of plugin problem remappings for JetBrains plugins ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388)) 
 
 ### Changed
 
 ### Fixed
 
-## 1.307 - 2023-11-27
+- Fix case when reclassified plugin problem level might not be used properly, leading to a plugin descriptor discovery issue. ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388))
+- Unwrap plugin problem which have reclassified problem level. ([#1074](https://github.com/JetBrains/intellij-plugin-verifier/pull/1074), [MP-6388](https://youtrack.jetbrains.com/issue/MP-6388))
+
+## 1.364 - 2024-03-10
+
+### Added
+
+- Publish Plugin Verifier to Maven Central
+- Structure: Support _frontend_ client types
+- Provide dynamic format for plugin problem level remapping ([#1060](https://github.com/JetBrains/intellij-plugin-verifier/pull/1060))
+- When remapping plugin problem severity level, allow to ignore a problem. ([#1047](https://github.com/JetBrains/intellij-plugin-verifier/pull/1047))
+- When remapping plugin problem severity level, allow to escalate to an _error_. ([#1061](https://github.com/JetBrains/intellij-plugin-verifier/pull/1061))
+- Changelog is maintained with [Gradle Changelog Plugin](https://github.com/JetBrains/gradle-changelog-plugin)
+- Structure: Allow `frontend-only` field for Fleet plugins ([#1069](https://github.com/JetBrains/intellij-plugin-verifier/pull/1069))
+
+### Changed
+
+- Remove Guava dependency ([#1040](https://github.com/JetBrains/intellij-plugin-verifier/pull/1040))
+- Structure: Do not search for additional logos when primary logo is not found ([#1044](https://github.com/JetBrains/intellij-plugin-verifier/pull/1044))
+- Remove `--major-ide-version` command-line switch as it was not used anywhere ([#1058](https://github.com/JetBrains/intellij-plugin-verifier/pull/1058))
+- Upgrade dependencies
+- Build with Gradle 8.6
+- Deprecate _Plugin Verifier Service_ module in the repository
+
+## [1.307] - 2023-11-27
 
 ### Added
 
 - Simplify JRT filesystem handling to make Plugin Verifier compatible with Java 17 ([#1013](https://github.com/JetBrains/intellij-plugin-verifier/pull/1013))
-- Collect telemetry data when verifying plugins 
+- Collect telemetry data when verifying plugins
 - Use custom name field for EDU sections and lessons ([#1039](https://github.com/JetBrains/intellij-plugin-verifier/pull/1039))
 
 ### Changed
@@ -29,7 +55,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Clarify `-runtime-dir` switch semantics  ([#1020](https://github.com/JetBrains/intellij-plugin-verifier/pull/1020))
 - Improve the instructional message on TeamCity runs when checking trunk API
 
-## 1.306 - 2023-10-19
+## [1.306] - 2023-10-19
 
 ### Added
 
@@ -45,9 +71,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 - Upgrade dependencies
 
-## 1.305 - 2023-10-11
-
-### Added
+## [1.305] - 2023-10-11
 
 ### Changed
 
@@ -56,24 +80,24 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Support API version in the Toolbox plugin descriptor ([#1004](https://github.com/JetBrains/intellij-plugin-verifier/pull/1004))
 - Upgrade dependencies
 
-## 1.304 - 2023-09-13
+## [1.304] - 2023-09-13
 
 ### Added
 
-- Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981)) 
-- Add command-line option to suppress internal API usages by internal plugins. ([#999](https://github.com/JetBrains/intellij-plugin-verifier/pull/999)) 
-- Add plugin pattern possibility for -keep-only-problems filter  [#995](https://github.com/JetBrains/intellij-plugin-verifier/pull/995) 
+- Add Markdown output format for verification reports. ([MP-5820](https://youtrack.jetbrains.com/issue/MP-5820), [#981](https://github.com/JetBrains/intellij-plugin-verifier/pull/981))
+- Add command-line option to suppress internal API usages by internal plugins. ([#999](https://github.com/JetBrains/intellij-plugin-verifier/pull/999))
+- Add plugin pattern possibility for -keep-only-problems filter  [#995](https://github.com/JetBrains/intellij-plugin-verifier/pull/995)
 
 ### Changed
 
 - Show verification report directory at the end of verification in CLI ([#991](https://github.com/JetBrains/intellij-plugin-verifier/pull/991))
 - Upgrade dependencies
 
-## 1.303 - 2023-08-08
+## [1.303] - 2023-08-08
 
-### Added 
+### Added
 
-- Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names. 
+- Specific words in plugin IDs are discouraged and treated as warnings, mainly JetBrains product names.
 - Specific plugin prefixes are discouraged and treated as warnings, such as `com.example` or `net.example`.
 - Ignore internal API usages from JetBrains plugins. Whenever a JetBrains plugin uses an internal API (`@ApiStatus.Internal` or `@IntellijInternalApi`), such usage is reported as ignored and not treated as an error or warning.
 - Treat service preloading as an error ([#975](https://github.com/JetBrains/intellij-plugin-verifier/pull/975))
@@ -88,27 +112,28 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Migrate to Java HTTP Client from Retrofit
 - Skip Kotlin default methods from internal usage check ([MP-5395](https://github.com/JetBrains/intellij-plugin-verifier/pull/885))
 
-## 1.301 - 2023-05-30
+## [1.301] - 2023-05-30
 
 ### Changed
 
 - This release is equivalent to 1.300.
 
-## 1.300 - 2023-05-30
+## [1.300] - 2023-05-30
 
 ### Fixed
+
 - Dependencies in the descriptor that reference the same descriptor file trigger a warning instead of an error ([MP-5523](https://youtrack.jetbrains.com/issue/MP-5523))
 
-## 1.299 - 2023-05-19
+## [1.299] - 2023-05-19
 
 ### Added
+
 - Improve description on empty `<vendor>` element ([MP-5490](https://youtrack.jetbrains.com/issue/MP-5490))
 - _Plugin Structure, Edu_: Add additional fields `programming_language_id` and `programming_language_version`. Field   `programming_language` is deprecated and treated as `programming_language_id` for backwards compatibility.
-- Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html) 
-
-### Fixed
+- Add support for Java 9 [`VarHandle`](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/invoke/VarHandle.html)
 
 ### Changed
+
 - Increase severity for _does not declare explicit dependency on Java plugin_ to an error ([MP-5434](https://youtrack.jetbrains.com/issue/MP-5434)). See [Java functionality extracted as a plugin](https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin) blog post.
 - Treat optional dependency with an empty `config-file` as an error ([MP-4919](https://youtrack.jetbrains.com/issue/MP-4919))
 - Dependencies in the descriptor cannot reference the same descriptor file anymore ([MP-3391](https://youtrack.jetbrains.com/issue/MP-3391))
@@ -117,7 +142,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Use Shadow Gradle Plugin for fat JARs
 - Declare dependencies in the Gradle version catalog
 
-## 1.297 - 2023-04-25
+## [1.297] - 2023-04-25
 
 ### Added
 
@@ -126,27 +151,35 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - _Plugin Structure_: Support V2 plugin modules.
 
 ### Fixed
+
 - _Verifier_: Work around unparseable class signatures in plugins
 
 ### Changed
 
 - _Plugin Structure_: Update ASM to 9.5
 
-## 1.294 - 2023-02-14
+## [1.294] - 2023-02-14
 
 ### Added
 
 - Treat `NonExtendable` and `OverrideOnly` API usages as problems`
 
-## 1.289 - 2022-11-11
+## [1.289] - 2022-11-11
 
 ### Added
 
 - Support Java 17 Records ([MP-4865](https://youtrack.jetbrains.com/issue/MP-4865/Plugin-Verifier-Problems-handling-java.lang.Record))
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
-[next]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...HEAD
-[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
-[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
-[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
+[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.307...HEAD
 [1.289]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.288...v1.289
+[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
+[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
+[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
+[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
+[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
+[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
+[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
+[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
+[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
+[1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307

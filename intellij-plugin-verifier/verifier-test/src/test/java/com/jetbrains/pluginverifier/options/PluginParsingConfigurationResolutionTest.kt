@@ -51,16 +51,13 @@ class PluginParsingConfigurationResolutionTest {
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
       levelRemappingFromClassPathJson())
 
-    assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
-    val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
-
     val problemsThatShouldBeIgnored = listOf(
       ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
       TemplateWordInPluginId(pluginId, "forbiddenTemplateWord"),
       TemplateWordInPluginName(pluginId, "forbiddenTemplateWord"),
     )
     val warnings = listOf(SuspiciousUntilBuild("999"))
-    val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeIgnored + warnings)
+    val creationResult = creationResultResolver.resolve(plugin, problemsThatShouldBeIgnored + warnings)
     assertTrue(creationResult is PluginCreationSuccess)
     val creationSuccess = creationResult as PluginCreationSuccess
     assertThat(creationSuccess.warnings.size, `is`(1))
@@ -76,14 +73,11 @@ class PluginParsingConfigurationResolutionTest {
     }
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config, levelMapper)
 
-    assertThat(creationResultResolver, instanceOf(LevelRemappingPluginCreationResultResolver::class.java))
-    val levelRemappingResolver = creationResultResolver as LevelRemappingPluginCreationResultResolver
-
     val problemsThatShouldBeRemapped = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
     )
     val warnings = listOf(SuspiciousUntilBuild("999"))
-    val creationResult = levelRemappingResolver.resolve(plugin, problemsThatShouldBeRemapped + warnings)
+    val creationResult = creationResultResolver.resolve(plugin, problemsThatShouldBeRemapped + warnings)
     assertTrue(creationResult is PluginCreationSuccess)
     val creationSuccess = creationResult as PluginCreationSuccess
     assertThat(creationSuccess.warnings.size, `is`(2))

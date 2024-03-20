@@ -71,7 +71,9 @@ class IdePluginManager private constructor(
               createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
           }
-          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
+          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
+            LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarFile, descriptor)
+          }
         }
       }
     } catch (e: JarArchiveCannotBeOpenException) {
@@ -433,7 +435,7 @@ class IdePluginManager private constructor(
         is PluginCreationSuccess<*> -> false
         is PluginCreationFail<*> -> {
           val errorsAndWarnings = pluginCreationResult.errorsAndWarnings
-          errorsAndWarnings.all { it.level !== PluginProblem.Level.ERROR || it is InvalidDescriptorProblem }
+          errorsAndWarnings.all { it.level !== PluginProblem.Level.ERROR || it.isInvalidDescriptorProblem }
         }
       }
     }
