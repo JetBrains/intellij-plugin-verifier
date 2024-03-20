@@ -219,8 +219,8 @@ internal class PluginCreator private constructor(
     plugin.originalFile = originalFile
   }
 
-  fun setDotNetPartExists(dotNetPartExists: Boolean) {
-    plugin.dotNetPartExists = dotNetPartExists
+  fun setHasDotNetPart(hasDotNetPart: Boolean) {
+    plugin.hasDotNetPart = hasDotNetPart
   }
 
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean, document: Document) {

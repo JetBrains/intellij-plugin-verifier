@@ -63,7 +63,7 @@ class IdePluginManager private constructor(
               createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
                 setIcons(jar.getIcons())
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
-                setDotNetPartExists(hasDotNetDirectory)
+                setHasDotNetPart(hasDotNetDirectory)
               }
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
@@ -114,7 +114,7 @@ class IdePluginManager private constructor(
       ).apply {
           setIcons(icons)
           setThirdPartyDependencies(dependencies)
-          setDotNetPartExists(hasDotNetDirectory)
+          setHasDotNetPart(hasDotNetDirectory)
       }
     } catch (e: JDOMParseException) {
       LOG.info("Unable to parse plugin descriptor $descriptorPath of plugin $descriptorFile", e)

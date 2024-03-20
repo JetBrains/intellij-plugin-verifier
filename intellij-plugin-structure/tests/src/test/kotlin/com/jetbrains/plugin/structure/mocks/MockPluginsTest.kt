@@ -584,7 +584,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       }
     }
 
-    assertTrue(plugin.dotNetPartExists)
+    assertTrue(plugin.hasDotNetPart)
   }
 
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
@@ -652,7 +652,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       checkPluginClasses(mainResolver, classFilesOrigin)
       checkPluginProperties(mainResolver, propertyFileOrigin)
     }
-    assertFalse(plugin.dotNetPartExists)
+    assertFalse(plugin.hasDotNetPart)
   }
 
   private fun checkPluginConfiguration(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {

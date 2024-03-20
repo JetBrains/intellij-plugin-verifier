@@ -44,7 +44,7 @@ class IdePluginImpl : IdePlugin {
 
   override var isV2: Boolean = false
 
-  override var dotNetPartExists: Boolean = false
+  override var hasDotNetPart: Boolean = false
 
   override var underlyingDocument: Document = Document()
 
