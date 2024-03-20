@@ -44,6 +44,8 @@ class IdePluginImpl : IdePlugin {
 
   override var isV2: Boolean = false
 
+  override var hasDotNetPart: Boolean = false
+
   override var underlyingDocument: Document = Document()
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()

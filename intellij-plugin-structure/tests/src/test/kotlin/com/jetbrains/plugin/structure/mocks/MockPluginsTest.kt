@@ -557,6 +557,36 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     assertEquals(lang, plugin.extensions.values.first().first().attributes.first().value)
   }
 
+  @Test
+  fun `plugin with dotnet directory`() {
+    val plugin = buildPluginSuccess(expectedWarnings) {
+      buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+        dir("plugin") {
+          dir("lib") {
+            dir("compile") {
+              zip("compile-library.jar") {
+                dir("META-INF") {
+                  dir("services", compileLibraryServices)
+                }
+                dir("com", compileLibraryClassesRoot.resolve("com"))
+              }
+            }
+
+            zip("plugin.jar") {
+              dir("META-INF", metaInfDir)
+              dir("optionalsDir", optionalsDir)
+              dir("somePackage", somePackageDir)
+              dir("properties", propertiesDir)
+            }
+          }
+          dir("dotnet") {}
+        }
+      }
+    }
+
+    assertTrue(plugin.hasDotNetPart)
+  }
+
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
@@ -622,6 +652,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       checkPluginClasses(mainResolver, classFilesOrigin)
       checkPluginProperties(mainResolver, propertyFileOrigin)
     }
+    assertFalse(plugin.hasDotNetPart)
   }
 
   private fun checkPluginConfiguration(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {

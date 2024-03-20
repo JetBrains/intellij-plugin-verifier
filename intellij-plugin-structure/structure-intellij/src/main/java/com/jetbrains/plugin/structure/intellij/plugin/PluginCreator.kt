@@ -219,6 +219,10 @@ internal class PluginCreator private constructor(
     plugin.originalFile = originalFile
   }
 
+  fun setHasDotNetPart(hasDotNetPart: Boolean) {
+    plugin.hasDotNetPart = hasDotNetPart
+  }
+
   /**
    * Create an instance of an invalid plugin with the most basic information.
    *
