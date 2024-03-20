@@ -39,6 +39,7 @@ data class MockIdePlugin(
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
+  override val hasDotNetPart: Boolean = false
 
   override val declaredThemes = emptyList<IdeTheme>()
 
