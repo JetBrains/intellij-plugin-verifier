@@ -2,6 +2,7 @@ package mock.plugin;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class OverrideFinalMethodProblem extends AnAction {
   /*expected(PROBLEM)
@@ -19,4 +20,9 @@ public class OverrideFinalMethodProblem extends AnAction {
 
   }
 
+  // just a plain override, no issues here
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+
+  }
 }

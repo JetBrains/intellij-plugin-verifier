@@ -10,6 +10,11 @@
 
     <idea-version since-build="131"/>
 
+    <actions>
+        <action class="mock.plugin.overrideOnly.DelegatingAction" id="mock.plugin.overrideOnly.DelegatingAction" />
+        <action class="mock.plugin.overrideOnly.ActionUpdatingItselfAction" id="mock.plugin.overrideOnly.ActionUpdatingItselfAction" />
+        <action class="mock.plugin.overrideOnly.ActionUpdatingAnotherActionExplicitlyAction" id="mock.plugin.overrideOnly.ActionUpdatingAnotherActionExplicitlyAction" />
+    </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceInterface="com.intellij.mockapi.ide.TreeExpander"
