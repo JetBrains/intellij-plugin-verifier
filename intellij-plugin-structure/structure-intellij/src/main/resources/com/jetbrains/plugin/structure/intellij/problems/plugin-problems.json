@@ -12,6 +12,7 @@
   "jetbrains-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId": "ignore",
-    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore"
+    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore",
+    "com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported": "warning"
   }
 }
