@@ -23,3 +23,6 @@ val PluginProblem.isInvalidDescriptorProblem: Boolean
   } else {
     this is InvalidDescriptorProblem
   }
+
+val PluginProblem.isError: Boolean
+  get() = level == PluginProblem.Level.ERROR

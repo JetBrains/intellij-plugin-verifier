@@ -9,6 +9,6 @@ import java.nio.file.Path
 
 /**
  * Descriptor of a plugin which was specified for the verification
- * but which has structure [errors] [pluginErrors].
+ * but which has structure [problems] [problems].
  */
-data class InvalidPluginFile(val pluginFile: Path, val pluginErrors: List<PluginProblem>)
+data class InvalidPluginFile(val file: Path, val problems: List<PluginProblem>)
