@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.output.markdown
 
+import com.jetbrains.plugin.structure.base.problems.isError
 import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -55,12 +56,23 @@ class MarkdownResultPrinter(private val out: PrintWriter) : ResultPrinter, AutoC
         }
       }
       if (invalidPluginFiles.isNotEmpty()) {
-        for ((pluginFile, pluginErrors) in invalidPluginFiles) {
+        for ((pluginFile, pluginProblems) in invalidPluginFiles) {
           h2("${pluginFile.fileName}")
           paragraph("Full path: `$pluginFile`")
+          val (pluginErrors, otherPluginProblems) = pluginProblems.partition { it.isError }
           if (pluginErrors.isNotEmpty()) {
+            h3("Plugin Problems")
             for (pluginError in pluginErrors) {
               unorderedListItem("$pluginError")
+            }
+            unorderedListEnd()
+          }
+          if (otherPluginProblems.isNotEmpty()) {
+            val prefix = if (pluginErrors.isEmpty()) "" else "Additional "
+
+            h3("${prefix}Plugin Warnings")
+            for (pluginProblem in otherPluginProblems) {
+              unorderedListItem("$pluginProblem")
             }
             unorderedListEnd()
           }
