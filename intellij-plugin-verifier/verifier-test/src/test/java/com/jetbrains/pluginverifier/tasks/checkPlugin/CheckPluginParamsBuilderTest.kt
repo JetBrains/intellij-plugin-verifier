@@ -65,7 +65,7 @@ class CheckPluginParamsBuilderTest {
   }
 
   @Test
-  fun `muted plugin problems is parsed`() {
+  fun `CLI-ignored plugin problems is parsed`() {
     val cmdOpts = CmdOpts().apply {
       mutedPluginProblems = arrayOf("ForbiddenPluginIdPrefix", "TemplateWordInPluginId")
     }
