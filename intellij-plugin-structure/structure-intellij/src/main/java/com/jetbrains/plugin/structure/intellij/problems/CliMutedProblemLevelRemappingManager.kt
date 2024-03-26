@@ -26,6 +26,10 @@ class CliMutedProblemLevelRemappingManager(mutedProblems: List<PluginProblemId> 
     }
   }
 
+  fun asLevelRemappingDefinition(): LevelRemappingDefinition {
+    return LevelRemappingDefinition(CLI_MUTED, mutedProblemLevelRemapping)
+  }
+
   private fun muteProblems(mutedProblems: List<PluginProblemId>): Map<KClass<*>, IgnoredLevel> {
     val mutedProblemClasses = mutedProblems.mapNotNull { mutedProblemId ->
       val problemClass = problems[mutedProblemId]

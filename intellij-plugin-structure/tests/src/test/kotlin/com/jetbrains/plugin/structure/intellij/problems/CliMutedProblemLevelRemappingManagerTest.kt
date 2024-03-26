@@ -31,4 +31,13 @@ class CliMutedProblemLevelRemappingManagerTest {
     val nonexistentRemappedLevel = cliMutedRemapping[DuplicatedDependencyWarning::class]
     assertNull(nonexistentRemappedLevel)
   }
+
+  @Test
+  fun `retrieve single level remapping definition`() {
+    val manager = CliMutedProblemLevelRemappingManager(listOf("ForbiddenPluginIdPrefix"))
+    val levelRemappingDefinition = manager.asLevelRemappingDefinition()
+
+    assertThat(levelRemappingDefinition.size, `is`(1))
+    assertThat(levelRemappingDefinition[ForbiddenPluginIdPrefix::class], `is`(IgnoredLevel))
+  }
 }

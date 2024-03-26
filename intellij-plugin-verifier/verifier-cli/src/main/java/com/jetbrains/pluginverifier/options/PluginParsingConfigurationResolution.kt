@@ -1,8 +1,6 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
-import com.jetbrains.plugin.structure.intellij.problems.newDefaultResolver
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import com.jetbrains.pluginverifier.options.SubmissionType.NEW
 
@@ -16,6 +14,14 @@ class PluginParsingConfigurationResolution {
       EXISTING -> EXISTING_PLUGIN_REMAPPING_SET
       NEW -> NEW_PLUGIN_REMAPPING_SET
     }
-    return problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
+    return problemLevelMappingManager
+      .newDefaultResolver(levelRemappingDefinitionName)
+      .withCliMutedProblemResolver(configuration)
+  }
+
+  private fun PluginCreationResultResolver.withCliMutedProblemResolver(configuration: PluginParsingConfiguration): PluginCreationResultResolver {
+    val cliMutedProblems = CliMutedProblemLevelRemappingManager(configuration.ignoredPluginProblems).asLevelRemappingDefinition()
+    return LevelRemappingPluginCreationResultResolver(this, cliMutedProblems, unwrapRemappedProblems = true)
   }
 }
+
