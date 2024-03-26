@@ -1,0 +1,17 @@
+[
+  {
+    "id": "ForbiddenPluginIdPrefix",
+    "class": "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix",
+    "since": "2024-03-31"
+  },
+  {
+    "id": "TemplateWordInPluginId",
+    "class": "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId",
+    "since": "2024-03-31"
+  },
+  {
+    "id": "TemplateWordInPluginName",
+    "class": "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName",
+    "since": "2024-03-31"
+  }
+]
