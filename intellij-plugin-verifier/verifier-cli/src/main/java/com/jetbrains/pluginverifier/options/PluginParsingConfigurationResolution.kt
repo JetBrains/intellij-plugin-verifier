@@ -16,12 +16,12 @@ class PluginParsingConfigurationResolution {
     }
     return problemLevelMappingManager
       .newDefaultResolver(levelRemappingDefinitionName)
-      .withCliMutedProblemResolver(configuration)
+      .withCliIgnoredProblemResolver(configuration)
   }
 
-  private fun PluginCreationResultResolver.withCliMutedProblemResolver(configuration: PluginParsingConfiguration): PluginCreationResultResolver {
-    val cliMutedProblems = CliMutedProblemLevelRemappingManager(configuration.ignoredPluginProblems).asLevelRemappingDefinition()
-    return LevelRemappingPluginCreationResultResolver(this, cliMutedProblems, unwrapRemappedProblems = true)
+  private fun PluginCreationResultResolver.withCliIgnoredProblemResolver(configuration: PluginParsingConfiguration): PluginCreationResultResolver {
+    val cliIgnoredProblems = CliIgnoredProblemLevelRemappingManager(configuration.ignoredPluginProblems).asLevelRemappingDefinition()
+    return LevelRemappingPluginCreationResultResolver(this, cliIgnoredProblems, unwrapRemappedProblems = true)
   }
 }
 
