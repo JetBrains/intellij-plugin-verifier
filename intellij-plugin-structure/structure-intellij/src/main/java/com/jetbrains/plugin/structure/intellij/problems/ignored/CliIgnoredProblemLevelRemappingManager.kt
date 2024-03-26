@@ -18,7 +18,7 @@ typealias PluginProblemId = String
 private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
 
 class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager1, ProblemSolutionHintProvider {
-  private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader()
+  private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader.fromClassPathJson()
 
   private val problemClasses: List<CliIgnoredPluginProblem> = ignoredProblemDefinitionLoader.load()
 

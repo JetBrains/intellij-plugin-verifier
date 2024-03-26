@@ -11,11 +11,15 @@ import java.net.URL
 private const val CLI_IGNORED_PROBLEMS_FILE_NAME = "plugin-problems-cli-muteable.json"
 
 class CliIgnoredProblemDefinitionLoader(private val jsonUrl: URL) {
-  constructor() : this(
-    LevelRemappingPluginCreationResultResolver::class.java.getResource(CLI_IGNORED_PROBLEMS_FILE_NAME)
-      ?: throw IOException("Definition for problems that can be ignored in the CLI switch " +
-        "cannot be found at <$CLI_IGNORED_PROBLEMS_FILE_NAME>")
-  )
+  companion object {
+    @Throws(IOException::class)
+    fun fromClassPathJson(): CliIgnoredProblemDefinitionLoader {
+      val jsonUrl = LevelRemappingPluginCreationResultResolver::class.java.getResource(CLI_IGNORED_PROBLEMS_FILE_NAME)
+        ?: throw IOException("Definition for problems that can be ignored in the CLI switch " +
+          "cannot be found at <$CLI_IGNORED_PROBLEMS_FILE_NAME>")
+      return CliIgnoredProblemDefinitionLoader(jsonUrl)
+    }
+  }
 
   private val json = ObjectMapper()
 
