@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.isInstance
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
@@ -11,7 +12,7 @@ typealias PluginProblemId = String
 
 private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
 
-class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager {
+class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager, ProblemSolutionHintProvider {
   private val problemClasses = mutableMapOf<PluginProblemId, KClass<out PluginProblem>>(
     "ForbiddenPluginIdPrefix" to ForbiddenPluginIdPrefix::class,
     "TemplateWordInPluginId" to TemplateWordInPluginId::class,
@@ -40,4 +41,18 @@ class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblem
     }
     return ignoredProblemClasses.associateWith { IgnoredLevel }
   }
+
+  override fun getProblemSolutionHint(problem: PluginProblem): String? {
+    val supportedProblems = problemClasses.filterValues { problemClass ->
+      problem.isInstance(problemClass)
+    }
+    if (supportedProblems.isEmpty()) return null
+    val problemId = supportedProblems.keys.firstOrNull() ?: return null
+
+    //FIXME novotnyr handle dates
+    val message = "This plugin problem has been reported since <___>. " +
+      "If the plugin was previously uploaded to the JetBrains Marketplace, it can be suppressed using the `-mute $problemId` command-line switch."
+    return message
+  }
+
 }

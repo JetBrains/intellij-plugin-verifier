@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.base.problems
 
+import kotlin.reflect.KClass
+
 fun PluginProblem.isReclassified(): Boolean = this is ReclassifiedPluginProblem
 
 /**
@@ -23,3 +25,6 @@ val PluginProblem.isInvalidDescriptorProblem: Boolean
   } else {
     this is InvalidDescriptorProblem
   }
+
+fun PluginProblem.isInstance(pluginProblemClass: KClass<*>): Boolean =
+  pluginProblemClass.isInstance(unwrapped)
