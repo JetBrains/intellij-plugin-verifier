@@ -34,6 +34,8 @@ fun PluginProblem.isInstance(pluginProblemClass: KClass<*>): Boolean =
   pluginProblemClass.isInstance(unwrapped)
 
 
+private const val PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX = "com.jetbrains.plugin.structure."
+
 object PluginProblems {
   /**
    * Resolves the problem ID to a fully qualified Kotlin class.
@@ -45,15 +47,18 @@ object PluginProblems {
    * - Problem ID which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
    *    package prefix, such as `intellij.problems.ForbiddenPluginIdPrefix`.
    */
-  // TODO duplicate code
-  fun resolveClass(fullyQualifiedProblemId: String): KClass<out Any>? {
+  fun resolveClass(problemId: String): KClass<out Any>? {
+    val fqProblemId = if (problemId.startsWith(PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX)) {
+      problemId
+    } else {
+      PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX + problemId
+    }
     return runCatching {
-      val pluginProblemJavaClass = Class.forName(fullyQualifiedProblemId, false, javaClass.getClassLoader())
+      val pluginProblemJavaClass = Class.forName(fqProblemId, false, this.javaClass.getClassLoader())
       val kotlin = pluginProblemJavaClass.kotlin
-
       kotlin
     }.onFailure { t ->
-      LOG.warn("Problem ID '$fullyQualifiedProblemId' could not be resolved to a fully qualified class corresponding to a plugin problem: {}", t.message)
+      LOG.warn("Problem ID '$problemId' could not be resolved to a fully qualified class corresponding to a plugin problem: {}", t.message)
     }.getOrNull()
   }
 }
