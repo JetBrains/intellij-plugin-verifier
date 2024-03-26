@@ -42,13 +42,15 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
         out.println("    $pluginFile")
         for (pluginError in pluginErrors) {
           out.println("        $pluginError")
-          if (pluginError.solutionHint.isNotEmpty()) {
-            val hint = pluginError.solutionHint
-            out.println("            $hint")
-          }
+          pluginError.printProblemSolutionHint()
         }
       }
     }
+  }
+
+  private fun PluginProblem.printProblemSolutionHint() {
+    if (solutionHint.isEmpty()) return
+    out.println("            $solutionHint")
   }
 
   private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
