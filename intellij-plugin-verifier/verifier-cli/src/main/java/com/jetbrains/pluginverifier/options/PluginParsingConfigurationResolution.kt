@@ -1,6 +1,10 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.ignored.CliIgnoredProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.newDefaultResolver
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import com.jetbrains.pluginverifier.options.SubmissionType.NEW
 

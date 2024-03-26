@@ -5,7 +5,7 @@
 package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.intellij.problems.CliIgnoredProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.ignored.CliIgnoredProblemLevelRemappingManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
