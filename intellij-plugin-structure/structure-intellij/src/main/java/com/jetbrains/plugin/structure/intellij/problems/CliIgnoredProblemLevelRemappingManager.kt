@@ -55,7 +55,7 @@ class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblem
     }
   }
 
-  private fun findProblemId(problem: PluginProblem): String? {
+  private fun findIgnoredProblemDefinition(problem: PluginProblem): CliIgnoredPluginProblem? {
     val ignoredProblemDefinition = problemClasses.firstOrNull {
       if (it.pluginProblemClass != null) {
         problem.isInstance(it.pluginProblemClass!!)
@@ -63,16 +63,15 @@ class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblem
         false
       }
     }
-    return ignoredProblemDefinition?.id
+    return ignoredProblemDefinition
   }
 
   override fun getProblemSolutionHint(problem: PluginProblem): String? {
-    val problemId = findProblemId(problem)
-
-    //FIXME novotnyr handle dates
-    val message = "This plugin problem has been reported since <___>. " +
-      "If the plugin was previously uploaded to the JetBrains Marketplace, it can be suppressed using the `-mute $problemId` command-line switch."
-    return message
+    val problemDefinition = findIgnoredProblemDefinition(problem) ?: return null
+    with(problemDefinition) {
+      return "This plugin problem has been reported since $since. " +
+        "If the plugin was previously uploaded to the JetBrains Marketplace, it can be suppressed using the `-mute $id` command-line switch."
+    }
   }
 
 }
