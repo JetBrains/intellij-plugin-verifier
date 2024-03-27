@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DatabindException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.*
+import com.jetbrains.plugin.structure.base.problems.PluginProblems.resolveClass
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URL
@@ -19,8 +20,6 @@ fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
     ?: throw IOException("Plugin problem level remapping definition cannot be found at <$PLUGIN_PROBLEMS_FILE_NAME>")
   return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
 }
-
-private const val PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX = "com.jetbrains.plugin.structure."
 
 const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
 
@@ -59,32 +58,6 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
       throw IOException("Cannot deserialize plugin problems definitions from JSON in <$pluginProblemsJsonUrl>", e)
     }
     return definitions
-  }
-
-
-  /**
-   * Resolves the problem ID to a fully qualified Kotlin class.
-   *
-   * The following formats are supported:
-   *
-   * - Fully qualified problem ID which corresponds to a class name, such as
-   *    `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
-   * - Problem ID which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
-   *    package prefix, such as `intellij.problems.ForbiddenPluginIdPrefix`.
-   */
-  private fun resolveClass(problemId: String): KClass<out Any>? {
-    val fqProblemId = if (problemId.startsWith(PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX)) {
-      problemId
-    } else {
-      PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX + problemId
-    }
-    return runCatching {
-      val pluginProblemJavaClass = Class.forName(fqProblemId, false, this.javaClass.getClassLoader())
-      val kotlin = pluginProblemJavaClass.kotlin
-      kotlin
-    }.onFailure { t ->
-      LOG.warn("Problem ID '$problemId' could not be resolved to a fully qualified class corresponding to a plugin problem: {}", t.message)
-    }.getOrNull()
   }
 }
 

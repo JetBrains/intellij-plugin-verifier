@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.output.stream
 
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.intellij.problems.ignored.CliIgnoredProblemLevelRemappingManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
@@ -19,6 +21,8 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   private companion object {
     private const val INDENT = "    "
   }
+
+  private val problemSolutionHintProvider = CliIgnoredProblemLevelRemappingManager()
 
   override fun printResults(results: List<PluginVerificationResult>) {
     results.forEach { result ->
@@ -38,9 +42,15 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
         out.println("    $pluginFile")
         for (pluginError in pluginErrors) {
           out.println("        $pluginError")
+          pluginError.printProblemSolutionHint()
         }
       }
     }
+  }
+
+  private fun PluginProblem.printProblemSolutionHint() {
+    if (solutionHint.isEmpty()) return
+    out.println("            $solutionHint")
   }
 
   private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
@@ -127,4 +137,6 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
     }
   }
 
+  private val PluginProblem.solutionHint: String
+    get() = problemSolutionHintProvider.getProblemSolutionHint(this) ?: ""
 }

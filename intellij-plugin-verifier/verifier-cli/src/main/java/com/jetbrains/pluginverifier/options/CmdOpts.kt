@@ -79,6 +79,13 @@ open class CmdOpts(
   "submission-type",
   description = "Set the plugin submission type for verifications. Available options: new (a first-time submission for new plugins with stricter set of verification rules), existing (a plugin that has been already submitted and validated with a relaxed set of rules)."
   )
-  var submissionType: String? = "new"
+  var submissionType: String? = "new",
 
+  @set:Argument(
+  "mute",
+    alias = "muted-problems",
+    description = "The problems that will be ignored. Comma-separated list of plugin problem identifiers.\n" +
+      "\tExample: -mute ForbiddenPluginIdPrefix,TemplateWordInPluginId"
+  )
+  var mutedPluginProblems: Array<String> = emptyArray()
 )

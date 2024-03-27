@@ -114,13 +114,13 @@ object OptionsParser {
     return IdeDescriptor.create(idePath, defaultJdkPath, null)
   }
 
-  fun createPluginParsingConfiguration(opts: CmdOpts): PluginParsingConfiguration {
-     val submissionType = when (opts.submissionType) {
+  fun createPluginParsingConfiguration(opts: CmdOpts): PluginParsingConfiguration = with(opts) {
+    val submissionType = when (submissionType) {
       "existing" -> SubmissionType.EXISTING
       "new" -> SubmissionType.NEW
       else -> SubmissionType.NEW
     }
-    return PluginParsingConfiguration(submissionType)
+    PluginParsingConfiguration(submissionType, mutedPluginProblems.toList())
   }
 
   private val ideLatestRegexp = Regex("\\[latest(-([A-Z]+))?]")

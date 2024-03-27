@@ -102,4 +102,22 @@ class PluginParsingConfigurationResolutionTest {
     val creationSuccess = creationResult as PluginCreationSuccess
     assertThat(creationSuccess.warnings.size, `is`(2))
   }
+
+  @Test
+  fun `plugin configuration with ignored plugin problems specified in CLI`() {
+    val config = PluginParsingConfiguration(ignoredPluginProblems = listOf("ForbiddenPluginIdPrefix"))
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
+      levelRemappingFromClassPathJson())
+
+    val forbiddenPluginIdPrefix = "com.example"
+    val forbiddenPluginId = "$forbiddenPluginIdPrefix.plugin"
+    val plugin = MockIdePlugin(pluginId = forbiddenPluginId)
+    val pluginProblems = listOf(ForbiddenPluginIdPrefix(forbiddenPluginId, forbiddenPluginIdPrefix))
+
+    val creationResult = creationResultResolver.resolve(plugin, pluginProblems)
+    assertThat(creationResult, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = creationResult as PluginCreationSuccess
+    assertThat(creationSuccess.warnings.size, `is`(0))
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+  }
 }

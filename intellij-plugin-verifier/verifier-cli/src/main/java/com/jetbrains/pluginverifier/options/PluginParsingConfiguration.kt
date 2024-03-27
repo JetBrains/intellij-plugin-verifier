@@ -7,4 +7,7 @@ enum class SubmissionType {
   EXISTING
 }
 
-data class PluginParsingConfiguration(val pluginSubmissionType: SubmissionType = NEW)
+typealias ProblemId = String
+
+data class PluginParsingConfiguration(val pluginSubmissionType: SubmissionType = NEW,
+                                      val ignoredPluginProblems: List<ProblemId> = emptyList())
