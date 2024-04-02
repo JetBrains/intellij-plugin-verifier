@@ -38,13 +38,13 @@ private const val PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX = "com.jetbrains.plugin.
 
 object PluginProblems {
   /**
-   * Resolves the problem ID to a fully qualified Kotlin class.
+   * Resolves a Kotlin class by a given problem identifier.
    *
    * The following formats are supported:
    *
-   * - Fully qualified problem ID which corresponds to a class name, such as
+   * - Fully qualified problem identifier which corresponds to a class name, such as
    *    `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
-   * - Problem ID which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
+   * - Problem identifier which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
    *    package prefix, such as `intellij.problems.ForbiddenPluginIdPrefix`.
    */
   fun resolveClass(problemId: String): KClass<out Any>? {
