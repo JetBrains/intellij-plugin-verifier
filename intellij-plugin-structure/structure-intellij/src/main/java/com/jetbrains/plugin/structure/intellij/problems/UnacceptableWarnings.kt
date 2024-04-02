@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 
@@ -13,6 +13,10 @@ class ShortOrNonLatinDescription : InvalidDescriptorProblem(
 ) {
   override val level
     get() = Level.UNACCEPTABLE_WARNING
+
+  override val hint = ProblemSolutionHint(
+    documentationUrl = "https://plugins.jetbrains.com/docs/marketplace/jetbrains-marketplace-approval-guidelines.html#plugin-description"
+  )
 }
 
 class HttpLinkInDescription(link: String) : InvalidDescriptorProblem(
