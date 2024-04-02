@@ -170,7 +170,7 @@ This option is used by JetBrains Marketplace by default.
   * `no`: all internal API usages will be reported. This is the default value.
   * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.  
 
-* `-mute` will mute (ignore) a specified plugin problem.
+* `-mute` will mute (ignore) specified plugin problems.
 This will mute any kind of supported plugin problems — including plugin problems related to the plugin descriptor.
 
     Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
