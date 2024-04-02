@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.intellij.problems.MIN_DESCRIPTION_LENGTH
 import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.ShortOrNonLatinDescription
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 
 private const val MAX_LONG_PROPERTY_LENGTH = 65535
 
@@ -16,6 +17,8 @@ private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
 
 class PluginDescriptionVerifier {
   private val nonLatinCharacterVerifier = NonLatinCharacterVerifier()
+  private val htmlLinkVerifier = HtmlLinkVerifier()
+  private val templateDescriptionVerifier = TemplateDescriptionVerifier()
 
   fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
     val htmlDescription = plugin.description
@@ -29,24 +32,9 @@ class PluginDescriptionVerifier {
     val html = Jsoup.parseBodyFragment(htmlDescription)
     val textDescription = html.text()
 
-    if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
-      problemRegistrar.registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
-      return
-    }
-
+    templateDescriptionVerifier.verify(textDescription, descriptorPath, problemRegistrar)
     nonLatinCharacterVerifier.verify(textDescription, problemRegistrar)
-
-    val links = html.select("[href],img[src]")
-    links.forEach { link ->
-      val href = link.attr("abs:href")
-      val src = link.attr("abs:src")
-      if (href.startsWith("http://")) {
-        problemRegistrar.registerProblem(HttpLinkInDescription(href))
-      }
-      if (src.startsWith("http://")) {
-        problemRegistrar.registerProblem(HttpLinkInDescription(src))
-      }
-    }
+    htmlLinkVerifier.verify(html, problemRegistrar)
   }
 
   class NonLatinCharacterVerifier {
@@ -58,6 +46,31 @@ class PluginDescriptionVerifier {
       val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
       if (latinDescriptionPart == null) {
         problemRegistrar.registerProblem(ShortOrNonLatinDescription())
+      }
+    }
+  }
+
+  class HtmlLinkVerifier {
+    fun verify(html: Document, problemRegistrar: ProblemRegistrar) {
+      val links = html.select("[href],img[src]")
+      links.forEach { link ->
+        val href = link.attr("abs:href")
+        val src = link.attr("abs:src")
+        if (href.startsWith("http://")) {
+          problemRegistrar.registerProblem(HttpLinkInDescription(href))
+        }
+        if (src.startsWith("http://")) {
+          problemRegistrar.registerProblem(HttpLinkInDescription(src))
+        }
+      }
+    }
+  }
+
+  class TemplateDescriptionVerifier {
+    fun verify(textDescription: String, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
+      if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
+        problemRegistrar.registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
+        return
       }
     }
   }
