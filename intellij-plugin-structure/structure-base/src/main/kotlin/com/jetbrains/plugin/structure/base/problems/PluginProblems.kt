@@ -57,7 +57,8 @@ object PluginProblems {
       val pluginProblemJavaClass = Class.forName(fqProblemId, false, this.javaClass.getClassLoader())
       pluginProblemJavaClass.kotlin
     }.onFailure { t ->
-      LOG.warn("Problem ID '$problemId' could not be resolved to a fully qualified class corresponding to a plugin problem: {}", t.message)
+      LOG.warn("Plugin problem ID '{}' could not be resolved to a class " +
+        "corresponding to a plugin problem: {}", problemId, t.message)
     }.getOrNull()
   }
 }
