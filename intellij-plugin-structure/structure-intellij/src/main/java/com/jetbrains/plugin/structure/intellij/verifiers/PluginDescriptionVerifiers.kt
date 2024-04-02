@@ -14,11 +14,9 @@ private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
   "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
 )
 
-// \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-@Suppress("RegExpSimplifiable")
-private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
-
 class PluginDescriptionVerifier {
+  private val nonLatinCharacterVerifier = NonLatinCharacterVerifier()
+
   fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
     val htmlDescription = plugin.description
 
@@ -36,10 +34,8 @@ class PluginDescriptionVerifier {
       return
     }
 
-    val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
-    if (latinDescriptionPart == null) {
-      problemRegistrar.registerProblem(ShortOrNonLatinDescription())
-    }
+    nonLatinCharacterVerifier.verify(textDescription, problemRegistrar)
+
     val links = html.select("[href],img[src]")
     links.forEach { link ->
       val href = link.attr("abs:href")
@@ -49,6 +45,19 @@ class PluginDescriptionVerifier {
       }
       if (src.startsWith("http://")) {
         problemRegistrar.registerProblem(HttpLinkInDescription(src))
+      }
+    }
+  }
+
+  class NonLatinCharacterVerifier {
+    // \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
+    @Suppress("RegExpSimplifiable")
+    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
+
+    fun verify(textDescription: String, problemRegistrar: ProblemRegistrar) {
+      val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
+      if (latinDescriptionPart == null) {
+        problemRegistrar.registerProblem(ShortOrNonLatinDescription())
       }
     }
   }
