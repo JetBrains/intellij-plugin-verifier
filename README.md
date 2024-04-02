@@ -175,7 +175,7 @@ This will mute any kind of supported plugin problems — including plugin proble
 
     Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
     with more relaxed rules than a new plugin. 
-    This option is used to mute plugin problems that don't apply to such plugin.
+    This option is used to mute plugin problems that don't apply to such a plugin.
 
     A comma-separated list of plugin problem identifiers is allowed.
 
