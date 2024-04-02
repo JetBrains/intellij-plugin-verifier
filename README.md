@@ -170,20 +170,25 @@ This option is used by JetBrains Marketplace by default.
   * `no`: all internal API usages will be reported. This is the default value.
   * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.  
 
-* `-mute` will mute (ignore) specified plugin problems.
-This will mute any kind of supported plugin problems — including plugin problems related to the plugin descriptor.
+* `-mute` will mute (ignore) a specified plugin problems.
 
-    Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
-    with more relaxed rules than a new plugin. 
-    This option is used to mute plugin problems that don't apply to such a plugin.
-
-    A comma-separated list of plugin problem identifiers is allowed.
-
-    The following plugin problem identifiers are supported:
+    Supported values:
 
     - `ForbiddenPluginIdPrefix`,
     - `TemplateWordInPluginId`,
     - `TemplateWordInPluginName`
+
+    A comma-separated list of plugin problems is allowed, e.g.:
+
+        -mute TemplateWordInPluginId,TemplateWordInPluginName
+
+    The switch will mute any kind of supported plugin problems — 
+    including plugin problems related to the plugin descriptor.
+
+    Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
+    with more relaxed rules than a new plugin. 
+    This option is used to mute plugin problems that do not apply to such a plugin.
+
 
 #### Examples
 
