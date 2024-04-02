@@ -154,7 +154,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
         [-suppress-internal-api-usages no|jetbrains-plugins]
-        [-mute <,>-separated plugin problem identifier list]
+        [-mute comma-separated plugin problem identifier list]
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
