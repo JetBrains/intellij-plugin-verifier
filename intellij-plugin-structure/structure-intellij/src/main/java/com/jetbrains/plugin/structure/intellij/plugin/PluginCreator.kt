@@ -21,7 +21,6 @@ import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
 import org.jdom2.Document
 import org.jdom2.Element
-import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.time.LocalDate
@@ -50,21 +49,15 @@ internal class PluginCreator private constructor(
       "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm",
       "WebStorm", "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
     )
-    private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
-      "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
-    )
-
     val v2ModulePrefix = Regex("^intellij\\..*")
-
-    // \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-    @Suppress("RegExpSimplifiable")
-    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
 
     private val json = jacksonObjectMapper()
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
     private val pluginIdVerifier = PluginIdVerifier()
+
+    private val pluginDescriptionVerifier = PluginDescriptionVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -520,7 +513,7 @@ internal class PluginCreator private constructor(
       validateVersion(bean.pluginVersion, validateDescriptor)
     }
     if (validateDescriptor || bean.description != null) {
-      validateDescription(bean.description, validateDescriptor)
+      validateDescription(bean, bean.description, validateDescriptor)
     }
     if (validateDescriptor || bean.changeNotes != null) {
       validateChangeNotes(bean.changeNotes)
@@ -802,39 +795,11 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validateDescription(htmlDescription: String?, validateDescriptor: Boolean) {
+  private fun validateDescription(bean: PluginBean, htmlDescription: String?, validateDescriptor: Boolean) {
     if (!validateDescriptor && htmlDescription == null) {
       return
     }
-    if (htmlDescription.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("description", descriptorPath))
-      return
-    }
-    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH)
-
-    val html = Jsoup.parseBodyFragment(htmlDescription)
-    val textDescription = html.text()
-
-    if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
-      return
-    }
-
-    val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
-    if (latinDescriptionPart == null) {
-      registerProblem(ShortOrNonLatinDescription())
-    }
-    val links = html.select("[href],img[src]")
-    links.forEach { link ->
-      val href = link.attr("abs:href")
-      val src = link.attr("abs:src")
-      if (href.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(href))
-      }
-      if (src.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(src))
-      }
-    }
+    pluginDescriptionVerifier.verify(bean, descriptorPath, ::registerProblem)
   }
 
   private fun validateChangeNotes(changeNotes: String?) {
