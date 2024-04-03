@@ -128,8 +128,12 @@ class HtmlResultPrinter(
           printShortAndFullDescriptionItems("Override-only API usages", overrideOnlyMethodUsages) { it.shortDescription to it.fullDescription }
           if (pluginStructureWarnings.isNotEmpty()) {
             printShortAndFullDescription("Plugin structure defects") {
-              pluginStructureWarnings.forEach {
-                +it.message
+              ul {
+                pluginStructureWarnings.forEach {
+                  li {
+                    +it.message
+                  }
+                }
               }
             }
           }
