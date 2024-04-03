@@ -129,7 +129,8 @@ internal class PluginCreator private constructor(
   val contentModules = arrayListOf<Module>()
 
   private val plugin = IdePluginImpl()
-  private val problems = arrayListOf<PluginProblem>()
+  private val problems: MutableList<PluginProblem>
+    get() = plugin.problems
 
   val pluginId: String?
     get() = plugin.pluginId ?: parentPlugin?.pluginId
