@@ -52,13 +52,6 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     idePlugin: IdePlugin
   ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null)
 
-  override fun providePluginDetails(
-    pluginInfo: PluginInfo,
-    idePlugin: IdePlugin,
-    warnings: List<PluginProblem>
-  ) = readPluginClasses(pluginInfo, idePlugin, warnings, null)
-
-
   private fun readPluginClasses(
     pluginInfo: PluginInfo,
     idePlugin: IdePlugin,
