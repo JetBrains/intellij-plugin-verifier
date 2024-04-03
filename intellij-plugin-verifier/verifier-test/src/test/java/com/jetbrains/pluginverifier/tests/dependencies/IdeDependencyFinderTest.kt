@@ -1,6 +1,5 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -137,20 +136,6 @@ class IdeDependencyFinderTest {
           pluginInfo,
           idePlugin,
           emptyList(),
-          IdePluginClassesLocations(
-            idePlugin,
-            Closeable { },
-            emptyMap()
-          ),
-          null
-        )
-      )
-
-      override fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin, warnings: List<PluginProblem>) = PluginDetailsProvider.Result.Provided(
-        PluginDetails(
-          pluginInfo,
-          idePlugin,
-          warnings,
           IdePluginClassesLocations(
             idePlugin,
             Closeable { },
