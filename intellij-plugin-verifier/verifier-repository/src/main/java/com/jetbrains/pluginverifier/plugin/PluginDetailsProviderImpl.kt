@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadPluginFile
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -34,7 +35,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
             readPluginClasses(
               pluginInfo,
               plugin,
-              warnings,
+              plugin.problems,
               pluginFileLock
             )
           }
@@ -50,7 +51,9 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
   override fun providePluginDetails(
     pluginInfo: PluginInfo,
     idePlugin: IdePlugin
-  ) = readPluginClasses(pluginInfo, idePlugin, emptyList(), null)
+  ): PluginDetailsProvider.Result {
+    return readPluginClasses(pluginInfo, idePlugin, idePlugin.problems, null)
+  }
 
   private fun readPluginClasses(
     pluginInfo: PluginInfo,
@@ -77,5 +80,8 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
       )
     )
   }
+
+  private val IdePlugin.problems: List<PluginProblem>
+    get() = if (this is StructurallyValidated) this.problems else emptyList()
 
 }
