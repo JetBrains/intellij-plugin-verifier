@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodInsnNode
@@ -16,6 +18,11 @@ private val LOG: Logger = LoggerFactory.getLogger(Method::class.java)
  * This is in line with Java Language Specification.
  */
 typealias BinaryClassName = String
+
+/**
+ * Indicates a fully qualified class name where packages are delimited by '.' (comma).
+ */
+typealias FullyQualifiedClassName = String
 
 const val JAVA_LANG_OBJECT: BinaryClassName = "java/lang/Object"
 
@@ -98,8 +105,44 @@ fun isCallOfSuperMethod(callerMethod: Method, calledMethod: Method, instructionN
 
 data class MethodDescriptor(private val methodName: String, private val descriptor: String)
 
-fun Method.matches(method: Method): Boolean =
-  MethodDescriptor(name, descriptor) == MethodDescriptor(method.name, method.descriptor)
+fun Method.matches(method: Method): Boolean {
+  return MethodDescriptor(name, descriptor) == MethodDescriptor(method.name, method.descriptor)
+}
 
 fun MethodInsnNode.matches(method: Method): Boolean =
   MethodDescriptor(name, desc) == MethodDescriptor(method.name, method.descriptor)
+
+fun Method.returnType(): BinaryClassName {
+  val returnType: Type = Type.getReturnType(this.descriptor)
+  return returnType.className.toBinaryClassName()
+}
+
+fun Method.doesOverride(possiblyParentMethod: Method, resolver: Resolver): Boolean {
+  return nonStaticAndNonFinal(possiblyParentMethod)
+    && sameName(this, possiblyParentMethod)
+    && sameParameters(this, possiblyParentMethod)
+    && sameOrCovariantReturnType(this, possiblyParentMethod, resolver)
+    && sameOrBroaderVisibility(this, possiblyParentMethod)
+}
+
+fun sameOrCovariantReturnType(method: Method, possiblyParentMethod: Method, resolver: Resolver): Boolean {
+  val returnType: BinaryClassName = method.returnType()
+  val possibleParentReturnType: BinaryClassName = possiblyParentMethod.returnType()
+
+  return resolver.isSubclassOrSelf(returnType, possibleParentReturnType)
+}
+
+fun sameParameters(method: Method, anotherMethod: Method): Boolean {
+  val argTypes: Array<Type> = Type.getArgumentTypes(method.descriptor)
+  val anotherArgTypes: Array<Type> = Type.getArgumentTypes(anotherMethod.descriptor)
+
+  if (argTypes.size != anotherArgTypes.size) {
+    return false
+  }
+
+  return argTypes.indices.all { index ->
+    argTypes[index] == anotherArgTypes[index]
+  }
+}
+
+fun FullyQualifiedClassName.toBinaryClassName(): BinaryClassName = replace('.', '/')
