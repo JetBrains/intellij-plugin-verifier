@@ -5,11 +5,11 @@ import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.intellij.problems.IgnoredLevel
 import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinition
 import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinitions
+import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.ProblemSolutionHintProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
-import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager as ProblemLevelRemappingManager1
 
 const val CLI_IGNORED = "cli-ignored"
 
@@ -17,7 +17,7 @@ typealias PluginProblemId = String
 
 private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
 
-class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager1, ProblemSolutionHintProvider {
+class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager , ProblemSolutionHintProvider {
   private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader.fromClassPathJson()
 
   private val problemClasses: List<CliIgnoredPluginProblem> = ignoredProblemDefinitionLoader.load()
