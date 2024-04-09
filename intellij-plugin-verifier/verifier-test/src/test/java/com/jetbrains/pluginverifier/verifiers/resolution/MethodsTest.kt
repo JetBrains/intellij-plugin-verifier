@@ -94,7 +94,7 @@ class MethodsTest {
     val resolver = createJdkResolver()
     // E set(int,E)
     val set = resolver.findMethodInClass(arrayListBinaryName, "(ILjava/lang/Object;)Ljava/lang/Object;")
-    // public List<E> subList(int fromIndex, int toIndex)
+    // List<E> subList(int fromIndex, int toIndex)
     val subList = resolver.findMethodInClass(arrayListBinaryName, "(II)Ljava/util/List;")
 
     assertFalse(sameParameters(set, subList))
@@ -130,25 +130,6 @@ class MethodsTest {
 
     assertTrue(arrayListToString.isOverriding(objectToString, resolver))
   }
-
-
-  /*
-  @Test
-  fun `method parameters override with the covariancy`() {
-    val childName: BinaryClassName = "com/intellij/util/indexing/SingleEntryFileBasedIndexExtension"
-    val parentName: BinaryClassName = "com/intellij/util/indexing/IndexExtension"
-
-    val getIndexerInChild = "()Lcom/intellij/util/indexing/SingleEntryIndexer;"
-    val getIndexerInParent = "()Lcom/intellij/util/indexing/DataIndexer;"
-
-    val resolver = mockResolver
-    val arrayListToString = resolver.findMethodInClass(childName, getIndexerInChild)
-    val objectToString = resolver.findMethodInClass(parentName, getIndexerInParent)
-
-    assertTrue(arrayListToString.doesOverride(objectToString, resolver))
-  }
-
-   */
 
   @Throws(AssertionError::class)
   private fun Resolver.findMethodInClass(cls: BinaryClassName, descriptor: String): MethodAsm {
