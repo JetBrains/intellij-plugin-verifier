@@ -6,12 +6,13 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
 import java.nio.file.Path
 
-class IdePluginImpl : IdePlugin {
+class IdePluginImpl : IdePlugin, StructurallyValidated {
   override var pluginId: String? = null
 
   override var pluginName: String? = null
@@ -76,6 +77,8 @@ class IdePluginImpl : IdePlugin {
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
     (sinceBuild == null || sinceBuild!! <= ideVersion) && (untilBuild == null || ideVersion <= untilBuild!!)
+
+  override val problems: MutableList<PluginProblem> = mutableListOf()
 
   override fun toString(): String =
     (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")

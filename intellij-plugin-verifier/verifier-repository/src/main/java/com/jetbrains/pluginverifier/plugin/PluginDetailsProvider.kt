@@ -29,11 +29,6 @@ interface PluginDetailsProvider {
   fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock): Result
 
   /**
-   * Creates [PluginDetails] for existing plugin with warnings of the plugin structure.
-   */
-  fun providePluginDetails(pluginInfo: PluginInfo, idePlugin: IdePlugin, warnings: List<PluginProblem>): Result
-
-  /**
    * Represents possible results of [providing] [providePluginDetails] the [PluginDetails].
    */
   sealed class Result : Closeable {
