@@ -5,8 +5,8 @@
 package com.jetbrains.pluginverifier.output.stream
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.intellij.problems.ignored.CliIgnoredProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.base.problems.isError
+import com.jetbrains.plugin.structure.intellij.problems.ignored.CliIgnoredProblemLevelRemappingManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
@@ -46,23 +46,24 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
           out.println("        Plugin problems:")
           for (pluginError in pluginErrors) {
             out.println("            $pluginError")
-            pluginError.printProblemSolutionHint()
+            pluginError.printProblemSolutionHint(indentLevel = 2)
           }
         }
         if (otherPluginProblems.isNotEmpty()) {
           out.println("        Additional plugin warnings:")
           for (pluginProblem in otherPluginProblems) {
             out.println("            $pluginProblem")
-            pluginProblem.printProblemSolutionHint()
+            pluginProblem.printProblemSolutionHint(indentLevel = 2)
           }
         }
       }
     }
   }
 
-  private fun PluginProblem.printProblemSolutionHint() {
+  private fun PluginProblem.printProblemSolutionHint(indentLevel: Int = 1) {
     if (solutionHint.isEmpty()) return
-    out.println("            $solutionHint")
+    val indent = " ".repeat(indentLevel * 4)
+    out.println("        $indent$solutionHint")
   }
 
   private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
