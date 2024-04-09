@@ -32,6 +32,14 @@ fun Method.isOverriding(anotherMethod: Method): Boolean =
     && sameParametersAndReturnType(this, anotherMethod)
     && sameOrBroaderVisibility(this, anotherMethod)
 
+fun Method.isOverriding(possiblyParentMethod: Method, resolver: Resolver): Boolean {
+  return nonStaticAndNonFinal(possiblyParentMethod)
+    && sameName(this, possiblyParentMethod)
+    && sameParameters(this, possiblyParentMethod)
+    && sameOrCovariantReturnType(this, possiblyParentMethod, resolver)
+    && sameOrBroaderVisibility(this, possiblyParentMethod)
+}
+
 data class MethodInClass(val method: Method, val klass: ClassFile)
 
 private fun nonStaticAndNonFinal(anotherMethod: Method) = !anotherMethod.isStatic && !anotherMethod.isFinal
@@ -115,14 +123,6 @@ fun MethodInsnNode.matches(method: Method): Boolean =
 fun Method.returnType(): BinaryClassName {
   val returnType: Type = Type.getReturnType(this.descriptor)
   return returnType.className.toBinaryClassName()
-}
-
-fun Method.doesOverride(possiblyParentMethod: Method, resolver: Resolver): Boolean {
-  return nonStaticAndNonFinal(possiblyParentMethod)
-    && sameName(this, possiblyParentMethod)
-    && sameParameters(this, possiblyParentMethod)
-    && sameOrCovariantReturnType(this, possiblyParentMethod, resolver)
-    && sameOrBroaderVisibility(this, possiblyParentMethod)
 }
 
 fun sameOrCovariantReturnType(method: Method, possiblyParentMethod: Method, resolver: Resolver): Boolean {

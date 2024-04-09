@@ -111,7 +111,7 @@ class MethodsTest {
     val arrayListToString = resolver.findMethodInClass(abstractCollectionBinaryName, toStringDesc)
     val objectToString = resolver.findMethodInClass(objectBinaryName, toStringDesc)
 
-    assertTrue(arrayListToString.doesOverride(objectToString, resolver))
+    assertTrue(arrayListToString.isOverriding(objectToString, resolver))
   }
 
   @Test
@@ -128,7 +128,7 @@ class MethodsTest {
     val arrayListToString = resolver.findMethodInClass(childName, getIndexerInChild)
     val objectToString = resolver.findMethodInClass(parentName, getIndexerInParent)
 
-    assertTrue(arrayListToString.doesOverride(objectToString, resolver))
+    assertTrue(arrayListToString.isOverriding(objectToString, resolver))
   }
 
 

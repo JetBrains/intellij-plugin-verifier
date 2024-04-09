@@ -7,7 +7,7 @@ package com.jetbrains.pluginverifier.usages.overrideOnly
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import com.jetbrains.pluginverifier.verifiers.resolution.doesOverride
+import com.jetbrains.pluginverifier.verifiers.resolution.isOverriding
 import org.objectweb.asm.tree.AbstractInsnNode
 
 /**
@@ -38,6 +38,6 @@ class BridgeMethodOverrideUsageFilter(private val nonBridgeMethodApiUsageFilterD
   private fun allowBridgeMethodInvocation(invokedMethod: Method,
                                           callerMethod: Method,
                                           context: VerificationContext): Boolean {
-    return invokedMethod.doesOverride(callerMethod, context.classResolver)
+    return invokedMethod.isOverriding(callerMethod, context.classResolver)
   }
 }
