@@ -139,7 +139,9 @@ class StreamOutputTest : BaseOutputTest<WriterResultPrinter>() {
       val expected = """
         The following files specified for the verification are not valid plugins:
             plugin.zip
-                Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
+                Additional plugin warnings:
+                    Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
+                        This plugin problem has been reported since 2024-03-26. If the plugin was previously uploaded to the JetBrains Marketplace, it can be suppressed using the `-mute ForbiddenPluginIdPrefix` command-line switch.
 
       """.trimIndent()
       assertOutput(expected)
