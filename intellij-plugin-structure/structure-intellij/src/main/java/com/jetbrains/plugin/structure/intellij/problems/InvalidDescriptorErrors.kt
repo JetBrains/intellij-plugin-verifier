@@ -69,7 +69,8 @@ class InvalidSinceBuild(
 
 class InvalidUntilBuild(
   descriptorPath: String,
-  untilBuild: String
+  untilBuild: String,
+  untilBuildVersion: IdeVersion? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <until-build> parameter ($untilBuild) format is invalid. Ensure it represents the actual build numbers."
@@ -123,6 +124,7 @@ class ErroneousSinceBuild(
     get() = Level.ERROR
 }
 
+@Deprecated(message = "Use InvalidUntilBuild")
 class ErroneousUntilBuild(
   descriptorPath: String,
   untilBuild: IdeVersion
