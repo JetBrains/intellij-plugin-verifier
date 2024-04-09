@@ -5,7 +5,7 @@ import com.intellij.util.indexing.SingleEntryIndexer;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractFileIndex<T> extends SingleEntryFileBasedIndexExtension<T> {
-    private final SingleEntryIndexer<T> indexer = new SingleEntryIndexer<T>() {
+    private final SingleEntryIndexer<T> indexer = new SingleEntryIndexer<>() {
         // no implementation
     };
 

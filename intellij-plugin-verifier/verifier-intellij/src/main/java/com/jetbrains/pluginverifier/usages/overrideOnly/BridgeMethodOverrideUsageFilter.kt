@@ -24,7 +24,7 @@ class BridgeMethodOverrideUsageFilter(private val nonBridgeMethodApiUsageFilterD
                                      callerMethod: Method,
                                      context: VerificationContext): Boolean {
     return if (callerMethod.isBridgeMethod) {
-      allowBridgeMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+      allowBridgeMethodInvocation(invokedMethod, callerMethod, context)
     } else {
       nonBridgeMethodApiUsageFilterDelegate.allowMethodInvocation(
         invokedMethod,
@@ -36,7 +36,6 @@ class BridgeMethodOverrideUsageFilter(private val nonBridgeMethodApiUsageFilterD
 
   //
   private fun allowBridgeMethodInvocation(invokedMethod: Method,
-                                          invocationInstruction: AbstractInsnNode,
                                           callerMethod: Method,
                                           context: VerificationContext): Boolean {
     return invokedMethod.doesOverride(callerMethod, context.classResolver)
