@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.options.CmdOpts
+import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.SubmissionType
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
@@ -63,4 +64,13 @@ class CheckPluginParamsBuilderTest {
     assertEquals(SubmissionType.EXISTING, params.pluginSubmissionType)
   }
 
+  @Test
+  fun `CLI-ignored plugin problems is parsed`() {
+    val cmdOpts = CmdOpts().apply {
+      mutedPluginProblems = arrayOf("ForbiddenPluginIdPrefix", "TemplateWordInPluginId")
+    }
+
+    val pluginParsingConfiguration = OptionsParser.createPluginParsingConfiguration(cmdOpts)
+    assertEquals(listOf("ForbiddenPluginIdPrefix", "TemplateWordInPluginId"), pluginParsingConfiguration.ignoredPluginProblems)
+  }
 }

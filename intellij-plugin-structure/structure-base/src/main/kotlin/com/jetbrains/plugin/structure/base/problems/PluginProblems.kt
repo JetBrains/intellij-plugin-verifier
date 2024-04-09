@@ -1,5 +1,11 @@
 package com.jetbrains.plugin.structure.base.problems
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import kotlin.reflect.KClass
+
+private val LOG: Logger = LoggerFactory.getLogger(PluginProblems::class.java)
+
 fun PluginProblem.isReclassified(): Boolean = this is ReclassifiedPluginProblem
 
 /**
@@ -26,3 +32,36 @@ val PluginProblem.isInvalidDescriptorProblem: Boolean
 
 val PluginProblem.isError: Boolean
   get() = level == PluginProblem.Level.ERROR
+
+fun PluginProblem.isInstance(pluginProblemClass: KClass<*>): Boolean =
+  pluginProblemClass.isInstance(unwrapped)
+
+
+private const val PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX = "com.jetbrains.plugin.structure."
+
+object PluginProblems {
+  /**
+   * Resolves a Kotlin class by a given problem identifier.
+   *
+   * The following formats are supported:
+   *
+   * - Fully qualified problem identifier which corresponds to a class name, such as
+   *    `com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix`
+   * - Problem identifier which can be resolved to a fully qualified class name in the `com.jetbrains.plugin.structure`
+   *    package prefix, such as `intellij.problems.ForbiddenPluginIdPrefix`.
+   */
+  fun resolveClass(problemId: String): KClass<out Any>? {
+    val fqProblemId = if (problemId.startsWith(PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX)) {
+      problemId
+    } else {
+      PLUGIN_PROBLEM_PACKAGE_DEFAULT_PREFIX + problemId
+    }
+    return runCatching {
+      val pluginProblemJavaClass = Class.forName(fqProblemId, false, this.javaClass.getClassLoader())
+      pluginProblemJavaClass.kotlin
+    }.onFailure { t ->
+      LOG.error("Plugin problem ID '{}' could not be resolved to a class " +
+        "corresponding to a plugin problem: {}", problemId, t.message)
+    }.getOrNull()
+  }
+}

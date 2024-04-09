@@ -154,6 +154,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
         [-tc-grouping | -g ]
         [-external-prefixes <':'-separated list>]
         [-suppress-internal-api-usages no|jetbrains-plugins]
+        [-mute comma-separated plugin problem identifier list]
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
@@ -168,6 +169,26 @@ This option is used by JetBrains Marketplace by default.
  
   * `no`: all internal API usages will be reported. This is the default value.
   * `jetbrains-plugins`: internal API usages by JetBrains plugins will not be reported.  
+
+* `-mute` will mute (ignore) a specified plugin problems.
+
+    Supported values:
+
+    - `ForbiddenPluginIdPrefix`,
+    - `TemplateWordInPluginId`,
+    - `TemplateWordInPluginName`
+
+    A comma-separated list of plugin problems is allowed, e.g.:
+
+        -mute TemplateWordInPluginId,TemplateWordInPluginName
+
+    The switch will mute any kind of supported plugin problems — 
+    including plugin problems related to the plugin descriptor.
+
+    Usually, a long-existing plugin uploaded to the JetBrains Marketplace might be verified 
+    with more relaxed rules than a new plugin. 
+    This option is used to mute plugin problems that do not apply to such a plugin.
+
 
 #### Examples
 
