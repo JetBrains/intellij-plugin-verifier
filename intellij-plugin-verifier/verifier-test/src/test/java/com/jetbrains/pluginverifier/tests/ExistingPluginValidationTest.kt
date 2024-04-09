@@ -237,7 +237,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `plugin is not built due to a warning and such problem level is escalated to an error`() {
-    val suspiciousUntilBuild = "404"
+    val suspiciousUntilBuild = "301"
     val header = ideaPlugin("com.example", untilBuild = suspiciousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, error<SuspiciousUntilBuild>())

@@ -73,10 +73,16 @@ class InvalidUntilBuild(
   untilBuildVersion: IdeVersion? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <until-build> parameter ($untilBuild) format is invalid. Ensure it represents the actual build numbers."
+  detailedMessage = "The <until-build> parameter ($untilBuild) does not match the multi-part build number format " +
+    "such as <branch>.<build_number>.<version>, for example, '182.4132.789'."
 ) {
   override val level
     get() = Level.ERROR
+
+  override val hint = ProblemSolutionHint(
+    example = "until-build=\"182.4132.789\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
 }
 
 class SinceBuildGreaterThanUntilBuild(
@@ -113,28 +119,13 @@ class ErroneousSinceBuild(
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <since-build> parameter ($sinceBuild) does not match the multi-part build number format " +
-                    "<branch>.<build_number>.<version>, for example, '182.4132.789'."
+                    "<branch>.<build_number>.<version>, for example, '182.4132.789'. " +
+                    "If you want your plugin to be compatible with all future IDEs, you can leave this field empty. " +
+                    "However, we highly recommend setting it to the latest available IDE version."
+
 ) {
   override val hint = ProblemSolutionHint(
     example = "since-build=\"182.4132.789\"",
-    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
-  )
-
-  override val level: Level
-    get() = Level.ERROR
-}
-
-@Deprecated(message = "Use InvalidUntilBuild")
-class ErroneousUntilBuild(
-  descriptorPath: String,
-  untilBuild: IdeVersion
-) : InvalidDescriptorProblem(
-  descriptorPath = descriptorPath,
-  detailedMessage = "The <until-build> parameter ($untilBuild) does not match the multi-part build number format " +
-                    "<branch>.<build_number>.<version>, for example, '182.4132.789'."
-) {
-  override val hint = ProblemSolutionHint(
-    example = "until-build=\"182.4132.789\"",
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
 
