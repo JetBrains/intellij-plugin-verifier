@@ -557,9 +557,7 @@ internal class PluginCreator private constructor(
         registerProblem(SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId))
       }
     }
-    ReusedDescriptorVerifier(descriptorPath).verify(dependencies) {
-      problems += it
-    }
+    ReusedDescriptorVerifier(descriptorPath).verify(dependencies, ::registerProblem)
   }
 
   private fun validateProductDescriptor(productDescriptor: ProductDescriptorBean?) {

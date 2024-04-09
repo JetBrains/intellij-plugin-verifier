@@ -30,6 +30,9 @@ val PluginProblem.isInvalidDescriptorProblem: Boolean
     this is InvalidDescriptorProblem
   }
 
+val PluginProblem.isError: Boolean
+  get() = level == PluginProblem.Level.ERROR
+
 fun PluginProblem.isInstance(pluginProblemClass: KClass<*>): Boolean =
   pluginProblemClass.isInstance(unwrapped)
 

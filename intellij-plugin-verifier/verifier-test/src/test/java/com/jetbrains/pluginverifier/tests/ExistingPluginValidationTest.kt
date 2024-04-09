@@ -6,12 +6,14 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -291,7 +293,49 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat(creationSuccess.warnings.size, `is`(0))
   }
 
-  private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
+    @Test
+    fun `internal plugin is build despite having a service extension point preload because it is remapped`() {
+        val header = ideaPlugin(vendor = "JetBrains")
+        val delegateResolver = IntelliJPluginCreationResultResolver()
+
+        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+                ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+        val problemResolver = JetBrainsPluginCreationResultResolver(
+                LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+                jetBrainsPluginLevelRemapping)
+
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $header
+              <extensions defaultExtensionNs="com.intellij">
+                <applicationService
+                    serviceInterface="com.example.MyAppService"
+                    serviceImplementation="com.example.MyAppServiceImpl"
+                    preload="await"
+                    />
+              </extensions>  
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+        val creationSuccess = result as PluginCreationSuccess
+
+        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+        // warning about ServiceExtensionPointPreload
+        val warnings = creationSuccess.warnings
+        assertEquals(1, warnings.size)
+        val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+                .singleOrNull()
+        Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+    }
+
+    private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
         """

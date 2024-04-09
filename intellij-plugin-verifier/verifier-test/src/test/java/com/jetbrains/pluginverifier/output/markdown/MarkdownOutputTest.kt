@@ -4,8 +4,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.InvalidSinceBuild
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -331,8 +333,44 @@ class MarkdownOutputTest {
         
         Full path: `plugin.zip`
         
+        ### Plugin Warnings
+        
         * Invalid plugin descriptor 'id'. The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
         
+        
+      """.trimIndent()
+    assertEquals(expected, output())
+  }
+
+  @Test
+  fun `plugin has structural problems with plugin error and plugin warning`() {
+    val pluginId = "com.example.intellij"
+    val prefix = "com.example"
+    val invalidPluginFiles = listOf(
+      InvalidPluginFile(Path("plugin.zip"), listOf(
+        InvalidSinceBuild(PLUGIN_XML, sinceBuild = "1"),
+        ForbiddenPluginIdPrefix(pluginId, prefix)))
+    )
+
+    resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
+
+    val expected = """
+        # Invalid plugin
+        
+        The following file specified for the verification is not a valid plugin.
+        
+        ## plugin.zip
+        
+        Full path: `plugin.zip`
+        
+        ### Plugin Problems
+        
+        * Invalid plugin descriptor 'plugin.xml'. The <since-build> parameter (1) format is invalid. Ensure it is greater than <130> and represents the actual build numbers.
+        
+        ### Additional Plugin Warnings
+        
+        * Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
+
         
       """.trimIndent()
     assertEquals(expected, output())
