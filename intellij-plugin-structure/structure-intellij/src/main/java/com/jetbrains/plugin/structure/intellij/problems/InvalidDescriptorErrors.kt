@@ -91,7 +91,7 @@ class InvalidUntilBuildWithJustBranch(
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <until-build> attribute with only a branch number ($untilBuild) is not valid. " +
-                    "Such values must include a wildcard, for example '$untilBuild.*'."
+                    "To specify compatibility with a whole branch, include a wildcard, for example '$untilBuild.*'."
 ) {
   override val level
     get() = Level.ERROR
