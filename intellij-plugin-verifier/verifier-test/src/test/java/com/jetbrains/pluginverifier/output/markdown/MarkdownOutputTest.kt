@@ -1,136 +1,65 @@
 package com.jetbrains.pluginverifier.output.markdown
 
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.InvalidSinceBuild
-import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.jar.PLUGIN_XML
-import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus.MaybeDynamic
-import com.jetbrains.pluginverifier.jdk.JdkVersion
-import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.hierarchy.ClassHierarchy
-import com.jetbrains.pluginverifier.results.instruction.Instruction
-import com.jetbrains.pluginverifier.results.location.ClassLocation
-import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.location.toReference
-import com.jetbrains.pluginverifier.results.modifiers.Modifiers
-import com.jetbrains.pluginverifier.results.modifiers.Modifiers.Modifier.PUBLIC
-import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
-import com.jetbrains.pluginverifier.results.problems.SuperInterfaceBecameClassProblem
-import com.jetbrains.pluginverifier.results.reference.ClassReference
-import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.tasks.InvalidPluginFile
-import com.jetbrains.pluginverifier.usages.experimental.ExperimentalClassUsage
-import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
-import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableTypeInherited
-import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
-import org.junit.Assert.assertEquals
+import com.jetbrains.pluginverifier.output.BaseOutputTest
+import com.jetbrains.pluginverifier.output.PLUGIN_VERSION
 import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
-import java.io.StringWriter
-import kotlin.io.path.Path
 
-private const val PLUGIN_ID = "pluginId"
-private const val PLUGIN_VERSION = "1.0"
+class MarkdownOutputTest : BaseOutputTest<MarkdownResultPrinter>() {
+    @Before
+    override fun setUp() {
+      super.setUp()
+      resultPrinter = MarkdownResultPrinter(PrintWriter(out))
+    }
 
-class MarkdownOutputTest {
-  private val pluginInfo = mockPluginInfo()
-  private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
+    @Test
+    fun `plugin is compatible`() {
+      `when plugin is compatible` {
+        val expected = """
+            # Plugin pluginId $PLUGIN_VERSION against 232.0
+            
+            Compatible
+            
+            
+            """.trimIndent()
+        assertOutput(expected)
+      }
+    }
 
-  private lateinit var out: StringWriter
-  private lateinit var resultPrinter: MarkdownResultPrinter
-
-  @Before
-  fun setUp() {
-    out = StringWriter()
-    resultPrinter = MarkdownResultPrinter(PrintWriter(out))
-  }
-
-  @Test
-  fun `plugin is compatible`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-      # Plugin pluginId $PLUGIN_VERSION against 232.0
-      
-      Compatible
-      
-      
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has compatibility warnings`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, mockCompatibilityProblems())
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-      # Plugin pluginId 1.0 against 232.0
-      
-      4 compatibility problems
-      
-      ## Compatibility problems (4)
-      
-      ### Incompatible change of super interface com.jetbrains.plugin.Parent to class
-      
-      * Class com.jetbrains.plugin.Child has a *super interface* com.jetbrains.plugin.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
-      
-      ### Incompatible change of super interface com.jetbrains.plugin.pkg.Parent to class
-      
-      * Class com.jetbrains.plugin.pkg.Child has a *super interface* com.jetbrains.plugin.pkg.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
-      
-      ### Invocation of unresolved method org.some.deleted.Class.foo() : void
-      
-      * Method SomeClassUsingDeletedClass.someMethodReferencingDeletedClass() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
-      * Method SampleStuffFactory.produceStuff() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
-
+    @Test
+    fun `plugin has compatibility warnings`() {
+      `when plugin has compatibility warnings` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          4 compatibility problems
+          
+          ## Compatibility problems (4)
+          
+          ### Incompatible change of super interface com.jetbrains.plugin.Parent to class
+          
+          * Class com.jetbrains.plugin.Child has a *super interface* com.jetbrains.plugin.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
+          
+          ### Incompatible change of super interface com.jetbrains.plugin.pkg.Parent to class
+          
+          * Class com.jetbrains.plugin.pkg.Child has a *super interface* com.jetbrains.plugin.pkg.Parent which is actually a *class*. This can lead to **IncompatibleClassChangeError** exception at runtime.
+          
+          ### Invocation of unresolved method org.some.deleted.Class.foo() : void
+          
+          * Method SomeClassUsingDeletedClass.someMethodReferencingDeletedClass() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
+          * Method SampleStuffFactory.produceStuff() : void contains an *invokevirtual* instruction referencing an unresolved method org.some.deleted.Class.foo() : void. This can lead to **NoSuchMethodError** exception at runtime.
+    
 
       """.trimIndent()
-    assertEquals(expected, output())
-  }
+        assertOutput(expected)
+      }
+    }
 
-  @Test
-  fun `plugin has structural problems`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-
-    val structureWarnings = setOf(
-      PluginStructureWarning(NoModuleDependencies(IdePluginManager.PLUGIN_XML))
-    )
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, pluginStructureWarnings = structureWarnings)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
+    @Test
+    fun `plugin has structural problems`() {
+      `when plugin has structural problems` {
+        val expected = """
           # Plugin pluginId 1.0 against 232.0
           
           Compatible. 1 plugin configuration defect
@@ -138,110 +67,57 @@ class MarkdownOutputTest {
           ## Plugin structure warnings (1)
           
           * Invalid plugin descriptor 'plugin.xml'. The plugin configuration file does not include any module dependency tags. So, the plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. Please note that plugins should declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality.
+          
+          
+          """.trimIndent()
+        assertOutput(expected)
+      }
+    }
 
-
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has internal API usage problems`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-
-    val internalApiUsages = setOf(
-      InternalClassUsage(ClassReference("com.jetbrains.InternalClass"), internalApiClassLocation, mockMethodLocationInSampleStuffFactory)
-    )
-
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, internalApiUsages = internalApiUsages)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-        # Plugin pluginId 1.0 against 232.0
+    @Test
+    fun `plugin has internal API usage problems`() {
+      `when plugin has internal API usage problems` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible. 1 usage of internal API
+          
+          ## Internal API usages (1)
+          
+          ### Internal class InternalApiRegistrar reference
+          
+          * Internal class InternalApiRegistrar is referenced in SampleStuffFactory.produceStuff() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
         
-        Compatible. 1 usage of internal API
         
-        ## Internal API usages (1)
-        
-        ### Internal class InternalApiRegistrar reference
-        
-        * Internal class InternalApiRegistrar is referenced in SampleStuffFactory.produceStuff() : void. This class is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation or @com.intellij.openapi.util.IntellijInternalApi annotation and indicates that the class is not supposed to be used in client code.
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
 
+    @Test
+    fun `plugin has non-extendable API usages problems`() {
+      `when plugin has non-extendable API usages problems` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible. 1 non-extendable API usage violation
+          
+          ## Non-extendable API usages (1)
+          
+          ### Non-extendable class NonExtendableClass is extended
+          
+          * Non-extendable class NonExtendableClass is extended by ExtendingClass. This class is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable, which indicates that the class is not supposed to be extended. See documentation of the @ApiStatus.NonExtendable for more info.
+  
+  
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
 
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has non-extendable API usages problems`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-
-    val nonExtendableClass = ClassLocation("NonExtendableClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-    val extendingClass = ClassLocation("ExtendingClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-
-    val nonExtendableApiUsages = setOf(
-      NonExtendableTypeInherited(nonExtendableClass, extendingClass)
-    )
-
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, nonExtendableApiUsages = nonExtendableApiUsages)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-        # Plugin pluginId 1.0 against 232.0
-        
-        Compatible. 1 non-extendable API usage violation
-        
-        ## Non-extendable API usages (1)
-        
-        ### Non-extendable class NonExtendableClass is extended
-        
-        * Non-extendable class NonExtendableClass is extended by ExtendingClass. This class is marked with @org.jetbrains.annotations.ApiStatus.NonExtendable, which indicates that the class is not supposed to be extended. See documentation of the @ApiStatus.NonExtendable for more info.
-
-
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has experimental API usage problems`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-
-    val experimentalClass = ClassLocation("ExperimentalClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-    val extendingClass = ClassLocation("ExtendingClass", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-    val usageLocation = MethodLocation(
-      extendingClass,
-      "someMethod",
-      "()V",
-      emptyList(),
-      null,
-      Modifiers.of(PUBLIC)
-    )
-
-    val experimentalApiUsages = setOf(
-      ExperimentalClassUsage(experimentalClass.toReference(), experimentalClass, usageLocation)
-    )
-
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, experimentalApiUsages = experimentalApiUsages)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
+    @Test
+    fun `plugin has experimental API usage problems`() {
+      `when plugin has experimental API usage problems` {
+        val expected = """
           # Plugin pluginId 1.0 against 232.0
           
           Compatible. 1 usage of experimental API
@@ -253,197 +129,90 @@ class MarkdownOutputTest {
           * Experimental API class ExperimentalClass is referenced in ExtendingClass.someMethod() : void. This class can be changed in a future release leading to incompatibilities
           
 
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
+
+    @Test
+    fun `plugin has missing dependencies`() {
+      `when plugin has missing dependencies` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible
+          
+          ## Missing dependencies (1)
+          
+          * MissingPlugin (optional): Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
+          
+          
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
+
+    @Test
+    fun `plugin is dynamic`() {
+      `when plugin is dynamic` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible
+          
+          ## Dynamic Plugin Status
+          
+          Plugin can probably be enabled or disabled without IDE restart
+
+
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
+
+    @Test
+    fun `plugin has structural problems with invalid plugin ID`() {
+      `when plugin has structural problems with invalid plugin ID` { resultPrinter, result ->
+        resultPrinter.printInvalidPluginFiles(result)
+
+        val expected = """
+          # Invalid plugin
+          
+          The following file specified for the verification is not a valid plugin.
+          
+          ## plugin.zip
+          
+          Full path: `plugin.zip`
+          
+          ### Plugin Warnings
+          
+          * Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
+          
+          
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
+
+    @Test
+    fun `plugin is dynamic and has structural warnings`() {
+      `when plugin is dynamic and has structural warnings` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          Compatible. 1 plugin configuration defect
+          
+          ## Plugin structure warnings (1)
+          
+          * Invalid plugin descriptor 'plugin.xml'. The plugin configuration file does not include any module dependency tags. So, the plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. Please note that plugins should declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality.
+          
+          ## Dynamic Plugin Status
+          
+          Plugin can probably be enabled or disabled without IDE restart
+          
+
       """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has missing dependencies`() {
-    val pluginDependency = DependencyNode(PLUGIN_ID, PLUGIN_VERSION)
-    val expectedDependency = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
-
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = pluginDependency,
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = mapOf(pluginDependency to setOf(expectedDependency))
-    )
-
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-        # Plugin pluginId 1.0 against 232.0
-        
-        Compatible
-        
-        ## Missing dependencies (1)
-        
-        * MissingPlugin (optional): Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
-        
-        
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin is dynamic`() {
-    val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
-      missingDependencies = emptyMap()
-    )
-
-    val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, dynamicPluginStatus = MaybeDynamic)
-
-    resultPrinter.printResults(listOf(verificationResult))
-
-    val expected = """
-        # Plugin pluginId 1.0 against 232.0
-        
-        Compatible
-        
-        ## Dynamic Plugin Status
-        
-        Plugin can probably be enabled or disabled without IDE restart
-
-
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has structural problems with invalid plugin ID`() {
-    val pluginId = "com.example.intellij"
-    val prefix = "com.example"
-    val invalidPluginFiles = listOf(
-      InvalidPluginFile(Path("plugin.zip"), listOf(ForbiddenPluginIdPrefix(pluginId, prefix)))
-    )
-
-    resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
-
-    val expected = """
-        # Invalid plugin
-        
-        The following file specified for the verification is not a valid plugin.
-        
-        ## plugin.zip
-        
-        Full path: `plugin.zip`
-        
-        ### Plugin Warnings
-        
-        * Invalid plugin descriptor 'id'. The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed.
-        
-        
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  @Test
-  fun `plugin has structural problems with plugin error and plugin warning`() {
-    val pluginId = "com.example.intellij"
-    val prefix = "com.example"
-    val invalidPluginFiles = listOf(
-      InvalidPluginFile(Path("plugin.zip"), listOf(
-        InvalidSinceBuild(PLUGIN_XML, sinceBuild = "1"),
-        ForbiddenPluginIdPrefix(pluginId, prefix)))
-    )
-
-    resultPrinter.printInvalidPluginFiles(invalidPluginFiles)
-
-    val expected = """
-        # Invalid plugin
-        
-        The following file specified for the verification is not a valid plugin.
-        
-        ## plugin.zip
-        
-        Full path: `plugin.zip`
-        
-        ### Plugin Problems
-        
-        * Invalid plugin descriptor 'plugin.xml'. The <since-build> parameter (1) format is invalid. Ensure it is greater than <130> and represents the actual build numbers.
-        
-        ### Additional Plugin Warnings
-        
-        * Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
-
-        
-      """.trimIndent()
-    assertEquals(expected, output())
-  }
-
-  private fun output() = out.buffer.toString()
-}
-
-private fun mockPluginInfo(): PluginInfo =
-  object : PluginInfo(PLUGIN_ID, PLUGIN_ID, PLUGIN_VERSION, null, null, null) {}
-
-private fun mockCompatibilityProblems(): Set<CompatibilityProblem> =
-  setOf(superInterfaceBecameClassProblem(), superInterfaceBecameClassProblemInOtherLocation(), methodNotFoundProblem(), methodNotFoundProblemInSampleStuffFactoryClass())
-
-private fun superInterfaceBecameClassProblem(): SuperInterfaceBecameClassProblem {
-  val child = ClassLocation("com.jetbrains.plugin.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-  val clazz = ClassLocation("com.jetbrains.plugin.Parent", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-  return SuperInterfaceBecameClassProblem(child, clazz)
-}
-
-private fun superInterfaceBecameClassProblemInOtherLocation(): SuperInterfaceBecameClassProblem {
-  val child = ClassLocation("com.jetbrains.plugin.pkg.Child", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-  val clazz = ClassLocation("com.jetbrains.plugin.pkg.Parent", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-  return SuperInterfaceBecameClassProblem(child, clazz)
-}
-
-private val javaLangObjectClassHierarchy = ClassHierarchy(
-  "java/lang/Object",
-  false,
-  null,
-  emptyList()
-)
-
-private val sampleStuffFactoryLocation = ClassLocation("SampleStuffFactory", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-private val internalApiClassLocation = ClassLocation("InternalApiRegistrar", null, Modifiers.of(PUBLIC), SomeFileOrigin)
-
-private val mockMethodLocationInSampleStuffFactory = MethodLocation(
-  sampleStuffFactoryLocation,
-  "produceStuff",
-  "()V",
-  emptyList(),
-  null,
-  Modifiers.of(PUBLIC)
-)
-
-private fun methodNotFoundProblem(): MethodNotFoundProblem {
-  val deletedClassRef = ClassReference("org/some/deleted/Class")
-  val referencingMethodLocation = MethodLocation(
-    ClassLocation("SomeClassUsingDeletedClass", null, Modifiers.of(PUBLIC), SomeFileOrigin),
-    "someMethodReferencingDeletedClass",
-    "()V",
-    emptyList(),
-    null,
-    Modifiers.of(PUBLIC)
-  )
-  return MethodNotFoundProblem(
-    MethodReference(deletedClassRef, "foo", "()V"),
-    referencingMethodLocation,
-    Instruction.INVOKE_VIRTUAL,
-    javaLangObjectClassHierarchy
-  )
-}
-
-private fun methodNotFoundProblemInSampleStuffFactoryClass(): MethodNotFoundProblem {
-  val deletedClassRef = ClassReference("org/some/deleted/Class")
-  return MethodNotFoundProblem(
-    MethodReference(deletedClassRef, "foo", "()V"),
-    mockMethodLocationInSampleStuffFactory,
-    Instruction.INVOKE_VIRTUAL,
-    javaLangObjectClassHierarchy
-  )
-}
-
-private object SomeFileOrigin : FileOrigin {
-  override val parent: FileOrigin? = null
+        assertOutput(expected)
+      }
+    }
 }
