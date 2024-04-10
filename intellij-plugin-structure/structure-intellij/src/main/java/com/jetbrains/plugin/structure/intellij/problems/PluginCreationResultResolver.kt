@@ -61,6 +61,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     SinceBuildNotSpecified::class,
     InvalidSinceBuild::class,
     InvalidUntilBuild::class,
+    InvalidUntilBuildWithJustBranch::class,
     SinceBuildGreaterThanUntilBuild::class,
     ErroneousSinceBuild::class,
     ProductCodePrefixInBuild::class,

@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
+import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch
 import com.jetbrains.plugin.structure.intellij.problems.NonexistentReleaseInUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
@@ -23,6 +24,7 @@ class PluginUntilBuildVerifier {
       if (isSpecialSingleComponent(untilBuild)) {
         return
       }
+      registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
       verifySingleComponentUntilBuild(untilBuild, descriptorPath, problemRegistrar)
       return
     }
@@ -61,6 +63,17 @@ class PluginUntilBuildVerifier {
     }
   }
 
+  private fun verifySingleComponentUntilBuild(untilBuild: String,
+                                              descriptorPath: String,
+                                              problemRegistrar: ProblemRegistrar) {
+    try {
+      val untilBuildNumber = untilBuild.toInt()
+      verifyBaseline(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath, problemRegistrar)
+    } catch (e: NumberFormatException) {
+      problemRegistrar.registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
+    }
+  }
+
   private fun verifyInThreeReleasesPerYear(untilBuildValue: String,
                                            baselineVersion: Int,
                                            problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
@@ -77,24 +90,11 @@ class PluginUntilBuildVerifier {
     return BUILD_NUMBER == untilBuild || SNAPSHOT == untilBuild
   }
 
-  private fun verifySingleComponentUntilBuild(untilBuild: String,
-                                              descriptorPath: String,
-                                              problemRegistrar: ProblemRegistrar) {
-    try {
-      val untilBuildNumber = untilBuild.toInt()
-      verifyBaseline(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath, problemRegistrar)
-    } catch (e: NumberFormatException) {
-      problemRegistrar.registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-    }
-  }
-
   private fun isJustASingleComponent(untilBuild: String): Boolean {
     if (!untilBuild.contains('.') && untilBuild.isNotBlank()) {
       return true
     }
-    val components = untilBuild.split('.').filterNot {
-      it.isNotBlank()
-    }.size
+    val components = untilBuild.split('.').size
     return components == 1
   }
 }

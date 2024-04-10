@@ -158,7 +158,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationFail)
     val failure = result as PluginCreationFail
-    assertEquals(2, failure.errorsAndWarnings.size)
+    assertEquals(3, failure.errorsAndWarnings.size)
     val reclassifiedProblems = failure.errorsAndWarnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
       .map { it as ReclassifiedPluginProblem }
@@ -237,7 +237,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `plugin is not built due to a warning and such problem level is escalated to an error`() {
-    val suspiciousUntilBuild = "301"
+    val suspiciousUntilBuild = "291.1" // 2029.1.1
     val header = ideaPlugin("com.example", untilBuild = suspiciousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
     val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, error<SuspiciousUntilBuild>())

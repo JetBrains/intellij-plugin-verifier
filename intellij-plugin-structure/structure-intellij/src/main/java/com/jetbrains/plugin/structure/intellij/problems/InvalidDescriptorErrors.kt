@@ -85,6 +85,24 @@ class InvalidUntilBuild(
   )
 }
 
+class InvalidUntilBuildWithJustBranch(
+  descriptorPath: String,
+  untilBuild: String,
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <until-build> attribute with only a branch number ($untilBuild) is not valid. " +
+                    "Such values must include a wildcard, for example '$untilBuild.*'."
+) {
+  override val level
+    get() = Level.ERROR
+
+  override val hint = ProblemSolutionHint(
+    example = "until-build=\"241.*}\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
+}
+
+
 class SinceBuildGreaterThanUntilBuild(
   descriptorPath: String,
   sinceBuild: IdeVersion,
