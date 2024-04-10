@@ -34,11 +34,11 @@ const val JAVA_LANG_OBJECT: BinaryClassName = "java/lang/Object"
  * the method in the argument
  */
 fun Method.isOverriding(possiblyParentMethod: Method, resolver: Resolver): Boolean {
-  return nonStaticAndNonFinal(possiblyParentMethod)
-    && sameName(this, possiblyParentMethod)
+  return sameName(this, possiblyParentMethod)
+    && nonStaticAndNonFinal(possiblyParentMethod)
+    && sameOrBroaderVisibility(this, possiblyParentMethod)
     && sameParameters(this, possiblyParentMethod)
     && sameOrCovariantReturnType(this, possiblyParentMethod, resolver)
-    && sameOrBroaderVisibility(this, possiblyParentMethod)
 }
 
 data class MethodInClass(val method: Method, val klass: ClassFile)
