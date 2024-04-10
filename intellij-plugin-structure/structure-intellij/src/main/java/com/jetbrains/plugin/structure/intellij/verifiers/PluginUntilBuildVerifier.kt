@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
+import com.jetbrains.plugin.structure.intellij.problems.NonexistentReleaseInUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -9,6 +10,9 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
+
+private const val SUSPICIOUS_BASELINE_LOWER_BOUND = 281
+private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
 
 class PluginUntilBuildVerifier {
   fun verify(plugin: PluginBean,
@@ -27,13 +31,44 @@ class PluginUntilBuildVerifier {
     if (untilBuildParsed == null) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      if (untilBuildParsed.baselineVersion >= 999) {
-        registerProblem(InvalidUntilBuild(descriptorPath, untilBuild, untilBuildParsed))
-      } else if (untilBuildParsed.baselineVersion > 400) {
-        registerProblem(SuspiciousUntilBuild(untilBuild))
-      }
+      verifyBaseLineVersion(untilBuildParsed, untilBuild, descriptorPath, problemRegistrar)
       if (untilBuildParsed.productCode.isNotEmpty()) {
         registerProblem(ProductCodePrefixInBuild(descriptorPath))
+      }
+    }
+  }
+
+  private fun verifyBaseLineVersion(untilBuild: IdeVersion,
+                                    untilBuildValue: String,
+                                    descriptorPath: String,
+                                    problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
+    untilBuild.baselineVersion.let {
+      verifyBaseline(it, untilBuildValue, untilBuild, descriptorPath, problemRegistrar)
+    }
+  }
+
+  private fun verifyBaseline(baseline: Int,
+                             untilBuildValue: String,
+                             untilBuild: IdeVersion?,
+                             descriptorPath: String,
+                             problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
+    if (baseline >= 999) {
+      registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
+    } else if (baseline >= SUSPICIOUS_BASELINE_LOWER_BOUND) {
+      registerProblem(SuspiciousUntilBuild(untilBuildValue))
+    } else {
+      verifyInThreeReleasesPerYear(untilBuildValue, baselineVersion = baseline, problemRegistrar)
+    }
+  }
+
+  private fun verifyInThreeReleasesPerYear(untilBuildValue: String,
+                                           baselineVersion: Int,
+                                           problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
+    if (baselineVersion >= FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE) {
+      val lastDigit = baselineVersion % 10
+      val releaseVersion = baselineVersion / 10
+      if (lastDigit !in 1..3) {
+        registerProblem(NonexistentReleaseInUntilBuild(untilBuildValue, "20$releaseVersion.$lastDigit"))
       }
     }
   }
@@ -47,11 +82,7 @@ class PluginUntilBuildVerifier {
                                               problemRegistrar: ProblemRegistrar) {
     try {
       val untilBuildNumber = untilBuild.toInt()
-      if (untilBuildNumber >= 400) {
-        problemRegistrar.registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-      } else if (untilBuildNumber >= 300) {
-        problemRegistrar.registerProblem(SuspiciousUntilBuild(untilBuild))
-      }
+      verifyBaseline(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath, problemRegistrar)
     } catch (e: NumberFormatException) {
       problemRegistrar.registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }

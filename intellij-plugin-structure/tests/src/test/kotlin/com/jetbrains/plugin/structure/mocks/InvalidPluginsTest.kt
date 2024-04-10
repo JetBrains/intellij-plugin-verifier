@@ -367,7 +367,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val specifiedVersion = "131.*"
     `test plugin xml warnings`(
       perfectXmlBuilder.modify {
-        ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="234.*"/>"""
+        ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="233.*"/>"""
       },
       listOf(
         SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(specifiedVersion))
@@ -673,6 +673,26 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
       }, listOf(InvalidUntilBuild(PLUGIN_XML, suspiciousUntilBuild))
+    )
+  }
+
+  @Test
+  fun `until build is a nonexistent single-component release`() {
+    val suspiciousUntilBuild = "234"
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(NonexistentReleaseInUntilBuild(suspiciousUntilBuild, "2023.4"))
+    )
+  }
+
+  @Test
+  fun `until build is a nonexistent release`() {
+    val suspiciousUntilBuild = "234.1"
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(NonexistentReleaseInUntilBuild(suspiciousUntilBuild, "2023.4"))
     )
   }
 
