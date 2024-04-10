@@ -121,14 +121,14 @@ class MethodsTest {
     val childName: BinaryClassName = "$pkg/Child"
     val parentName: BinaryClassName = "$pkg/Parent"
 
-    val getIndexerInChild = "()L$pkg/ChildResult;"
-    val getIndexerInParent = "()L$pkg/ParentResult;"
+    val descriptorInChild = "()L$pkg/ChildResult;"
+    val descriptorInParent = "()L$pkg/ParentResult;"
 
     val resolver = createTestResolver()
-    val arrayListToString = resolver.findMethodInClass(childName, getIndexerInChild)
-    val objectToString = resolver.findMethodInClass(parentName, getIndexerInParent)
+    val methodInChild = resolver.findMethodInClass(childName, descriptorInChild)
+    val methodInParent = resolver.findMethodInClass(parentName, descriptorInParent)
 
-    assertTrue(arrayListToString.isOverriding(objectToString, resolver))
+    assertTrue(methodInChild.isOverriding(methodInParent, resolver))
   }
 
   @Throws(AssertionError::class)
