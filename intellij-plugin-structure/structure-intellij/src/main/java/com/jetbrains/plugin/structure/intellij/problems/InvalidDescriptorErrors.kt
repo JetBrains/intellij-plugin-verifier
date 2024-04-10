@@ -73,7 +73,7 @@ class InvalidUntilBuild(
   untilBuildVersion: IdeVersion? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <until-build> parameter ($untilBuild) does not match the multi-part build number format " +
+  detailedMessage = "The <until-build> attribute ($untilBuild) does not match the multi-part build number format " +
     "such as <branch>.<build_number>.<version>, for example, '182.4132.789'."
 ) {
   override val level
