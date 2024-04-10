@@ -120,7 +120,7 @@ class ErroneousSinceBuild(
   descriptorPath = descriptorPath,
   detailedMessage = "The <since-build> parameter ($sinceBuild) does not match the multi-part build number format " +
                     "<branch>.<build_number>.<version>, for example, '182.4132.789'. " +
-                    "If you want your plugin to be compatible with all future IDEs, you can leave this field empty. " +
+                    "If you want your plugin to be compatible with all future IDE versions, you can remove this attribute. " +
                     "However, we highly recommend setting it to the latest available IDE version."
 
 ) {
