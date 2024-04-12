@@ -44,9 +44,7 @@ class PluginUntilBuildVerifier {
                                     untilBuildValue: String,
                                     descriptorPath: String,
                                     problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
-    untilBuild.baselineVersion.let {
-      verifyBaseline(it, untilBuildValue, untilBuild, descriptorPath, problemRegistrar)
-    }
+    verifyBaseline(untilBuild.baselineVersion, untilBuildValue, untilBuild, descriptorPath, problemRegistrar)
   }
 
   private fun verifyBaseline(baseline: Int,
