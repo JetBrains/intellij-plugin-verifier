@@ -3,9 +3,12 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch
+import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber
 import com.jetbrains.plugin.structure.intellij.problems.NonexistentReleaseInUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier.ValidationResult.INVALID
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier.ValidationResult.VALID
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 
@@ -14,6 +17,7 @@ private const val SNAPSHOT = "SNAPSHOT"
 
 private const val SUSPICIOUS_BASELINE_LOWER_BOUND = 281
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
+private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR = 2016
 
 class PluginUntilBuildVerifier {
   fun verify(plugin: PluginBean,
@@ -22,6 +26,9 @@ class PluginUntilBuildVerifier {
     val untilBuild = plugin.ideaVersion?.untilBuild ?: return
     if (isJustASingleComponent(untilBuild)) {
       if (isSpecialSingleComponent(untilBuild)) {
+        return
+      }
+      if (verifyMagicNumber(untilBuild, descriptorPath, problemRegistrar) == INVALID) {
         return
       }
       registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
@@ -52,13 +59,31 @@ class PluginUntilBuildVerifier {
                              untilBuild: IdeVersion?,
                              descriptorPath: String,
                              problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
-    if (baseline >= 999) {
+    if (baseline >= FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
+    } else if (baseline >= 999) {
+      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline.toString()))
     } else if (baseline >= SUSPICIOUS_BASELINE_LOWER_BOUND) {
       registerProblem(SuspiciousUntilBuild(untilBuildValue))
     } else {
       verifyInThreeReleasesPerYear(untilBuildValue, baselineVersion = baseline, problemRegistrar)
     }
+  }
+
+  private fun verifyMagicNumber(untilBuildValue: String,
+                                descriptorPath: String,
+                                problemRegistrar: ProblemRegistrar): ValidationResult = with(problemRegistrar) {
+    val untilBuild = untilBuildValue.toIntOrNull() ?: return ValidationResult.NOT_APPLICABLE
+    return if (untilBuild >= 999) {
+      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, untilBuildValue))
+      INVALID
+    } else {
+      VALID
+    }
+  }
+
+  private enum class ValidationResult {
+    VALID, INVALID, NOT_APPLICABLE
   }
 
   private fun verifySingleComponentUntilBuild(untilBuild: String,

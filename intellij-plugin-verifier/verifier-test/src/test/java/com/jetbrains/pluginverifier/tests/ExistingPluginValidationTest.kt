@@ -76,6 +76,33 @@ class ExistingPluginValidationTest : BasePluginTest() {
   }
 
   @Test
+  fun `plugin is built and an error is remapped to an unnaceptable warning`() {
+    val header = ideaPlugin("someId", untilBuild = "999")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver,
+      unacceptableWarning<InvalidUntilBuildWithMagicNumber>())
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertTrue(result is PluginCreationSuccess)
+    val pluginCreated = result as PluginCreationSuccess
+    assertEquals(1, pluginCreated.unacceptableWarnings.size)
+    val reclassifiedPluginProblem = pluginCreated.unacceptableWarnings.first()
+    assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, reclassifiedPluginProblem.level)
+    assertTrue(reclassifiedPluginProblem is ReclassifiedPluginProblem)
+    assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is InvalidUntilBuildWithMagicNumber)
+  }
+
+  @Test
   fun `plugin is built, it has two different plugin problems and both are remapped`() {
     val erroneousSinceBuild = "1.1"
     val header = ideaPlugin("com.example", sinceBuild = erroneousSinceBuild)
@@ -158,7 +185,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationFail)
     val failure = result as PluginCreationFail
-    assertEquals(3, failure.errorsAndWarnings.size)
+    assertEquals(2, failure.errorsAndWarnings.size)
     val reclassifiedProblems = failure.errorsAndWarnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
       .map { it as ReclassifiedPluginProblem }
