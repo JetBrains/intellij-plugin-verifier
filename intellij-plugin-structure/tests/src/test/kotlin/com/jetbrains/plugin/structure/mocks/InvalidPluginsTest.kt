@@ -727,7 +727,6 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `until build contains a magic number in the secondary components`() {
     val suspiciousUntilBuild = "231.999.123"
-    val magicNumber = "999"
     `test valid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="223" />"""
