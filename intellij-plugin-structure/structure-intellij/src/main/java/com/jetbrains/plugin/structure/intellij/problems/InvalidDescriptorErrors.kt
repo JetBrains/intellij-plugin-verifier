@@ -102,6 +102,25 @@ class InvalidUntilBuildWithJustBranch(
   )
 }
 
+class InvalidUntilBuildWithMagicNumber(
+  descriptorPath: String,
+  untilBuild: String,
+  magicNumber: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <until-build> attribute ($untilBuild) should not contain a magic value ($magicNumber). " +
+                    "If you want your plugin to be compatible with all future IDE versions, you can remove this attribute. " +
+                    "However, we highly recommend setting it to the latest available IDE version."
+) {
+  override val level
+    get() = Level.ERROR
+
+  override val hint = ProblemSolutionHint(
+    example = "until-build=\"241.*}\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
+}
+
 
 class SinceBuildGreaterThanUntilBuild(
   descriptorPath: String,
