@@ -72,7 +72,7 @@ dependencies {
     implementation(group = "org.jetbrains.intellij.plugins", name = "structure-ide-classes", version = structureVersion)
 
     implementation(sharedLibs.spullara.cliParser)
-    implementation("org.apache.commons:commons-text:1.11.0")
+    implementation("org.apache.commons:commons-text:1.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:1.0-M1-1.4.0-rc")
 }
 
