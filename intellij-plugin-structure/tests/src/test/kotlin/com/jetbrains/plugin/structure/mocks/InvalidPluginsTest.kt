@@ -679,6 +679,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `until build is a suspicious from far future`() {
+    val suspiciousUntilBuild = "301"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
+      }, listOf(
+        InvalidUntilBuildWithJustBranch(PLUGIN_XML, suspiciousUntilBuild),
+        SuspiciousUntilBuild(suspiciousUntilBuild)
+      )
+    )
+  }
+
+  @Test
   fun `until build has a single-component`() {
     val suspiciousUntilBuild = "233"
     `test invalid plugin xml`(
