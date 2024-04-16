@@ -67,15 +67,16 @@ class InvalidSinceBuild(
     get() = Level.ERROR
 }
 
-class InvalidUntilBuild(
+open class InvalidUntilBuild(
   descriptorPath: String,
   untilBuild: String,
-  untilBuildVersion: IdeVersion? = null
+  untilBuildVersion: IdeVersion? = null,
+  detailedMessage: String = "The <until-build> attribute ($untilBuild) does not match the multi-part build number format " +
+    "such as <branch>.<build_number>.<version>, for example, '182.4132.789'."
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <until-build> attribute ($untilBuild) does not match the multi-part build number format " +
-    "such as <branch>.<build_number>.<version>, for example, '182.4132.789'."
-) {
+  detailedMessage)
+  {
   override val level
     get() = Level.ERROR
 
@@ -88,7 +89,8 @@ class InvalidUntilBuild(
 class InvalidUntilBuildWithJustBranch(
   descriptorPath: String,
   untilBuild: String,
-) : InvalidDescriptorProblem(
+) : InvalidUntilBuild(
+  untilBuild = untilBuild,
   descriptorPath = descriptorPath,
   detailedMessage = "The <until-build> attribute with only a branch number ($untilBuild) is not valid. " +
                     "To specify compatibility with a whole branch, include a wildcard, for example '$untilBuild.*'."
@@ -106,11 +108,12 @@ class InvalidUntilBuildWithMagicNumber(
   descriptorPath: String,
   untilBuild: String,
   magicNumber: String
-) : InvalidDescriptorProblem(
+) : InvalidUntilBuild(
   descriptorPath = descriptorPath,
+  untilBuild,
   detailedMessage = "The <until-build> attribute ($untilBuild) should not contain a magic value ($magicNumber). " +
-                    "If you want your plugin to be compatible with all future IDE versions, you can remove this attribute. " +
-                    "However, we highly recommend setting it to the latest available IDE version."
+    "If you want your plugin to be compatible with all future IDE versions, you can remove this attribute. " +
+    "However, we highly recommend setting it to the latest available IDE version."
 ) {
   override val level
     get() = Level.ERROR
@@ -120,7 +123,6 @@ class InvalidUntilBuildWithMagicNumber(
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
 }
-
 
 class SinceBuildGreaterThanUntilBuild(
   descriptorPath: String,
