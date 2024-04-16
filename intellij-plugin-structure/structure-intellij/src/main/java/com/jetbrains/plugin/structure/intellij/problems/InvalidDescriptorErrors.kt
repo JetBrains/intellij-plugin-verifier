@@ -97,7 +97,7 @@ class InvalidUntilBuildWithJustBranch(
     get() = Level.ERROR
 
   override val hint = ProblemSolutionHint(
-    example = "until-build=\"241.*}\"",
+    example = "until-build=\"241.*\"",
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
 }
@@ -116,7 +116,7 @@ class InvalidUntilBuildWithMagicNumber(
     get() = Level.ERROR
 
   override val hint = ProblemSolutionHint(
-    example = "until-build=\"241.*}\"",
+    example = "until-build=\"241.*\"",
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
 }
