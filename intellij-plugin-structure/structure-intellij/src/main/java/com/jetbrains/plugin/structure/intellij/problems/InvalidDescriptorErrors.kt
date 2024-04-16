@@ -75,8 +75,8 @@ open class InvalidUntilBuild(
     "such as <branch>.<build_number>.<version>, for example, '182.4132.789'."
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage)
-  {
+  detailedMessage
+) {
   override val level
     get() = Level.ERROR
 
