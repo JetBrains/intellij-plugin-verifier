@@ -111,6 +111,9 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         if (old is IdePluginImpl) {
           extensions.putAll(old.extensions)
           actions.addAll(old.actions)
+          old.appContainerDescriptor.copyInto(appContainerDescriptor)
+          old.projectContainerDescriptor.copyInto(projectContainerDescriptor)
+          old.moduleContainerDescriptor.copyInto(moduleContainerDescriptor)
         }
         icons = old.icons.toMutableList()
         optionalDescriptors.addAll(old.optionalDescriptors)
@@ -123,6 +126,15 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
             problems.addAll(old.problems)
           }
         }
+      }
+    }
+
+    private fun IdePluginContentDescriptor.copyInto(new: MutableIdePluginContentDescriptor) {
+      with(new) {
+        services.addAll(this@copyInto.services)
+        components.addAll(this@copyInto.components)
+        listeners.addAll(this@copyInto.listeners)
+        extensionPoints.addAll(this@copyInto.extensionPoints)
       }
     }
   }

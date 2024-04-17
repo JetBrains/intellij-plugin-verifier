@@ -337,6 +337,8 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
     assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
   }
+
+  @Test
   fun `transitive dependencies in optional dependency configuration file`() {
     val plugin = buildPluginSuccess(emptyList()) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
