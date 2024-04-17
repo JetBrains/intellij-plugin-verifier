@@ -312,6 +312,31 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
   }
 
   @Test
+  fun `dependency in an optional dependency configuration file`() {
+    val plugin = buildPluginSuccess(emptyList()) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF") {
+          file("plugin.xml") {
+            perfectXmlBuilder.modify {
+              depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+            }
+          }
+
+          file(
+            "optionalDependency.xml",
+            """
+                <idea-plugin>
+                  <id>mock.OptionalDependency</id>
+                </idea-plugin>
+              """.trimIndent()
+          )
+        }
+      }
+    }
+    val optionalDescriptor = plugin.optionalDescriptors.single()
+    assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+    assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+  }
   fun `transitive dependencies in optional dependency configuration file`() {
     val plugin = buildPluginSuccess(emptyList()) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
