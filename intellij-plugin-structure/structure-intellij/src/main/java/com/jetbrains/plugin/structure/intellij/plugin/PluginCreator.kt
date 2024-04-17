@@ -139,7 +139,9 @@ internal class PluginCreator private constructor(
     get() = !hasErrors()
 
   val pluginCreationResult: PluginCreationResult<IdePlugin>
-    get() = problemResolver.resolve(plugin, problems).add(telemetry)
+    get() = problemResolver.resolve(plugin, problems)
+        .reassignStructureProblems()
+        .add(telemetry)
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -943,6 +945,15 @@ internal class PluginCreator private constructor(
       is PluginCreationSuccess -> emptyList()
       is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
     }
+
+  private fun PluginCreationResult<IdePlugin>.reassignStructureProblems() =
+    when (this) {
+      is PluginCreationSuccess -> copy(plugin = IdePluginImpl.clone(plugin, problems))
+      is PluginCreationFail -> this
+    }
+
+  private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
+    get() = warnings + unacceptableWarnings
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {
