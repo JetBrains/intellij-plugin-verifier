@@ -1,7 +1,18 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
+import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
+import com.jetbrains.plugin.structure.base.problems.NotBoolean
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -10,6 +21,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -355,7 +367,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val specifiedVersion = "131.*"
     `test plugin xml warnings`(
       perfectXmlBuilder.modify {
-        ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="234.*"/>"""
+        ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="233.*"/>"""
       },
       listOf(
         SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(specifiedVersion))
@@ -650,7 +662,98 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
-      }, listOf(ErroneousUntilBuild("plugin.xml", IdeVersion.createIdeVersion("2018.*")))
+      }, listOf(InvalidUntilBuild("plugin.xml", "2018.*", IdeVersion.createIdeVersion("2018.*")))
+    )
+  }
+
+  @Test
+  fun `until build is a 999`() {
+    val suspiciousUntilBuild = "999"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
+      }, listOf(
+            InvalidUntilBuildWithMagicNumber(PLUGIN_XML, suspiciousUntilBuild, "999"),
+        )
+    )
+  }
+
+  @Test
+  fun `until build is a suspicious from far future`() {
+    val suspiciousUntilBuild = "301"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
+      }, listOf(
+        InvalidUntilBuildWithJustBranch(PLUGIN_XML, suspiciousUntilBuild),
+        SuspiciousUntilBuild(suspiciousUntilBuild)
+      )
+    )
+  }
+
+  @Test
+  fun `until build has a single-component`() {
+    val suspiciousUntilBuild = "233"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(
+          InvalidUntilBuildWithJustBranch(PLUGIN_XML, suspiciousUntilBuild))
+    )
+  }
+
+  @Test
+  fun `until build has a single-component with dot suffix`() {
+    val suspiciousUntilBuild = "233."
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(
+        InvalidUntilBuild(PLUGIN_XML, suspiciousUntilBuild))
+    )
+  }
+
+  @Test
+  fun `until build is a nonexistent single-component release`() {
+    val suspiciousUntilBuild = "234"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(
+        InvalidUntilBuildWithJustBranch(PLUGIN_XML, suspiciousUntilBuild),
+        NonexistentReleaseInUntilBuild(suspiciousUntilBuild, "2023.4"),
+      )
+    )
+  }
+
+  @Test
+  fun `until build is a nonexistent release`() {
+    val suspiciousUntilBuild = "234.1"
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="231" />"""
+      }, listOf(NonexistentReleaseInUntilBuild(suspiciousUntilBuild, "2023.4"))
+    )
+  }
+
+  @Test
+  fun `until build is a 999 dot star`() {
+    val suspiciousUntilBuild = "999.*"
+    val magicNumber = "999"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
+      }, listOf(InvalidUntilBuildWithMagicNumber(PLUGIN_XML, suspiciousUntilBuild, magicNumber))
+    )
+  }
+
+  @Test
+  fun `until build contains a magic number in the secondary components`() {
+    val suspiciousUntilBuild = "231.999.123"
+    `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="223" />"""
+      }
     )
   }
 

@@ -5,17 +5,37 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
+import com.jetbrains.plugin.structure.base.problems.NotBoolean
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.beans.*
+import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
+import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.verifiers.*
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -65,6 +85,7 @@ internal class PluginCreator private constructor(
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
     private val pluginIdVerifier = PluginIdVerifier()
+    private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -531,6 +552,7 @@ internal class PluginCreator private constructor(
     }
     if (validateDescriptor || bean.ideaVersion != null) {
       validateIdeaVersion(bean.ideaVersion)
+      pluginUntilBuildVerifier.verify(bean, descriptorPath, ::registerProblem)
     }
     if (validateDescriptor || bean.productDescriptor != null) {
       validateProductDescriptor(bean.productDescriptor)
@@ -907,22 +929,6 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validateUntilBuild(untilBuild: String) {
-    val untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild)
-    if (untilBuildParsed == null) {
-      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-    } else {
-      if (untilBuildParsed.baselineVersion > 999) {
-        registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
-      } else if (untilBuildParsed.baselineVersion > 400) {
-        registerProblem(SuspiciousUntilBuild(untilBuild))
-      }
-      if (untilBuildParsed.productCode.isNotEmpty()) {
-        registerProblem(ProductCodePrefixInBuild(descriptorPath))
-      }
-    }
-  }
-
   private fun validateIdeaVersion(versionBean: IdeaVersionBean?) {
     if (versionBean == null) {
       registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
@@ -931,11 +937,6 @@ internal class PluginCreator private constructor(
 
     val sinceBuild = versionBean.sinceBuild
     validateSinceBuild(sinceBuild)
-
-    val untilBuild = versionBean.untilBuild
-    if (untilBuild != null) {
-      validateUntilBuild(untilBuild)
-    }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>

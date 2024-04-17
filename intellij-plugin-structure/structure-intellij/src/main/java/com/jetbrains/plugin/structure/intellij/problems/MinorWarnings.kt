@@ -4,9 +4,9 @@
 
 package com.jetbrains.plugin.structure.intellij.problems
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
@@ -155,20 +155,28 @@ class ElementMissingAttribute(
 }
 
 
-class SuspiciousUntilBuild(
-  private val untilBuild: String
+open class SuspiciousUntilBuild(
+  private val untilBuild: String,
+  private val additionalMessage: String = ""
 ) : PluginProblem() {
   override val hint = ProblemSolutionHint(
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
   override val message: String
-    get() = "The <until-build> '$untilBuild' does not represent the actual build number. If you want your plugin to " +
-            "be compatible with all future IDEs, you can leave this field empty. However, we highly recommend " +
-            "setting it to the latest available IDE version."
+    get() = "The <until-build> '$untilBuild' does not represent the actual build number. " +
+            if (additionalMessage.isNotBlank()) "$additionalMessage " else "" +
+            "If you want your plugin to be compatible with all future IDE versions, you can remove this attribute. " +
+            "However, we highly recommend setting it to the latest available IDE version."
 
   override val level
     get() = Level.WARNING
 }
+
+open class NonexistentReleaseInUntilBuild(
+  untilBuild: String,
+  nonexistentRelease: String = ""
+) : SuspiciousUntilBuild(untilBuild, "Version '$nonexistentRelease' does not exist")
+
 
 class ForbiddenPluginIdPrefix(
   pluginId: String,

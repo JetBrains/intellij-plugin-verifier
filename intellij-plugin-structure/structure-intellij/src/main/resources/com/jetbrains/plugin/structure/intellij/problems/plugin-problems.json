@@ -2,7 +2,9 @@
   "existing-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId": "ignore",
-    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore"
+    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore",
+    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
+    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning"
   },
   "new-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "error",
@@ -13,6 +15,8 @@
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore",
-    "com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported": "warning"
+    "com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported": "warning",
+    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
+    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning"
   }
 }
