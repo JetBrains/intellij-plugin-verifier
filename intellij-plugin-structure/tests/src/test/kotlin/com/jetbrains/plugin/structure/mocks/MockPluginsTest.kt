@@ -5,7 +5,13 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.JarOrZipFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
@@ -15,7 +21,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
+import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
+import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -353,13 +363,14 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
             "optionalDependency.xml",
             """
                 <idea-plugin>
+                  <id>mock.OptionalDependency</id>
                   <depends>transitiveMandatoryDependencyId</depends>
                   <depends optional="true" config-file="transitiveOptionalDependency.xml">transitiveOptionalDependencyId</depends>
                 </idea-plugin>
               """.trimIndent()
           )
 
-          file("transitiveOptionalDependency.xml", """<idea-plugin></idea-plugin>""".trimIndent())
+          file("transitiveOptionalDependency.xml", """<idea-plugin><id>mock.TransitiveOptionalDependency</id></idea-plugin>""".trimIndent())
         }
       }
     }
