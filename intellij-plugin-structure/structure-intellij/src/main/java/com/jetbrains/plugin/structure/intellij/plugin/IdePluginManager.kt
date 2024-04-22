@@ -44,6 +44,12 @@ class IdePluginManager private constructor(
 
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
+  private val optionalDependencyResolver = OptionalDependencyResolver(PluginLoader { ctx: PluginMetadataResolutionContext ->
+    with(ctx) {
+      loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, false, resourceResolver, parentPlugin, problemResolver)
+    }
+  })
+
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
     descriptorPath: String,
@@ -249,7 +255,7 @@ class IdePluginManager private constructor(
 
   private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
-      resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, problemResolver, pluginCreator)
+      optionalDependencyResolver.resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, problemResolver, pluginCreator)
     }
   }
 
@@ -262,39 +268,6 @@ class IdePluginManager private constructor(
         currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
       }
     }
-
-  }
-
-  /**
-   * [mainPlugin] - the root plugin (plugin.xml)
-   * [currentPlugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
-   */
-  private fun resolveOptionalDependencies(
-    currentPlugin: PluginCreator,
-    visitedConfigurationFiles: MutableSet<String>,
-    path: LinkedList<String>,
-    pluginFile: Path,
-    resourceResolver: ResourceResolver,
-    problemResolver: PluginCreationResultResolver,
-    mainPlugin: PluginCreator,
-  ) {
-    if (!visitedConfigurationFiles.add(currentPlugin.descriptorPath)) {
-      return
-    }
-    path.addLast(currentPlugin.descriptorPath)
-    val optionalDependenciesConfigFiles: Map<PluginDependency, String> = currentPlugin.optionalDependenciesConfigFiles
-    for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
-      if (path.contains(configurationFile)) {
-        val configurationFilesCycle: MutableList<String> = ArrayList(path)
-        configurationFilesCycle.add(configurationFile)
-        mainPlugin.registerOptionalDependenciesConfigurationFilesCycleProblem(configurationFilesCycle)
-        return
-      }
-      val optionalDependencyCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configurationFile, false, resourceResolver, currentPlugin, problemResolver)
-      currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
-      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, mainPlugin)
-    }
-    path.removeLast()
   }
 
   private fun extractZipAndCreatePlugin(
