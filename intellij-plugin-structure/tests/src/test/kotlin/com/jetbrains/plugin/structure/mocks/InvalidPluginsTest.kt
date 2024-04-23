@@ -1019,4 +1019,34 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       listOf(UnknownServiceClientValue("plugin.xml", "xxx"))
     )
   }
+
+  @Test
+  fun `plugin xincludes snippets without proper root element which is against XInclud spec but working correctly`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            additionalContent += """
+              <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="/META-INF/common-ide-modules.xml"/>
+            """.trimIndent()
+          }
+        }
+
+        file(
+          "common-ide-modules.xml",
+          """
+              <idea>
+                <extensions defaultExtensionNs="com.intellij">
+                  <applicationService serviceImplementation="com.intellij.ultimate.UltimateVerifier" />
+                </extensions>
+              </idea>
+              """.trimIndent()
+        )
+      }
+    }
+    val creationResult = createPluginSuccessfully(pluginFile)
+    val services = creationResult.plugin.appContainerDescriptor.services
+    assertEquals(1, services.size)
+    assertEquals("com.intellij.ultimate.UltimateVerifier", services.first().serviceImplementation)
+  }
 }
