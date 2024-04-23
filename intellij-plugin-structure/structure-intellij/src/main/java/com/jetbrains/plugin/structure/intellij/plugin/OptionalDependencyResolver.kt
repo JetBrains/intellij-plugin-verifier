@@ -10,12 +10,12 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
 
   fun resolveOptionalDependencies(
     plugin: PluginCreator,
-    pluginFile: Path,
+    pluginArtifactPath: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ) {
     val dependencyChain = DependencyChain()
-    resolveOptionalDependencies(plugin, pluginFile, resourceResolver, problemResolver, dependencyChain)
+    resolveOptionalDependencies(plugin, pluginArtifactPath, resourceResolver, problemResolver, dependencyChain)
     dependencyChain.cycles.forEach {
       plugin.registerOptionalDependenciesConfigurationFilesCycleProblem(it)
     }
@@ -26,7 +26,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
    */
   private fun resolveOptionalDependencies(
     plugin: PluginCreator,
-    pluginFile: Path,
+    pluginArtifactPath: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     dependencyChain: DependencyChain
@@ -39,7 +39,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
         return
       }
 
-      val optionalDependencyCreator = pluginLoader.load(pluginFile, configurationFile, false, resourceResolver, plugin, problemResolver)
+      val optionalDependencyCreator = pluginLoader.load(pluginArtifactPath, configurationFile, false, resourceResolver, plugin, problemResolver)
       if (optionalDependencyCreator.isSuccess) {
         val optionalPlugin = optionalDependencyCreator.plugin
         plugin.plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
@@ -47,7 +47,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
       } else {
         plugin.registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, optionalDependencyCreator.resolvedProblems))
       }
-      resolveOptionalDependencies(optionalDependencyCreator, pluginFile, resourceResolver, problemResolver, dependencyChain)
+      resolveOptionalDependencies(optionalDependencyCreator, pluginArtifactPath, resourceResolver, problemResolver, dependencyChain)
     }
     dependencyChain.dropLast()
   }
