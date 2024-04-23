@@ -255,7 +255,7 @@ class IdePluginManager private constructor(
 
   private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
-      optionalDependencyResolver.resolveOptionalDependencies(pluginCreator, HashSet(), LinkedList(), pluginFile, resourceResolver, problemResolver, pluginCreator)
+      optionalDependencyResolver.resolveOptionalDependencies(pluginCreator, pluginFile, resourceResolver, problemResolver)
     }
   }
 

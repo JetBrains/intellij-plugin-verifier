@@ -19,6 +19,16 @@ internal fun interface PluginLoader {
 }
 
 internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader) {
+
+  fun resolveOptionalDependencies(
+    currentPlugin: PluginCreator,
+    pluginFile: Path,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ) {
+    resolveOptionalDependencies(currentPlugin, mutableSetOf(), LinkedList(), pluginFile, resourceResolver, problemResolver, currentPlugin)
+  }
+
   /**
    * [mainPlugin] - the root plugin (plugin.xml)
    * [currentPlugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
@@ -51,6 +61,4 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     }
     path.removeLast()
   }
-
-
 }
