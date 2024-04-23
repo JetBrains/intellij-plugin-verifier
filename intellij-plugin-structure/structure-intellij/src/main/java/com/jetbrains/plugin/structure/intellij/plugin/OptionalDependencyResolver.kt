@@ -26,9 +26,9 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ) {
-    val dependencyCycles = DependencyCycles()
-    resolveOptionalDependencies(plugin, mutableSetOf(), LinkedList(), pluginFile, resourceResolver, problemResolver, dependencyCycles)
-    dependencyCycles.forEach {
+    val dependencyChain = DependencyChain()
+    resolveOptionalDependencies(plugin, mutableSetOf(), pluginFile, resourceResolver, problemResolver, dependencyChain)
+    dependencyChain.cycles.forEach {
       plugin.registerOptionalDependenciesConfigurationFilesCycleProblem(it)
     }
   }
@@ -39,39 +39,55 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
   private fun resolveOptionalDependencies(
     plugin: PluginCreator,
     visitedConfigurationFiles: MutableSet<String>,
-    path: LinkedList<String>,
     pluginFile: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
-    dependencyCycles: DependencyCycles
+    dependencyChain: DependencyChain
   ) {
     if (!visitedConfigurationFiles.add(plugin.descriptorPath)) {
       return
     }
-    path.addLast(plugin.descriptorPath)
+    dependencyChain.push(plugin)
     val optionalDependenciesConfigFiles: Map<PluginDependency, String> = plugin.optionalDependenciesConfigFiles
     for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
-      if (path.contains(configurationFile)) {
-        dependencyCycles.add(path + configurationFile)
+      if (dependencyChain.detectCycle(configurationFile)) {
         return
       }
 
       val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, plugin))
       plugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
-      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, dependencyCycles)
+      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, pluginFile, resourceResolver, problemResolver, dependencyChain)
     }
-    path.removeLast()
+    dependencyChain.pop()
   }
 
-  internal class DependencyCycles: Iterable<DependencyCycle> {
-    private val cycles: MutableList<DependencyCycle> = mutableListOf()
+  internal class DependencyChain {
+    private val chain = LinkedList<String>()
 
-    fun add(cycleChain: DependencyCycle) {
-     cycles.add(cycleChain)
+    private val _dependencyCycles: MutableList<DependencyCycle> = mutableListOf()
+
+    val cycles: List<DependencyCycle>
+      get() = _dependencyCycles
+
+    fun detectCycle(configurationFile: String): Boolean {
+      if (chain.contains(configurationFile)) {
+        _dependencyCycles.add(chain + configurationFile)
+        return true
+      }
+      return false
     }
 
-    override fun iterator(): Iterator<DependencyCycle> = cycles.iterator()
+    fun push(plugin: PluginCreator) {
+      chain.addLast(plugin.descriptorPath)
+    }
+
+    fun pop() {
+      chain.removeLast()
+    }
   }
 }
+
+
+
 
 typealias DependencyCycle = List<String>
