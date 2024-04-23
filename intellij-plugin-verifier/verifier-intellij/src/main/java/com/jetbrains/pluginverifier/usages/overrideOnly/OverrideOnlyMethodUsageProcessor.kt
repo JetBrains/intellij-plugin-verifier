@@ -22,7 +22,7 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
     CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
-    DelegateCallOnOverrideOnlyUsageFilter(),
+    DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
     SuperclassCallOnOverrideOnlyUsageFilter()
   )
 
@@ -100,6 +100,10 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
   private companion object {
     const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"
   }
+
+  private fun DelegateCallOnOverrideOnlyUsageFilter.withBridgeMethodSupport() =
+    BridgeMethodOverrideUsageFilter(this)
 }
+
 
 
