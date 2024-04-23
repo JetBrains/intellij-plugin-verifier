@@ -27,7 +27,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     problemResolver: PluginCreationResultResolver
   ) {
     val dependencyChain = DependencyChain()
-    resolveOptionalDependencies(plugin, mutableSetOf(), pluginFile, resourceResolver, problemResolver, dependencyChain)
+    resolveOptionalDependencies(plugin, pluginFile, resourceResolver, problemResolver, dependencyChain)
     dependencyChain.cycles.forEach {
       plugin.registerOptionalDependenciesConfigurationFilesCycleProblem(it)
     }
@@ -38,16 +38,14 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
    */
   private fun resolveOptionalDependencies(
     plugin: PluginCreator,
-    visitedConfigurationFiles: MutableSet<String>,
     pluginFile: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     dependencyChain: DependencyChain
   ) {
-    if (!visitedConfigurationFiles.add(plugin.descriptorPath)) {
+    if (!dependencyChain.extend(plugin)) {
       return
     }
-    dependencyChain.push(plugin)
     for ((pluginDependency, configurationFile) in plugin.optionalDependenciesConfigFiles) {
       if (dependencyChain.detectCycle(configurationFile)) {
         return
@@ -55,9 +53,9 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
 
       val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, plugin))
       plugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
-      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, pluginFile, resourceResolver, problemResolver, dependencyChain)
+      resolveOptionalDependencies(optionalDependencyCreator, pluginFile, resourceResolver, problemResolver, dependencyChain)
     }
-    dependencyChain.pop()
+    dependencyChain.dropLast()
   }
 
   internal class DependencyChain {
@@ -68,6 +66,8 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     val cycles: List<DependencyCycle>
       get() = _dependencyCycles
 
+    private val visitedPluginDescriptors = mutableSetOf<String>()
+
     fun detectCycle(configurationFile: String): Boolean {
       if (chain.contains(configurationFile)) {
         _dependencyCycles.add(chain + configurationFile)
@@ -76,11 +76,16 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
       return false
     }
 
-    fun push(plugin: PluginCreator) {
-      chain.addLast(plugin.descriptorPath)
+    fun extend(plugin: PluginCreator): Boolean {
+      val descriptor = plugin.descriptorPath
+      if (visitedPluginDescriptors.contains(descriptor)) {
+        return false
+      }
+      chain.addLast(descriptor)
+      return true
     }
 
-    fun pop() {
+    fun dropLast() {
       chain.removeLast()
     }
   }
