@@ -263,7 +263,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
   }
 
   @Test
-  fun `internal plugin is build despite having an descriptor error because it is remapped`() {
+  fun `internal plugin is built despite having an descriptor error because it is remapped`() {
     // Intentional JetBrains plugin that contains a forbidden word in the plugin name
     val header = ideaPlugin("com.jetbrains.SomePlugin", "IDEA Fountain", vendor = "JetBrains")
     val delegateResolver = IntelliJPluginCreationResultResolver()
