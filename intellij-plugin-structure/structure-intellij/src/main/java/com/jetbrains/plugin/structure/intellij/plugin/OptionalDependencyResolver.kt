@@ -1,10 +1,10 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyChain
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
-import java.util.*
 
 internal fun interface PluginLoader {
   fun load(
@@ -16,8 +16,6 @@ internal fun interface PluginLoader {
     problemResolver: PluginCreationResultResolver
   ): PluginCreator
 }
-
-typealias DependencyCycle = List<String>
 
 internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader) {
 
@@ -65,35 +63,5 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     dependencyChain.dropLast()
   }
 
-  internal class DependencyChain {
-    private val chain = LinkedList<String>()
 
-    private val _dependencyCycles: MutableList<DependencyCycle> = mutableListOf()
-
-    val cycles: List<DependencyCycle>
-      get() = _dependencyCycles
-
-    private val visitedPluginDescriptors = mutableSetOf<String>()
-
-    fun detectCycle(configurationFile: String): Boolean {
-      if (chain.contains(configurationFile)) {
-        _dependencyCycles.add(chain + configurationFile)
-        return true
-      }
-      return false
-    }
-
-    fun extend(plugin: PluginCreator): Boolean {
-      val descriptor = plugin.descriptorPath
-      if (visitedPluginDescriptors.contains(descriptor)) {
-        return false
-      }
-      chain.addLast(descriptor)
-      return true
-    }
-
-    fun dropLast() {
-      chain.removeLast()
-    }
-  }
 }
