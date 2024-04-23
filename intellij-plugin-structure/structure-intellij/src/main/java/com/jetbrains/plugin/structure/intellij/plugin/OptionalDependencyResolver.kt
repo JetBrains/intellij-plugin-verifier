@@ -34,11 +34,10 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
   }
 
   /**
-   * [mainPlugin] - the root plugin (plugin.xml)
-   * [currentPlugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
+   * [plugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
    */
   private fun resolveOptionalDependencies(
-    currentPlugin: PluginCreator,
+    plugin: PluginCreator,
     visitedConfigurationFiles: MutableSet<String>,
     path: LinkedList<String>,
     pluginFile: Path,
@@ -46,19 +45,19 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     problemResolver: PluginCreationResultResolver,
     dependencyCycles: DependencyCycles
   ) {
-    if (!visitedConfigurationFiles.add(currentPlugin.descriptorPath)) {
+    if (!visitedConfigurationFiles.add(plugin.descriptorPath)) {
       return
     }
-    path.addLast(currentPlugin.descriptorPath)
-    val optionalDependenciesConfigFiles: Map<PluginDependency, String> = currentPlugin.optionalDependenciesConfigFiles
+    path.addLast(plugin.descriptorPath)
+    val optionalDependenciesConfigFiles: Map<PluginDependency, String> = plugin.optionalDependenciesConfigFiles
     for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
       if (path.contains(configurationFile)) {
         dependencyCycles.add(path + configurationFile)
         return
       }
 
-      val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, currentPlugin))
-      currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
+      val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, plugin))
+      plugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
       resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, dependencyCycles)
     }
     path.removeLast()
