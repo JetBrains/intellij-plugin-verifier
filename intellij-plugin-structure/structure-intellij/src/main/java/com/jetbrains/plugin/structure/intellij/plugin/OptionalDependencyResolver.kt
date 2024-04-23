@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
@@ -52,7 +53,13 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
       }
 
       val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, plugin))
-      plugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
+      if (optionalDependencyCreator.isSuccess) {
+        val optionalPlugin = optionalDependencyCreator.plugin
+        plugin.plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
+        plugin.mergeContent(optionalPlugin)
+      } else {
+        plugin.registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, optionalDependencyCreator.resolvedProblems))
+      }
       resolveOptionalDependencies(optionalDependencyCreator, pluginFile, resourceResolver, problemResolver, dependencyChain)
     }
     dependencyChain.dropLast()

@@ -5,17 +5,36 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
+import com.jetbrains.plugin.structure.base.problems.NotBoolean
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.beans.*
+import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
+import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
+import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.verifiers.*
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
@@ -128,7 +147,8 @@ internal class PluginCreator private constructor(
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
   val contentModules = arrayListOf<Module>()
 
-  private val plugin = IdePluginImpl()
+  internal val plugin = IdePluginImpl()
+
   private val problems: MutableList<PluginProblem>
     get() = plugin.problems
 
@@ -145,20 +165,8 @@ internal class PluginCreator private constructor(
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
-  fun addOptionalDescriptor(
-    pluginDependency: PluginDependency,
-    configurationFile: String,
-    optionalDependencyCreator: PluginCreator
-  ) {
-    val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val optionalPlugin = pluginCreationResult.plugin
-      plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
-      mergeContent(optionalPlugin)
-    } else {
-      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, pluginCreationResult.errors))
-    }
-  }
+  internal val resolvedProblems: List<PluginProblem>
+    get() = problemResolver.classify(plugin, problems)
 
   fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
@@ -184,7 +192,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun mergeContent(pluginToMerge: IdePlugin) {
+  internal fun mergeContent(pluginToMerge: IdePlugin) {
     pluginToMerge.extensions.forEach { (extensionPointName, extensionElement) ->
       plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
     }
@@ -747,7 +755,7 @@ internal class PluginCreator private constructor(
 
   }
 
-  private fun registerProblem(problem: PluginProblem) {
+  internal fun registerProblem(problem: PluginProblem) {
     problems += problem
   }
 
