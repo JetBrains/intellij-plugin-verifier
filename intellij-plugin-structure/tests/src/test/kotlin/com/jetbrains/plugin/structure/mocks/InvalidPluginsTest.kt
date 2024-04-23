@@ -1,7 +1,18 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
+import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
+import com.jetbrains.plugin.structure.base.problems.NotBoolean
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -867,6 +878,47 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       }
     }
     assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
+  }
+
+  @Test
+  fun `plugin has cycle in the transitive dependency`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="dependency.xml">dependency</depends>"""
+          }
+        }
+
+        file(
+          "dependency.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">a</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "a.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="b.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "b.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+    assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "dependency.xml", "a.xml", "b.xml", "a.xml"))))
   }
 
   @Test
