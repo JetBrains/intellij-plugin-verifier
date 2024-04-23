@@ -6,17 +6,6 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-internal fun interface PluginLoader {
-  fun load(
-    pluginFile: Path,
-    descriptorPath: String,
-    validateDescriptor: Boolean,
-    resourceResolver: ResourceResolver,
-    parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver
-  ): PluginCreator
-}
-
 internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader) {
 
   fun resolveOptionalDependencies(
