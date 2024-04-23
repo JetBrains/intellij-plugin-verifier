@@ -129,13 +129,11 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
       }
     }
 
-    private fun IdePluginContentDescriptor.copyInto(new: MutableIdePluginContentDescriptor) {
-      with(new) {
-        services.addAll(this@copyInto.services)
-        components.addAll(this@copyInto.components)
-        listeners.addAll(this@copyInto.listeners)
-        extensionPoints.addAll(this@copyInto.extensionPoints)
-      }
+    private fun IdePluginContentDescriptor.copyInto(descriptor: MutableIdePluginContentDescriptor) {
+      descriptor.services.addAll(services)
+      descriptor.components.addAll(components)
+      descriptor.listeners.addAll(listeners)
+      descriptor.extensionPoints.addAll(extensionPoints)
     }
   }
 }
