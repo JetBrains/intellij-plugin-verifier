@@ -44,11 +44,7 @@ class IdePluginManager private constructor(
 
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
-  private val optionalDependencyResolver = OptionalDependencyResolver(PluginLoader { ctx: PluginMetadataResolutionContext ->
-    with(ctx) {
-      loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, false, resourceResolver, parentPlugin, problemResolver)
-    }
-  })
+  private val optionalDependencyResolver = OptionalDependencyResolver(this::loadPluginInfoFromJarOrDirectory)
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,

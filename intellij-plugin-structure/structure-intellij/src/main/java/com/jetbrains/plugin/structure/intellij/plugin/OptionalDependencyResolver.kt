@@ -6,17 +6,15 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 import java.util.*
 
-internal data class PluginMetadataResolutionContext(
-  val pluginFile: Path,
-  val descriptorPath: String,
-  val validateDescriptor: Boolean,
-  val resourceResolver: ResourceResolver,
-  val problemResolver: PluginCreationResultResolver,
-  val parentPlugin: PluginCreator?,
-)
-
 internal fun interface PluginLoader {
-  fun load(context: PluginMetadataResolutionContext): PluginCreator
+  fun load(
+    pluginFile: Path,
+    descriptorPath: String,
+    validateDescriptor: Boolean,
+    resourceResolver: ResourceResolver,
+    parentPlugin: PluginCreator?,
+    problemResolver: PluginCreationResultResolver
+  ): PluginCreator
 }
 
 typealias DependencyCycle = List<String>
@@ -54,7 +52,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
         return
       }
 
-      val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, plugin))
+      val optionalDependencyCreator = pluginLoader.load(pluginFile, configurationFile, false, resourceResolver, plugin, problemResolver)
       if (optionalDependencyCreator.isSuccess) {
         val optionalPlugin = optionalDependencyCreator.plugin
         plugin.plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
