@@ -53,9 +53,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     val optionalDependenciesConfigFiles: Map<PluginDependency, String> = currentPlugin.optionalDependenciesConfigFiles
     for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
       if (path.contains(configurationFile)) {
-        val configurationFilesCycle: MutableList<String> = ArrayList(path)
-        configurationFilesCycle.add(configurationFile)
-        cycles.add(configurationFilesCycle)
+        cycles.add(path + configurationFile)
         return
       }
 
