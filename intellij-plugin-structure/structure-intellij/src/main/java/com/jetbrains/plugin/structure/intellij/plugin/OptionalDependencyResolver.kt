@@ -15,39 +15,45 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     problemResolver: PluginCreationResultResolver
   ) {
     val dependencyChain = DependencyChain()
-    resolveOptionalDependencies(plugin, pluginArtifactPath, resourceResolver, problemResolver, dependencyChain)
+    plugin.resolveOptionalDependencies(pluginArtifactPath, resourceResolver, problemResolver, dependencyChain)
     dependencyChain.cycles.forEach {
       plugin.registerOptionalDependenciesConfigurationFilesCycleProblem(it)
     }
   }
 
   /**
-   * [plugin] - plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
+   * @receiver plugin whose optional dependencies are resolved (plugin.xml, then someOptional.xml, ...)
    */
-  private fun resolveOptionalDependencies(
-    plugin: PluginCreator,
+  private fun PluginCreator.resolveOptionalDependencies(
     pluginArtifactPath: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     dependencyChain: DependencyChain
   ) {
-    if (!dependencyChain.extend(plugin)) {
+    if (!dependencyChain.extend(this)) {
       return
     }
-    for ((pluginDependency, configurationFile) in plugin.optionalDependenciesConfigFiles) {
+    for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
       if (dependencyChain.detectCycle(configurationFile)) {
         return
       }
 
-      val optionalDependencyCreator = pluginLoader.load(pluginArtifactPath, configurationFile, false, resourceResolver, plugin, problemResolver)
+      val optionalDependencyCreator = pluginLoader.load(pluginArtifactPath, configurationFile,
+        false, resourceResolver, parentPlugin = this, problemResolver
+      )
       if (optionalDependencyCreator.isSuccess) {
         val optionalPlugin = optionalDependencyCreator.plugin
-        plugin.plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
-        plugin.mergeContent(optionalPlugin)
+        plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
+        mergeContent(optionalPlugin)
       } else {
-        plugin.registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, optionalDependencyCreator.resolvedProblems))
+        registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, optionalDependencyCreator.resolvedProblems))
       }
-      resolveOptionalDependencies(optionalDependencyCreator, pluginArtifactPath, resourceResolver, problemResolver, dependencyChain)
+      optionalDependencyCreator.resolveOptionalDependencies(
+        pluginArtifactPath,
+        resourceResolver,
+        problemResolver,
+        dependencyChain
+      )
     }
     dependencyChain.dropLast()
   }
