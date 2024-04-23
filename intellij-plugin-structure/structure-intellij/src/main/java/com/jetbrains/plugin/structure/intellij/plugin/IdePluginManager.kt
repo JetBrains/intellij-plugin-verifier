@@ -286,10 +286,7 @@ class IdePluginManager private constructor(
     return when (extractorResult) {
       is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
         if (extractedFile.isJar() || extractedFile.isDirectory) {
-          val pluginCreator = loadPluginInfoFromJarOrDirectory(extractedFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver)
-          resolveOptionalDependencies(extractedFile, pluginCreator, myResourceResolver, problemResolver)
-          resolveContentModules(extractedFile, pluginCreator, myResourceResolver, problemResolver)
-          pluginCreator
+          getPluginCreator(extractedFile, descriptorPath, validateDescriptor, resourceResolver, problemResolver)
         } else {
           getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
         }
@@ -340,14 +337,26 @@ class IdePluginManager private constructor(
           problemResolver
         )
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
-        pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, null, problemResolver)
-        resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-        resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+        pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
       } else {
         pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
       }
       pluginCreator.setOriginalFile(pluginFile)
     }.let { pluginCreationDuration -> pluginCreator.setTelemetry(pluginFile, pluginCreationDuration)}
+    return pluginCreator
+  }
+
+  private fun getPluginCreator(
+    pluginFile: Path,
+    descriptorPath: String,
+    validateDescriptor: Boolean,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ): PluginCreator {
+    val pluginCreator = loadPluginInfoFromJarOrDirectory(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver)
+    resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+    resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+
     return pluginCreator
   }
 
