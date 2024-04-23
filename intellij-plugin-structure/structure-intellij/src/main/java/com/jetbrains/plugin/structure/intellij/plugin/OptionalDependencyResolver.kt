@@ -19,6 +19,8 @@ internal fun interface PluginLoader {
   fun load(context: PluginMetadataResolutionContext): PluginCreator
 }
 
+typealias DependencyCycle = List<String>
+
 internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader) {
 
   fun resolveOptionalDependencies(
@@ -97,8 +99,3 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     }
   }
 }
-
-
-
-
-typealias DependencyCycle = List<String>
