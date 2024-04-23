@@ -26,9 +26,9 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ) {
-    val cycles = Cycles()
-    resolveOptionalDependencies(plugin, mutableSetOf(), LinkedList(), pluginFile, resourceResolver, problemResolver, cycles)
-    cycles.forEach {
+    val dependencyCycles = DependencyCycles()
+    resolveOptionalDependencies(plugin, mutableSetOf(), LinkedList(), pluginFile, resourceResolver, problemResolver, dependencyCycles)
+    dependencyCycles.forEach {
       plugin.registerOptionalDependenciesConfigurationFilesCycleProblem(it)
     }
   }
@@ -44,7 +44,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     pluginFile: Path,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
-    cycles: Cycles
+    dependencyCycles: DependencyCycles
   ) {
     if (!visitedConfigurationFiles.add(currentPlugin.descriptorPath)) {
       return
@@ -53,18 +53,18 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     val optionalDependenciesConfigFiles: Map<PluginDependency, String> = currentPlugin.optionalDependenciesConfigFiles
     for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
       if (path.contains(configurationFile)) {
-        cycles.add(path + configurationFile)
+        dependencyCycles.add(path + configurationFile)
         return
       }
 
       val optionalDependencyCreator = pluginLoader.load(PluginMetadataResolutionContext(pluginFile, configurationFile, false, resourceResolver, problemResolver, currentPlugin))
       currentPlugin.addOptionalDescriptor(pluginDependency, configurationFile, optionalDependencyCreator)
-      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, cycles)
+      resolveOptionalDependencies(optionalDependencyCreator, visitedConfigurationFiles, path, pluginFile, resourceResolver, problemResolver, dependencyCycles)
     }
     path.removeLast()
   }
 
-  internal class Cycles: Iterable<DependencyCycle> {
+  internal class DependencyCycles: Iterable<DependencyCycle> {
     private val cycles: MutableList<DependencyCycle> = mutableListOf()
 
     fun add(cycleChain: DependencyCycle) {
