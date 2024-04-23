@@ -48,8 +48,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
       return
     }
     dependencyChain.push(plugin)
-    val optionalDependenciesConfigFiles: Map<PluginDependency, String> = plugin.optionalDependenciesConfigFiles
-    for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
+    for ((pluginDependency, configurationFile) in plugin.optionalDependenciesConfigFiles) {
       if (dependencyChain.detectCycle(configurationFile)) {
         return
       }
