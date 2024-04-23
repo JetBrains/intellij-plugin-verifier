@@ -1021,7 +1021,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
-  fun `plugin xincludes snippets without proper root element which is against XInclud spec but working correctly`() {
+  fun `plugin xincludes snippets without proper root element which is against XInclude spec but working correctly`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
       dir("META-INF") {
         file("plugin.xml") {
