@@ -183,12 +183,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin name contains template words`() {
     for (templateWord in PLUGIN_NAME_RESTRICTED_WORDS) {
+      val pluginName = "bla ${templateWord}bla"
       val warning = `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          name = "<name>bla ${templateWord}bla</name>"
+          name = "<name>$pluginName</name>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
+      assertEquals(TemplateWordInPluginName("plugin.xml", pluginName, templateWord), warning)
     }
   }
 

@@ -34,10 +34,11 @@ class DefaultChangeNotes(descriptorPath: String) : InvalidDescriptorProblem(
 
 class TemplateWordInPluginName(
   descriptorPath: String,
+  pluginName: String,
   templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The plugin name should not contain the word '$templateWord'."
+  detailedMessage = "The plugin name '$pluginName' should not include the word '$templateWord'."
 ) {
   override val level
     get() = Level.WARNING
