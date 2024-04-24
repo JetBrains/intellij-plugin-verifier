@@ -100,7 +100,7 @@ private fun Method.findInSuperClass(superClass: ClassFileAsm, isSuperClassMethod
     superClassMethodCandidates.isEmpty() -> null
     superClassMethodCandidates.size == 1 -> superClassMethodCandidates.first()
     else -> {
-      LOG.warn("Too many candidates for discovering overridden method in superclass for ${this.name}")
+      LOG.debug("Too many candidates for discovering overridden method in superclass for ${this.name}")
       null
     }
   }
