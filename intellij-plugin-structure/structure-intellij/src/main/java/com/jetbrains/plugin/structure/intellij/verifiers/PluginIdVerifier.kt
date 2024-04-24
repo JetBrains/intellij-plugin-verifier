@@ -43,7 +43,7 @@ class PluginIdVerifier {
     val id = plugin.id
     DEFAULT_ILLEGAL_PREFIXES
       .filter(id::startsWith)
-      .forEach { problemRegistrar.registerProblem(ForbiddenPluginIdPrefix(id, it)) }
+      .forEach { problemRegistrar.registerProblem(ForbiddenPluginIdPrefix(descriptorPath, id, it)) }
 
     id.split('.')
       .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }

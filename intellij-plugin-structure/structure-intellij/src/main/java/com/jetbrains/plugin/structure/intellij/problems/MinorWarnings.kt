@@ -179,10 +179,11 @@ open class NonexistentReleaseInUntilBuild(
 
 
 class ForbiddenPluginIdPrefix(
+  descriptorPath: String,
   pluginId: String,
   prefix: String
 ) : InvalidDescriptorProblem(
-  descriptorPath = "id",
+  descriptorPath = descriptorPath,
   detailedMessage = "The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed."
 ) {
   override val level

@@ -3,7 +3,15 @@ package com.jetbrains.pluginverifier.options
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.ErroneousSinceBuild
+import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinitions
+import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.StandardLevel
+import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
+import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
+import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
+import com.jetbrains.plugin.structure.intellij.problems.levelRemappingFromClassPathJson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
@@ -52,7 +60,7 @@ class PluginParsingConfigurationResolutionTest {
       levelRemappingFromClassPathJson())
 
     val problemsThatShouldBeIgnored = listOf(
-      ForbiddenPluginIdPrefix(pluginId, "some.forbidden.plugin.id"),
+      ForbiddenPluginIdPrefix(PLUGIN_XML, pluginId, "some.forbidden.plugin.id"),
       TemplateWordInPluginId(pluginId, "forbiddenTemplateWord"),
       TemplateWordInPluginName(pluginId, "forbiddenTemplateWord"),
     )
@@ -112,7 +120,7 @@ class PluginParsingConfigurationResolutionTest {
     val forbiddenPluginIdPrefix = "com.example"
     val forbiddenPluginId = "$forbiddenPluginIdPrefix.plugin"
     val plugin = MockIdePlugin(pluginId = forbiddenPluginId)
-    val pluginProblems = listOf(ForbiddenPluginIdPrefix(forbiddenPluginId, forbiddenPluginIdPrefix))
+    val pluginProblems = listOf(ForbiddenPluginIdPrefix(PLUGIN_XML, forbiddenPluginId, forbiddenPluginIdPrefix))
 
     val creationResult = creationResultResolver.resolve(plugin, pluginProblems)
     assertThat(creationResult, instanceOf(PluginCreationSuccess::class.java))
