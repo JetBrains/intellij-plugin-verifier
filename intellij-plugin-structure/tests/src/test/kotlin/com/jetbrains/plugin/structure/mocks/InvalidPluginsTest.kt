@@ -159,12 +159,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin id has template word prefix`() {
     PRODUCT_ID_RESTRICTED_WORDS.forEach { product ->
+      val pluginId = "plugin.${product}.improved"
       val warning = `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          id = "<id>plugin.${product}.improved</id>"
+          id = "<id>$pluginId</id>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginId("plugin.xml", product), warning)
+      assertEquals(TemplateWordInPluginId(PLUGIN_XML, pluginId, product), warning)
     }
   }
 

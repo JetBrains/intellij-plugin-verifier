@@ -46,10 +46,11 @@ class TemplateWordInPluginName(
 
 class TemplateWordInPluginId(
   descriptorPath: String,
+  pluginId: String,
   templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The plugin id should not contain the word '$templateWord'."
+  detailedMessage = "The plugin ID '$pluginId' should not include the word '$templateWord'."
 ) {
   override val level
     get() = Level.WARNING

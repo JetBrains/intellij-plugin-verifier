@@ -61,7 +61,7 @@ class PluginParsingConfigurationResolutionTest {
 
     val problemsThatShouldBeIgnored = listOf(
       ForbiddenPluginIdPrefix(PLUGIN_XML, pluginId, "some.forbidden.plugin.id"),
-      TemplateWordInPluginId(pluginId, "forbiddenTemplateWord"),
+      TemplateWordInPluginId(PLUGIN_XML, pluginId, "forbiddenTemplateWord"),
       TemplateWordInPluginName(PLUGIN_XML, "IntelliJ Toolset","IntelliJ"),
     )
     val warnings = listOf(SuspiciousUntilBuild("999"))

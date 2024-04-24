@@ -47,7 +47,7 @@ class PluginIdVerifier {
 
     id.split('.')
       .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }
-      .forEach { idComponent -> problemRegistrar.registerProblem(TemplateWordInPluginId(descriptorPath, idComponent)) }
+      .forEach { idComponent -> problemRegistrar.registerProblem(TemplateWordInPluginId(descriptorPath, id, idComponent)) }
   }
 
   private fun isDevelopedByJetBrains(plugin: PluginBean): Boolean {
