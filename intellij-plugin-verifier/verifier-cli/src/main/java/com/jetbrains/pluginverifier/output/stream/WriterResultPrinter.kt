@@ -71,6 +71,7 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
       appendLine("Plugin structure warnings (${pluginStructureWarnings.size}): ")
       for (warning in pluginStructureWarnings) {
         appendLine("$INDENT${warning.message}")
+        warning.problem.solutionHint.takeUnless { it.isBlank() }?.let { appendLine(INDENT + INDENT + it) }
       }
     }
 
