@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.MAX_DOT_NET_RELEASE_NOTES_LENGTH
+import com.jetbrains.plugin.structure.base.problems.MAX_CHANGE_NOTES_LENGTH
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
@@ -65,7 +65,7 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
       descriptor = "",
       propertyName = "releaseNotes",
       propertyValue = releaseNotes,
-      maxLength = MAX_DOT_NET_RELEASE_NOTES_LENGTH,
+      maxLength = MAX_CHANGE_NOTES_LENGTH,
       problems = problems
     )
   }

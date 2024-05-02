@@ -1,0 +1,27 @@
+{
+  "name": "template-app",
+  "title": "Template App",
+  "description": "App description",
+  "version": "1.0.0",
+  "vendor": {
+    "name": "JetBrains",
+    "url": "https://www.jetbrains.com/",
+    "email": "info@jetbrains.com"
+  },
+  "icon": "icon.svg",
+  "iconDark": "icon.svg",
+  "youTrackVersion": "^2024.2.0",
+  "url": "https://example.com",
+  "changeNotes": "Version 0.0.1: Feature 1\n\nVersion 1.0.0: Feature 2",
+  "widgets": [
+    {
+      "key": "sample",
+      "name": "Sample Widget",
+      "description": "Optional widget description",
+      "extensionPoint": "MARKDOWN",
+      "indexPath": "index.html",
+      "iconPath": "icon.png",
+      "settingsSchemaPath": "sample-widget-settings.json"
+    }
+  ]
+}
