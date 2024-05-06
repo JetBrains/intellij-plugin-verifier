@@ -336,7 +336,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
             "optionalDependency.xml",
             """
                 <idea-plugin>
-                  <id>mock.OptionalDependency</id>
+                  <extensions defaultExtensionNs="com.intellij" />
                 </idea-plugin>
               """.trimIndent()
           )
