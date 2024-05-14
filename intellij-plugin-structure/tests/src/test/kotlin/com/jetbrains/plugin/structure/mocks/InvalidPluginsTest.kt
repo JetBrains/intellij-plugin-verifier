@@ -871,7 +871,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           "b.xml",
           """
                 <idea-plugin>
-                  <depends optional="true" config-file="a.xml">b</depends>
+                  <depends optional="true" config-file="a.xml">a</depends>
                 </idea-plugin>
               """.trimIndent()
         )
