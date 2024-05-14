@@ -67,15 +67,11 @@ class IdeManagerImpl : IdeManager() {
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
     val platformJarFiles = idePath.resolve("lib").listJars()
-    val platformModuleJarFiles = platformModuleJarFiles(idePath)
+    val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
     val platformResourceResolver = PlatformResourceResolver(platformJarFiles + platformModuleJarFiles)
     val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
     val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver, ideVersion)
     return bundledPlugins + platformPlugins
-  }
-
-  private fun platformModuleJarFiles(idePath: Path): List<Path> {
-    return idePath.resolve("lib").resolve("modules").listJars()
   }
 
   /**
