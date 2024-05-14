@@ -33,6 +33,8 @@ internal class DependencyChain {
     }
 
     fun dropLast() {
-      chain.removeLast()
+      if (chain.isNotEmpty()) {
+        chain.removeLast()
+      }
     }
   }
