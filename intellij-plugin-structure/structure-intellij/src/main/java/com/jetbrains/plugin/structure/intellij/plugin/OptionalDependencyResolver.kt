@@ -35,6 +35,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     }
     for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
       if (dependencyChain.detectCycle(configurationFile)) {
+        dependencyChain.dropLast()
         return
       }
 
