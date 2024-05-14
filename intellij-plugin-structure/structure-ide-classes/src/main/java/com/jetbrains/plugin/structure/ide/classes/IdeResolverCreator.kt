@@ -4,8 +4,17 @@
 
 package com.jetbrains.plugin.structure.ide.classes
 
-import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.listJars
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledCommunity
@@ -39,9 +48,10 @@ object IdeResolverCreator {
       return EmptyResolver
     }
 
-    val jars = libDirectory.listFiles().filter { file -> file.isJar() }
-    val antJars = libDirectory.resolve("ant").resolve("lib").listFiles().filter { it.isJar() }
-    return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars, readMode, parentOrigin))
+    val jars = libDirectory.listJars()
+    val antJars = libDirectory.resolve("ant").resolve("lib").listJars()
+    val moduleJars = libDirectory.resolve("modules").listJars()
+    return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars + moduleJars, readMode, parentOrigin))
   }
 
   //TODO: Resolver created this way contains all libraries declared in the project,

@@ -109,6 +109,8 @@ fun Path.listFiles(): List<Path> {
   return Files.list(this).use { it.collect(Collectors.toList()) }
 }
 
+fun Path.listJars(): List<Path> = listFiles().filter { it.isJar() }
+
 fun Path.listAllFiles() =
   Files.walk(this).use { stream -> stream.filter { it.isFile }.map { this.relativize(it) }.toList() }
 
