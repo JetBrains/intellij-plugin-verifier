@@ -34,10 +34,11 @@ class DefaultChangeNotes(descriptorPath: String) : InvalidDescriptorProblem(
 
 class TemplateWordInPluginName(
   descriptorPath: String,
+  pluginName: String,
   templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The plugin name should not contain the word '$templateWord'."
+  detailedMessage = "The plugin name '$pluginName' should not include the word '$templateWord'."
 ) {
   override val level
     get() = Level.WARNING
@@ -45,10 +46,11 @@ class TemplateWordInPluginName(
 
 class TemplateWordInPluginId(
   descriptorPath: String,
+  pluginId: String,
   templateWord: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The plugin id should not contain the word '$templateWord'."
+  detailedMessage = "The plugin ID '$pluginId' should not include the word '$templateWord'."
 ) {
   override val level
     get() = Level.WARNING
@@ -179,10 +181,11 @@ open class NonexistentReleaseInUntilBuild(
 
 
 class ForbiddenPluginIdPrefix(
+  descriptorPath: String,
   pluginId: String,
   prefix: String
 ) : InvalidDescriptorProblem(
-  descriptorPath = "id",
+  descriptorPath = descriptorPath,
   detailedMessage = "The plugin ID '$pluginId' has a prefix '$prefix' that is not allowed."
 ) {
   override val level

@@ -186,7 +186,7 @@ class MarkdownOutputTest : BaseOutputTest<MarkdownResultPrinter>() {
           
           ### Plugin Warnings
           
-          * Invalid plugin descriptor 'id'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
+          * Invalid plugin descriptor 'plugin.xml'. The plugin ID 'com.example.intellij' has a prefix 'com.example' that is not allowed.
           
           
         """.trimIndent()

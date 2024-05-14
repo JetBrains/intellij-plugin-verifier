@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -145,7 +146,7 @@ open class BaseOutputTest<T : ResultPrinter> {
     val pluginId = "com.example.intellij"
     val prefix = "com.example"
     val invalidPluginFiles = listOf(
-      InvalidPluginFile(Path("plugin.zip"), listOf(ForbiddenPluginIdPrefix(pluginId, prefix)))
+      InvalidPluginFile(Path("plugin.zip"), listOf(ForbiddenPluginIdPrefix(PLUGIN_XML, pluginId, prefix)))
     )
 
     testRunner.run(resultPrinter, invalidPluginFiles)

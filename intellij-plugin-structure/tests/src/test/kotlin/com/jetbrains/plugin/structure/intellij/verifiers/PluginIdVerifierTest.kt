@@ -47,7 +47,7 @@ class PluginIdVerifierTest {
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'id'. The plugin ID '$illegalId' has a prefix 'org.jetbrains' that is not allowed.",
+      "Invalid plugin descriptor 'plugin.xml'. The plugin ID '$illegalId' has a prefix 'org.jetbrains' that is not allowed.",
       problem.message
     )
   }
@@ -62,7 +62,7 @@ class PluginIdVerifierTest {
     Assert.assertEquals(1, problems.size)
     val problem = problems[0]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'id'. The plugin ID '$genericId' has a prefix 'com.example' that is not allowed.",
+      "Invalid plugin descriptor 'plugin.xml'. The plugin ID '$genericId' has a prefix 'com.example' that is not allowed.",
       problem.message
     )
   }
@@ -70,13 +70,14 @@ class PluginIdVerifierTest {
   @Test
   fun `plugin with product name in ID is disallowed`() {
     PRODUCT_ID_RESTRICTED_WORDS.forEach {
-      val plugin = plugin("vendor.$it.quickride", "Third Party Inc.")
+      val pluginId = "vendor.$it.quickride"
+      val plugin = plugin(pluginId, "Third Party Inc.")
 
       verifier.verify(plugin, DESCRIPTOR_PATH, problemRegistrar)
 
       Assert.assertEquals(1, problems.size)
       val problem = problems[0]
-      Assert.assertEquals("Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word '$it'.", problem.message)
+      Assert.assertEquals("Invalid plugin descriptor 'plugin.xml'. The plugin ID '$pluginId' should not include the word '$it'.", problem.message)
 
       problems.clear()
     }
@@ -84,19 +85,20 @@ class PluginIdVerifierTest {
 
   @Test
   fun `plugin with multiple case-sensitive names in ID is disallowed`() {
-    val plugin = plugin("vendor.DataLore.DataGrip", "Third Party Inc.")
+    val pluginId = "vendor.DataLore.DataGrip"
+    val plugin = plugin(pluginId, "Third Party Inc.")
     verifier.verify(plugin, DESCRIPTOR_PATH, problemRegistrar)
 
     Assert.assertEquals(2, problems.size)
     val dataLoreProblem = problems[0]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word 'DataLore'.",
+      "Invalid plugin descriptor 'plugin.xml'. The plugin ID '$pluginId' should not include the word 'DataLore'.",
       dataLoreProblem.message
     )
 
     val dataGripProblem = problems[1]
     Assert.assertEquals(
-      "Invalid plugin descriptor 'plugin.xml'. The plugin id should not contain the word 'DataGrip'.",
+      "Invalid plugin descriptor 'plugin.xml'. The plugin ID '$pluginId' should not include the word 'DataGrip'.",
       dataGripProblem.message
     )
   }

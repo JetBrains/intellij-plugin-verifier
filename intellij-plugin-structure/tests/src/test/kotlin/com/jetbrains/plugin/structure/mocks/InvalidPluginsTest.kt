@@ -153,18 +153,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
         id = "<id>com.example.plugin</id>"
       },
     ).warnings.single()
-    assertEquals(ForbiddenPluginIdPrefix("com.example.plugin", "com.example"), warning)
+    assertEquals(ForbiddenPluginIdPrefix(PLUGIN_XML,"com.example.plugin", "com.example"), warning)
   }
 
   @Test
   fun `plugin id has template word prefix`() {
     PRODUCT_ID_RESTRICTED_WORDS.forEach { product ->
+      val pluginId = "plugin.${product}.improved"
       val warning = `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          id = "<id>plugin.${product}.improved</id>"
+          id = "<id>$pluginId</id>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginId("plugin.xml", product), warning)
+      assertEquals(TemplateWordInPluginId(PLUGIN_XML, pluginId, product), warning)
     }
   }
 
@@ -183,12 +184,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   @Test
   fun `plugin name contains template words`() {
     for (templateWord in PLUGIN_NAME_RESTRICTED_WORDS) {
+      val pluginName = "bla ${templateWord}bla"
       val warning = `test valid plugin xml`(
         perfectXmlBuilder.modify {
-          name = "<name>bla ${templateWord}bla</name>"
+          name = "<name>$pluginName</name>"
         }
       ).warnings.single()
-      assertEquals(TemplateWordInPluginName("plugin.xml", templateWord), warning)
+      assertEquals(TemplateWordInPluginName("plugin.xml", pluginName, templateWord), warning)
     }
   }
 
