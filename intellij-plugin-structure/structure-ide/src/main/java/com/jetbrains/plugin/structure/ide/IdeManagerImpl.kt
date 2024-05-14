@@ -10,8 +10,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.base.utils.readText
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -66,9 +66,7 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
-    val platformJarFiles = idePath.resolve("lib")
-      .listFiles()
-      .filter { it.isJar() }
+    val platformJarFiles = idePath.resolve("lib").listJars()
     val platformModuleJarFiles = platformModuleJarFiles(idePath)
     val platformResourceResolver = PlatformResourceResolver(platformJarFiles + platformModuleJarFiles)
     val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
@@ -77,9 +75,7 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun platformModuleJarFiles(idePath: Path): List<Path> {
-    return idePath.resolve("lib").resolve("modules")
-      .listFiles()
-      .filter { it.isJar() }
+    return idePath.resolve("lib").resolve("modules").listJars()
   }
 
   /**

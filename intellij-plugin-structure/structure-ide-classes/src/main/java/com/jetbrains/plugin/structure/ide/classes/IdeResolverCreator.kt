@@ -6,8 +6,8 @@ package com.jetbrains.plugin.structure.ide.classes
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
@@ -48,9 +48,9 @@ object IdeResolverCreator {
       return EmptyResolver
     }
 
-    val jars = libDirectory.listFiles().filter { file -> file.isJar() }
-    val antJars = libDirectory.resolve("ant").resolve("lib").listFiles().filter { it.isJar() }
-    val moduleJars = libDirectory.resolve("modules").listFiles().filter { it.isJar() }
+    val jars = libDirectory.listJars()
+    val antJars = libDirectory.resolve("ant").resolve("lib").listJars()
+    val moduleJars = libDirectory.resolve("modules").listJars()
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars + moduleJars, readMode, parentOrigin))
   }
 
