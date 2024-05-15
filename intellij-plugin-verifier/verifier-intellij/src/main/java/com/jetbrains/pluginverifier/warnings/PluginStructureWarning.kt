@@ -6,13 +6,13 @@ package com.jetbrains.pluginverifier.warnings
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
-data class PluginStructureWarning(private val pluginProblem: PluginProblem) {
+data class PluginStructureWarning(val problem: PluginProblem) {
 
   init {
-    check(pluginProblem.level == PluginProblem.Level.WARNING || pluginProblem.level == PluginProblem.Level.UNACCEPTABLE_WARNING)
+    check(problem.level == PluginProblem.Level.WARNING || problem.level == PluginProblem.Level.UNACCEPTABLE_WARNING)
   }
 
   val problemType: String get() = "Plugin descriptor warning"
 
-  val message: String get() = pluginProblem.message
+  val message: String get() = problem.message
 }

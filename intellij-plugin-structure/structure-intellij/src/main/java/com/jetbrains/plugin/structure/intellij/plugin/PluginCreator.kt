@@ -31,6 +31,7 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
@@ -84,6 +85,7 @@ internal class PluginCreator private constructor(
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
     private val pluginIdVerifier = PluginIdVerifier()
+    private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -541,6 +543,7 @@ internal class PluginCreator private constructor(
     }
     if (validateDescriptor || bean.ideaVersion != null) {
       validateIdeaVersion(bean.ideaVersion)
+      pluginUntilBuildVerifier.verify(bean, descriptorPath, ::registerProblem)
     }
     if (validateDescriptor || bean.productDescriptor != null) {
       validateProductDescriptor(bean.productDescriptor)
@@ -803,7 +806,7 @@ internal class PluginCreator private constructor(
       else -> {
         val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
         if (templateWord != null) {
-          registerProblem(TemplateWordInPluginName(descriptorPath, templateWord))
+          registerProblem(TemplateWordInPluginName(descriptorPath, name, templateWord))
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
         verifyNewlines("name", name, descriptorPath, ::registerProblem)
@@ -917,22 +920,6 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun validateUntilBuild(untilBuild: String) {
-    val untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild)
-    if (untilBuildParsed == null) {
-      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-    } else {
-      if (untilBuildParsed.baselineVersion > 999) {
-        registerProblem(ErroneousUntilBuild(descriptorPath, untilBuildParsed))
-      } else if (untilBuildParsed.baselineVersion > 400) {
-        registerProblem(SuspiciousUntilBuild(untilBuild))
-      }
-      if (untilBuildParsed.productCode.isNotEmpty()) {
-        registerProblem(ProductCodePrefixInBuild(descriptorPath))
-      }
-    }
-  }
-
   private fun validateIdeaVersion(versionBean: IdeaVersionBean?) {
     if (versionBean == null) {
       registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
@@ -941,11 +928,6 @@ internal class PluginCreator private constructor(
 
     val sinceBuild = versionBean.sinceBuild
     validateSinceBuild(sinceBuild)
-
-    val untilBuild = versionBean.untilBuild
-    if (untilBuild != null) {
-      validateUntilBuild(untilBuild)
-    }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>

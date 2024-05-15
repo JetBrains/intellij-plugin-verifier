@@ -7,7 +7,13 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isFile
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.listJars
+import com.jetbrains.plugin.structure.base.utils.readLines
+import com.jetbrains.plugin.structure.base.utils.readText
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
@@ -60,10 +66,9 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
-    val platformJarFiles = idePath.resolve("lib")
-      .listFiles()
-      .filter { it.isJar() }
-    val platformResourceResolver = PlatformResourceResolver(platformJarFiles)
+    val platformJarFiles = idePath.resolve("lib").listJars()
+    val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
+    val platformResourceResolver = PlatformResourceResolver(platformJarFiles + platformModuleJarFiles)
     val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
     val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver, ideVersion)
     return bundledPlugins + platformPlugins
