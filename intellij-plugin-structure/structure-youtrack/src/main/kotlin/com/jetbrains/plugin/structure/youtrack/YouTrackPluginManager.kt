@@ -16,9 +16,9 @@ import java.nio.file.Paths
 class YouTrackPluginManager private constructor(private val extractDirectory: Path) : PluginManager<YouTrackPlugin> {
 
   companion object {
-    const val DESCRIPTOR_NAME = "manifest.json"
-
     private val LOG: Logger = LoggerFactory.getLogger(YouTrackPluginManager::class.java)
+
+    const val DESCRIPTOR_NAME = "manifest.json"
 
     fun createManager(
       extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get())
@@ -61,8 +61,7 @@ class YouTrackPluginManager private constructor(private val extractDirectory: Pa
       return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
     }
     val manifestContent = manifestFile.readText()
-    val mapper = jacksonObjectMapper()
-    val manifest = mapper.readValue(manifestContent, YouTrackAppManifest::class.java)
+    val manifest = jacksonObjectMapper().readValue(manifestContent, YouTrackAppManifest::class.java)
     val icons = getIcons(pluginDirectory, manifest)
 
     return createPlugin(manifest, icons)
