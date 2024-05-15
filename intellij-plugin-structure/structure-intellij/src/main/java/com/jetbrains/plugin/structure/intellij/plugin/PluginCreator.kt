@@ -149,7 +149,8 @@ internal class PluginCreator private constructor(
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
   val contentModules = arrayListOf<Module>()
 
-  private val plugin = IdePluginImpl()
+  internal val plugin = IdePluginImpl()
+
   private val problems: MutableList<PluginProblem>
     get() = plugin.problems
 
@@ -160,24 +161,14 @@ internal class PluginCreator private constructor(
     get() = !hasErrors()
 
   val pluginCreationResult: PluginCreationResult<IdePlugin>
-    get() = problemResolver.resolve(plugin, problems).add(telemetry)
+    get() = problemResolver.resolve(plugin, problems)
+        .reassignStructureProblems()
+        .add(telemetry)
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
-  fun addOptionalDescriptor(
-    pluginDependency: PluginDependency,
-    configurationFile: String,
-    optionalDependencyCreator: PluginCreator
-  ) {
-    val pluginCreationResult = optionalDependencyCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val optionalPlugin = pluginCreationResult.plugin
-      plugin.optionalDescriptors += OptionalPluginDescriptor(pluginDependency, optionalPlugin, configurationFile)
-      mergeContent(optionalPlugin)
-    } else {
-      registerProblem(OptionalDependencyDescriptorResolutionProblem(pluginDependency.id, configurationFile, pluginCreationResult.errors))
-    }
-  }
+  internal val resolvedProblems: List<PluginProblem>
+    get() = problemResolver.classify(plugin, problems)
 
   fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
@@ -203,7 +194,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun mergeContent(pluginToMerge: IdePlugin) {
+  internal fun mergeContent(pluginToMerge: IdePlugin) {
     pluginToMerge.extensions.forEach { (extensionPointName, extensionElement) ->
       plugin.extensions.getOrPut(extensionPointName) { arrayListOf() }.addAll(extensionElement)
     }
@@ -767,7 +758,7 @@ internal class PluginCreator private constructor(
 
   }
 
-  private fun registerProblem(problem: PluginProblem) {
+  internal fun registerProblem(problem: PluginProblem) {
     problems += problem
   }
 
@@ -944,6 +935,15 @@ internal class PluginCreator private constructor(
       is PluginCreationSuccess -> emptyList()
       is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
     }
+
+  private fun PluginCreationResult<IdePlugin>.reassignStructureProblems() =
+    when (this) {
+      is PluginCreationSuccess -> copy(plugin = IdePluginImpl.clone(plugin, problems))
+      is PluginCreationFail -> this
+    }
+
+  private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
+    get() = warnings + unacceptableWarnings
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {

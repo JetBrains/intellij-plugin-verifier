@@ -82,4 +82,58 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override fun toString(): String =
     (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
+
+  companion object {
+    fun clone(old: IdePlugin, structureProblems: List<PluginProblem>): IdePlugin {
+      return IdePluginImpl().apply {
+        pluginId = old.pluginId
+        pluginName = old.pluginName
+        pluginVersion = old.pluginVersion
+        sinceBuild = old.sinceBuild
+        untilBuild = old.untilBuild
+        originalFile = old.originalFile
+        productDescriptor = old.productDescriptor
+        vendor = old.vendor
+        vendorEmail = old.vendorEmail
+        vendorUrl = old.vendorUrl
+        description = old.description
+        changeNotes = old.changeNotes
+        url = old.url
+        useIdeClassLoader = old.useIdeClassLoader
+        isImplementationDetail = old.isImplementationDetail
+        isV2 = old.isV2
+        hasDotNetPart = old.hasDotNetPart
+        underlyingDocument = old.underlyingDocument
+        declaredThemes.addAll(old.declaredThemes)
+        definedModules.addAll(old.definedModules)
+        dependencies.addAll(old.dependencies)
+        incompatibleModules.addAll(old.incompatibleModules)
+        if (old is IdePluginImpl) {
+          extensions.putAll(old.extensions)
+          actions.addAll(old.actions)
+          old.appContainerDescriptor.copyInto(appContainerDescriptor)
+          old.projectContainerDescriptor.copyInto(projectContainerDescriptor)
+          old.moduleContainerDescriptor.copyInto(moduleContainerDescriptor)
+        }
+        icons = old.icons.toMutableList()
+        optionalDescriptors.addAll(old.optionalDescriptors)
+        modulesDescriptors.addAll(old.modulesDescriptors)
+        thirdPartyDependencies = old.thirdPartyDependencies.toMutableList()
+        if (old is StructurallyValidated) {
+          if (structureProblems.isNotEmpty()) {
+            problems.addAll(structureProblems)
+          } else {
+            problems.addAll(old.problems)
+          }
+        }
+      }
+    }
+
+    private fun IdePluginContentDescriptor.copyInto(descriptor: MutableIdePluginContentDescriptor) {
+      descriptor.services.addAll(services)
+      descriptor.components.addAll(components)
+      descriptor.listeners.addAll(listeners)
+      descriptor.extensionPoints.addAll(extensionPoints)
+    }
+  }
 }

@@ -58,6 +58,10 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
   }
 
   private fun remapPluginProblemLevel(pluginProblem: PluginProblem): PluginProblem? {
+    return remapPluginProblemLevel(pluginProblem, unwrapRemappedProblems)
+  }
+
+  private fun remapPluginProblemLevel(pluginProblem: PluginProblem, unwrapRemappedProblems: Boolean): PluginProblem? {
     val problem = if (unwrapRemappedProblems) {
       pluginProblem.unwrapped
     } else {
@@ -72,8 +76,16 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
   }
 
   override fun classify(plugin: IdePlugin, problems: List<PluginProblem>): List<PluginProblem> {
-    return problems.mapNotNull {
-      remapPluginProblemLevel(it)
+    return delegatedResolver.classify(plugin, problems).mapNotNull {
+      classify(it.unwrapped)
+    }
+  }
+
+  private fun classify(pluginProblem: PluginProblem): PluginProblem? {
+    return when (val remappedLevel = remappedLevel[pluginProblem::class]) {
+      is StandardLevel -> ReclassifiedPluginProblem(remappedLevel.originalLevel, pluginProblem)
+      is IgnoredLevel -> null
+      null -> pluginProblem
     }
   }
 

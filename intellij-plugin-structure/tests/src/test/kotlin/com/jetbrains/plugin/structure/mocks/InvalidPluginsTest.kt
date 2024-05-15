@@ -965,13 +965,177 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           "b.xml",
           """
                 <idea-plugin>
-                  <depends optional="true" config-file="a.xml">b</depends>
+                  <depends optional="true" config-file="a.xml">a</depends>
                 </idea-plugin>
               """.trimIndent()
         )
       }
     }
     assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "a.xml", "b.xml", "a.xml"))))
+  }
+
+  @Test
+  fun `plugin has multiple cycles in optional plugin dependencies configuration files`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="a.xml">a</depends>"""
+            depends += """<depends optional="true" config-file="alpha.xml">alpha</depends>"""
+          }
+        }
+
+        file(
+          "a.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="b.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "b.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">a</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "alpha.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="beta.xml">beta</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "beta.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="alpha.xml">alpha</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+
+    val abaCycle = listOf("plugin.xml", "a.xml", "b.xml", "a.xml")
+    val abaCycleProblem = OptionalDependencyDescriptorCycleProblem("plugin.xml", abaCycle)
+
+    val alphaBetaAlphaCycle = listOf("plugin.xml", "alpha.xml", "beta.xml", "alpha.xml")
+    val alphaBetaAlphaCycleProblem = OptionalDependencyDescriptorCycleProblem("plugin.xml", alphaBetaAlphaCycle)
+
+    assertProblematicPlugin(pluginFile, listOf(abaCycleProblem, alphaBetaAlphaCycleProblem))
+  }
+
+  @Test
+  fun `plugin has multiple cycles cross-referencing each other in optional plugin dependencies configuration files`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="a.xml">a</depends>"""
+            depends += """<depends optional="true" config-file="alpha.xml">alpha</depends>"""
+          }
+        }
+
+        file(
+          "a.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="b.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "b.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">a</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "alpha.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="beta.xml">beta</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "beta.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="alpha.xml">alpha</depends>
+                  <depends optional="true" config-file="a.xml">a</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+
+    val abaCycle = listOf("plugin.xml", "a.xml", "b.xml", "a.xml")
+    val abaCycleProblem = OptionalDependencyDescriptorCycleProblem("plugin.xml", abaCycle)
+
+    val alphaBetaAlphaCycle = listOf("plugin.xml", "alpha.xml", "beta.xml", "alpha.xml")
+    val alphaBetaAlphaCycleProblem = OptionalDependencyDescriptorCycleProblem("plugin.xml", alphaBetaAlphaCycle)
+
+
+    val alphaBetaAlphaBACrossOverCycle = listOf("plugin.xml", "alpha.xml", "beta.xml", "a.xml", "b.xml", "a.xml")
+    val alphaBetaAlphaBACrossOverCycleProblem = OptionalDependencyDescriptorCycleProblem("plugin.xml", alphaBetaAlphaBACrossOverCycle)
+
+
+    assertProblematicPlugin(pluginFile, listOf(abaCycleProblem, alphaBetaAlphaCycleProblem, alphaBetaAlphaBACrossOverCycleProblem))
+  }
+
+
+  @Test
+  fun `plugin has cycle in the transitive dependency`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            depends += """<depends optional="true" config-file="dependency.xml">dependency</depends>"""
+          }
+        }
+
+        file(
+          "dependency.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">a</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "a.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="b.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+
+        file(
+          "b.xml",
+          """
+                <idea-plugin>
+                  <depends optional="true" config-file="a.xml">b</depends>
+                </idea-plugin>
+              """.trimIndent()
+        )
+      }
+    }
+    assertProblematicPlugin(pluginFile, listOf(OptionalDependencyDescriptorCycleProblem("plugin.xml", listOf("plugin.xml", "dependency.xml", "a.xml", "b.xml", "a.xml"))))
   }
 
   @Test
