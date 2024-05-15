@@ -8,14 +8,15 @@ even errors like `Directory 'lib' must not be empty` according to verification [
 
 There are different types of plugins: 
 
-| Plugin Type   | Module               | Manager -> .createPlugin(Path pluginFile)  | API               | 
-|---------------|----------------------|--------------------------------------------|-------------------|  
-| IntelliJ      | `structure-intellij` | `IdePluginManager.createManager()`         | `IdePlugin`       |
-| ReSharper     | `structure-dotnet`   | `ReSharperPluginManager.createManager()`   | `ReSharperPlugin` |
-| EDU           | `structure-edu`      | `EduPluginManager.createManager()`         | `EduPlugin`       |
-| Fleet         | `structure-fleet`    | `FleetPluginManager.createManager()`       | `FleetPlugin`     |
-| Hub           | `structure-hub`      | `HubPluginManager.createManager()`         | `HubPlugin`       |
-| TeamCity      | `structure-teamcity` | `TeamcityPluginManager.createManager()`    | `TeamcityPlugin`  |
+| Plugin Type | Module               | Manager -> .createPlugin(Path pluginFile) | API               | 
+|-------------|----------------------|-------------------------------------------|-------------------|  
+| IntelliJ    | `structure-intellij` | `IdePluginManager.createManager()`        | `IdePlugin`       |
+| ReSharper   | `structure-dotnet`   | `ReSharperPluginManager.createManager()`  | `ReSharperPlugin` |
+| EDU         | `structure-edu`      | `EduPluginManager.createManager()`        | `EduPlugin`       |
+| Fleet       | `structure-fleet`    | `FleetPluginManager.createManager()`      | `FleetPlugin`     |
+| Hub         | `structure-hub`      | `HubPluginManager.createManager()`        | `HubPlugin`       |
+| TeamCity    | `structure-teamcity` | `TeamcityPluginManager.createManager()`   | `TeamcityPlugin`  |
+| YouTrack    | `structure-youtrack` | `YouTrackPluginManager.createManager()`   | `YouTrackPlugin`  |
 
 *IntelliJ Plugins* may be in several forms:
 - single `.jar` file containing `/META-INF/plugin.xml`

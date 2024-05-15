@@ -1,0 +1,9 @@
+{
+  "key": "sample",
+  "name": "Sample Widget",
+  "description": "Optional widget description",
+  "extensionPoint": "MARKDOWN",
+  "indexPath": "index.html",
+  "iconPath": "icon.png",
+  "settingsSchemaPath": "sample-widget-settings.json"
+}

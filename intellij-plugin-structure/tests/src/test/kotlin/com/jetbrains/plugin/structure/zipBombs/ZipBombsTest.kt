@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.mocks.BaseFileSystemAwareTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
+import com.jetbrains.plugin.structure.youtrack.YouTrackPluginManager
 import com.jetbrains.plugin.structure.zipBombs.DecompressorSizeLimitTest.Companion.generateZipFileOfSizeAtLeast
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -24,7 +25,8 @@ class ZipBombsTest(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fil
     Settings.INTELLIJ_PLUGIN_SIZE_LIMIT,
     Settings.TEAM_CITY_PLUGIN_SIZE_LIMIT,
     Settings.RE_SHARPER_PLUGIN_SIZE_LIMIT,
-    Settings.HUB_PLUGIN_SIZE_LIMIT
+    Settings.HUB_PLUGIN_SIZE_LIMIT,
+    Settings.YOUTRACK_PLUGIN_SIZE_LIMIT
   )
 
   private val oldValues = mutableMapOf<Settings, String>()
@@ -62,6 +64,8 @@ class ZipBombsTest(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fil
     checkTooLargeProblem(HubPluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
     checkTooLargeProblem(ReSharperPluginManager.createManager(), nuPkgBomb)
     checkTooLargeProblem(ReSharperPluginManager.createManager(temporaryFolder.newFolder()), nuPkgBomb)
+    checkTooLargeProblem(YouTrackPluginManager.createManager(), zipBomb)
+    checkTooLargeProblem(YouTrackPluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
   }
 
   private fun checkTooLargeProblem(manager: PluginManager<Plugin>, zipBomb: Path) {
