@@ -1,7 +1,7 @@
 [versions]
 bcpkix-jdk15on = "1.70"
 byteBuddy = "1.14.16"
-commons-compress = "1.26.1"
+commons-compress = "1.26.2"
 jgrapht-core = "1.5.2"
 jetbrains-pluginRepositoryRestClient = "2.0.39"
 okhttp-mockwebserver = "4.12.0"
