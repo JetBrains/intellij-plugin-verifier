@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
+import java.lang.Boolean.parseBoolean
 import java.nio.file.Path
 import java.util.*
 import java.util.regex.Pattern
@@ -18,7 +19,7 @@ import java.util.regex.Pattern
  * The inspiring implementation is in IntelliJ Community class [`com.intellij.util.xmlb.JDOMXIncluder`](https://github.com/JetBrains/intellij-community/blob/master/platform/util/src/com/intellij/util/xmlb/JDOMXIncluder.java).
  * This implementation provides better messages.
  */
-class XIncluder private constructor(private val resourceResolver: ResourceResolver) {
+class XIncluder private constructor(private val resourceResolver: ResourceResolver, private val properties: Properties) {
 
   companion object {
     @Throws(XIncluderException::class)
@@ -27,7 +28,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       presentablePath: String,
       resourceResolver: ResourceResolver,
       documentPath: Path
-    ): Document = XIncluder(resourceResolver).resolveXIncludes(document, presentablePath, documentPath)
+    ): Document = XIncluder(resourceResolver, System.getProperties()).resolveXIncludes(document, presentablePath, documentPath)
   }
 
   private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {
@@ -43,7 +44,23 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
   private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> =
     if (isIncludeElement(element)) {
-      resolveXIncludeElements(element, bases)
+      val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
+      val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
+      if (includeUnless != null && includeIf != null) {
+        // FIXME novotnyr: XIncludeEntries
+        throw XIncluderException(
+          emptyList(), "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' " +
+          "simultaneously. Specify either of attributes")
+      }
+
+      //if (properties.isTrue(includeUnless) || properties.isTrue(includeIf)) {
+      if ((includeIf == null && includeUnless == null)
+        || (includeIf != null && properties.isTrue(includeIf))
+        || (includeUnless != null && properties.isFalse(includeUnless))) {
+        resolveXIncludeElements(element, bases)
+      } else {
+        emptyList()
+      }
     } else {
       listOf(resolveNonXIncludeElement(element, bases))
     }
@@ -213,6 +230,20 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
   private fun isIncludeElement(element: Element): Boolean =
     element.name == INCLUDE && element.namespace == HTTP_XINCLUDE_NAMESPACE
+
+  private fun Element.getAttributeValueByLocalName(attributeLocalName: String): String? {
+    val attr = this.attributes.find { it.name == attributeLocalName }
+    return attr?.value
+  }
+
+  private fun Properties.isTrue(key: String?): Boolean {
+    return parseBoolean(getProperty(key))
+  }
+
+  private fun Properties.isFalse(key: String?): Boolean {
+    return !parseBoolean(getProperty(key))
+  }
+
 }
 
 private const val HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude"
@@ -227,3 +258,6 @@ private val HTTP_XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG
 
 private val XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)")
 private val XPOINTER_SELECTOR_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*")
+
+private const val INCLUDE_UNLESS_ATTR_NAME = "includeUnless"
+private const val INCLUDE_IF_ATTR_NAME = "includeIf"

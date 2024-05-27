@@ -625,6 +625,166 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     assertTrue(plugin.hasDotNetPart)
   }
 
+  @Test
+  fun `xinclude includeUnless with system property being set to false`() {
+    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", false) {
+      val plugin = buildPluginSuccess(emptyList()) {
+        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="applicationServices.xml" 
+                  includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+              }
+            }
+
+            file(
+              "applicationServices.xml",
+              """
+                <idea-plugin>
+                  <extensions defaultExtensionNs="com.intellij">
+                    <applicationService
+                        serviceImplementation="com.example.MyAppServiceImpl" />
+                  </extensions>
+                </idea-plugin>
+              """.trimIndent()
+            )
+          }
+        }
+      }
+      with(plugin.appContainerDescriptor.services) {
+        assertEquals(1, size)
+        val applicationService = first()
+        assertEquals("com.example.MyAppServiceImpl", applicationService.serviceImplementation)
+      }
+    }
+  }
+
+  @Test
+  fun `xinclude includeUnless with system property being set to true`() {
+    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
+      val plugin = buildPluginSuccess(emptyList()) {
+        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="applicationServices.xml" 
+                  includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+              }
+            }
+
+            file(
+              "applicationServices.xml",
+              """
+                <idea-plugin>
+                  <extensions defaultExtensionNs="com.intellij">
+                    <applicationService
+                        serviceInterface="com.example.MyAppService"
+                        serviceImplementation="com.example.MyAppServiceImpl" />
+                  </extensions>
+                </idea-plugin>
+              """.trimIndent()
+            )
+          }
+        }
+      }
+      assertEquals(0, plugin.appContainerDescriptor.services.size)
+    }
+  }
+
+  @Test
+  fun `xinclude includeUnless with system property being set`() {
+    try {
+      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "true")
+      val plugin = buildPluginSuccess(emptyList()) {
+        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+                additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="optionalDependency.xml" 
+                  includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+              }
+            }
+
+            file(
+              "optionalDependency.xml",
+              """
+                <idea-plugin>
+                  <extensions defaultExtensionNs="com.intellij" />
+                </idea-plugin>
+              """.trimIndent()
+            )
+          }
+        }
+      }
+      val optionalDescriptor = plugin.optionalDescriptors.single()
+      assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+      assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+    } finally {
+      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "false")
+    }
+  }
+
+  @Test
+  fun `xinclude includeIf with system property`() {
+    try {
+      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "true")
+      val plugin = buildPluginSuccess(emptyList()) {
+        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+          dir("META-INF") {
+            file("plugin.xml") {
+              perfectXmlBuilder.modify {
+                depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+                additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="optionalDependency.xml" 
+                  includeIf="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+              }
+            }
+
+            file(
+              "optionalDependency.xml",
+              """
+                <idea-plugin>
+                  <extensions defaultExtensionNs="com.intellij" />
+                </idea-plugin>
+              """.trimIndent()
+            )
+          }
+        }
+      }
+      val optionalDescriptor = plugin.optionalDescriptors.single()
+      assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+      assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+    } finally {
+      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "false")
+    }
+  }
+
+  private fun withSystemProperty(property: String, value: Boolean, block: () -> Unit) {
+    try {
+      System.setProperty(property, value.toString())
+      block()
+    } finally {
+      System.clearProperty(property)
+    }
+  }
+
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)

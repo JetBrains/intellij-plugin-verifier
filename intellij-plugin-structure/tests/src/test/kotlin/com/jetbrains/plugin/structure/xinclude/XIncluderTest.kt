@@ -114,4 +114,36 @@ class XIncluderTest {
   fun `nothing selected error`() {
     testError("nothingSelected")
   }
+
+  @Test
+  fun `includeIf variable is set`() {
+    val property = "xinclude.enabled"
+    try {
+      System.setProperty(property, true.toString())
+      testSuccess("includeIf")
+    } finally {
+      System.clearProperty(property)
+    }
+  }
+
+  @Test
+  fun `includeIf variable is not set`() {
+    testSuccess("includeIfWithUnsetProperty")
+  }
+
+  @Test
+  fun `includeUnless variable is set`() {
+    testSuccess("includeUnless")
+  }
+
+  @Test
+  fun `includeUnless with variable that is set`() {
+    val property = "xinclude.disabled"
+    try {
+      System.setProperty(property, true.toString())
+      testSuccess("includeUnlessWithSetProperty")
+    } finally {
+      System.clearProperty(property)
+    }
+  }
 }
