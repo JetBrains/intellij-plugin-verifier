@@ -10,7 +10,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
-## 1.366 - 2024-05-29
+## 1.367 - 2024-05-29
 
 ### Added
 
