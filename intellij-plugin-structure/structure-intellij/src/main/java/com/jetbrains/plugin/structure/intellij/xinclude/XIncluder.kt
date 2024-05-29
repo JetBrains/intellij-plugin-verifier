@@ -55,7 +55,6 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
           "simultaneously. Specify either of attributes")
       }
 
-      //if (properties.isTrue(includeUnless) || properties.isTrue(includeIf)) {
       if ((includeIf == null && includeUnless == null)
         || (includeIf != null && properties.isTrue(includeIf))
         || (includeUnless != null && properties.isFalse(includeUnless))) {
