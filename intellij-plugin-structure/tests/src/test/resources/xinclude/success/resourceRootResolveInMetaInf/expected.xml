@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<top  xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!--Start <xi:include href="part.xml"/>-->
+    <part>42</part>
+    <!--End <xi:include href="part.xml"/>-->
+</top>

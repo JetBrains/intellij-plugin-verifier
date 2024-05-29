@@ -4,7 +4,9 @@
 
 package com.jetbrains.plugin.structure.intellij.xinclude
 
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
@@ -84,8 +86,13 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
     val basePath = bases.peek()!!.documentPath
+    val resolver = CompositeResourceResolver(mutableListOf<ResourceResolver>().apply {
+      add(resourceResolver)
+      if (basePath.isInMetaInf()) add(InParentPathResourceResolver(resourceResolver))
+      if (basesHaveMetaInfResolution(bases)) add(MetaInfResourceResolver(resourceResolver))
+    })
 
-    when (val resourceResult = resourceResolver.resolveResource(href, basePath)) {
+    when (val resourceResult = resolver.resolveResource(href, basePath)) {
       is ResourceResolver.Result.Found -> resourceResult.use {
         val remoteDocument = try {
           JDOMUtil.loadDocument(it.resourceStream.buffered())
@@ -110,6 +117,15 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
         throw XIncluderException(bases, "Failed to load document referenced in $presentableXInclude", resourceResult.exception)
       }
     }
+  }
+
+  private fun Path.isInMetaInf(): Boolean {
+    val parent: Path? = parent
+    return parent?.simpleName == "META-INF"
+  }
+
+  private fun basesHaveMetaInfResolution(bases: Stack<XIncludeEntry>): Boolean {
+    return bases.any { it.documentPath.isInMetaInf() }
   }
 
   private fun resolveXIncludesOfRemoteDocument(
