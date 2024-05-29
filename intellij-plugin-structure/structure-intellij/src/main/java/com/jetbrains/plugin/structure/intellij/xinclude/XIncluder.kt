@@ -49,10 +49,9 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
       val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
       if (includeUnless != null && includeIf != null) {
-        // FIXME novotnyr: XIncludeEntries
         throw XIncluderException(
-          emptyList(), "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' " +
-          "simultaneously. Specify either of attributes")
+          bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' " +
+          "attributes simultaneously. Specify either of these attributes or none to always include the document")
       }
 
       if ((includeIf == null && includeUnless == null)
