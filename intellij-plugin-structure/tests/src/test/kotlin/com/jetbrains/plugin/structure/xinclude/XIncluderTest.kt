@@ -114,4 +114,19 @@ class XIncluderTest {
   fun `nothing selected error`() {
     testError("nothingSelected")
   }
+
+  @Test
+  fun `include in META-INF`() {
+    testSuccess("metaInfResolveInResourceRoot/META-INF")
+  }
+
+  @Test
+  fun `include document in META-INF from resource root`() {
+    testSuccess("resourceRootResolveInMetaInf")
+  }
+
+  @Test
+  fun `include document in META-INF from resource root and from that include a file in the META-INF`() {
+    testSuccess("metaInfResolveInResourceRootAndBack/META-INF")
+  }
 }
