@@ -702,8 +702,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
 
   @Test
   fun `xinclude includeUnless with system property being set`() {
-    try {
-      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "true")
+    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
       val plugin = buildPluginSuccess(emptyList()) {
         buildZipFile(temporaryFolder.newFile("plugin.jar")) {
           dir("META-INF") {
@@ -733,15 +732,12 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       val optionalDescriptor = plugin.optionalDescriptors.single()
       assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
       assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
-    } finally {
-      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "false")
     }
   }
 
   @Test
   fun `xinclude includeIf with system property`() {
-    try {
-      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "true")
+    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
       val plugin = buildPluginSuccess(emptyList()) {
         buildZipFile(temporaryFolder.newFile("plugin.jar")) {
           dir("META-INF") {
@@ -771,8 +767,6 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
       val optionalDescriptor = plugin.optionalDescriptors.single()
       assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
       assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
-    } finally {
-      System.setProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", "false")
     }
   }
 
