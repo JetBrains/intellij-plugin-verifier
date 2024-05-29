@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.366 - 2024-05-29
+
+### Added
+
 - Introduce a CLI switch to `–mute` specific plugin problems ([#1078](https://github.com/JetBrains/intellij-plugin-verifier/pull/1078))
 - Distinguish errors and other plugin problems in Markdown and Console outputs ([#1075](https://github.com/JetBrains/intellij-plugin-verifier/pull/1075))
 - Show structure warnings in verification reports for HTML, Markdown and Stdout outputs ([#1080](https://github.com/JetBrains/intellij-plugin-verifier/pull/1080))
@@ -20,7 +28,6 @@ Indicate illegal `until-build` values, such as `241` (wildcards should be used).
 Improve messages to indicate that the attribute can be omitted to provide compatibility with all future versions.
 Mark specific magic build values - e. g. `999` - as invalid. 
 ([#1083](https://github.com/JetBrains/intellij-plugin-verifier/pull/1083))
-
 - Consider `ServiceExtensionPointPreloadNotSupported` as warning for JetBrains plugins
 - Upgrade dependencies
 
