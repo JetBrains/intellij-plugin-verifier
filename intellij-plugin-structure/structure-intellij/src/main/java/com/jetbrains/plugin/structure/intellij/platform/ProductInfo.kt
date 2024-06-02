@@ -1,10 +1,12 @@
 package com.jetbrains.plugin.structure.intellij.platform
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import java.nio.file.Path
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ProductInfo(
@@ -32,11 +34,18 @@ data class ProductInfo(
 sealed class Layout(val kind: String) {
   abstract val name: String
 
+  interface Classpathable {
+    @JsonIgnore
+    fun getClasspath(): List<Path>
+  }
+
   data class Plugin(
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,
-  ) : Layout("plugin")
+  ) : Layout("plugin"), Classpathable {
+    override fun getClasspath() = classPaths.paths
+  }
 
   data class PluginAlias(
     @JsonProperty("name") override val name: String,
@@ -45,7 +54,7 @@ sealed class Layout(val kind: String) {
   data class ModuleV2(
     override val name: String,
     val classPaths: List<String>,
-  ) : Layout("moduleV2") {
+  ) : Layout("moduleV2"), Classpathable {
 
     companion object {
       @JvmStatic
@@ -54,13 +63,20 @@ sealed class Layout(val kind: String) {
         return ModuleV2(name, classPaths ?: emptyList())
       }
     }
+
+    override fun getClasspath() = classPaths.paths
   }
 
   data class ProductModuleV2(
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,
-  ) : Layout("productModuleV2")
+  ) : Layout("productModuleV2"), Classpathable {
+    override fun getClasspath() = classPaths.paths
+  }
+
+  protected val List<String>.paths
+    get() = map { Path.of(it) }
 }
 
 
