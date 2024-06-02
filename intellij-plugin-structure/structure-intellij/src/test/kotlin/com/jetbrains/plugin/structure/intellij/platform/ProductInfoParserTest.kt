@@ -1,25 +1,18 @@
 package com.jetbrains.plugin.structure.intellij.platform
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import junit.framework.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 
 class ProductInfoParserTest {
-  private lateinit var jackson: ObjectMapper
-
-  @Before
-  fun setUp() {
-    jackson = ObjectMapper()
-  }
+  private val productInfoParser = ProductInfoParser()
 
   @Test
   fun `product-info JSON is loaded`() {
     val productInfoUrl = ProductInfoParserTest::class.java.getResource("product-info.json")
       ?: throw AssertionError("product-info.json not found in classpath")
 
-    val productInfo = jackson.readValue<ProductInfo>(productInfoUrl)
+    val productInfo = productInfoParser.parse(productInfoUrl)
 
     assertEquals("IntelliJ IDEA", productInfo.name)
     assertEquals("2024.2", productInfo.version)
@@ -50,6 +43,8 @@ class ProductInfoParserTest {
 
   @Test
   fun `product-info JSON is serialized`() {
+    val jackson = ObjectMapper()
+
     val expectedJson = """
           {"name":"name","version":"version","versionSuffix":"versioNnuffix","buildNumber":"buildNumber","productCode":"productCode","dataDirectoryName":"dataDirectoryName","svgIconPath":"svgIconPath","productVendor":"productVendor","bundledPlugins":[],"modules":[],"layout":[{"name":"Coverage","kind":"plugin","classPaths":["plugins/java-coverage/lib/java-coverage.jar","plugins/java-coverage/lib/java-coverage-rt.jar"]},{"name":"com.intellij.modules.json","kind":"pluginAlias"}]}
     """.trimIndent()
