@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.platform
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ProductInfoParserTest {
