@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-internal data class ProductInfo(
+data class ProductInfo(
   @JsonProperty("name") val name: String,
   @JsonProperty("version") val version: String,
   @JsonProperty("versionSuffix") val versionSuffix: String,
@@ -29,20 +29,20 @@ internal data class ProductInfo(
   JsonSubTypes.Type(value = Layout.ProductModuleV2::class, name = "productModuleV2")
 )
 
-internal sealed class Layout(val kind: String) {
+sealed class Layout(val kind: String) {
   abstract val name: String
 
-  internal data class Plugin(
+  data class Plugin(
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,
   ) : Layout("plugin")
 
-  internal data class PluginAlias(
+  data class PluginAlias(
     @JsonProperty("name") override val name: String,
   ) : Layout("pluginAlias")
 
-  internal data class ModuleV2(
+  data class ModuleV2(
     override val name: String,
     val classPaths: List<String>,
   ) : Layout("moduleV2") {
@@ -56,7 +56,7 @@ internal sealed class Layout(val kind: String) {
     }
   }
 
-  internal data class ProductModuleV2(
+  data class ProductModuleV2(
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,

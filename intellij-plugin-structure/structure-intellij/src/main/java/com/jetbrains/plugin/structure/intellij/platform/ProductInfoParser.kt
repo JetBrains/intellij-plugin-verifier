@@ -10,7 +10,7 @@ import java.io.InputStream
 import java.net.URL
 import java.nio.file.Path
 
-internal class ProductInfoParser {
+class ProductInfoParser {
   private val jackson = ObjectMapper()
 
   @Throws(ProductInfoParseException::class)
@@ -40,4 +40,4 @@ internal class ProductInfoParser {
   }
 }
 
-internal class ProductInfoParseException(message: String, cause: Exception) : Exception(message, cause)
+class ProductInfoParseException(message: String, cause: Exception) : Exception(message, cause)
