@@ -49,7 +49,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
-    val product = IntelliJPlatformProduct.fromIdeVersion(ideVersion) ?: IntelliJPlatformProduct.IDEA
     val plugins = readPlugins(idePath, productInfo, ideVersion)
     return IdeImpl(idePath, ideVersion, plugins)
   }
