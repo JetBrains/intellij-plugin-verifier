@@ -63,7 +63,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
       if (it is LayoutComponent.Classpathable) {
         it.resourceResolver()
       } else {
-        LOG.atDebug().log("Skipping {}", it)
+        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
         null
       }
     }
