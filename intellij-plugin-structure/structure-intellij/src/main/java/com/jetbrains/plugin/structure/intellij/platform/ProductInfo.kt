@@ -20,18 +20,18 @@ data class ProductInfo(
   @JsonProperty("productVendor") val productVendor: String,
   @JsonProperty("bundledPlugins") val bundledPlugins: List<String>,
   @JsonProperty("modules") val modules: List<String>,
-  @JsonProperty("layout") val layout: List<Layout>
+  @JsonProperty("layout") val layout: List<LayoutComponent>
 )
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "kind")
 @JsonSubTypes(
-  JsonSubTypes.Type(value = Layout.Plugin::class, name = "plugin"),
-  JsonSubTypes.Type(value = Layout.PluginAlias::class, name = "pluginAlias"),
-  JsonSubTypes.Type(value = Layout.ModuleV2::class, name = "moduleV2"),
-  JsonSubTypes.Type(value = Layout.ProductModuleV2::class, name = "productModuleV2")
+  JsonSubTypes.Type(value = LayoutComponent.Plugin::class, name = "plugin"),
+  JsonSubTypes.Type(value = LayoutComponent.PluginAlias::class, name = "pluginAlias"),
+  JsonSubTypes.Type(value = LayoutComponent.ModuleV2::class, name = "moduleV2"),
+  JsonSubTypes.Type(value = LayoutComponent.ProductModuleV2::class, name = "productModuleV2")
 )
 
-sealed class Layout(val kind: String) {
+sealed class LayoutComponent(val kind: String) {
   abstract val name: String
 
   interface Classpathable {
@@ -43,18 +43,18 @@ sealed class Layout(val kind: String) {
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,
-  ) : Layout("plugin"), Classpathable {
+  ) : LayoutComponent("plugin"), Classpathable {
     override fun getClasspath() = classPaths.paths
   }
 
   data class PluginAlias(
     @JsonProperty("name") override val name: String,
-  ) : Layout("pluginAlias")
+  ) : LayoutComponent("pluginAlias")
 
   data class ModuleV2(
     override val name: String,
     val classPaths: List<String>,
-  ) : Layout("moduleV2"), Classpathable {
+  ) : LayoutComponent("moduleV2"), Classpathable {
 
     companion object {
       @JvmStatic
@@ -71,7 +71,7 @@ sealed class Layout(val kind: String) {
     @JsonProperty("name") override val name: String,
     @JsonProperty("classPath")
     val classPaths: List<String>,
-  ) : Layout("productModuleV2"), Classpathable {
+  ) : LayoutComponent("productModuleV2"), Classpathable {
     override fun getClasspath() = classPaths.paths
   }
 

@@ -28,12 +28,12 @@ class ProductInfoParserTest {
     assertEquals(623, productInfo.layout.size)
 
     val v2Modules = productInfo.layout
-      .filterIsInstance<Layout.ModuleV2>()
+      .filterIsInstance<LayoutComponent.ModuleV2>()
     assertEquals(379, v2Modules.size)
     assertEquals(4, v2Modules.filter { it.classPaths.isNotEmpty() }.size)
 
     val v2ProductModules = productInfo.layout
-      .filterIsInstance<Layout.ProductModuleV2>()
+      .filterIsInstance<LayoutComponent.ProductModuleV2>()
     assertEquals(33, v2ProductModules.size)
     assertEquals(0, v2ProductModules.filter {
       @Suppress("SENSELESS_COMPARISON")
@@ -60,11 +60,11 @@ class ProductInfoParserTest {
       emptyList(),
       emptyList(),
       listOf(
-        Layout.Plugin("Coverage", listOf(
+        LayoutComponent.Plugin("Coverage", listOf(
           "plugins/java-coverage/lib/java-coverage.jar",
           "plugins/java-coverage/lib/java-coverage-rt.jar",
         )),
-        Layout.PluginAlias("com.intellij.modules.json")
+        LayoutComponent.PluginAlias("com.intellij.modules.json")
       )
     )
     assertEquals(expectedJson, jackson.writeValueAsString(productInfo))

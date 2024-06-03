@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.ide
 
-import com.jetbrains.plugin.structure.intellij.platform.Layout
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import java.lang.Integer.min
 import java.nio.file.Path
 
@@ -57,7 +57,7 @@ private fun Path.prefixSubpath(endIndex: Int): Path? {
 
 private operator fun Path.get(index: Int) = getName(index)
 
-fun commonParentDirectory(classpathable: Layout.Classpathable): Path? {
+fun commonParentDirectory(classpathable: LayoutComponent.Classpathable): Path? {
   val classpath = classpathable.getClasspath()
   return when (classpath.size) {
     0 -> null

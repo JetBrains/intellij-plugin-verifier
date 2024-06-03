@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.ide
 
-import com.jetbrains.plugin.structure.intellij.platform.Layout
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -154,8 +154,8 @@ class StringUtilsTest {
 
   private fun paths(vararg paths: String) = paths.map { Path.of(it) }
 
-  private fun classpath(vararg paths: String): Layout.Classpathable {
-    return object : Layout.Classpathable {
+  private fun classpath(vararg paths: String): LayoutComponent.Classpathable {
+    return object : LayoutComponent.Classpathable {
       override fun getClasspath(): List<Path> = paths.map {
         Path.of(it)
       }

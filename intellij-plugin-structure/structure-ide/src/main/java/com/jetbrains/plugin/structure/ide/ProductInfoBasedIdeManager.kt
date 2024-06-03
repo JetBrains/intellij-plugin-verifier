@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.platform.Layout
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
@@ -59,8 +59,8 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val resourceResolvers = productInfo.layout.mapNotNull { it: Layout ->
-      if (it is Layout.Classpathable) {
+    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
+      if (it is LayoutComponent.Classpathable) {
         it.resourceResolver()
       } else {
         LOG.atDebug().log("Skipping {}", it)
@@ -70,7 +70,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
 
     val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
-      if (it is Layout.Classpathable) {
+      if (it is LayoutComponent.Classpathable) {
         getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
           if (commonParent.simpleName == "lib") {
             commonParent.parent
@@ -106,8 +106,8 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
   }
 
-  private fun Layout.resourceResolver(): NamedResourceResolver? {
-    return if (this is Layout.Classpathable) {
+  private fun LayoutComponent.resourceResolver(): NamedResourceResolver? {
+    return if (this is LayoutComponent.Classpathable) {
       val itemJarResolvers = getClasspath().map {
         NamedResourceResolver(this.name + "#" + it, JarFilesResourceResolver(listOf(it)))
       }
