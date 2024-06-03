@@ -102,6 +102,17 @@ class StringUtilsTest {
   }
 
   @Test
+  fun `common parent directory for two items with common file prefix`() {
+    val paths = paths(
+      "plugins/testng/lib/testng-plugin.jar",
+      "plugins/testng/lib/testng-rt.jar"
+    )
+
+    val commonPrefix = getCommonParentDirectory(paths)
+    assertEqualPaths("plugins/testng/lib", commonPrefix)
+  }
+
+  @Test
   fun `common parent directory for empty list`() {
     val commonPrefix = getCommonParentDirectory(emptyList())
     assertNull(commonPrefix)
