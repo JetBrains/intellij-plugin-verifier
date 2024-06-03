@@ -1,8 +1,7 @@
 package com.jetbrains.plugin.structure.ide
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -83,28 +82,39 @@ class ProductInfoBasedIdeManager : IdeManager() {
       }
     }
     val pluginArtifactPaths = relativePluginArtifactPaths.map { idePath.resolve(it) }
-    return pluginArtifactPaths.mapNotNull {
-      createPlugin(idePath, it, platformResourceResolver, ideVersion)
+
+    val (successes, failures) = pluginArtifactPaths.map {
+      createPlugin(it, platformResourceResolver, ideVersion)
+    }.partition {
+      it.result is PluginCreationSuccess
+    }
+    logFailures(failures, idePath)
+    return successes.map {
+      (it.result as PluginCreationSuccess).plugin
     }
   }
 
   private fun createPlugin(
-    idePath: Path,
     pluginArtifactPath: Path,
     pathResolver: ResourceResolver,
     ideVersion: IdeVersion
-  ): IdePlugin? = when (val creationResult = IdePluginManager
+  ) = PluginPathAndResult(pluginArtifactPath, IdePluginManager
     .createManager(pathResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, PLUGIN_XML)
+    .createBundledPlugin(pluginArtifactPath, ideVersion, PLUGIN_XML))
+
+  private fun logFailures(
+    failures: List<PluginPathAndResult>,
+    idePath: Path
   ) {
-    is PluginCreationSuccess -> creationResult.plugin
-    is PluginCreationFail -> {
-      val msg = "Plugin '${idePath.relativize(pluginArtifactPath)}' is invalid: " +
-        creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
-      LOG.atError().log(msg)
-      null
+    if (failures.isNotEmpty()) {
+      val failedPluginPaths = failures.map {
+        idePath.relativize(it.pluginArtifactPath)
+      }.joinToString(", ")
+      LOG.atWarn().log("Following plugins (${failures.size}) could not be created: $failedPluginPaths")
     }
   }
+
+
 
   private fun LayoutComponent.resourceResolver(): NamedResourceResolver? {
     return if (this is LayoutComponent.Classpathable) {
@@ -132,4 +142,5 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
   }
 
+  private data class PluginPathAndResult(val pluginArtifactPath: Path, val result: PluginCreationResult<IdePlugin>)
 }
