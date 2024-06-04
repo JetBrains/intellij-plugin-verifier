@@ -58,16 +58,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
-      if (it is LayoutComponent.Classpathable) {
-        it.resourceResolver()
-      } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
-        null
-      }
-    }
-    val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
-
+    val platformResourceResolver = getPlatformResourceResolver(productInfo)
     val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
       if (it is LayoutComponent.Classpathable) {
         getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
@@ -92,6 +83,19 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return successes.map {
       (it.result as PluginCreationSuccess).plugin
     }
+  }
+
+  private fun getPlatformResourceResolver(productInfo: ProductInfo): CompositeResourceResolver {
+    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
+      if (it is LayoutComponent.Classpathable) {
+        it.resourceResolver()
+      } else {
+        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
+        null
+      }
+    }
+    val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
+    return platformResourceResolver
   }
 
   private fun createPlugin(
