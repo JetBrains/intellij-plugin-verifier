@@ -4,8 +4,10 @@ import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.extractor.ModuleUnmarshaller
 import junit.framework.TestCase.assertNotNull
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.nio.file.Path
+import javax.xml.bind.UnmarshalException
 
 class ModuleBeanParsingTest {
   @Test
@@ -32,7 +34,16 @@ class ModuleBeanParsingTest {
       assertEquals(1, resources.size)
       assertEquals(Path.of("../lib/modules/intellij.notebooks.ui.jar"), resources[0].path)
     }
+  }
 
+  @Test
+  fun `invalid module XML`() {
+    val xml = """
+      <random-element />
+      """.trimIndent()
+    assertThrows(UnmarshalException::class.java) {
+      xml.unmarshall()
+    }
   }
 
   private fun String.unmarshall(): ModuleBean {
