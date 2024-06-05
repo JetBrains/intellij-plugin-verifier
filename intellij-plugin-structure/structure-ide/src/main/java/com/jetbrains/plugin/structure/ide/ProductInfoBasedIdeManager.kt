@@ -58,7 +58,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val platformResourceResolver = getPlatformResourceResolver(productInfo)
+    val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
     val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
       if (it is LayoutComponent.Classpathable) {
         getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
@@ -85,10 +85,10 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
   }
 
-  private fun getPlatformResourceResolver(productInfo: ProductInfo): CompositeResourceResolver {
+  private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
     val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
       if (it is LayoutComponent.Classpathable) {
-        it.resourceResolver()
+        getResourceResolver(it, idePath)
       } else {
         LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
         null
@@ -114,18 +114,17 @@ class ProductInfoBasedIdeManager : IdeManager() {
       val failedPluginPaths = failures.map {
         idePath.relativize(it.pluginArtifactPath)
       }.joinToString(", ")
-      LOG.atWarn().log("Following plugins (${failures.size}) could not be created: $failedPluginPaths")
+      LOG.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
     }
   }
 
-
-
-  private fun LayoutComponent.resourceResolver(): NamedResourceResolver? {
-    return if (this is LayoutComponent.Classpathable) {
-      val itemJarResolvers = getClasspath().map {
-        NamedResourceResolver(this.name + "#" + it, JarFilesResourceResolver(listOf(it)))
+  private fun getResourceResolver(layoutComponent: LayoutComponent, idePath: Path): NamedResourceResolver? {
+    return if (layoutComponent is LayoutComponent.Classpathable) {
+      val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
+        val fullyQualifiedJarFile = idePath.resolve(jarPath)
+        NamedResourceResolver(layoutComponent.name + "#" + jarPath, JarFilesResourceResolver(listOf(fullyQualifiedJarFile)))
       }
-      NamedResourceResolver(name, CompositeResourceResolver(itemJarResolvers))
+      NamedResourceResolver(layoutComponent.name, CompositeResourceResolver(itemJarResolvers))
     } else {
       null
     }
