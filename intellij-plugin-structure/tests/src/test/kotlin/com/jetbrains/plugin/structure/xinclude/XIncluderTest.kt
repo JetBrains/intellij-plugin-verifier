@@ -117,33 +117,41 @@ class XIncluderTest {
 
   @Test
   fun `includeIf variable is set`() {
-    val property = "xinclude.enabled"
-    try {
-      System.setProperty(property, true.toString())
-      testSuccess("includeIf")
-    } finally {
-      System.clearProperty(property)
+    withConditionalXIncludes {
+      val property = "xinclude.enabled"
+      try {
+        System.setProperty(property, true.toString())
+        testSuccess("includeIf")
+      } finally {
+        System.clearProperty(property)
+      }
     }
   }
 
   @Test
   fun `includeIf variable is not set`() {
-    testSuccess("includeIfWithUnsetProperty")
+    withConditionalXIncludes {
+      testSuccess("includeIfWithUnsetProperty")
+    }
   }
 
   @Test
   fun `includeUnless variable is set`() {
-    testSuccess("includeUnless")
+    withConditionalXIncludes {
+      testSuccess("includeUnless")
+    }
   }
 
   @Test
   fun `includeUnless with variable that is set`() {
-    val property = "xinclude.disabled"
-    try {
-      System.setProperty(property, true.toString())
-      testSuccess("includeUnlessWithSetProperty")
-    } finally {
-      System.clearProperty(property)
+    withConditionalXIncludes {
+      val property = "xinclude.disabled"
+      try {
+        System.setProperty(property, true.toString())
+        testSuccess("includeUnlessWithSetProperty")
+      } finally {
+        System.clearProperty(property)
+      }
     }
   }
 

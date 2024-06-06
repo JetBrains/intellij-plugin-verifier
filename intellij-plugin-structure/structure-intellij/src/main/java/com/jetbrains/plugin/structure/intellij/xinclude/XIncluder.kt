@@ -44,26 +44,31 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return Document(rootElement)
   }
 
-  private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> =
+  private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> {
     if (isIncludeElement(element)) {
       val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
       val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
-      if (includeUnless != null && includeIf != null) {
+      if (isResolvingConditionalIncludes && includeUnless != null && includeIf != null) {
         throw XIncluderException(
-          bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' " +
-          "attributes simultaneously. Specify either of these attributes or none to always include the document")
+          bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' attributes simultaneously. " +
+            "Specify either of these attributes or none to always include the document"
+        )
       }
 
-      if ((includeIf == null && includeUnless == null)
+      return if ((includeIf != null || includeUnless != null) && !isResolvingConditionalIncludes) {
+        emptyList()
+      } else if ((includeIf == null && includeUnless == null)
         || (includeIf != null && properties.isTrue(includeIf))
-        || (includeUnless != null && properties.isFalse(includeUnless))) {
+        || (includeUnless != null && properties.isFalse(includeUnless))
+      ) {
         resolveXIncludeElements(element, bases)
       } else {
         emptyList()
       }
     } else {
-      listOf(resolveNonXIncludeElement(element, bases))
+      return listOf(resolveNonXIncludeElement(element, bases))
     }
+  }
 
   private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {
     //V2 included configs can be located only in root
@@ -258,6 +263,9 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return !parseBoolean(getProperty(key))
   }
 
+  private val isResolvingConditionalIncludes: Boolean
+    get() = properties.isTrue(IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY)
+
 }
 
 private const val HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude"
@@ -275,3 +283,5 @@ private val XPOINTER_SELECTOR_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*")
 
 private const val INCLUDE_UNLESS_ATTR_NAME = "includeUnless"
 private const val INCLUDE_IF_ATTR_NAME = "includeIf"
+
+const val IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY = "com.jetbrains.plugin.structure.intellij.xinclude.isResolvingConditionalIncludes"

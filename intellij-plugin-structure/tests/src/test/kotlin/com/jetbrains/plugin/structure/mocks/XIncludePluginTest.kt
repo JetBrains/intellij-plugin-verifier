@@ -6,6 +6,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import com.jetbrains.plugin.structure.xinclude.withConditionalXIncludes
+import com.jetbrains.plugin.structure.xinclude.withSystemProperty
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
@@ -14,89 +16,157 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `xinclude includeUnless with system property being set to false`() {
-    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", false) {
-      val plugin = buildPluginSuccess(emptyList()) {
-        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
-          dir("META-INF") {
-            file("plugin.xml") {
-              perfectXmlBuilder.modify {
-                additionalContent = """
+    withConditionalXIncludes {
+      withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", false) {
+        val plugin = buildPluginSuccess(emptyList()) {
+          buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+            dir("META-INF") {
+              file("plugin.xml") {
+                perfectXmlBuilder.modify {
+                  additionalContent = """
                 <xi:include 
                   xmlns:xi="http://www.w3.org/2001/XInclude" 
                   href="applicationServices.xml" 
                   includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
               """.trimIndent()
+                }
               }
+              file("applicationServices.xml", optionalDependencyXml)
             }
-            file("applicationServices.xml",optionalDependencyXml)
           }
         }
-      }
-      with(plugin.appContainerDescriptor.services) {
-        assertEquals(1, size)
-        val applicationService = first()
-        assertEquals("com.jetbrains.plugins.structure.mocks.ProjectService", applicationService.serviceImplementation)
+        with(plugin.appContainerDescriptor.services) {
+          assertEquals(1, size)
+          val applicationService = first()
+          assertEquals("com.jetbrains.plugins.structure.mocks.ProjectService", applicationService.serviceImplementation)
+        }
       }
     }
   }
 
   @Test
   fun `xinclude includeUnless with system property being set to true`() {
-    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
-      val plugin = buildPluginSuccess(emptyList()) {
-        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
-          dir("META-INF") {
-            file("plugin.xml") {
-              perfectXmlBuilder.modify {
-                additionalContent = """
+    withConditionalXIncludes {
+      withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
+        val plugin = buildPluginSuccess(emptyList()) {
+          buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+            dir("META-INF") {
+              file("plugin.xml") {
+                perfectXmlBuilder.modify {
+                  additionalContent = """
                 <xi:include 
                   xmlns:xi="http://www.w3.org/2001/XInclude" 
                   href="applicationServices.xml" 
                   includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
               """.trimIndent()
+                }
               }
+              file(
+                "applicationServices.xml", optionalDependencyXml
+              )
             }
-            file(
-              "applicationServices.xml", optionalDependencyXml
-            )
           }
         }
+        assertEquals(0, plugin.appContainerDescriptor.services.size)
       }
-      assertEquals(0, plugin.appContainerDescriptor.services.size)
     }
   }
 
   @Test
   fun `xinclude includeUnless with system property being set`() {
-    withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
-      val plugin = buildPluginSuccess(emptyList()) {
-        buildZipFile(temporaryFolder.newFile("plugin.jar")) {
-          dir("META-INF") {
-            file("plugin.xml") {
-              perfectXmlBuilder.modify {
-                depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
-                additionalContent = """
+    withConditionalXIncludes {
+      withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
+        val plugin = buildPluginSuccess(emptyList()) {
+          buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+            dir("META-INF") {
+              file("plugin.xml") {
+                perfectXmlBuilder.modify {
+                  depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+                  additionalContent = """
                 <xi:include 
                   xmlns:xi="http://www.w3.org/2001/XInclude" 
                   href="optionalDependency.xml" 
                   includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
               """.trimIndent()
+                }
               }
+              file("optionalDependency.xml", optionalDependencyXml)
             }
-            file("optionalDependency.xml", optionalDependencyXml)
           }
         }
-      }
-      val optionalDescriptor = plugin.optionalDescriptors.single()
-      assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-      assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+        val optionalDescriptor = plugin.optionalDescriptors.single()
+        assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
 
-      assert(plugin.extensions.isEmpty())
+        assert(plugin.extensions.isEmpty())
+      }
     }
   }
 
   @Test
   fun `xinclude includeIf with system property`() {
+    withConditionalXIncludes {
+      withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
+        val plugin = buildPluginSuccess(emptyList()) {
+          buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+            dir("META-INF") {
+              file("plugin.xml") {
+                perfectXmlBuilder.modify {
+                  depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+                  additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="optionalDependency.xml" 
+                  includeIf="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+                }
+              }
+              file("optionalDependency.xml", optionalDependencyXml)
+            }
+          }
+        }
+        val optionalDescriptor = plugin.optionalDescriptors.single()
+        assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+
+        assert(plugin.extensions.isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun `xinclude includeIf conditional inclusion disabled`() {
+    withConditionalXIncludes {
+      withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
+        val plugin = buildPluginSuccess(emptyList()) {
+          buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+            dir("META-INF") {
+              file("plugin.xml") {
+                perfectXmlBuilder.modify {
+                  depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+                  additionalContent = """
+                <xi:include 
+                  xmlns:xi="http://www.w3.org/2001/XInclude" 
+                  href="optionalDependency.xml" 
+                  includeIf="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+              """.trimIndent()
+                }
+              }
+              file("optionalDependency.xml", optionalDependencyXml)
+            }
+          }
+        }
+        val optionalDescriptor = plugin.optionalDescriptors.single()
+        assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
+        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+
+        assert(plugin.extensions.isEmpty())
+      }
+    }
+  }
+
+  @Test
+  fun `conditional inclusion is disabled and conditional element with includeIf is completely ignored`() {
     withSystemProperty("com.jetbrains.plugins.structure.mocks.optionalDependency", true) {
       val plugin = buildPluginSuccess(emptyList()) {
         buildZipFile(temporaryFolder.newFile("plugin.jar")) {
@@ -105,23 +175,42 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
               perfectXmlBuilder.modify {
                 depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
                 additionalContent = """
-                <xi:include 
-                  xmlns:xi="http://www.w3.org/2001/XInclude" 
-                  href="optionalDependency.xml" 
-                  includeIf="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
-              """.trimIndent()
+                    <xi:include 
+                      xmlns:xi="http://www.w3.org/2001/XInclude" 
+                      href="optionalDependency.xml" 
+                      includeIf="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+                  """.trimIndent()
               }
             }
             file("optionalDependency.xml", optionalDependencyXml)
           }
         }
       }
-      val optionalDescriptor = plugin.optionalDescriptors.single()
-      assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-      assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
-
       assert(plugin.extensions.isEmpty())
     }
+  }
+
+  @Test
+  fun `conditional inclusion is disabled and conditional element with includeUnless is completely ignored`() {
+    val plugin = buildPluginSuccess(emptyList()) {
+      buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+        dir("META-INF") {
+          file("plugin.xml") {
+            perfectXmlBuilder.modify {
+              depends += """<depends optional="true" config-file="optionalDependency.xml">Optional Dependency</depends>"""
+              additionalContent = """
+                  <xi:include 
+                    xmlns:xi="http://www.w3.org/2001/XInclude" 
+                    href="optionalDependency.xml" 
+                    includeUnless="com.jetbrains.plugins.structure.mocks.optionalDependency"/>
+                """.trimIndent()
+            }
+          }
+          file("optionalDependency.xml", optionalDependencyXml)
+        }
+      }
+    }
+    assert(plugin.extensions.isEmpty())
   }
 
   override fun createManager(extractDirectory: Path): IdePluginManager =
@@ -136,15 +225,6 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     return plugin
   }
 
-  private fun withSystemProperty(property: String, value: Boolean, block: () -> Unit) {
-    try {
-      System.setProperty(property, value.toString())
-      block()
-    } finally {
-      System.clearProperty(property)
-    }
-  }
-
   private val optionalDependencyXml = """
     <idea-plugin>
       <extensions defaultExtensionNs="com.intellij">
@@ -152,6 +232,4 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       </extensions>
     </idea-plugin>
     """.trimIndent()
-
-
 }
