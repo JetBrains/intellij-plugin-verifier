@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<top xmlns:jb="https://plugins.jetbrains.com/" xmlns:xi="http://www.w3.org/2001/XInclude">
+    <!--Start <xi:include href="part.xml", includeUnless="xinclude.disabled"/>-->
+    <part>42</part>
+    <!--End <xi:include href="part.xml", includeUnless="xinclude.disabled"/>-->
+</top>

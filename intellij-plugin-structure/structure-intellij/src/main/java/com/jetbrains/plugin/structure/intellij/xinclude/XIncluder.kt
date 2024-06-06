@@ -4,10 +4,13 @@
 
 package com.jetbrains.plugin.structure.intellij.xinclude
 
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
+import java.lang.Boolean.parseBoolean
 import java.nio.file.Path
 import java.util.*
 import java.util.regex.Pattern
@@ -18,7 +21,7 @@ import java.util.regex.Pattern
  * The inspiring implementation is in IntelliJ Community class [`com.intellij.util.xmlb.JDOMXIncluder`](https://github.com/JetBrains/intellij-community/blob/master/platform/util/src/com/intellij/util/xmlb/JDOMXIncluder.java).
  * This implementation provides better messages.
  */
-class XIncluder private constructor(private val resourceResolver: ResourceResolver) {
+class XIncluder private constructor(private val resourceResolver: ResourceResolver, private val properties: Properties) {
 
   companion object {
     @Throws(XIncluderException::class)
@@ -27,7 +30,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       presentablePath: String,
       resourceResolver: ResourceResolver,
       documentPath: Path
-    ): Document = XIncluder(resourceResolver).resolveXIncludes(document, presentablePath, documentPath)
+    ): Document = XIncluder(resourceResolver, System.getProperties()).resolveXIncludes(document, presentablePath, documentPath)
   }
 
   private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {
@@ -41,12 +44,43 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return Document(rootElement)
   }
 
-  private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> =
-    if (isIncludeElement(element)) {
-      resolveXIncludeElements(element, bases)
+  private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> {
+    return if (isIncludeElement(element)) {
+      if (shouldXInclude(element, bases)) {
+        resolveXIncludeElements(element, bases)
+      } else {
+        emptyList()
+      }
     } else {
       listOf(resolveNonXIncludeElement(element, bases))
     }
+  }
+
+  /**
+   * Handle conditional resolution of XInclude.
+   *
+   * - `includeIf`: Includes the document only if the corresponding property is set to a `true` value.
+   * - `includeUnless`: Includes the document if the corresponding property is either not set, or its value is `false`.
+   *
+   * Note: Although this feature is used by the Kotlin plugin, it should not be employed as a general purpose
+   * conditional inclusion method for other plugins.
+   */
+  private fun shouldXInclude(element: Element, bases: Stack<XIncludeEntry>): Boolean {
+    val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
+    val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
+    if (isResolvingConditionalIncludes && includeUnless != null && includeIf != null) {
+      throw XIncluderException(
+        bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' attributes simultaneously. " +
+          "Specify either of these attributes or none to always include the document"
+      )
+    }
+
+    return if ((includeIf != null || includeUnless != null) && !isResolvingConditionalIncludes) {
+      false
+    } else includeIf == null && includeUnless == null
+      || (includeIf != null && properties.isTrue(includeIf))
+      || (includeUnless != null && properties.isFalse(includeUnless))
+  }
 
   private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {
     //V2 included configs can be located only in root
@@ -67,8 +101,13 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
 
     val basePath = bases.peek()!!.documentPath
+    val resolver = CompositeResourceResolver(mutableListOf<ResourceResolver>().apply {
+      add(resourceResolver)
+      if (basePath.isInMetaInf()) add(InParentPathResourceResolver(resourceResolver))
+      if (basesHaveMetaInfResolution(bases)) add(MetaInfResourceResolver(resourceResolver))
+    })
 
-    when (val resourceResult = resourceResolver.resolveResource(href, basePath)) {
+    when (val resourceResult = resolver.resolveResource(href, basePath)) {
       is ResourceResolver.Result.Found -> resourceResult.use {
         val remoteDocument = try {
           JDOMUtil.loadDocument(it.resourceStream.buffered())
@@ -93,6 +132,15 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
         throw XIncluderException(bases, "Failed to load document referenced in $presentableXInclude", resourceResult.exception)
       }
     }
+  }
+
+  private fun Path.isInMetaInf(): Boolean {
+    val parent: Path? = parent
+    return parent?.simpleName == "META-INF"
+  }
+
+  private fun basesHaveMetaInfResolution(bases: Stack<XIncludeEntry>): Boolean {
+    return bases.any { it.documentPath.isInMetaInf() }
   }
 
   private fun resolveXIncludesOfRemoteDocument(
@@ -213,6 +261,23 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
   private fun isIncludeElement(element: Element): Boolean =
     element.name == INCLUDE && element.namespace == HTTP_XINCLUDE_NAMESPACE
+
+  private fun Element.getAttributeValueByLocalName(attributeLocalName: String): String? {
+    val attr = this.attributes.find { it.name == attributeLocalName }
+    return attr?.value
+  }
+
+  private fun Properties.isTrue(key: String?): Boolean {
+    return parseBoolean(getProperty(key))
+  }
+
+  private fun Properties.isFalse(key: String?): Boolean {
+    return !parseBoolean(getProperty(key))
+  }
+
+  private val isResolvingConditionalIncludes: Boolean
+    get() = properties.isTrue(IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY)
+
 }
 
 private const val HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude"
@@ -227,3 +292,8 @@ private val HTTP_XINCLUDE_NAMESPACE = Namespace.getNamespace(XI, HTTP_WWW_W3_ORG
 
 private val XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)")
 private val XPOINTER_SELECTOR_PATTERN = Pattern.compile("/([^/]*)(/[^/]*)?/\\*")
+
+private const val INCLUDE_UNLESS_ATTR_NAME = "includeUnless"
+private const val INCLUDE_IF_ATTR_NAME = "includeIf"
+
+const val IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY = "com.jetbrains.plugin.structure.intellij.xinclude.isResolvingConditionalIncludes"
