@@ -641,25 +641,14 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
               """.trimIndent()
               }
             }
-
-            file(
-              "applicationServices.xml",
-              """
-                <idea-plugin>
-                  <extensions defaultExtensionNs="com.intellij">
-                    <applicationService
-                        serviceImplementation="com.example.MyAppServiceImpl" />
-                  </extensions>
-                </idea-plugin>
-              """.trimIndent()
-            )
+            file("applicationServices.xml",optionalDependencyXml)
           }
         }
       }
       with(plugin.appContainerDescriptor.services) {
         assertEquals(1, size)
         val applicationService = first()
-        assertEquals("com.example.MyAppServiceImpl", applicationService.serviceImplementation)
+        assertEquals("com.jetbrains.plugins.structure.mocks.ProjectService", applicationService.serviceImplementation)
       }
     }
   }
@@ -680,18 +669,8 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
               """.trimIndent()
               }
             }
-
             file(
-              "applicationServices.xml",
-              """
-                <idea-plugin>
-                  <extensions defaultExtensionNs="com.intellij">
-                    <applicationService
-                        serviceInterface="com.example.MyAppService"
-                        serviceImplementation="com.example.MyAppServiceImpl" />
-                  </extensions>
-                </idea-plugin>
-              """.trimIndent()
+              "applicationServices.xml", optionalDependencyXml
             )
           }
         }
@@ -717,21 +696,15 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
               """.trimIndent()
               }
             }
-
-            file(
-              "optionalDependency.xml",
-              """
-                <idea-plugin>
-                  <extensions defaultExtensionNs="com.intellij" />
-                </idea-plugin>
-              """.trimIndent()
-            )
+            file("optionalDependency.xml", optionalDependencyXml)
           }
         }
       }
       val optionalDescriptor = plugin.optionalDescriptors.single()
       assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
       assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+
+      assert(plugin.extensions.isEmpty())
     }
   }
 
@@ -752,23 +725,25 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
               """.trimIndent()
               }
             }
-
-            file(
-              "optionalDependency.xml",
-              """
-                <idea-plugin>
-                  <extensions defaultExtensionNs="com.intellij" />
-                </idea-plugin>
-              """.trimIndent()
-            )
+            file("optionalDependency.xml", optionalDependencyXml)
           }
         }
       }
       val optionalDescriptor = plugin.optionalDescriptors.single()
       assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
       assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+
+      assert(plugin.extensions.isEmpty())
     }
   }
+
+  private val optionalDependencyXml = """
+    <idea-plugin>
+      <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="com.jetbrains.plugins.structure.mocks.ProjectService"/>
+      </extensions>
+    </idea-plugin>
+    """.trimIndent()
 
   private fun withSystemProperty(property: String, value: Boolean, block: () -> Unit) {
     try {
