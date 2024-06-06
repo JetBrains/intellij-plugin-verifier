@@ -56,6 +56,15 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
   }
 
+  /**
+   * Handle conditional resolution of XInclude.
+   *
+   * - `includeIf`: Includes the document only if the corresponding property is set to a `true` value.
+   * - `includeUnless`: Includes the document if the corresponding property is either not set, or its value is `false`.
+   *
+   * Note: Although this feature is used by the Kotlin plugin, it should not be employed as a general purpose
+   * conditional inclusion method for other plugins.
+   */
   private fun shouldXInclude(element: Element, bases: Stack<XIncludeEntry>): Boolean {
     val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
     val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
