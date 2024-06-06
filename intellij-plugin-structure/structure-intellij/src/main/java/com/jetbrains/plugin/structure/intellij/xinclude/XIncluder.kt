@@ -45,29 +45,32 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> {
-    if (isIncludeElement(element)) {
-      val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
-      val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
-      if (isResolvingConditionalIncludes && includeUnless != null && includeIf != null) {
-        throw XIncluderException(
-          bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' attributes simultaneously. " +
-            "Specify either of these attributes or none to always include the document"
-        )
-      }
-
-      return if ((includeIf != null || includeUnless != null) && !isResolvingConditionalIncludes) {
-        emptyList()
-      } else if ((includeIf == null && includeUnless == null)
-        || (includeIf != null && properties.isTrue(includeIf))
-        || (includeUnless != null && properties.isFalse(includeUnless))
-      ) {
+    return if (isIncludeElement(element)) {
+      if (shouldXInclude(element, bases)) {
         resolveXIncludeElements(element, bases)
       } else {
         emptyList()
       }
     } else {
-      return listOf(resolveNonXIncludeElement(element, bases))
+      listOf(resolveNonXIncludeElement(element, bases))
     }
+  }
+
+  private fun shouldXInclude(element: Element, bases: Stack<XIncludeEntry>): Boolean {
+    val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
+    val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
+    if (isResolvingConditionalIncludes && includeUnless != null && includeIf != null) {
+      throw XIncluderException(
+        bases, "Cannot use '$INCLUDE_IF_ATTR_NAME' and '$INCLUDE_UNLESS_ATTR_NAME' attributes simultaneously. " +
+          "Specify either of these attributes or none to always include the document"
+      )
+    }
+
+    return if ((includeIf != null || includeUnless != null) && !isResolvingConditionalIncludes) {
+      false
+    } else includeIf == null && includeUnless == null
+      || (includeIf != null && properties.isTrue(includeIf))
+      || (includeUnless != null && properties.isFalse(includeUnless))
   }
 
   private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {

@@ -136,7 +136,7 @@ class XIncluderTest {
   }
 
   @Test
-  fun `includeUnless variable is set`() {
+  fun `includeUnless variable is set with missing variable`() {
     withConditionalXIncludes {
       testSuccess("includeUnless")
     }
