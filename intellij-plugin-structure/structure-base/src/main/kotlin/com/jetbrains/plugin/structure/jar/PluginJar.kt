@@ -44,6 +44,14 @@ class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: Ja
     return PluginDescriptorResult.Found(descriptorPath, descriptorPath.inputStream().buffered())
   }
 
+  fun getPluginDescriptor(vararg possibleDescriptorPaths: String): PluginDescriptorResult {
+    return possibleDescriptorPaths
+      .asSequence()
+      .map { getPluginDescriptor(it) }
+      .firstOrNull { it is PluginDescriptorResult.Found }
+      ?: PluginDescriptorResult.NotFound
+  }
+
   fun getIcons(): List<PluginIcon> {
     val defaultIcon = findPluginIcon(IconTheme.DEFAULT)
     if (defaultIcon == null) {

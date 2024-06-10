@@ -1,8 +1,15 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.PLUGIN_XML
-import com.jetbrains.plugin.structure.jar.*
+import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.JarArchiveException
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.META_INF
+import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
+import com.jetbrains.plugin.structure.jar.PluginJar
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
@@ -76,6 +83,17 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
     PluginJar(jarPath, fileSystemProvider).use { jar ->
       val pluginDescriptor = jar.getPluginDescriptor("nonexistent-descriptor.xml")
       assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
+    }
+  }
+
+  @Test
+  fun `descriptor in the resource root is chosen from multiple path candidates`() {
+    val pluginJarPath = getPluginJarPath("sample-jar-with-descriptor-in-resource-root.jar")
+
+    PluginJar(pluginJarPath, fileSystemProvider).use { jar ->
+      val pluginDescriptor = jar.getPluginDescriptor("META-INF/plugin.xml", "descriptor.xml")
+      assertTrue(pluginDescriptor is Found)
+      assertEquals("descriptor.xml", (pluginDescriptor as Found).path.simpleName)
     }
   }
 
