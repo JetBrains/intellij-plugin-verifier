@@ -98,6 +98,27 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
   }
 
   @Test
+  fun `descriptor in the resource root is not found in the default location`() {
+    val pluginJarPath = getPluginJarPath("sample-jar-with-descriptor-in-resource-root.jar")
+
+    PluginJar(pluginJarPath, fileSystemProvider).use { jar ->
+      val pluginDescriptor = jar.getPluginDescriptor()
+      assertTrue(pluginDescriptor is PluginDescriptorResult.NotFound)
+    }
+  }
+
+  @Test
+  fun `descriptor in the resource root is found when using slash as an absolute path`() {
+    val pluginJarPath = getPluginJarPath("sample-jar-with-descriptor-in-resource-root.jar")
+
+    PluginJar(pluginJarPath, fileSystemProvider).use { jar ->
+      val pluginDescriptor = jar.getPluginDescriptor("/descriptor.xml")
+      assertTrue(pluginDescriptor is Found)
+      assertEquals("descriptor.xml", (pluginDescriptor as Found).path.simpleName)
+    }
+  }
+
+  @Test
   fun `find default and dark icon`() {
     val pluginJarPath = getPluginJarPath("simple-with-default-icon-and-dark-icon.jar")
     val icons = PluginJar(pluginJarPath).getIcons()
