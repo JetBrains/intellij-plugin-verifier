@@ -8,6 +8,9 @@ import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
+import com.jetbrains.plugin.structure.ide.layout.ProductModuleV2Factory
+import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
+import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
@@ -62,6 +65,17 @@ class ProductInfoBasedIdeManager : IdeManager() {
   ): List<IdePlugin> {
 
     val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
+    val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
+
+    val moduleLoadingResults = LoadingResults()
+
+    val productModuleV2Factory = ProductModuleV2Factory(this::createProductModule)
+    productInfo.layout.filterIsInstance<LayoutComponent.ProductModuleV2>()
+      .mapNotNull { productModuleV2Factory.read(it, idePath, ideVersion, platformResourceResolver, moduleManager) }
+      .let {
+        moduleLoadingResults.add(it)
+      }
+
     val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
       if (it is LayoutComponent.ProductModuleV2) {
         LOG.atDebug().log("Skipping {}", it)
@@ -80,15 +94,14 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
     val pluginArtifactPaths = relativePluginArtifactPaths.map { idePath.resolve(it) }
 
-    val (successes, failures) = pluginArtifactPaths.map {
+    pluginArtifactPaths.map {
       createPlugin(it, platformResourceResolver, ideVersion)
-    }.partition {
-      it is Success
+    }.let {
+      moduleLoadingResults.add(it)
     }
-    logFailures(failures, idePath)
-    return successes.map {
-      (it as Success).plugin
-    }
+
+    logFailures(moduleLoadingResults.failures, idePath)
+    return moduleLoadingResults.successfulPlugins
   }
 
   private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
@@ -102,6 +115,18 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
     val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
     return platformResourceResolver
+  }
+
+  private fun createProductModule(
+    pluginArtifactPath: Path,
+    descriptorName: String,
+    pathResolver: ResourceResolver,
+    ideVersion: IdeVersion
+  ): PluginWithArtifactPathResult {
+    return IdePluginManager
+      .createManager(pathResolver)
+      .createBundledModule(pluginArtifactPath, ideVersion, descriptorName)
+      .withPath(pluginArtifactPath)
   }
 
   private fun createPlugin(
@@ -152,7 +177,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
   }
 
-  private sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: Path) {
+  sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: Path) {
     data class Success(override val pluginArtifactPath: Path, val plugin: IdePlugin) : PluginWithArtifactPathResult(pluginArtifactPath)
     data class Failure(override val pluginArtifactPath: Path) : PluginWithArtifactPathResult(pluginArtifactPath)
   }
@@ -160,6 +185,28 @@ class ProductInfoBasedIdeManager : IdeManager() {
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
     is PluginCreationFail -> Failure(pluginArtifactPath)
+  }
+
+  private class LoadingResults {
+    private val _successes = mutableListOf<Success>()
+    private val _failures = mutableListOf<Failure>()
+
+    val successes: List<Success>
+      get() = _successes
+
+    val failures: List<Failure>
+      get() = _failures
+
+    val successfulPlugins: List<IdePlugin>
+      get() = successes.map { it.plugin }
+
+    fun add(results: List<PluginWithArtifactPathResult>) {
+      val (successes, failures) = results.partition {
+        it is Success
+      }
+      _successes += successes.map { it as Success }
+      _failures += failures.map { it as Failure }
+    }
   }
 }
 
