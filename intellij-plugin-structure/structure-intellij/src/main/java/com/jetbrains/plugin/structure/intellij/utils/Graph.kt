@@ -22,6 +22,17 @@ class Graph<T> {
     }
   }
 
+  fun hasEdgeFrom(from: T): Boolean = adjacencyMap.containsKey(from)
+
+  val edgeCount: Int
+    get() = adjacencyMap.size
+
+  val nodeCount: Int
+    get() {
+      return adjacencyMap.flatMap { (module, deps) -> deps + module }
+        .toSet().size
+    }
+
   data class Edge<T>(val from: T, val to: T)
 }
 
