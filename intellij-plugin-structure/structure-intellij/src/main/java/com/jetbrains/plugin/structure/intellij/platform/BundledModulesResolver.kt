@@ -18,7 +18,7 @@ private val LOG: Logger = LoggerFactory.getLogger(BundledModulesResolver::class.
 private const val MODULES_DIR = "modules"
 private const val MODULE_DESCRIPTORS_JAR= "module-descriptors.jar"
 
-class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) : AutoCloseable {
+class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) : AutoCloseable, ModulesResolver {
 
   private val moduleDescriptorsJarPath: Path = idePath.resolve(MODULES_DIR).resolve(MODULE_DESCRIPTORS_JAR)
 
@@ -28,7 +28,7 @@ class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvide
     }
   }
 
-  fun resolveModules(): List<ModuleBean> {
+  override fun resolveModules(): List<ModuleBean> {
     val jarFs = jarFileSystemProvider.getFileSystem(moduleDescriptorsJarPath)
     val root: Path = jarFs.rootDirectories.first()
     return Files.list(root).use { files ->
