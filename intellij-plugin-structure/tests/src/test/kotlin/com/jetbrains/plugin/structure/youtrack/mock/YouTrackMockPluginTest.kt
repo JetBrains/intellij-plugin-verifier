@@ -33,10 +33,12 @@ class YouTrackMockPluginTest(fileSystemType: FileSystemType) : BasePluginManager
     assertEquals("App description", plugin.description)
     assertEquals("1.0.0", plugin.pluginVersion)
     assertEquals("https://example.com", plugin.url)
+    assertEquals("2022.2.0", plugin.sinceVersion)
+    assertEquals("2024.2.0", plugin.untilVersion)
     assertEquals("Version 0.0.1: Feature 1\n\nVersion 1.0.0: Feature 2", plugin.changeNotes)
 
-    assertEquals("JetBrains", plugin.vendor)
-    assertEquals("info@jetbrains.com", plugin.vendorEmail)
+    assertEquals("JetBrains s.r.o.", plugin.vendor)
+    assertEquals("support@jetbrains.com", plugin.vendorEmail)
     assertEquals("https://www.jetbrains.com/", plugin.vendorUrl)
 
     assertEquals(2, plugin.icons.size)
