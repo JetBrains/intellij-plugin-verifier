@@ -87,38 +87,21 @@ class ProductInfoBasedIdeManager : IdeManager() {
         moduleLoadingResults.add(it)
       }
 
-    val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
-      if (it is LayoutComponent.ProductModuleV2) {
-        LOG.atDebug().log("Skipping product module (V2) {}", it)
-        null
-      } else if (it is LayoutComponent.ModuleV2) {
-        LOG.atDebug().log("Skipping module (V2) {}", it)
-        null
-      } else if (it is LayoutComponent.PluginAlias) {
-        LOG.atDebug().log("Skipping plugin alias (V2) {}", it)
-        null
-      } else if (it is LayoutComponent.Classpathable) {
-        getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
-          if (commonParent.simpleName == "lib") {
-            commonParent.parent
-          } else {
-            commonParent
-          }
-        }
-      } else {
-        null
+    productInfo.layout.filterIsInstance<LayoutComponent.Plugin>()
+      .mapNotNull { getRelativePluginArtifactPaths(it) }
+      .map { idePath.resolve(it) }
+      .map { createPlugin(it, platformResourceResolver, ideVersion) }
+      .let {
+        moduleLoadingResults.add(it)
       }
-    }
-    val pluginArtifactPaths = relativePluginArtifactPaths.map { idePath.resolve(it) }
-
-    pluginArtifactPaths.map {
-      createPlugin(it, platformResourceResolver, ideVersion)
-    }.let {
-      moduleLoadingResults.add(it)
-    }
 
     logFailures(moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
+  }
+
+  private fun getRelativePluginArtifactPaths(pluginComponent: LayoutComponent.Plugin): Path? {
+    val commonParent = getCommonParentDirectory(pluginComponent.getClasspath()) ?: return null
+    return if (commonParent.simpleName == "lib") commonParent.parent else commonParent
   }
 
   private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
