@@ -9,6 +9,8 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
+import com.jetbrains.plugin.structure.ide.layout.ModuleLoader
+import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
@@ -19,7 +21,6 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
-import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -56,8 +57,9 @@ class ProductInfoBasedIdeManager : IdeManager() {
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
+    val platformPlugins = readPlatformPlugins(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
-    return IdeImpl(idePath, ideVersion, plugins)
+    return IdeImpl(idePath, ideVersion, platformPlugins + plugins)
   }
 
   private fun readPlugins(
@@ -92,6 +94,9 @@ class ProductInfoBasedIdeManager : IdeManager() {
       } else if (it is LayoutComponent.ModuleV2) {
         LOG.atDebug().log("Skipping module (V2) {}", it)
         null
+      } else if (it is LayoutComponent.PluginAlias) {
+        LOG.atDebug().log("Skipping plugin alias (V2) {}", it)
+        null
       } else if (it is LayoutComponent.Classpathable) {
         getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
           if (commonParent.simpleName == "lib") {
@@ -112,19 +117,22 @@ class ProductInfoBasedIdeManager : IdeManager() {
       moduleLoadingResults.add(it)
     }
 
-    //---------------------------------------
-    val pluginManager = IdePluginManager.createManager()
-    val moduleDependencyResolver =
-      ModuleDependencyResolver(pluginManager, idePath, ideVersion, platformResourceResolver, moduleManager, ProductInfoClasspathProvider(productInfo))
-    moduleLoadingResults.successfulPlugins.filterIsInstance<IdeModule>().map {
-      moduleDependencyResolver.resolve(it)
-    }
-    //---------------------------------------
-
     logFailures(moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
   }
 
+  private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
+    val platformPluginManager =
+      PlatformPluginManager(ModuleLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion ->
+        createPlugin(
+          pluginArtifactPath,
+          resourceResolver,
+          ideVersion,
+          descriptorName
+        )
+      })
+    return platformPluginManager.loadPlatformPlugins(idePath, ideVersion)
+  }
 
   private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
     val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
@@ -154,10 +162,11 @@ class ProductInfoBasedIdeManager : IdeManager() {
   private fun createPlugin(
     pluginArtifactPath: Path,
     pathResolver: ResourceResolver,
-    ideVersion: IdeVersion
+    ideVersion: IdeVersion,
+    descriptorPath: String = PLUGIN_XML
   ) = IdePluginManager
     .createManager(pathResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, PLUGIN_XML)
+    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath)
     .withPath(pluginArtifactPath)
 
   private fun logFailures(
@@ -211,7 +220,11 @@ class ProductInfoBasedIdeManager : IdeManager() {
     is PluginCreationFail -> Failure(pluginArtifactPath)
   }
 
-  private class LoadingResults {
+  internal class LoadingResults() {
+    constructor(results: List<PluginWithArtifactPathResult>) : this() {
+      add(results)
+    }
+
     private val _successes = mutableListOf<Success>()
     private val _failures = mutableListOf<Failure>()
 

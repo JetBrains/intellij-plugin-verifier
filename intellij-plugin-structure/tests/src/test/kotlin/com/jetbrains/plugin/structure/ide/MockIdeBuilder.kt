@@ -13,22 +13,10 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
     file("build.txt", "IU-242.10180.25")
     file("product-info.json", productInfoJson())
     dir("lib") {
-      zip("idea.jar") {
-        dir("META-INF") {
-          file("plugin.xml") {
-            """
-                <idea-plugin>
-                  <id>com.intellij</id>
-                  <name>Core Platform Plugin</name>
-                  <version>1.0</version>
-                  <module value="com.intellij.modules.all"/>                
-                </idea-plugin>
-                """.trimIndent()
-          }
-        }
-      }
       zip("app-client.jar") {
-        file("PlatformLangPlugin.xml", platformLangPluginXml)
+        dir("META-INF") {
+          file("PlatformLangPlugin.xml", platformLangPluginXml)
+        }
       }
       dir("modules") {
         zip("intellij.notebooks.ui.jar") {

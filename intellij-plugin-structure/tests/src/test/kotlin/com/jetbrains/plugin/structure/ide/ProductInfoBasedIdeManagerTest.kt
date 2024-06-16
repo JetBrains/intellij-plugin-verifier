@@ -33,7 +33,7 @@ class ProductInfoBasedIdeManagerTest {
     val ideManager = ProductInfoBasedIdeManager()
     val ide = ideManager.createIde(ideRoot)
 
-    assertEquals(3, ide.bundledPlugins.size)
+    assertEquals(4, ide.bundledPlugins.size)
     val uiPlugin = ide.getPluginById("intellij.notebooks.ui")
     assertNotNull(uiPlugin)
     assertTrue(uiPlugin is IdeModule)
@@ -60,6 +60,12 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(1, classpath.size)
       assertEquals(0, moduleDependencies.size)
       assertEquals(1, resources.size)
+    }
+
+    val ideCore = ide.getPluginById("com.intellij")
+    assertNotNull(ideCore)
+    with(ideCore!!) {
+      assertEquals(4, definedModules.size)
     }
   }
 }
