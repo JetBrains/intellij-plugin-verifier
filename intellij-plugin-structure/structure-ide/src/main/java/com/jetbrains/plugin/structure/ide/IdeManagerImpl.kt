@@ -266,7 +266,7 @@ class IdeManagerImpl : IdeManager() {
     private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
 
     // in idea-IE com.intellij plugin is defined in PlatformLangPlugin.xml file
-    private const val PLATFORM_PLUGIN_XML = "PlatformLangPlugin.xml"
+    internal const val PLATFORM_PLUGIN_XML = "PlatformLangPlugin.xml"
 
     fun isCompiledUltimate(ideaDir: Path) = getCompiledClassesRoot(ideaDir) != null &&
       ideaDir.resolve(".idea").isDirectory &&
