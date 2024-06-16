@@ -86,9 +86,42 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
                 </module>                
               """.trimIndent()
         }
+        file("intellij.java.featuresTrainer.xml") {
+          """
+              <?xml version="1.0" encoding="UTF-8"?>
+              <module name="intellij.java.featuresTrainer">
+                <dependencies>
+                </dependencies>
+                <resources>
+                  <resource-root path="../plugins/java/lib/modules/intellij.java.featuresTrainer.jar"/>
+                </resources>
+              </module>            
+          """.trimIndent()
+        }
       }
     }
-
+    dir("plugins") {
+      dir("java") {
+        dir("lib") {
+          dir("modules") {
+            zip("intellij.java.featuresTrainer.jar") {
+              file("intellij.java.featuresTrainer.xml") {
+                """
+                  <idea-plugin>
+                    <extensions defaultExtensionNs="com.intellij">
+                          <lang.documentationProvider 
+                               language="JAVA" 
+                              implementationClass="com.intellij.java.featuresTrainer.onboarding.tips.JavaOnboardingTipsDocumentationProvider"
+                          />
+                    </extensions>
+                  </idea-plugin>                
+                """.trimIndent()
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   private fun productInfoJson(): String {
@@ -119,6 +152,13 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
               "kind": "productModuleV2",
               "classPath": [
                 "lib/modules/intellij.notebooks.visualization.jar"
+              ]
+            },
+            {
+              "name": "intellij.java.featuresTrainer",
+              "kind": "moduleV2",
+              "classPath": [
+                "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
               ]
             }            
           ]

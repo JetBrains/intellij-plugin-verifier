@@ -8,7 +8,8 @@ import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
-import com.jetbrains.plugin.structure.ide.layout.ProductModuleV2Factory
+import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
+import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -18,6 +19,7 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -69,16 +71,26 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
     val moduleLoadingResults = LoadingResults()
 
-    val productModuleV2Factory = ProductModuleV2Factory(this::createProductModule)
+    val productModuleV2Factory = ModuleFactory(this::createProductModule, ProductInfoClasspathProvider(productInfo))
     productInfo.layout.filterIsInstance<LayoutComponent.ProductModuleV2>()
-      .mapNotNull { productModuleV2Factory.read(it, idePath, ideVersion, platformResourceResolver, moduleManager) }
+      .mapNotNull { productModuleV2Factory.read(it.name, idePath, ideVersion, platformResourceResolver, moduleManager) }
+      .let {
+        moduleLoadingResults.add(it)
+      }
+
+    val moduleV2Factory = productModuleV2Factory
+    productInfo.layout.filterIsInstance<LayoutComponent.ModuleV2>()
+      .mapNotNull { moduleV2Factory.read(it.name, idePath, ideVersion, platformResourceResolver, moduleManager) }
       .let {
         moduleLoadingResults.add(it)
       }
 
     val relativePluginArtifactPaths = productInfo.layout.mapNotNull {
       if (it is LayoutComponent.ProductModuleV2) {
-        LOG.atDebug().log("Skipping {}", it)
+        LOG.atDebug().log("Skipping product module (V2) {}", it)
+        null
+      } else if (it is LayoutComponent.ModuleV2) {
+        LOG.atDebug().log("Skipping module (V2) {}", it)
         null
       } else if (it is LayoutComponent.Classpathable) {
         getCommonParentDirectory(it.getClasspath())?.let { commonParent ->
@@ -100,9 +112,19 @@ class ProductInfoBasedIdeManager : IdeManager() {
       moduleLoadingResults.add(it)
     }
 
+    //---------------------------------------
+    val pluginManager = IdePluginManager.createManager()
+    val moduleDependencyResolver =
+      ModuleDependencyResolver(pluginManager, idePath, ideVersion, platformResourceResolver, moduleManager, ProductInfoClasspathProvider(productInfo))
+    moduleLoadingResults.successfulPlugins.filterIsInstance<IdeModule>().map {
+      moduleDependencyResolver.resolve(it)
+    }
+    //---------------------------------------
+
     logFailures(moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
   }
+
 
   private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
     val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
@@ -176,6 +198,8 @@ class ProductInfoBasedIdeManager : IdeManager() {
       throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available. This file should be present for IDE versions 2024.2 and newer")
     }
   }
+
+  fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
 
   sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: Path) {
     data class Success(override val pluginArtifactPath: Path, val plugin: IdePlugin) : PluginWithArtifactPathResult(pluginArtifactPath)

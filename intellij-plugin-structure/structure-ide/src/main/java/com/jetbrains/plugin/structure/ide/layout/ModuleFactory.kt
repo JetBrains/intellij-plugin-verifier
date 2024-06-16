@@ -5,25 +5,24 @@ import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithA
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
-import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
-import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-private val LOG: Logger = LoggerFactory.getLogger(ProductModuleV2Factory::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(ModuleFactory::class.java)
 
-class ProductModuleV2Factory(private val moduleLoader: ModuleLoader) {
+//FIXME duplicate code with com.jetbrains.plugin.structure.ide.layout.ProductModuleV2Factory
+class ModuleFactory(private val moduleLoader: ModuleLoader, private val classpathProvider: ModuleClasspathProvider) {
   fun read(
-    productModule: LayoutComponent.ProductModuleV2,
+    moduleName: String,
     idePath: Path,
     ideVersion: IdeVersion,
-    platformResourceResolver: CompositeResourceResolver,
+    platformResourceResolver: ResourceResolver,
     moduleManager: BundledModulesManager
   ): PluginWithArtifactPathResult? {
-    val moduleName = productModule.name
     val moduleDescriptor = moduleManager.findModuleByName(moduleName)
     if (moduleDescriptor == null) {
       LOG.atDebug().log("No module descriptor found for $moduleName")
@@ -43,7 +42,7 @@ class ProductModuleV2Factory(private val moduleLoader: ModuleLoader) {
         IdeModule
           .clone(moduleLoadingResult.plugin, moduleName)
           .apply {
-            classpath += productModule.classPaths.map { idePath.resolve(it) }
+            classpath += classpathProvider.getClasspath(moduleName).map { idePath.resolve(it) }
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources
           }
@@ -70,4 +69,3 @@ class ProductModuleV2Factory(private val moduleLoader: ModuleLoader) {
   }
 
 }
-
