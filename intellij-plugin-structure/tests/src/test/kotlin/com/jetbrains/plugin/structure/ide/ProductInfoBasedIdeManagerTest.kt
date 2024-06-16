@@ -22,13 +22,6 @@ class ProductInfoBasedIdeManagerTest {
   }
 
   @Test
-  fun name() {
-    val ideManager = ProductInfoBasedIdeManager()
-    val ide = ideManager.createIde(Path.of("/Users/novotnyr/projects/jetbrains/platforms/IU-242.10180.25"))
-    println(ide)
-  }
-
-  @Test
   fun `create IDE manager from mock IDE`() {
     val ideManager = ProductInfoBasedIdeManager()
     val ide = ideManager.createIde(ideRoot)
