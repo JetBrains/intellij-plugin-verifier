@@ -14,7 +14,6 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(ModuleFactory::class.java)
 
-//FIXME duplicate code with com.jetbrains.plugin.structure.ide.layout.ProductModuleV2Factory
 class ModuleFactory(private val moduleLoader: ModuleLoader, private val classpathProvider: ModuleClasspathProvider) {
   fun read(
     moduleName: String,
