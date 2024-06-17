@@ -111,9 +111,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
         null
       }
     }
-    val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
-
-    return platformResourceResolver
+    return CompositeResourceResolver(resourceResolvers)
   }
 
   private fun createProductModule(
