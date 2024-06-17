@@ -90,6 +90,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
           pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
         is LayoutComponent.PluginAlias -> {
+          // References to plugin IDs that are already loaded in the other types of layout components
           null
         }
       }
