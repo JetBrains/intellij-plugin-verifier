@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
-import com.jetbrains.plugin.structure.ide.layout.LayoutComponentLoader
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
@@ -72,9 +71,9 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
-    val productModuleV2Factory = ModuleFactory(this::createProductModule, ProductInfoClasspathProvider(productInfo))
+    val productModuleV2Factory = ModuleFactory(::createProductModule, ProductInfoClasspathProvider(productInfo))
     val moduleV2Factory = productModuleV2Factory
-    val pluginFactory = PluginFactory(LayoutComponentLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion -> createPlugin(pluginArtifactPath, resourceResolver, ideVersion) })
+    val pluginFactory = PluginFactory(::createPlugin)
 
     val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
       when (layoutComponent) {
@@ -87,7 +86,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
         is LayoutComponent.Plugin -> {
           pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
-
         is LayoutComponent.PluginAlias -> {
           null
         }
@@ -100,14 +98,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val platformPluginManager =
-      PlatformPluginManager(LayoutComponentLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion ->
-        createPlugin(
-          pluginArtifactPath,
-          resourceResolver,
-          ideVersion,
-          descriptorName
-        )
-      })
+      PlatformPluginManager(::createPlugin)
     return platformPluginManager.loadPlatformPlugins(idePath, ideVersion)
   }
 
@@ -121,6 +112,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
       }
     }
     val platformResourceResolver = CompositeResourceResolver(resourceResolvers)
+
     return platformResourceResolver
   }
 
@@ -138,11 +130,11 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   private fun createPlugin(
     pluginArtifactPath: Path,
-    pathResolver: ResourceResolver,
-    ideVersion: IdeVersion,
-    descriptorPath: String = PLUGIN_XML
+    descriptorPath: String = PLUGIN_XML,
+    resourceResolver: ResourceResolver,
+    ideVersion: IdeVersion
   ) = IdePluginManager
-    .createManager(pathResolver)
+    .createManager(resourceResolver)
     .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath)
     .withPath(pluginArtifactPath)
 
