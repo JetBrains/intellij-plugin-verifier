@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.PLATFORM_PLUGIN_XML
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -27,8 +28,7 @@ internal class PlatformPluginManager(private val pluginLoader: LayoutComponentLo
     val loadPlugin = { jarPath: Path -> loadPlugin(jarPath, ideVersion, platformResourceResolver) }
     val loadedPlugins = platformJarFiles.mapNotNull(loadPlugin)
     val loadingResults = LoadingResults(loadedPlugins)
-
-    logFailures(loadingResults.failures, idePath)
+    logFailures(LOG, loadingResults.failures, idePath)
     return loadingResults.successfulPlugins
   }
 
@@ -62,18 +62,4 @@ internal class PlatformPluginManager(private val pluginLoader: LayoutComponentLo
       val product = platformProduct ?: IntelliJPlatformProduct.IDEA
       return product.platformPrefix
     }
-
-  // FIXME duplicate with com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.logFailures
-  private fun logFailures(
-    failures: List<PluginWithArtifactPathResult>,
-    idePath: Path
-  ) {
-    if (failures.isNotEmpty()) {
-      val failedPluginPaths = failures.map {
-        idePath.relativize(it.pluginArtifactPath)
-      }.joinToString(", ")
-      LOG.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
-    }
-  }
-
 }

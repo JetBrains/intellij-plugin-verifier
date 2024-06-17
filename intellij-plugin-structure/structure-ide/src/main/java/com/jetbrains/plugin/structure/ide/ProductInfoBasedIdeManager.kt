@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
@@ -94,7 +95,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
       }
     }.fold(LoadingResults(), LoadingResults::add)
 
-    logFailures(moduleLoadingResults.failures, idePath)
+    logFailures(LOG, moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
   }
 
@@ -138,17 +139,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
     .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath)
     .withPath(pluginArtifactPath)
 
-  private fun logFailures(
-    failures: List<PluginWithArtifactPathResult>,
-    idePath: Path
-  ) {
-    if (failures.isNotEmpty()) {
-      val failedPluginPaths = failures.map {
-        idePath.relativize(it.pluginArtifactPath)
-      }.joinToString(", ")
-      LOG.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
-    }
-  }
 
   private fun getResourceResolver(layoutComponent: LayoutComponent, idePath: Path): NamedResourceResolver? {
     return if (layoutComponent is LayoutComponent.Classpathable) {
