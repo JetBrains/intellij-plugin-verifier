@@ -6,7 +6,7 @@ import com.jetbrains.intellij.feature.extractor.extractor.ModuleTypeExtractor
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class ModuleBeanTypeTest : FeatureExtractorTestBase() {
+class ModuleTypeTest : FeatureExtractorTestBase() {
 
   private fun assertModuleIdFound(className: String, expectedModuleIds: List<String>) {
     resetPluginExtensionPoint(ExtensionPoint.MODULE_TYPE, className)
