@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithA
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.ModuleLoader
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
+import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
@@ -73,6 +74,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
     val productModuleV2Factory = ModuleFactory(this::createProductModule, ProductInfoClasspathProvider(productInfo))
     val moduleV2Factory = productModuleV2Factory
+    val pluginFactory = PluginFactory(ModuleLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion -> createPlugin(pluginArtifactPath, resourceResolver, ideVersion) })
 
     val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
       when (layoutComponent) {
@@ -83,9 +85,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
           moduleV2Factory.read(layoutComponent.name, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
         is LayoutComponent.Plugin -> {
-          getRelativePluginDirectory(layoutComponent)
-            ?.let { idePath.resolve(it) }
-            ?.let { createPlugin(it, platformResourceResolver, ideVersion) }
+          pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
 
         is LayoutComponent.PluginAlias -> {
@@ -96,11 +96,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
     logFailures(moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
-  }
-
-  private fun getRelativePluginDirectory(pluginComponent: LayoutComponent.Plugin): Path? {
-    val commonParent = getCommonParentDirectory(pluginComponent.getClasspath()) ?: return null
-    return if (commonParent.simpleName == "lib") commonParent.parent else commonParent
   }
 
   private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
