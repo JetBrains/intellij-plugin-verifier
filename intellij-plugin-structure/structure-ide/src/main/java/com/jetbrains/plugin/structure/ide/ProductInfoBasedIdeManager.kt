@@ -71,35 +71,34 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
-    val moduleLoadingResults = LoadingResults()
-
     val productModuleV2Factory = ModuleFactory(this::createProductModule, ProductInfoClasspathProvider(productInfo))
-    productInfo.layout.filterIsInstance<LayoutComponent.ProductModuleV2>()
-      .mapNotNull { productModuleV2Factory.read(it.name, idePath, ideVersion, platformResourceResolver, moduleManager) }
-      .let {
-        moduleLoadingResults.add(it)
-      }
-
     val moduleV2Factory = productModuleV2Factory
-    productInfo.layout.filterIsInstance<LayoutComponent.ModuleV2>()
-      .mapNotNull { moduleV2Factory.read(it.name, idePath, ideVersion, platformResourceResolver, moduleManager) }
-      .let {
-        moduleLoadingResults.add(it)
-      }
 
-    productInfo.layout.filterIsInstance<LayoutComponent.Plugin>()
-      .mapNotNull { getRelativePluginArtifactPaths(it) }
-      .map { idePath.resolve(it) }
-      .map { createPlugin(it, platformResourceResolver, ideVersion) }
-      .let {
-        moduleLoadingResults.add(it)
+    val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
+      when (layoutComponent) {
+        is LayoutComponent.ProductModuleV2 -> {
+          productModuleV2Factory.read(layoutComponent.name, idePath, ideVersion, platformResourceResolver, moduleManager)
+        }
+        is LayoutComponent.ModuleV2 -> {
+          moduleV2Factory.read(layoutComponent.name, idePath, ideVersion, platformResourceResolver, moduleManager)
+        }
+        is LayoutComponent.Plugin -> {
+          getRelativePluginDirectory(layoutComponent)
+            ?.let { idePath.resolve(it) }
+            ?.let { createPlugin(it, platformResourceResolver, ideVersion) }
+        }
+
+        is LayoutComponent.PluginAlias -> {
+          null
+        }
       }
+    }.fold(LoadingResults(), LoadingResults::add)
 
     logFailures(moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
   }
 
-  private fun getRelativePluginArtifactPaths(pluginComponent: LayoutComponent.Plugin): Path? {
+  private fun getRelativePluginDirectory(pluginComponent: LayoutComponent.Plugin): Path? {
     val commonParent = getCommonParentDirectory(pluginComponent.getClasspath()) ?: return null
     return if (commonParent.simpleName == "lib") commonParent.parent else commonParent
   }
@@ -226,6 +225,14 @@ class ProductInfoBasedIdeManager : IdeManager() {
       }
       _successes += successes.map { it as Success }
       _failures += failures.map { it as Failure }
+    }
+
+    fun add(result: PluginWithArtifactPathResult): LoadingResults {
+      when (result) {
+        is Success -> _successes += result
+        is Failure -> _failures += result
+      }
+      return this
     }
   }
 }
