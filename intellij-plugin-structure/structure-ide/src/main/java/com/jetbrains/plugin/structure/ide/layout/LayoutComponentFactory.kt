@@ -1,13 +1,12 @@
 package com.jetbrains.plugin.structure.ide.layout
 
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
 
-interface LayoutComponentFactory<T : LayoutComponent> {
+internal interface LayoutComponentFactory<T : LayoutComponent> {
   fun read(
     layoutComponent: T,
     idePath: Path,

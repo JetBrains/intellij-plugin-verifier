@@ -1,8 +1,7 @@
 package com.jetbrains.plugin.structure.ide.layout
 
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -15,7 +14,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(ModuleFactory::class.java)
 
-class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val classpathProvider: ModuleClasspathProvider) : LayoutComponentFactory<LayoutComponent> {
+internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val classpathProvider: ModuleClasspathProvider) : LayoutComponentFactory<LayoutComponent> {
 
   override fun read(
     layoutComponent: LayoutComponent,

@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.ide.layout
 
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
 import com.jetbrains.plugin.structure.ide.getCommonParentDirectory
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
@@ -10,14 +9,14 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import java.nio.file.Path
 
-class PluginFactory(private val pluginLoader: LayoutComponentLoader) : LayoutComponentFactory<Plugin> {
+internal class PluginFactory(private val pluginLoader: LayoutComponentLoader) : LayoutComponentFactory<Plugin> {
   override fun read(
     layoutComponent: Plugin,
     idePath: Path,
     ideVersion: IdeVersion,
     resourceResolver: ResourceResolver,
     moduleManager: BundledModulesManager
-  ): ProductInfoBasedIdeManager.PluginWithArtifactPathResult? {
+  ): PluginWithArtifactPathResult? {
 
     return getRelativePluginDirectory(layoutComponent)
       ?.let { idePath.resolve(it) }

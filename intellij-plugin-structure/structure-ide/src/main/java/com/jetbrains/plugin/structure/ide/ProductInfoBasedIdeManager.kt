@@ -6,11 +6,13 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
+import com.jetbrains.plugin.structure.ide.layout.LoadingResults
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
+import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
@@ -177,48 +179,13 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
 
-  sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: Path) {
-    data class Success(override val pluginArtifactPath: Path, val plugin: IdePlugin) : PluginWithArtifactPathResult(pluginArtifactPath)
-    data class Failure(override val pluginArtifactPath: Path) : PluginWithArtifactPathResult(pluginArtifactPath)
-  }
+
 
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
     is PluginCreationFail -> Failure(pluginArtifactPath)
   }
 
-  internal class LoadingResults() {
-    constructor(results: List<PluginWithArtifactPathResult>) : this() {
-      add(results)
-    }
 
-    private val _successes = mutableListOf<Success>()
-    private val _failures = mutableListOf<Failure>()
-
-    val successes: List<Success>
-      get() = _successes
-
-    val failures: List<Failure>
-      get() = _failures
-
-    val successfulPlugins: List<IdePlugin>
-      get() = successes.map { it.plugin }
-
-    fun add(results: List<PluginWithArtifactPathResult>) {
-      val (successes, failures) = results.partition {
-        it is Success
-      }
-      _successes += successes.map { it as Success }
-      _failures += failures.map { it as Failure }
-    }
-
-    fun add(result: PluginWithArtifactPathResult): LoadingResults {
-      when (result) {
-        is Success -> _successes += result
-        is Failure -> _failures += result
-      }
-      return this
-    }
-  }
 }
 

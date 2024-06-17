@@ -4,8 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.PLATFORM_PLUGIN_XML
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.LoadingResults
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -21,7 +19,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(PlatformPluginManager::class.java)
 
-class PlatformPluginManager(private val pluginLoader: LayoutComponentLoader) {
+internal class PlatformPluginManager(private val pluginLoader: LayoutComponentLoader) {
   fun loadPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val platformJarFiles = idePath.resolve("lib").listJars()
     val platformResourceResolver = JarFilesResourceResolver(platformJarFiles)
