@@ -181,6 +181,7 @@ publishing {
     configurePublication("EduPublication", "structure-edu", "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
     configurePublication("FleetPublication", "structure-fleet", "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
     configurePublication("ToolboxPublication", "structure-toolbox", "JetBrains Plugins Structure Toolbox", "Library for parsing JetBrains Toolbox plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    configurePublication("YoutrackPublication", "structure-youtrack", "JetBrains Plugins Structure YouTrack Apps", "Library for parsing JetBrains YouTrack Apps. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
   }
 }
 
@@ -204,6 +205,7 @@ signing {
     sign(publishing.publications["EduPublication"])
     sign(publishing.publications["FleetPublication"])
     sign(publishing.publications["ToolboxPublication"])
+    sign(publishing.publications["YoutrackPublication"])
   }
 }
 
