@@ -73,16 +73,13 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
-    val productModuleV2Factory = ModuleFactory(::createProductModule, ProductInfoClasspathProvider(productInfo))
-    val moduleV2Factory = productModuleV2Factory
+    val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
     val pluginFactory = PluginFactory(::createPlugin)
 
     val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
       when (layoutComponent) {
+        is LayoutComponent.ModuleV2,
         is LayoutComponent.ProductModuleV2 -> {
-          productModuleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
-        is LayoutComponent.ModuleV2 -> {
           moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
         is LayoutComponent.Plugin -> {
@@ -117,7 +114,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return CompositeResourceResolver(resourceResolvers)
   }
 
-  private fun createProductModule(
+  private fun createModule(
     pluginArtifactPath: Path,
     descriptorName: String,
     pathResolver: ResourceResolver,
