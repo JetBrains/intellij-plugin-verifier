@@ -78,10 +78,10 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
       when (layoutComponent) {
         is LayoutComponent.ProductModuleV2 -> {
-          productModuleV2Factory.read(layoutComponent.name, idePath, ideVersion, platformResourceResolver, moduleManager)
+          productModuleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
         is LayoutComponent.ModuleV2 -> {
-          moduleV2Factory.read(layoutComponent.name, idePath, ideVersion, platformResourceResolver, moduleManager)
+          moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
         }
         is LayoutComponent.Plugin -> {
           pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)

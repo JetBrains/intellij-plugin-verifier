@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithA
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -14,14 +15,16 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(ModuleFactory::class.java)
 
-class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val classpathProvider: ModuleClasspathProvider) {
-  fun read(
-    moduleName: String,
+class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val classpathProvider: ModuleClasspathProvider) : LayoutComponentFactory<LayoutComponent> {
+
+  override fun read(
+    layoutComponent: LayoutComponent,
     idePath: Path,
     ideVersion: IdeVersion,
-    platformResourceResolver: ResourceResolver,
+    resourceResolver: ResourceResolver,
     moduleManager: BundledModulesManager
   ): PluginWithArtifactPathResult? {
+    val moduleName = layoutComponent.name
     val moduleDescriptor = moduleManager.findModuleByName(moduleName)
     if (moduleDescriptor == null) {
       LOG.atDebug().log("No module descriptor found for $moduleName")
@@ -35,7 +38,7 @@ class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val
       return null
     }
 
-    val moduleLoadingResult = moduleLoader.load(loadingContext.artifactPath, loadingContext.descriptorName, platformResourceResolver, ideVersion)
+    val moduleLoadingResult = moduleLoader.load(loadingContext.artifactPath, loadingContext.descriptorName, resourceResolver, ideVersion)
     return when (moduleLoadingResult) {
       is Success -> {
         IdeModule
