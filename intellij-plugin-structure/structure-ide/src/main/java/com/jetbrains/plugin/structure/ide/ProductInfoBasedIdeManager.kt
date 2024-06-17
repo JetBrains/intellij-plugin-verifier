@@ -3,9 +3,8 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.listFiles
-import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
@@ -153,8 +152,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
   }
 
-  private fun Path.containsProductInfoJson(): Boolean =
-    listFiles().any { it.simpleName == PRODUCT_INFO_JSON }
+  private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
 
   private val Path.productInfoJson: Path
     get() {
