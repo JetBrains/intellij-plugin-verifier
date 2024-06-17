@@ -29,7 +29,7 @@ fun getCommonParentDirectory(paths: List<Path>): Path? {
 
 private fun Path.prefixSubpath(endIndex: Int): Path? {
   if (endIndex == 0) return null
-  return this.subpath(0, endIndex)
+  return subpath(0, endIndex)
 }
 
 private operator fun Path.get(index: Int) = getName(index)
