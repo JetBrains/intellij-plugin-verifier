@@ -61,7 +61,6 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
   }
 
   private fun Path.resolveFromModulesDir(p: Path): Path {
-    //FIXME find constant for modules
     return resolve("modules").resolve(p)
   }
 
