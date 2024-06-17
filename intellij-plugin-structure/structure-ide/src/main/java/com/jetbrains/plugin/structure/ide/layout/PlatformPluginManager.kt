@@ -21,7 +21,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(PlatformPluginManager::class.java)
 
-class PlatformPluginManager(private val moduleLoader: ModuleLoader) {
+class PlatformPluginManager(private val pluginLoader: LayoutComponentLoader) {
   fun loadPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val platformJarFiles = idePath.resolve("lib").listJars()
     val platformResourceResolver = JarFilesResourceResolver(platformJarFiles)
@@ -36,7 +36,7 @@ class PlatformPluginManager(private val moduleLoader: ModuleLoader) {
 
   private fun loadPlugin(jarPath: Path, ideVersion: IdeVersion, platformResourceResolver: ResourceResolver): PluginWithArtifactPathResult? {
     return findDescriptor(jarPath, ideVersion)?.let { descriptor ->
-      moduleLoader.load(jarPath, descriptor, platformResourceResolver, ideVersion)
+      pluginLoader.load(jarPath, descriptor, platformResourceResolver, ideVersion)
     }
   }
 

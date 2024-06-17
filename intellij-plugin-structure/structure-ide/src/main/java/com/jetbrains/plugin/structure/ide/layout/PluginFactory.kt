@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import java.nio.file.Path
 
-class PluginFactory(private val moduleLoader: ModuleLoader) {
+class PluginFactory(private val pluginLoader: LayoutComponentLoader) {
   fun read(
     pluginComponent: LayoutComponent.Plugin,
     idePath: Path,
@@ -21,7 +21,7 @@ class PluginFactory(private val moduleLoader: ModuleLoader) {
 
     return getRelativePluginDirectory(pluginComponent)
       ?.let { idePath.resolve(it) }
-      ?.let { moduleLoader.load(pluginArtifactPath = it, PLUGIN_XML, resourceResolver, ideVersion) }
+      ?.let { pluginLoader.load(pluginArtifactPath = it, PLUGIN_XML, resourceResolver, ideVersion) }
   }
 
   private fun getRelativePluginDirectory(pluginComponent: LayoutComponent.Plugin): Path? {

@@ -14,7 +14,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(ModuleFactory::class.java)
 
-class ModuleFactory(private val moduleLoader: ModuleLoader, private val classpathProvider: ModuleClasspathProvider) {
+class ModuleFactory(private val moduleLoader: LayoutComponentLoader, private val classpathProvider: ModuleClasspathProvider) {
   fun read(
     moduleName: String,
     idePath: Path,

@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
 
-fun interface ModuleLoader {
+fun interface LayoutComponentLoader {
   fun load(
     pluginArtifactPath: Path,
     descriptorName: String,

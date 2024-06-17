@@ -8,8 +8,8 @@ import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginWithArtifactPathResult.Success
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentLoader
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
-import com.jetbrains.plugin.structure.ide.layout.ModuleLoader
 import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
@@ -74,7 +74,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
     val productModuleV2Factory = ModuleFactory(this::createProductModule, ProductInfoClasspathProvider(productInfo))
     val moduleV2Factory = productModuleV2Factory
-    val pluginFactory = PluginFactory(ModuleLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion -> createPlugin(pluginArtifactPath, resourceResolver, ideVersion) })
+    val pluginFactory = PluginFactory(LayoutComponentLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion -> createPlugin(pluginArtifactPath, resourceResolver, ideVersion) })
 
     val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
       when (layoutComponent) {
@@ -100,7 +100,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val platformPluginManager =
-      PlatformPluginManager(ModuleLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion ->
+      PlatformPluginManager(LayoutComponentLoader { pluginArtifactPath, descriptorName, resourceResolver, ideVersion ->
         createPlugin(
           pluginArtifactPath,
           resourceResolver,
