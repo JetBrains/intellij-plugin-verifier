@@ -25,12 +25,9 @@ class KtClassResolver {
   }
 
   private fun findMetadataAnnotation(classNode: ClassNode): Metadata? {
-    with(classNode) {
-      val annotations: List<AnnotationNode> = visibleAnnotations.orEmpty() + invisibleAnnotations.orEmpty()
-      return annotations
-        .firstOrNull { it.desc == KOTLIN_METADATA_ANNOTATION_DESC }
-        ?.toMetadata()
-    }
+    return classNode.allAnnotations
+      .firstOrNull { it.desc == KOTLIN_METADATA_ANNOTATION_DESC }
+      ?.toMetadata()
   }
 
   private fun AnnotationNode.toMetadata() = Metadata(
@@ -58,4 +55,13 @@ class KtClassResolver {
     }
     return null
   }
+
+  companion object {
+    private fun hasKotlinMetadataAnnotation(classNode: ClassNode): Boolean {
+      return classNode.allAnnotations.any { it.desc == KOTLIN_METADATA_ANNOTATION_DESC }
+    }
+  }
 }
+
+private val ClassNode.allAnnotations: List<AnnotationNode>
+  get() = (visibleAnnotations.orEmpty() + invisibleAnnotations.orEmpty())
