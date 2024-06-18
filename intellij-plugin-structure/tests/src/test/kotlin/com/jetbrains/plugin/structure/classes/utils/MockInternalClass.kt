@@ -5,5 +5,6 @@ internal class MockInternalClass {
 
   internal val internalField = "internal"
 
-  internal fun internalMethod() = "internal"
+  internal fun internalMethod(s: String, i: Int) = "internal"
+  fun internalMethod(s: String) = "internal"
 }

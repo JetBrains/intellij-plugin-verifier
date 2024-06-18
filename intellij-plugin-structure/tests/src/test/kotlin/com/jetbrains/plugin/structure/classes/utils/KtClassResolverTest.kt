@@ -34,4 +34,10 @@ class KtClassResolverTest {
     assertTrue(ktClassNode.isInternalField("internalField"))
     assertFalse(ktClassNode.isInternalField("privateField"))
   }
+
+  @Test
+  fun `internal class functions are resolved as internal`() {
+    assertTrue(ktClassNode.isInternalFunction("internalMethod", "(Ljava/lang/String;I)Ljava/lang/String;"))
+    assertFalse(ktClassNode.isInternalFunction("internalMethod", "(Ljava/lang/String;)Ljava/lang/String;"))
+  }
 }
