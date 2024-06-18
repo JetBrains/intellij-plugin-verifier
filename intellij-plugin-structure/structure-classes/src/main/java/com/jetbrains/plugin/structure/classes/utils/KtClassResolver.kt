@@ -19,7 +19,7 @@ class KtClassResolver {
     return cache.getOrPut(classNode) {
       return findMetadataAnnotation(classNode)?.let {
         val metadata = KotlinClassMetadata.readStrict(it)
-        KtClassNode(classNode, metadata)
+        KtClassNode(classNode, metadata as KotlinClassMetadata.Class)
       }
     }
   }

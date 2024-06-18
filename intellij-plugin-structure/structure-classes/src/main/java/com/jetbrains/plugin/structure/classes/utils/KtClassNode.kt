@@ -1,14 +1,23 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+import kotlinx.metadata.KmClass
 import kotlinx.metadata.Visibility
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.visibility
 import org.objectweb.asm.tree.ClassNode
 
-class KtClassNode(private val classNode: ClassNode, private val metadata: KotlinClassMetadata) {
+class KtClassNode(private val classNode: ClassNode, private val metadata: KotlinClassMetadata.Class) {
+
   val isInternal: Boolean
-    get() = metadata is KotlinClassMetadata.Class && metadata.kmClass.visibility == Visibility.INTERNAL
+    get() = cls.visibility == Visibility.INTERNAL
 
   val name: String
     get() = classNode.name
+
+  fun isInternalField(fieldName: String): Boolean {
+    return cls.properties.any { it.name == fieldName && it.visibility == Visibility.INTERNAL }
+  }
+
+  private val cls: KmClass
+    get() = metadata.kmClass
 }
