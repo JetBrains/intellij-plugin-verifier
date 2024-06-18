@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+@Suppress("unused")
 internal class MockInternalClass {
   private val privateField = "private"
 

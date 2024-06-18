@@ -13,7 +13,8 @@ class KtClassResolverTest {
     val classResolver = KtClassResolver()
 
     val mockInternalClass = KtClassResolverTest::class.java.getResourceAsStream("MockInternalClass.class").use {
-      val classNode = readClassNode("com.jetbrains.plugin.structure.classes.utils.MockInternalClass", it)
+      if (it == null) fail("Cannot load resource")
+      val classNode = readClassNode("com.jetbrains.plugin.structure.classes.utils.MockInternalClass", it!!)
       classNode
     }
 
