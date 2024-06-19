@@ -19,7 +19,11 @@ class KtClassResolver {
     return cache.getOrPut(classNode) {
       return findMetadataAnnotation(classNode)?.let {
         val metadata = KotlinClassMetadata.readStrict(it)
-        KtClassNode(classNode, metadata as KotlinClassMetadata.Class)
+        if (metadata is KotlinClassMetadata.Class) {
+          KtClassNode(classNode, metadata)
+        } else {
+          null
+        }
       }
     }
   }
@@ -57,7 +61,7 @@ class KtClassResolver {
   }
 
   companion object {
-    private fun hasKotlinMetadataAnnotation(classNode: ClassNode): Boolean {
+    fun hasKotlinMetadataAnnotation(classNode: ClassNode): Boolean {
       return classNode.allAnnotations.any { it.desc == KOTLIN_METADATA_ANNOTATION_DESC }
     }
   }
