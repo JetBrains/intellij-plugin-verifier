@@ -97,7 +97,7 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
       apiElement: MethodLocation,
       usageLocation: MethodLocation
     ) {
-      LOG.atInfo().log("Registering method: {}", methodReference)
+      verificationContext.registerInternalApiUsage(KtInternalMethodUsage(methodReference, apiElement, usageLocation))
     }
 
     override fun registerField(

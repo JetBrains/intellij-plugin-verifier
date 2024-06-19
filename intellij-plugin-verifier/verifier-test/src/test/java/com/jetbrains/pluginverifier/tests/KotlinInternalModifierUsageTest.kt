@@ -10,15 +10,22 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
+import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IdeaPluginSpec
 import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IntellijInternalApiDump
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalClassUsage
+import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import kotlinx.metadata.KmClass
+import kotlinx.metadata.KmClassifier
+import kotlinx.metadata.KmFunction
+import kotlinx.metadata.KmType
 import kotlinx.metadata.Visibility
 import kotlinx.metadata.jvm.JvmMetadataVersion
+import kotlinx.metadata.jvm.JvmMethodSignature
 import kotlinx.metadata.jvm.KotlinClassMetadata
+import kotlinx.metadata.jvm.signature
 import kotlinx.metadata.visibility
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.dynamic.DynamicType
@@ -39,11 +46,10 @@ class KotlinInternalModifierUsageTest {
 
   private val byteBuddy = ByteBuddy()
 
-  private val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.fortyTwo() : " +
-    "int is invoked in usage.Usage.delegateFortyTwo() : int. " +
-    "This method is marked with @org.jetbrains.annotations.ApiStatus.Internal annotation " +
-    "or @com.intellij.openapi.util.IntellijInternalApi annotation " +
-    "and indicates that the method is not supposed to be used in client code."
+  private val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.internalFortyTwo() : int " +
+    "is invoked in usage.Usage.delegateInternalFortyTwo() : int. " +
+    "This method is marked with Kotlin `internal` visibility modifier and indicates that the method is not " +
+    "supposed to be used in client code."
 
   private val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
     "is referenced in usage.Usage.delegateFortyTwo() : int. " +
@@ -67,8 +73,14 @@ class KotlinInternalModifierUsageTest {
     val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
 
     val internalClassUsages = ignoredUsages.filterIsInstance<KtInternalClassUsage>()
-    assertEquals(1, internalClassUsages.size)
-    assertEquals(internalClassUsageMsg, internalClassUsages[0].fullDescription)
+    assertEquals(2, internalClassUsages.size)
+    val internalClassUsage = internalClassUsages.first { it.usageLocation is MethodLocation && (it.usageLocation as MethodLocation).methodName == "delegateFortyTwo" }
+    assertEquals(internalClassUsageMsg, internalClassUsage.fullDescription)
+
+    with(ignoredUsages.filterIsInstance<KtInternalMethodUsage>()) {
+      assertEquals(1, size)
+      assertEquals(internalMethodUsageMsg, this[0].fullDescription)
+    }
   }
 
 
@@ -80,6 +92,13 @@ class KotlinInternalModifierUsageTest {
     val kotlinMetadataKmClass = KmClass().apply {
       name = "internalApiServiceClassName"
       visibility = Visibility.INTERNAL
+      functions += KmFunction("internalFortyTwo").apply {
+        visibility = Visibility.INTERNAL
+        returnType = KmType().apply {
+          classifier = KmClassifier.Class("I")
+        }
+        signature = JvmMethodSignature("internalFortyTwo", "()I")
+      }
     }
     val annotationData = KotlinClassMetadata.Class(kotlinMetadataKmClass, JvmMetadataVersion.LATEST_STABLE_SUPPORTED, 0).write()
 
@@ -88,6 +107,7 @@ class KotlinInternalModifierUsageTest {
       .name(internalApiServiceClassName)
       .annotateType(annotationData)
       .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
+      .defineMethod("internalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
       .make()
 
     val internalApiClazz = load(internalApiServiceClassUdt, classLoader, internalApiServiceClassName)
@@ -101,6 +121,10 @@ class KotlinInternalModifierUsageTest {
         MethodDelegation
           .withDefaultConfiguration()
           .filter(named("fortyTwo")).to(internalApiService))
+      .defineMethod("delegateInternalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
+        MethodDelegation
+          .withDefaultConfiguration()
+          .filter(named("internalFortyTwo")).to(internalApiService))
       .make()
 
     val usageClass = load(usageClassUdt, classLoader, usageClassName)
