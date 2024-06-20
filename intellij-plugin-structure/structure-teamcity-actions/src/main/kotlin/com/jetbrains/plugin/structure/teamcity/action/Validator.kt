@@ -27,9 +27,12 @@ internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequ
   validateExistsAndNotEmpty(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
   validateSemver(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
 
-  validateExistsAndNotEmpty(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
-  validateNoSpaces(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
+  validateExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
+  validateNotEmptyIfExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
   validateMaxLength(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION, ActionName.MAX_LENGTH)
+  validateMatchesRegexIfExistsAndNotEmpty(descriptor.name, ActionName.nameRegex, ActionName.NAME, ActionName.DESCRIPTION,
+    "should only contain latin letters, numbers, dashes and underscores. " +
+            "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.")
 
   validateExistsAndNotEmpty(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
   validateSemver(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
@@ -261,13 +264,15 @@ private suspend fun SequenceScope<PluginProblem>.validateBooleanIfExists(
   }
 }
 
-private suspend fun SequenceScope<PluginProblem>.validateNoSpaces(
+private suspend fun SequenceScope<PluginProblem>.validateMatchesRegexIfExistsAndNotEmpty(
   propertyValue: String?,
+  regex: Regex,
   propertyName: String,
   propertyDescription: String,
+  validationFailureMessage: String,
 ) {
-  if (propertyValue != null && propertyValue.contains(" ")) {
-    yield(ValueContainsSpacesProblem(propertyName, propertyDescription))
+  if (!propertyValue.isNullOrEmpty() && !regex.matches(propertyValue)) {
+    yield(InvalidPropertyValueProblem("The property <$propertyName> ($propertyDescription) $validationFailureMessage"))
   }
 }
 

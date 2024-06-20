@@ -2,13 +2,12 @@ package com.jetbrains.plugin.structure.teamcity.action.problems
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
-object ParseYamlProblem : PluginProblem() {
-  override val level: Level = Level.ERROR
-  override val message = "The action description should follow valid YAML syntax."
-}
-
 abstract class InvalidPropertyProblem : PluginProblem() {
   override val level: Level = Level.ERROR
+}
+
+object ParseYamlProblem : InvalidPropertyProblem() {
+  override val message = "The action specification should follow valid YAML syntax."
 }
 
 class InvalidPropertyValueProblem(override val message: String) : InvalidPropertyProblem()
@@ -29,10 +28,6 @@ class InvalidBooleanProblem(propertyName: String, propertyDescription: String) :
   override val message = "The property <$propertyName> ($propertyDescription) should be either 'true' or 'false'."
 }
 
-class ValueContainsSpacesProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {
-  override val message = "The property <$propertyName> ($propertyDescription) should not contain spaces."
-}
-
 class TooLongValueProblem(
   propertyName: String,
   propertyDescription: String,
@@ -41,7 +36,7 @@ class TooLongValueProblem(
 ) : InvalidPropertyProblem() {
   override val message =
     "The property <$propertyName> ($propertyDescription) should not contain more than $maxAllowedLength characters. " +
-            "The current number of characters is $currentLength."
+        "The current number of characters is $currentLength."
 }
 
 class PropertiesCombinationProblem(override val message: String) : InvalidPropertyProblem()

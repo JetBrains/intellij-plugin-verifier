@@ -10,6 +10,17 @@ object TeamCityActionSpec {
     const val NAME = "name"
     const val DESCRIPTION = "action name"
     const val MAX_LENGTH = 30
+
+    /**
+     * Regular expression pattern for the action name.
+     *
+     * The pattern enforces the following rules:
+     * - Name cannot be empty.
+     * – Name can only contain latin letters, dashes and underscores.
+     * - Name cannot start or end with a dash or underscore.
+     * - Name cannot contain several consecutive dashes or underscores.
+     */
+    val nameRegex: Regex = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$")
   }
 
   object ActionVersion {

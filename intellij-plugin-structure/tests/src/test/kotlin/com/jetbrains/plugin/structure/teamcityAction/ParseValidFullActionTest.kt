@@ -117,7 +117,7 @@ class ParseValidFullActionTest(
     with(result.plugin) {
       assertEquals("1.0.0", this.specVersion.toString())
       assertEquals("simple-action", this.pluginName)
-      assertEquals("1.2.3", this.pluginVersion.toString())
+      assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple action", this.description)
 
       thenInputsAreCorrect(this.inputs)
@@ -259,6 +259,7 @@ class ParseValidFullActionTest(
       assertEquals(
         mapOf(
           "script.content" to """echo "step 2 output"""",
+          "use.custom.script" to "true",
         ),
         this.parameters
       )

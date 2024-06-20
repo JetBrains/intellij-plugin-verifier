@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionPluginManager
@@ -17,6 +18,7 @@ import com.jetbrains.plugin.structure.teamcityAction.Requirements.someExistsRequ
 import com.jetbrains.plugin.structure.teamcityAction.Steps.someScriptStep
 import com.jetbrains.plugin.structure.teamcityAction.Steps.someWithStep
 import org.junit.Test
+import java.nio.file.Files
 import java.nio.file.Path
 
 class ParseInvalidActionTests(
@@ -63,11 +65,29 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action with spaces in name`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(name = "action name")),
-      listOf(ValueContainsSpacesProblem("name", "action name")),
+  fun `action with non-empty invalid name`() {
+    val invalidActionNamesProvider = arrayOf(
+      "-a",
+      "_a",
+      "a-",
+      "a_",
+      "a--a",
+      "a__a",
+      "a+a",
+      "абв"
     )
+    invalidActionNamesProvider.forEach { actionName ->
+      Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
+      assertProblematicPlugin(
+        prepareActionYaml(someAction.copy(name = actionName)),
+        listOf(
+          InvalidPropertyValueProblem(
+            "The property <name> (action name) should only contain latin letters, numbers, dashes and underscores. " +
+                    "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+          )
+        ),
+      )
+    }
   }
 
   @Test

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.plugin.Settings.EXTRACT_DIRECTORY
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.ACTION_PREFIX
@@ -19,21 +20,16 @@ import java.nio.file.Files.createTempDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class TeamCityActionPluginManager private constructor(
-  private val extractDirectory: Path,
-) : PluginManager<TeamCityActionPlugin> {
+class TeamCityActionPluginManager
+private constructor(private val extractDirectory: Path) : PluginManager<TeamCityActionPlugin> {
 
   private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityActionPluginManager::class.java)
 
-    fun createManager(
-      extractDirectory: Path = Paths.get(Settings.EXTRACT_DIRECTORY.get()),
-    ): TeamCityActionPluginManager {
-      extractDirectory.createDir()
-      return TeamCityActionPluginManager(extractDirectory)
-    }
+    fun createManager(extractDirectory: Path = Paths.get(EXTRACT_DIRECTORY.get())) =
+      TeamCityActionPluginManager(extractDirectory.createDir())
   }
 
   override fun createPlugin(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> {
@@ -81,7 +77,7 @@ class TeamCityActionPluginManager private constructor(
     try {
       actionDescriptor = objectMapper.readValue(yamlContent, TeamCityActionDescriptor::class.java)
     } catch (e: Exception) {
-      LOG.warn("Failed to parse TeamCity Action. Error: ${e.message}", e)
+      LOG.warn("Failed to parse TeamCity Action", e)
       return PluginCreationFail(ParseYamlProblem)
     }
     try {
@@ -101,7 +97,7 @@ class TeamCityActionPluginManager private constructor(
     val plugin = with(descriptor) {
       TeamCityActionPlugin(
         pluginId = this.name + "@" + this.version, // TODO: It is a temporary way of the pluginID creation
-        pluginName = this.name!!,
+        pluginName = this.name!!, // These fields are expected to be non-null due to the validations above
         description = this.description!!,
         pluginVersion = this.version!!,
         specVersion = Semver(this.specVersion!!),
@@ -114,8 +110,7 @@ class TeamCityActionPluginManager private constructor(
   }
 }
 
-private fun inputs(inputs: List<Map<String, ActionInputDescriptor>>) =
-  inputs.asSequence().map(::input).toList()
+private fun inputs(inputs: List<Map<String, ActionInputDescriptor>>) = inputs.asSequence().map(::input).toList()
 
 private fun input(input: Map<String, ActionInputDescriptor>): ActionInput {
   val inputName = input.keys.first()
@@ -148,7 +143,7 @@ private fun input(input: Map<String, ActionInputDescriptor>): ActionInput {
 
     else -> throw IllegalArgumentException(
       "Unsupported action input type: ${inputValue.type}. " +
-              "Supported values are: ${ActionInputTypeDescriptor.values().joinToString()}"
+          "Supported values are: ${ActionInputTypeDescriptor.values().joinToString()}"
     )
   }
 }
@@ -166,14 +161,13 @@ private fun requirement(requirement: Map<String, ActionRequirementDescriptor>): 
   )
 }
 
-private fun steps(steps: List<ActionStepDescriptor>) =
-  steps.asSequence().map(::step).toList()
+private fun steps(steps: List<ActionStepDescriptor>) = steps.asSequence().map(::step).toList()
 
 private fun step(step: ActionStepDescriptor): ActionStep {
   if (step.script != null) {
     return RunnerBasedStep(
       step.name!!,
-      mapOf("script.content" to step.script),
+      mapOf("script.content" to step.script, "use.custom.script" to "true"),
       "simpleRunner",
     )
   }
@@ -192,10 +186,10 @@ private fun step(step: ActionStepDescriptor): ActionStep {
       actionId,
     )
   }
-  throw IllegalArgumentException("Failed to parse action step")
+  throw IllegalArgumentException("Failed to parse action step: $step")
 }
 
 private fun fileFormatError(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> =
-  PluginCreationFail(IncorrectPluginFile(pluginFile.simpleName, ".zip archive or .yaml file"))
+  PluginCreationFail(IncorrectPluginFile(pluginFile.simpleName, "ZIP archive or YAML file"))
 
 private fun Path.isYaml(): Boolean = this.hasExtension("yaml") || this.hasExtension("yml")
