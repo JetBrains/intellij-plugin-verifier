@@ -20,6 +20,7 @@ import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import kotlinx.metadata.KmClass
 import kotlinx.metadata.KmClassifier
 import kotlinx.metadata.KmFunction
+import kotlinx.metadata.KmProperty
 import kotlinx.metadata.KmType
 import kotlinx.metadata.Visibility
 import kotlinx.metadata.jvm.JvmMetadataVersion
@@ -38,6 +39,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.lang.reflect.Modifier
+
 
 class KotlinInternalModifierUsageTest {
   @Rule
@@ -99,6 +101,12 @@ class KotlinInternalModifierUsageTest {
         }
         signature = JvmMethodSignature("internalFortyTwo", "()I")
       }
+      properties += KmProperty("internalField").apply {
+        visibility = Visibility.INTERNAL
+        returnType = KmType().apply {
+          classifier = KmClassifier.Class("I")
+        }
+      }
     }
     val annotationData = KotlinClassMetadata.Class(kotlinMetadataKmClass, JvmMetadataVersion.LATEST_STABLE_SUPPORTED, 0).write()
 
@@ -108,10 +116,21 @@ class KotlinInternalModifierUsageTest {
       .annotateType(annotationData)
       .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
       .defineMethod("internalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
+      .defineField("internalField", Integer.TYPE, Modifier.PUBLIC)
       .make()
 
     val internalApiClazz = load(internalApiServiceClassUdt, classLoader, internalApiServiceClassName)
     val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
+
+    val internalFieldRefl = internalApiClazz.getField("internalField")
+
+    val delegateInternalFortyTwoInterceptor = object {
+      fun intercept(): Int {
+        internalFieldRefl.isAccessible = true
+        internalFieldRefl.set(internalApiService, 17)
+        return 17
+      }
+    }
 
     val usageClassName = "usage.Usage"
     val usageClassUdt = byteBuddy
@@ -121,10 +140,8 @@ class KotlinInternalModifierUsageTest {
         MethodDelegation
           .withDefaultConfiguration()
           .filter(named("fortyTwo")).to(internalApiService))
-      .defineMethod("delegateInternalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
-        MethodDelegation
-          .withDefaultConfiguration()
-          .filter(named("internalFortyTwo")).to(internalApiService))
+      .defineMethod("delegateInternalFortyTwo", Integer.TYPE, Modifier.PUBLIC)
+        .intercept(MethodDelegation.to(delegateInternalFortyTwoInterceptor))
       .make()
 
     val usageClass = load(usageClassUdt, classLoader, usageClassName)
@@ -132,6 +149,10 @@ class KotlinInternalModifierUsageTest {
 
     val result = usageClass.getMethod("delegateFortyTwo").invoke(usage)
     assertEquals(42, result)
+
+    val delegateInternalFortyTwoResult = usageClass.getMethod("delegateInternalFortyTwo").invoke(usage)
+    assertEquals(17, delegateInternalFortyTwoResult)
+    assertEquals(17, internalFieldRefl.get(internalApiService))
 
 
     val idePlugin = buildIdePlugin(pluginSpec) {
@@ -250,3 +271,4 @@ class KotlinInternalModifierUsageTest {
     return (IdePluginManager.createManager().createPlugin(pluginFile) as PluginCreationSuccess).plugin
   }
 }
+
