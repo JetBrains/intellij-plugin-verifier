@@ -5,9 +5,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
-import com.jetbrains.plugin.structure.ide.layout.PlatformPluginManager
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
@@ -59,9 +59,9 @@ class ProductInfoBasedIdeManager : IdeManager() {
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
-    val platformPlugins = readPlatformPlugins(idePath, ideVersion)
+    val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
-    return IdeImpl(idePath, ideVersion, platformPlugins + plugins)
+    return IdeImpl(idePath, ideVersion, listOf(corePlugin) + plugins)
   }
 
   private fun readPlugins(
@@ -96,10 +96,10 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return moduleLoadingResults.successfulPlugins
   }
 
-  private fun readPlatformPlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
-    val platformPluginManager =
-      PlatformPluginManager(::createPlugin)
-    return platformPluginManager.loadPlatformPlugins(idePath, ideVersion)
+  private fun readCorePlugin(idePath: Path, ideVersion: IdeVersion): IdePlugin {
+    val corePluginManager =
+      CorePluginManager(::createPlugin)
+    return corePluginManager.loadCorePlugin(idePath, ideVersion)
   }
 
   private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
