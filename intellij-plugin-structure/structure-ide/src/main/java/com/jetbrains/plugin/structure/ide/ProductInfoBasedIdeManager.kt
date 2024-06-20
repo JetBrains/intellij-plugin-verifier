@@ -159,7 +159,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
   @Throws(InvalidIdeException::class)
   private fun assertProductInfoPresent(idePath: Path) {
     if (!idePath.containsProductInfoJson()) {
-      throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available. This file should be present for IDE versions 2024.2 and newer")
+      throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
     }
   }
 
