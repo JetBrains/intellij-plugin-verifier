@@ -15,7 +15,10 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IdeaPluginSpec
 import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IntellijInternalApiDump
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalClassUsage
+import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalFieldUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalMethodUsage
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
+import com.jetbrains.pluginverifier.verifiers.resolution.toBinaryClassName
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import kotlinx.metadata.KmClass
 import kotlinx.metadata.KmClassifier
@@ -29,15 +32,22 @@ import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.signature
 import kotlinx.metadata.visibility
 import net.bytebuddy.ByteBuddy
+import net.bytebuddy.description.method.MethodDescription
 import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.FixedValue
+import net.bytebuddy.implementation.Implementation
 import net.bytebuddy.implementation.MethodDelegation
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender
+import net.bytebuddy.implementation.bytecode.ByteCodeAppender.Size
+import net.bytebuddy.jar.asm.Label
+import net.bytebuddy.jar.asm.MethodVisitor
 import net.bytebuddy.matcher.ElementMatchers.named
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.objectweb.asm.Opcodes.*
 import java.lang.reflect.Modifier
 
 
@@ -57,6 +67,11 @@ class KotlinInternalModifierUsageTest {
     "is referenced in usage.Usage.delegateFortyTwo() : int. " +
     "This class is marked with Kotlin `internal` visibility modifier."
 
+  private val internalFieldUsageMsg = "Internal field com.intellij.openapi.InternalApiService.internalField : int " +
+    "is accessed in usage.Usage.accessInternalField() : int. " +
+    "This field is marked with Kotlin `internal` visibility modifier and indicates that the field is not " +
+    "supposed to be used in client code."
+
   @Test
   fun `JetBrains plugin class uses an internal API`() {
     val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o."))
@@ -75,13 +90,18 @@ class KotlinInternalModifierUsageTest {
     val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
 
     val internalClassUsages = ignoredUsages.filterIsInstance<KtInternalClassUsage>()
-    assertEquals(2, internalClassUsages.size)
+    assertEquals(3, internalClassUsages.size)
     val internalClassUsage = internalClassUsages.first { it.usageLocation is MethodLocation && (it.usageLocation as MethodLocation).methodName == "delegateFortyTwo" }
     assertEquals(internalClassUsageMsg, internalClassUsage.fullDescription)
 
     with(ignoredUsages.filterIsInstance<KtInternalMethodUsage>()) {
       assertEquals(1, size)
       assertEquals(internalMethodUsageMsg, this[0].fullDescription)
+    }
+
+    with(ignoredUsages.filterIsInstance<KtInternalFieldUsage>()) {
+      assertEquals(1, size)
+      assertEquals(internalFieldUsageMsg, this[0].fullDescription)
     }
   }
 
@@ -110,27 +130,20 @@ class KotlinInternalModifierUsageTest {
     }
     val annotationData = KotlinClassMetadata.Class(kotlinMetadataKmClass, JvmMetadataVersion.LATEST_STABLE_SUPPORTED, 0).write()
 
+    val internalFieldName = "internalField"
+    val internalFieldValue = 17
+
     val internalApiServiceClassUdt = byteBuddy
       .subclass(Object::class.java)
       .name(internalApiServiceClassName)
       .annotateType(annotationData)
       .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
       .defineMethod("internalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
-      .defineField("internalField", Integer.TYPE, Modifier.PUBLIC)
+      .defineField(internalFieldName, Integer.TYPE, Modifier.PUBLIC)
       .make()
 
     val internalApiClazz = load(internalApiServiceClassUdt, classLoader, internalApiServiceClassName)
     val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
-
-    val internalFieldRefl = internalApiClazz.getField("internalField")
-
-    val delegateInternalFortyTwoInterceptor = object {
-      fun intercept(): Int {
-        internalFieldRefl.isAccessible = true
-        internalFieldRefl.set(internalApiService, 17)
-        return 17
-      }
-    }
 
     val usageClassName = "usage.Usage"
     val usageClassUdt = byteBuddy
@@ -141,7 +154,22 @@ class KotlinInternalModifierUsageTest {
           .withDefaultConfiguration()
           .filter(named("fortyTwo")).to(internalApiService))
       .defineMethod("delegateInternalFortyTwo", Integer.TYPE, Modifier.PUBLIC)
-        .intercept(MethodDelegation.to(delegateInternalFortyTwoInterceptor))
+      .intercept(
+        MethodDelegation
+          .withDefaultConfiguration()
+          .filter(named("internalFortyTwo")).to(internalApiService)
+      )
+      .defineMethod("accessInternalField", Integer.TYPE, Modifier.PUBLIC)
+      .intercept(
+        Implementation.Simple(
+          DirectFieldAccess(
+            caller = usageClassName.toBinaryClassName(),
+            callee = internalApiServiceClassName.toBinaryClassName(),
+            fieldName = internalFieldName,
+            fieldValue = internalFieldValue
+          )
+        )
+      )
       .make()
 
     val usageClass = load(usageClassUdt, classLoader, usageClassName)
@@ -151,9 +179,7 @@ class KotlinInternalModifierUsageTest {
     assertEquals(42, result)
 
     val delegateInternalFortyTwoResult = usageClass.getMethod("delegateInternalFortyTwo").invoke(usage)
-    assertEquals(17, delegateInternalFortyTwoResult)
-    assertEquals(17, internalFieldRefl.get(internalApiService))
-
+    assertEquals(42, delegateInternalFortyTwoResult)
 
     val idePlugin = buildIdePlugin(pluginSpec) {
       dir("usage") {
@@ -269,6 +295,45 @@ class KotlinInternalModifierUsageTest {
     }
 
     return (IdePluginManager.createManager().createPlugin(pluginFile) as PluginCreationSuccess).plugin
+  }
+
+  /**
+   * Creates a new instance of `callee` and invokes a `fieldName` while assigning an fixed value on this instance.
+   * This occurs within a method of the `caller`.
+   * The field value is hardwired to an integer
+   */
+  private class DirectFieldAccess(
+    private val caller: BinaryClassName,
+    private val callee: BinaryClassName,
+    private val fieldName: String,
+    private val fieldValue: Int
+  ) : ByteCodeAppender {
+    override fun apply(
+      methodVisitor: MethodVisitor,
+      implementationContext: Implementation.Context,
+      instrumentedMethod: MethodDescription
+    ): Size {
+      with(methodVisitor) {
+        val methodBeginning = Label();
+        visitLabel(methodBeginning);
+        visitTypeInsn(NEW, callee);
+        visitInsn(DUP);
+        visitMethodInsn(INVOKESPECIAL, callee, "<init>", "()V", false);
+        visitVarInsn(ASTORE, 1);
+        val instanceScopeBeginning = Label();
+        visitLabel(instanceScopeBeginning);
+        visitVarInsn(ALOAD, 1);
+        visitIntInsn(BIPUSH, fieldValue);
+        visitFieldInsn(PUTFIELD, callee, fieldName, "I");
+        visitIntInsn(BIPUSH, fieldValue);
+        visitInsn(IRETURN);
+        val methodEnd = Label();
+        visitLabel(methodEnd);
+        visitLocalVariable("this", "L$caller;", null, methodBeginning, methodEnd, 0);
+        visitLocalVariable("instance", "L$callee;", null, instanceScopeBeginning, methodEnd, 1);
+      }
+      return Size(2, 2)
+    }
   }
 }
 

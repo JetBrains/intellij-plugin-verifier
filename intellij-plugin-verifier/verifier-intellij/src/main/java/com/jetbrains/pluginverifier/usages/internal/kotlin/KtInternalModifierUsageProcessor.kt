@@ -105,7 +105,7 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
       apiElement: FieldLocation,
       usageLocation: MethodLocation
     ) {
-      LOG.atInfo().log("Registering field: {}", fieldReference)
+      verificationContext.registerInternalApiUsage(KtInternalFieldUsage(fieldReference, apiElement, usageLocation))
     }
   }
 
