@@ -314,23 +314,23 @@ class KotlinInternalModifierUsageTest {
       instrumentedMethod: MethodDescription
     ): Size {
       with(methodVisitor) {
-        val methodBeginning = Label();
-        visitLabel(methodBeginning);
-        visitTypeInsn(NEW, callee);
-        visitInsn(DUP);
-        visitMethodInsn(INVOKESPECIAL, callee, "<init>", "()V", false);
-        visitVarInsn(ASTORE, 1);
-        val instanceScopeBeginning = Label();
-        visitLabel(instanceScopeBeginning);
-        visitVarInsn(ALOAD, 1);
-        visitIntInsn(BIPUSH, fieldValue);
-        visitFieldInsn(PUTFIELD, callee, fieldName, "I");
-        visitIntInsn(BIPUSH, fieldValue);
-        visitInsn(IRETURN);
-        val methodEnd = Label();
-        visitLabel(methodEnd);
-        visitLocalVariable("this", "L$caller;", null, methodBeginning, methodEnd, 0);
-        visitLocalVariable("instance", "L$callee;", null, instanceScopeBeginning, methodEnd, 1);
+        val methodBeginning = Label()
+        visitLabel(methodBeginning)
+        visitTypeInsn(NEW, callee)
+        visitInsn(DUP)
+        visitMethodInsn(INVOKESPECIAL, callee, "<init>", "()V", false)
+        visitVarInsn(ASTORE, 1)
+        val instanceScopeBeginning = Label()
+        visitLabel(instanceScopeBeginning)
+        visitVarInsn(ALOAD, 1)
+        visitIntInsn(BIPUSH, fieldValue)
+        visitFieldInsn(PUTFIELD, callee, fieldName, "I")
+        visitIntInsn(BIPUSH, fieldValue)
+        visitInsn(IRETURN)
+        val methodEnd = Label()
+        visitLabel(methodEnd)
+        visitLocalVariable("this", "L$caller;", null, methodBeginning, methodEnd, 0)
+        visitLocalVariable("instance", "L$callee;", null, instanceScopeBeginning, methodEnd, 1)
       }
       return Size(2, 2)
     }

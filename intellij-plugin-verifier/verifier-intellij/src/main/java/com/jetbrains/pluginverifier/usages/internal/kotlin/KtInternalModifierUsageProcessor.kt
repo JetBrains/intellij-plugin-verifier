@@ -19,10 +19,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-private val LOG: Logger = LoggerFactory.getLogger(KtInternalModifierUsageProcessor::class.java)
 
 /**
  * ByteBuddy modifiers when using the filtering with delegation:
@@ -46,7 +42,7 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
     if (hasSameOrigin(resolvedMember, usageLocation)) {
       return false
     }
-    if (isIgnored(resolvedMember, usageLocation)) {
+    if (isIgnored(usageLocation)) {
       return false
     }
 
@@ -62,7 +58,7 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
     }
   }
 
-  private fun isIgnored(member: ClassFileMember, usageLocation: Location): Boolean {
+  private fun isIgnored(usageLocation: Location): Boolean {
     return usageLocation is FieldLocation && usageLocation.modifiers == byteBuddyMethodDelegationModifiers
   }
 
