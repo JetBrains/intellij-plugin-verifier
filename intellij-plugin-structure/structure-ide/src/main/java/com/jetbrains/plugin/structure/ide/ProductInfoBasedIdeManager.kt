@@ -164,6 +164,15 @@ class ProductInfoBasedIdeManager : IdeManager() {
   }
 
   fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
+    && isAtLeastVersion(idePath, "242")
+
+  private fun isAtLeastVersion(idePath: Path, expectedVersion: String): Boolean {
+    return when (val version = BuildTxtIdeVersionProvider().readIdeVersion(idePath)) {
+      is IdeVersionResolution.Found -> version.ideVersion > IdeVersion.createIdeVersion(expectedVersion)
+      is IdeVersionResolution.Failed,
+      is IdeVersionResolution.NotFound -> false
+    }
+  }
 
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
