@@ -10,10 +10,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
-import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IdeaPluginSpec
-import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IntellijInternalApiDump
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalFieldUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalMethodUsage
@@ -44,11 +43,18 @@ import net.bytebuddy.jar.asm.Label
 import net.bytebuddy.jar.asm.MethodVisitor
 import net.bytebuddy.matcher.ElementMatchers.named
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.objectweb.asm.Opcodes.*
 import java.lang.reflect.Modifier
+import java.lang.reflect.Type
+import java.util.*
+
+private const val internalApiServiceClassName = "com.intellij.openapi.InternalApiService"
+
+private const val usageClassName = "usage.Usage"
 
 
 class KotlinInternalModifierUsageTest {
@@ -56,161 +62,238 @@ class KotlinInternalModifierUsageTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
-  private val byteBuddy = ByteBuddy()
+  private lateinit var byteBuddy: ByteBuddy
 
-  private val internalMethodUsageMsg = "Internal method com.intellij.openapi.InternalApiService.internalFortyTwo() : int " +
-    "is invoked in usage.Usage.delegateInternalFortyTwo() : int. " +
-    "This method is marked with Kotlin `internal` visibility modifier and indicates that the method is not " +
-    "supposed to be used in client code."
+  @Before
+  fun setUp() {
+    byteBuddy = ByteBuddy()
+  }
 
-  private val internalClassUsageMsg = "Internal class com.intellij.openapi.InternalApiService " +
-    "is referenced in usage.Usage.delegateFortyTwo() : int. " +
+  private fun getInternalMethodUsageMsg(caller: String, callee: String) =
+    "Internal method $callee.internalFortyTwo() : int " +
+      "is invoked in $caller.delegateInternalFortyTwo() : int. " +
+      "This method is marked with Kotlin `internal` visibility modifier and indicates that the method is not " +
+      "supposed to be used in client code."
+
+  private fun getInternalClassUsageMsg(caller: String, callee: String) = "Internal class $callee " +
+    "is referenced in $caller.delegateInternalFortyTwo() : int. " +
     "This class is marked with Kotlin `internal` visibility modifier."
 
-  private val internalFieldUsageMsg = "Internal field com.intellij.openapi.InternalApiService.internalField : int " +
-    "is accessed in usage.Usage.accessInternalField() : int. " +
-    "This field is marked with Kotlin `internal` visibility modifier and indicates that the field is not " +
-    "supposed to be used in client code."
+  private fun getInternalFieldUsageMsg(caller: String, callee: String) =
+    "Internal field $callee.internalField : int " +
+      "is accessed in $caller.accessInternalField() : int. " +
+      "This field is marked with Kotlin `internal` visibility modifier and indicates that the field is not " +
+      "supposed to be used in client code."
+
+  private val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.")
 
   @Test
-  fun `JetBrains plugin class uses an internal API`() {
-    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o."))
+  fun `JetBrains plugin class calls a public method in an internal class `() {
 
+    val internalApiServiceClassName = generateInternalApiServiceClassName()
+
+    val publicMethodName = "publicFortyTwo"
+    val internalApiServiceClassUdt = internalApiServiceClassName
+      .constructWithMethod(publicMethodName, Integer.TYPE)
+      .intercept(FixedValue.value(42))
+      .annotateType(kotlinMetadata {
+        name = internalApiServiceClassName
+        visibility = Visibility.INTERNAL
+        functions += KmFunction(publicMethodName).apply {
+          visibility = Visibility.PUBLIC
+          returnType = KmType().apply {
+            classifier = KmClassifier.Class("I")
+          }
+          signature = JvmMethodSignature(publicMethodName, "()I")
+        }
+      })
+      .make()
+
+    val internalApiService = internalApiServiceClassUdt.newInstance()
+
+    val usageClassName = generateUsageClassName()
+    val usageClassUdt = usageClassName
+      .constructWithMethod("delegateInternalFortyTwo", Integer.TYPE)
+      .intercept(
+        MethodDelegation
+          .withDefaultConfiguration()
+          .filter(named(publicMethodName)).to(internalApiService)
+      )
+      .make()
+
+    val ide = prepareIdeWithApi { internalApiServiceClassUdt }
+    val plugin = prepareUsage(pluginSpec) { usageClassUdt }
+
+    verify(ide, plugin).run {
+      assertEquals(1, size)
+      with(filterIsInstance<KtInternalClassUsage>()) {
+        assertEquals(1, size)
+        assertEquals(getInternalClassUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+      }
+    }
+  }
+
+  @Test
+  fun `JetBrains plugin class uses an internal class and an internal method name`() {
+    val internalApiServiceClassName = generateInternalApiServiceClassName()
+
+    val internalMethodName = "internalFortyTwo"
+    val internalApiServiceClassUdt = internalApiServiceClassName
+      .constructWithMethod(internalMethodName, Integer.TYPE)
+      .intercept(FixedValue.value(42))
+      .annotateType(kotlinMetadata {
+        name = internalApiServiceClassName
+        visibility = Visibility.INTERNAL
+        functions += KmFunction(internalMethodName).apply {
+          visibility = Visibility.INTERNAL
+          returnType = KmType().apply {
+            classifier = KmClassifier.Class("I")
+          }
+          signature = JvmMethodSignature(internalMethodName, "()I")
+        }
+      })
+      .make()
+
+
+    val internalApiService = internalApiServiceClassUdt.newInstance()
+
+    val usageClassName = generateUsageClassName()
+    val usageClassUdt = usageClassName
+      .constructWithMethod("delegateInternalFortyTwo", Integer.TYPE)
+      .intercept(
+        MethodDelegation
+          .withDefaultConfiguration()
+          .filter(named(internalMethodName)).to(internalApiService)
+      )
+      .make()
+
+    val ide = prepareIdeWithApi { internalApiServiceClassUdt }
+    val plugin = prepareUsage(pluginSpec) { usageClassUdt }
+
+    verify(ide, plugin).run {
+      assertEquals(2, size)
+      with(filterIsInstance<KtInternalClassUsage>()) {
+        assertEquals(1, size)
+        assertEquals(getInternalClassUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+      }
+
+      with(filterIsInstance<KtInternalMethodUsage>()) {
+        assertEquals(1, size)
+        assertEquals(getInternalMethodUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+      }
+    }
+  }
+
+  @Test
+  fun `internal field access is reported as an internal Kotlin API usage`() {
+    val internalFieldName = "internalField"
+    val internalFieldValue = 17
+
+    val internalApiServiceClassName = generateInternalApiServiceClassName()
+    val usageClassName = generateUsageClassName()
+
+    val idePlugin = prepareUsage(pluginSpec) {
+      usageClassName.constructWithMethod("accessInternalField", Integer.TYPE)
+        .intercept(
+          DirectFieldAccess(
+              usageClassName.toBinaryClassName(),
+              internalApiServiceClassName.toBinaryClassName(),
+              internalFieldName,
+              internalFieldValue
+          ).implementation
+        )
+        .make()
+    }
+    val ide = prepareIdeWithApi {
+      internalApiServiceClassName.construct()
+        .annotateType(kotlinMetadata {
+          name = internalApiServiceClassName
+          visibility = Visibility.INTERNAL
+          properties += KmProperty(internalFieldName).apply {
+            visibility = Visibility.INTERNAL
+            returnType = KmType().apply {
+              classifier = KmClassifier.Class("I")
+            }
+          }
+        })
+        .defineField(internalFieldName, Integer.TYPE, Modifier.PUBLIC)
+        .make()
+    }
+    verify(ide, idePlugin).run {
+      with(filterIsInstance<KtInternalFieldUsage>()) {
+        assertEquals(1, size)
+        assertEquals(getInternalFieldUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+      }
+    }
+  }
+
+  private fun verify(ide: Ide, idePlugin: IdePlugin): Set<InternalApiUsage> {
     val apiUsageFilter = InternalApiUsageFilter()
 
     // Run verification
-    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin,
-      apiUsageFilters = listOf(apiUsageFilter)) as PluginVerificationResult.Verified
+    val verificationResult = VerificationRunner().runPluginVerification(
+      ide, idePlugin,
+      apiUsageFilters = listOf(apiUsageFilter)
+    ) as PluginVerificationResult.Verified
 
     // No warnings should be produced
     assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
     assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
     // JetBrains Plugin should not report internal usages. These are in the ignored usages
     assertEquals(0, verificationResult.internalApiUsages.size)
-    val ignoredUsages = verificationResult.ignoredInternalApiUsages.keys
+    return verificationResult.ignoredInternalApiUsages.keys
+  }
 
-    val internalClassUsages = ignoredUsages.filterIsInstance<KtInternalClassUsage>()
-    assertEquals(3, internalClassUsages.size)
-    val internalClassUsage = internalClassUsages.first { it.usageLocation is MethodLocation && (it.usageLocation as MethodLocation).methodName == "delegateFortyTwo" }
-    assertEquals(internalClassUsageMsg, internalClassUsage.fullDescription)
-
-    with(ignoredUsages.filterIsInstance<KtInternalMethodUsage>()) {
-      assertEquals(1, size)
-      assertEquals(internalMethodUsageMsg, this[0].fullDescription)
-    }
-
-    with(ignoredUsages.filterIsInstance<KtInternalFieldUsage>()) {
-      assertEquals(1, size)
-      assertEquals(internalFieldUsageMsg, this[0].fullDescription)
+  private fun prepareUsage(
+    pluginSpec: IdeaPluginSpec,
+    dynamicTypeBuilder: () -> DynamicType.Unloaded<*>
+  ): IdePlugin {
+    return buildIdePlugin(pluginSpec) {
+      usageClass(dynamicTypeBuilder())
     }
   }
 
-
-  private fun prepareIde(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
-    val classLoader = this::class.java.classLoader
-
-    val internalApiServiceClassName = "com.intellij.openapi.InternalApiService"
-
-    val kotlinMetadataKmClass = KmClass().apply {
-      name = "internalApiServiceClassName"
-      visibility = Visibility.INTERNAL
-      functions += KmFunction("internalFortyTwo").apply {
-        visibility = Visibility.INTERNAL
-        returnType = KmType().apply {
-          classifier = KmClassifier.Class("I")
-        }
-        signature = JvmMethodSignature("internalFortyTwo", "()I")
-      }
-      properties += KmProperty("internalField").apply {
-        visibility = Visibility.INTERNAL
-        returnType = KmType().apply {
-          classifier = KmClassifier.Class("I")
-        }
-      }
-    }
-    val annotationData = KotlinClassMetadata.Class(kotlinMetadataKmClass, JvmMetadataVersion.LATEST_STABLE_SUPPORTED, 0).write()
-
-    val internalFieldName = "internalField"
-    val internalFieldValue = 17
-
-    val internalApiServiceClassUdt = byteBuddy
-      .subclass(Object::class.java)
-      .name(internalApiServiceClassName)
-      .annotateType(annotationData)
-      .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
-      .defineMethod("internalFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
-      .defineField(internalFieldName, Integer.TYPE, Modifier.PUBLIC)
-      .make()
-
-    val internalApiClazz = load(internalApiServiceClassUdt, classLoader, internalApiServiceClassName)
-    val internalApiService = internalApiClazz.getDeclaredConstructor().newInstance()
-
-    val usageClassName = "usage.Usage"
-    val usageClassUdt = byteBuddy
-      .subclass(Object::class.java)
-      .name(usageClassName)
-      .defineMethod("delegateFortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(
-        MethodDelegation
-          .withDefaultConfiguration()
-          .filter(named("fortyTwo")).to(internalApiService))
-      .defineMethod("delegateInternalFortyTwo", Integer.TYPE, Modifier.PUBLIC)
-      .intercept(
-        MethodDelegation
-          .withDefaultConfiguration()
-          .filter(named("internalFortyTwo")).to(internalApiService)
-      )
-      .defineMethod("accessInternalField", Integer.TYPE, Modifier.PUBLIC)
-      .intercept(
-        Implementation.Simple(
-          DirectFieldAccess(
-            caller = usageClassName.toBinaryClassName(),
-            callee = internalApiServiceClassName.toBinaryClassName(),
-            fieldName = internalFieldName,
-            fieldValue = internalFieldValue
-          )
-        )
-      )
-      .make()
-
-    val usageClass = load(usageClassUdt, classLoader, usageClassName)
-    val usage = usageClass.getDeclaredConstructor().newInstance()
-
-    val result = usageClass.getMethod("delegateFortyTwo").invoke(usage)
-    assertEquals(42, result)
-
-    val delegateInternalFortyTwoResult = usageClass.getMethod("delegateInternalFortyTwo").invoke(usage)
-    assertEquals(42, delegateInternalFortyTwoResult)
-
-    val idePlugin = buildIdePlugin(pluginSpec) {
-      dir("usage") {
-        file("Usage.class", usageClassUdt.bytes)
-      }
-    }
-
-    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
+  private fun prepareIdeWithApi(platformApiClassTypeBuilder: () -> DynamicType.Unloaded<*>): Ide {
+    return buildIdeWithBundledPlugins {
       dir("com") {
         dir("intellij") {
           dir("openapi") {
-            dir("util") {
-              file("IntellijInternalApi.class", IntellijInternalApiDump.dump())
-            }
-            file("InternalApiService.class", internalApiServiceClassUdt.bytes)
+            apiClass(platformApiClassTypeBuilder())
           }
         }
-
       }
-    })
-    return idePlugin to ide
+    }
+  }
+
+  private fun ContentBuilder.usageClass(dynamicType: DynamicType.Unloaded<*>) {
+    val className = dynamicType.typeDescription.simpleName
+    dir("usage") {
+      file("$className.class", dynamicType.bytes)
+    }
+  }
+
+  private fun ContentBuilder.apiClass(dynamicType: DynamicType.Unloaded<*>) {
+    val className = dynamicType.typeDescription.simpleName
+    file("$className.class", dynamicType.bytes)
   }
 
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-  private fun load(classDynamicType: DynamicType.Unloaded<Object>, classLoader: ClassLoader, className: String): Class<out Any> {
-    return try {
-      classDynamicType.load(classLoader, ClassLoadingStrategy.Default.INJECTION).loaded
-    } catch (e: IllegalStateException) {
-      // class might have already been injected into classloader from previous runs
-      classLoader.loadClass(className)
-    }
+  private fun load(classDynamicType: DynamicType.Unloaded<Object>, classLoader: ClassLoader): Class<out Any> {
+    return classDynamicType.load(classLoader, ClassLoadingStrategy.Default.WRAPPER).loaded
+  }
+
+  private fun String.construct() = byteBuddy
+    .subclass(Object::class.java)
+    .name(this)
+
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  private fun String.constructWithMethod(
+    method: String,
+    returnType: Type,
+    modifier: Int = Modifier.PUBLIC
+  ): DynamicType.Builder.MethodDefinition.ParameterDefinition.Initial<Object> {
+    return construct()
+      .defineMethod(method, returnType, modifier)
   }
 
   private fun buildIdeWithBundledPlugins(
@@ -258,7 +341,6 @@ class KotlinInternalModifierUsageTest {
     }
 
     // Fast assert IDE is fine
-
     val ide = IdeManager.createManager().createIde(ideaDirectory)
     assertEquals("IU-192.1", ide.version.asString())
 
@@ -269,8 +351,9 @@ class KotlinInternalModifierUsageTest {
     return ide
   }
 
-  private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
-                             pluginClassesContentBuilder: (ContentBuilder).() -> Unit
+  private fun buildIdePlugin(
+    ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
+    pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
       pluginClassesContentBuilder()
@@ -286,7 +369,6 @@ class KotlinInternalModifierUsageTest {
               <description>this description is looooooooooong enough</description>
               <change-notes>these change-notes are looooooooooong enough</change-notes>
               <idea-version since-build="131.1"/>
-              <depends>org.intellij.groovy</depends>
               <depends>com.intellij.modules.java</depends>
             </idea-plugin>
             """.trimIndent()
@@ -298,7 +380,37 @@ class KotlinInternalModifierUsageTest {
   }
 
   /**
-   * Creates a new instance of `callee` and invokes a `fieldName` while assigning an fixed value on this instance.
+   * Generate random API class name to prevent naming clashes in ByteBuddy.
+   */
+  private fun generateInternalApiServiceClassName() = internalApiServiceClassName.randomize()
+  /**
+   * Generate random API Usage class to prevent naming clashes in ByteBuddy.
+   */
+  private fun generateUsageClassName() = usageClassName.randomize()
+
+  private fun kotlinMetadata(configure: KmClass.() -> Unit) = KmClass().apply {
+    configure()
+  }.let {
+    KotlinClassMetadata
+      .Class(it, JvmMetadataVersion.LATEST_STABLE_SUPPORTED, 0)
+      .write()
+  }
+
+  private fun String.randomize(): String {
+    return buildString {
+      append(this@randomize)
+      append("_")
+      append(UUID.randomUUID().toString().replace("-", ""))
+    }
+  }
+
+  @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+  private fun DynamicType.Unloaded<Object>.newInstance(classLoader: ClassLoader = this::class.java.classLoader) =
+    load(this, classLoader)
+      .getDeclaredConstructor().newInstance()
+
+  /**
+   * Creates a new instance of `callee` and invokes a `fieldName` while assigning a fixed value on this instance.
    * This occurs within a method of the `caller`.
    * The field value is hardwired to an integer
    */
@@ -308,6 +420,7 @@ class KotlinInternalModifierUsageTest {
     private val fieldName: String,
     private val fieldValue: Int
   ) : ByteCodeAppender {
+
     override fun apply(
       methodVisitor: MethodVisitor,
       implementationContext: Implementation.Context,
@@ -334,6 +447,10 @@ class KotlinInternalModifierUsageTest {
       }
       return Size(2, 2)
     }
+
+    val implementation: Implementation
+      get() = Implementation.Simple(this)
   }
+
 }
 
