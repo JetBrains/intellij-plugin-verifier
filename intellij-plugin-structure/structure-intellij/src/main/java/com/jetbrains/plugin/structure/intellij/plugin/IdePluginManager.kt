@@ -84,6 +84,44 @@ class IdePluginManager private constructor(
     }
   }
 
+  private fun loadModuleInfoFromJarFile(
+    jarFile: Path,
+    descriptorPath: String,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver,
+  ): PluginCreator {
+    return try {
+      PluginJar(jarFile, fileSystemProvider).use { jar ->
+        when (val descriptor = jar.getPluginDescriptor(descriptorPath)) {
+          is Found -> {
+            try {
+              val descriptorXml = descriptor.loadXml()
+              createPlugin(
+                jarFile.simpleName,
+                descriptorPath,
+                parentPlugin = null,
+                validateDescriptor = false,
+                descriptorXml,
+                descriptor.path, resourceResolver, problemResolver
+              )
+            } catch (e: Exception) {
+              LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
+              val message = e.localizedMessage
+              createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
+            }
+          }
+
+          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
+            LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarFile, descriptor)
+          }
+        }
+      }
+    } catch (e: JarArchiveCannotBeOpenException) {
+      LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
+      createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
+    }
+  }
+
   private fun Found.loadXml(): Document {
     return inputStream.use {
       JDOMUtil.loadDocument(it)
@@ -313,6 +351,18 @@ class IdePluginManager private constructor(
     val pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, problemResolver)
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
     return pluginCreator.pluginCreationResult
+  }
+
+  fun createBundledModule(
+    pluginFile: Path,
+    ideVersion: IdeVersion,
+    descriptorPath: String,
+    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+  ): PluginCreationResult<IdePlugin> {
+    return loadModuleInfoFromJarFile(pluginFile, descriptorPath, myResourceResolver, problemResolver).apply {
+      setPluginVersion(ideVersion.asStringWithoutProductCode())
+      setOriginalFile(pluginFile)
+    }.pluginCreationResult
   }
 
   private fun getPluginCreatorWithResult(

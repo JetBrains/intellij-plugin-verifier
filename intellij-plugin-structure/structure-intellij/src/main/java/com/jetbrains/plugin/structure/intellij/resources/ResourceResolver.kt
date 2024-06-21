@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.resources
 
+import com.jetbrains.plugin.structure.base.utils.description
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.file.Path
@@ -16,7 +17,8 @@ interface ResourceResolver {
     data class Found(
       val path: Path,
       val resourceStream: InputStream,
-      private val resourceToClose: Closeable = Closeable {  }
+      private val resourceToClose: Closeable = Closeable {  },
+      val description: String = path.description
     ) : Result(), Closeable {
       override fun close() {
         resourceStream.close()

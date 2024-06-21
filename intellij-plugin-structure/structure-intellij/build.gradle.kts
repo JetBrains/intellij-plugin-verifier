@@ -5,4 +5,6 @@ dependencies {
   implementation(sharedLibs.jsoup)
   implementation(libs.jaxb.api)
   implementation(libs.jaxb.runtime)
+
+  testImplementation(sharedLibs.junit)
 }

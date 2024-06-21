@@ -1,19 +1,24 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.xinclude
 
+import com.jetbrains.plugin.structure.base.utils.description
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.lang.Boolean.parseBoolean
 import java.nio.file.Path
 import java.util.*
 import java.util.regex.Pattern
+
+private val LOG: Logger = LoggerFactory.getLogger(XIncluder::class.java)
 
 /**
  * Resolves all `<xi:include>` references in xml documents using the provided path resolver.
@@ -34,7 +39,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {
-    val startEntry = XIncludeEntry(presentablePath, documentPath)
+    val startEntry = XIncludeEntry(presentablePath, documentPath, documentPath.description)
     if (isIncludeElement(document.rootElement)) {
       throw XIncluderException(listOf(startEntry), "Invalid root element ${document.rootElement.getElementNameAndAttributes()}")
     }
@@ -109,13 +114,14 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
     when (val resourceResult = resolver.resolveResource(href, basePath)) {
       is ResourceResolver.Result.Found -> resourceResult.use {
+        logXInclude(xincludeElement, resourceResult, bases)
         val remoteDocument = try {
           JDOMUtil.loadDocument(it.resourceStream.buffered())
         } catch (e: Exception) {
           throw XIncluderException(bases, "Invalid document '$href' referenced in $presentableXInclude", e)
         }
 
-        val xincludeEntry = XIncludeEntry(href, resourceResult.path)
+        val xincludeEntry = XIncludeEntry(href, resourceResult.path, resourceResult.description)
         val xIncludeElements = resolveXIncludesOfRemoteDocument(remoteDocument, xincludeElement, xincludeEntry, bases)
         val startComment = Comment("Start $presentableXInclude")
         val endComment = Comment("End $presentableXInclude")
@@ -266,6 +272,36 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     val attr = this.attributes.find { it.name == attributeLocalName }
     return attr?.value
   }
+
+  private fun Element.toDebugString(): String {
+    if (isIncludeElement(this)) {
+      val href: String? = getAttributeValue(HREF)
+      if (href != null) {
+        return href
+      }
+    }
+    return this.toString()
+  }
+
+  private fun Stack<XIncludeEntry>.toDebugString(): String {
+    return joinToString("->") { it.description }
+  }
+
+  private fun logXInclude(
+    xincludeElement: Element,
+    resourceResult: ResourceResolver.Result.Found,
+    bases: Stack<XIncludeEntry>
+  ) {
+    if (!LOG.isDebugEnabled) return
+    val include = xincludeElement.toDebugString()
+    val chain = if (bases.toDebugString().isNotEmpty()) {
+      bases.toDebugString() + "->" + resourceResult.description
+    } else {
+      include
+    }
+    LOG.atDebug().log("XIncluding '{}' from '{}'. Chain {}", include, resourceResult.description, chain)
+  }
+
 
   private fun Properties.isTrue(key: String?): Boolean {
     return parseBoolean(getProperty(key))
