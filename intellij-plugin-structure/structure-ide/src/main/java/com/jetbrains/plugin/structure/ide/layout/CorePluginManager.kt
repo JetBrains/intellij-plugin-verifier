@@ -29,7 +29,14 @@ private val LIB_DIRECTORY = "lib"
  * See also [`PluginManagerCore.CORE_PLUGIN_ID`](https://github.com/JetBrains/intellij-community/blob/1fd62dc88af158383087e7fd3860d18b5de798b2/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt#L67).
  */
 internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader) {
-  fun loadCorePlugin(idePath: Path, ideVersion: IdeVersion): IdePlugin {
+  /**
+   * Loads Core plugins from the IDE 'lib' directory.
+   *
+   * Note that there might be multiple such plugins with multiple descriptors, e. g.
+   * `product.jar` with the descriptor in `META-INF/plugin.xml` and `app-client.jar`
+   * with the descriptor in `META-INF/PlatformLangPlugin.xml`.
+   */
+  fun loadCorePlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val corePluginJarPaths = idePath.resolve(LIB_DIRECTORY).listJars()
     val corePluginJarsResolver = JarFilesResourceResolver(corePluginJarPaths)
 
@@ -37,31 +44,18 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
     val loadedPlugins = corePluginJarPaths.mapNotNull(loadPlugin)
     val loadingResults = LoadingResults(loadedPlugins)
     logFailures(LOG, loadingResults.failures, idePath)
-    assertExactlyOnePlugin(idePath, loadingResults)
+    assertCorePluginsPresent(idePath, loadingResults)
 
-    return loadingResults.successfulPlugins.first()
+    return loadingResults.successfulPlugins
   }
 
-  private fun assertExactlyOnePlugin(
+  private fun assertCorePluginsPresent(
     idePath: Path,
     loadingResults: LoadingResults
   ) {
-    with(loadingResults.successfulPlugins) {
-      when (size) {
-        0 -> throw InvalidIdeException(
-          idePath, "The 'Core' plugin is expected in the $idePath${File.separator}$LIB_DIRECTORY, " +
-            "no such plugin could be created"
-        )
-
-        1 -> Unit
-
-        else -> throw InvalidIdeException(
-          idePath,
-          "Only single 'Core' plugin is expected in the $idePath${File.separator}$LIB_DIRECTORY, " +
-            "but found ${loadingResults.successfulPlugins.size} plugin(s): " +
-            loadingResults.successfulPlugins.joinToString { it.pluginId + " in " + (it.originalFile ?: "") })
-
-      }
+    if (loadingResults.successfulPlugins.isEmpty()) {
+      throw InvalidIdeException(
+        idePath, "The 'Core' plugin (ID: 'com.intellij') is expected in the $idePath${File.separator}$LIB_DIRECTORY")
     }
   }
 

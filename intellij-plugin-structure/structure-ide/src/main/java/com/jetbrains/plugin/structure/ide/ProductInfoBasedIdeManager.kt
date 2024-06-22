@@ -61,7 +61,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
     val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
-    return IdeImpl(idePath, ideVersion, listOf(corePlugin) + plugins)
+    return IdeImpl(idePath, ideVersion, corePlugin + plugins)
   }
 
   private fun readPlugins(
@@ -96,10 +96,10 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return moduleLoadingResults.successfulPlugins
   }
 
-  private fun readCorePlugin(idePath: Path, ideVersion: IdeVersion): IdePlugin {
+  private fun readCorePlugin(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val corePluginManager =
       CorePluginManager(::createPlugin)
-    return corePluginManager.loadCorePlugin(idePath, ideVersion)
+    return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
   private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
