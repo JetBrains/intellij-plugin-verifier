@@ -4,16 +4,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
-### Fixed
-
-## 1.368 - 2024-06-22
-
-### Added
-
+### Added 
+ 
 - Add a module for YouTrack plugins
 - Support `product-info.json`-based Platform layout for 2024.2 and newer ([#1100](https://github.com/JetBrains/intellij-plugin-verifier/pull/1100))  
 
