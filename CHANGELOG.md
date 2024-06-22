@@ -4,11 +4,20 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ## [Unreleased]
 
-### Added
+### Added 
+ 
+- Add a module for YouTrack plugins
+- Support `product-info.json`-based Platform layout for 2024.2 and newer ([#1100](https://github.com/JetBrains/intellij-plugin-verifier/pull/1100))  
 
 ### Changed
 
+- Resolve XInclude targets both in `META-INF` and resource roots ([#1097](https://github.com/JetBrains/intellij-plugin-verifier/pull/1097))
+- Support conditional inclusion in XInclude directives (`includeIf`, `includeUnless`) ([#1097](https://github.com/JetBrains/intellij-plugin-verifier/pull/1097))
+- Upgrade dependencies
+
 ### Fixed
+
+- Resolve issues with bundled plugins not being found (e. g. Kotlin, Python). ([#1100](https://github.com/JetBrains/intellij-plugin-verifier/pull/1100), [MP-6594](https://youtrack.jetbrains.com/issue/MP-6594))
 
 ## 1.367 - 2024-05-29
 
