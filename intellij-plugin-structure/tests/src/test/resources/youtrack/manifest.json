@@ -3,16 +3,17 @@
   "title": "Template App",
   "description": "App description",
   "version": "1.0.0",
-  "vendor": {
-    "name": "JetBrains",
-    "url": "https://www.jetbrains.com/",
-    "email": "info@jetbrains.com"
-  },
+  "url": "https://example.com",
   "icon": "icon.svg",
   "iconDark": "icon.svg",
-  "youTrackVersion": "^2024.2.0",
-  "url": "https://example.com",
+  "minYouTrackVersion": "2022.2.0",
+  "maxYouTrackVersion": "2024.2.0",
   "changeNotes": "Version 0.0.1: Feature 1\n\nVersion 1.0.0: Feature 2",
+  "vendor": {
+    "name": "JetBrains s.r.o.",
+    "url": "https://www.jetbrains.com/",
+    "email": "support@jetbrains.com"
+  },
   "widgets": [
     {
       "key": "sample",

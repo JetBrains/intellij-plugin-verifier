@@ -27,8 +27,11 @@ data class YouTrackAppManifest(
   @JsonProperty("iconDark")
   val iconDark: String? = null,
 
-  @JsonProperty("youTrackVersion")
-  val youTrackVersion: String? = null,
+  @JsonProperty("minYouTrackVersion")
+  val minYouTrackVersion: String? = null,
+
+  @JsonProperty("maxYouTrackVersion")
+  val maxYouTrackVersion: String? = null,
 
   @JsonProperty("changeNotes")
   val changeNotes: String? = null,

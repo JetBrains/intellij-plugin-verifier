@@ -88,7 +88,9 @@ class YouTrackPluginManager private constructor(private val extractDirectory: Pa
           vendor = vendor?.name,
           vendorUrl = vendor?.url,
           vendorEmail = vendor?.email,
-          icons = icons
+          icons = icons,
+          sinceVersion = minYouTrackVersion,
+          untilVersion = maxYouTrackVersion
         )
       }
       return PluginCreationSuccess(plugin, beanValidationResult)
