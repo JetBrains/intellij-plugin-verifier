@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.usages.experimental
@@ -11,7 +11,11 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: ExperimentalApiRegistrar) : ApiUsageProcessor {
@@ -20,7 +24,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     resolvedMember: ClassFileMember,
     context: VerificationContext,
     usageLocation: Location
-  ) = resolvedMember.isExperimentalApi(context.classResolver)
+  ) = resolvedMember.isExperimentalApi(context.classResolver, usageLocation)
     && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
 
   override fun processClassReference(
