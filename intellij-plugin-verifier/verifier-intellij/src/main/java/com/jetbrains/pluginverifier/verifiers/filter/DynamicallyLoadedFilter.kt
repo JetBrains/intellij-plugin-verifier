@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.verifiers.filter
 
-import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 
 /**
@@ -19,6 +19,6 @@ class DynamicallyLoadedFilter : ClassFilter {
   }
 
   override fun shouldVerify(classFile: ClassFile) =
-    classFile.annotations.findAnnotation(DYNAMICALLY_LOADED) == null
+    !classFile.annotations.hasAnnotation(DYNAMICALLY_LOADED)
 
 }

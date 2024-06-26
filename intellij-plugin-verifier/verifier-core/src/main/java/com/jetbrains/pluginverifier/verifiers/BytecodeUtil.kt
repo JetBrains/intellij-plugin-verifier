@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.pluginverifier.results.access.AccessType
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AnnotationNode
 
@@ -50,8 +51,17 @@ fun getAccessType(accessCode: Int): AccessType = when {
   else -> AccessType.PACKAGE_PRIVATE
 }
 
-fun List<AnnotationNode>.findAnnotation(className: String): AnnotationNode? =
-  find { it.desc?.extractClassNameFromDescriptor() == className }
+private fun classNameIs(annotation: BinaryClassName): (AnnotationNode) -> Boolean {
+  return { annNode: AnnotationNode -> annNode.desc?.extractClassNameFromDescriptor() == annotation }
+}
+
+fun List<AnnotationNode>.findAnnotation(annotation: BinaryClassName): AnnotationNode? {
+  return find(classNameIs(annotation))
+}
+
+fun List<AnnotationNode>.hasAnnotation(annotation: BinaryClassName): Boolean =
+  any(classNameIs(annotation))
+
 
 fun AnnotationNode.getAnnotationValue(key: String): Any? {
   val vls = values ?: return null
