@@ -28,7 +28,7 @@ class KtInternalClassUsage(
       append("Internal $element ${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}")
       append(" is referenced in " + usageLocation.formatUsageLocation())
       append(". This $element is marked with Kotlin `internal` visibility modifier, indicating ")
-      append(" that it is not supposed to be referenced in client code outside the declaring module")
+      append("that it is not supposed to be referenced in client code outside the declaring module.")
     }
 
   override fun equals(other: Any?) = other is KtInternalModifierUsage
