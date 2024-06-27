@@ -8,31 +8,25 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
 
-private const val DISABLE_SAME_MODULE_INVOCATIONS: BinaryClassName = "com/jetbrains/pluginverifier/verifiers/resolution/DisableSameModuleInvocations"
-
-class SameModuleUsageFilter : ApiUsageFilter {
+class SameModuleUsageFilter(val annotation: BinaryClassName) : ApiUsageFilter {
   override fun allowMethodInvocation(
     invokedMethod: Method,
     invocationInstruction: AbstractInsnNode,
     callerMethod: Method,
     context: VerificationContext
-  ): Boolean {
-
-    return isSameOrigin(invokedMethod, callerMethod) && invokedMethod.hasSameModuleInvocationsEnabled(context)
-  }
+  ) =
+    invokedMethod
+      .findAnnotatedElement(annotation, context)
+      ?.let { isSameOrigin(it, callerMethod) } ?: false
 
   private fun isSameOrigin(method: Method, anotherMethod: Method): Boolean =
     method.containingClassFile.classFileOrigin == anotherMethod.containingClassFile.classFileOrigin
 
-  private fun Method.hasSameModuleInvocationsEnabled(context: VerificationContext): Boolean {
-    return !isAnnotationPresent(DISABLE_SAME_MODULE_INVOCATIONS, context)
-  }
-
-  private fun Method.isAnnotationPresent(annotationFqn: String, verificationContext: VerificationContext): Boolean {
-    if (hasAnnotation(annotationFqn)) return true
-    return searchParentOverrides(verificationContext.classResolver).any { (it, _) ->
+  private fun Method.findAnnotatedElement(annotationFqn: String, verificationContext: VerificationContext): Method? {
+    if (hasAnnotation(annotationFqn)) return this
+    return searchParentOverrides(verificationContext.classResolver).firstOrNull { (it, _) ->
       it.hasAnnotation(annotationFqn)
-    }
+    }?.method
   }
 
   private fun ClassFileMember.hasAnnotation(annotationName: BinaryClassName): Boolean =

@@ -22,7 +22,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
-    SameModuleUsageFilter(),
+    SameModuleUsageFilter(overrideOnlyAnnotationName),
     CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
     DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
     SuperclassCallOnOverrideOnlyUsageFilter()

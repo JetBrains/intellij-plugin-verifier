@@ -1,6 +1,5 @@
 package com.intellij.openapi.actionSystem;
 
-import com.jetbrains.pluginverifier.verifiers.resolution.DisableSameModuleInvocations;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +20,5 @@ public abstract class AnAction {
   protected abstract void actionPerformed(AnActionEvent e);
 
   @ApiStatus.OverrideOnly
-  @DisableSameModuleInvocations
   public abstract void update(@NotNull AnActionEvent e);
 }
