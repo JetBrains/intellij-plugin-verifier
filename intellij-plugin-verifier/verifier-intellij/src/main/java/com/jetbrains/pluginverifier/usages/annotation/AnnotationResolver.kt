@@ -21,7 +21,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-val LOG: Logger = LoggerFactory.getLogger(AnnotationResolver::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(AnnotationResolver::class.java)
 
 class AnnotationResolver(val annotation: FullyQualifiedClassName) {
 
