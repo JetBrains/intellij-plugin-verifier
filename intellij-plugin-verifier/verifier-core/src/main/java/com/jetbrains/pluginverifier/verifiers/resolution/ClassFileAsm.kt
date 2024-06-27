@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.getAccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 
-class ClassFileAsm(private val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
+class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
   override val location
     get() = ClassLocation(
       name,
