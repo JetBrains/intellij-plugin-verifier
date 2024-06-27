@@ -72,18 +72,20 @@ class KotlinInternalModifierUsageTest {
   private fun getInternalMethodUsageMsg(caller: String, callee: String) =
     "Internal method $callee.internalFortyTwo() : int " +
       "is invoked in $caller.delegateInternalFortyTwo() : int. " +
-      "This method is marked with Kotlin `internal` visibility modifier and indicates that the method is not " +
-      "supposed to be used in client code."
+      "This method is marked with Kotlin `internal` visibility modifier, indicating " +
+      "that it is not supposed to be invoked by the client code outside the declaring module."
 
   private fun getInternalClassUsageMsg(caller: String, callee: String) = "Internal class $callee " +
     "is referenced in $caller.delegateInternalFortyTwo() : int. " +
-    "This class is marked with Kotlin `internal` visibility modifier."
+    "This class is marked with Kotlin `internal` visibility modifier, indicating " +
+    "that it is not supposed to be referenced in client code outside the declaring module."
 
   private fun getInternalFieldUsageMsg(caller: String, callee: String) =
     "Internal field $callee.internalField : int " +
       "is accessed in $caller.accessInternalField() : int. " +
-      "This field is marked with Kotlin `internal` visibility modifier and indicates that the field is not " +
-      "supposed to be used in client code."
+      "This field is marked with Kotlin `internal` visibility modifier, " +
+      "indicating that it is not supposed to be used in client code outside the declaring module."
+
 
   private val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.")
 
