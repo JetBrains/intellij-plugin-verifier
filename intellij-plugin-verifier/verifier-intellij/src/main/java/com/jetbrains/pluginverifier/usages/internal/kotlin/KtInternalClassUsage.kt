@@ -24,10 +24,11 @@ class KtInternalClassUsage(
 
   override val fullDescription: String
     get() = buildString {
-      append("Internal " + apiElement.elementType.presentableName + " ${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}")
+      val element = apiElement.elementType.presentableName
+      append("Internal $element ${apiElement.formatClassLocation(FULL_NAME, WITH_GENERICS)}")
       append(" is referenced in " + usageLocation.formatUsageLocation())
-      append(". This " + apiElement.elementType.presentableName)
-      append(" is marked with Kotlin `internal` visibility modifier.")
+      append(". This $element is marked with Kotlin `internal` visibility modifier, indicating ")
+      append(" that it is not supposed to be referenced in client code outside the declaring module")
     }
 
   override fun equals(other: Any?) = other is KtInternalModifierUsage

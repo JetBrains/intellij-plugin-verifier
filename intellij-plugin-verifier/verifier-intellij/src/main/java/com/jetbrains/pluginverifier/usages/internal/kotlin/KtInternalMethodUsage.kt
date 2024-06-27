@@ -32,13 +32,12 @@ class KtInternalMethodUsage(
 
   override val fullDescription
     get() = buildString {
-      append("Internal " + apiElement.elementType.presentableName + " ")
+      val element = apiElement.elementType.presentableName
+      append("Internal $element ")
       append(apiElement.formatMethodLocation(FULL_HOST_NAME, FULL_PARAM_CLASS_NAME, FULL_RETURN_TYPE_CLASS_NAME, WITH_PARAM_NAMES_IF_AVAILABLE))
-      append(" is invoked in " + usageLocation.formatUsageLocation())
-      append(
-        ". This " + apiElement.elementType.presentableName + " is marked with " +
-          "Kotlin `internal` visibility modifier and indicates " +
-          "that the method is not supposed to be used in client code."
+      append(" is invoked in ${usageLocation.formatUsageLocation()}")
+      append(". This $element is marked with Kotlin `internal` visibility modifier, indicating ")
+      append("that it is not supposed to be invoked by the client code outside the declaring module."
       )
     }
 

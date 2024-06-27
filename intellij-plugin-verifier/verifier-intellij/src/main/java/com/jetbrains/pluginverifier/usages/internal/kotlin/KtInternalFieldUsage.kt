@@ -27,12 +27,11 @@ class KtInternalFieldUsage(
 
   override val fullDescription
     get() = buildString {
-      append("Internal field ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
+      val element = apiElement.elementType.presentableName
+      append("Internal $element ${apiElement.formatFieldLocation(FULL_HOST_NAME, FieldTypeOption.FULL_TYPE)} is")
       append(" accessed in ${usageLocation.formatUsageLocation()}")
-      append(
-        ". This field is marked with Kotlin `internal` visibility modifier and indicates " +
-          "that the field is not supposed to be used in client code."
-      )
+      append(". This $element is marked with Kotlin `internal` visibility modifier, indicating ")
+      append("that it is not supposed to be used in client code outside the declaring module.")
     }
 
   override fun equals(other: Any?) = other is KtInternalFieldUsage
