@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.findEffectiveMemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.CompositeApiUsageFilter
+import com.jetbrains.pluginverifier.verifiers.filter.SameModuleUsageFilter
 import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
@@ -21,6 +22,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
+    SameModuleUsageFilter(),
     CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
     DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
     SuperclassCallOnOverrideOnlyUsageFilter()
