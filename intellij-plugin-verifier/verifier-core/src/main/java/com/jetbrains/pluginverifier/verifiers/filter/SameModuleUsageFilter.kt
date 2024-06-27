@@ -18,11 +18,15 @@ class SameModuleUsageFilter : ApiUsageFilter {
     context: VerificationContext
   ): Boolean {
 
-    return isSameOrigin(invokedMethod, callerMethod) && !invokedMethod.isAnnotationPresent(DISABLE_SAME_MODULE_INVOCATIONS, context)
+    return isSameOrigin(invokedMethod, callerMethod) && invokedMethod.hasSameModuleInvocationsEnabled(context)
   }
 
   private fun isSameOrigin(method: Method, anotherMethod: Method): Boolean =
     method.containingClassFile.classFileOrigin == anotherMethod.containingClassFile.classFileOrigin
+
+  private fun Method.hasSameModuleInvocationsEnabled(context: VerificationContext): Boolean {
+    return !isAnnotationPresent(DISABLE_SAME_MODULE_INVOCATIONS, context)
+  }
 
   private fun Method.isAnnotationPresent(annotationFqn: String, verificationContext: VerificationContext): Boolean {
     if (hasAnnotation(annotationFqn)) return true
