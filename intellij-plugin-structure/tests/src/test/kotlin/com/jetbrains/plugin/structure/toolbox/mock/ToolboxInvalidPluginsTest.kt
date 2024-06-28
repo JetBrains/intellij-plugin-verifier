@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.toolbox.mock
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -82,8 +79,20 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `compatibility range is valid`() {
-    checkInvalidPlugin(ToolboxInvalidVersion("from", "123")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "123")) }
-    checkInvalidPlugin(ToolboxInvalidVersion("to", "123")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "123")) }
+    checkInvalidPlugin(InvalidSemverVersion(
+      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+      versionName = "compatibleVersionRange.from",
+      version = "123"
+    )) {
+      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "123"))
+    }
+    checkInvalidPlugin(InvalidSemverVersion(
+      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+      versionName = "compatibleVersionRange.to",
+      version = "123"
+    )) {
+      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "123"))
+    }
 
     checkInvalidPlugin(listOf(ToolboxErroneousVersion("from", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE), ToolboxErroneousVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE))) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
     checkInvalidPlugin(ToolboxErroneousVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "7450.1.2")) }
@@ -92,7 +101,12 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
     checkInvalidPlugin(ToolboxErroneousVersion("from", "patch", "1.2.1048577", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.2.1048577")) }
     checkInvalidPlugin(ToolboxErroneousVersion("to", "patch", "1.1000.1048577", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.1000.1048577")) }
 
-    checkInvalidPlugin(ToolboxInvalidVersionRange(from = "1.1000.1", to = "1.1000.0")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
+    checkInvalidPlugin(InvalidVersionRange(
+      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+      rangeName = "compatibleVersionRange",
+      since = "1.1000.1",
+      until = "1.1000.0"
+    )) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
 
     checkValidPlugin { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7449.8191.1048575", to = "7449.8191.1048575")) }
   }

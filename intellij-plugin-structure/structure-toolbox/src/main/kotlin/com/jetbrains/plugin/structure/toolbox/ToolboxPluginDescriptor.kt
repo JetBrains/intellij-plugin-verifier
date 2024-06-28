@@ -58,7 +58,11 @@ data class ToolboxPluginDescriptor(
       } else {
         val fromParsed = parseVersionOrNull(compatibleVersionRange.from)
         if (fromParsed == null) {
-          problems.add(ToolboxInvalidVersion("from", compatibleVersionRange.from))
+          problems.add(InvalidSemverVersion(
+            descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+            versionName = "compatibleVersionRange.from",
+            version = compatibleVersionRange.from
+          ))
         } else {
           problems.addAll(validateVersion("from", fromParsed))
         }
@@ -68,11 +72,20 @@ data class ToolboxPluginDescriptor(
       if (!compatibleVersionRange.to.isNullOrBlank()) {
         val toParsed = parseVersionOrNull(compatibleVersionRange.to)
         if (toParsed == null) {
-          problems.add(ToolboxInvalidVersion("to", compatibleVersionRange.to))
+          problems.add(InvalidSemverVersion(
+            descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+            versionName = "compatibleVersionRange.to",
+            version = compatibleVersionRange.to
+          ))
         } else {
           problems.addAll(validateVersion("to", toParsed))
           if (fromSemver != null && compatibleVersionRange.from != null && fromSemver.isGreaterThan(toParsed)) {
-            problems.add(ToolboxInvalidVersionRange(compatibleVersionRange.from, compatibleVersionRange.to))
+            problems.add(InvalidVersionRange(
+              descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+              rangeName = "compatibleVersionRange",
+              since = compatibleVersionRange.from,
+              until = compatibleVersionRange.to
+            ))
           }
         }
       }
@@ -152,21 +165,6 @@ const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
 const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
 const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 1048575
 
-class ToolboxInvalidVersion(versionName: String, version: String) : InvalidDescriptorProblem(
-  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The `compatibleVersionRange.$versionName` version should be formatted as semver [$version]."
-) {
-  override val level
-    get() = Level.ERROR
-}
-
-class ToolboxInvalidVersionRange(from: String, to: String) : InvalidDescriptorProblem(
-  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The `compatibleVersionRange.from` build $from is greater than `compatibleVersionRange.to` build $to."
-) {
-  override val level
-    get() = Level.ERROR
-}
 
 class ToolboxErroneousVersion(
   versionName: String,

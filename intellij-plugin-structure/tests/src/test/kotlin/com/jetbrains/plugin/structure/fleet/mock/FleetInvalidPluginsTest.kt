@@ -1,9 +1,6 @@
 package com.jetbrains.plugin.structure.fleet.mock
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.*
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
@@ -95,8 +92,18 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `compatibility range is valid`() {
-    checkInvalidPlugin(FleetInvalidShipVersion("from", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123")) }
-    checkInvalidPlugin(FleetInvalidShipVersion("to", "123")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
+    checkInvalidPlugin(InvalidSemverVersion(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      versionName = "compatibleShipVersionRange.from",
+      version = "123"
+    )) {
+      it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"))
+    }
+    checkInvalidPlugin(InvalidSemverVersion(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      versionName = "compatibleShipVersionRange.to",
+      version = "123"
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
 
     checkInvalidPlugin(FleetErroneousShipVersion("from", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
     checkInvalidPlugin(FleetErroneousShipVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
@@ -105,7 +112,12 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     checkInvalidPlugin(FleetErroneousShipVersion("from", "patch", "1.2.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
     checkInvalidPlugin(FleetErroneousShipVersion("to", "patch", "1.1000.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
 
-    checkInvalidPlugin(FleetInvalidShipVersionRange(from = "1.1000.1", to = "1.1000.0")) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
+    checkInvalidPlugin(InvalidVersionRange(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      rangeName = "compatibleShipVersionRange",
+      since = "1.1000.1",
+      until = "1.1000.0"
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
 
     checkValidPlugin { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7449.8191.16383", to = "7449.8191.16383")) }
   }

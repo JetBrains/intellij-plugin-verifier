@@ -136,3 +136,28 @@ class VendorCannotBeEmpty(
   override val level
     get() = Level.ERROR
 }
+
+class InvalidSemverVersion(
+  descriptorPath: String,
+  versionName: String,
+  version: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The `$versionName` version should be formatted as semver [$version]."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
+class InvalidVersionRange(
+  descriptorPath: String,
+  rangeName: String,
+  since: String,
+  until: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The compatibility range `$rangeName` [$since, $until] is empty."
+) {
+  override val level
+    get() = Level.ERROR
+}
