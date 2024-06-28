@@ -1,0 +1,66 @@
+package com.jetbrains.pluginverifier.usages
+
+import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
+import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
+import com.jetbrains.pluginverifier.results.location.ClassLocation
+import com.jetbrains.pluginverifier.results.reference.ClassReference
+import com.jetbrains.pluginverifier.results.reference.FieldReference
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import org.objectweb.asm.tree.AbstractInsnNode
+
+class SamePluginUsageFilter : ApiUsageFilter {
+  override fun allowMethodInvocation(
+    invokedMethod: Method,
+    invocationInstruction: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
+  ): Boolean {
+    val usageHost = callerMethod.location.containingClass
+    val apiHost = invokedMethod.location.containingClass
+    return allowUsage(usageHost, apiHost)
+  }
+
+  override fun allowUsage(
+    classReference: ClassReference,
+    invocationTarget: ClassFile,
+    caller: ClassFileMember,
+    usageType: ClassUsageType,
+    context: VerificationContext
+  ): Boolean {
+    val usageHost = caller.location.containingClass
+    val apiHost = invocationTarget.location.containingClass
+    return allowUsage(usageHost, apiHost)
+  }
+
+  private fun allowUsage(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
+    val callSourceOrigin = usageLocation.classFileOrigin
+    val callTargetOrigin = apiLocation.classFileOrigin
+    if (callTargetOrigin.isOriginOfType<IdeFileOrigin>()) {
+      return false
+    }
+    return callTargetOrigin
+      .findOriginOfType<PluginFileOrigin>()
+      .takeIf { callSourceOrigin == it } != null
+  }
+
+  fun allowInvocation(
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    callerMethod: Method,
+    context: VerificationContext
+  ): Boolean {
+    val apiHost = callerMethod.location.containingClass
+    val usageHost = resolvedField.location.containingClass
+
+    return allowUsage(usageHost, apiHost)
+  }
+
+}
