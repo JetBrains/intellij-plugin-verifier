@@ -23,7 +23,6 @@ import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiRegistrar
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingClassUsageProcessor
-import com.jetbrains.pluginverifier.usages.discouraging.DiscouragingJdkClassUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiRegistrar
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProcessor
@@ -103,11 +102,7 @@ data class PluginVerificationContext(
   }
 
   override fun registerDeprecatedUsage(deprecatedApiUsage: DeprecatedApiUsage) {
-    val deprecatedElementHost = deprecatedApiUsage.apiElement.containingClass
-    val usageHostClass = deprecatedApiUsage.usageLocation.containingClass
-    if (deprecatedApiUsage is DiscouragingJdkClassUsage || shouldIndexDeprecatedClass(usageHostClass, deprecatedElementHost)) {
-      deprecatedUsages += deprecatedApiUsage
-    }
+    deprecatedUsages += deprecatedApiUsage
   }
 
   override fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
