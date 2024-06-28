@@ -129,6 +129,33 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
     ) { it.copy(widgets = widgets) }
   }
 
+  @Test
+  fun `invalid youtrack versions`() {
+    checkInvalidPlugin(
+      InvalidSemverVersion(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        versionName = "minYouTrackVersion",
+        version = "123"
+      ),
+      InvalidSemverVersion(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        versionName = "maxYouTrackVersion",
+        version = "456"
+      )
+    ) { it.copy(minYouTrackVersion = "123", maxYouTrackVersion = "456") }
+  }
+
+  @Test
+  fun `invalid youtrack versions range`() {
+    checkInvalidPlugin(
+      InvalidVersionRange(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        since = "123.12.1",
+        until = "12.12.1"
+      )
+    ) { it.copy(minYouTrackVersion = "123.12.1", maxYouTrackVersion = "12.12.1") }
+  }
+
   private fun checkInvalidPlugin(vararg expectedProblems: PluginProblem, modify: (YouTrackAppManifest) -> YouTrackAppManifest) {
     val manifestJson = getMockPluginFileContent("manifest.json")
     val manifest = modify(jacksonObjectMapper().readValue(manifestJson, YouTrackAppManifest::class.java))
