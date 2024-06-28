@@ -88,7 +88,7 @@ class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: Deprecated
     resolvedField: Field,
     callerMethod: Method,
     context: VerificationContext
-  ) = allowedUsageFilter.allowInvocation(fieldReference, resolvedField, callerMethod, context)
+  ) = allowedUsageFilter.allow(fieldReference, resolvedField, callerMethod, context)
 
   private fun isIgnored(
     classReference: ClassReference,
@@ -96,7 +96,7 @@ class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: Deprecated
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
     context: VerificationContext
-  ) = allowedUsageFilter.allowUsage(classReference, resolvedClass, referrer, classUsageType, context)
+  ) = allowedUsageFilter.allow(classReference, resolvedClass, referrer, classUsageType, context)
 
 
   private fun isIgnored(
@@ -105,7 +105,7 @@ class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: Deprecated
     invocationInstruction: AbstractInsnNode,
     callerMethod: Method,
     context: VerificationContext): Boolean {
-    return allowedUsageFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+    return allowedUsageFilter.allow(invokedMethod, invocationInstruction, callerMethod, context)
   }
 
 }

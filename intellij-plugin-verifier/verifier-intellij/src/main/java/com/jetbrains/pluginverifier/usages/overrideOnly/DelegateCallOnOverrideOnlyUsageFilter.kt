@@ -10,14 +10,18 @@ import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.matches
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 
 class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
   @Suppress("UNUSED_VARIABLE")
-  override fun allowMethodInvocation(invokedMethod: Method,
-                                     invocationInstruction: AbstractInsnNode,
-                                     callerMethod: Method,
-                                     context: VerificationContext): Boolean = with(context.classResolver) {
+  override fun allow(invokedMethod: Method,
+                     invocationInstruction: AbstractInsnNode,
+                     callerMethod: Method,
+                     context: VerificationContext): Boolean = with(context.classResolver) {
     val isCallingAllowedMethod = isInvokedMethodAllowed(callerMethod, invokedMethod)
     if (!isCallingAllowedMethod) {
       return false

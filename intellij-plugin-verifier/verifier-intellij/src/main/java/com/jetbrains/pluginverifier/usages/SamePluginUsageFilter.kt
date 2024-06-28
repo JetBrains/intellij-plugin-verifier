@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.pluginverifier.usages
 
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
@@ -16,19 +19,15 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
+/**
+ * API Usage filter that allows class usages, method invocations and field references
+ * within the same JAR, directory or similar common origins.
+ *
+ * This filter will ignore API usages that occur within the same plugin.
+ */
 class SamePluginUsageFilter : ApiUsageFilter {
-  override fun allowMethodInvocation(
-    invokedMethod: Method,
-    invocationInstruction: AbstractInsnNode,
-    callerMethod: Method,
-    context: VerificationContext
-  ): Boolean {
-    val usageHost = callerMethod.location.containingClass
-    val apiHost = invokedMethod.location.containingClass
-    return allowUsage(usageHost, apiHost)
-  }
 
-  override fun allowUsage(
+  override fun allow(
     classReference: ClassReference,
     invocationTarget: ClassFile,
     caller: ClassFileMember,
@@ -37,10 +36,32 @@ class SamePluginUsageFilter : ApiUsageFilter {
   ): Boolean {
     val usageHost = caller.location.containingClass
     val apiHost = invocationTarget.location.containingClass
-    return allowUsage(usageHost, apiHost)
+    return allow(usageHost, apiHost)
   }
 
-  private fun allowUsage(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
+  override fun allow(
+    invokedMethod: Method,
+    invocationInstruction: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
+  ): Boolean {
+    val usageHost = callerMethod.location.containingClass
+    val apiHost = invokedMethod.location.containingClass
+    return allow(usageHost, apiHost)
+  }
+
+  override fun allow(
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    callerMethod: Method,
+    context: VerificationContext
+  ): Boolean {
+    val apiHost = callerMethod.location.containingClass
+    val usageHost = resolvedField.location.containingClass
+    return allow(usageHost, apiHost)
+  }
+
+  private fun allow(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
     val callSourceOrigin = usageLocation.classFileOrigin
     val callTargetOrigin = apiLocation.classFileOrigin
     if (callTargetOrigin.isOriginOfType<IdeFileOrigin>()) {
@@ -51,16 +72,5 @@ class SamePluginUsageFilter : ApiUsageFilter {
       .takeIf { callSourceOrigin == it } != null
   }
 
-  fun allowInvocation(
-    fieldReference: FieldReference,
-    resolvedField: Field,
-    callerMethod: Method,
-    context: VerificationContext
-  ): Boolean {
-    val apiHost = callerMethod.location.containingClass
-    val usageHost = resolvedField.location.containingClass
-
-    return allowUsage(usageHost, apiHost)
-  }
 
 }
