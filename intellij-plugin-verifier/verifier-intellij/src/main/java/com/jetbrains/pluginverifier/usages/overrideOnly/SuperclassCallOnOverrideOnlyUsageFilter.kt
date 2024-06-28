@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.matches
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class SuperclassCallOnOverrideOnlyUsageFilter  : ApiUsageFilter {
-  override fun allowMethodInvocation(invokedMethod: Method, invocationInstruction: AbstractInsnNode, callerMethod: Method, context: VerificationContext): Boolean {
+  override fun allow(invokedMethod: Method, invocationInstruction: AbstractInsnNode, callerMethod: Method, context: VerificationContext): Boolean {
     return callerMethod.matches(invokedMethod)
       && isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
   }

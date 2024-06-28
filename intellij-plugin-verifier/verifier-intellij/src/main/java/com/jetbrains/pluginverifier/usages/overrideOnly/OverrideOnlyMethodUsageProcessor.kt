@@ -74,7 +74,7 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
                                          invocationInstruction: AbstractInsnNode,
                                          callerMethod: Method,
                                          context: VerificationContext): Boolean {
-    return allowedOverrideOnlyUsageFilter.allowMethodInvocation(invokedMethod, invocationInstruction, callerMethod, context)
+    return allowedOverrideOnlyUsageFilter.allow(invokedMethod, invocationInstruction, callerMethod, context)
   }
 
   private fun Method.isOverrideOnlyMethod(context: VerificationContext): Boolean =
