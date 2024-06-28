@@ -137,7 +137,7 @@ class VendorCannotBeEmpty(
     get() = Level.ERROR
 }
 
-class InvalidSemverVersion(
+class InvalidSemverFormat(
   descriptorPath: String,
   versionName: String,
   version: String
@@ -158,5 +158,19 @@ class InvalidVersionRange(
   detailedMessage = "The compatibility range [$since, $until] is empty."
 ) {
   override val level
+    get() = Level.ERROR
+}
+
+class SemverComponentLimitExceeded(
+  descriptorPath: String,
+  componentName: String,
+  versionName: String,
+  version: String,
+  limit: Int
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The `$componentName` component of the `$versionName` semver version is too big [$version]. Max value is $limit."
+) {
+  override val level: Level
     get() = Level.ERROR
 }

@@ -58,7 +58,7 @@ data class ToolboxPluginDescriptor(
       } else {
         val fromParsed = parseVersionOrNull(compatibleVersionRange.from)
         if (fromParsed == null) {
-          problems.add(InvalidSemverVersion(
+          problems.add(InvalidSemverFormat(
             descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
             versionName = "compatibleVersionRange.from",
             version = compatibleVersionRange.from
@@ -72,7 +72,7 @@ data class ToolboxPluginDescriptor(
       if (!compatibleVersionRange.to.isNullOrBlank()) {
         val toParsed = parseVersionOrNull(compatibleVersionRange.to)
         if (toParsed == null) {
-          problems.add(InvalidSemverVersion(
+          problems.add(InvalidSemverFormat(
             descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
             versionName = "compatibleVersionRange.to",
             version = compatibleVersionRange.to
@@ -114,9 +114,33 @@ data class ToolboxPluginDescriptor(
   private fun validateVersion(versionName: String, semver: Semver): Collection<PluginProblem> {
     val problems = mutableListOf<PluginProblem>()
     when {
-      semver.major > VERSION_MAJOR_PART_MAX_VALUE -> problems.add(ToolboxErroneousVersion(versionName, "major", semver.originalValue, VERSION_MAJOR_PART_MAX_VALUE))
-      semver.minor > VERSION_MINOR_PART_MAX_VALUE -> problems.add(ToolboxErroneousVersion(versionName, "minor", semver.originalValue, VERSION_MINOR_PART_MAX_VALUE))
-      semver.patch > VERSION_PATCH_PART_MAX_VALUE -> problems.add(ToolboxErroneousVersion(versionName, "patch", semver.originalValue, VERSION_PATCH_PART_MAX_VALUE))
+      semver.major > ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE -> problems.add(
+        SemverComponentLimitExceeded(
+          descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+          componentName = "major",
+          versionName = "compatibleVersionRange.$versionName",
+          version = semver.originalValue,
+          limit = ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE
+        )
+      )
+      semver.minor > ToolboxVersionRange.VERSION_MINOR_PART_MAX_VALUE -> problems.add(
+        SemverComponentLimitExceeded(
+          descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+          componentName = "minor",
+          versionName = "compatibleVersionRange.$versionName",
+          version = semver.originalValue,
+          limit = ToolboxVersionRange.VERSION_MINOR_PART_MAX_VALUE
+        )
+      )
+      semver.patch > ToolboxVersionRange.VERSION_PATCH_PART_MAX_VALUE -> problems.add(
+        SemverComponentLimitExceeded(
+          descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+          componentName = "patch",
+          versionName = "compatibleVersionRange.$versionName",
+          version = semver.originalValue,
+          limit = ToolboxVersionRange.VERSION_PATCH_PART_MAX_VALUE
+        )
+      )
     }
     return problems
   }
@@ -140,8 +164,14 @@ data class ToolboxVersionRange(
   @JsonProperty("to")
   val to: String? = null
 ) {
-
   companion object {
+    private const val VERSION_PATCH_LENGTH = 20
+    private const val VERSION_MINOR_LENGTH = 13
+
+    const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
+    const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
+    const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 1048575
+
     fun fromStringToLong(version: String?): Long {
       return Semver(version).run {
         major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch
@@ -155,25 +185,4 @@ data class ToolboxVersionRange(
     val toLong = fromStringToLong(to)
     return fromLong..toLong
   }
-}
-
-private const val VERSION_PATCH_LENGTH = 20
-private const val VERSION_MINOR_LENGTH = 13
-
-const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
-const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
-const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 1048575
-
-
-class ToolboxErroneousVersion(
-  versionName: String,
-  partName: String,
-  version: String,
-  limit: Int
-) : InvalidDescriptorProblem(
-  descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The $partName part of `compatibleVersionRange.$versionName` version is too big [$version]. Max value is $limit."
-) {
-  override val level: Level
-    get() = Level.ERROR
 }

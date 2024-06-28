@@ -92,25 +92,61 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `compatibility range is valid`() {
-    checkInvalidPlugin(InvalidSemverVersion(
+    checkInvalidPlugin(InvalidSemverFormat(
       descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
       versionName = "compatibleShipVersionRange.from",
       version = "123"
     )) {
       it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"))
     }
-    checkInvalidPlugin(InvalidSemverVersion(
+    checkInvalidPlugin(InvalidSemverFormat(
       descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
       versionName = "compatibleShipVersionRange.to",
       version = "123"
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
 
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "major", "7450.1.2", limit = VERSION_MAJOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "minor", "0.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "minor", "1.8192.2", limit = VERSION_MINOR_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("from", "patch", "1.2.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
-    checkInvalidPlugin(FleetErroneousShipVersion("to", "patch", "1.1000.16384", limit = VERSION_PATCH_PART_MAX_VALUE)) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "major",
+      versionName = "compatibleShipVersionRange.from",
+      version = "7450.1.2",
+      limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "major",
+      versionName = "compatibleShipVersionRange.to",
+      version = "7450.1.2",
+      limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "minor",
+      versionName = "compatibleShipVersionRange.from",
+      version = "0.8192.2",
+      limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "minor",
+      versionName = "compatibleShipVersionRange.to",
+      version = "1.8192.2",
+      limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "patch",
+      versionName = "compatibleShipVersionRange.from",
+      version = "1.2.16384",
+      limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      componentName = "patch",
+      versionName = "compatibleShipVersionRange.to",
+      version = "1.1000.16384",
+      limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
+    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
 
     checkInvalidPlugin(InvalidVersionRange(
       descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
