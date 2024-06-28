@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.youtrack.YouTrackPlugin
 import com.jetbrains.plugin.structure.youtrack.YouTrackPluginManager
+import com.jetbrains.plugin.structure.youtrack.YouTrackVersionUtils
 import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppFields
 import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppManifest
 import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppWidget
@@ -133,12 +134,12 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   @Test
   fun `invalid youtrack versions`() {
     checkInvalidPlugin(
-      InvalidSemverVersion(
+      InvalidSemverFormat(
         descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
         versionName = YouTrackAppFields.Manifest.SINCE,
         version = "123"
       ),
-      InvalidSemverVersion(
+      InvalidSemverFormat(
         descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
         versionName = YouTrackAppFields.Manifest.UNTIL,
         version = "456"
@@ -157,10 +158,77 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
     ) { it.copy(minYouTrackVersion = "123.12.1", maxYouTrackVersion = "12.12.1") }
   }
 
+  @Test
+  fun `invalid youtrack version`() {
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "3001.1.2",
+        limit = YouTrackVersionUtils.MAX_MAJOR_VALUE
+      ),
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "3001.1.2",
+        limit = YouTrackVersionUtils.MAX_MAJOR_VALUE
+      )
+    ) { it.copy(minYouTrackVersion = "3001.1.2", maxYouTrackVersion = "3001.1.2") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "2022.101.2",
+        limit = YouTrackVersionUtils.VERSION_MINOR_LENGTH - 1
+      )
+    ) { it.copy(minYouTrackVersion =  "2022.101.2") }
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "2022.101.2",
+        limit = YouTrackVersionUtils.VERSION_MINOR_LENGTH - 1
+      )
+    ) { it.copy(maxYouTrackVersion =  "2022.101.2") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "2022.2.1000001",
+        limit = YouTrackVersionUtils.VERSION_PATCH_LENGTH - 1
+      )
+    ) { it.copy(minYouTrackVersion = "2022.2.1000001") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "2022.2.1000001",
+        limit = YouTrackVersionUtils.VERSION_PATCH_LENGTH - 1
+      )
+    ) { it.copy(maxYouTrackVersion = "2022.2.1000001") }
+
+    checkValidPlugin { it.copy(minYouTrackVersion = "2024.99.999999", maxYouTrackVersion = "2024.99.999999") }
+  }
+
   private fun checkInvalidPlugin(vararg expectedProblems: PluginProblem, modify: (YouTrackAppManifest) -> YouTrackAppManifest) {
     val manifestJson = getMockPluginFileContent("manifest.json")
     val manifest = modify(jacksonObjectMapper().readValue(manifestJson, YouTrackAppManifest::class.java))
     Assert.assertEquals(expectedProblems.toList(), validateYouTrackManifest(manifest))
+  }
+
+  private fun checkValidPlugin(modify: (YouTrackAppManifest) -> YouTrackAppManifest) {
+    val manifestJson = getMockPluginFileContent("manifest.json")
+    val manifest = modify(jacksonObjectMapper().readValue(manifestJson, YouTrackAppManifest::class.java))
+    Assert.assertEquals(emptyList<PluginProblem>(), validateYouTrackManifest(manifest))
   }
 
   private val widget: YouTrackAppWidget

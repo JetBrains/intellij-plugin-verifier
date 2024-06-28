@@ -107,6 +107,9 @@ private fun validateYouTrackRange(
 
   if (since == null || until == null) return
 
+  validateYouTrackVersion(versionName = YouTrackAppFields.Manifest.SINCE, since, problems)
+  validateYouTrackVersion(versionName = YouTrackAppFields.Manifest.UNTIL, until, problems)
+
   if (since.isGreaterThan(until)) {
     problems.add(InvalidVersionRange(
       descriptorPath = DESCRIPTOR_NAME,
@@ -124,14 +127,50 @@ private fun getYouTrackVersionOrNull(
   if (version == null) return null
 
   return runCatching {
-    Semver(version, Semver.SemverType.STRICT)
+    YouTrackVersionUtils.getSemverFromString(version)
   }.onFailure {
     problems.add(
-      InvalidSemverVersion(
+      InvalidSemverFormat(
         descriptorPath = DESCRIPTOR_NAME,
         versionName = versionName,
         version = version
       )
     )
   }.getOrNull()
+}
+
+private fun validateYouTrackVersion(
+  versionName: String,
+  semver: Semver,
+  problems: MutableList<PluginProblem>
+) {
+  when {
+    semver.major > YouTrackVersionUtils.MAX_MAJOR_VALUE -> problems.add(
+      SemverComponentLimitExceeded(
+        descriptorPath = DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = versionName,
+        version = semver.originalValue,
+        limit = YouTrackVersionUtils.MAX_MAJOR_VALUE
+      )
+    )
+    semver.minor >= YouTrackVersionUtils.VERSION_MINOR_LENGTH -> problems.add(
+      SemverComponentLimitExceeded(
+        descriptorPath = DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = versionName,
+        version = semver.originalValue,
+        limit = YouTrackVersionUtils.VERSION_MINOR_LENGTH - 1
+      )
+    )
+    semver.patch >= YouTrackVersionUtils.VERSION_PATCH_LENGTH -> problems.add(
+      SemverComponentLimitExceeded(
+        descriptorPath = DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = versionName,
+        version = semver.originalValue,
+        limit = YouTrackVersionUtils.VERSION_PATCH_LENGTH - 1
+      )
+    )
+  }
 }
