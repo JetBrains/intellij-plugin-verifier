@@ -114,7 +114,6 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
     checkInvalidPlugin(InvalidVersionRange(
       descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
-      rangeName = "compatibleShipVersionRange",
       since = "1.1000.1",
       until = "1.1000.0"
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }

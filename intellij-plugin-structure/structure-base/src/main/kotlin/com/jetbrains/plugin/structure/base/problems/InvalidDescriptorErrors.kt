@@ -151,12 +151,11 @@ class InvalidSemverVersion(
 
 class InvalidVersionRange(
   descriptorPath: String,
-  rangeName: String,
   since: String,
   until: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The compatibility range `$rangeName` [$since, $until] is empty."
+  detailedMessage = "The compatibility range [$since, $until] is empty."
 ) {
   override val level
     get() = Level.ERROR

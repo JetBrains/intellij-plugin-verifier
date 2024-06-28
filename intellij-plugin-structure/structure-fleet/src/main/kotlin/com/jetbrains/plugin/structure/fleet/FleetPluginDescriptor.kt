@@ -88,7 +88,6 @@ data class FleetPluginDescriptor(
             fromSemver.isGreaterThan(toSemver) -> {
               problems.add(InvalidVersionRange(
                 descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
-                rangeName = "compatibleShipVersionRange",
                 since = compatibleShipVersionRange.from,
                 until = compatibleShipVersionRange.to
               ))

@@ -82,7 +82,6 @@ data class ToolboxPluginDescriptor(
           if (fromSemver != null && compatibleVersionRange.from != null && fromSemver.isGreaterThan(toParsed)) {
             problems.add(InvalidVersionRange(
               descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-              rangeName = "compatibleVersionRange",
               since = compatibleVersionRange.from,
               until = compatibleVersionRange.to
             ))

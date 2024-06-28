@@ -103,7 +103,6 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
 
     checkInvalidPlugin(InvalidVersionRange(
       descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-      rangeName = "compatibleVersionRange",
       since = "1.1000.1",
       until = "1.1000.0"
     )) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
