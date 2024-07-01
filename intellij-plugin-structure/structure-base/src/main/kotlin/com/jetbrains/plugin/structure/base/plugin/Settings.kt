@@ -15,6 +15,7 @@ enum class Settings(private val key: String, private val defaultValue: () -> Str
   FLEET_PLUGIN_SIZE_LIMIT("intellij.structure.fleet.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   TOOLBOX_PLUGIN_SIZE_LIMIT("intellij.structure.toolbox.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   TEAM_CITY_PLUGIN_SIZE_LIMIT("intellij.structure.team.city.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
+  TEAM_CITY_ACTION_SIZE_LIMIT("intellij.structure.team.city.action.size.limit", { FileUtils.ONE_MB.toString() }),
   RE_SHARPER_PLUGIN_SIZE_LIMIT("intellij.structure.re.sharper.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   HUB_PLUGIN_SIZE_LIMIT("intellij.structure.hub.plugin.size.limit", { (FileUtils.ONE_MB * 30).toString() }),
   HUB_PLUGIN_MAX_FILES_NUMBER("intellij.structure.hub.plugin.max.files.number", { 1000.toString() }),
