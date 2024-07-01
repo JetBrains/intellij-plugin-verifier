@@ -5,7 +5,8 @@
 package com.jetbrains.pluginverifier.usages.util
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.hasAnnotation
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
@@ -75,5 +76,5 @@ fun ClassFileMember.findEffectiveMemberAnnotation(annotationName: String, resolv
   return null
 }
 
-private fun ClassFileMember.isDirectlyAnnotatedWith(annotationName: String): Boolean =
-  annotations.findAnnotation(annotationName) != null
+private fun ClassFileMember.isDirectlyAnnotatedWith(annotationName: BinaryClassName): Boolean =
+  annotations.hasAnnotation(annotationName)

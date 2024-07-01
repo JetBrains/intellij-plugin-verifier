@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import org.hamcrest.CoreMatchers.hasItem
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
@@ -153,7 +152,12 @@ class VerificationTest {
     }
 
     if (allRedundant.isNotEmpty() || allMissing.isNotEmpty()) {
-      Assert.fail("Sets are not equal")
+      val message = buildString {
+        append("Sets are not equal.")
+        append(if (allRedundant.isNotEmpty()) " Unexpectingly reported ${allRedundant.size} failed assertions" else "")
+        append(if (allMissing.isNotEmpty()) " Expected ${allMissing.size} failed assertions" else "")
+      }
+      Assert.fail(message)
     }
   }
 
