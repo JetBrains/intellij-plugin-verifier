@@ -80,8 +80,9 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
       return parse(actionDescriptor)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      LOG.warn("Unable to read TeamCity Action descriptor", e)
-      return PluginCreationFail(UnableToReadDescriptor(yamlPath.toAbsolutePath().toString(), e.localizedMessage))
+      val errorMessage = "An unexpected error occurred while parsing the TeamCity Action descriptor"
+      LOG.warn(errorMessage, e)
+      return PluginCreationFail(UnableToReadDescriptor(yamlPath.toAbsolutePath().toString(), errorMessage))
     }
   }
 
