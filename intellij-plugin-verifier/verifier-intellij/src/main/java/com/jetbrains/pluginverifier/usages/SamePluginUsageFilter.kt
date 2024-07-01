@@ -3,6 +3,7 @@
  */
 package com.jetbrains.pluginverifier.usages
 
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
 import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
@@ -64,13 +65,18 @@ class SamePluginUsageFilter : ApiUsageFilter {
   private fun allow(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
     val callSourceOrigin = usageLocation.classFileOrigin
     val callTargetOrigin = apiLocation.classFileOrigin
-    if (callTargetOrigin.isOriginOfType<IdeFileOrigin>()) {
-      return false
+    if (isInvocationWithinPlatform(callSourceOrigin, callTargetOrigin)) {
+      return true
     }
     return callTargetOrigin
       .findOriginOfType<PluginFileOrigin>()
       .takeIf { callSourceOrigin == it } != null
   }
 
-
+  private fun isInvocationWithinPlatform(usageOrigin: FileOrigin, apiHostOrigin: FileOrigin): Boolean {
+    if (!apiHostOrigin.isOriginOfType<IdeFileOrigin>()) return false
+    if (usageOrigin == apiHostOrigin) return true
+    if (usageOrigin.isOriginOfType<IdeFileOrigin>()) return true
+    return false
+  }
 }
