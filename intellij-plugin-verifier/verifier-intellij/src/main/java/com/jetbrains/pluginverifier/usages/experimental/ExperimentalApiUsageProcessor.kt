@@ -9,19 +9,24 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.SamePluginUsageFilter
 import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.resolution.*
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
+import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: ExperimentalApiRegistrar) : ApiUsageProcessor {
+  private val usageFilter = SamePluginUsageFilter()
 
   private fun isExperimental(
     resolvedMember: ClassFileMember,
     context: VerificationContext,
     usageLocation: Location
   ) = resolvedMember.isExperimentalApi(context.classResolver)
-    && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
 
   override fun processClassReference(
     classReference: ClassReference,
@@ -30,6 +35,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     referrer: ClassFileMember,
     classUsageType: ClassUsageType
   ) {
+    if (usageFilter.allow(classReference, resolvedClass, referrer, classUsageType, context)) return
     val usageLocation = referrer.location
     if (isExperimental(resolvedClass, context, usageLocation) && context.isFromVerifiedPlugin(referrer)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
@@ -45,6 +51,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     callerMethod: Method,
     context: VerificationContext
   ) {
+    if (usageFilter.allow(resolvedMethod, instructionNode, callerMethod, context)) return
     val usageLocation = callerMethod.location
     if (isExperimental(resolvedMethod, context, usageLocation)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
@@ -59,6 +66,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     context: VerificationContext,
     callerMethod: Method
   ) {
+    if (usageFilter.allow(fieldReference, resolvedField, callerMethod, context)) return
     val usageLocation = callerMethod.location
     if (isExperimental(resolvedField, context, usageLocation)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
