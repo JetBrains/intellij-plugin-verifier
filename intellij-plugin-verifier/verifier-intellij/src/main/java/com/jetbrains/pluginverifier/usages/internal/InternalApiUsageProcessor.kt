@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.FilteringApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.SamePluginUsageFilter
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
@@ -27,9 +27,7 @@ import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 import org.objectweb.asm.tree.AbstractInsnNode
 
-class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVerificationContext) : ApiUsageProcessor {
-
-  private val usageFilter = SamePluginUsageFilter()
+class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVerificationContext) : FilteringApiUsageProcessor(SamePluginUsageFilter()) {
 
   private fun isInternal(
     resolvedMember: ClassFileMember,
@@ -37,41 +35,39 @@ class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVer
     usageLocation: Location
   ): Boolean = resolvedMember.isInternalApi(context.classResolver)
 
-  override fun processClassReference(
+  override fun doProcessClassReference(
     classReference: ClassReference,
     resolvedClass: ClassFile,
-    context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    context: VerificationContext
   ) {
-    if (usageFilter.allow(classReference, resolvedClass, referrer, classUsageType, context)) return
     val usageLocation = referrer.location
     if (isInternal(resolvedClass, context, usageLocation)) {
       registerInternalApiUsage(InternalClassUsage(classReference, resolvedClass.location, usageLocation))
     }
   }
 
-  override fun processMethodInvocation(
-    methodReference: MethodReference,
-    resolvedMethod: Method,
-    instructionNode: AbstractInsnNode,
+  override fun doProcessMethodInvocation(
+    invokedMethodReference: MethodReference,
+    invokedMethod: Method,
+    invocationInstruction: AbstractInsnNode,
     callerMethod: Method,
     context: VerificationContext
   ) {
-    if (usageFilter.allow(resolvedMethod, instructionNode, callerMethod, context)) return
     val usageLocation = callerMethod.location
-    if (isInternal(resolvedMethod, context, usageLocation)) {
+    if (isInternal(invokedMethod, context, usageLocation)) {
       // Check if the method is an override, and if so check top declaration
-      val canBeOverridden = !resolvedMethod.isStatic && !resolvedMethod.isPrivate
-        && resolvedMethod.name != "<init>" && resolvedMethod.name != "<clinit>"
+      val canBeOverridden = !invokedMethod.isStatic && !invokedMethod.isPrivate
+        && invokedMethod.name != "<init>" && invokedMethod.name != "<clinit>"
 
       // Taken from MethodOverridingVerifier
       val overriddenMethod = if(canBeOverridden) {
         MethodResolver().resolveMethod(
-          ClassFileWithNoMethodsWrapper(resolvedMethod.containingClassFile),
-          resolvedMethod.location.toReference(),
-          if (resolvedMethod.containingClassFile.isInterface) Instruction.INVOKE_INTERFACE else Instruction.INVOKE_VIRTUAL,
-          resolvedMethod,
+          ClassFileWithNoMethodsWrapper(invokedMethod.containingClassFile),
+          invokedMethod.location.toReference(),
+          if (invokedMethod.containingClassFile.isInterface) Instruction.INVOKE_INTERFACE else Instruction.INVOKE_VIRTUAL,
+          invokedMethod,
           VerificationContextWithSilentProblemRegistrar(context)
         )
       } else {
@@ -79,7 +75,7 @@ class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVer
       }
 
       if (overriddenMethod == null || isInternal(overriddenMethod, context, usageLocation)) {
-        registerInternalApiUsage(InternalMethodUsage(methodReference, resolvedMethod.location, usageLocation))
+        registerInternalApiUsage(InternalMethodUsage(invokedMethodReference, invokedMethod.location, usageLocation))
       }
     }
   }
@@ -102,13 +98,12 @@ class InternalApiUsageProcessor(private val pluginVerificationContext: PluginVer
     }
   }
 
-  override fun processFieldAccess(
+  override fun doProcessFieldAccess(
     fieldReference: FieldReference,
     resolvedField: Field,
-    context: VerificationContext,
-    callerMethod: Method
+    callerMethod: Method,
+    context: VerificationContext
   ) {
-    if (usageFilter.allow(fieldReference, resolvedField, callerMethod, context)) return
     val usageLocation = callerMethod.location
     if (isInternal(resolvedField, context, usageLocation)) {
       registerInternalApiUsage(InternalFieldUsage(fieldReference, resolvedField.location, usageLocation))
