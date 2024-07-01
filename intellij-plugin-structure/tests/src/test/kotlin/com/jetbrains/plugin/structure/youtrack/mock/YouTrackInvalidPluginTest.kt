@@ -9,6 +9,8 @@ import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.youtrack.YouTrackPlugin
 import com.jetbrains.plugin.structure.youtrack.YouTrackPluginManager
+import com.jetbrains.plugin.structure.youtrack.YouTrackVersionUtils
+import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppFields
 import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppManifest
 import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppWidget
 import com.jetbrains.plugin.structure.youtrack.problems.*
@@ -51,42 +53,42 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `invalid app name`() {
-    checkInvalidPlugin(ManifestPropertyNotSpecified("name")) { it.copy(name = null) }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.NAME)) { it.copy(name = null) }
     checkInvalidPlugin(AppNameIsBlank()) { it.copy(name = "") }
     checkInvalidPlugin(UnsupportedSymbolsAppNameProblem()) { it.copy(name = "hello world") }
   }
 
   @Test
   fun `invalid app title`() {
-    checkInvalidPlugin(ManifestPropertyNotSpecified("title")) { it.copy(title = null) }
-    checkInvalidPlugin(ManifestPropertyNotSpecified("title")) { it.copy(title = "") }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE)) { it.copy(title = null) }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE)) { it.copy(title = "") }
   }
 
   @Test
   fun `app title is too long`() {
     var longTitle = "a"
     repeat(MAX_NAME_LENGTH) { longTitle += "a" }
-    val expectedProblem = TooLongPropertyValue("manifest.json", "title", longTitle.length, MAX_NAME_LENGTH)
+    val expectedProblem = TooLongPropertyValue("manifest.json", YouTrackAppFields.Manifest.TITLE, longTitle.length, MAX_NAME_LENGTH)
     checkInvalidPlugin(expectedProblem) { it.copy(title = longTitle) }
   }
 
   @Test
   fun `invalid app description`() {
-    checkInvalidPlugin(ManifestPropertyNotSpecified("description")) { it.copy(description = null) }
-    checkInvalidPlugin(ManifestPropertyNotSpecified("description")) { it.copy(description = "") }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION)) { it.copy(description = null) }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION)) { it.copy(description = "") }
   }
 
   @Test
   fun `invalid app version`() {
-    checkInvalidPlugin(ManifestPropertyNotSpecified("version")) { it.copy(version = null) }
-    checkInvalidPlugin(ManifestPropertyNotSpecified("version")) { it.copy(version = "") }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.VERSION)) { it.copy(version = null) }
+    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.VERSION)) { it.copy(version = "") }
   }
 
   @Test
   fun `app changeNotes is too long`() {
     var longChangeNotes = "a"
     repeat(MAX_CHANGE_NOTES_LENGTH) { longChangeNotes += "a" }
-    val expectedProblem = TooLongPropertyValue("manifest.json", "changeNotes", longChangeNotes.length, MAX_CHANGE_NOTES_LENGTH)
+    val expectedProblem = TooLongPropertyValue("manifest.json", YouTrackAppFields.Manifest.NOTES, longChangeNotes.length, MAX_CHANGE_NOTES_LENGTH)
     checkInvalidPlugin(expectedProblem) { it.copy(changeNotes = longChangeNotes) }
   }
 
@@ -115,8 +117,8 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   fun `invalid widget indexPath`() {
     val widgets = listOf(widget.copy(key = "1", indexPath = null), widget.copy(key = "2", indexPath = null), widget)
     checkInvalidPlugin(
-      WidgetManifestPropertyNotSpecified("indexPath", "1"),
-      WidgetManifestPropertyNotSpecified("indexPath", "2")
+      WidgetManifestPropertyNotSpecified(YouTrackAppFields.Widget.INDEX_PATH, "1"),
+      WidgetManifestPropertyNotSpecified(YouTrackAppFields.Widget.INDEX_PATH, "2")
     ) { it.copy(widgets = widgets) }
   }
 
@@ -124,15 +126,109 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   fun `invalid widget extensionPoint`() {
     val widgets = listOf(widget.copy(key = "1", extensionPoint = null), widget.copy(key = "2", extensionPoint = null), widget)
     checkInvalidPlugin(
-      WidgetManifestPropertyNotSpecified("extensionPoint", "1"),
-      WidgetManifestPropertyNotSpecified("extensionPoint", "2")
+      WidgetManifestPropertyNotSpecified(YouTrackAppFields.Widget.EXTENSION_POINT, "1"),
+      WidgetManifestPropertyNotSpecified(YouTrackAppFields.Widget.EXTENSION_POINT, "2")
     ) { it.copy(widgets = widgets) }
+  }
+
+  @Test
+  fun `invalid youtrack versions`() {
+    checkInvalidPlugin(
+      InvalidSemverFormat(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "123"
+      ),
+      InvalidSemverFormat(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "456"
+      )
+    ) { it.copy(minYouTrackVersion = "123", maxYouTrackVersion = "456") }
+  }
+
+  @Test
+  fun `invalid youtrack versions range`() {
+    checkInvalidPlugin(
+      InvalidVersionRange(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        since = "123.12.1",
+        until = "12.12.1"
+      )
+    ) { it.copy(minYouTrackVersion = "123.12.1", maxYouTrackVersion = "12.12.1") }
+  }
+
+  @Test
+  fun `invalid youtrack version`() {
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "3001.1.2",
+        limit = YouTrackVersionUtils.MAX_MAJOR_VALUE
+      ),
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "3001.1.2",
+        limit = YouTrackVersionUtils.MAX_MAJOR_VALUE
+      )
+    ) { it.copy(minYouTrackVersion = "3001.1.2", maxYouTrackVersion = "3001.1.2") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "2022.101.2",
+        limit = YouTrackVersionUtils.VERSION_MINOR_LENGTH - 1
+      )
+    ) { it.copy(minYouTrackVersion =  "2022.101.2") }
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "2022.101.2",
+        limit = YouTrackVersionUtils.VERSION_MINOR_LENGTH - 1
+      )
+    ) { it.copy(maxYouTrackVersion =  "2022.101.2") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = YouTrackAppFields.Manifest.SINCE,
+        version = "2022.2.1000001",
+        limit = YouTrackVersionUtils.VERSION_PATCH_LENGTH - 1
+      )
+    ) { it.copy(minYouTrackVersion = "2022.2.1000001") }
+
+    checkInvalidPlugin(
+      SemverComponentLimitExceeded(
+        descriptorPath = YouTrackPluginManager.DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = YouTrackAppFields.Manifest.UNTIL,
+        version = "2022.2.1000001",
+        limit = YouTrackVersionUtils.VERSION_PATCH_LENGTH - 1
+      )
+    ) { it.copy(maxYouTrackVersion = "2022.2.1000001") }
+
+    checkValidPlugin { it.copy(minYouTrackVersion = "2024.99.999999", maxYouTrackVersion = "2024.99.999999") }
   }
 
   private fun checkInvalidPlugin(vararg expectedProblems: PluginProblem, modify: (YouTrackAppManifest) -> YouTrackAppManifest) {
     val manifestJson = getMockPluginFileContent("manifest.json")
     val manifest = modify(jacksonObjectMapper().readValue(manifestJson, YouTrackAppManifest::class.java))
     Assert.assertEquals(expectedProblems.toList(), validateYouTrackManifest(manifest))
+  }
+
+  private fun checkValidPlugin(modify: (YouTrackAppManifest) -> YouTrackAppManifest) {
+    val manifestJson = getMockPluginFileContent("manifest.json")
+    val manifest = modify(jacksonObjectMapper().readValue(manifestJson, YouTrackAppManifest::class.java))
+    Assert.assertEquals(emptyList<PluginProblem>(), validateYouTrackManifest(manifest))
   }
 
   private val widget: YouTrackAppWidget

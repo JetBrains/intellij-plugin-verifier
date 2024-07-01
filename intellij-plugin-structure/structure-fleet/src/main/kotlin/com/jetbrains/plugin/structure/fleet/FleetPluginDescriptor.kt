@@ -70,15 +70,27 @@ data class FleetPluginDescriptor(
           val toSemver = parseVersionOrNull(compatibleShipVersionRange.to)
           when {
             fromSemver == null -> {
-              problems.add(FleetInvalidShipVersion("from", compatibleShipVersionRange.from))
+              problems.add(InvalidSemverFormat(
+                descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+                versionName = "compatibleShipVersionRange.from",
+                version = compatibleShipVersionRange.from
+              ))
             }
 
             toSemver == null -> {
-              problems.add(FleetInvalidShipVersion("to", compatibleShipVersionRange.to))
+              problems.add(InvalidSemverFormat(
+                descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+                versionName = "compatibleShipVersionRange.to",
+                version = compatibleShipVersionRange.to
+              ))
             }
 
             fromSemver.isGreaterThan(toSemver) -> {
-              problems.add(FleetInvalidShipVersionRange(compatibleShipVersionRange.from, compatibleShipVersionRange.to))
+              problems.add(InvalidVersionRange(
+                descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+                since = compatibleShipVersionRange.from,
+                until = compatibleShipVersionRange.to
+              ))
             }
 
             else -> {
@@ -117,9 +129,27 @@ data class FleetPluginDescriptor(
   private fun validateVersion(versionName: String, semver: Semver): Collection<PluginProblem> {
     val problems = mutableListOf<PluginProblem>()
     when {
-      semver.major > VERSION_MAJOR_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "major", semver.originalValue, VERSION_MAJOR_PART_MAX_VALUE))
-      semver.minor > VERSION_MINOR_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "minor", semver.originalValue, VERSION_MINOR_PART_MAX_VALUE))
-      semver.patch > VERSION_PATCH_PART_MAX_VALUE -> problems.add(FleetErroneousShipVersion(versionName, "patch", semver.originalValue, VERSION_PATCH_PART_MAX_VALUE))
+      semver.major > FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+        componentName = "major",
+        versionName = "compatibleShipVersionRange.$versionName",
+        version = semver.originalValue,
+        limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
+      ))
+      semver.minor > FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+        componentName = "minor",
+        versionName = "compatibleShipVersionRange.$versionName",
+        version = semver.originalValue,
+        limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
+      ))
+      semver.patch > FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+        componentName = "patch",
+        versionName = "compatibleShipVersionRange.$versionName",
+        version = semver.originalValue,
+        limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
+      ))
     }
     return problems
   }
@@ -145,6 +175,13 @@ data class FleetShipVersionRange(
 ) {
 
   companion object {
+    private const val VERSION_PATCH_LENGTH = 14
+    private const val VERSION_MINOR_LENGTH = 13
+
+    const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
+    const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
+    const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
+
     fun fromStringToLong(version: String?): Long {
       return Semver(version).run {
         major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch
@@ -158,43 +195,4 @@ data class FleetShipVersionRange(
     val toLong = fromStringToLong(to)
     return fromLong..toLong
   }
-}
-
-private const val VERSION_PATCH_LENGTH = 14
-private const val VERSION_MINOR_LENGTH = 13
-
-const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
-const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
-const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
-
-class FleetInvalidShipVersion(
-  versionName: String,
-  version: String
-) : InvalidDescriptorProblem(
-  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The `compatibleShipVersionRange.$versionName` version should be formatted as semver [$version]."
-) {
-  override val level
-    get() = Level.ERROR
-}
-
-class FleetInvalidShipVersionRange(from: String, to: String) : InvalidDescriptorProblem(
-  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The `compatibleShipVersionRange.from` build $from is greater than `compatibleShipVersionRange.to` build $to."
-) {
-  override val level
-    get() = Level.ERROR
-}
-
-class FleetErroneousShipVersion(
-  versionName: String,
-  partName: String,
-  version: String,
-  limit: Int
-) : InvalidDescriptorProblem(
-  descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
-  detailedMessage = "The $partName part of `compatibleShipVersionRange.$versionName` version is too big [$version]. Max value is $limit."
-) {
-  override val level: Level
-    get() = Level.ERROR
 }
