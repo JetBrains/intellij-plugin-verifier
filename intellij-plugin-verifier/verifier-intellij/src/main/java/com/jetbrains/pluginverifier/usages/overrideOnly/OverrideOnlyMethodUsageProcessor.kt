@@ -4,13 +4,19 @@
 
 package com.jetbrains.pluginverifier.usages.overrideOnly
 
+import com.jetbrains.pluginverifier.results.reference.ClassReference
+import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.FilteringApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.findEffectiveMemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.CompositeApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.filter.SameModuleUsageFilter
 import com.jetbrains.pluginverifier.verifiers.hasAnnotation
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
+import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -18,38 +24,20 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcessor::class.java)
+private const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"
 
-class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
+private val overrideOnlyUsageFilter = CompositeApiUsageFilter(
+  SameModuleUsageFilter(overrideOnlyAnnotationName),
+  CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
+  DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
+  SuperclassCallOnOverrideOnlyUsageFilter()
+)
 
-  private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
-    SameModuleUsageFilter(overrideOnlyAnnotationName),
-    CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
-    DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
-    SuperclassCallOnOverrideOnlyUsageFilter()
-  )
-
-  override fun processMethodInvocation(
-    methodReference: MethodReference,
-    resolvedMethod: Method,
-    instructionNode: AbstractInsnNode,
-    callerMethod: Method,
-    context: VerificationContext
-  ) {
-
-
-    if (resolvedMethod.isOverrideOnlyMethod(context)
-      && !isAllowedOverrideOnlyUsage(methodReference, resolvedMethod, instructionNode, callerMethod, context))
-    {
-      overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
-        OverrideOnlyMethodUsage(methodReference, resolvedMethod.location, callerMethod.location)
-      )
-    }
-  }
+class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) :
+  FilteringApiUsageProcessor(overrideOnlyUsageFilter) {
 
   /**
-   * Detects if this is an allowed method invocation.
-   * In other words, if this is an allowed scenario where the invocation of such method is allowed and will not
-   * be reported as a plugin problem.
+   * Processes the invocation of a method, if allowed.
    *
    * Example:
    * ```
@@ -60,7 +48,7 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
    * Description:
    * - Both _Invoked Method Reference_ and _Invoked Method_ will refer to the `overrideOnlyMethod`.
    * - _Invocation Instruction_ will refer to the JVM bytecode instruction which will invoke the `overrideOnlyMethod`.
-   * In this sample, this will be `182/invokevirtual` opcode.
+   * In this example, this will be `182/invokevirtual` opcode.
    * - _Caller Method_ refers to the `usages()` method
    * @param invokedMethodReference a reference to the `OverrideOnly` method that is being invoked
    * @param invokedMethod the `OverrideOnly` method that is being invoked
@@ -69,13 +57,21 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
    * @param context the verification context with additional metadata and data
    *
    */
-  private fun isAllowedOverrideOnlyUsage(invokedMethodReference: MethodReference,
-                                         invokedMethod: Method,
-                                         invocationInstruction: AbstractInsnNode,
-                                         callerMethod: Method,
-                                         context: VerificationContext): Boolean {
-    return allowedOverrideOnlyUsageFilter.allow(invokedMethod, invocationInstruction, callerMethod, context)
+  override fun doProcessMethodInvocation(
+    invokedMethodReference: MethodReference,
+    invokedMethod: Method,
+    invocationInstruction: AbstractInsnNode,
+    callerMethod: Method,
+    context: VerificationContext
+  ) {
+
+    if (invokedMethod.isOverrideOnlyMethod(context)) {
+      overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
+        OverrideOnlyMethodUsage(invokedMethodReference, invokedMethod.location, callerMethod.location)
+      )
+    }
   }
+
 
   private fun Method.isOverrideOnlyMethod(context: VerificationContext): Boolean =
     annotations.hasAnnotation(overrideOnlyAnnotationName)
@@ -87,25 +83,41 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
       return true
     }
 
-    val overriddenMethod = searchParentOverrides(verificationContext.classResolver).firstOrNull { (overriddenMethod, c) ->
-       overriddenMethod.findEffectiveMemberAnnotation(annotationFqn, verificationContext.classResolver) != null
-    }
+    val overriddenMethod =
+      searchParentOverrides(verificationContext.classResolver).firstOrNull { (overriddenMethod, c) ->
+        overriddenMethod.findEffectiveMemberAnnotation(annotationFqn, verificationContext.classResolver) != null
+      }
     return if (overriddenMethod == null) {
       LOG.atTrace().log("No overridden method for $name is annotated by [$annotationFqn]")
       false
     } else {
-      LOG.atDebug().log("Method '${overriddenMethod.method.name}' in [${overriddenMethod.klass.name}] is annotated by [$annotationFqn]")
+      LOG.atDebug()
+        .log("Method '${overriddenMethod.method.name}' in [${overriddenMethod.klass.name}] is annotated by [$annotationFqn]")
       true
     }
   }
 
-  private companion object {
-    const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"
-  }
 
-  private fun DelegateCallOnOverrideOnlyUsageFilter.withBridgeMethodSupport() =
-    BridgeMethodOverrideUsageFilter(this)
+  override fun doProcessClassReference(
+    classReference: ClassReference,
+    resolvedClass: ClassFile,
+    referrer: ClassFileMember,
+    classUsageType: ClassUsageType,
+    context: VerificationContext
+  ) = Unit
+
+  override fun doProcessFieldAccess(
+    fieldReference: FieldReference,
+    resolvedField: Field,
+    callerMethod: Method,
+    context: VerificationContext
+  ) = Unit
+
 }
+
+private fun DelegateCallOnOverrideOnlyUsageFilter.withBridgeMethodSupport() =
+  BridgeMethodOverrideUsageFilter(this)
+
 
 
 
