@@ -21,7 +21,7 @@ object YouTrackVersionUtils {
     val semanticVersion = getSemverFromString(youTrackVersion)
 
     return semanticVersion.run {
-      major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch
+      major.toLong() * (VERSION_PATCH_LENGTH * VERSION_MINOR_LENGTH) + minor.toLong() * VERSION_PATCH_LENGTH + patch
     }
   }
 
