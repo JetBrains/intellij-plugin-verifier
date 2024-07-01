@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcityAction
+package com.jetbrains.plugin.structure.teamcity.action
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription

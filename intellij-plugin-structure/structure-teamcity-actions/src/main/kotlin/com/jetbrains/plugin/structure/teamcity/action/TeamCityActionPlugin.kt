@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action.model
+package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
@@ -19,7 +19,4 @@ data class TeamCityActionPlugin(
   override val changeNotes: String? = null,
 
   val specVersion: Semver,
-  val inputs: List<ActionInput> = emptyList(),
-  val requirements: List<ActionRequirement> = emptyList(),
-  val steps: List<ActionStep> = emptyList(),
 ) : Plugin

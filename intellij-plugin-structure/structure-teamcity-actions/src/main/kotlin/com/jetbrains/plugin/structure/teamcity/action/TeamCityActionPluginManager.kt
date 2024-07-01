@@ -8,10 +8,6 @@ import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.plugin.Settings.EXTRACT_DIRECTORY
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.ACTION_PREFIX
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.RUNNER_PREFIX
-import com.jetbrains.plugin.structure.teamcity.action.model.*
-import com.jetbrains.plugin.structure.teamcity.action.problems.ParseYamlProblem
 import com.vdurmont.semver4j.Semver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,12 +31,12 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
   override fun createPlugin(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> {
     require(pluginFile.exists()) { "TeamCity Action file ${pluginFile.toAbsolutePath()} does not exist" }
     return when {
-      pluginFile.isZip() || pluginFile.isYaml() -> parse(pluginFile)
+      pluginFile.isZip() || pluginFile.isYaml() -> createPluginFrom(pluginFile)
       else -> fileFormatError(pluginFile)
     }
   }
 
-  private fun parse(actionPath: Path): PluginCreationResult<TeamCityActionPlugin> {
+  private fun createPluginFrom(actionPath: Path): PluginCreationResult<TeamCityActionPlugin> {
     val sizeLimit = Settings.TEAM_CITY_ACTION_SIZE_LIMIT.getAsLong()
     if (Files.size(actionPath) > sizeLimit) {
       return PluginCreationFail(FileTooBig(actionPath.simpleName, sizeLimit))
@@ -96,97 +92,16 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     }
     val plugin = with(descriptor) {
       TeamCityActionPlugin(
-        pluginId = this.name + "@" + this.version, // TODO: It is a temporary way of the pluginID creation
-        pluginName = this.name!!, // These fields are expected to be non-null due to the validations above
+        // All the fields are expected to be non-null due to the validations above
+        pluginId = this.name!!, // TODO: It is a temporary way of the pluginID creation, must be changed
+        pluginName = this.name,
         description = this.description!!,
         pluginVersion = this.version!!,
         specVersion = Semver(this.specVersion!!),
-        inputs = inputs(descriptor.inputs),
-        requirements = requirements(descriptor.requirements),
-        steps = steps(descriptor.steps),
       )
     }
     return PluginCreationSuccess(plugin, validationResult)
   }
-}
-
-private fun inputs(inputs: List<Map<String, ActionInputDescriptor>>) = inputs.asSequence().map(::input).toList()
-
-private fun input(input: Map<String, ActionInputDescriptor>): ActionInput {
-  val inputName = input.keys.first()
-  val inputValue = input.values.first()
-  return when (inputValue.type!!) {
-    ActionInputTypeDescriptor.text.name -> TextActionInput(
-      inputName,
-      inputValue.isRequired.toBoolean(),
-      inputValue.label,
-      inputValue.description,
-      inputValue.defaultValue,
-    )
-
-    ActionInputTypeDescriptor.boolean.name -> BooleanActionInput(
-      inputName,
-      inputValue.isRequired.toBoolean(),
-      inputValue.label,
-      inputValue.description,
-      inputValue.defaultValue,
-    )
-
-    ActionInputTypeDescriptor.select.name -> SelectActionInput(
-      inputName,
-      inputValue.isRequired.toBoolean(),
-      inputValue.label,
-      inputValue.description,
-      inputValue.defaultValue,
-      inputValue.selectOptions,
-    )
-
-    else -> throw IllegalArgumentException(
-      "Unsupported action input type: ${inputValue.type}. " +
-          "Supported values are: ${ActionInputTypeDescriptor.values().joinToString()}"
-    )
-  }
-}
-
-private fun requirements(requirements: List<Map<String, ActionRequirementDescriptor>>) =
-  requirements.asSequence().map(::requirement).toList()
-
-private fun requirement(requirement: Map<String, ActionRequirementDescriptor>): ActionRequirement {
-  val requirementName = requirement.keys.first()
-  val requirementValue = requirement.values.first()
-  return ActionRequirement(
-    requirementName,
-    ActionRequirementType.from(requirementValue.type!!),
-    requirementValue.value
-  )
-}
-
-private fun steps(steps: List<ActionStepDescriptor>) = steps.asSequence().map(::step).toList()
-
-private fun step(step: ActionStepDescriptor): ActionStep {
-  if (step.script != null) {
-    return RunnerBasedStep(
-      step.name!!,
-      mapOf("script.content" to step.script, "use.custom.script" to "true"),
-      "simpleRunner",
-    )
-  }
-  if (step.with!!.startsWith(RUNNER_PREFIX)) {
-    val runnerName = step.with.removePrefix(RUNNER_PREFIX)
-    return RunnerBasedStep(
-      step.name!!,
-      step.parameters,
-      runnerName,
-    )
-  } else if (step.with.startsWith(ACTION_PREFIX)) {
-    val actionId = step.with.removePrefix(ACTION_PREFIX)
-    return ActionBasedStep(
-      step.name!!,
-      step.parameters,
-      actionId,
-    )
-  }
-  throw IllegalArgumentException("Failed to parse action step: $step")
 }
 
 private fun fileFormatError(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> =

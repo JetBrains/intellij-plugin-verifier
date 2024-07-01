@@ -1,10 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action.model
-
-data class ActionRequirement(
-  val name: String,
-  val type: ActionRequirementType,
-  val value: String? = null,
-)
+package com.jetbrains.plugin.structure.teamcity.action
 
 enum class ActionRequirementType(
   val type: String,

@@ -18,8 +18,6 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionS
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSteps
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionVersion
-import com.jetbrains.plugin.structure.teamcity.action.model.ActionRequirementType
-import com.jetbrains.plugin.structure.teamcity.action.problems.*
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
 
@@ -30,9 +28,11 @@ internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequ
   validateExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
   validateNotEmptyIfExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
   validateMaxLength(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION, ActionName.MAX_LENGTH)
-  validateMatchesRegexIfExistsAndNotEmpty(descriptor.name, ActionName.nameRegex, ActionName.NAME, ActionName.DESCRIPTION,
+  validateMatchesRegexIfExistsAndNotEmpty(
+    descriptor.name, ActionName.nameRegex, ActionName.NAME, ActionName.DESCRIPTION,
     "should only contain latin letters, numbers, dashes and underscores. " +
-            "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.")
+        "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+  )
 
   validateExistsAndNotEmpty(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
   validateSemver(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
@@ -133,7 +133,7 @@ private suspend fun SequenceScope<PluginProblem>.validateActionRequirement(requi
     yield(
       InvalidPropertyValueProblem(
         "Wrong action requirement type '${value.type}'. " +
-                "Supported values are: ${ActionRequirementType.values().joinToString { it.type }}"
+            "Supported values are: ${ActionRequirementType.values().joinToString { it.type }}"
       )
     )
     return
@@ -154,17 +154,17 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
     yield(
       PropertiesCombinationProblem(
         "The properties " +
-                "<${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) and " +
-                "<${ActionStepScript.NAME}> (${ActionStepScript.DESCRIPTION}) " +
-                "cannot be specified together for action step."
+            "<${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) and " +
+            "<${ActionStepScript.NAME}> (${ActionStepScript.DESCRIPTION}) " +
+            "cannot be specified together for action step."
       )
     )
   } else if (step.with == null && step.script == null) {
     yield(
       PropertiesCombinationProblem(
         "One of the properties " +
-                "<${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) or " +
-                "<${ActionStepScript.NAME}> (${ActionStepScript.DESCRIPTION}) should be specified for action step."
+            "<${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) or " +
+            "<${ActionStepScript.NAME}> (${ActionStepScript.DESCRIPTION}) should be specified for action step."
       )
     )
   } else if (step.with != null) {
@@ -173,7 +173,7 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
       yield(
         InvalidPropertyValueProblem(
           "The property <${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) should have " +
-                  "a value starting with one of the following prefixes: ${ActionStepWith.allowedPrefixes.joinToString()}"
+              "a value starting with one of the following prefixes: ${ActionStepWith.allowedPrefixes.joinToString()}"
         )
       )
     }

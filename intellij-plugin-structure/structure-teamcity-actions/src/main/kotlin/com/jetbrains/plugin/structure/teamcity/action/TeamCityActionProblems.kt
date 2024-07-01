@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action.problems
+package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 

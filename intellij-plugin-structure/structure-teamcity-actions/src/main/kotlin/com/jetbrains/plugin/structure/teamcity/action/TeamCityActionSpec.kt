@@ -110,9 +110,7 @@ object TeamCityActionSpec {
     const val NAME = "with"
     const val DESCRIPTION = "runner or action reference"
     const val MAX_LENGTH = 100
-    const val RUNNER_PREFIX = "runner/"
-    const val ACTION_PREFIX = "action/"
-    val allowedPrefixes = listOf(RUNNER_PREFIX, ACTION_PREFIX)
+    val allowedPrefixes = listOf("runner/", "action/")
   }
 
   object ActionStepScript {

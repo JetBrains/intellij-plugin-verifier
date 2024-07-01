@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcityAction
+package com.jetbrains.plugin.structure.teamcity.action
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -7,16 +7,13 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionPluginManager
-import com.jetbrains.plugin.structure.teamcity.action.model.TeamCityActionPlugin
-import com.jetbrains.plugin.structure.teamcity.action.problems.*
-import com.jetbrains.plugin.structure.teamcityAction.Actions.someAction
-import com.jetbrains.plugin.structure.teamcityAction.Inputs.someActionTextInput
-import com.jetbrains.plugin.structure.teamcityAction.Inputs.someBooleanTextInput
-import com.jetbrains.plugin.structure.teamcityAction.Inputs.someSelectTextInput
-import com.jetbrains.plugin.structure.teamcityAction.Requirements.someExistsRequirement
-import com.jetbrains.plugin.structure.teamcityAction.Steps.someScriptStep
-import com.jetbrains.plugin.structure.teamcityAction.Steps.someWithStep
+import com.jetbrains.plugin.structure.teamcity.action.Actions.someAction
+import com.jetbrains.plugin.structure.teamcity.action.Inputs.someActionTextInput
+import com.jetbrains.plugin.structure.teamcity.action.Inputs.someBooleanTextInput
+import com.jetbrains.plugin.structure.teamcity.action.Inputs.someSelectTextInput
+import com.jetbrains.plugin.structure.teamcity.action.Requirements.someExistsRequirement
+import com.jetbrains.plugin.structure.teamcity.action.Steps.someScriptStep
+import com.jetbrains.plugin.structure.teamcity.action.Steps.someWithStep
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -83,7 +80,7 @@ class ParseInvalidActionTests(
         listOf(
           InvalidPropertyValueProblem(
             "The property <name> (action name) should only contain latin letters, numbers, dashes and underscores. " +
-                    "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+                "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
           )
         ),
       )
@@ -271,9 +268,9 @@ class ParseInvalidActionTests(
       listOf(
         InvalidPropertyValueProblem(
           "Wrong action requirement type 'wrong_requirement_type'. " +
-                  "Supported values are: exists, not-exists, equals, not-equals, more-than, not-more-than, less-than, " +
-                  "not-less-than, starts-with, contains, does-not-contain, ends-with, matches, does-not-match, " +
-                  "version-more-than, version-not-more-than, version-less-than, version-not-less-than, any"
+              "Supported values are: exists, not-exists, equals, not-equals, more-than, not-more-than, less-than, " +
+              "not-less-than, starts-with, contains, does-not-contain, ends-with, matches, does-not-match, " +
+              "version-more-than, version-not-more-than, version-less-than, version-not-less-than, any"
         )
       )
     )
@@ -322,9 +319,9 @@ class ParseInvalidActionTests(
       listOf(
         PropertiesCombinationProblem(
           "The properties " +
-                  "<with> (runner or action reference) and " +
-                  "<script> (executable script content) " +
-                  "cannot be specified together for action step."
+              "<with> (runner or action reference) and " +
+              "<script> (executable script content) " +
+              "cannot be specified together for action step."
         )
       )
     )
@@ -337,9 +334,9 @@ class ParseInvalidActionTests(
       listOf(
         PropertiesCombinationProblem(
           "One of the properties " +
-                  "<with> (runner or action reference) or " +
-                  "<script> (executable script content) " +
-                  "should be specified for action step."
+              "<with> (runner or action reference) or " +
+              "<script> (executable script content) " +
+              "should be specified for action step."
         )
       )
     )
@@ -372,7 +369,7 @@ class ParseInvalidActionTests(
       listOf(
         InvalidPropertyValueProblem(
           "The property <with> (runner or action reference) should have a value " +
-                  "starting with one of the following prefixes: runner/, action/"
+              "starting with one of the following prefixes: runner/, action/"
         )
       )
     )
