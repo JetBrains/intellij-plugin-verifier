@@ -43,6 +43,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
         IdeModule
           .clone(moduleLoadingResult.plugin, moduleName)
           .apply {
+            definedModules += moduleName
             classpath += classpathProvider.getClasspath(moduleName).map { idePath.resolve(it) }
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources

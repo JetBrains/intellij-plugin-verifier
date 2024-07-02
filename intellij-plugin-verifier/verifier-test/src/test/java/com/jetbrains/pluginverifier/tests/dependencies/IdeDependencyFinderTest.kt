@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
@@ -15,21 +16,36 @@ import com.jetbrains.pluginverifier.plugin.PluginFileProvider
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
+import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.createMockPluginInfo
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.Closeable
 
-class IdeDependencyFinderTest {
+private val MOCK_IDE_MODULE_ID = "intellij.module.one"
 
+class IdeDependencyFinderTest {
   @JvmField
   @Rule
   var tempFolder: TemporaryFolder = TemporaryFolder()
+
+  private lateinit var ideModule: IdePlugin
+
+  private lateinit var lock: IdleFileLock
+
+  @Before
+  fun setUp() {
+    lock = IdleFileLock(tempFolder.newFile().toPath())
+    ideModule = IdeModule(MOCK_IDE_MODULE_ID).apply {
+      definedModules += MOCK_IDE_MODULE_ID
+    }
+  }
 
   @Test
   fun `get all plugin transitive dependencies`() {
@@ -85,7 +101,8 @@ class IdeDependencyFinderTest {
         ),
         testPlugin,
         somePlugin,
-        moduleContainer
+        moduleContainer,
+        ideModule,
       )
     )
 
@@ -96,7 +113,8 @@ class IdeDependencyFinderTest {
       dependencies = listOf(
         PluginDependencyImpl("test", true, false),
         externalModuleDependency,
-        PluginDependencyImpl("com.intellij.modules.platform", false, true)
+        PluginDependencyImpl("com.intellij.modules.platform", false, true),
+        PluginDependencyImpl(MOCK_IDE_MODULE_ID, false, true)
       )
     )
 
@@ -105,7 +123,7 @@ class IdeDependencyFinderTest {
     val (dependenciesGraph, _) = DependenciesGraphBuilder(ideDependencyFinder).buildDependenciesGraph(startPlugin, ide)
 
     val deps = dependenciesGraph.vertices.map { it.pluginId }
-    assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij"), deps.toSet())
+    assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij", MOCK_IDE_MODULE_ID), deps.toSet())
 
     assertEquals(setOf(MissingDependency(externalModuleDependency, "Failed to fetch plugin.")), dependenciesGraph.getDirectMissingDependencies())
   }
@@ -113,7 +131,11 @@ class IdeDependencyFinderTest {
   private fun configureTestIdeDependencyFinder(ide: Ide): DependencyFinder {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
       override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
-        if (moduleId == "externalModule") listOf(createMockPluginInfo("externalPlugin", "1.0")) else emptyList()
+        when (moduleId) {
+          "externalModule" -> listOf(createMockPluginInfo("externalPlugin", "1.0"))
+          MOCK_IDE_MODULE_ID -> listOf(createMockPluginInfo(MOCK_IDE_MODULE_ID, "1.0"))
+          else -> emptyList()
+        }
 
       override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String) =
         if (pluginId == "externalPlugin") createMockPluginInfo(pluginId, "1.0") else null
@@ -123,6 +145,9 @@ class IdeDependencyFinderTest {
       override fun getPluginFile(pluginInfo: PluginInfo): PluginFileProvider.Result {
         if (pluginInfo.pluginId == "externalPlugin") {
           return PluginFileProvider.Result.Failed("Failed to fetch plugin.", Exception())
+        }
+        if (pluginInfo.pluginId == MOCK_IDE_MODULE_ID) {
+          return PluginFileProvider.Result.Found(lock)
         }
         return PluginFileProvider.Result.NotFound("No need to be found")
       }
