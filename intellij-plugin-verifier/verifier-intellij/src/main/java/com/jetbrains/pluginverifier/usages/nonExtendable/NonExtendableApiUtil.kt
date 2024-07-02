@@ -4,8 +4,8 @@
 
 package com.jetbrains.pluginverifier.usages.nonExtendable
 
-import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 
 fun ClassFileMember.isNonExtendable(): Boolean =
-  annotations.findAnnotation("org/jetbrains/annotations/ApiStatus\$NonExtendable") != null
+  annotations.hasAnnotation("org/jetbrains/annotations/ApiStatus\$NonExtendable")

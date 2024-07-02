@@ -9,7 +9,8 @@ import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.findEffectiveMemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.CompositeApiUsageFilter
-import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.filter.SameModuleUsageFilter
+import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -21,6 +22,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
+    SameModuleUsageFilter(overrideOnlyAnnotationName),
     CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
     DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),
     SuperclassCallOnOverrideOnlyUsageFilter()
@@ -76,8 +78,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
   }
 
   private fun Method.isOverrideOnlyMethod(context: VerificationContext): Boolean =
-    annotations.findAnnotation(overrideOnlyAnnotationName) != null
-      || containingClassFile.annotations.findAnnotation(overrideOnlyAnnotationName) != null
+    annotations.hasAnnotation(overrideOnlyAnnotationName)
+      || containingClassFile.annotations.hasAnnotation(overrideOnlyAnnotationName)
       || isAnnotationPresent(overrideOnlyAnnotationName, context)
 
   private fun Method.isAnnotationPresent(annotationFqn: String, verificationContext: VerificationContext): Boolean {
