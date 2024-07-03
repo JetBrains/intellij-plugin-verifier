@@ -1,0 +1,15 @@
+<idea-plugin package="com.intellij.python.community.plugin.java">
+  <!--For IU or IC-->
+  <dependencies>
+    <!-- Supports Java -->
+    <plugin id="com.intellij.java"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.plugin.impl"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+</idea-plugin>

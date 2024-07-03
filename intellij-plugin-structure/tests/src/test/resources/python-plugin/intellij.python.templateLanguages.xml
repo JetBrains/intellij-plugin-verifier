@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.python.templateLanguages">
+  <dependencies>
+    <module name="intellij.python.community.impl"/> <!-- The whole open-source part of Python support -->
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.platform"/>
+    <module name="intellij.jinja"/>
+    <module name="intellij.template.lang.core"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+
+</idea-plugin>
