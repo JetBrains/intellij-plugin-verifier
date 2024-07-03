@@ -1,0 +1,4 @@
+<!-- package is not specific, but it cannot be changed due to backward compatibility,
+ and package anyway is not used in our project for something else -->
+<idea-plugin package="com.intellij.ultimate">
+</idea-plugin>

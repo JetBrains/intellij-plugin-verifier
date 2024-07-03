@@ -1,0 +1,14 @@
+<idea-plugin package="com.intellij.python.docker">
+  <dependencies>
+    <module name="intellij.clouds.docker.remoteRun"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.remoteInterpreter"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+
+</idea-plugin>

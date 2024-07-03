@@ -1,0 +1,8 @@
+<idea-plugin package="com.intellij.python.community.impl.poetry">
+  <dependencies>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.python.community.impl"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+</idea-plugin>

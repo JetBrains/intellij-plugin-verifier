@@ -186,6 +186,7 @@ internal class PluginCreator private constructor(
           }
         }
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
+        plugin.definedModules.add(moduleName)
 
         mergeContent(module)
       }

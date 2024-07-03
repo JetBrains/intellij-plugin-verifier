@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.python.plugin.java">
+  <!-- Python of Idea Ultimate -->
+  <dependencies>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.community.plugin.java"/>
+    <module name="intellij.python"/>
+
+    <plugin id="com.intellij.java"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+</idea-plugin>
