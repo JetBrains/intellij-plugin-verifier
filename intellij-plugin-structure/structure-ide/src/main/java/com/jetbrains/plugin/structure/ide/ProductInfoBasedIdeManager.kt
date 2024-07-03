@@ -48,7 +48,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     assertProductInfoPresent(idePath)
     try {
       val productInfo = productInfoParser.parse(idePath.productInfoJson)
-      val ideVersion = version ?: IdeVersion.createIdeVersion(productInfo.buildNumber)
+      val ideVersion = version ?: createIdeVersion(productInfo)
       return createIde(idePath, ideVersion, productInfo)
     } catch (e: ProductInfoParseException) {
       throw InvalidIdeException(idePath, e)
@@ -136,6 +136,15 @@ class ProductInfoBasedIdeManager : IdeManager() {
     .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath)
     .withPath(pluginArtifactPath)
 
+  private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
+    val versionString = buildString {
+      with(productInfo) {
+        if (productCode.isNotEmpty()) append(productCode).append("-")
+        append(buildNumber)
+      }
+    }
+    return IdeVersion.createIdeVersion(versionString)
+  }
 
   private fun getResourceResolver(layoutComponent: LayoutComponent, idePath: Path): NamedResourceResolver? {
     return if (layoutComponent is LayoutComponent.Classpathable) {
