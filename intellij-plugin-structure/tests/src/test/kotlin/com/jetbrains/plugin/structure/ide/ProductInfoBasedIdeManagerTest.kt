@@ -61,4 +61,24 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(4, definedModules.size)
     }
   }
+
+  @Test
+  fun `create nonIDEA IDE manager from mock IDE`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockRiderBuilder(temporaryFolder).buildIdeaDirectory()
+    val ide = ideManager.createIde(ideRoot)
+
+    val ideCore = ide.getPluginById("com.intellij")
+    assertNotNull(ideCore)
+    with(ideCore!!) {
+      with(definedModules) {
+        assertEquals(1, size)
+        assertEquals("com.intellij.modules.rider", definedModules.first())
+      }
+    }
+    val riderModule = ide.getPluginByModule("com.intellij.modules.rider")
+    assertNotNull(riderModule)
+    riderModule!!
+    assertTrue(ideCore.pluginId == riderModule.pluginId)
+  }
 }
