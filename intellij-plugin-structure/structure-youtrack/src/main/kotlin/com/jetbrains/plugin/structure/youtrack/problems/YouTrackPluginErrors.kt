@@ -2,9 +2,10 @@ package com.jetbrains.plugin.structure.youtrack.problems
 
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.youtrack.YouTrackPluginManager.Companion.DESCRIPTOR_NAME
+import com.jetbrains.plugin.structure.youtrack.bean.YouTrackAppFields
 
 open class InvalidAppNameProblem(message: String) : InvalidDescriptorProblem(
-  descriptorPath = "name",
+  descriptorPath = YouTrackAppFields.Manifest.NAME,
   detailedMessage = message
 ) {
   override val level
@@ -37,7 +38,7 @@ open class WidgetManifestPropertyNotSpecified(propertyName: String, widgetKey: S
 }
 
 open class InvalidWidgetKeyProblem(message: String) : InvalidDescriptorProblem(
-  descriptorPath = "key",
+  descriptorPath = YouTrackAppFields.Widget.KEY,
   detailedMessage = message
 ) {
   override val level
@@ -51,7 +52,7 @@ class UnsupportedSymbolsWidgetKeyProblem(key: String) : InvalidWidgetKeyProblem(
 
 open class WidgetKeyNotSpecified : InvalidDescriptorProblem(
   descriptorPath = DESCRIPTOR_NAME,
-  detailedMessage = "Widget property 'key' is not specified."
+  detailedMessage = "Widget property '${YouTrackAppFields.Widget.KEY}' is not specified."
 ) {
   override val level
     get() = Level.ERROR
@@ -59,7 +60,7 @@ open class WidgetKeyNotSpecified : InvalidDescriptorProblem(
 
 open class WidgetKeyIsNotUnique : InvalidDescriptorProblem(
   descriptorPath = DESCRIPTOR_NAME,
-  detailedMessage = "Widget property 'key' is not unique."
+  detailedMessage = "Widget property '${YouTrackAppFields.Widget.KEY}' is not unique."
 ) {
   override val level
     get() = Level.ERROR
