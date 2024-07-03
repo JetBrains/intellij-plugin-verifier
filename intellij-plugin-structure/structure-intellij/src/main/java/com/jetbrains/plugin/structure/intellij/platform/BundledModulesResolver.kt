@@ -24,7 +24,7 @@ class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvide
 
   init {
     if (!moduleDescriptorsJarPath.exists()) {
-      throw InvalidIdeException("IDE path [$idePath] does not contain '$MODULES_DIR/$MODULES_DIR' file")
+      throw InvalidIdeException("IDE path [$idePath] does not contain '$MODULES_DIR/$MODULE_DESCRIPTORS_JAR' file")
     }
   }
 
