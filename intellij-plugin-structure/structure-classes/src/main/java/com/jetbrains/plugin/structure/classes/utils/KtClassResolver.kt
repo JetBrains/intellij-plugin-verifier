@@ -16,15 +16,26 @@ class KtClassResolver {
   })
 
   operator fun get(classNode: ClassNode): KtClassNode? {
-    return cache.getOrPut(classNode) {
-      return findMetadataAnnotation(classNode)?.let {
-        val metadata = KotlinClassMetadata.readStrict(it)
-        if (metadata is KotlinClassMetadata.Class) {
-          KtClassNode(classNode, metadata)
-        } else {
-          null
-        }
+    return if (cache.containsKey(classNode)) {
+      cache[classNode]
+    } else {
+      classNode.ktClassNode?.also {
+        cache[classNode] = it
       }
+    }
+  }
+
+  private val ClassNode.ktClassNode: KtClassNode?
+    get() = findMetadataAnnotation(this)
+      ?.let { annotation -> getKtClassNode(this, annotation) }
+
+
+  private fun getKtClassNode(classNode: ClassNode, metadataAnnotation: Metadata): KtClassNode? {
+    val metadata = KotlinClassMetadata.readStrict(metadataAnnotation)
+    return if (metadata is KotlinClassMetadata.Class) {
+      KtClassNode(classNode, metadata)
+    } else {
+      null
     }
   }
 
