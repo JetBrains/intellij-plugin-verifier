@@ -8,7 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
 
-class SameModuleUsageFilter(val annotation: BinaryClassName) : ApiUsageFilter {
+class SameModuleUsageFilter(private val annotation: BinaryClassName) : ApiUsageFilter {
   override fun allow(
     invokedMethod: Method,
     invocationInstruction: AbstractInsnNode,
