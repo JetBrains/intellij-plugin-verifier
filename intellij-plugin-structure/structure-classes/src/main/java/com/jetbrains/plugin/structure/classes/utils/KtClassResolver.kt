@@ -4,19 +4,16 @@ import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.Metadata
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
-import java.util.*
 
 internal const val KOTLIN_METADATA_ANNOTATION_DESC = "Lkotlin/Metadata;"
 
+private typealias Signature = String
+
 class KtClassResolver {
-  private val cache = TreeMap<ClassNode, KtClassNode>(Comparator<ClassNode> { o1, o2 ->
-    val s1 = o1?.signature ?: ""
-    val s2 = o2?.signature ?: ""
-    s1.compareTo(s2)
-  })
+  private val cache = HashMap<Signature, KtClassNode>()
 
   operator fun get(classNode: ClassNode): KtClassNode? {
-    return if (cache.containsKey(classNode)) {
+    return if (classNode in cache) {
       cache[classNode]
     } else {
       classNode.ktClassNode?.also {
@@ -29,6 +26,17 @@ class KtClassResolver {
     get() = findMetadataAnnotation(this)
       ?.let { annotation -> getKtClassNode(this, annotation) }
 
+  private operator fun HashMap<Signature, KtClassNode>.get(classNode: ClassNode): KtClassNode? {
+    return classNode.signature?.let { cache[it] }
+  }
+
+  private operator fun HashMap<Signature, KtClassNode>.set(classNode: ClassNode, ktClassNode: KtClassNode) {
+    classNode.signature?.let { put(it, ktClassNode) }
+  }
+
+  private operator fun HashMap<Signature, KtClassNode>.contains(classNode: ClassNode): Boolean {
+    return containsKey(classNode.signature)
+  }
 
   private fun getKtClassNode(classNode: ClassNode, metadataAnnotation: Metadata): KtClassNode? {
     val metadata = KotlinClassMetadata.readStrict(metadataAnnotation)
