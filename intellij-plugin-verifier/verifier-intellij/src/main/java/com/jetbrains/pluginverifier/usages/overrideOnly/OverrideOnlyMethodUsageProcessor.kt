@@ -6,7 +6,8 @@ package com.jetbrains.pluginverifier.usages.overrideOnly
 
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
-import com.jetbrains.pluginverifier.usages.util.findEffectiveMemberAnnotation
+import com.jetbrains.pluginverifier.usages.annotation.AnnotationResolver
+import com.jetbrains.pluginverifier.usages.annotation.isMemberEffectivelyAnnotatedWith
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.CompositeApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.filter.SameModuleUsageFilter
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory
 private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcessor::class.java)
 
 class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: OverrideOnlyRegistrar) : ApiUsageProcessor {
+  private val overrideOnlyAnnotationResolver = AnnotationResolver(overrideOnlyAnnotationName)
 
   private val allowedOverrideOnlyUsageFilter = CompositeApiUsageFilter(
     SameModuleUsageFilter(overrideOnlyAnnotationName),
@@ -83,12 +85,12 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
       || isAnnotationPresent(overrideOnlyAnnotationName, context)
 
   private fun Method.isAnnotationPresent(annotationFqn: String, verificationContext: VerificationContext): Boolean {
-    if (findEffectiveMemberAnnotation(annotationFqn, verificationContext.classResolver) != null) {
+    if (isMemberEffectivelyAnnotatedWith(overrideOnlyAnnotationResolver, verificationContext.classResolver)) {
       return true
     }
 
-    val overriddenMethod = searchParentOverrides(verificationContext.classResolver).firstOrNull { (overriddenMethod, c) ->
-       overriddenMethod.findEffectiveMemberAnnotation(annotationFqn, verificationContext.classResolver) != null
+    val overriddenMethod = searchParentOverrides(verificationContext.classResolver).firstOrNull { (overriddenMethod, _) ->
+       overriddenMethod.isMemberEffectivelyAnnotatedWith(overrideOnlyAnnotationResolver, verificationContext.classResolver)
     }
     return if (overriddenMethod == null) {
       LOG.atTrace().log("No overridden method for $name is annotated by [$annotationFqn]")
