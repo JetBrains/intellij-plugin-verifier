@@ -17,6 +17,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 abstract class ExperimentalApiUsage : ApiUsage()
 
 fun ClassFileMember.isExperimentalApi(classResolver: Resolver, usageLocation: Location): Boolean =
-  isMemberEffectivelyAnnotatedWith(experimentalApiStatusResolver, classResolver, location)
+  isMemberEffectivelyAnnotatedWith(experimentalApiStatusResolver, classResolver, usageLocation)
 
 private val experimentalApiStatusResolver = AnnotationResolver("org/jetbrains/annotations/ApiStatus\$Experimental")

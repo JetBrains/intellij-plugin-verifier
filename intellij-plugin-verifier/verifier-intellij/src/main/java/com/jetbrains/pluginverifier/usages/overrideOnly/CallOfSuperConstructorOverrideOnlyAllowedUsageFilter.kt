@@ -6,10 +6,10 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class CallOfSuperConstructorOverrideOnlyAllowedUsageFilter: ApiUsageFilter {
-  override fun allowMethodInvocation(invokedMethod: Method,
-                                     invocationInstruction: AbstractInsnNode,
-                                     callerMethod: Method,
-                                     context: VerificationContext): Boolean {
+  override fun allow(invokedMethod: Method,
+                     invocationInstruction: AbstractInsnNode,
+                     callerMethod: Method,
+                     context: VerificationContext): Boolean {
     return invokedMethod.isConstructor
         && callerMethod.isConstructor
         && callerMethod.containingClassFile.superName == invokedMethod.containingClassFile.name

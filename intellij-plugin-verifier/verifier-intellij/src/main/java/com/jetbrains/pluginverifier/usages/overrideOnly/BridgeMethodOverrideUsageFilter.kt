@@ -19,14 +19,14 @@ import org.objectweb.asm.tree.AbstractInsnNode
  * See [Java Generics FAQ](http://www.angelikalanger.com/GenericsFAQ/FAQSections/TechnicalDetails.html#FAQ103)
  */
 class BridgeMethodOverrideUsageFilter(private val nonBridgeMethodApiUsageFilterDelegate: ApiUsageFilter) : ApiUsageFilter {
-  override fun allowMethodInvocation(invokedMethod: Method,
-                                     invocationInstruction: AbstractInsnNode,
-                                     callerMethod: Method,
-                                     context: VerificationContext): Boolean {
+  override fun allow(invokedMethod: Method,
+                     invocationInstruction: AbstractInsnNode,
+                     callerMethod: Method,
+                     context: VerificationContext): Boolean {
     return if (callerMethod.isBridgeMethod) {
       allowBridgeMethodInvocation(invokedMethod, callerMethod, context)
     } else {
-      nonBridgeMethodApiUsageFilterDelegate.allowMethodInvocation(
+      nonBridgeMethodApiUsageFilterDelegate.allow(
         invokedMethod,
         invocationInstruction,
         callerMethod,
