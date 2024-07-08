@@ -7,15 +7,10 @@ package com.jetbrains.pluginverifier.verifiers
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
-import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
-import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
-import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import com.jetbrains.pluginverifier.results.location.ClassLocation
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.telemetry.TelemetryRegistrar
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -106,11 +101,7 @@ data class PluginVerificationContext(
   }
 
   override fun registerExperimentalApiUsage(experimentalApiUsage: ExperimentalApiUsage) {
-    val elementHostClass = experimentalApiUsage.apiElement.containingClass
-    val usageHostClass = experimentalApiUsage.usageLocation.containingClass
-    if (shouldIndexDeprecatedClass(usageHostClass, elementHostClass)) {
-      experimentalApiUsages += experimentalApiUsage
-    }
+    experimentalApiUsages += experimentalApiUsage
   }
 
   override fun registerInternalApiUsage(internalApiUsage: InternalApiUsage) {
@@ -141,20 +132,4 @@ data class PluginVerificationContext(
   fun registerPluginStructureWarning(warning: PluginStructureWarning) {
     pluginStructureWarnings += warning
   }
-
-  private fun shouldIndexDeprecatedClass(usageHostClass: ClassLocation, apiHostClass: ClassLocation): Boolean {
-    val usageHostOrigin = usageHostClass.classFileOrigin
-    if (idePlugin == usageHostOrigin.findOriginOfType<PluginFileOrigin>()?.idePlugin) {
-      val apiHostOrigin = apiHostClass.classFileOrigin
-      if (apiHostOrigin.isOriginOfType<IdeFileOrigin>()) {
-        return true
-      }
-      val pluginOrigin = apiHostOrigin.findOriginOfType<PluginFileOrigin>()
-      if (pluginOrigin != null && pluginOrigin.idePlugin != idePlugin) {
-        return true
-      }
-    }
-    return false
-  }
-
 }
