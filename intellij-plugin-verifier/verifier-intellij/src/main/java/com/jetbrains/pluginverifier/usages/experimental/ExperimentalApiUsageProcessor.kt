@@ -42,7 +42,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
   }
 
   override fun doProcessMethodInvocation(
-    methodReference: MethodReference,
+    invokedMethodReference: MethodReference,
     invokedMethod: Method,
     invocationInstruction: AbstractInsnNode,
     callerMethod: Method,
@@ -51,7 +51,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     val usageLocation = callerMethod.location
     if (isExperimental(invokedMethod, context, usageLocation)) {
       experimentalApiRegistrar.registerExperimentalApiUsage(
-        ExperimentalMethodUsage(methodReference, invokedMethod.location, usageLocation)
+        ExperimentalMethodUsage(invokedMethodReference, invokedMethod.location, usageLocation)
       )
     }
   }
