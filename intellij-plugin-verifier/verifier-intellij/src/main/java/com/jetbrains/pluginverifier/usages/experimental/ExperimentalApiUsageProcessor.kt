@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.usages.experimental
@@ -24,7 +24,7 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     resolvedMember: ClassFileMember,
     context: VerificationContext,
     usageLocation: Location
-  ) = resolvedMember.isExperimentalApi(context.classResolver)
+  ) = resolvedMember.isExperimentalApi(context.classResolver, usageLocation)
 
   override fun doProcessClassReference(
     classReference: ClassReference,

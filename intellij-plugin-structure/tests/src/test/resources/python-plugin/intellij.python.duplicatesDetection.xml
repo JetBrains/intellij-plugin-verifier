@@ -1,0 +1,11 @@
+<idea-plugin package="com.intellij.python.duplicatesDetection">
+  <dependencies>
+    <plugin id="com.intellij.modules.duplicatesDetector"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python"/>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+</idea-plugin>

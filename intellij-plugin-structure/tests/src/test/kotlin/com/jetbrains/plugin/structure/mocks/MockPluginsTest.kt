@@ -2,16 +2,9 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
-import com.jetbrains.plugin.structure.classes.resolvers.JarOrZipFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
@@ -21,21 +14,16 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
-import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.*
 
-class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
   private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
 
@@ -60,18 +48,6 @@ class MockPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<Id
     ),
     DuplicatedDependencyWarning("duplicatedDependencyId"),
   )
-
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFactory: IdePluginFactory = ::defaultPluginFactory, pluginFileBuilder: () -> Path): IdePlugin {
-    val pluginFile = pluginFileBuilder()
-    val successResult = createPluginSuccessfully(pluginFile, pluginFactory)
-    val (plugin, warnings) = successResult
-    assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
-    assertEquals(pluginFile, plugin.originalFile)
-    return plugin
-  }
-
-  override fun createManager(extractDirectory: Path): IdePluginManager =
-    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `single jar file`() {

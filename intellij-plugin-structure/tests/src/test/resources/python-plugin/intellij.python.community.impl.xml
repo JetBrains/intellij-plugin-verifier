@@ -1,0 +1,23 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.jetbrains.python">
+  <!--Part of both: community and prof -->
+
+  <dependencies>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="org.toml.lang"/>
+  </dependencies>
+
+  <resource-bundle>messages.PyBundle</resource-bundle>
+
+
+  <xi:include href="/META-INF/PythonParser.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonPsi.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonPsiImpl.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonSdk.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PythonSyntax.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+
+</idea-plugin>

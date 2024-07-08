@@ -11,8 +11,11 @@ dependencies {
   testImplementation(project(":structure-edu"))
   testImplementation(project(":structure-toolbox"))
   testImplementation(project(":structure-youtrack"))
+  testImplementation(project(":structure-teamcity-actions"))
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.jackson.module.kotlin)
   testImplementation(libs.jimfs)
+  testImplementation(libs.jackson.yaml)
+  testImplementation(libs.semver4j)
   testRuntimeOnly(sharedLibs.logback.classic)
 }

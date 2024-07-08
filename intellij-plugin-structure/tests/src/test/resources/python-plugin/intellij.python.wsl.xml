@@ -1,0 +1,13 @@
+<idea-plugin package="com.intellij.python.wsl">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.wsl.remoteSdk"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.remoteInterpreter"/>
+    <plugin id="org.jetbrains.plugins.remote-run"/>
+  </dependencies>
+  <!-- Inject WSL -->
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+</idea-plugin>

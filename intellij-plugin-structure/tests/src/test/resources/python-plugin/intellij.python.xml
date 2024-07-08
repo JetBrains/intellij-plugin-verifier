@@ -1,0 +1,24 @@
+<idea-plugin package="com.intellij.python.pro">
+<!-- Python PRO only features, used both in fleet, Pycharm and plugin -->
+  <dependencies>
+    <module name="intellij.django.core"/> <!-- Django language -->
+    <module name="intellij.jinja"/>
+    <module name="intellij.python.community.impl"/> <!-- The whole open-source part of Python support -->
+    <module name="intellij.template.lang.core"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.platform"/>
+    <module name="intellij.commandInterface"/>  <!-- for django console -->
+    <module name="intellij.python.endpoints"/>
+    <module name="intellij.python.pyramid"/>
+    <module name="intellij.python.templateLanguages"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+  </extensions>
+
+  <extensions defaultExtensionNs="com.jetbrains.python.debugger">
+  </extensions>
+</idea-plugin>

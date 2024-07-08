@@ -1,24 +1,24 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
-import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 
-class MockPluginsV2Test(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
   private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin-v2").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
   private val v2ModuleFile = mockPluginRoot.resolve("intellij.v2.module.xml")
@@ -35,18 +35,6 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : BasePluginManagerTest<
       listOf(PluginDescriptorIsNotFound("../intellij.v2.missing.xml"))
     )
   )
-
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFileBuilder: () -> Path): IdePlugin {
-    val pluginFile = pluginFileBuilder()
-    val successResult = createPluginSuccessfully(pluginFile)
-    val (plugin, warnings) = successResult
-    assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
-    assertEquals(pluginFile, plugin.originalFile)
-    return plugin
-  }
-
-  override fun createManager(extractDirectory: Path): IdePluginManager =
-    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `single jar file`() {
