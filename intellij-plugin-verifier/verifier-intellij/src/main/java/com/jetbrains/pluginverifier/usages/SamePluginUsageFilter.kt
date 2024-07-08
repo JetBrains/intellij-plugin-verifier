@@ -73,10 +73,7 @@ class SamePluginUsageFilter : ApiUsageFilter {
       .takeIf { callSourceOrigin == it } != null
   }
 
-  private fun isInvocationWithinPlatform(usageOrigin: FileOrigin, apiHostOrigin: FileOrigin): Boolean {
-    if (!apiHostOrigin.isOriginOfType<IdeFileOrigin>()) return false
-    if (usageOrigin == apiHostOrigin) return true
-    if (usageOrigin.isOriginOfType<IdeFileOrigin>()) return true
-    return false
-  }
+  private fun isInvocationWithinPlatform(usageOrigin: FileOrigin, apiHostOrigin: FileOrigin): Boolean =
+    apiHostOrigin.isOriginOfType<IdeFileOrigin>()
+      && (usageOrigin == apiHostOrigin || usageOrigin.isOriginOfType<IdeFileOrigin>())
 }
