@@ -6,9 +6,21 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Add `sinceVersion` and `untilVersion` to YouTrack plugins ([#1099](https://github.com/JetBrains/intellij-plugin-verifier/pull/1099))
+- Improve support for dependency resolution in the 2024.2+ Platform layout ([#1106](https://github.com/JetBrains/intellij-plugin-verifier/pull/1106), [MP-6704](https://youtrack.jetbrains.com/issue/MP-6704))
+- Parse and validate TeamCity Actions YAML descriptor ([#1091](https://github.com/JetBrains/intellij-plugin-verifier/pull/1091))
+- Log call stack when tracing annotation usage ([#1102](https://github.com/JetBrains/intellij-plugin-verifier/pull/1102))
+
 ### Changed
 
+- Do not report API usages in elements annotated with `@ApiStatus` family of annotations which are declared within a plugin and invoked from the plugin itself. 
+ The following annotations are supported: `@ApiStatus.OverrideOnly`, `@ApiStatus.Experimental`, `@ApiStatus.ScheduledForRemoval`, and `@ApiStatus.Internal`  ([#1103](https://github.com/JetBrains/intellij-plugin-verifier/pull/1103), [#1105](https://github.com/JetBrains/intellij-plugin-verifier/pull/1105))
+- Improve YouTrack compatibility and reuse code from other plugin models ([#1104](https://github.com/JetBrains/intellij-plugin-verifier/pull/1104))
+- Improve Plugin Module v2 support for modules
+
 ### Fixed
+
+- Improve module resolution in the 2024.2+ Platform layout. Handle `com.intellij.modules` family of modules, such as `rider` or `php`. ([#1107](https://github.com/JetBrains/intellij-plugin-verifier/pull/1107), [MP-6707](https://youtrack.jetbrains.com/issue/MP-6707))
 
 ## 1.369 - 2024-06-22
 
