@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.370 - 2024-07-08
+
+### Added
+
 - Add `sinceVersion` and `untilVersion` to YouTrack plugins ([#1099](https://github.com/JetBrains/intellij-plugin-verifier/pull/1099))
 - Improve support for dependency resolution in the 2024.2+ Platform layout ([#1106](https://github.com/JetBrains/intellij-plugin-verifier/pull/1106), [MP-6704](https://youtrack.jetbrains.com/issue/MP-6704))
 - Parse and validate TeamCity Actions YAML descriptor ([#1091](https://github.com/JetBrains/intellij-plugin-verifier/pull/1091))
