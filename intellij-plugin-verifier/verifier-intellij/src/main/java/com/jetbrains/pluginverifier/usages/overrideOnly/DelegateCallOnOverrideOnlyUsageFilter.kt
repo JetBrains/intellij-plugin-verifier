@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.isSubclassOrSelf
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.isCallOfSuperMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.matches
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -22,7 +23,7 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
                      invocationInstruction: AbstractInsnNode,
                      callerMethod: Method,
                      context: VerificationContext): Boolean = with(context.classResolver) {
-    val isCallingAllowedMethod = isInvokedMethodAllowed(callerMethod, invokedMethod)
+    val isCallingAllowedMethod = isInvokedMethodAllowed(callerMethod, invokedMethod, invocationInstruction)
     if (!isCallingAllowedMethod) {
       return false
     }
@@ -70,9 +71,12 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     return delegateMethodInvocationInstruction.matches(callerMethod)
   }
 
-  private fun isInvokedMethodAllowed(callerMethod: Method, invokedMethod: Method): Boolean {
-    return callerMethod.matches(invokedMethod)
-  }
+  private fun isInvokedMethodAllowed(
+    callerMethod: Method,
+    invokedMethod: Method,
+    invocationInstruction: AbstractInsnNode
+  ) = callerMethod.matches(invokedMethod)
+    && !isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
 
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
     return if (this is T) this else null
