@@ -1,8 +1,6 @@
 package mock.plugin.overrideOnly;
 
-import java.util.Vector;
-
-public class ClearCountingVector extends Vector<String> {
+public class ClearCountingContainer extends Container {
     private int clearCount = 0;
 
     @Override
