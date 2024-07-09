@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.usages.overrideOnly
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.tests.mocks.MockVerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
@@ -27,11 +28,11 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     val filter = DelegateCallOnOverrideOnlyUsageFilter()
 
     val className = "mock.plugin.overrideOnly.ClearCountingContainer"
-    val clearMethodAsm = ClearCountingContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
-    if (clearMethodAsm == null) {
+    val clearMethod = ClearCountingContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
+    if (clearMethod == null) {
       fail("Unable to find '$CLEAR_METHOD' method on the $className")
     }
-    clearMethodAsm!!
+    clearMethod!!
 
     val containerFqn = "mock.plugin.overrideOnly.Container"
     val containerClearMethodAsm = ContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
@@ -40,15 +41,11 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     }
     containerClearMethodAsm!!
 
-    val superClearInstruction = clearMethodAsm.asmNode.instructions.find { it is MethodInsnNode
-      && it.name == CLEAR_METHOD
-      && it.owner == containerFqn.toBinaryClassName()
-      && it.desc == NO_PARAMS_RETURN_VOID_DESCRIPTOR
-    }
+    val superClearInstruction = clearMethod.findInvocation(containerFqn.toBinaryClassName(), CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
     if (superClearInstruction == null) fail("Unable to find '$CLEAR_METHOD' method on the $className")
     superClearInstruction!!
 
-    val isAllowed = filter.allow(containerClearMethodAsm, superClearInstruction, clearMethodAsm, context)
+    val isAllowed = filter.allow(containerClearMethodAsm, superClearInstruction, clearMethod, context)
     Assert.assertFalse(isAllowed)
   }
 
@@ -65,12 +62,7 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     method!!
 
     val targetClassName = "java.lang.Package"
-    val instruction = method.asmNode.instructions.find {
-      it is MethodInsnNode
-        && it.name == GET_PACKAGE_METHOD
-        && it.owner == targetClassName.toBinaryClassName()
-        && it.desc == STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR
-    }
+    val instruction = method.findInvocation(targetClassName.toBinaryClassName(), GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
     if (instruction == null) fail("Unable to find '$GET_PACKAGE_METHOD' method on the $className")
     instruction!!
 
@@ -84,6 +76,17 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     Assert.assertFalse(isAllowed)
   }
 
+  private fun MethodAsm.findInvocation(
+    invokedMethodOwner: BinaryClassName,
+    invokedMethodName: String,
+    invokedMethodDescriptor: String
+  ): MethodInsnNode? =
+    asmNode.instructions.find {
+      it is MethodInsnNode
+        && it.name == invokedMethodName
+        && it.owner == invokedMethodOwner
+        && it.desc == invokedMethodDescriptor
+    }?.let { it as MethodInsnNode }
 
   private fun ClassNode.loadMethod(methodName: String, methodDescriptor: String): MethodAsm? {
     val classFile = ClassFileAsm(this, TestClasspathFileOrigin)
