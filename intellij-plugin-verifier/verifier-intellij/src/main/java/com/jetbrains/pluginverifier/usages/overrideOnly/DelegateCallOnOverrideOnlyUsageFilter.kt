@@ -28,12 +28,9 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
       return false
     }
 
-    var ins = invocationInstruction
-    val callMethod = ins.narrow<MethodInsnNode>() ?: return false
-    ins = ins.previous
-    val loadMethodParameter = ins.narrow<VarInsnNode>() ?: return false
-    ins = ins.previous
-    val getDelegateField = ins.narrow<FieldInsnNode>() ?: return false
+    val callMethod = invocationInstruction.narrow<MethodInsnNode>() ?: return false
+    val loadMethodParameter = callMethod.previousInstruction<VarInsnNode>() ?: return false
+    val getDelegateField = loadMethodParameter.previousInstruction<FieldInsnNode>() ?: return false
 
     val delegateBinaryClassName = getDelegateField.fieldClass ?: return false
     val delegateClassNode = when (val classResolution = resolveClass(delegateBinaryClassName)) {
@@ -79,6 +76,10 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     // static methods with @OverrideOnly do not make sense due to shadowing
     && !invocationInstruction.isStatic
     && !isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
+
+  private inline fun <reified T : AbstractInsnNode> AbstractInsnNode?.previousInstruction(): T? {
+    return this?.previous?.narrow<T>()
+  }
 
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
     return if (this is T) this else null
