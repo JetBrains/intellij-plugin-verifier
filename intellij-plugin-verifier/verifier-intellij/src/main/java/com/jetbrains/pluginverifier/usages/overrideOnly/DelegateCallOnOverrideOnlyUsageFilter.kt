@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.isCallOfSuperMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.matches
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldInsnNode
@@ -75,6 +76,8 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     invokedMethod: Method,
     invocationInstruction: AbstractInsnNode
   ) = callerMethod.matches(invokedMethod)
+    // static methods with @OverrideOnly do not make sense due to shadowing
+    && !invocationInstruction.isStatic
     && !isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
 
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
@@ -83,4 +86,7 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
 
   private val FieldInsnNode.fieldClass: BinaryClassName?
     get() = desc.extractClassNameFromDescriptor()
+
+  private val AbstractInsnNode.isStatic: Boolean
+    get() = opcode == Opcodes.INVOKESTATIC
 }
