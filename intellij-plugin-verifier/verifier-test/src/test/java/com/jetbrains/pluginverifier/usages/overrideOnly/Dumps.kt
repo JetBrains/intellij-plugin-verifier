@@ -102,7 +102,7 @@ private fun dumpClearCountingContainer(): ByteArray {
   return classWriter.toByteArray()
 }
 
-internal fun dumpContainer(): ByteArray {
+private fun dumpContainer(): ByteArray {
   val classWriter = ClassWriter(0)
   var methodVisitor: MethodVisitor
 
@@ -150,7 +150,7 @@ internal fun dumpContainer(): ByteArray {
   return classWriter.toByteArray()
 }
 
-fun dumpPackageInvokingBox(): ByteArray {
+private fun dumpPackageInvokingBox(): ByteArray {
   val classWriter = ClassWriter(0)
   var methodVisitor: MethodVisitor
 
