@@ -97,13 +97,13 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     return opcode == Opcodes.ALOAD && `var` == 0
   }
 
-  private fun AbstractInsnNode.previousNodes() =
-    generateSequence(this.previous) {
+  private val AbstractInsnNode.previousNodes
+    get() = generateSequence(this.previous) {
       it.previous
     }
 
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.previousOf(): T? =
-    previousNodes()
+    previousNodes
       .firstOrNull { it is T }
       ?.narrow()
 }
