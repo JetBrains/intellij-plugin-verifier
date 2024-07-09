@@ -1,5 +1,6 @@
 package mock.plugin.overrideOnly;
 
+@SuppressWarnings("unused")
 public class PackageInvokingBox {
     /*expected(DEPRECATED)
     Deprecated method java.lang.Package.getPackage(String) invocation

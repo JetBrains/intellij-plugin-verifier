@@ -2,6 +2,8 @@ package com.jetbrains.pluginverifier.usages.overrideOnly
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.tests.mocks.MockVerificationContext
+import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
@@ -9,6 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.toBinaryClassName
 import org.junit.Assert
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.ClassNode
@@ -22,11 +25,18 @@ private const val CLEAR_METHOD = "clear"
 private const val GET_PACKAGE_METHOD = "getPackage"
 
 class DelegateCallOnOverrideOnlyUsageFilterTest {
+  private lateinit var verificationContext: VerificationContext
+
+  private lateinit var filter: ApiUsageFilter
+
+  @Before
+  fun setUp() {
+    verificationContext = MockVerificationContext()
+    filter = DelegateCallOnOverrideOnlyUsageFilter()
+  }
+
   @Test
   fun `invocation of super as delegate is intentionally ignored`() {
-    val context = MockVerificationContext()
-    val filter = DelegateCallOnOverrideOnlyUsageFilter()
-
     val className = "mock.plugin.overrideOnly.ClearCountingContainer"
     val clearMethod = ClearCountingContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
     if (clearMethod == null) {
@@ -45,15 +55,12 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     if (superClearInstruction == null) fail("Unable to find '$CLEAR_METHOD' method on the $className")
     superClearInstruction!!
 
-    val isAllowed = filter.allow(containerClearMethodAsm, superClearInstruction, clearMethod, context)
+    val isAllowed = filter.allow(containerClearMethodAsm, superClearInstruction, clearMethod, verificationContext)
     Assert.assertFalse(isAllowed)
   }
 
   @Test
   fun `invocation of similarly named static method is ignored`() {
-    val context = MockVerificationContext()
-    val filter = DelegateCallOnOverrideOnlyUsageFilter()
-
     val className = "mock.plugin.overrideOnly.PackageInvokingBox"
     val method = PackageInvokingBoxNode().loadMethod(GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
     if (method == null) {
@@ -72,7 +79,7 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     }
     targetMethod!!
 
-    val isAllowed = filter.allow(targetMethod, instruction, method, context)
+    val isAllowed = filter.allow(targetMethod, instruction, method, verificationContext)
     Assert.assertFalse(isAllowed)
   }
 

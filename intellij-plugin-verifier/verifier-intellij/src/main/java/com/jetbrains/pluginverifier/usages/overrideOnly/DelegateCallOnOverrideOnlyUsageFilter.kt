@@ -78,10 +78,6 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     && !invocationInstruction.isStatic
     && !isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
 
-  private inline fun <reified T : AbstractInsnNode> AbstractInsnNode?.previousInstruction(): T? {
-    return this?.previous?.narrow<T>()
-  }
-
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
     return if (this is T) this else null
   }
