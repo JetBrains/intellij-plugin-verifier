@@ -23,8 +23,7 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
                      invocationInstruction: AbstractInsnNode,
                      callerMethod: Method,
                      context: VerificationContext): Boolean = with(context.classResolver) {
-    val isCallingAllowedMethod = isInvokedMethodAllowed(callerMethod, invokedMethod, invocationInstruction)
-    if (!isCallingAllowedMethod) {
+    if (!isInvokedMethodAllowed(callerMethod, invokedMethod, invocationInstruction)) {
       return false
     }
 
