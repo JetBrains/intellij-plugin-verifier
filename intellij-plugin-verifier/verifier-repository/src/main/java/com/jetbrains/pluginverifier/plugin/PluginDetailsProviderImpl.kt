@@ -61,24 +61,24 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     warnings: List<PluginProblem>,
     pluginFileLock: FileLock?
   ): PluginDetailsProvider.Result {
-
-    val pluginClassesLocations = try {
-      IdePluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
+    return try {
+      IdePluginClassesFinder
+        .findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
+        .let { pluginClassesLocations ->
+          PluginDetailsProvider.Result.Provided(
+            PluginDetails(
+              pluginInfo,
+              idePlugin,
+              warnings,
+              pluginClassesLocations,
+              pluginFileLock
+            ))
+        }
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       val message = e.message ?: e.javaClass.simpleName
-      return PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
+      PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
     }
-
-    return PluginDetailsProvider.Result.Provided(
-      PluginDetails(
-        pluginInfo,
-        idePlugin,
-        warnings,
-        pluginClassesLocations,
-        pluginFileLock
-      )
-    )
   }
 
   private val IdePlugin.problems: List<PluginProblem>
