@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
@@ -62,8 +63,7 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
     pluginFileLock: FileLock?
   ): PluginDetailsProvider.Result {
     return try {
-      IdePluginClassesFinder
-        .findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
+      readPluginClasses(pluginInfo, idePlugin)
         .let { pluginClassesLocations ->
           PluginDetailsProvider.Result.Provided(
             PluginDetails(
@@ -72,7 +72,8 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
               warnings,
               pluginClassesLocations,
               pluginFileLock
-            ))
+            )
+          )
         }
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
@@ -80,6 +81,13 @@ class PluginDetailsProviderImpl(private val extractDirectory: Path) : PluginDeta
       PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
     }
   }
+
+  private fun readPluginClasses(
+    pluginInfo: PluginInfo,
+    idePlugin: IdePlugin
+  ): IdePluginClassesLocations =
+    IdePluginClassesFinder
+      .findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
 
   private val IdePlugin.problems: List<PluginProblem>
     get() = if (this is StructurallyValidated) this.problems else emptyList()
