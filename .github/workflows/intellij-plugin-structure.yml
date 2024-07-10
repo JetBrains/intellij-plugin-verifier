@@ -64,7 +64,7 @@ jobs:
 
       - name: Collect Test Results
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-intellij-plugin-structure
           path: ${{ github.workspace }}/intellij-plugin-structure/build/reports/tests/test/
