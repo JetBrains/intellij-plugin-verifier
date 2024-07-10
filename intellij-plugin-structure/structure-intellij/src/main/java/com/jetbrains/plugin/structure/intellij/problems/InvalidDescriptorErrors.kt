@@ -193,6 +193,14 @@ class ReleaseDateWrongFormat(descriptorPath: String) : InvalidDescriptorProblem(
     get() = Level.ERROR
 }
 
+class ReleaseDateInFuture(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-date> parameter must be set to a date that is no more than five days in the future from today's date."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
 class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The theme description file cannot be found by the path '$themePath'. Ensure the theme description " +

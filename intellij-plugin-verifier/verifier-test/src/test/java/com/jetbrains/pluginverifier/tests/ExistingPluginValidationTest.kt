@@ -18,6 +18,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.slf4j.LoggerFactory
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 
 class ExistingPluginValidationTest : BasePluginTest() {
@@ -360,6 +362,43 @@ class ExistingPluginValidationTest : BasePluginTest() {
         val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
                 .singleOrNull()
         Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+    }
+
+    @Test
+    fun `internal plugin is built despite having release date in the future because it is remapped`() {
+        val releaseDateInFuture = LocalDate.now().plusMonths(1)
+        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+        val releaseDateInFutureString = releaseDateInFuture.format(formatter)
+        val header = ideaPlugin(vendor = "JetBrains")
+        val delegateResolver = IntelliJPluginCreationResultResolver()
+
+        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+            ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+        val problemResolver = JetBrainsPluginCreationResultResolver(
+            LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+            jetBrainsPluginLevelRemapping)
+
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $header
+              <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+        val creationSuccess = result as PluginCreationSuccess
+
+        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+        assertThat(creationSuccess.warnings.size, `is`(1))
+        val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
+            .singleOrNull()
+        Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
     }
 
     private fun pluginOf(header: String): ContentBuilder.() -> Unit = {

@@ -17,6 +17,7 @@
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported": "warning",
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
-    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning"
+    "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning",
+    "com.jetbrains.plugin.structure.intellij.problems.ReleaseDateInFuture": "warning"
   }
 }

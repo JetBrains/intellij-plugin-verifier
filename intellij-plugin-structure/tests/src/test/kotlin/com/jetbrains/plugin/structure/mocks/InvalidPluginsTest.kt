@@ -1,18 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
-import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
-import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
-import com.jetbrains.plugin.structure.base.problems.NotBoolean
-import com.jetbrains.plugin.structure.base.problems.NotNumber
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
-import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -28,6 +17,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
   private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
@@ -812,6 +803,18 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       },
       listOf(
         NotBoolean("optional", "plugin.xml")
+      )
+    )
+
+    val releaseDateInFuture = LocalDate.now().plusMonths(1)
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    val releaseDateInFutureString = releaseDateInFuture.format(formatter)
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        productDescriptor = """<product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>"""
+      },
+      listOf(
+        ReleaseDateInFuture("plugin.xml")
       )
     )
   }
