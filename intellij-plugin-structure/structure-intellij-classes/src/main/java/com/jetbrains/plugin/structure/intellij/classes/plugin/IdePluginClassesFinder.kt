@@ -5,7 +5,14 @@
 package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Settings
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
@@ -16,7 +23,6 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.Closeable
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -102,7 +108,7 @@ class IdePluginClassesFinder private constructor(
       return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
-    fun findPluginClasses(
+    private fun findPluginClasses(
       idePlugin: IdePlugin,
       extractDirectory: Path,
       readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
