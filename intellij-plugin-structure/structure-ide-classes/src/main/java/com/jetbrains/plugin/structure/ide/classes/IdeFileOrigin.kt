@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.classes
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.ide.Ide
+import java.nio.file.Path
 
 sealed class IdeFileOrigin : FileOrigin {
   override val parent: FileOrigin? = null
@@ -15,7 +16,7 @@ sealed class IdeFileOrigin : FileOrigin {
   data class SourceLibDirectory(override val ide: Ide) : IdeAwareFileOrigin(ide)
   data class CompiledModule(override val ide: Ide, val moduleName: String) : IdeAwareFileOrigin(ide)
 
-  class BundledPlugin() : IdeFileOrigin()
+  class BundledPlugin(val pluginFile: Path) : IdeFileOrigin()
 
   abstract class IdeAwareFileOrigin(open val ide: Ide): IdeFileOrigin()
 }
