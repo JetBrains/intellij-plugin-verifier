@@ -9,16 +9,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.isOriginOfType
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
-import com.jetbrains.pluginverifier.results.reference.ClassReference
-import com.jetbrains.pluginverifier.results.reference.FieldReference
-import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.filter.ApiUsageFilter
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
-import com.jetbrains.pluginverifier.verifiers.resolution.Field
-import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import org.objectweb.asm.tree.AbstractInsnNode
 
 /**
  * API Usage filter that allows class usages, method invocations and field references
@@ -26,43 +16,8 @@ import org.objectweb.asm.tree.AbstractInsnNode
  *
  * This filter will ignore API usages that occur within the same plugin.
  */
-class SamePluginUsageFilter : ApiUsageFilter {
-
-  override fun allow(
-    classReference: ClassReference,
-    invocationTarget: ClassFile,
-    caller: ClassFileMember,
-    usageType: ClassUsageType,
-    context: VerificationContext
-  ): Boolean {
-    val usageHost = caller.location.containingClass
-    val apiHost = invocationTarget.location.containingClass
-    return allow(usageHost, apiHost)
-  }
-
-  override fun allow(
-    invokedMethod: Method,
-    invocationInstruction: AbstractInsnNode,
-    callerMethod: Method,
-    context: VerificationContext
-  ): Boolean {
-    val usageHost = callerMethod.location.containingClass
-    val apiHost = invokedMethod.location.containingClass
-    return allow(usageHost, apiHost)
-  }
-
-  override fun allow(
-    fieldReference: FieldReference,
-    resolvedField: Field,
-    callerMethod: Method,
-    context: VerificationContext
-  ): Boolean {
-    val apiHost = callerMethod.location.containingClass
-    val usageHost = resolvedField.location.containingClass
-    return allow(usageHost, apiHost)
-  }
-
-  private fun allow(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
+class SamePluginUsageFilter : ClassLocationApiUsageFilter() {
+  override fun allow(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
     val usageOrigin = usageLocation.classFileOrigin
     val apiHostOrigin = apiLocation.classFileOrigin
     return isInvocationWithinPlatform(usageOrigin, apiHostOrigin)
