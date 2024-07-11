@@ -29,8 +29,9 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     }
 
     val callMethod = invocationInstruction.narrow<MethodInsnNode>() ?: return false
-    val loadMethodParameter = callMethod.previousInstruction<VarInsnNode>() ?: return false
-    val getDelegateField = loadMethodParameter.previousInstruction<FieldInsnNode>() ?: return false
+    val loadMethodParameter = callMethod.previousOf<VarInsnNode>() ?: return false
+    if (loadMethodParameter.isLoadThisReferenceOnOperandStack()) return false
+    val getDelegateField = loadMethodParameter.previousOf<FieldInsnNode>() ?: return false
 
     val delegateBinaryClassName = getDelegateField.fieldClass ?: return false
     val delegateClassNode = when (val classResolution = resolveClass(delegateBinaryClassName)) {
@@ -77,10 +78,6 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
     && !invocationInstruction.isStatic
     && !isCallOfSuperMethod(callerMethod, invokedMethod, invocationInstruction)
 
-  private inline fun <reified T : AbstractInsnNode> AbstractInsnNode?.previousInstruction(): T? {
-    return this?.previous?.narrow<T>()
-  }
-
   private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.narrow(): T? {
     return if (this is T) this else null
   }
@@ -90,4 +87,19 @@ class DelegateCallOnOverrideOnlyUsageFilter : ApiUsageFilter {
 
   private val AbstractInsnNode.isStatic: Boolean
     get() = opcode == Opcodes.INVOKESTATIC
+
+  private fun VarInsnNode.isLoadThisReferenceOnOperandStack(): Boolean {
+    // see JLS§2.6.1: On instance method invocation, local variable 0 is always used to pass `this` in Java
+    return opcode == Opcodes.ALOAD && `var` == 0
+  }
+
+  private val AbstractInsnNode.previousNodes
+    get() = generateSequence(this.previous) {
+      it.previous
+    }
+
+  private inline fun <reified T : AbstractInsnNode> AbstractInsnNode.previousOf(): T? =
+    previousNodes
+      .firstOrNull { it is T }
+      ?.narrow()
 }
