@@ -9,8 +9,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.toBinaryClassName
-import org.junit.Assert
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.objectweb.asm.ClassReader
@@ -39,16 +38,12 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
   fun `invocation of super as delegate is intentionally ignored`() {
     val className = "mock.plugin.overrideOnly.ClearCountingContainer"
     val clearMethod = ClearCountingContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
-    if (clearMethod == null) {
-      fail("Unable to find '$CLEAR_METHOD' method on the $className")
-    }
+    assertNotNull("Unable to find '$CLEAR_METHOD' method on the $className", clearMethod)
     clearMethod!!
 
     val containerFqn = "mock.plugin.overrideOnly.Container"
     val containerClearMethodAsm = ContainerNode().loadMethod(CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
-    if (containerClearMethodAsm == null) {
-      fail("Unable to find '$CLEAR_METHOD' method on the $className")
-    }
+    assertNotNull("Unable to find '$CLEAR_METHOD' method on the $className", containerClearMethodAsm)
     containerClearMethodAsm!!
 
     val superClearInstruction = clearMethod.findInvocation(containerFqn.toBinaryClassName(), CLEAR_METHOD, NO_PARAMS_RETURN_VOID_DESCRIPTOR)
@@ -56,31 +51,27 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
     superClearInstruction!!
 
     val isAllowed = filter.allow(containerClearMethodAsm, superClearInstruction, clearMethod, verificationContext)
-    Assert.assertFalse(isAllowed)
+    assertFalse(isAllowed)
   }
 
   @Test
   fun `invocation of similarly named static method is ignored`() {
     val className = "mock.plugin.overrideOnly.PackageInvokingBox"
-    val method = PackageInvokingBoxNode().loadMethod(GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
-    if (method == null) {
-      fail("Unable to find '$CLEAR_METHOD' method on the $className")
-    }
-    method!!
+    val getPackageMethodAsm = PackageInvokingBoxNode().loadMethod(GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
+    assertNotNull("Unable to find '$CLEAR_METHOD' method on the $className", getPackageMethodAsm)
+    getPackageMethodAsm!!
 
     val targetClassName = "java.lang.Package"
-    val instruction = method.findInvocation(targetClassName.toBinaryClassName(), GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
-    if (instruction == null) fail("Unable to find '$GET_PACKAGE_METHOD' method on the $className")
-    instruction!!
+    val getPackageInstruction = getPackageMethodAsm.findInvocation(targetClassName.toBinaryClassName(), GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
+    if (getPackageInstruction == null) fail("Unable to find '$GET_PACKAGE_METHOD' method on the $className")
+    getPackageInstruction!!
 
-    val targetMethod = loadMethod(targetClassName, GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
-    if (targetMethod == null) {
-      fail("Unable to find '$GET_PACKAGE_METHOD' method on the $targetClassName")
-    }
-    targetMethod!!
+    val getPackageTargetMethodAsm = loadMethod(targetClassName, GET_PACKAGE_METHOD, STRING_PARAM_RETURN_PACKAGE_DESCRIPTOR)
+    assertNotNull("Unable to find '$GET_PACKAGE_METHOD' method on the $targetClassName", getPackageTargetMethodAsm)
+    getPackageTargetMethodAsm!!
 
-    val isAllowed = filter.allow(targetMethod, instruction, method, verificationContext)
-    Assert.assertFalse(isAllowed)
+    val isAllowed = filter.allow(getPackageTargetMethodAsm, getPackageInstruction, getPackageMethodAsm, verificationContext)
+    assertFalse(isAllowed)
   }
 
   private fun MethodAsm.findInvocation(
