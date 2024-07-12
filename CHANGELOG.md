@@ -6,9 +6,17 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- In paid or freemium plugins, the [`<release-date>`](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__product-descriptor)  
+must be set to a date that is no more than 5 days in the future from today's date. ([#1119](https://github.com/JetBrains/intellij-plugin-verifier/pull/1119))
+- Improve documentation on the `-ignored-problems` CLI switch ([#1110](https://github.com/JetBrains/intellij-plugin-verifier/pull/1110))
+
 ### Changed
 
 ### Fixed
+
+- Fix false positives in Platform API when invoking another `@Experimental` Platform API, e. g. in PSI calls. ([#1120](https://github.com/JetBrains/intellij-plugin-verifier/pull/1120), [MP-6729](https://youtrack.jetbrains.com/issue/MP-6729))  
+- Fix `NullPointerException` on delegate calls in `OverrideOnly` checks. ([#1111](https://github.com/JetBrains/intellij-plugin-verifier/pull/1111), [#1112](https://github.com/JetBrains/intellij-plugin-verifier/pull/1112), [#1113](https://github.com/JetBrains/intellij-plugin-verifier/pull/1113), [MP-6724](https://youtrack.jetbrains.com/issue/MP-6724))
+- Upgrade dependencies
 
 ## 1.370 - 2024-07-08
 
