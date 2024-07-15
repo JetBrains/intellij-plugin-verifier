@@ -108,6 +108,14 @@ class IdePluginClassesFinder private constructor(
       return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
     }
 
+    fun fullyFindPluginClassesInExplicitLocations(idePlugin: IdePlugin, locations: List<LocationKey>): IdePluginClassesLocations =
+      IdePluginClassesFinder(
+        idePlugin,
+        extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir(),
+        Resolver.ReadMode.FULL,
+        locations
+      ).findPluginClasses()
+
     private fun findPluginClasses(
       idePlugin: IdePlugin,
       extractDirectory: Path,
