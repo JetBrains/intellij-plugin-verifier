@@ -353,8 +353,15 @@ Here is the full syntax of the command:
 
 * `-ignored-problems (-ip)`
 
-    A file that contains a list of problems that will be ignored in report. 
-    The file must contain lines in form `<plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>`
+    A file that contains a list of problems that will be ignored in the report. 
+    The file must contain lines in the format `<plugin_xml_id>:<plugin_version>:<problem_description_regexp_pattern>`.
+    Both `plugin_xml_id` and `plugin_version` are optional.
+
+    Examples:
+ 
+    * `DevKit:242.19890.14:access to unresolved class org.foo.Foo.*` — ignore the plugin problem that occurs in the plugin with the identifier `DevKit` and version `242.19890.14`.   
+    * `org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*` — ignore the plugin problem for all versions of the Kotlin plugin.  
+    * `access to unresolved class org.jetbrains.kotlin.compiler.*` — ignore the plugin problem for all plugins.
 
 * `-keep-only-problems (-kop)`
 

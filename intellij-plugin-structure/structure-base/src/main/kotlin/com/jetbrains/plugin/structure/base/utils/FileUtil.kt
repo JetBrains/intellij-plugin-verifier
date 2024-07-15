@@ -163,3 +163,12 @@ val Path.length: Long
 
 val Path.pluginSize: Bytes
   get() = if (isZip() || isJar()) Files.size(this) else UNKNOWN_SIZE
+
+val Path.description: String
+  get() {
+    return if (fileSystem == FileSystems.getDefault()) {
+      toString()
+    } else {
+      "$fileSystem!$this"
+    }
+  }

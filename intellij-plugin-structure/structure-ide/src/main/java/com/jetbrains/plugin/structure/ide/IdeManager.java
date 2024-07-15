@@ -19,7 +19,7 @@ public abstract class IdeManager {
 
   @NotNull
   public static IdeManager createManager() {
-    return new IdeManagerImpl();
+    return new DispatchingIdeManager();
   }
 
   /**

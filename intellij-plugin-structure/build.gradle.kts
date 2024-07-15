@@ -64,14 +64,14 @@ allprojects {
   }
 }
 
-val mavenCentralUsername = findProperty("mavenCentralUsername")?.toString()
-val mavenCentralPassword = findProperty("mavenCentralPassword")?.toString()
+val mavenCentralOssrhToken: String? by project
+val mavenCentralOssrhTokenPassword: String? by project
 
 nexusPublishing {
   repositories {
     sonatype {
-      username = mavenCentralUsername
-      password = mavenCentralPassword
+      username = mavenCentralOssrhToken
+      password = mavenCentralOssrhTokenPassword
     }
   }
 }
@@ -186,7 +186,7 @@ publishing {
 }
 
 signing {
-  isRequired = mavenCentralUsername != null
+  isRequired = mavenCentralOssrhToken != null
   if (isRequired) {
     val signingKey = findProperty("signingKey").toString()
     val signingPassword = findProperty("signingPassword").toString()

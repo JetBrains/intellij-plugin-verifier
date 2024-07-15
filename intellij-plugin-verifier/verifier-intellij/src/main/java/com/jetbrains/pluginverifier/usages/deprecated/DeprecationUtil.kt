@@ -9,6 +9,10 @@ import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import org.objectweb.asm.tree.AnnotationNode
 
+internal const val JETBRAINS_SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME = "org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval"
+internal const val JAVA_DEPRECATED_ANNOTATION_NAME = "java/lang/Deprecated"
+internal const val KOTLIN_DEPRECATED_ANNOTATION_NAME = "kotlin/Deprecated"
+
 /**
  * Extracts [DeprecationInfo] for the following cases:
  *
@@ -21,19 +25,19 @@ import org.objectweb.asm.tree.AnnotationNode
 val ClassFileMember.deprecationInfo: DeprecationInfo?
   get() {
     val annotations = annotations
-    val scheduledForRemoval = annotations.findAnnotation("org/jetbrains/annotations/ApiStatus\$ScheduledForRemoval")
+    val scheduledForRemoval = annotations.findAnnotation(JETBRAINS_SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME)
     if (scheduledForRemoval != null) {
       val inVersion = scheduledForRemoval.getAnnotationValue("inVersion") as? String
       return DeprecationInfo(true, inVersion)
     }
 
-    val deprecated = annotations.findAnnotation("java/lang/Deprecated")
+    val deprecated = annotations.findAnnotation(JAVA_DEPRECATED_ANNOTATION_NAME)
     if (deprecated != null) {
       val forRemoval = deprecated.getAnnotationValue("forRemoval") as? Boolean ?: false
       return DeprecationInfo(forRemoval, null)
     }
 
-    val kotlinDeprecated = annotations.findAnnotation("kotlin/Deprecated")
+    val kotlinDeprecated = annotations.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME)
     if (kotlinDeprecated != null) {
       val deprecationLevel = kotlinDeprecated.getEnumValue<DeprecationLevel>("level")
       if (deprecationLevel == DeprecationLevel.HIDDEN) {

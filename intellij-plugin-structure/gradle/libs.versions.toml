@@ -18,6 +18,7 @@ asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
 asm-util = { group = "org.ow2.asm", name = "asm-util", version.ref = "asm" }
 commons-compress = { group = "org.apache.commons", name = "commons-compress", version.ref = "commons-compress" }
 evo-inflector = { group = "org.atteo", name = "evo-inflector", version.ref = "evo-inflector" }
+jackson-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml" }
 jaxb-api = { group = "javax.xml.bind", name = "jaxb-api", version.ref = "jaxb" }
 jaxb-runtime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version.ref = "jaxb" }
 jdom = { group = "org.jdom", name = "jdom2", version.ref = "jdom" }

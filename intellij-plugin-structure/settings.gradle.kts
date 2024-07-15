@@ -12,6 +12,7 @@ include("structure-toolbox")
 include("structure-ide")
 include("structure-ide-classes")
 include("structure-youtrack")
+include("structure-teamcity-actions")
 include("tests")
 
 dependencyResolutionManagement {

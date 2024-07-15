@@ -10,6 +10,57 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+## 1.371 - 2024-07-12
+
+### Added
+
+- In paid or freemium plugins, the [`<release-date>`](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__product-descriptor)  
+must be set to a date that is no more than 5 days in the future from today's date. ([#1119](https://github.com/JetBrains/intellij-plugin-verifier/pull/1119))
+- Improve documentation on the `-ignored-problems` CLI switch ([#1110](https://github.com/JetBrains/intellij-plugin-verifier/pull/1110))
+
+### Fixed
+
+- Fix false positives in Platform API when invoking another `@Experimental` Platform API, e. g. in PSI calls. ([#1120](https://github.com/JetBrains/intellij-plugin-verifier/pull/1120), [MP-6729](https://youtrack.jetbrains.com/issue/MP-6729))  
+- Fix `NullPointerException` on delegate calls in `OverrideOnly` checks. ([#1111](https://github.com/JetBrains/intellij-plugin-verifier/pull/1111), [#1112](https://github.com/JetBrains/intellij-plugin-verifier/pull/1112), [#1113](https://github.com/JetBrains/intellij-plugin-verifier/pull/1113), [MP-6724](https://youtrack.jetbrains.com/issue/MP-6724))
+- Upgrade dependencies
+
+## 1.370 - 2024-07-08
+
+### Added
+
+- Add `sinceVersion` and `untilVersion` to YouTrack plugins ([#1099](https://github.com/JetBrains/intellij-plugin-verifier/pull/1099))
+- Improve support for dependency resolution in the 2024.2+ Platform layout ([#1106](https://github.com/JetBrains/intellij-plugin-verifier/pull/1106), [MP-6704](https://youtrack.jetbrains.com/issue/MP-6704))
+- Parse and validate TeamCity Actions YAML descriptor ([#1091](https://github.com/JetBrains/intellij-plugin-verifier/pull/1091))
+- Log call stack when tracing annotation usage ([#1102](https://github.com/JetBrains/intellij-plugin-verifier/pull/1102))
+
+### Changed
+
+- Do not report API usages in elements annotated with `@ApiStatus` family of annotations which are declared within a plugin and invoked from the plugin itself. 
+ The following annotations are supported: `@ApiStatus.OverrideOnly`, `@ApiStatus.Experimental`, `@ApiStatus.ScheduledForRemoval`, and `@ApiStatus.Internal`  ([#1103](https://github.com/JetBrains/intellij-plugin-verifier/pull/1103), [#1105](https://github.com/JetBrains/intellij-plugin-verifier/pull/1105))
+- Improve YouTrack compatibility and reuse code from other plugin models ([#1104](https://github.com/JetBrains/intellij-plugin-verifier/pull/1104))
+- Improve Plugin Module v2 support for modules
+
+### Fixed
+
+- Improve module resolution in the 2024.2+ Platform layout. Handle `com.intellij.modules` family of modules, such as `rider` or `php`. ([#1107](https://github.com/JetBrains/intellij-plugin-verifier/pull/1107), [MP-6707](https://youtrack.jetbrains.com/issue/MP-6707))
+
+## 1.369 - 2024-06-22
+
+### Added
+
+- Add a module for YouTrack plugins
+- Support `product-info.json`-based Platform layout for 2024.2 and newer ([#1100](https://github.com/JetBrains/intellij-plugin-verifier/pull/1100))  
+
+### Changed
+
+- Resolve XInclude targets both in `META-INF` and resource roots ([#1097](https://github.com/JetBrains/intellij-plugin-verifier/pull/1097))
+- Support conditional inclusion in XInclude directives (`includeIf`, `includeUnless`) ([#1097](https://github.com/JetBrains/intellij-plugin-verifier/pull/1097))
+- Upgrade dependencies
+
+### Fixed
+
+- Resolve issues with bundled plugins not being found (e. g. Kotlin, Python). ([#1100](https://github.com/JetBrains/intellij-plugin-verifier/pull/1100), [MP-6594](https://youtrack.jetbrains.com/issue/MP-6594))
+
 ## 1.367 - 2024-05-29
 
 ### Added

@@ -100,14 +100,14 @@ subprojects {
   }
 }
 
-val mavenCentralUsername: String? by project
-val mavenCentralPassword: String? by project
+val mavenCentralOssrhToken: String? by project
+val mavenCentralOssrhTokenPassword: String? by project
 
 nexusPublishing {
   repositories {
     sonatype {
-      username = mavenCentralUsername
-      password = mavenCentralPassword
+      username = mavenCentralOssrhToken
+      password = mavenCentralOssrhTokenPassword
     }
   }
 }
@@ -149,7 +149,7 @@ publishing {
 }
 
 signing {
-  isRequired = mavenCentralUsername != null
+  isRequired = mavenCentralOssrhToken != null
   if (isRequired) {
     val signingKey: String? by project
     val signingPassword: String? by project

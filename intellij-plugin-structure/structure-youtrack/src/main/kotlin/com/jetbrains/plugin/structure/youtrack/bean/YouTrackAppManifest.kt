@@ -6,62 +6,65 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class YouTrackAppManifest(
 
-  @JsonProperty("name")
+  @JsonProperty(YouTrackAppFields.Manifest.NAME)
   val name: String? = null,
 
-  @JsonProperty("title")
+  @JsonProperty(YouTrackAppFields.Manifest.TITLE)
   val title: String? = null,
 
-  @JsonProperty("version")
+  @JsonProperty(YouTrackAppFields.Manifest.VERSION)
   val version: String? = null,
 
-  @JsonProperty("description")
+  @JsonProperty(YouTrackAppFields.Manifest.DESCRIPTION)
   val description: String? = null,
 
-  @JsonProperty("url")
+  @JsonProperty(YouTrackAppFields.Manifest.URL)
   val url: String? = null,
 
-  @JsonProperty("icon")
+  @JsonProperty(YouTrackAppFields.Manifest.ICON)
   val icon: String? = null,
 
-  @JsonProperty("iconDark")
+  @JsonProperty(YouTrackAppFields.Manifest.ICON_DARK)
   val iconDark: String? = null,
 
-  @JsonProperty("youTrackVersion")
-  val youTrackVersion: String? = null,
+  @JsonProperty(YouTrackAppFields.Manifest.SINCE)
+  val minYouTrackVersion: String? = null,
 
-  @JsonProperty("changeNotes")
+  @JsonProperty(YouTrackAppFields.Manifest.UNTIL)
+  val maxYouTrackVersion: String? = null,
+
+  @JsonProperty(YouTrackAppFields.Manifest.NOTES)
   val changeNotes: String? = null,
 
-  @JsonProperty("vendor")
+  @JsonProperty(YouTrackAppFields.Manifest.VENDOR)
   val vendor: YouTrackAppVendor? = null,
 
-  @JsonProperty("widgets")
+  @JsonProperty(YouTrackAppFields.Manifest.WIDGETS)
   val widgets: List<YouTrackAppWidget>? = null
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class YouTrackAppWidget(
 
-  @JsonProperty("key")
+  @JsonProperty(YouTrackAppFields.Widget.KEY)
   val key: String? = null,
 
-  @JsonProperty("extensionPoint")
+  @JsonProperty(YouTrackAppFields.Widget.EXTENSION_POINT)
   val extensionPoint: String? = null,
 
-  @JsonProperty("indexPath")
+  @JsonProperty(YouTrackAppFields.Widget.INDEX_PATH)
   val indexPath: String? = null,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class YouTrackAppVendor(
 
-  @JsonProperty("name")
+  @JsonProperty(YouTrackAppFields.Vendor.NAME)
   val name: String? = null,
 
-  @JsonProperty("url")
+  @JsonProperty(YouTrackAppFields.Vendor.URL)
   val url: String? = null,
 
-  @JsonProperty("email")
+  @JsonProperty(YouTrackAppFields.Vendor.EMAIL)
   val email: String? = null
 )

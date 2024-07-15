@@ -17,6 +17,6 @@ class InternalApiUsageProcessor(pluginVerificationContext: PluginVerificationCon
     resolvedMember: ClassFileMember,
     context: VerificationContext,
     usageLocation: Location
-  ): Boolean = resolvedMember.isInternalApi(context.classResolver)
+  ): Boolean = resolvedMember.isInternalApi(context.classResolver, usageLocation)
     && resolvedMember.containingClassFile.classFileOrigin != usageLocation.containingClass.classFileOrigin
 }

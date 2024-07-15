@@ -1,0 +1,9 @@
+<idea-plugin package="com.intellij.python.javascript.debugger">
+  <dependencies>
+    <plugin id="JavaScriptDebugger"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains">
+  </extensions>
+</idea-plugin>

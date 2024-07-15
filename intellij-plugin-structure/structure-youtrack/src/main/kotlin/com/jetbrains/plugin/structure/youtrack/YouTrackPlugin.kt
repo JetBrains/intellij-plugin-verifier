@@ -15,5 +15,7 @@ data class YouTrackPlugin(
   override var vendorEmail: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
   override val changeNotes: String? = null,
-  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
+  override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
+  val sinceVersion: String? = null,
+  val untilVersion: String? = null,
 ) : Plugin

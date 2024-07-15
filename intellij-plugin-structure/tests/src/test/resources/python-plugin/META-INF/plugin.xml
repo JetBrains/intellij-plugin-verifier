@@ -1,0 +1,64 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/" package="PythonId">
+  <!-- Python Prof plugin installed both on IU and PyCharm Prof -->
+
+  <id>Pythonid</id>
+
+  <version>241.18034.62</version>
+
+  <idea-version since-build="241.18034" until-build="241.*"/>
+  <name>Python</name>
+
+  <description><![CDATA[
+The Python plug-in provides smart editing for Python scripts. The feature set of the plugin
+ corresponds to PyCharm IDE Professional Edition.
+<br>
+<a href="https://blog.jetbrains.com/pycharm">PyCharm blog</a><br>
+<a href="https://forum.jetbrains.com/forum/PyCharm">Discussion forum</a><br>
+<a href="https://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
+]]></description>
+
+  <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
+  <!-- Declare that we support python -->
+  <module value="com.intellij.modules.python"/>
+  <module value="com.intellij.modules.python.scientific"/>
+  <!-- Part shared with community -->
+  <xi:include href="/META-INF/python-v2-core-plugin-content-include.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!-- and pro part -->
+  <dependencies>
+    <module name="intellij.notebooks.ui"/>
+    <module name="intellij.notebooks.visualization"/>
+    <plugin id="com.intellij.modules.python-pro-capable"/> <!-- Only enable plugin if IDe supports python pro -->
+    <plugin id="com.intellij.modules.ultimate"/>
+    <plugin id="org.toml.lang"/><!-- intellij.python.community.imp doesn't work without it -->
+  </dependencies>
+
+  <content>
+    <module name="intellij.python.scientific"/>
+    <module name="intellij.python.plugin.java"/> <!-- Java for IU -->
+    <module name="intellij.django.core"/> <!-- Django core part -->
+    <module name="intellij.jinja"/> <!-- Jinja is a template lang -->
+    <module name="intellij.python.concurrencyVisualizer"/>
+    <module name="intellij.python.djangoDbConfig"/>
+    <module name="intellij.python.docker"/>
+    <module name="intellij.python.duplicatesDetection"/>
+    <module name="intellij.python.endpoints"/>
+    <module name="intellij.python.endpointsHttpclient"/>
+    <module name="intellij.python.endpointsMicroservicesUI"/>
+    <module name="intellij.python.gherkin"/>
+    <module name="intellij.python.javascript.debugger"/>
+    <module name="intellij.python.profiler"/>
+    <module name="intellij.python.pyramid"/>
+    <module name="intellij.python.pytestBdd"/>
+    <module name="intellij.python.remoteInterpreter"/>
+    <module name="intellij.python.uml"/>
+    <module name="intellij.python.wsl"/>
+    <module name="intellij.python.pro.js"/>
+    <module name="intellij.python.pro.localization"/>
+    <module name="intellij.python.templateLanguages"/>
+    <module name="intellij.python"/> <!-- Closed-source python -->
+    <module name="intellij.template.lang.core"/>
+    <module name="intellij.python.community.deprecated.extensions"/><!-- backward comp -->
+  </content>
+
+</idea-plugin>

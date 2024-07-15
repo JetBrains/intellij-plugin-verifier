@@ -186,6 +186,7 @@ internal class PluginCreator private constructor(
           }
         }
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
+        plugin.definedModules.add(moduleName)
 
         mergeContent(module)
       }
@@ -597,7 +598,10 @@ internal class PluginCreator private constructor(
       registerProblem(PropertyNotSpecified("release-date", descriptorPath))
     } else {
       try {
-        LocalDate.parse(releaseDate, releaseDateFormatter)
+        val date = LocalDate.parse(releaseDate, releaseDateFormatter)
+        if (date > LocalDate.now().plusDays(5)) {
+          registerProblem(ReleaseDateInFuture(descriptorPath))
+        }
       } catch (e: DateTimeParseException) {
         registerProblem(ReleaseDateWrongFormat(descriptorPath))
       }
