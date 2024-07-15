@@ -5,6 +5,8 @@
 package com.jetbrains.pluginverifier.filtering
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
+import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -21,12 +23,14 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
  * a) they typically don't contain IntelliJ API usages
  * b) the verification may produce false warnings since some libraries optionally depend on missing libraries.
  */
-class MainClassesSelector : ClassesSelector {
 class MainClassesSelector private constructor(private val locationKeys: List<LocationKey>) : ClassesSelector {
 
   companion object {
     fun forPlugin(): MainClassesSelector {
       return MainClassesSelector(IdePluginClassesFinder.MAIN_CLASSES_KEYS)
+    }
+    fun forBundledPlugin(): MainClassesSelector {
+      return MainClassesSelector(BundledPluginClassesFinder.LOCATION_KEYS)
     }
   }
 
@@ -34,7 +38,7 @@ class MainClassesSelector private constructor(private val locationKeys: List<Loc
    * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
    */
   override fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver> =
-    IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
+    locationKeys.flatMap { classesLocations.getResolvers(it) }
 
   /**
    * Determines plugin's classes that must be verified.
@@ -47,7 +51,7 @@ class MainClassesSelector private constructor(private val locationKeys: List<Loc
    * we predict the .jar-files that correspond to the plugin itself (not the secondary bundled libraries).
    */
   override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
-    val resolvers = IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
+    val resolvers = locationKeys.flatMap { classesLocations.getResolvers(it) }
 
     val allClassesReferencedFromXml = getAllClassesReferencedFromXml(classesLocations.idePlugin)
 
