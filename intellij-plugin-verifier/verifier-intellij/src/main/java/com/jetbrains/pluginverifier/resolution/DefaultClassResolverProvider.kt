@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
+import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import com.jetbrains.pluginverifier.verifiers.resolution.caching
 import java.io.Closeable
@@ -23,6 +24,8 @@ class DefaultClassResolverProvider(
   private val ideDescriptor: IdeDescriptor,
   private val externalClassesPackageFilter: PackageFilter
 ) : ClassResolverProvider {
+
+  private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
@@ -48,6 +51,32 @@ class DefaultClassResolverProvider(
 
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
 
+  private fun createDependenciesClassResolver(checkedPluginDetails: PluginDetails, dependencies: List<DependencyFinder.Result>): Resolver {
+    val resolvers = mutableListOf<Resolver>()
+    resolvers.closeOnException {
+      val providedResults = dependencies
+        .filterIsInstance<DependencyFinder.Result.DetailsProvided>()
+        .map { it.pluginDetailsCacheResult }
+        .filterIsInstance<PluginDetailsCache.Result.Provided>()
+
+      providedResults.forEach {
+        try {
+          resolvers += it.pluginDetails.pluginClassesLocations.createPluginResolver()
+        } catch (e: Exception) {
+          e.rethrowIfInterrupted()
+        }
+      }
+      resolvers
+    }
+    return CompositeResolver.create(resolvers)
+  }
+
+  private fun createPluginResolver(pluginDependency: PluginDetails): Resolver =
+    when (pluginDependency.pluginInfo) {
+      is BundledPluginInfo -> bundledPluginClassResolverProvider.getResolver(pluginDependency)
+      else -> pluginDependency.pluginClassesLocations.createPluginResolver()
+    }
+
   private fun createDependenciesResolver(results: List<DependencyFinder.Result>): Resolver {
     val resolvers = arrayListOf<Resolver>()
     resolvers.closeOnException {
@@ -56,7 +85,7 @@ class DefaultClassResolverProvider(
           val cacheResult = result.pluginDetailsCacheResult
           if (cacheResult is PluginDetailsCache.Result.Provided) {
             val resolver = try {
-              cacheResult.pluginDetails.pluginClassesLocations.createPluginResolver()
+              createPluginResolver(cacheResult.pluginDetails)
             } catch (e: Exception) {
               e.rethrowIfInterrupted()
               continue
@@ -68,4 +97,5 @@ class DefaultClassResolverProvider(
       return CompositeResolver.create(resolvers)
     }
   }
+
 }

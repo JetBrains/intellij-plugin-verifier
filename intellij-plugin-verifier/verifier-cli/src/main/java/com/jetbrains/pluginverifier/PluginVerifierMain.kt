@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputOptions
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
@@ -116,7 +116,7 @@ object PluginVerifierMain {
 
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
-    val pluginDetailsProvider = PluginDetailsProviderImpl(getPluginsExtractDirectory())
+    val pluginDetailsProvider = DefaultPluginDetailsProvider(getPluginsExtractDirectory())
 
     val reportageAggregator = LoggingPluginVerificationReportageAggregator()
     DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->

@@ -15,7 +15,7 @@ import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -40,7 +40,7 @@ class VerificationRunner {
     val tempFolder = Files.createTempDirectory("")
     tempFolder.toFile().deleteOnExit()
 
-    val pluginDetailsProvider = PluginDetailsProviderImpl(tempFolder)
+    val pluginDetailsProvider = DefaultPluginDetailsProvider(tempFolder)
     val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
     return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
