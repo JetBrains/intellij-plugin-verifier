@@ -22,6 +22,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
  * b) the verification may produce false warnings since some libraries optionally depend on missing libraries.
  */
 class MainClassesSelector : ClassesSelector {
+class MainClassesSelector private constructor(private val locationKeys: List<LocationKey>) : ClassesSelector {
+
+  companion object {
+    fun forPlugin(): MainClassesSelector {
+      return MainClassesSelector(IdePluginClassesFinder.MAIN_CLASSES_KEYS)
+    }
+  }
 
   /**
    * Selects the plugin's classes that can be referenced by the plugin and its dependencies.
