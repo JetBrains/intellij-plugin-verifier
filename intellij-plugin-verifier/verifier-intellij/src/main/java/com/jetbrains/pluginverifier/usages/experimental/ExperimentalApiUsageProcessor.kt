@@ -9,7 +9,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.FilteringApiUsageProcessor
-import com.jetbrains.pluginverifier.usages.SameOriginApiUsageFilter
+import com.jetbrains.pluginverifier.usages.SamePluginUsageFilter
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
@@ -19,7 +19,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: ExperimentalApiRegistrar) : FilteringApiUsageProcessor(
-  SameOriginApiUsageFilter()
+  SamePluginUsageFilter()
 ) {
 
   private fun isExperimental(
