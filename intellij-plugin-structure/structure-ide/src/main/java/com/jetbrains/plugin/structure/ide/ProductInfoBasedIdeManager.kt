@@ -196,7 +196,5 @@ class ProductInfoBasedIdeManager : IdeManager() {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
     is PluginCreationFail -> Failure(pluginArtifactPath, errorsAndWarnings)
   }
-
-
 }
 
