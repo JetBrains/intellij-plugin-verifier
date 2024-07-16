@@ -117,11 +117,14 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
                 """
                   <idea-plugin>
                     <id>com.jetbrains.codeWithMe</id>
+                    <name>Code With Me</name>
+                    <vendor>JetBrains</vendor>
                     <version>242.20224.38</version>
                     <idea-version since-build="242.20224.38" until-build="242.20224.38" />
                     <!-- Intentionally set a release date in the future -->
                     <product-descriptor 
                       code="PCWMP" 
+                      release-version="2024200"
                       release-date="40000101" />
                   </idea-plugin>                                    
                 """.trimIndent()

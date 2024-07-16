@@ -7,6 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
+import java.time.LocalDate
 
 class ProductInfoBasedIdeManagerTest {
 
@@ -26,7 +27,7 @@ class ProductInfoBasedIdeManagerTest {
     val ideManager = ProductInfoBasedIdeManager()
     val ide = ideManager.createIde(ideRoot)
 
-    assertEquals(4, ide.bundledPlugins.size)
+    assertEquals(5, ide.bundledPlugins.size)
     val uiPlugin = ide.getPluginById("intellij.notebooks.ui")
     assertNotNull(uiPlugin)
     assertTrue(uiPlugin is IdeModule)
@@ -59,6 +60,14 @@ class ProductInfoBasedIdeManagerTest {
     assertNotNull(ideCore)
     with(ideCore!!) {
       assertEquals(4, definedModules.size)
+    }
+
+    val codeWithMe = ide.getPluginById("com.jetbrains.codeWithMe")
+    assertNotNull(codeWithMe)
+    with(codeWithMe!!) {
+      assertNotNull(productDescriptor)
+      val productDescriptor = productDescriptor!!
+      assertEquals(LocalDate.of(4000, 1, 1), productDescriptor.releaseDate)
     }
   }
 
