@@ -109,6 +109,27 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
           }
         }
       }
+      dir("cwm-plugin") {
+        dir("lib") {
+          zip("cwm-plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                  <idea-plugin>
+                    <id>com.jetbrains.codeWithMe</id>
+                    <version>242.20224.38</version>
+                    <idea-version since-build="242.20224.38" until-build="242.20224.38" />
+                    <!-- Intentionally set a release date in the future -->
+                    <product-descriptor 
+                      code="PCWMP" 
+                      release-date="40000101" />
+                  </idea-plugin>                                    
+                """.trimIndent()
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -148,7 +169,14 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
               "classPath": [
                 "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
               ]
-            }            
+            },
+            {
+              "name": "com.jetbrains.codeWithMe",
+              "kind": "plugin",
+              "classPath": [
+                "plugins/cwm-plugin/lib/cwm-plugin.jar"
+              ]
+            }                      
           ]
         } 
     """.trimIndent()

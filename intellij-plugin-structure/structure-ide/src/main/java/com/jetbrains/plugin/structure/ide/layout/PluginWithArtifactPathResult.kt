@@ -22,6 +22,17 @@ internal sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: 
           idePath.relativize(it.pluginArtifactPath)
         }.joinToString(", ")
         log.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
+        if (log.isDebugEnabled) {
+          buildString {
+            failures
+              .filterIsInstance<Failure>()
+              .forEach { (pluginArtifactPath, problems) ->
+                append("Unable to load '")
+                append(idePath.relativize(pluginArtifactPath)).append("': ")
+                append(problems.joinToString("\n* ", "\n* "))
+              }
+          }.let { log.debug(it) }
+        }
       }
     }
   }
