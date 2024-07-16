@@ -185,7 +185,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
-    is PluginCreationFail -> Failure(pluginArtifactPath)
+    is PluginCreationFail -> Failure(pluginArtifactPath, errorsAndWarnings)
   }
 
 
