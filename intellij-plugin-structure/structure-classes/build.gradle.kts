@@ -7,6 +7,8 @@ dependencies {
   api(libs.asm.tree)
   api(libs.asm.analysis)
 
+  api(libs.kotlinx.metadata)
+
   implementation(project(":structure-base"))
 
   api(sharedLibs.caffeine)
