@@ -5,7 +5,9 @@
 package com.jetbrains.pluginverifier.usages.javaPlugin
 
 import com.jetbrains.plugin.structure.classes.resolvers.findOriginOfType
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.BundledPlugin
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
@@ -24,8 +26,20 @@ class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaP
   }
 
   private fun ClassFileMember.isJavaPluginApi(): Boolean {
-    val pluginFileOrigin = containingClassFile.classFileOrigin.findOriginOfType<PluginFileOrigin>()
-    return pluginFileOrigin != null && pluginFileOrigin.idePlugin.pluginId == "com.intellij.java"
+    with(containingClassFile.classFileOrigin) {
+      val bundledPluginOrigin = findOriginOfType<BundledPlugin>()
+      if (bundledPluginOrigin != null) {
+        return bundledPluginOrigin.isJavaPlugin()
+      }
+      val pluginOrigin = findOriginOfType<PluginFileOrigin>()
+      if (pluginOrigin != null) {
+        return pluginOrigin.isJavaPlugin()
+      }
+      return false
+    }
   }
 
+  private fun BundledPlugin.isJavaPlugin() = idePlugin.isJavaPlugin()
+  private fun PluginFileOrigin.isJavaPlugin() = idePlugin.isJavaPlugin()
+  private fun IdePlugin.isJavaPlugin() = pluginId == "com.intellij.java"
 }

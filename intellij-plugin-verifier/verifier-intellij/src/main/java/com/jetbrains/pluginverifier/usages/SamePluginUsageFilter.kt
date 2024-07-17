@@ -20,7 +20,8 @@ class SamePluginUsageFilter : ClassLocationApiUsageFilter() {
   override fun allow(usageLocation: ClassLocation, apiLocation: ClassLocation): Boolean {
     val usageOrigin = usageLocation.classFileOrigin
     val apiHostOrigin = apiLocation.classFileOrigin
-    return isInvocationWithinPlatform(usageOrigin, apiHostOrigin)
+    return isInvocationWithinSameOrigin(usageOrigin, apiHostOrigin)
+      || isInvocationWithinPlatform(usageOrigin, apiHostOrigin)
       || isInvocationWithinSamePlugin(usageOrigin, apiHostOrigin)
   }
 
@@ -30,4 +31,8 @@ class SamePluginUsageFilter : ClassLocationApiUsageFilter() {
   private fun isInvocationWithinPlatform(usageOrigin: FileOrigin, apiHostOrigin: FileOrigin) =
     apiHostOrigin.isOriginOfType<IdeFileOrigin>()
       && (usageOrigin == apiHostOrigin || usageOrigin.isOriginOfType<IdeFileOrigin>())
+
+  private fun isInvocationWithinSameOrigin(usageOrigin: FileOrigin, apiHostOrigin: FileOrigin): Boolean {
+    return SameOriginApiUsageFilter(usageOrigin, apiHostOrigin)
+  }
 }

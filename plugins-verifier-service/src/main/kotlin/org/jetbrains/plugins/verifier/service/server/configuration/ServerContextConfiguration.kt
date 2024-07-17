@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
-import com.jetbrains.pluginverifier.plugin.PluginDetailsProviderImpl
+import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
@@ -68,7 +68,7 @@ class ServerContextConfiguration(
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
-    val pluginDetailsProvider = PluginDetailsProviderImpl(extractedPluginsDir)
+    val pluginDetailsProvider = DefaultPluginDetailsProvider(extractedPluginsDir)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = SizeLimitedPluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 

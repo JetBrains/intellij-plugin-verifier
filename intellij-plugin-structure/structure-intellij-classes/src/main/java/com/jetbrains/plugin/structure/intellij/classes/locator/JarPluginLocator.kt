@@ -13,7 +13,10 @@ import java.nio.file.Path
 /**
  * Locates plugin classes located in a single JAR file.
  */
-class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator {
+class JarPluginLocator(
+  private val readMode: Resolver.ReadMode,
+  private val fileOriginProvider: FileOriginProvider = SingleJarFileOriginProvider
+) : ClassesLocator {
   override val locationKey: LocationKey = JarPluginKey
 
   /**
@@ -22,7 +25,7 @@ class JarPluginLocator(private val readMode: Resolver.ReadMode) : ClassesLocator
    */
   override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
     if (pluginFile.isJar()) {
-      return listOf(JarFileResolver(pluginFile, readMode, PluginFileOrigin.SingleJar(idePlugin)))
+      return listOf(JarFileResolver(pluginFile, readMode, fileOriginProvider.getFileOrigin(idePlugin, pluginFile)))
     }
     return emptyList()
   }
@@ -32,4 +35,8 @@ object JarPluginKey : LocationKey {
   override val name: String = "jar"
 
   override fun getLocator(readMode: Resolver.ReadMode) = JarPluginLocator(readMode)
+}
+
+object SingleJarFileOriginProvider: FileOriginProvider {
+  override fun getFileOrigin(idePlugin: IdePlugin, pluginFile: Path) = PluginFileOrigin.SingleJar(idePlugin)
 }

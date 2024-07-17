@@ -343,7 +343,7 @@ class PluginVerifier(
  * Selectors of classes that constitute the plugin
  * class loader and of classes that should be verified.
  */
-private val classesSelectors = listOf(MainClassesSelector(), ExternalBuildClassesSelector())
+private val classesSelectors = listOf(MainClassesSelector.forPlugin(), ExternalBuildClassesSelector())
 
 fun IdePluginClassesLocations.createPluginResolver() =
   CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) })
