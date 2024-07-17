@@ -131,7 +131,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
   ): PluginWithArtifactPathResult {
     return IdePluginManager
       .createManager(pathResolver)
-      .createBundledModule(pluginArtifactPath, ideVersion, descriptorName)
+      .createBundledModule(pluginArtifactPath, ideVersion, descriptorName, bundledPluginCreationResultResolver)
       .withPath(pluginArtifactPath)
   }
 
