@@ -23,6 +23,9 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
+import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -40,6 +43,12 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::cl
 
 class ProductInfoBasedIdeManager : IdeManager() {
   private val productInfoParser = ProductInfoParser()
+
+  /**
+   * Problem level remapping used for bundled plugins.
+   */
+  private val bundledPluginCreationResultResolver: PluginCreationResultResolver
+    get() = JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
 
   @Throws(InvalidIdeException::class)
   override fun createIde(idePath: Path): Ide = createIde(idePath, VERSION_FROM_PRODUCT_INFO)
@@ -133,7 +142,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ) = IdePluginManager
     .createManager(resourceResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath)
+    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, bundledPluginCreationResultResolver)
     .withPath(pluginArtifactPath)
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
@@ -185,9 +194,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
 
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
-    is PluginCreationFail -> Failure(pluginArtifactPath)
+    is PluginCreationFail -> Failure(pluginArtifactPath, errorsAndWarnings)
   }
-
-
 }
 
