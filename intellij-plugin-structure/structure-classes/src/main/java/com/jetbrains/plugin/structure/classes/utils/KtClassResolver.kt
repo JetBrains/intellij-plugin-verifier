@@ -13,11 +13,12 @@ class KtClassResolver {
   private val cache = HashMap<Signature, KtClassNode>()
 
   operator fun get(classNode: ClassNode): KtClassNode? {
-    return if (classNode in cache) {
-      cache[classNode]
+    val signature: Signature = classNode.signature ?: return classNode.ktClassNode
+    return if (signature in cache) {
+      cache[signature]
     } else {
       classNode.ktClassNode?.also {
-        cache[classNode] = it
+        cache[signature] = it
       }
     }
   }
@@ -25,18 +26,6 @@ class KtClassResolver {
   private val ClassNode.ktClassNode: KtClassNode?
     get() = findMetadataAnnotation(this)
       ?.let { annotation -> getKtClassNode(this, annotation) }
-
-  private operator fun HashMap<Signature, KtClassNode>.get(classNode: ClassNode): KtClassNode? {
-    return classNode.signature?.let { cache[it] }
-  }
-
-  private operator fun HashMap<Signature, KtClassNode>.set(classNode: ClassNode, ktClassNode: KtClassNode) {
-    classNode.signature?.let { put(it, ktClassNode) }
-  }
-
-  private operator fun HashMap<Signature, KtClassNode>.contains(classNode: ClassNode): Boolean {
-    return containsKey(classNode.signature)
-  }
 
   private fun getKtClassNode(classNode: ClassNode, metadataAnnotation: Metadata): KtClassNode? {
     val metadata = KotlinClassMetadata.readStrict(metadataAnnotation)
