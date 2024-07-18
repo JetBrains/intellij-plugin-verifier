@@ -89,6 +89,18 @@ private class PluginDetailsResourceProvider(
       .provideDetails(pluginInfo)
   }
 
+  private fun provideDependencyDetails(dependency: DependencyPluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+    val unwrappedPlugin = dependency.idePlugin
+    val unwrappedPluginInfo = dependency.pluginInfo
+    return if (unwrappedPlugin != null) {
+      pluginDetailsProvider.providePluginDetails(unwrappedPluginInfo, unwrappedPlugin).provided
+    } else {
+      pluginFileProvider
+        .getPluginFile(unwrappedPluginInfo)
+        .provideDetails(dependency)
+    }
+  }
+
   private fun PluginFileProvider.Result.provideDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
     return when (this) {
       is PluginFileProvider.Result.Found -> {
@@ -99,18 +111,6 @@ private class PluginDetailsResourceProvider(
 
       is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
       is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
-    }
-  }
-
-  private fun provideDependencyDetails(dependency: DependencyPluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-    val unwrappedPlugin = dependency.idePlugin
-    val unwrappedPluginInfo = dependency.pluginInfo
-    return if (unwrappedPlugin != null) {
-      pluginDetailsProvider.providePluginDetails(unwrappedPluginInfo, unwrappedPlugin).provided
-    } else {
-      pluginFileProvider
-        .getPluginFile(unwrappedPluginInfo)
-        .provideDetails(dependency)
     }
   }
 
