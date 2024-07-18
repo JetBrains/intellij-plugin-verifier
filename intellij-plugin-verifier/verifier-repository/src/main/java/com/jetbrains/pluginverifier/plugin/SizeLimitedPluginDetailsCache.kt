@@ -84,16 +84,21 @@ private class PluginDetailsResourceProvider(
   }
 
   private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-    return with(pluginFileProvider.getPluginFile(pluginInfo)) {
-      when (this) {
-        is PluginFileProvider.Result.Found -> {
-          pluginDetailsProvider
-            .providePluginDetails(pluginInfo, pluginFileLock)
-            .provided
-        }
-        is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
-        is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
+    return pluginFileProvider
+      .getPluginFile(pluginInfo)
+      .provideDetails(pluginInfo)
+  }
+
+  private fun PluginFileProvider.Result.provideDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+    return when (this) {
+      is PluginFileProvider.Result.Found -> {
+        pluginDetailsProvider
+          .providePluginDetails(pluginInfo, pluginFileLock)
+          .provided
       }
+
+      is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
+      is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
     }
   }
 
@@ -103,16 +108,9 @@ private class PluginDetailsResourceProvider(
     return if (unwrappedPlugin != null) {
       pluginDetailsProvider.providePluginDetails(unwrappedPluginInfo, unwrappedPlugin).provided
     } else {
-      with(pluginFileProvider.getPluginFile(unwrappedPluginInfo)) {
-        when (this) {
-          is PluginFileProvider.Result.Found -> pluginDetailsProvider
-            .providePluginDetails(dependency, pluginFileLock)
-            .provided
-
-          is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
-          is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
-        }
-      }
+      pluginFileProvider
+        .getPluginFile(unwrappedPluginInfo)
+        .provideDetails(dependency)
     }
   }
 
