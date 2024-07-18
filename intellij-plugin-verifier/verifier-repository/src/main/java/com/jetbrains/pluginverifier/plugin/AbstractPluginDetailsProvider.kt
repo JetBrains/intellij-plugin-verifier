@@ -33,7 +33,7 @@ abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path)
 
   override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
     pluginFileLock.closeOnException {
-      with(createPlugin(pluginFileLock)) {
+      with(createPlugin(pluginInfo, pluginFileLock)) {
         when (this) {
           is PluginCreationSuccess<IdePlugin> -> {
             readPluginClasses(
@@ -85,6 +85,6 @@ abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path)
     }
   }
 
-  protected fun createPlugin(pluginFileLock: FileLock) =
+  protected open fun createPlugin(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
     idePluginManager.createPlugin(pluginFileLock.file)
 }
