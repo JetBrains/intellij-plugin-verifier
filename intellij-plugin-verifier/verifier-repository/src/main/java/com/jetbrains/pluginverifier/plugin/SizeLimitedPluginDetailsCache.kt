@@ -23,8 +23,8 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInf
  */
 class SizeLimitedPluginDetailsCache(
   cacheSize: Int,
-  val pluginFileProvider: PluginFileProvider,
-  val pluginDetailsProvider: PluginDetailsProvider
+  pluginFileProvider: PluginFileProvider,
+  pluginDetailsProvider: PluginDetailsProvider
 ) : PluginDetailsCache {
 
   private val internalCache = createSizeLimitedResourceCache(
