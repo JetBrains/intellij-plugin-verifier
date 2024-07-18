@@ -24,7 +24,7 @@ import java.nio.file.Path
  * uses the [extractDirectory] for extracting `.zip`-ped plugins.
  */
 abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path) : PluginDetailsProvider {
-  private val idePluginManager = IdePluginManager.createManager(extractDirectory)
+  protected val idePluginManager = IdePluginManager.createManager(extractDirectory)
 
   private val IdePlugin.problems: List<PluginProblem>
     get() = if (this is StructurallyValidated) this.problems else emptyList()
