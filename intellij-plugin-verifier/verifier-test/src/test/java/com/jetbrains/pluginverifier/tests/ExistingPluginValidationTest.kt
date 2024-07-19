@@ -322,93 +322,95 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat(creationSuccess.warnings.size, `is`(0))
   }
 
-    @Test
-    fun `internal plugin is build despite having a service extension point preload because it is remapped`() {
-        val header = ideaPlugin(vendor = "JetBrains")
-        val delegateResolver = IntelliJPluginCreationResultResolver()
+  @Test
+  fun `internal plugin is build despite having a service extension point preload because it is remapped`() {
+    val header = ideaPlugin(vendor = "JetBrains")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
 
-        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-                ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
-        val problemResolver = JetBrainsPluginCreationResultResolver(
-                LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
-                jetBrainsPluginLevelRemapping)
+    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val problemResolver = JetBrainsPluginCreationResultResolver(
+      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+      jetBrainsPluginLevelRemapping
+    )
 
-        val result = buildPluginWithResult(problemResolver) {
-            dir("META-INF") {
-                file("plugin.xml") {
-                    """
-            <idea-plugin>
-              $header
-              <extensions defaultExtensionNs="com.intellij">
-                <applicationService
-                    serviceInterface="com.example.MyAppService"
-                    serviceImplementation="com.example.MyAppServiceImpl"
-                    preload="await"
-                    />
-              </extensions>  
-            </idea-plugin>
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
           """
-                }
-            }
+          <idea-plugin>
+            $header
+            <extensions defaultExtensionNs="com.intellij">
+              <applicationService
+                  serviceInterface="com.example.MyAppService"
+                  serviceImplementation="com.example.MyAppServiceImpl"
+                  preload="await"
+                  />
+            </extensions>  
+          </idea-plugin>
+        """
         }
-        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
-        val creationSuccess = result as PluginCreationSuccess
-
-        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
-        // warning about ServiceExtensionPointPreload
-        val warnings = creationSuccess.warnings
-        assertEquals(1, warnings.size)
-        val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
-                .singleOrNull()
-        Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+      }
     }
+    assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = result as PluginCreationSuccess
 
-    @Test
-    fun `internal plugin is built despite having release date in the future because it is remapped`() {
-        val releaseDateInFuture = LocalDate.now().plusMonths(1)
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val releaseDateInFutureString = releaseDateInFuture.format(formatter)
-        val header = ideaPlugin(vendor = "JetBrains")
-        val delegateResolver = IntelliJPluginCreationResultResolver()
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+    // warning about ServiceExtensionPointPreload
+    val warnings = creationSuccess.warnings
+    assertEquals(1, warnings.size)
+    val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+      .singleOrNull()
+    Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+  }
 
-        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-            ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
-        val problemResolver = JetBrainsPluginCreationResultResolver(
-            LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
-            jetBrainsPluginLevelRemapping)
+  @Test
+  fun `internal plugin is built despite having release date in the future because it is remapped`() {
+    val releaseDateInFuture = LocalDate.now().plusMonths(1)
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    val releaseDateInFutureString = releaseDateInFuture.format(formatter)
+    val header = ideaPlugin(vendor = "JetBrains")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
 
-        val result = buildPluginWithResult(problemResolver) {
-            dir("META-INF") {
-                file("plugin.xml") {
-                    """
-            <idea-plugin>
-              $header
-              <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
-            </idea-plugin>
+    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val problemResolver = JetBrainsPluginCreationResultResolver(
+      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+      jetBrainsPluginLevelRemapping
+    )
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
           """
-                }
-            }
+          <idea-plugin>
+            $header
+            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
+          </idea-plugin>
+        """
         }
-        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
-        val creationSuccess = result as PluginCreationSuccess
-
-        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
-        assertThat(creationSuccess.warnings.size, `is`(1))
-        val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
-            .singleOrNull()
-        Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+      }
     }
+    assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = result as PluginCreationSuccess
 
-    private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+    assertThat(creationSuccess.warnings.size, `is`(1))
+    val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
+      .singleOrNull()
+    Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+  }
+
+  private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
         """
-            <idea-plugin>
-              $header
-            </idea-plugin>
-          """
+          <idea-plugin>
+            $header
+          </idea-plugin>
+        """
       }
     }
   }
