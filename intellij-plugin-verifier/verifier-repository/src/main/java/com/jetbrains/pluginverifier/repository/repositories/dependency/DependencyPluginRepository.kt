@@ -12,7 +12,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * Repository wrapping another repository while mapping plugins into [dependencies][DependencyPluginInfo].
  */
 class DependencyPluginRepository(private val delegateRepository: PluginRepository) : PluginRepository {
-  override val presentableName: String = "Plugin Dependency repository"
+  override val presentableName: String = "${delegateRepository.presentableName} (used for plugin dependencies)"
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> =
     delegateRepository.getLastCompatiblePlugins(ideVersion).asDependencies()
