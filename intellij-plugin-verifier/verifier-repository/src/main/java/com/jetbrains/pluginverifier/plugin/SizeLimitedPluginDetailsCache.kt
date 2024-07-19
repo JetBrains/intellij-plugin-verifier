@@ -4,8 +4,8 @@
 
 package com.jetbrains.pluginverifier.plugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.WithIdePlugin
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -13,10 +13,8 @@ import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.custom.CustomPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 
 /**
  * This cache is intended to open and cache [PluginDetails] for
@@ -90,8 +88,8 @@ private class PluginDetailsResourceProvider(
   }
 
   private fun provideDependencyDetails(dependency: DependencyPluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-    val unwrappedPlugin = dependency.idePlugin
     val unwrappedPluginInfo = dependency.pluginInfo
+    val unwrappedPlugin = (unwrappedPluginInfo as? WithIdePlugin)?.idePlugin
     return if (unwrappedPlugin != null) {
       pluginDetailsProvider.providePluginDetails(unwrappedPluginInfo, unwrappedPlugin).provided
     } else {
@@ -114,19 +112,7 @@ private class PluginDetailsResourceProvider(
     }
   }
 
-  private val DependencyPluginInfo.idePlugin: IdePlugin?
-    get() {
-      return when (pluginInfo) {
-        is BundledPluginInfo -> pluginInfo.idePlugin
-        is LocalPluginInfo -> pluginInfo.idePlugin
-        is CustomPluginInfo -> null
-        is UpdateInfo -> null
-        else -> null
-      }
-    }
-
   private val PluginDetailsProvider.Result.provided
     get() = ProvideResult.Provided(this)
-
 
 }
