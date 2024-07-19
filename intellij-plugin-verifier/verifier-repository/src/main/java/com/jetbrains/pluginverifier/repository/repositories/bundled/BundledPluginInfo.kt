@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.repository.repositories.bundled
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.WithIdePlugin
 import java.io.ObjectInputStream
 import java.util.*
 
@@ -15,7 +16,7 @@ import java.util.*
  */
 class BundledPluginInfo(
   val ideVersion: IdeVersion,
-  val idePlugin: IdePlugin
+  override val idePlugin: IdePlugin
 ) : PluginInfo(
   idePlugin.pluginId!!,
   idePlugin.pluginName ?: idePlugin.pluginId!!,
@@ -23,7 +24,7 @@ class BundledPluginInfo(
   idePlugin.sinceBuild,
   idePlugin.untilBuild,
   idePlugin.vendor
-) {
+), WithIdePlugin {
 
   private fun writeReplace(): Any = throw UnsupportedOperationException("Bundled plugins cannot be serialized")
 

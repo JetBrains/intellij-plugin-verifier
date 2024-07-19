@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.repository.repositories.local
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.WithIdePlugin
 import java.io.ObjectInputStream
 
 /**
@@ -14,7 +15,7 @@ import java.io.ObjectInputStream
  * @see [LocalPluginRepository]
  */
 class LocalPluginInfo(
-  val idePlugin: IdePlugin
+  override val idePlugin: IdePlugin
 ) : PluginInfo(
   idePlugin.pluginId!!,
   idePlugin.pluginName ?: idePlugin.pluginId!!,
@@ -22,7 +23,7 @@ class LocalPluginInfo(
   idePlugin.sinceBuild,
   idePlugin.untilBuild,
   idePlugin.vendor
-) {
+), WithIdePlugin {
 
   val definedModules: Set<String>
     get() = idePlugin.definedModules
