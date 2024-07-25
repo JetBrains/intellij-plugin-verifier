@@ -84,7 +84,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
     (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
 
   companion object {
-    fun clone(old: IdePlugin, structureProblems: List<PluginProblem>): IdePlugin {
+    fun clone(old: IdePlugin, structureProblems: List<PluginProblem>, overrideStructureProblems: Boolean): IdePlugin {
       return IdePluginImpl().apply {
         pluginId = old.pluginId
         pluginName = old.pluginName
@@ -120,10 +120,11 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         modulesDescriptors.addAll(old.modulesDescriptors)
         thirdPartyDependencies = old.thirdPartyDependencies.toMutableList()
         if (old is StructurallyValidated) {
-          if (structureProblems.isNotEmpty()) {
+          if (overrideStructureProblems) {
             problems.addAll(structureProblems)
           } else {
-            problems.addAll(old.problems)
+            val oldProblems = (structureProblems + old.problems).toSet()
+            problems.addAll(oldProblems)
           }
         }
       }
