@@ -942,7 +942,7 @@ internal class PluginCreator private constructor(
 
   private fun PluginCreationResult<IdePlugin>.reassignStructureProblems() =
     when (this) {
-      is PluginCreationSuccess -> copy(plugin = IdePluginImpl.clone(plugin, problems))
+      is PluginCreationSuccess -> copy(plugin = IdePluginImpl.clone(plugin, problems, overrideStructureProblems = true))
       is PluginCreationFail -> this
     }
 

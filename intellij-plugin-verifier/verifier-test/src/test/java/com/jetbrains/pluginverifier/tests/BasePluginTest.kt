@@ -15,10 +15,28 @@ abstract class BasePluginTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
+  protected fun buildPluginWithResult(
+    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+    pluginContentBuilder: ContentBuilder.() -> Unit
+  ) = buildPluginWithResult(problemResolver, "plugin.jar", pluginContentBuilder)
+
   protected fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
-                                      pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
-    val ideManager = IdePluginManager.createManager()
-    return ideManager.createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemResolver)
+                                      pluginJarName: String,
+                                      pluginContentBuilder: ContentBuilder.() -> Unit
+  ): PluginCreationResult<IdePlugin> =
+    buildPluginWithResult(
+      problemResolver,
+      { IdePluginManager.createManager() },
+      pluginJarName,
+      pluginContentBuilder = pluginContentBuilder
+    )
+
+  protected fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+                                      pluginManagerProvider: () -> IdePluginManager,
+                                      pluginJarName: String,
+                                      pluginContentBuilder: ContentBuilder.() -> Unit
+                                      ): PluginCreationResult<IdePlugin> {
+    val pluginFile = buildZipFile(temporaryFolder.newFile(pluginJarName).toPath(), pluginContentBuilder)
+    return pluginManagerProvider().createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemResolver)
   }
 }

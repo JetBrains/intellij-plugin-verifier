@@ -9,7 +9,13 @@ import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.pluginverifier.options.EXISTING_PLUGIN_REMAPPING_SET
+import com.jetbrains.pluginverifier.options.NEW_PLUGIN_REMAPPING_SET
+import com.jetbrains.pluginverifier.options.PluginParsingConfiguration
+import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
+import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -102,6 +108,90 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, reclassifiedPluginProblem.level)
     assertTrue(reclassifiedPluginProblem is ReclassifiedPluginProblem)
     assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is InvalidUntilBuildWithMagicNumber)
+  }
+
+  @Test
+    fun `plugin is built with existing plugin verification rules`() {
+    val problemResolver = getIntelliJPluginCreationResolver()
+
+    val header = ideaPlugin("pluginverifier.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertTrue(result is PluginCreationSuccess)
+    val pluginCreated = result as PluginCreationSuccess
+    assertEquals(0, pluginCreated.warnings.size)
+    assertEquals(0, pluginCreated.unacceptableWarnings.size)
+
+    assertTrue(result.plugin is StructurallyValidated)
+    with(result.plugin as StructurallyValidated) {
+      assertEquals(0, problems.size)
+    }
+  }
+
+  @Test
+  fun `plugin is built with existing plugin verification rules and CLI-like remapping setup`() {
+    val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
+    val problemResolver = PluginParsingConfigurationResolution()
+      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+
+    val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertTrue(result is PluginCreationSuccess)
+    val pluginCreated = result as PluginCreationSuccess
+    assertEquals(0, pluginCreated.warnings.size)
+    assertEquals(0, pluginCreated.unacceptableWarnings.size)
+  }
+
+  @Test
+  fun `plugin and its optional dependency is built with existing plugin verification rules and CLI-like remapping setup`() {
+    val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
+    val problemResolver = PluginParsingConfigurationResolution()
+      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+
+    val dependencyPluginId = "com.intellij.dep"
+    val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+              <depends optional="true" config-file="dependency.xml">$dependencyPluginId</depends>
+            </idea-plugin>
+          """
+        }
+        file("dependency.xml") {
+          """
+            <idea-plugin />
+          """
+        }
+      }
+    }
+
+    assertTrue(result is PluginCreationSuccess)
+    with(result as PluginCreationSuccess) {
+      assertEquals(0, warnings.size)
+      assertEquals(0, unacceptableWarnings.size)
+    }
   }
 
   @Test
@@ -430,4 +520,10 @@ class ExistingPluginValidationTest : BasePluginTest() {
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
   """
+
+  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true): PluginCreationResultResolver {
+    val problemLevelMappingManager = levelRemappingFromClassPathJson()
+    val levelRemappingDefinitionName = if (isExistingPlugin) EXISTING_PLUGIN_REMAPPING_SET else NEW_PLUGIN_REMAPPING_SET
+    return problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
+  }
 }
