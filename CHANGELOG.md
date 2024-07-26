@@ -6,9 +6,16 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Report usages of Kotlin classes with `internal` visibility modifier ([#1101](https://github.com/JetBrains/intellij-plugin-verifier/pull/1101))
+
 ### Changed
 
+- Attribute `versionSuffix` in `product-info.json` is now optional ([#1128](https://github.com/JetBrains/intellij-plugin-verifier/pull/1128))
+
 ### Fixed
+
+- Various fixes for detecting Platform API to Platform API invocations ([MP-6729](https://youtrack.jetbrains.com/issue/MP-6729), [#1121](https://github.com/JetBrains/intellij-plugin-verifier/pull/1121))
+- Use plugin problem level remapping rules for bundled plugins ([MP-6757](https://youtrack.jetbrains.com/issue/MP-6757), [IJPL-158170](https://youtrack.jetbrains.com/issue/IJPL-158170), [#1122](https://github.com/JetBrains/intellij-plugin-verifier/pull/1122))
 
 ## 1.371 - 2024-07-12
 
