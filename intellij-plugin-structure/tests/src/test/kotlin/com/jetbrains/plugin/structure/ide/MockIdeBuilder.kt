@@ -208,5 +208,9 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
 
   class ProductInfo {
     var versionSuffix: String? = "EAP"
+
+    fun omitVersionSuffix() {
+      versionSuffix = null
+    }
   }
 }
