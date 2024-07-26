@@ -55,6 +55,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       }
     }
     assertTrue(result is PluginCreationSuccess)
+    assertMatchingPluginProblems(result as PluginCreationSuccess)
   }
 
   @Test
@@ -76,6 +77,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationSuccess)
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(1, pluginCreated.warnings.size)
     val reclassifiedPluginProblem = pluginCreated.warnings.first()
     assertEquals(PluginProblem.Level.WARNING, reclassifiedPluginProblem.level)
@@ -102,7 +105,10 @@ class ExistingPluginValidationTest : BasePluginTest() {
       }
     }
     assertTrue(result is PluginCreationSuccess)
+
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(1, pluginCreated.unacceptableWarnings.size)
     val reclassifiedPluginProblem = pluginCreated.unacceptableWarnings.first()
     assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, reclassifiedPluginProblem.level)
@@ -128,13 +134,10 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationSuccess)
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(0, pluginCreated.warnings.size)
     assertEquals(0, pluginCreated.unacceptableWarnings.size)
-
-    assertTrue(result.plugin is StructurallyValidated)
-    with(result.plugin as StructurallyValidated) {
-      assertEquals(0, problems.size)
-    }
   }
 
   @Test
@@ -157,6 +160,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationSuccess)
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(0, pluginCreated.warnings.size)
     assertEquals(0, pluginCreated.unacceptableWarnings.size)
   }
@@ -192,6 +197,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
       assertEquals(0, warnings.size)
       assertEquals(0, unacceptableWarnings.size)
     }
+
+    assertMatchingPluginProblems(result)
   }
 
   @Test
@@ -217,6 +224,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(2, pluginCreated.warnings.size)
     val reclassifiedProblems = pluginCreated.warnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
@@ -239,6 +248,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val result = buildPluginWithResult(remappingProblemResolver, pluginOf(header))
     assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertThat(pluginCreated.warnings, `is`(emptyList()))
   }
 
@@ -407,6 +418,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertThat(result, instanceOf(PluginCreationSuccess::class.java))
     val creationSuccess = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
 
     assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
     assertThat(creationSuccess.warnings.size, `is`(0))
@@ -446,6 +458,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat(result, instanceOf(PluginCreationSuccess::class.java))
     val creationSuccess = result as PluginCreationSuccess
 
+    assertMatchingPluginProblems(result)
     assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
     // warning about ServiceExtensionPointPreload
     val warnings = creationSuccess.warnings
@@ -485,6 +498,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertThat(result, instanceOf(PluginCreationSuccess::class.java))
     val creationSuccess = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
 
     assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
     assertThat(creationSuccess.warnings.size, `is`(1))
@@ -525,5 +539,15 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val problemLevelMappingManager = levelRemappingFromClassPathJson()
     val levelRemappingDefinitionName = if (isExistingPlugin) EXISTING_PLUGIN_REMAPPING_SET else NEW_PLUGIN_REMAPPING_SET
     return problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
+  }
+
+  private fun assertMatchingPluginProblems(pluginResult: PluginCreationSuccess<IdePlugin>) {
+    with(pluginResult) {
+      if (plugin is StructurallyValidated) {
+        val plugin = plugin as StructurallyValidated
+        val resultProblems = warnings + unacceptableWarnings
+        assertEquals(resultProblems, plugin.problems)
+      }
+    }
   }
 }
