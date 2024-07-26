@@ -4,14 +4,14 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 
-class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
+class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val folderSuffix: String = "") {
   private val ideRoot: Path by lazy {
-    temporaryFolder.newFolder("idea").toPath()
+    temporaryFolder.newFolder("idea$folderSuffix").toPath()
   }
 
-  fun buildIdeaDirectory() = buildDirectory(ideRoot) {
+  fun buildIdeaDirectory(productInfo: ProductInfo.() -> Unit = {}) = buildDirectory(ideRoot) {
     file("build.txt", "IU-242.10180.25")
-    file("product-info.json", productInfoJson())
+    file("product-info.json", productInfoJson(productInfo))
     dir("lib") {
       zip("app-client.jar") {
         dir("META-INF") {
@@ -136,54 +136,62 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
     }
   }
 
-  private fun productInfoJson(): String {
-    return """
-        {
-          "name": "IntelliJ IDEA",
-          "version": "2024.2",
-          "versionSuffix": "EAP",
-          "buildNumber": "242.10180.25",
-          "productCode": "IU",
-          "dataDirectoryName": "IntelliJIdea2024.2",
-          "svgIconPath": "bin/idea.svg",
-          "productVendor": "JetBrains",
-          "launch": [],
-          "bundledPlugins": [],
-          "modules": [],
-          "fileExtensions": [],
-          "layout": [
-            {
-              "name": "intellij.notebooks.ui",
-              "kind": "productModuleV2",
-              "classPath": [
-                "lib/modules/intellij.notebooks.ui.jar"
-              ]
-            },
-            {
-              "name": "intellij.notebooks.visualization",
-              "kind": "productModuleV2",
-              "classPath": [
-                "lib/modules/intellij.notebooks.visualization.jar"
-              ]
-            },
-            {
-              "name": "intellij.java.featuresTrainer",
-              "kind": "moduleV2",
-              "classPath": [
-                "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
-              ]
-            },
-            {
-              "name": "com.jetbrains.codeWithMe",
-              "kind": "plugin",
-              "classPath": [
-                "plugins/cwm-plugin/lib/cwm-plugin.jar"
-              ]
-            }                      
-          ]
-        } 
+  private fun productInfoJson(init: ProductInfo.() -> Unit = {}) = with(ProductInfo()) {
+    init()
+    """
+      {
+        "name": "IntelliJ IDEA",
+        "version": "2024.2",
+        $versionSuffixJson
+        "buildNumber": "242.10180.25",
+        "productCode": "IU",
+        "dataDirectoryName": "IntelliJIdea2024.2",
+        "svgIconPath": "bin/idea.svg",
+        "productVendor": "JetBrains",
+        "launch": [],
+        "bundledPlugins": [],
+        "modules": [],
+        "fileExtensions": [],
+        "layout": [
+          {
+            "name": "intellij.notebooks.ui",
+            "kind": "productModuleV2",
+            "classPath": [
+              "lib/modules/intellij.notebooks.ui.jar"
+            ]
+          },
+          {
+            "name": "intellij.notebooks.visualization",
+            "kind": "productModuleV2",
+            "classPath": [
+              "lib/modules/intellij.notebooks.visualization.jar"
+            ]
+          },
+          {
+            "name": "intellij.java.featuresTrainer",
+            "kind": "moduleV2",
+            "classPath": [
+              "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
+            ]
+          },
+          {
+            "name": "com.jetbrains.codeWithMe",
+            "kind": "plugin",
+            "classPath": [
+              "plugins/cwm-plugin/lib/cwm-plugin.jar"
+            ]
+          }                      
+        ]
+      } 
     """.trimIndent()
   }
+
+  private val ProductInfo.versionSuffixJson: String
+    get() = versionSuffix?.let {
+      """
+        "versionSuffix": "$it",
+      """.trimIndent()
+    } ?: ""
 
   private val platformLangPluginXml: String
     get() = """
@@ -197,4 +205,12 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder) {
       <module value="com.intellij.modules.externalSystem"/>
     </idea-plugin>        
     """.trimIndent()
+
+  class ProductInfo {
+    var versionSuffix: String? = "EAP"
+
+    fun omitVersionSuffix() {
+      versionSuffix = null
+    }
+  }
 }

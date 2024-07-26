@@ -26,7 +26,40 @@ class ProductInfoBasedIdeManagerTest {
   fun `create IDE manager from mock IDE`() {
     val ideManager = ProductInfoBasedIdeManager()
     val ide = ideManager.createIde(ideRoot)
+    assertIdeAndPluginsIsCreated(ide)
+  }
 
+  @Test
+  fun `create nonIDEA IDE manager from mock IDE`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockRiderBuilder(temporaryFolder).buildIdeaDirectory()
+    val ide = ideManager.createIde(ideRoot)
+
+    val ideCore = ide.getPluginById("com.intellij")
+    assertNotNull(ideCore)
+    with(ideCore!!) {
+      with(definedModules) {
+        assertEquals(1, size)
+        assertEquals("com.intellij.modules.rider", definedModules.first())
+      }
+    }
+    val riderModule = ide.getPluginByModule("com.intellij.modules.rider")
+    assertNotNull(riderModule)
+    riderModule!!
+    assertTrue(ideCore.pluginId == riderModule.pluginId)
+  }
+
+  @Test
+  fun `create IDE manager with missing version suffix`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockIdeBuilder(temporaryFolder, "-missing-version-suffix").buildIdeaDirectory {
+      omitVersionSuffix()
+    }
+    val ide = ideManager.createIde(ideRoot)
+    assertIdeAndPluginsIsCreated(ide)
+  }
+
+  private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)
     val uiPlugin = ide.getPluginById("intellij.notebooks.ui")
     assertNotNull(uiPlugin)
@@ -69,25 +102,5 @@ class ProductInfoBasedIdeManagerTest {
       val productDescriptor = productDescriptor!!
       assertEquals(LocalDate.of(4000, 1, 1), productDescriptor.releaseDate)
     }
-  }
-
-  @Test
-  fun `create nonIDEA IDE manager from mock IDE`() {
-    val ideManager = ProductInfoBasedIdeManager()
-    val ideRoot = MockRiderBuilder(temporaryFolder).buildIdeaDirectory()
-    val ide = ideManager.createIde(ideRoot)
-
-    val ideCore = ide.getPluginById("com.intellij")
-    assertNotNull(ideCore)
-    with(ideCore!!) {
-      with(definedModules) {
-        assertEquals(1, size)
-        assertEquals("com.intellij.modules.rider", definedModules.first())
-      }
-    }
-    val riderModule = ide.getPluginByModule("com.intellij.modules.rider")
-    assertNotNull(riderModule)
-    riderModule!!
-    assertTrue(ideCore.pluginId == riderModule.pluginId)
   }
 }

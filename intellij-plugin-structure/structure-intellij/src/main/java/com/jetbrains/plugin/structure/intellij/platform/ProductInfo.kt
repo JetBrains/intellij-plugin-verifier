@@ -12,7 +12,7 @@ import java.nio.file.Path
 data class ProductInfo(
   @JsonProperty("name") val name: String,
   @JsonProperty("version") val version: String,
-  @JsonProperty("versionSuffix") val versionSuffix: String,
+  @JsonProperty("versionSuffix") val versionSuffix: String?,
   @JsonProperty("buildNumber") val buildNumber: String,
   @JsonProperty("productCode") val productCode: String,
   @JsonProperty("dataDirectoryName") val dataDirectoryName: String,
