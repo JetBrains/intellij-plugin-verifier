@@ -16,19 +16,9 @@ abstract class BasePluginTest {
   val temporaryFolder = TemporaryFolder()
 
   protected fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
-                                      pluginContentBuilder: ContentBuilder.() -> Unit
-  ): PluginCreationResult<IdePlugin> =
-    buildPluginWithResult(
-      problemResolver,
-      { IdePluginManager.createManager() },
-      pluginContentBuilder = pluginContentBuilder
-    )
-
-  private fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
-                                    pluginManagerProvider: () -> IdePluginManager,
-                                    pluginContentBuilder: ContentBuilder.() -> Unit
-                                      ): PluginCreationResult<IdePlugin> {
+                                      pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
-    return pluginManagerProvider().createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemResolver)
+    val ideManager = IdePluginManager.createManager()
+    return ideManager.createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemResolver)
   }
 }
