@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.372 - 2024-07-26
+
+### Added
+
 - Report usages of Kotlin classes with `internal` visibility modifier ([#1101](https://github.com/JetBrains/intellij-plugin-verifier/pull/1101))
 
 ### Changed
