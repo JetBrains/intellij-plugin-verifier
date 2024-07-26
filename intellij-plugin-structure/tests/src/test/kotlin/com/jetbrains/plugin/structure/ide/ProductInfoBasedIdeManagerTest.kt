@@ -7,6 +7,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
+import java.time.LocalDate
 
 class ProductInfoBasedIdeManagerTest {
 
@@ -99,7 +100,7 @@ class ProductInfoBasedIdeManagerTest {
     with(codeWithMe!!) {
       assertNotNull(productDescriptor)
       val productDescriptor = productDescriptor!!
-      assertEquals(java.time.LocalDate.of(4000, 1, 1), productDescriptor.releaseDate)
+      assertEquals(LocalDate.of(4000, 1, 1), productDescriptor.releaseDate)
     }
   }
 }
