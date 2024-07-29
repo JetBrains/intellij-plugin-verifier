@@ -84,7 +84,17 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
     (pluginId ?: pluginName ?: "<unknown plugin ID>") + (pluginVersion?.let { ":$it" } ?: "")
 
   companion object {
-    fun clone(old: IdePlugin, structureProblems: List<PluginProblem>, overrideStructureProblems: Boolean): IdePlugin {
+    /**
+     * Clones an existing plugin into a new `IdePlugin` instance.
+     *
+     * If the [old][IdePlugin] instance is [StructurallyValidated], the
+     * provided list of plugin problems will replace the original list of plugin problems in the [problems] field.
+     *
+     * @param old the plugin that will be cloned.
+     * @param overriddenProblems a list of plugin problems that will be explicitly assigned to the cloned instance
+     * if the [old] instance is [StructurallyValidated].
+     */
+    fun clone(old: IdePlugin, overriddenProblems: List<PluginProblem>): IdePlugin {
       return IdePluginImpl().apply {
         pluginId = old.pluginId
         pluginName = old.pluginName
@@ -120,12 +130,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         modulesDescriptors.addAll(old.modulesDescriptors)
         thirdPartyDependencies = old.thirdPartyDependencies.toMutableList()
         if (old is StructurallyValidated) {
-          if (overrideStructureProblems) {
-            problems.addAll(structureProblems)
-          } else {
-            val oldProblems = (structureProblems + old.problems).toSet()
-            problems.addAll(oldProblems)
-          }
+          problems.addAll(overriddenProblems)
         }
       }
     }
