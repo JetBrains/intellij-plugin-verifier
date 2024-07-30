@@ -3,7 +3,6 @@ package com.jetbrains.plugin.structure.teamcity.action
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
-import com.vdurmont.semver4j.Semver
 
 data class TeamCityActionPlugin(
   override val pluginName: String,
@@ -17,6 +16,5 @@ data class TeamCityActionPlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val url: String? = null,
   override val changeNotes: String? = null,
-
-  val specVersion: Semver,
+  val specVersion: String,
 ) : Plugin

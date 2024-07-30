@@ -113,7 +113,7 @@ class ParseValidFullActionTest(
 
     // assert
     with(result.plugin) {
-      assertEquals("1.0.0", this.specVersion.toString())
+      assertEquals("1.0.0", this.specVersion)
       assertEquals("simple-action", this.pluginName)
       assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple action", this.description)

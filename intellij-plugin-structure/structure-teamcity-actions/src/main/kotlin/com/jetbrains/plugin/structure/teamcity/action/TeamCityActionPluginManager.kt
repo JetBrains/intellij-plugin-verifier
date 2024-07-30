@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.plugin.Settings.EXTRACT_DIRECTORY
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.*
-import com.vdurmont.semver4j.Semver
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -98,7 +97,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginName = this.name,
         description = this.description!!,
         pluginVersion = this.version!!,
-        specVersion = Semver(this.specVersion!!),
+        specVersion = this.specVersion!!
       )
     }
     return PluginCreationSuccess(plugin, validationResult)
