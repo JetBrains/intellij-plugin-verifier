@@ -30,6 +30,7 @@ import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.LanguageBundleExtensionPointVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
@@ -682,6 +683,7 @@ internal class PluginCreator private constructor(
 
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
     StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
+    LanguageBundleExtensionPointVerifier().verify(plugin, ::registerProblem)
   }
 
   private fun resolveDocumentAndValidateBean(
