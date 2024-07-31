@@ -138,9 +138,9 @@ class VendorCannotBeEmpty(
 }
 
 class InvalidSemverFormat(
-  descriptorPath: String,
   versionName: String,
-  version: String
+  version: String,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The `$versionName` version should be formatted as SemVer [$version]."
@@ -150,9 +150,9 @@ class InvalidSemverFormat(
 }
 
 class InvalidVersionRange(
-  descriptorPath: String,
   since: String,
-  until: String
+  until: String,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The compatibility range [$since, $until] is empty."
@@ -162,11 +162,11 @@ class InvalidVersionRange(
 }
 
 class SemverComponentLimitExceeded(
-  descriptorPath: String,
   componentName: String,
   versionName: String,
   version: String,
-  limit: Int
+  limit: Int,
+  descriptorPath: String? = null
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The `$componentName` component of the `$versionName` SemVer version is too big [$version]. Max value is $limit."

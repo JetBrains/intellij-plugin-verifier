@@ -40,11 +40,3 @@ class TooLongValueProblem(
 }
 
 class PropertiesCombinationProblem(override val message: String) : InvalidPropertyProblem()
-
-class InvalidVersionProblem(
-  propertyName: String,
-  propertyDescription: String,
-) : InvalidPropertyProblem() {
-  override val message =
-    "The property <$propertyName> ($propertyDescription) should follow semantic versioning specification."
-}

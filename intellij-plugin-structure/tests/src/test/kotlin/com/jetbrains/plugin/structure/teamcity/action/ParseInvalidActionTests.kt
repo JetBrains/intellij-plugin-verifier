@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.teamcity.action
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
+import com.jetbrains.plugin.structure.base.problems.SemverComponentLimitExceeded
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -17,6 +19,7 @@ import com.jetbrains.plugin.structure.teamcity.action.Steps.someWithStep
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.UUID
 
 class ParseInvalidActionTests(
   fileSystemType: FileSystemType,
@@ -104,15 +107,53 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action with invalid spec_version`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(specVersion = "invalid_version")),
-      listOf(
-        InvalidVersionProblem(
-          "spec-version",
-          "the version of action specification",
+  fun `invalid semver spec versions`() {
+    val invalidSpecVersions = listOf(
+      "invalid_version", "-test", "+12354", "^1.2.3", "1.1.x", "1.2.*", "~1.2.3"
+    )
+    invalidSpecVersions.forEach { specVersion ->
+      assertProblematicPlugin(
+        prepareActionYaml(someAction.copy(specVersion = specVersion)),
+        listOf(
+          InvalidSemverFormat(
+            "spec-version",
+            specVersion
+          )
         )
       )
+    }
+  }
+
+  @Test
+  fun `invalid spec version limits`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(specVersion = "10000")),
+      listOf(SemverComponentLimitExceeded(
+        componentName = "major",
+        versionName = "spec-version",
+        version = "10000",
+        limit = TeamCityActionSpecVersionUtils.MAX_MAJOR_VALUE - 1
+      ))
+    )
+
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(specVersion = "0.10000")),
+      listOf(SemverComponentLimitExceeded(
+        componentName = "minor",
+        versionName = "spec-version",
+        version = "0.10000",
+        limit = TeamCityActionSpecVersionUtils.VERSION_MINOR_LENGTH - 1
+      ))
+    )
+
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(specVersion = "0.0.10000")),
+      listOf(SemverComponentLimitExceeded(
+        componentName = "patch",
+        versionName = "spec-version",
+        version = "0.0.10000",
+        limit = TeamCityActionSpecVersionUtils.VERSION_PATCH_LENGTH - 1
+      ))
     )
   }
 
@@ -129,9 +170,9 @@ class ParseInvalidActionTests(
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(version = "invalid_version")),
       listOf(
-        InvalidVersionProblem(
+        InvalidSemverFormat(
           "version",
-          "action version",
+          "invalid_version",
         )
       )
     )
@@ -386,7 +427,7 @@ class ParseInvalidActionTests(
   }
 
   private fun prepareActionYaml(actionBuilder: TeamCityActionBuilder) =
-    buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    buildZipFile(temporaryFolder.newFile("plugin-${UUID.randomUUID()}.zip")) {
       val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
       file("action.yaml") {
         mapper.writeValueAsString(actionBuilder)
