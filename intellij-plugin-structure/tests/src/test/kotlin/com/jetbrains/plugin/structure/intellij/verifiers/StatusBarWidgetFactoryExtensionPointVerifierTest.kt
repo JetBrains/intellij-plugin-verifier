@@ -1,35 +1,18 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import org.jdom2.Element
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
 
-private const val PLUGIN_ID = "com.example.thirdparty"
-private const val PLUGIN_VENDOR = "PluginIndustries s.r.o."
 private const val EP_IMPLEMENTATION = "com.example.MyStatusBarWidgetFactory"
 
 private const val MESSAGE_TEMPLATE = "The extension point in the <com.intellij.statusBarWidgetFactory> element must have " +
   "'id' attribute set with the same value returned from the getId() method of the $EP_IMPLEMENTATION implementation."
 
 
-class StatusBarWidgetFactoryExtensionPointVerifierTest {
-  private lateinit var verifier: StatusBarWidgetFactoryExtensionPointVerifier
-
-  private lateinit var problems: MutableList<PluginProblem>
-
-  private val problemRegistrar = ProblemRegistrar {
-    problems += it
-  }
-
-  @Before
-  fun setUp() {
-    verifier = StatusBarWidgetFactoryExtensionPointVerifier()
-    problems = mutableListOf()
-  }
-
+class StatusBarWidgetFactoryExtensionPointVerifierTest :
+  BaseExtensionPointTest<StatusBarWidgetFactoryExtensionPointVerifier>(StatusBarWidgetFactoryExtensionPointVerifier()) {
 
   @Test
   fun `status bar widget factory extension does not declare ID`() {
