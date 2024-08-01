@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor.ServiceDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors.isDevelopedByJetBrains
+import com.jetbrains.plugin.structure.intellij.problems.LanguageBundleExtensionPointIsInternal
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import com.jetbrains.plugin.structure.intellij.problems.StatusBarWidgetFactoryExtensionPointIdMissing
 
@@ -43,6 +45,22 @@ class StatusBarWidgetFactoryExtensionPointVerifier {
       val extensionId = it.getAttribute("id")
       if (extensionId == null) {
         problemRegistrar.registerProblem(StatusBarWidgetFactoryExtensionPointIdMissing(implementation))
+      }
+    }
+  }
+}
+
+/**
+ * Rule: EP `com.intellij.languageBundle` is internal and must be used by JetBrains only.
+ */
+class LanguageBundleExtensionPointVerifier {
+  private val extensionPointName = "com.intellij.languageBundle"
+
+  fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
+    if (!isDevelopedByJetBrains(plugin)) {
+      val languageBundles = plugin.extensions[extensionPointName] ?: emptyList()
+      if (languageBundles.isNotEmpty()) {
+        problemRegistrar.registerProblem(LanguageBundleExtensionPointIsInternal())
       }
     }
   }
