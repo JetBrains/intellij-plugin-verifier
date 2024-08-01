@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.mocks.MockExtension
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-private const val MESSAGE_TEMPLATE = "The extension point in the <com.intellij.languageBundle> element is internal and must be used by JetBrains only."
+private const val MESSAGE_TEMPLATE = "The extension point in the <com.intellij.languageBundle> element is marked with @ApiStatus.Internal and must be used by JetBrains only."
 
 class LanguageBundleEpVerifierTest : BaseExtensionPointTest<LanguageBundleExtensionPointVerifier>(LanguageBundleExtensionPointVerifier()) {
 

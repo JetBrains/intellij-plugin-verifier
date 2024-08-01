@@ -63,7 +63,7 @@ class LanguageBundleExtensionPointIsInternal : PluginProblem() {
     get() = Level.UNACCEPTABLE_WARNING
 
   override val message
-    get() = "The extension point in the <${extensionPointName}> element is internal " +
+    get() = "The extension point in the <${extensionPointName}> element is marked with @ApiStatus.Internal " +
       "and must be used by JetBrains only."
 }
 
