@@ -11,7 +11,7 @@ class LanguageBundleEpVerifierTest : BaseExtensionPointTest<LanguageBundleExtens
 
   @Test
   fun `plugin is not allowed to use languageBundle EP`() {
-    val extension = MockExtension.from("languageBundle", "locale" to "en-US")
+    val extension = MockExtension.from("com.intellij.languageBundle", "locale" to "en-US")
 
     val idePlugin = IdePluginImpl().apply {
       pluginId = PLUGIN_ID
@@ -26,7 +26,7 @@ class LanguageBundleEpVerifierTest : BaseExtensionPointTest<LanguageBundleExtens
 
   @Test
   fun `JetBrains plugin is allowed to use languageBundle EP`() {
-    val extension = MockExtension.from("languageBundle", "locale" to "en-US")
+    val extension = MockExtension.from("com.intellij.languageBundle", "locale" to "en-US")
 
     val idePlugin = IdePluginImpl().apply {
       pluginId = PLUGIN_ID

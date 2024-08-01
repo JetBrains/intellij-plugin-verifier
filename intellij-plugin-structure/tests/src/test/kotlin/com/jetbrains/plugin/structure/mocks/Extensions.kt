@@ -9,14 +9,13 @@ class MockExtension(private val fullyQualifiedName: String, private val elements
   }
 
   companion object {
-    fun from(extensionLocalName: String, vararg attributes: Pair<String, String>): MockExtension {
-      val extensionFqn = "com.intellij.$extensionLocalName"
-      val element = Element(extensionFqn).apply {
+    fun from(fullyQualifiedName: String, vararg attributes: Pair<String, String>): MockExtension {
+      val element = Element(fullyQualifiedName).apply {
         for ((attrName, attrValue) in attributes) {
           setAttribute(attrName, attrValue)
         }
       }
-      return MockExtension(extensionFqn, listOf(element))
+      return MockExtension(fullyQualifiedName, listOf(element))
     }
   }
 }
