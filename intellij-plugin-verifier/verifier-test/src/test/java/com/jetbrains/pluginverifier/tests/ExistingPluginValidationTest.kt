@@ -9,7 +9,13 @@ import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.pluginverifier.options.EXISTING_PLUGIN_REMAPPING_SET
+import com.jetbrains.pluginverifier.options.NEW_PLUGIN_REMAPPING_SET
+import com.jetbrains.pluginverifier.options.PluginParsingConfiguration
+import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
+import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -49,6 +55,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
       }
     }
     assertTrue(result is PluginCreationSuccess)
+    assertMatchingPluginProblems(result as PluginCreationSuccess)
   }
 
   @Test
@@ -70,6 +77,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationSuccess)
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(1, pluginCreated.warnings.size)
     val reclassifiedPluginProblem = pluginCreated.warnings.first()
     assertEquals(PluginProblem.Level.WARNING, reclassifiedPluginProblem.level)
@@ -96,12 +105,100 @@ class ExistingPluginValidationTest : BasePluginTest() {
       }
     }
     assertTrue(result is PluginCreationSuccess)
+
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(1, pluginCreated.unacceptableWarnings.size)
     val reclassifiedPluginProblem = pluginCreated.unacceptableWarnings.first()
     assertEquals(PluginProblem.Level.UNACCEPTABLE_WARNING, reclassifiedPluginProblem.level)
     assertTrue(reclassifiedPluginProblem is ReclassifiedPluginProblem)
     assertTrue((reclassifiedPluginProblem as ReclassifiedPluginProblem).unwrapped is InvalidUntilBuildWithMagicNumber)
+  }
+
+  @Test
+    fun `plugin is built with existing plugin verification rules`() {
+    val problemResolver = getIntelliJPluginCreationResolver()
+
+    val header = ideaPlugin("pluginverifier.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertTrue(result is PluginCreationSuccess)
+    val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
+    assertEquals(0, pluginCreated.warnings.size)
+    assertEquals(0, pluginCreated.unacceptableWarnings.size)
+  }
+
+  @Test
+  fun `plugin is built with existing plugin verification rules and CLI-like remapping setup`() {
+    val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
+    val problemResolver = PluginParsingConfigurationResolution()
+      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+
+    val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertTrue(result is PluginCreationSuccess)
+    val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
+    assertEquals(0, pluginCreated.warnings.size)
+    assertEquals(0, pluginCreated.unacceptableWarnings.size)
+  }
+
+  @Test
+  fun `plugin and its optional dependency is built with existing plugin verification rules and CLI-like remapping setup`() {
+    val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
+    val problemResolver = PluginParsingConfigurationResolution()
+      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+
+    val dependencyPluginId = "com.intellij.dep"
+    val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $header
+              <depends optional="true" config-file="dependency.xml">$dependencyPluginId</depends>
+            </idea-plugin>
+          """
+        }
+        file("dependency.xml") {
+          """
+            <idea-plugin />
+          """
+        }
+      }
+    }
+
+    assertTrue(result is PluginCreationSuccess)
+    with(result as PluginCreationSuccess) {
+      assertEquals(0, warnings.size)
+      assertEquals(0, unacceptableWarnings.size)
+    }
+
+    assertMatchingPluginProblems(result)
   }
 
   @Test
@@ -127,6 +224,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertEquals(2, pluginCreated.warnings.size)
     val reclassifiedProblems = pluginCreated.warnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
@@ -149,6 +248,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val result = buildPluginWithResult(remappingProblemResolver, pluginOf(header))
     assertThat("Plugin Creation Result must succeed", result, instanceOf(PluginCreationSuccess::class.java))
     val pluginCreated = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
+
     assertThat(pluginCreated.warnings, `is`(emptyList()))
   }
 
@@ -317,98 +418,103 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertThat(result, instanceOf(PluginCreationSuccess::class.java))
     val creationSuccess = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
 
     assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
     assertThat(creationSuccess.warnings.size, `is`(0))
   }
 
-    @Test
-    fun `internal plugin is build despite having a service extension point preload because it is remapped`() {
-        val header = ideaPlugin(vendor = "JetBrains")
-        val delegateResolver = IntelliJPluginCreationResultResolver()
+  @Test
+  fun `internal plugin is build despite having a service extension point preload because it is remapped`() {
+    val header = ideaPlugin(vendor = "JetBrains")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
 
-        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-                ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
-        val problemResolver = JetBrainsPluginCreationResultResolver(
-                LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
-                jetBrainsPluginLevelRemapping)
+    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val problemResolver = JetBrainsPluginCreationResultResolver(
+      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+      jetBrainsPluginLevelRemapping
+    )
 
-        val result = buildPluginWithResult(problemResolver) {
-            dir("META-INF") {
-                file("plugin.xml") {
-                    """
-            <idea-plugin>
-              $header
-              <extensions defaultExtensionNs="com.intellij">
-                <applicationService
-                    serviceInterface="com.example.MyAppService"
-                    serviceImplementation="com.example.MyAppServiceImpl"
-                    preload="await"
-                    />
-              </extensions>  
-            </idea-plugin>
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
           """
-                }
-            }
+          <idea-plugin>
+            $header
+            <extensions defaultExtensionNs="com.intellij">
+              <applicationService
+                  serviceInterface="com.example.MyAppService"
+                  serviceImplementation="com.example.MyAppServiceImpl"
+                  preload="await"
+                  />
+            </extensions>  
+          </idea-plugin>
+        """
         }
-        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
-        val creationSuccess = result as PluginCreationSuccess
-
-        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
-        // warning about ServiceExtensionPointPreload
-        val warnings = creationSuccess.warnings
-        assertEquals(1, warnings.size)
-        val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
-                .singleOrNull()
-        Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+      }
     }
+    assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = result as PluginCreationSuccess
 
-    @Test
-    fun `internal plugin is built despite having release date in the future because it is remapped`() {
-        val releaseDateInFuture = LocalDate.now().plusMonths(1)
-        val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val releaseDateInFutureString = releaseDateInFuture.format(formatter)
-        val header = ideaPlugin(vendor = "JetBrains")
-        val delegateResolver = IntelliJPluginCreationResultResolver()
+    assertMatchingPluginProblems(result)
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+    // warning about ServiceExtensionPointPreload
+    val warnings = creationSuccess.warnings
+    assertEquals(1, warnings.size)
+    val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
+      .singleOrNull()
+    Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+  }
 
-        val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-        val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-            ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
-        val problemResolver = JetBrainsPluginCreationResultResolver(
-            LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
-            jetBrainsPluginLevelRemapping)
+  @Test
+  fun `internal plugin is built despite having release date in the future because it is remapped`() {
+    val releaseDateInFuture = LocalDate.now().plusMonths(1)
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    val releaseDateInFutureString = releaseDateInFuture.format(formatter)
+    val header = ideaPlugin(vendor = "JetBrains")
+    val delegateResolver = IntelliJPluginCreationResultResolver()
 
-        val result = buildPluginWithResult(problemResolver) {
-            dir("META-INF") {
-                file("plugin.xml") {
-                    """
-            <idea-plugin>
-              $header
-              <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
-            </idea-plugin>
+    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
+      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val problemResolver = JetBrainsPluginCreationResultResolver(
+      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
+      jetBrainsPluginLevelRemapping
+    )
+
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
           """
-                }
-            }
+          <idea-plugin>
+            $header
+            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
+          </idea-plugin>
+        """
         }
-        assertThat(result, instanceOf(PluginCreationSuccess::class.java))
-        val creationSuccess = result as PluginCreationSuccess
-
-        assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
-        assertThat(creationSuccess.warnings.size, `is`(1))
-        val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
-            .singleOrNull()
-        Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+      }
     }
+    assertThat(result, instanceOf(PluginCreationSuccess::class.java))
+    val creationSuccess = result as PluginCreationSuccess
+    assertMatchingPluginProblems(result)
 
-    private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
+    assertThat(creationSuccess.unacceptableWarnings.size, `is`(0))
+    assertThat(creationSuccess.warnings.size, `is`(1))
+    val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
+      .singleOrNull()
+    Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+  }
+
+  private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
         """
-            <idea-plugin>
-              $header
-            </idea-plugin>
-          """
+          <idea-plugin>
+            $header
+          </idea-plugin>
+        """
       }
     }
   }
@@ -428,4 +534,20 @@ class ExistingPluginValidationTest : BasePluginTest() {
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
   """
+
+  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true): PluginCreationResultResolver {
+    val problemLevelMappingManager = levelRemappingFromClassPathJson()
+    val levelRemappingDefinitionName = if (isExistingPlugin) EXISTING_PLUGIN_REMAPPING_SET else NEW_PLUGIN_REMAPPING_SET
+    return problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
+  }
+
+  private fun assertMatchingPluginProblems(pluginResult: PluginCreationSuccess<IdePlugin>) {
+    with(pluginResult) {
+      if (plugin is StructurallyValidated) {
+        val plugin = plugin as StructurallyValidated
+        val resultProblems = warnings + unacceptableWarnings
+        assertEquals(resultProblems, plugin.problems)
+      }
+    }
+  }
 }
