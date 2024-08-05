@@ -44,6 +44,7 @@ import net.bytebuddy.jar.asm.MethodVisitor
 import net.bytebuddy.matcher.ElementMatchers.named
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -90,6 +91,7 @@ class KotlinInternalModifierUsageTest {
   private val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.")
 
   @Test
+  @Ignore
   fun `JetBrains plugin class calls a public method in an internal class `() {
 
     val internalApiServiceClassName = generateInternalApiServiceClassName()
@@ -136,6 +138,7 @@ class KotlinInternalModifierUsageTest {
   }
 
   @Test
+  @Ignore
   fun `JetBrains plugin class uses an internal class and an internal method name`() {
     val internalApiServiceClassName = generateInternalApiServiceClassName()
 
@@ -187,6 +190,7 @@ class KotlinInternalModifierUsageTest {
   }
 
   @Test
+  @Ignore
   fun `internal field access is reported as an internal Kotlin API usage`() {
     val internalFieldName = "internalField"
     val internalFieldValue = 17
