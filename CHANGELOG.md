@@ -6,9 +6,17 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Report usages of the `com.intellij.languageBundle` extension point. This extension point is internal and must be used by JetBrains only. ([#1130](https://github.com/JetBrains/intellij-plugin-verifier/pull/1130), [MP-6788](https://youtrack.jetbrains.com/issue/MP-6788))
+- Structure: Add TeamCity actions spec versions calculation
+
 ### Changed
 
+- Remap plugin problem severity level when resolving plugin dependencies. This resolves unexpected reports of missing plugin dependencies, even when they are actually available. ([#1124](https://github.com/JetBrains/intellij-plugin-verifier/pull/1124))
+- Disable API usage checks of Kotlin `internal` modifier. ([#1131](https://github.com/JetBrains/intellij-plugin-verifier/pull/1131))
+
 ### Fixed
+
+- Match problems in the plugin and problems in the creation result. This fixes JetBrains Marketplace reports with non-actionable plugin problems for existing plugins, e. g. an invalid plugin identifier. ([#1127](https://github.com/JetBrains/intellij-plugin-verifier/pull/1127), [MP-6733](https://youtrack.jetbrains.com/issue/MP-6773))
 
 ## 1.372 - 2024-07-26
 
