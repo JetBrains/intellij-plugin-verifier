@@ -127,10 +127,9 @@ class KotlinInternalModifierUsageTest {
     val plugin = prepareUsage(pluginSpec) { usageClassUdt }
 
     verify(ide, plugin).run {
-      assertEquals(1, size)
+      assertEquals(0, size)
       with(filterIsInstance<KtInternalClassUsage>()) {
-        assertEquals(1, size)
-        assertEquals(getInternalClassUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+        assertEquals(0, size)
       }
     }
   }
@@ -173,15 +172,13 @@ class KotlinInternalModifierUsageTest {
     val plugin = prepareUsage(pluginSpec) { usageClassUdt }
 
     verify(ide, plugin).run {
-      assertEquals(2, size)
+      assertEquals(0, size)
       with(filterIsInstance<KtInternalClassUsage>()) {
-        assertEquals(1, size)
-        assertEquals(getInternalClassUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+        assertEquals(0, size)
       }
 
       with(filterIsInstance<KtInternalMethodUsage>()) {
-        assertEquals(1, size)
-        assertEquals(getInternalMethodUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+        assertEquals(0, size)
       }
     }
   }
@@ -223,8 +220,7 @@ class KotlinInternalModifierUsageTest {
     }
     verify(ide, idePlugin).run {
       with(filterIsInstance<KtInternalFieldUsage>()) {
-        assertEquals(1, size)
-        assertEquals(getInternalFieldUsageMsg(usageClassName, internalApiServiceClassName), this[0].fullDescription)
+        assertEquals(0, size)
       }
     }
   }

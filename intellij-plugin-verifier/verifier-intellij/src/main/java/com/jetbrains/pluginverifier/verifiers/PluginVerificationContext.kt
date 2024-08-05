@@ -24,7 +24,6 @@ import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsageProc
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsageRegistrar
-import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalModifierUsageProcessor
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiCompatibilityIssueAnalyzer
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.javaPlugin.JavaPluginApiUsageRegistrar
@@ -67,7 +66,6 @@ data class PluginVerificationContext(
       ExperimentalApiUsageProcessor(this),
       DiscouragingClassUsageProcessor(this),
       InternalApiUsageProcessor(this),
-      KtInternalModifierUsageProcessor(this),
       OverrideOnlyMethodUsageProcessor(this),
       JavaPluginApiUsageProcessor(this),
       PropertyUsageProcessor()
