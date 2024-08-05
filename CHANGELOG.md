@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.373 - 2024-08-05
+
+### Added
+
 - Report usages of the `com.intellij.languageBundle` extension point. This extension point is internal and must be used by JetBrains only. ([#1130](https://github.com/JetBrains/intellij-plugin-verifier/pull/1130), [MP-6788](https://youtrack.jetbrains.com/issue/MP-6788))
 - Structure: Add TeamCity actions spec versions calculation
 
