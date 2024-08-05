@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.WithIdePlugin
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -12,6 +13,7 @@ import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
+import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 
 /**
@@ -23,8 +25,8 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInf
  */
 class SizeLimitedPluginDetailsCache(
   cacheSize: Int,
-  val pluginFileProvider: PluginFileProvider,
-  val pluginDetailsProvider: PluginDetailsProvider
+  pluginFileProvider: PluginFileProvider,
+  pluginDetailsProvider: PluginDetailsProvider
 ) : PluginDetailsCache {
 
   private val internalCache = createSizeLimitedResourceCache(
@@ -75,19 +77,42 @@ private class PluginDetailsResourceProvider(
   override fun provide(key: PluginInfo) = when (key) {
     is LocalPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
     is BundledPluginInfo -> ProvideResult.Provided(pluginDetailsProvider.providePluginDetails(key, key.idePlugin))
+    is DependencyPluginInfo -> provideDependencyDetails(key)
     else -> provideFileAndDetails(key)
   }
 
   private fun provideFileAndDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
-    return with(pluginFileProvider.getPluginFile(pluginInfo)) {
-      when (this) {
-        is PluginFileProvider.Result.Found -> {
-          val pluginDetailsResult = pluginDetailsProvider.providePluginDetails(pluginInfo, pluginFileLock)
-          ProvideResult.Provided(pluginDetailsResult)
-        }
-        is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
-        is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
-      }
+    return pluginFileProvider
+      .getPluginFile(pluginInfo)
+      .provideDetails(pluginInfo)
+  }
+
+  private fun provideDependencyDetails(dependency: DependencyPluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+    val unwrappedPluginInfo = dependency.pluginInfo
+    val unwrappedPlugin = (unwrappedPluginInfo as? WithIdePlugin)?.idePlugin
+    return if (unwrappedPlugin != null) {
+      pluginDetailsProvider.providePluginDetails(unwrappedPluginInfo, unwrappedPlugin).provided
+    } else {
+      pluginFileProvider
+        .getPluginFile(unwrappedPluginInfo)
+        .provideDetails(dependency)
     }
   }
+
+  private fun PluginFileProvider.Result.provideDetails(pluginInfo: PluginInfo): ProvideResult<PluginDetailsProvider.Result> {
+    return when (this) {
+      is PluginFileProvider.Result.Found -> {
+        pluginDetailsProvider
+          .providePluginDetails(pluginInfo, pluginFileLock)
+          .provided
+      }
+
+      is PluginFileProvider.Result.NotFound -> ProvideResult.NotFound(reason)
+      is PluginFileProvider.Result.Failed -> ProvideResult.Failed(reason, error)
+    }
+  }
+
+  private val PluginDetailsProvider.Result.provided
+    get() = ProvideResult.Provided(this)
+
 }

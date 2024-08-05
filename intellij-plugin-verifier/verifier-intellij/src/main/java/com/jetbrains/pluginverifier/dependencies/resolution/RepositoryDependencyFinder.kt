@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginRepository
 
 /**
  * [DependencyFinder] that searches for the dependency in the [PluginRepository].
@@ -14,10 +15,12 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
  * if multiple versions are available.
  */
 class RepositoryDependencyFinder(
-  private val pluginRepository: PluginRepository,
+  pluginRepository: PluginRepository,
   private val pluginVersionSelector: PluginVersionSelector,
   private val pluginDetailsCache: PluginDetailsCache
 ) : DependencyFinder {
+
+  private val pluginRepository = DependencyPluginRepository(pluginRepository)
 
   override val presentableName
     get() = pluginRepository.toString()

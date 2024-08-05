@@ -794,9 +794,11 @@ internal class PluginCreator private constructor(
       return false
     }
     val invalidPlugin = newInvalidPlugin(bean, document)
-    return problemResolver.classify(invalidPlugin, problems).any {
-      it.level == ERROR
-    }
+    return problemResolver
+      .classify(invalidPlugin, problems)
+      .filter {
+        it.level == ERROR
+      }.notEmpty(context = bean)
   }
 
   private fun validateId(plugin: PluginBean) {
@@ -950,6 +952,19 @@ internal class PluginCreator private constructor(
 
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
     get() = warnings + unacceptableWarnings
+
+  private fun List<PluginProblem>.notEmpty(context: PluginBean): Boolean {
+    return if (isEmpty()) {
+      false
+    } else {
+      if (LOG.isDebugEnabled) {
+        val errorMsg = joinToString()
+        LOG.debug("Plugin '${context.id}' has $size error(s): $errorMsg")
+      }
+      true
+    }
+  }
+
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {

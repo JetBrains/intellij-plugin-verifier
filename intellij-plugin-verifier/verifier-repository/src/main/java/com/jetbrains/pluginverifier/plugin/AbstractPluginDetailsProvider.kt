@@ -24,7 +24,7 @@ import java.nio.file.Path
  * uses the [extractDirectory] for extracting `.zip`-ped plugins.
  */
 abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path) : PluginDetailsProvider {
-  private val idePluginManager = IdePluginManager.createManager(extractDirectory)
+  protected val idePluginManager = IdePluginManager.createManager(extractDirectory)
 
   private val IdePlugin.problems: List<PluginProblem>
     get() = if (this is StructurallyValidated) this.problems else emptyList()
@@ -33,7 +33,7 @@ abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path)
 
   override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
     pluginFileLock.closeOnException {
-      with(idePluginManager.createPlugin(pluginFileLock.file)) {
+      with(createPlugin(pluginInfo, pluginFileLock)) {
         when (this) {
           is PluginCreationSuccess<IdePlugin> -> {
             readPluginClasses(
@@ -84,4 +84,7 @@ abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path)
       PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
     }
   }
+
+  protected open fun createPlugin(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
+    idePluginManager.createPlugin(pluginFileLock.file)
 }
