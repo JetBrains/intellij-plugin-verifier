@@ -7,6 +7,11 @@ import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolve
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
+/**
+ * Locates classes from `lib/modules` directory.
+ *
+ * Such classes correspond to V2 plugin modules with module-level libraries packaged into separate JARs.
+ */
 class LibModulesDirectoryLocator(
   private val readMode: Resolver.ReadMode,
   private val fileOriginProvider: FileOriginProvider = LibModulesDirectoryOriginProvider
