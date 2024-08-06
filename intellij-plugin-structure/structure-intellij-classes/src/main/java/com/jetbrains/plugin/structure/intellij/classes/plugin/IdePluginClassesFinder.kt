@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.ClassesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
+import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
@@ -91,7 +92,7 @@ class IdePluginClassesFinder private constructor(
 
   companion object {
 
-    val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey)
+    val MAIN_CLASSES_KEYS = listOf(JarPluginKey, ClassesDirectoryKey, LibDirectoryKey, LibModulesDirectoryKey)
 
     fun findPluginClasses(
       idePlugin: IdePlugin,

@@ -1,0 +1,40 @@
+package com.jetbrains.plugin.structure.intellij.classes.locator
+
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import java.nio.file.Path
+
+class LibModulesDirectoryLocator(
+  private val readMode: Resolver.ReadMode,
+  private val fileOriginProvider: FileOriginProvider = LibModulesDirectoryOriginProvider
+) : ClassesLocator {
+
+  override val locationKey = LibModulesDirectoryKey
+
+  override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
+    val modulesDir = pluginFile.resolve("lib").resolve("modules")
+    if (!modulesDir.isDirectory) {
+      return emptyList()
+    }
+
+    val origin = fileOriginProvider.getFileOrigin(idePlugin, pluginFile)
+    val jarsOrZips = modulesDir.listFiles().filter { file -> file.isJar() || file.isZip() }
+
+    return buildJarOrZipFileResolvers(jarsOrZips, readMode, origin)
+  }
+}
+
+object LibModulesDirectoryKey : LocationKey {
+  override val name: String = "lib/modules directory"
+
+  override fun getLocator(readMode: Resolver.ReadMode) = LibModulesDirectoryLocator(readMode)
+}
+
+object LibModulesDirectoryOriginProvider : FileOriginProvider {
+  override fun getFileOrigin(idePlugin: IdePlugin, pluginFile: Path) = PluginFileOrigin.LibDirectory(idePlugin)
+}
