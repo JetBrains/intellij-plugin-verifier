@@ -1,9 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.classes.locator
 
 import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -23,7 +21,7 @@ class LibModulesDirectoryLocator(
     }
 
     val origin = fileOriginProvider.getFileOrigin(idePlugin, pluginFile)
-    val jarsOrZips = modulesDir.listFiles().filter { file -> file.isJar() || file.isZip() }
+    val jarsOrZips = modulesDir.listJars()
 
     return buildJarOrZipFileResolvers(jarsOrZips, readMode, origin)
   }
