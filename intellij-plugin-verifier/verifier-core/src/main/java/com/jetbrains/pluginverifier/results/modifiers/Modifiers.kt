@@ -31,6 +31,12 @@ data class Modifiers(private val flags: Int) {
 
   fun contains(flag: Modifier): Boolean = flags.and(flag.flag) != 0
 
+  override fun toString(): String {
+     return Modifier.values()
+       .filter { contains(it) }
+       .joinToString { it.name.lowercase() }
+  }
+
   companion object {
     fun of(vararg modifiers: Modifier) = Modifiers(modifiers.map { it.flag }.fold(0) { acc, m -> acc.or(m) })
   }
