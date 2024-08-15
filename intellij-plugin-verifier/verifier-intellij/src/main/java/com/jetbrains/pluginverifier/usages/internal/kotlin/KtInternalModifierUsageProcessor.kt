@@ -28,7 +28,14 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
  */
 private val byteBuddyMethodDelegationModifiers = Modifiers.of(PUBLIC, STATIC, VOLATILE, BRIDGE, SYNTHETIC)
 
-class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationContext) : BaseInternalApiUsageProcessor(KtInternalUsageRegistrar(verificationContext))  {
+private val kotlinPlatformPackages = listOf("kotlin", "kotlinx")
+
+internal const val KOTLIN_PUBLISHED_API_ANNOTATION_DESC = "Lkotlin/PublishedApi;"
+
+class KtInternalModifierUsageProcessor(
+  verificationContext: PluginVerificationContext,
+  private val excludedPackages: List<String> = kotlinPlatformPackages
+) : BaseInternalApiUsageProcessor(KtInternalUsageRegistrar(verificationContext)) {
   private val ktClassResolver = KtClassResolver()
 
   override fun isInternal(
@@ -42,7 +49,7 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
     if (hasSameOrigin(resolvedMember, usageLocation)) {
       return false
     }
-    if (isIgnored(usageLocation)) {
+    if (isPublishedApi(resolvedMember)) {
       return false
     }
 
@@ -79,6 +86,9 @@ class KtInternalModifierUsageProcessor(verificationContext: PluginVerificationCo
     classFileMember.selfOrContainingClassFile?.let {
       hasKotlinMetadataAnnotation(it)
     } ?: false
+
+  private fun isPublishedApi(classFileMember: ClassFileMember): Boolean =
+    classFileMember.annotations.any { it.desc == KOTLIN_PUBLISHED_API_ANNOTATION_DESC }
 
   private fun hasKotlinMetadataAnnotation(classFile: ClassFile): Boolean =
     classFile is ClassFileAsm && KtClassResolver.hasKotlinMetadataAnnotation(classFile.asmNode)
