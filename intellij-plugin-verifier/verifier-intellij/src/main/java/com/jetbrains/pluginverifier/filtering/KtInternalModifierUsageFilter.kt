@@ -9,20 +9,40 @@ import com.jetbrains.pluginverifier.filtering.ApiUsageFilter.Result.Report
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalModifierUsage
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
+import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
+import com.jetbrains.pluginverifier.verifiers.resolution.toFullyQualifiedClassName
 
-private val kotlinPlatformPackages = listOf("kotlin", "kotlinx")
+private val ignoredPackages = listOf(
+  "kotlin.jvm.internal",
+  "kotlin.internal",
+  "kotlin.coroutines.jvm.internal",
+  "kotlinx.serialization.internal"
+)
 
-class KtInternalModifierUsageFilter(private val excludedPackages: List<String> = kotlinPlatformPackages) : ApiUsageFilter {
+private val ignoredClasses: Set<FullyQualifiedClassName> = setOf(
+  "kotlin._Assertions"
+)
+
+class KtInternalModifierUsageFilter : ApiUsageFilter {
   override fun shouldReport(apiUsage: ApiUsage, context: VerificationContext): ApiUsageFilter.Result =
     when {
-      apiUsage is KtInternalModifierUsage && apiUsage.isKotlinPlatform() -> Ignore("Kotlin internal visibility modifier in '${apiUsage.packageName}' package is ignored.")
+      apiUsage is KtInternalModifierUsage && apiUsage.isIgnored() -> Ignore("Kotlin internal visibility modifier in '${apiUsage.packageName}' package is ignored.")
       else -> Report
     }
 
-  private fun ApiUsage.isKotlinPlatform(): Boolean {
+  private fun ApiUsage.isIgnored(): Boolean {
+    return hasIgnoredClass() || hasIgnoredPackage()
+  }
+
+  private fun ApiUsage.hasIgnoredClass(): Boolean {
+    val apiUsageClass: BinaryClassName = apiElement.containingClass.className
+    return ignoredClasses.contains(apiUsageClass.toFullyQualifiedClassName())
+  }
+
+  private fun ApiUsage.hasIgnoredPackage(): Boolean {
     val apiPackage = this.packageName
-    return excludedPackages
-      .map { "$it." }
+    return ignoredPackages
       .any {
         apiPackage.startsWith(it)
       }

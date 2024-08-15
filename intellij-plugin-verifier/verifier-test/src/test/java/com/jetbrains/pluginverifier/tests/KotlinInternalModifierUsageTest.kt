@@ -237,6 +237,7 @@ class KotlinInternalModifierUsageTest {
     assertVerified {
       ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
       plugin = prepareUsage(pluginSpec, "KotlinUsage", Dumps.KotlinUsage())
+      kotlin = true
     }.run {
       with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
         assertEquals(0, size)
@@ -249,6 +250,7 @@ class KotlinInternalModifierUsageTest {
     assertVerified {
       ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
       plugin = prepareUsage(pluginSpec, "KotlinUsage", Dumps.KotlinSuspendLambda())
+      kotlin = true
     }.run {
       with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
         assertEquals(0, size)
@@ -261,6 +263,7 @@ class KotlinInternalModifierUsageTest {
     assertVerified {
       ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
       plugin = prepareUsage(pluginSpec, "KotlinUsage", JavaDumps.getSerializableVersion())
+      kotlin = true
     }.run {
       with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
         assertEquals(0, size)
