@@ -28,13 +28,10 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
  */
 private val byteBuddyMethodDelegationModifiers = Modifiers.of(PUBLIC, STATIC, VOLATILE, BRIDGE, SYNTHETIC)
 
-private val kotlinPlatformPackages = listOf("kotlin", "kotlinx")
-
 internal const val KOTLIN_PUBLISHED_API_ANNOTATION_DESC = "Lkotlin/PublishedApi;"
 
 class KtInternalModifierUsageProcessor(
-  verificationContext: PluginVerificationContext,
-  private val excludedPackages: List<String> = kotlinPlatformPackages
+  verificationContext: PluginVerificationContext
 ) : BaseInternalApiUsageProcessor(KtInternalUsageRegistrar(verificationContext)) {
   private val ktClassResolver = KtClassResolver()
 
@@ -68,17 +65,7 @@ class KtInternalModifierUsageProcessor(
   }
 
   private fun isIgnored(usageLocation: Location, resolvedMember: ClassFileMember): Boolean {
-    return isKotlinPlatform(resolvedMember)
-      || usageLocation is FieldLocation && usageLocation.modifiers == byteBuddyMethodDelegationModifiers
-  }
-
-  private fun isKotlinPlatform(resolvedMember: ClassFileMember): Boolean {
-    val pkg = resolvedMember.containingClassFile.javaPackageName
-    return excludedPackages
-      .map { "$it." }
-      .any {
-        pkg.startsWith(it)
-      }
+    return usageLocation is FieldLocation && usageLocation.modifiers == byteBuddyMethodDelegationModifiers
   }
 
   private fun hasSameOrigin(
