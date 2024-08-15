@@ -22,7 +22,8 @@ import java.io.Closeable
 class DefaultClassResolverProvider(
   private val dependencyFinder: DependencyFinder,
   private val ideDescriptor: IdeDescriptor,
-  private val externalClassesPackageFilter: PackageFilter
+  private val externalClassesPackageFilter: PackageFilter,
+  private val additionalClassResolvers: List<Resolver> = emptyList()
 ) : ClassResolverProvider {
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
@@ -39,12 +40,14 @@ class DefaultClassResolverProvider(
 
       val dependenciesClassResolver = createDependenciesClassResolver(checkedPluginDetails, dependenciesResults)
 
-      val resolver = CompositeResolver.create(
+      val resolvers = listOf(
         pluginResolver,
         ideDescriptor.jdkDescriptor.jdkResolver,
         ideDescriptor.ideResolver,
         dependenciesClassResolver
-      ).caching()
+      ) + additionalClassResolvers
+
+      val resolver = CompositeResolver.create(resolvers).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }
   }
