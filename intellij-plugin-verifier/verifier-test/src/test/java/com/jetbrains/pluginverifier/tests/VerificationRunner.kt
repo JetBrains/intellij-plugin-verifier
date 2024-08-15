@@ -14,6 +14,7 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
+import com.jetbrains.pluginverifier.filtering.KtInternalModifierUsageFilter
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -59,13 +60,15 @@ class VerificationRunner {
       )
       val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
 
+      val allApiUsagesFilters = apiUsageFilters + getAdditionalApiUsageFilters(includeKotlinStdLib)
+
       val pluginVerifier = PluginVerifier(
         verificationDescriptor,
         problemsFilters,
         pluginDetailsCache,
         listOf(DynamicallyLoadedFilter()),
         false,
-        apiUsageFilters
+        allApiUsagesFilters
       )
       pluginVerifierHandler(pluginVerifier)
     }
@@ -81,6 +84,14 @@ class VerificationRunner {
     return if (includeKotlinStdLib) {
       val kotlinStdLibJar = ide.findKotlinStdLib()
       listOf(JarFileResolver(kotlinStdLibJar, ReadMode.SIGNATURES, IdeLibDirectory(ide)))
+    } else {
+      emptyList()
+    }
+  }
+
+  private fun getAdditionalApiUsageFilters(includeKotlinStdLib: Boolean): List<ApiUsageFilter> {
+    return if(includeKotlinStdLib) {
+      listOf(KtInternalModifierUsageFilter())
     } else {
       emptyList()
     }
