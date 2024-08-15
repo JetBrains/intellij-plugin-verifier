@@ -52,7 +52,9 @@ class KtInternalModifierUsageProcessor(
     if (isPublishedApi(resolvedMember)) {
       return false
     }
-
+    if (isIgnored(usageLocation, resolvedMember)) {
+      return false
+    }
     val classFile = resolvedMember.selfOrContainingClassFile ?: return false
     val classNode = (classFile as? ClassFileAsm)?.asmNode ?: return false
     val ktClassNode = ktClassResolver[classNode] ?: return false
@@ -65,8 +67,18 @@ class KtInternalModifierUsageProcessor(
     }
   }
 
-  private fun isIgnored(usageLocation: Location): Boolean {
-    return usageLocation is FieldLocation && usageLocation.modifiers == byteBuddyMethodDelegationModifiers
+  private fun isIgnored(usageLocation: Location, resolvedMember: ClassFileMember): Boolean {
+    return isKotlinPlatform(resolvedMember)
+      || usageLocation is FieldLocation && usageLocation.modifiers == byteBuddyMethodDelegationModifiers
+  }
+
+  private fun isKotlinPlatform(resolvedMember: ClassFileMember): Boolean {
+    val pkg = resolvedMember.containingClassFile.javaPackageName
+    return excludedPackages
+      .map { "$it." }
+      .any {
+        pkg.startsWith(it)
+      }
   }
 
   private fun hasSameOrigin(
