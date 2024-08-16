@@ -19,4 +19,12 @@ abstract class ExperimentalApiUsage : ApiUsage()
 fun ClassFileMember.isExperimentalApi(classResolver: Resolver, usageLocation: Location): Boolean =
   isMemberEffectivelyAnnotatedWith(experimentalApiStatusResolver, classResolver, usageLocation)
 
+@Suppress("unused")
+fun ClassFileMember.isExperimentalApi(classResolver: Resolver): Boolean =
+  isMemberEffectivelyAnnotatedWith(experimentalApiStatusResolver, classResolver, usageLocation = null)
+
+@Suppress("unused")
+fun ClassFileMember.resolveExperimentalApiAnnotation(classResolver: Resolver) =
+  experimentalApiStatusResolver.resolve(this, classResolver, usageLocation = null)
+
 private val experimentalApiStatusResolver = AnnotationResolver("org/jetbrains/annotations/ApiStatus\$Experimental")

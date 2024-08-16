@@ -124,7 +124,7 @@ class AnnotationResolver(val annotation: FullyQualifiedClassName) {
 }
 
 fun ClassFileMember.isMemberEffectivelyAnnotatedWith(annotationResolver: AnnotationResolver, classResolver: Resolver): Boolean =
-  isMemberEffectivelyAnnotatedWith(annotationResolver, classResolver, location = null)
+  isMemberEffectivelyAnnotatedWith(annotationResolver, classResolver, usageLocation = null)
 
-fun ClassFileMember.isMemberEffectivelyAnnotatedWith(annotationResolver: AnnotationResolver, classResolver: Resolver, location: Location?): Boolean =
-  annotationResolver.resolve(this, classResolver, location) != null
+fun ClassFileMember.isMemberEffectivelyAnnotatedWith(annotationResolver: AnnotationResolver, classResolver: Resolver, usageLocation: Location?): Boolean =
+  annotationResolver.resolve(this, classResolver, usageLocation) != null
