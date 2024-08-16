@@ -24,7 +24,7 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityTest
 import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.results.presentation.toSimpleJavaClassName
 import com.jetbrains.pluginverifier.usages.deprecated.deprecationInfo
-import com.jetbrains.pluginverifier.usages.experimental.findEffectiveExperimentalAnnotation
+import com.jetbrains.pluginverifier.usages.experimental.resolveExperimentalApiAnnotation
 import com.jetbrains.pluginverifier.usages.util.MemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
@@ -418,7 +418,7 @@ class ApiQualityCheckCommand : Command {
     val signature = classFileMember.toSignature()
     val apiEvents = apiMetadata[signature]
 
-    val experimentalMemberAnnotation = classFileMember.findEffectiveExperimentalAnnotation(ideResolver)
+    val experimentalMemberAnnotation = classFileMember.resolveExperimentalApiAnnotation(ideResolver)
     if (experimentalMemberAnnotation != null) {
       if (experimentalMemberAnnotation !is MemberAnnotation.AnnotatedViaContainingClass) {
         val since = apiEvents.filterIsInstance<MarkedExperimentalIn>().map { it.ideVersion }.minOrNull()
