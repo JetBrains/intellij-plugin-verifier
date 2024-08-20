@@ -20,8 +20,7 @@ import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
@@ -507,6 +506,26 @@ class ExistingPluginValidationTest : BasePluginTest() {
     Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
   }
 
+  @Test
+  fun `paid plugin is not built due to invalid release-version but such problem is filtered because it is an existing plugin`() {
+    val singleDigitReleaseVersion = 1
+    val paidIdeaPlugin = paidIdeaPlugin(releaseVersion = singleDigitReleaseVersion)
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $paidIdeaPlugin
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertSuccess(result)
+    assertMatchingPluginProblems(result as PluginCreationSuccess)
+  }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
@@ -535,6 +554,19 @@ class ExistingPluginValidationTest : BasePluginTest() {
     <depends>com.intellij.modules.platform</depends>
   """
 
+  private fun paidIdeaPlugin(pluginId: String = "someid",
+                         pluginName: String = "someName",
+                         vendor: String = "vendor",
+                         sinceBuild: String = "131.1",
+                         untilBuild: String = "231.1",
+                         description: String = "this description is looooooooooong enough",
+                         releaseVersion: Int = 20211) =
+    ideaPlugin(pluginId, pluginName, vendor, sinceBuild, untilBuild, description) +
+      """
+        <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
+      """.trimIndent()
+
+
   private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true): PluginCreationResultResolver {
     val problemLevelMappingManager = levelRemappingFromClassPathJson()
     val levelRemappingDefinitionName = if (isExistingPlugin) EXISTING_PLUGIN_REMAPPING_SET else NEW_PLUGIN_REMAPPING_SET
@@ -549,5 +581,16 @@ class ExistingPluginValidationTest : BasePluginTest() {
         assertEquals(resultProblems, plugin.problems)
       }
     }
+  }
+
+  private fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
+    when (pluginResult) {
+      is PluginCreationSuccess -> return
+      is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
+        fail("Expected successful plugin creation, but got $size problem(s): "
+          + joinToString { it.message })
+      }
+    }
+
   }
 }
