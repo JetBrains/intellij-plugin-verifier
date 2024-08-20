@@ -201,6 +201,18 @@ class ReleaseDateInFuture(descriptorPath: String) : InvalidDescriptorProblem(
     get() = Level.ERROR
 }
 
+class ReleaseVersionWrongFormat(
+  descriptorPath: String,
+  releaseVersion: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-version> parameter ($releaseVersion) format is invalid. " +
+    "Ensure it is an integer with at least two digits."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
 class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The theme description file cannot be found by the path '$themePath'. Ensure the theme description " +
