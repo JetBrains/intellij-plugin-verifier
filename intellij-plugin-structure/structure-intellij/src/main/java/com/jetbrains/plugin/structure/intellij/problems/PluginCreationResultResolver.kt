@@ -70,6 +70,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     TooLongPropertyValue::class,
     ReleaseDateWrongFormat::class,
     ReleaseDateInFuture::class,
+    ReleaseVersionWrongFormat::class,
     UnableToFindTheme::class,
     UnableToReadTheme::class,
     OptionalDependencyDescriptorCycleProblem::class,

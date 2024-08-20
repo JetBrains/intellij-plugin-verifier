@@ -30,6 +30,6 @@ data class ProductDescriptor(
     optional
   )
 
-  @Deprecated("Use version", replaceWith = ReplaceWith("version"))
+  @Deprecated("Use version.value field", replaceWith = ReplaceWith("version.value"))
   val releaseVersion: Int = version.value
 }
