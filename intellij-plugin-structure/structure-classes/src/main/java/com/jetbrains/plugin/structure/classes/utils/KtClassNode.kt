@@ -9,16 +9,14 @@ import org.objectweb.asm.tree.ClassNode
 
 class KtClassNode(private val classNode: ClassNode, private val metadata: KotlinClassMetadata.Class) {
 
+  val name: String
+    get() = classNode.name
+
   val isInternal: Boolean
     get() = cls.visibility == Visibility.INTERNAL
 
   val isEnumClass: Boolean
-    get() {
-      return cls.enumEntries.isNotEmpty()
-    }
-
-  val name: String
-    get() = classNode.name
+    get() = cls.enumEntries.isNotEmpty()
 
   fun isInternalField(fieldName: String): Boolean {
     return cls.properties.any { it.name == fieldName && it.visibility == Visibility.INTERNAL }
