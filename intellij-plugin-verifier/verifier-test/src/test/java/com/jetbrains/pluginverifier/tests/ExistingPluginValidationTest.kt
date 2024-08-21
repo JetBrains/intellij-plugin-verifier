@@ -526,6 +526,25 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertMatchingPluginProblems(result as PluginCreationSuccess)
   }
 
+  @Test
+  fun `existing paid plugin has release-version that does not match plugin version but this is filtered`() {
+    val paidIdeaPlugin = paidIdeaPlugin(releaseVersion = 20)
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $paidIdeaPlugin
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertSuccess(result)
+    assertMatchingPluginProblems(result as PluginCreationSuccess)
+  }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
@@ -546,7 +565,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
                          description: String = "this description is looooooooooong enough") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
-    <version>someVersion</version>
+    <version>1</version>
     ""<vendor email="vendor.com" url="url">$vendor</vendor>""
     <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>

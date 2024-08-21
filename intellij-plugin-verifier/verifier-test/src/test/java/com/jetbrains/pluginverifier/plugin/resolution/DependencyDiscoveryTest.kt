@@ -44,7 +44,7 @@ class DependencyDiscoveryTest {
           append("""
             <product-descriptor 
               code="MOCKPLUGIN" 
-              release-version="10" 
+              release-version="20" 
               release-date="99991212" />
           """.trimIndent())
         }

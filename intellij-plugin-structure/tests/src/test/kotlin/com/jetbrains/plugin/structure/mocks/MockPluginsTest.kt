@@ -26,6 +26,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipl
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
 import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
 import org.junit.Test
@@ -648,7 +649,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     with(plugin.productDescriptor!!) {
       assertEquals("PABC", code)
       assertEquals(LocalDate.of(2018, 1, 18), releaseDate)
-      assertEquals(20181, version.value )
+      assertEquals(ProductReleaseVersion(10), version)
       assertEquals(true, eap)
       assertEquals(true, optional)
     }

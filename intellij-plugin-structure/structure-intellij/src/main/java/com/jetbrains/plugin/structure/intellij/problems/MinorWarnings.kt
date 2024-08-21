@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionEr
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
 class NoModuleDependencies(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
@@ -179,6 +180,19 @@ open class NonexistentReleaseInUntilBuild(
   nonexistentRelease: String = ""
 ) : SuspiciousUntilBuild(untilBuild, "Version '$nonexistentRelease' does not exist")
 
+class SuspiciousReleaseVersion(
+  descriptorPath: String,
+  releaseVersion: ProductReleaseVersion,
+  pluginVersion: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-version> parameter [$releaseVersion] and the plugin version [$pluginVersion] " +
+    "should have similar integers at the beginning. " +
+    "For example, release version '20201' should match plugin version 2020.1.1"
+) {
+  override val level
+    get() = Level.WARNING
+}
 
 class ForbiddenPluginIdPrefix(
   descriptorPath: String,

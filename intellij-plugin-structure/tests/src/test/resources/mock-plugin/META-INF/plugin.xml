@@ -9,7 +9,7 @@
 
     <idea-version since-build="141.1009.5" until-build="141.9999999"/>
 
-    <product-descriptor code="PABC" release-date="20180118" release-version="20181" eap="true" optional="true"/>
+    <product-descriptor code="PABC" release-date="20180118" release-version="10" eap="true" optional="true"/>
 
     <module value="one_module"/>
 

@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
+import com.jetbrains.plugin.structure.intellij.problems.SuspiciousReleaseVersion
 import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier.VerificationResult.Invalid
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
@@ -25,6 +26,7 @@ class ProductReleaseVersionVerifier {
             problemRegistrar.registerProblem(ReleaseVersionWrongFormat(descriptorPath, releaseVersionValue))
           }
         } else {
+          verifyPluginVersionAndReleaseVersionMatch(plugin, productReleaseVersion = this, descriptorPath, problemRegistrar)
           VerificationResult.Valid(this)
         }
       }
@@ -32,6 +34,26 @@ class ProductReleaseVersionVerifier {
       Invalid("Attribute '$RELEASE_VERSION_ATTRIBUTE_NAME' is not an integer: '$releaseVersionValue'").also {
         problemRegistrar.registerProblem(NotNumber(RELEASE_VERSION_ATTRIBUTE_NAME, descriptorPath))
       }
+    }
+  }
+
+  private fun verifyPluginVersionAndReleaseVersionMatch(
+    plugin: PluginBean,
+    productReleaseVersion: ProductReleaseVersion,
+    descriptorPath: String,
+    problemRegistrar: ProblemRegistrar
+  ) {
+    if (plugin.pluginVersion == null) return
+
+    val commonPrefix = productReleaseVersion.major.toString().commonPrefixWith(plugin.pluginVersion)
+    if (commonPrefix.isEmpty()) {
+      problemRegistrar.registerProblem(
+        SuspiciousReleaseVersion(
+          descriptorPath,
+          productReleaseVersion,
+          plugin.pluginVersion
+        )
+      )
     }
   }
 

@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfig
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
+import com.jetbrains.plugin.structure.intellij.problems.SuspiciousReleaseVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.junit.Assert.*
 import org.junit.Rule
@@ -193,6 +194,30 @@ class PluginXmlValidationTest {
     }
   }
 
+  @Test
+  fun `paid plugin with a mismatching release version and plugin version`() {
+    val creationResult = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER_WITHOUT_VERSION
+              <version>2.0</version>
+              <product-descriptor code="PCODE" release-date="20240813" release-version="10"/>
+              <depends>com.intellij.modules.lang</depends>              
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(creationResult.warnings) {
+      assertEquals(1, size)
+      val problem = filterIsInstance<SuspiciousReleaseVersion>().singleOrNull()
+      assertNotNull(problem)
+      problem!!
+      assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [10] and the plugin version [2.0] should have similar integers at the beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())
+    }
+  }
 
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
