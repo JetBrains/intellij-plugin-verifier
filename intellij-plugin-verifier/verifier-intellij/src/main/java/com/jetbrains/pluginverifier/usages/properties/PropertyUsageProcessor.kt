@@ -7,7 +7,6 @@ package com.jetbrains.pluginverifier.usages.properties
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.pluginverifier.results.location.MethodLocation
-import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
@@ -15,13 +14,13 @@ import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
-import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import com.jetbrains.pluginverifier.verifiers.resolution.MethodParameter
 import org.objectweb.asm.tree.AbstractInsnNode
 import java.util.*
 
 class PropertyUsageProcessor : ApiUsageProcessor {
+
+  private val enumClassPropertyUsage = EnumClassPropertyUsageAdapter()
 
   override fun processMethodInvocation(
     methodReference: MethodReference,
@@ -30,7 +29,11 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     callerMethod: Method,
     context: VerificationContext
   ) {
-    val methodParameters = resolveParameters(resolvedMethod)
+    val methodParameters = if (enumClassPropertyUsage.supports(resolvedMethod)) {
+      enumClassPropertyUsage.resolveParameters(resolvedMethod)
+    } else {
+      resolvedMethod.methodParameters
+    }
     if (methodParameters.any { it.name.contains("default", true) }) {
       //Some resource bundle methods provide default value parameter, which is used if such property is not available in the bundle.
       return
@@ -91,17 +94,6 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     }
   }
 
-  private fun resolveParameters(resolvedMethod: Method): List<MethodParameter> {
-    return if (resolvedMethod.isInEnum() && resolvedMethod.descriptor == "(Ljava/lang/String;ILjava/lang/String;)V") {
-      resolvedMethod.methodParameters.drop(2)
-    } else {
-      resolvedMethod.methodParameters
-    }
-  }
 
-  private fun Method.isInEnum(): Boolean {
-    val enclosingClassFile = containingClassFile as? ClassFileAsm ?: return false
-    val containingClassModifiers = Modifiers(enclosingClassFile.asmNode.access)
-    return containingClassModifiers.contains(Modifiers.Modifier.ENUM)
-  }
+
 }
