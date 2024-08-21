@@ -12,6 +12,11 @@ class KtClassNode(private val classNode: ClassNode, private val metadata: Kotlin
   val isInternal: Boolean
     get() = cls.visibility == Visibility.INTERNAL
 
+  val isEnumClass: Boolean
+    get() {
+      return cls.enumEntries.isNotEmpty()
+    }
+
   val name: String
     get() = classNode.name
 
