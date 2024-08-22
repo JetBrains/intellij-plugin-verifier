@@ -87,12 +87,11 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       val problems = descriptor.validate()
 
       val icons = loadIconFromDir(pluginDir)
-      val iconNames = icons.map { it.fileName }.toSet()
 
       val fileChecker = FileChecker(descriptor.id)
       val files = Files.list(pluginDir).toList().mapNotNull { file ->
         val fileName = file.fileName.toString()
-        if (file.isFile && fileName !in iconNames && fileChecker.addFile(file)) {
+        if (file.isFile && fileChecker.addFile(file)) {
           PluginFile(fileName, Files.readAllBytes(file))
         }
         else {
