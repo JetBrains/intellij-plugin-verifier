@@ -164,7 +164,9 @@ data class FleetMeta(
   @JsonProperty("vendor")
   val vendor: String? = null,
   @JsonProperty("frontend-only")
-  val frontendOnly: Boolean? = null
+  val frontendOnly: Boolean? = null,
+  @JsonProperty("visible")
+  val humanVisible: Boolean?
 )
 
 data class FleetShipVersionRange(
