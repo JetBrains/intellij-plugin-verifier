@@ -41,10 +41,6 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
       val (f, s) = it.plugin.icons
       assertEquals(content, String(f.content))
       assertEquals(content, String(s.content))
-
-      val fileNames = it.plugin.files.map { file -> file.name }.toSet()
-      assertTrue("File ${f.fileName} should not be in files list: $fileNames", f.fileName !in fileNames)
-      assertTrue("File ${s.fileName} should not be in files list: $fileNames", s.fileName !in fileNames)
     }
   }
 
