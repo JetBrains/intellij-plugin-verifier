@@ -6,16 +6,22 @@ package com.jetbrains.pluginverifier.usages.properties
 
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.bytecode.InterpreterAdapter
+import com.jetbrains.pluginverifier.verifiers.bytecode.InvokeSpecialInterpreterListener
+import com.jetbrains.pluginverifier.verifiers.bytecode.StringValue
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.analysis.Analyzer
+import org.objectweb.asm.tree.analysis.BasicValue
 import java.util.*
 
 class PropertyUsageProcessor : ApiUsageProcessor {
@@ -29,11 +35,30 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     callerMethod: Method,
     context: VerificationContext
   ) {
-    val methodParameters = if (enumClassPropertyUsage.supports(resolvedMethod)) {
-      enumClassPropertyUsage.resolveParameters(resolvedMethod)
-    } else {
-      resolvedMethod.methodParameters
+    println(callerMethod.location.toString() + " " + callerMethod.name)
+    if (enumClassPropertyUsage.supports(resolvedMethod)) {
+      if (callerMethod is MethodAsm) {
+        val invokeSpecialDetector = InvokeSpecialInterpreterListener()
+        val a: Analyzer<BasicValue> = Analyzer(InterpreterAdapter(invokeSpecialDetector))
+        val f = a.analyze("PropertyUsageProcessor", callerMethod.asmNode)
+        val z= callerMethod.asmNode.instructions.zip(f)
+        z
+        enumClassPropertyUsage.resolve(resolvedMethod)?.run {
+          invokeSpecialDetector.invocations.filter {
+            it.methodName == "<init>" && it.desc == "(Ljava/lang/String;ILjava/lang/String;)V"
+          }.forEach { constructorInvocation ->
+            val invocationParameteres = constructorInvocation.values.drop(3) // 1) invocation target 2) enum member name 3) enum ordinal value
+            // TODO support more parameters
+            invocationParameteres.firstStringOrNull()?.let { propertyKey ->
+              checkProperty(bundleName, propertyKey, context, callerMethod.location)
+            }
+          }
+        }
+      }
+      return
     }
+
+    val methodParameters = resolvedMethod.methodParameters
     if (methodParameters.any { it.name.contains("default", true) }) {
       //Some resource bundle methods provide default value parameter, which is used if such property is not available in the bundle.
       return
@@ -60,7 +85,7 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     resourceBundleName: String,
     propertyKey: String,
     context: VerificationContext,
-    usageLocation: MethodLocation
+    usageLocation: Location
   ) {
     if (resourceBundleName != getBundleBaseName(resourceBundleName)) {
       //In general, we can't resolve non-base bundles, like "some.Bundle_en" because we don't know the locale to use.
@@ -94,6 +119,8 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     }
   }
 
-
+  private fun List<BasicValue>.firstStringOrNull(): String? =
+    filterIsInstance<StringValue>().firstOrNull()?.value
 
 }
+

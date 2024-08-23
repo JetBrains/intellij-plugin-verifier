@@ -1,6 +1,8 @@
 package com.jetbrains.pluginverifier.usages.properties
 
 import com.jetbrains.plugin.structure.classes.utils.KtClassResolver
+import com.jetbrains.pluginverifier.verifiers.findAnnotation
+import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
@@ -11,6 +13,15 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodNode
 
 class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver = KtClassResolver()) {
+
+  fun resolve(method: Method): ResourceBundledProperty? {
+    if (!supports(method)) return null
+    val methodParam = method.methodParameters.drop(2).first()
+    val propertyKeyAnn = method.getAnnotations { invisibleParameterAnnotations }.findAnnotation("org/jetbrains/annotations/PropertyKey") ?: return null
+
+    val bundleName = propertyKeyAnn.getAnnotationValue("resourceBundle") as? String ?: return null
+    return ResourceBundledProperty(methodParam.name, bundleName)
+  }
 
   fun resolveParameters(method: Method): List<MethodParameter> {
     return if (supports(method)) {
@@ -40,8 +51,9 @@ class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver =
     return allAnnotations.hasAnnotation(annotation)
   }
 
-  private fun MethodAsm.getAnnotations(propertyExtractor: MethodNode.() -> Array<List<AnnotationNode?>?>?): List<AnnotationNode> {
-    val nestedAnnotations = propertyExtractor.invoke(this.asmNode) ?: emptyArray()
+  private fun Method.getAnnotations(propertyExtractor: MethodNode.() -> Array<List<AnnotationNode?>?>?): List<AnnotationNode> {
+    val methodAsm = this as? MethodAsm ?: return emptyList()
+    val nestedAnnotations = propertyExtractor.invoke(methodAsm.asmNode) ?: emptyArray()
     return nestedAnnotations.filterNotNull().flatMap { it.filterNotNull() }
   }
 }
