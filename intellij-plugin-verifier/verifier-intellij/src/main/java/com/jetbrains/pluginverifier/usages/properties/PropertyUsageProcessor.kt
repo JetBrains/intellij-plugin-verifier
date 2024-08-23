@@ -43,14 +43,17 @@ class PropertyUsageProcessor : ApiUsageProcessor {
         val f = a.analyze("PropertyUsageProcessor", callerMethod.asmNode)
         val z= callerMethod.asmNode.instructions.zip(f)
         z
-        enumClassPropertyUsage.resolve(resolvedMethod)?.run {
+        enumClassPropertyUsage.resolve(resolvedMethod)?.let { resourceBundledProperty ->
           invokeSpecialDetector.invocations.filter {
-            it.methodName == "<init>" && it.desc == "(Ljava/lang/String;ILjava/lang/String;)V"
+            it.methodName == "<init>" && it.desc == ENUM_PRIVATE_CONSTRUCTOR_DESC
           }.forEach { constructorInvocation ->
-            val invocationParameteres = constructorInvocation.values.drop(3) // 1) invocation target 2) enum member name 3) enum ordinal value
+            // Drop the following parameters
+            //    1) invocation target 2) enum member name 3) enum ordinal value
+            // Such parameters are passed to the pseudo-synthetic private enum constructor
+            val invocationParameteres = constructorInvocation.values.drop(3)
             // TODO support more parameters
             invocationParameteres.firstStringOrNull()?.let { propertyKey ->
-              checkProperty(bundleName, propertyKey, context, callerMethod.location)
+              checkProperty(resourceBundledProperty.bundleName, propertyKey, context, callerMethod.location)
             }
           }
         }

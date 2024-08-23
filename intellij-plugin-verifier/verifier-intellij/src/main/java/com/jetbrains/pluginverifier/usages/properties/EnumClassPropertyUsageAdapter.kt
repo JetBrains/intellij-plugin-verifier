@@ -12,6 +12,8 @@ import com.jetbrains.pluginverifier.verifiers.resolution.MethodParameter
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodNode
 
+internal const val ENUM_PRIVATE_CONSTRUCTOR_DESC = "(Ljava/lang/String;ILjava/lang/String;)V"
+
 class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver = KtClassResolver()) {
 
   fun resolve(method: Method): ResourceBundledProperty? {
@@ -33,7 +35,7 @@ class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver =
 
   fun supports(method: Method): Boolean {
     return method.isInKotlinEnumClass()
-      && method.descriptor == "(Ljava/lang/String;ILjava/lang/String;)V"
+      && method.descriptor == ENUM_PRIVATE_CONSTRUCTOR_DESC
       && method.hasParameterAnnotation("org/jetbrains/annotations/PropertyKey")
   }
 
