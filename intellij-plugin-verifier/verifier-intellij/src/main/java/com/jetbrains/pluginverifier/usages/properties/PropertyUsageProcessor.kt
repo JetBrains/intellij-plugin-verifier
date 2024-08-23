@@ -4,29 +4,17 @@
 
 package com.jetbrains.pluginverifier.usages.properties
 
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
-import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
-import com.jetbrains.pluginverifier.verifiers.bytecode.InterpreterAdapter
-import com.jetbrains.pluginverifier.verifiers.bytecode.InvokeSpecialInterpreterListener
-import com.jetbrains.pluginverifier.verifiers.bytecode.StringValue
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
-import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.BasicValue
-import java.util.*
 
-class PropertyUsageProcessor : ApiUsageProcessor {
+class PropertyUsageProcessor : AbstractPropertyUsageProcessor() {
 
-  private val enumClassPropertyUsage = EnumClassPropertyUsageAdapter()
+  private val enumPropertyUsageProcessor = EnumPropertyUsageProcessor()
 
   override fun processMethodInvocation(
     methodReference: MethodReference,
@@ -35,30 +23,8 @@ class PropertyUsageProcessor : ApiUsageProcessor {
     callerMethod: Method,
     context: VerificationContext
   ) {
-    println(callerMethod.location.toString() + " " + callerMethod.name)
-    if (enumClassPropertyUsage.supports(resolvedMethod)) {
-      if (callerMethod is MethodAsm) {
-        val invokeSpecialDetector = InvokeSpecialInterpreterListener()
-        val a: Analyzer<BasicValue> = Analyzer(InterpreterAdapter(invokeSpecialDetector))
-        val f = a.analyze("PropertyUsageProcessor", callerMethod.asmNode)
-        val z= callerMethod.asmNode.instructions.zip(f)
-        z
-        enumClassPropertyUsage.resolve(resolvedMethod)?.let { resourceBundledProperty ->
-          invokeSpecialDetector.invocations.filter {
-            it.methodName == "<init>" && it.desc == ENUM_PRIVATE_CONSTRUCTOR_DESC
-          }.forEach { constructorInvocation ->
-            // Drop the following parameters
-            //    1) invocation target 2) enum member name 3) enum ordinal value
-            // Such parameters are passed to the pseudo-synthetic private enum constructor
-            val invocationParameteres = constructorInvocation.values.drop(3)
-            // TODO support more parameters
-            invocationParameteres.firstStringOrNull()?.let { propertyKey ->
-              checkProperty(resourceBundledProperty.bundleName, propertyKey, context, callerMethod.location)
-            }
-          }
-        }
-      }
-      return
+    if (enumPropertyUsageProcessor.supports(resolvedMethod)) {
+      return enumPropertyUsageProcessor.processMethodInvocation(methodReference, resolvedMethod, instructionNode, callerMethod, context)
     }
 
     val methodParameters = resolvedMethod.methodParameters
@@ -83,47 +49,5 @@ class PropertyUsageProcessor : ApiUsageProcessor {
       }
     }
   }
-
-  private fun checkProperty(
-    resourceBundleName: String,
-    propertyKey: String,
-    context: VerificationContext,
-    usageLocation: Location
-  ) {
-    if (resourceBundleName != getBundleBaseName(resourceBundleName)) {
-      //In general, we can't resolve non-base bundles, like "some.Bundle_en" because we don't know the locale to use.
-      return
-    }
-
-    val resolutionResult = context.classResolver.resolveExactPropertyResourceBundle(resourceBundleName, Locale.ROOT)
-    if (resolutionResult !is ResolutionResult.Found) {
-      return
-    }
-
-    val resourceBundle = resolutionResult.value
-    if (!resourceBundle.containsKey(propertyKey)) {
-      // MP-3201: Don't report warnings about properties which were moved to *DeprecatedMessagesBundle files
-      val deprecatedBundleNames = context.classResolver.allBundleNameSet.baseBundleNames
-        .filter { it.endsWith("DeprecatedMessagesBundle") }
-      for (deprecatedBundleName in deprecatedBundleNames) {
-        val resolution = context.classResolver.resolveExactPropertyResourceBundle(deprecatedBundleName, Locale.ROOT)
-        if (resolution is ResolutionResult.Found) {
-          val deprecatedBundle = resolution.value
-          if (deprecatedBundle.containsKey(propertyKey)) {
-            context.warningRegistrar.registerCompatibilityWarning(
-              DeprecatedPropertyUsageWarning(propertyKey, resourceBundleName, deprecatedBundleName, usageLocation)
-            )
-            return
-          }
-        }
-      }
-
-      context.problemRegistrar.registerProblem(MissingPropertyReferenceProblem(propertyKey, resourceBundleName, usageLocation))
-    }
-  }
-
-  private fun List<BasicValue>.firstStringOrNull(): String? =
-    filterIsInstance<StringValue>().firstOrNull()?.value
-
 }
 
