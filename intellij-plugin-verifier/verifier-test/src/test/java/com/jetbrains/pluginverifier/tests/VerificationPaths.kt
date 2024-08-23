@@ -28,3 +28,11 @@ fun findMockPluginSourcePath(): Path {
   }
   return Paths.get("verifier-test").resolve(mockPluginsSourcePath).also { check(it.isDirectory) }
 }
+
+fun findMockPluginKotlinSourcePath(): Path {
+  val mockPluginsKotlinSourcePath = Paths.get("mock-plugin", "src", "main", "kotlin")
+  if (mockPluginsKotlinSourcePath.isDirectory) {
+    return mockPluginsKotlinSourcePath
+  }
+  return Paths.get("verifier-test").resolve(mockPluginsKotlinSourcePath).also { check(it.isDirectory) }
+}
