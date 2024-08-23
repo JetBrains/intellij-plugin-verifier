@@ -8,7 +8,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
-import com.jetbrains.pluginverifier.verifiers.resolution.MethodParameter
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodNode
 
@@ -23,14 +22,6 @@ class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver =
 
     val bundleName = propertyKeyAnn.getAnnotationValue("resourceBundle") as? String ?: return null
     return ResourceBundledProperty(methodParam.name, bundleName)
-  }
-
-  fun resolveParameters(method: Method): List<MethodParameter> {
-    return if (supports(method)) {
-      method.methodParameters.drop(2)
-    } else {
-      method.methodParameters
-    }
   }
 
   fun supports(method: Method): Boolean {
