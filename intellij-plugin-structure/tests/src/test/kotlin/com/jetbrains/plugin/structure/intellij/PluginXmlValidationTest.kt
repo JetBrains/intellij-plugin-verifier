@@ -34,7 +34,7 @@ private const val HEADER = """
 private const val HEADER_WITHOUT_VERSION = """
       <id>someId</id>
       <name>someName</name>
-      ""<vendor email="vendor.com" url="url">vendor</vendor>""
+      <vendor email="vendor.com" url="url">vendor</vendor>
       <description>this description is looooooooooong enough</description>
       <change-notes>these change-notes are looooooooooong enough</change-notes>
       <idea-version since-build="131.1"/>
@@ -169,7 +169,7 @@ class PluginXmlValidationTest {
   }
 
   @Test
-  fun `paid plugin with a incorrect single-digit release version`() {
+  fun `paid plugin with an incorrect single-digit release version`() {
     val creationResult = buildMalformedPlugin {
       dir("META-INF") {
         file("plugin.xml") {
@@ -215,7 +215,7 @@ class PluginXmlValidationTest {
       val problem = filterIsInstance<SuspiciousReleaseVersion>().singleOrNull()
       assertNotNull(problem)
       problem!!
-      assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [10] and the plugin version [2.0] should have similar integers at the beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())
+      assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [10] and the plugin version [2.0] should have a matching beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())
     }
   }
 
