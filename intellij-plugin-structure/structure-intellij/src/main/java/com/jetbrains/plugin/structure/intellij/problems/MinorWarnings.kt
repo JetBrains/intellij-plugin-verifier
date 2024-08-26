@@ -187,7 +187,7 @@ class SuspiciousReleaseVersion(
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <release-version> parameter [$releaseVersion] and the plugin version [$pluginVersion] " +
-    "should have similar integers at the beginning. " +
+    "should have a matching beginning. " +
     "For example, release version '20201' should match plugin version 2020.1.1"
 ) {
   override val level

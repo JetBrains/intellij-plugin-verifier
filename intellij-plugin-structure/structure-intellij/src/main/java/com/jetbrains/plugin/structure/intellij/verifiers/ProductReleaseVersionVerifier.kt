@@ -22,7 +22,7 @@ class ProductReleaseVersionVerifier {
     return try {
       ProductReleaseVersion.parse(releaseVersionValue).run {
         if (isSingleDigit) {
-          Invalid("Attribute '$RELEASE_VERSION_ATTRIBUTE_NAME' is must have two or more digits: '$releaseVersionValue'").also {
+          Invalid("Attribute '$RELEASE_VERSION_ATTRIBUTE_NAME' must have two or more digits: '$releaseVersionValue'").also {
             problemRegistrar.registerProblem(ReleaseVersionWrongFormat(descriptorPath, releaseVersionValue))
           }
         } else {
