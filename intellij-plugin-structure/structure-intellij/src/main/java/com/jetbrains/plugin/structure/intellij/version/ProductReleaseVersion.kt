@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.version
 
 
-private const val RELEASE_VERSION_TAG_NAME = "release-version"
 /**
  * Type-safe `release-version` of paid plugins.
  *
