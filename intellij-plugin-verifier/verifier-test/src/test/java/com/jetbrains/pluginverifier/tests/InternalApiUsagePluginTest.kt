@@ -15,6 +15,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
@@ -173,7 +174,8 @@ class InternalApiUsagePluginTest {
     }
   }
 
-  private fun buildIdePlugin(ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
+  private fun buildIdePlugin(
+    ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
@@ -279,8 +281,6 @@ class InternalApiUsagePluginTest {
 
     return ide
   }
-
-  data class IdeaPluginSpec(val id: String, val vendor: String)
 
   object IntellijInternalApiDump : Opcodes {
     @Throws(Exception::class)
