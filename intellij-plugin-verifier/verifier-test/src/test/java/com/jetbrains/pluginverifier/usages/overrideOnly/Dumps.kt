@@ -2,12 +2,16 @@
 
 package com.jetbrains.pluginverifier.usages.overrideOnly
 
+import com.jetbrains.pluginverifier.tests.bytecode.BinaryClassContent
 import com.jetbrains.pluginverifier.tests.bytecode.createClassNode
+import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.FieldVisitor
+import org.objectweb.asm.Handle
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 
 
@@ -213,4 +217,99 @@ private fun dumpPackageInvokingBox(): ByteArray {
   classWriter.visitEnd()
 
   return classWriter.toByteArray()
+}
+
+/**
+ * Simulates a situation when Java 17 builds a class which
+ * uses `INVOKEINTERFACE` instruction on a lambda.
+ *
+ * The lambda compiles to a `private default synthetic` method,
+ * and it is dynamically dispatch via `INVOKEDYNAMIC`.
+ *
+ * ```java
+ * package mock;
+ *
+ * import java.util.function.Supplier;
+ *
+ * public interface Handler {
+ *   default void handle() {
+ *     Supplier<Integer> s = () -> getValue();
+ *   }
+ *
+ *   default int getValue() {
+ *     return 0;
+ *   }
+ * }
+ * ```
+ *
+ * *Warning*: Java 8--17 might use `INVOKESPECIAL` instruction instead,
+ * which is not covered by this dump.
+ */
+internal fun dumpInterfaceWithDefaultMethodsAndLambdas(): BinaryClassContent {
+  val classWriter = ClassWriter(0)
+  val className: BinaryClassName = "mock/Handler"
+  classWriter.visit(
+    V17,
+    ACC_PUBLIC or ACC_ABSTRACT or ACC_INTERFACE,
+    className,
+    null,
+    "java/lang/Object",
+    null
+  )
+
+  classWriter.visitInnerClass(
+    "java/lang/invoke/MethodHandles\$Lookup",
+    "java/lang/invoke/MethodHandles",
+    "Lookup",
+    ACC_PUBLIC or ACC_FINAL or ACC_STATIC
+  )
+
+  classWriter.visitMethod(ACC_PUBLIC, "handle", "()V", null, null).run {
+    visitCode()
+    visitVarInsn(ALOAD, 0)
+    visitInvokeDynamicInsn(
+      "get",
+      "(Lmock/plugin/interfaces/Handler;)Ljava/util/function/Supplier;",
+      Handle(
+        H_INVOKESTATIC,
+        "java/lang/invoke/LambdaMetafactory",
+        "metafactory",
+        "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
+        false
+      ),
+      Type.getType("()Ljava/lang/Object;"), Handle(
+        H_INVOKEINTERFACE,
+        className,
+        "lambda\$handle$0",
+        "()Ljava/lang/Integer;",
+        true
+      ), Type.getType("()Ljava/lang/Integer;")
+    )
+    visitVarInsn(ASTORE, 1)
+    visitInsn(RETURN)
+    visitMaxs(1, 2)
+    visitEnd()
+  }
+
+  classWriter.visitMethod(ACC_PUBLIC, "getValue", "()I", null, null).run {
+    visitCode()
+    visitInsn(ICONST_0)
+    visitInsn(IRETURN)
+    visitMaxs(1, 1)
+    visitEnd()
+  }
+
+  classWriter.visitMethod(ACC_PRIVATE or ACC_SYNTHETIC, "lambda\$handle$0", "()Ljava/lang/Integer;", null, null).run {
+    visitCode()
+    visitVarInsn(ALOAD, 0)
+    visitMethodInsn(INVOKEINTERFACE, className, "getValue", "()I", true)
+    visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false)
+    visitInsn(ARETURN)
+    visitMaxs(1, 1)
+    visitEnd()
+  }
+
+  classWriter.visitEnd()
+
+  return BinaryClassContent(className, classWriter.toByteArray())
 }

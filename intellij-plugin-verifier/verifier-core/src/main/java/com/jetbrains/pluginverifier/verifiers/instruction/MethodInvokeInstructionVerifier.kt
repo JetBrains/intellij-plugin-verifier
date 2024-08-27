@@ -5,7 +5,11 @@
 package com.jetbrains.pluginverifier.verifiers.instruction
 
 import com.jetbrains.pluginverifier.results.instruction.Instruction
-import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.problems.AbstractMethodInvocationProblem
+import com.jetbrains.pluginverifier.results.problems.InvokeInstanceInstructionOnStaticMethodProblem
+import com.jetbrains.pluginverifier.results.problems.InvokeInterfaceOnPrivateMethodProblem
+import com.jetbrains.pluginverifier.results.problems.InvokeStaticOnInstanceMethodProblem
+import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
@@ -13,6 +17,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 
 class MethodInvokeInstructionVerifier(
@@ -128,10 +133,18 @@ class MethodInvokeInstructionVerifier(
       method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
 
     /*
-    Otherwise, if the resolved method is static or private, the invokeinterface instruction throws an IncompatibleClassChangeError.
+    Otherwise, if the resolved method is static or private, the INVOKEINTERFACE instruction throws an IncompatibleClassChangeError.
+    However, Java 17 and other compilers might invoke such methods when using INVOKEDYNAMIC.
+    Usuallly, this happens when invoking lambdas that are compiled as `private synthetic` methods.
      */
-    if (method.isPrivate || isTestPrivateInterfaceMethod(method)) {
-      context.problemRegistrar.registerProblem(InvokeInterfaceOnPrivateMethodProblem(methodReference, method.location, callerMethod.location))
+    if ((method.isPrivate || isTestPrivateInterfaceMethod(method)) && !isViaInvokeDynamic) {
+      context.problemRegistrar.registerProblem(
+        InvokeInterfaceOnPrivateMethodProblem(
+          methodReference,
+          method.location,
+          callerMethod.location
+        )
+      )
     }
     if (method.isStatic) {
       context.problemRegistrar.registerProblem(InvokeInstanceInstructionOnStaticMethodProblem(methodReference, method.location, callerMethod.location, instruction))
@@ -187,4 +200,6 @@ class MethodInvokeInstructionVerifier(
     return method
   }
 
+  private val isViaInvokeDynamic: Boolean
+    get() = instructionNode.opcode == Opcodes.INVOKEDYNAMIC
 }
