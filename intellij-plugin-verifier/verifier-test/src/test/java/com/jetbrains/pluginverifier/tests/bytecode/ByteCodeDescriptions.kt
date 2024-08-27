@@ -4,6 +4,11 @@ import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 
+/**
+ * Provides a debug string representation of a type instruction.
+ *
+ * It is used mainly in IDE debugging to better describe ASM nodes.
+ */
 @Suppress("unused")
 fun TypeInsnNode.toDebugString(): String = when (opcode) {
   NEW -> "NEW $desc"
@@ -13,6 +18,11 @@ fun TypeInsnNode.toDebugString(): String = when (opcode) {
   else -> toString()
 }
 
+/**
+ * Provides a debug string representation of a zero-operand instruction.
+ *
+ * It is used mainly in IDE debugging to better describe ASM nodes.
+ */
 @Suppress("unused")
 fun InsnNode.toDebugString(): String = insnOpCodes[opcode] ?: toString()
 
