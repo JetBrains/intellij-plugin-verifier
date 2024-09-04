@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.PluginFile
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 
@@ -17,4 +18,5 @@ data class TeamCityActionPlugin(
   override val url: String? = null,
   override val changeNotes: String? = null,
   val specVersion: String,
+  val yamlFile: PluginFile
 ) : Plugin

@@ -67,16 +67,8 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
   }
 
   private fun parseYaml(yamlPath: Path): PluginCreationResult<TeamCityActionPlugin> {
-    val yamlContent = yamlPath.readText()
-    val actionDescriptor: TeamCityActionDescriptor
     try {
-      actionDescriptor = objectMapper.readValue(yamlContent, TeamCityActionDescriptor::class.java)
-    } catch (e: Exception) {
-      LOG.warn("Failed to parse TeamCity Action", e)
-      return PluginCreationFail(ParseYamlProblem)
-    }
-    try {
-      return parse(actionDescriptor)
+      return parse(yamlPath)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
       val errorMessage = "An unexpected error occurred while parsing the TeamCity Action descriptor"
@@ -85,7 +77,15 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     }
   }
 
-  private fun parse(descriptor: TeamCityActionDescriptor): PluginCreationResult<TeamCityActionPlugin> {
+  private fun parse(yamlPath: Path): PluginCreationResult<TeamCityActionPlugin> {
+    val descriptor = try {
+      val yamlContent = yamlPath.readText()
+      objectMapper.readValue(yamlContent, TeamCityActionDescriptor::class.java)
+    } catch (e: Exception) {
+      LOG.warn("Failed to parse TeamCity Action", e)
+      return PluginCreationFail(ParseYamlProblem)
+    }
+
     val validationResult = validateTeamCityAction(descriptor)
     if (validationResult.any { it.isError }) {
       return PluginCreationFail(validationResult)
@@ -97,7 +97,8 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginName = this.name,
         description = this.description!!,
         pluginVersion = this.version!!,
-        specVersion = this.specVersion!!
+        specVersion = this.specVersion!!,
+        yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes())
       )
     }
     return PluginCreationSuccess(plugin, validationResult)
