@@ -14,6 +14,8 @@ import java.nio.file.Path
 class DotNetMockPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ReSharperPlugin, ReSharperPluginManager>(fileSystemType) {
   private fun testMockConfigs(plugin: ReSharperPlugin) {
     Assert.assertEquals("JetBrains.Mock", plugin.pluginId)
+    Assert.assertEquals("${plugin.pluginId}.nuspec", plugin.nuspecFile.fileName)
+    Assert.assertArrayEquals(getMockPluginXmlContent().toByteArray(), plugin.nuspecFile.content)
     Assert.assertEquals("Some title", plugin.pluginName)
     Assert.assertEquals("10.2.55", plugin.pluginVersion)
     Assert.assertEquals(listOf("JetBrains"), plugin.authors)

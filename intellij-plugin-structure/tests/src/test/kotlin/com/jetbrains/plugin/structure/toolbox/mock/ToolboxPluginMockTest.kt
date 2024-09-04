@@ -40,7 +40,7 @@ class ToolboxPluginMockTest(fileSystemType: FileSystemType) :
             assertEquals(content, String(f.content))
             assertEquals(content, String(s.content))
 
-            val fileNames = it.plugin.files.map { file -> file.name }.toSet()
+            val fileNames = it.plugin.files.map { file -> file.fileName }.toSet()
             assertTrue("File ${f.fileName} should not be in files list: $fileNames", f.fileName !in fileNames)
             assertTrue("File ${s.fileName} should not be in files list: $fileNames", s.fileName !in fileNames)
         }
