@@ -71,6 +71,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     ReleaseDateWrongFormat::class,
     ReleaseDateInFuture::class,
     ReleaseVersionWrongFormat::class,
+    ReleaseVersionAndPluginVersionMismatch::class,
     UnableToFindTheme::class,
     UnableToReadTheme::class,
     OptionalDependencyDescriptorCycleProblem::class,

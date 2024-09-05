@@ -528,7 +528,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `existing paid plugin has release-version that does not match plugin version but this is filtered`() {
-    val paidIdeaPlugin = paidIdeaPlugin(releaseVersion = 20)
+    val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "2.1", releaseVersion = 20)
     val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -559,13 +559,14 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   private fun ideaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
+                         pluginVersion: String = "1",
                          vendor: String = "vendor",
                          sinceBuild: String = "131.1",
                          untilBuild: String = "231.1",
                          description: String = "this description is looooooooooong enough") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
-    <version>1</version>
+    <version>$pluginVersion</version>
     ""<vendor email="vendor.com" url="url">$vendor</vendor>""
     <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>
@@ -575,12 +576,13 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   private fun paidIdeaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
+                         pluginVersion: String = "1",
                          vendor: String = "vendor",
                          sinceBuild: String = "131.1",
                          untilBuild: String = "231.1",
                          description: String = "this description is looooooooooong enough",
                          releaseVersion: Int = 20211) =
-    ideaPlugin(pluginId, pluginName, vendor, sinceBuild, untilBuild, description) +
+    ideaPlugin(pluginId, pluginName, pluginVersion, vendor, sinceBuild, untilBuild, description) +
       """
         <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
       """.trimIndent()

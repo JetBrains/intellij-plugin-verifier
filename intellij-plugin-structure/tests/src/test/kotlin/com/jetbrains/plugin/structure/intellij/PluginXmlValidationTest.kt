@@ -11,9 +11,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
+import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
-import com.jetbrains.plugin.structure.intellij.problems.SuspiciousReleaseVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.junit.Assert.*
 import org.junit.Rule
@@ -151,8 +151,8 @@ class PluginXmlValidationTest {
           """
             <idea-plugin>
               $HEADER_WITHOUT_VERSION
-              <version>1.1</version>
-              <product-descriptor code="PCODE" release-date="20240813" release-version="10"/>
+              <version>1.1.0</version>
+              <product-descriptor code="PCODE" release-date="20240813" release-version="11"/>
               <depends>com.intellij.modules.lang</depends>              
             </idea-plugin>
           """
@@ -164,7 +164,7 @@ class PluginXmlValidationTest {
     with(plugin.productDescriptor!!) {
       assertEquals("PCODE", code)
       assertEquals(LocalDate.of(2024, 8, 13), releaseDate)
-      assertEquals(ProductReleaseVersion(10), version)
+      assertEquals(ProductReleaseVersion(11), version)
     }
   }
 
@@ -196,7 +196,7 @@ class PluginXmlValidationTest {
 
   @Test
   fun `paid plugin with a mismatching release version and plugin version`() {
-    val creationResult = buildCorrectPlugin {
+    val creationResult = buildMalformedPlugin {
       dir("META-INF") {
         file("plugin.xml") {
           """
@@ -210,9 +210,9 @@ class PluginXmlValidationTest {
         }
       }
     }
-    with(creationResult.warnings) {
+    with(creationResult.errorsAndWarnings) {
       assertEquals(1, size)
-      val problem = filterIsInstance<SuspiciousReleaseVersion>().singleOrNull()
+      val problem = filterIsInstance<ReleaseVersionAndPluginVersionMismatch>().singleOrNull()
       assertNotNull(problem)
       problem!!
       assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [10] and the plugin version [2.0] should have a matching beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())
@@ -221,7 +221,7 @@ class PluginXmlValidationTest {
 
   @Test
   fun `paid plugin with a mismatching release version and plugin version in minor components`() {
-    val creationResult = buildCorrectPlugin {
+    val creationResult = buildMalformedPlugin {
       dir("META-INF") {
         file("plugin.xml") {
           """
@@ -235,9 +235,9 @@ class PluginXmlValidationTest {
         }
       }
     }
-    with(creationResult.warnings) {
+    with(creationResult.errorsAndWarnings) {
       assertEquals(1, size)
-      val problem = filterIsInstance<SuspiciousReleaseVersion>().singleOrNull()
+      val problem = filterIsInstance<ReleaseVersionAndPluginVersionMismatch>().singleOrNull()
       assertNotNull(problem)
       problem!!
       assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [20201] and the plugin version [2020.2.1] should have a matching beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())

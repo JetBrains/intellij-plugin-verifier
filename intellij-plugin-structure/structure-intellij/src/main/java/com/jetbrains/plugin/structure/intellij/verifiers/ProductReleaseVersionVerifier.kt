@@ -3,8 +3,8 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
-import com.jetbrains.plugin.structure.intellij.problems.SuspiciousReleaseVersion
 import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier.VerificationResult.Invalid
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
@@ -53,7 +53,7 @@ class ProductReleaseVersionVerifier {
     val pluginVersion = MajorMinorVersion.parse(plugin) ?: return
     if (!pluginVersion.matches(productReleaseVersion)) {
       problemRegistrar.registerProblem(
-        SuspiciousReleaseVersion(
+        ReleaseVersionAndPluginVersionMismatch(
           descriptorPath,
           productReleaseVersion,
           plugin.pluginVersion
