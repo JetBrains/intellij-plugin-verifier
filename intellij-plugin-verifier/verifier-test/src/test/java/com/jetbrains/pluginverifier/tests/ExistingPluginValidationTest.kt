@@ -489,7 +489,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
           """
           <idea-plugin>
             $header
-            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
+            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="10"/>
           </idea-plugin>
         """
         }

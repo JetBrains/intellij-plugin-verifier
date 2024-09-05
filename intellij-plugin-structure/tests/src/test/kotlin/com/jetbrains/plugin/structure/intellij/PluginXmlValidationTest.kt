@@ -219,6 +219,31 @@ class PluginXmlValidationTest {
     }
   }
 
+  @Test
+  fun `paid plugin with a mismatching release version and plugin version in minor components`() {
+    val creationResult = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER_WITHOUT_VERSION
+              <version>2020.2.1</version>
+              <product-descriptor code="PCODE" release-date="20240813" release-version="20201"/>
+              <depends>com.intellij.modules.lang</depends>              
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(creationResult.warnings) {
+      assertEquals(1, size)
+      val problem = filterIsInstance<SuspiciousReleaseVersion>().singleOrNull()
+      assertNotNull(problem)
+      problem!!
+      assertEquals("Invalid plugin descriptor 'plugin.xml'. The <release-version> parameter [20201] and the plugin version [2020.2.1] should have a matching beginning. For example, release version '20201' should match plugin version 2020.1.1", problem.toString())
+    }
+  }
+
   private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {

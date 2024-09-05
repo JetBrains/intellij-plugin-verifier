@@ -26,7 +26,12 @@ class ProductReleaseVersionVerifier {
             problemRegistrar.registerProblem(ReleaseVersionWrongFormat(descriptorPath, releaseVersionValue))
           }
         } else {
-          verifyPluginVersionAndReleaseVersionMatch(plugin, productReleaseVersion = this, descriptorPath, problemRegistrar)
+          verifyPluginVersionAndReleaseVersionMatch(
+            plugin,
+            productReleaseVersion = this,
+            descriptorPath,
+            problemRegistrar
+          )
           VerificationResult.Valid(this)
         }
       }
@@ -45,8 +50,8 @@ class ProductReleaseVersionVerifier {
   ) {
     if (plugin.pluginVersion == null) return
 
-    val commonPrefix = productReleaseVersion.major.toString().commonPrefixWith(plugin.pluginVersion)
-    if (commonPrefix.isEmpty()) {
+    val pluginVersion = MajorMinorVersion.parse(plugin) ?: return
+    if (!pluginVersion.matches(productReleaseVersion)) {
       problemRegistrar.registerProblem(
         SuspiciousReleaseVersion(
           descriptorPath,
@@ -56,6 +61,24 @@ class ProductReleaseVersionVerifier {
       )
     }
   }
+
+  private data class MajorMinorVersion(val major: Int, val minor: Int) {
+    fun matches(productReleaseVersion: ProductReleaseVersion): Boolean {
+      return major == productReleaseVersion.major && minor == productReleaseVersion.minor
+    }
+
+    companion object {
+      fun parse(plugin: PluginBean): MajorMinorVersion? {
+        val pluginVersionParts = plugin.pluginVersion.split(".")
+        val major = pluginVersionParts[0].toIntOrNull() ?: return null
+        val minor = if (pluginVersionParts.size > 1) {
+          pluginVersionParts[1].split("-")[0].toIntOrNull() ?: 0
+        } else 0
+        return MajorMinorVersion(major, minor)
+      }
+    }
+  }
+
 
   sealed class VerificationResult {
     data class Valid(val version: ProductReleaseVersion) : VerificationResult()
