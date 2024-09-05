@@ -21,7 +21,7 @@ internal fun Path.buildIdePlugin(pluginContentBuilder: (ContentBuilder).() -> Un
 }
 
 /**
- * Build a bare-bones IDE without any plugins except the core plugin.
+ * Builds a bare-bones IDE without any plugins except the core plugin.
  *
  * This plugin exposes the `com.intellij.modules.platform` module
  * that represents a shared functionality.

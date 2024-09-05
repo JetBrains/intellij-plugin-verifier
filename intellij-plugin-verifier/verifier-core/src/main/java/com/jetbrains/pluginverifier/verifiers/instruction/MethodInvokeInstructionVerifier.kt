@@ -133,9 +133,10 @@ class MethodInvokeInstructionVerifier(
       method.name == System.getProperty("plugin.verifier.test.private.interface.method.name")
 
     /*
-    Otherwise, if the resolved method is static or private, the INVOKEINTERFACE instruction throws an IncompatibleClassChangeError.
-    However, Java 17 and other compilers might invoke such methods when using INVOKEDYNAMIC.
-    Usuallly, this happens when invoking lambdas that are compiled as `private synthetic` methods.
+    Otherwise, if the resolved method is `static` or `private`, the `INVOKEINTERFACE` instruction
+    throws an `IncompatibleClassChangeError`.
+    However, Java 17 and other compilers might invoke such methods when using `INVOKEDYNAMIC`.
+    Usually, this happens when invoking lambdas that are compiled as `private synthetic` methods.
      */
     if ((method.isPrivate || isTestPrivateInterfaceMethod(method)) && !isViaInvokeDynamic) {
       context.problemRegistrar.registerProblem(

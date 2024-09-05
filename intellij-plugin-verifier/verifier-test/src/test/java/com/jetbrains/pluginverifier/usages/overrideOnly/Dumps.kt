@@ -224,7 +224,7 @@ private fun dumpPackageInvokingBox(): ByteArray {
  * uses `INVOKEINTERFACE` instruction on a lambda.
  *
  * The lambda compiles to a `private default synthetic` method,
- * and it is dynamically dispatch via `INVOKEDYNAMIC`.
+ * and it is dynamically dispatched via `INVOKEDYNAMIC`.
  *
  * ```java
  * package mock;
