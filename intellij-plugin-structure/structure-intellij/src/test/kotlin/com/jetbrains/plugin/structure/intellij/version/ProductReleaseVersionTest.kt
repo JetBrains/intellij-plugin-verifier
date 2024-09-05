@@ -30,11 +30,11 @@ class ProductReleaseVersionTest {
   }
 
   @Test
-  fun `legacy release version`() {
+  fun `if release-version is a single digit, the major is 0 and the minor is value`() {
     with(parse("8")) {
       assertTrue(isSingleDigit)
-      assertEquals(8, major)
-      assertEquals(0, minor)
+      assertEquals(0, major)
+      assertEquals(8, minor)
       assertEquals(8, value)
     }
   }

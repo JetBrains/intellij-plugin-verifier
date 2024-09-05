@@ -12,10 +12,10 @@ package com.jetbrains.plugin.structure.intellij.version
  */
 data class ProductReleaseVersion(val value: Int) {
   val major: Int
-    get() = if (isSingleDigit) value else value / 10
+    get() = if (isSingleDigit) 0 else value / 10
 
   val minor: Int
-    get() = if (isSingleDigit) 0 else value % 10
+    get() = if (isSingleDigit) value else value % 10
 
   val isSingleDigit: Boolean
     get() = value in 1..9
