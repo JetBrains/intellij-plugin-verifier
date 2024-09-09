@@ -226,6 +226,12 @@ class ReleaseVersionAndPluginVersionMismatch(
 ) {
   override val level
     get() = Level.ERROR
+
+  override val hint: ProblemSolutionHint
+    get() = ProblemSolutionHint(
+      "release-version=\"20201\" and <version>2020.1</version>",
+      "https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html"
+    )
 }
 
 class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
