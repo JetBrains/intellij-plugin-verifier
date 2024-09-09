@@ -13,5 +13,10 @@
     "id": "TemplateWordInPluginName",
     "class": "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName",
     "since": "2024-03-26"
+  },
+  {
+    "id": "ReleaseVersionAndPluginVersionMismatch",
+    "class": "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch",
+    "since": "2024-10-13"
   }
 ]
