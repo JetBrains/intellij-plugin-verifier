@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -25,6 +26,7 @@ import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.reflect.KClass
 
 
 class ExistingPluginValidationTest : BasePluginTest() {
@@ -541,8 +543,9 @@ class ExistingPluginValidationTest : BasePluginTest() {
         }
       }
     }
-    assertSuccess(result)
-    assertMatchingPluginProblems(result as PluginCreationSuccess)
+    result.assertContains<ReleaseVersionAndPluginVersionMismatch>("Invalid plugin descriptor 'plugin.xml'. " +
+      "The <release-version> parameter [20] and the plugin version [2.1] should have a matching beginning. " +
+      "For example, release version '20201' should match plugin version 2020.1.1")
   }
 
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
@@ -612,6 +615,35 @@ class ExistingPluginValidationTest : BasePluginTest() {
           + joinToString { it.message })
       }
     }
+  }
 
+  private inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
+    val problems = when (this) {
+      is PluginCreationSuccess -> warnings + unacceptableWarnings
+      is PluginCreationFail -> errorsAndWarnings
+    }
+    assertContains(problems, T::class, message)
+  }
+
+  private fun assertContains(
+    pluginProblems: Collection<PluginProblem>,
+    pluginProblemClass: KClass<out PluginProblem>,
+    message: String
+  ) {
+    val problems = pluginProblems.filter { problem ->
+      problem.isInstance(pluginProblemClass)
+    }
+    if (problems.isEmpty()) {
+      fail("Plugin creation result does not contain any problem of class [${pluginProblemClass.qualifiedName}]")
+      return
+    }
+    val problemsWithMessage = problems.filter { it.message == message }
+    if (problemsWithMessage.isEmpty()) {
+      fail("Plugin creation result has ${problems.size} problem of class [${pluginProblemClass.qualifiedName}], " +
+        "but none has a message '$message'. " +
+        "Found [" + problems.joinToString { it.message } + "]"
+      )
+      return
+    }
   }
 }
