@@ -529,7 +529,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
   }
 
   @Test
-  fun `existing paid plugin has release-version that does not match plugin version but this is filtered`() {
+  fun `existing paid plugin has release-version that does not match plugin version and this is an error`() {
     val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "2.1", releaseVersion = 20)
     val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
     val result = buildPluginWithResult(problemResolver) {
