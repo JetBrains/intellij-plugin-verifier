@@ -1,7 +1,18 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
+import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
+import com.jetbrains.plugin.structure.base.problems.NotBoolean
+import com.jetbrains.plugin.structure.base.problems.NotNumber
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -790,7 +801,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" eap="aaaa"/>"""
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="10" eap="aaaa"/>"""
       },
       listOf(
         NotBoolean("eap", "plugin.xml")
@@ -799,7 +810,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="12" optional="not-bool"/>"""
+        productDescriptor = """<product-descriptor code="ABC" release-date="20180118" release-version="10" optional="not-bool"/>"""
       },
       listOf(
         NotBoolean("optional", "plugin.xml")
@@ -811,7 +822,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     val releaseDateInFutureString = releaseDateInFuture.format(formatter)
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        productDescriptor = """<product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>"""
+        productDescriptor = """<product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="10"/>"""
       },
       listOf(
         ReleaseDateInFuture("plugin.xml")

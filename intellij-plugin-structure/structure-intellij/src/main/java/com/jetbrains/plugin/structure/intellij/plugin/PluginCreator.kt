@@ -12,7 +12,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.NotBoolean
-import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
@@ -33,11 +32,13 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.LanguageBundleExtensionPointVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
 import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
 import org.jdom2.Document
@@ -87,6 +88,7 @@ internal class PluginCreator private constructor(
 
     private val pluginIdVerifier = PluginIdVerifier()
     private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
+    private val pluginProductReleaseVersionVerifier = ProductReleaseVersionVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -339,11 +341,10 @@ internal class PluginCreator private constructor(
     }
     val productDescriptorBean = bean.productDescriptor
     if (productDescriptorBean != null) {
-
       productDescriptor = ProductDescriptor(
         productDescriptorBean.code,
         LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
-        Integer.parseInt(productDescriptorBean.releaseVersion),
+        ProductReleaseVersion.parse(productDescriptorBean.releaseVersion),
         productDescriptorBean.eap == "true",
         productDescriptorBean.optional == "true"
       )
@@ -548,7 +549,7 @@ internal class PluginCreator private constructor(
       pluginUntilBuildVerifier.verify(bean, descriptorPath, ::registerProblem)
     }
     if (validateDescriptor || bean.productDescriptor != null) {
-      validateProductDescriptor(bean.productDescriptor)
+      validateProductDescriptor(bean, bean.productDescriptor)
     }
     if (bean.dependencies != null) {
       validateDependencies(bean.dependencies)
@@ -576,11 +577,11 @@ internal class PluginCreator private constructor(
     ReusedDescriptorVerifier(descriptorPath).verify(dependencies, ::registerProblem)
   }
 
-  private fun validateProductDescriptor(productDescriptor: ProductDescriptorBean?) {
+  private fun validateProductDescriptor(plugin: PluginBean, productDescriptor: ProductDescriptorBean?) {
     if (productDescriptor != null) {
       validateProductCode(productDescriptor.code)
       validateReleaseDate(productDescriptor.releaseDate)
-      validateReleaseVersion(productDescriptor.releaseVersion)
+      pluginProductReleaseVersionVerifier.verify(plugin, descriptorPath, ::registerProblem)
       productDescriptor.eap?.let { validateEapFlag(it) }
       productDescriptor.optional?.let { validateOptionalFlag(it) }
     }
@@ -605,18 +606,6 @@ internal class PluginCreator private constructor(
         }
       } catch (e: DateTimeParseException) {
         registerProblem(ReleaseDateWrongFormat(descriptorPath))
-      }
-    }
-  }
-
-  private fun validateReleaseVersion(releaseVersion: String?) {
-    if (releaseVersion.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("release-version", descriptorPath))
-    } else {
-      try {
-        Integer.valueOf(releaseVersion)
-      } catch (e: NumberFormatException) {
-        registerProblem(NotNumber("release-version", descriptorPath))
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.problems
@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.problems
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
 class PropertyWithDefaultValue(
   descriptorPath: String,
@@ -199,6 +200,38 @@ class ReleaseDateInFuture(descriptorPath: String) : InvalidDescriptorProblem(
 ) {
   override val level
     get() = Level.ERROR
+}
+
+class ReleaseVersionWrongFormat(
+  descriptorPath: String,
+  releaseVersion: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-version> parameter ($releaseVersion) format is invalid. " +
+    "Ensure it is an integer with at least two digits."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
+class ReleaseVersionAndPluginVersionMismatch(
+  descriptorPath: String,
+  releaseVersion: ProductReleaseVersion,
+  pluginVersion: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The <release-version> parameter [$releaseVersion] and the plugin version [$pluginVersion] " +
+    "should have a matching beginning. " +
+    "For example, release version '20201' should match plugin version 2020.1.1"
+) {
+  override val level
+    get() = Level.ERROR
+
+  override val hint: ProblemSolutionHint
+    get() = ProblemSolutionHint(
+      "release-version=\"20201\" and <version>2020.1</version>",
+      "https://plugins.jetbrains.com/docs/marketplace/add-required-parameters.html"
+    )
 }
 
 class UnableToFindTheme(descriptorPath: String, themePath: String) : InvalidDescriptorProblem(
