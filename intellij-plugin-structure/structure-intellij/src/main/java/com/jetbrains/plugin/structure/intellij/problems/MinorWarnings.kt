@@ -206,7 +206,7 @@ class UnknownServiceClientValue(descriptorPath: String, serviceClient: String) :
 /**
  * @see [K2IdeModeCompatibilityVerifier]
  */
-class UndeclaredKotlinK2CompatibilityMode(descriptorPath: String) : InvalidDescriptorProblem(
+data class UndeclaredKotlinK2CompatibilityMode(val descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
     "a compatibility mode in the <supportsKotlinPluginMode> extension. " +
