@@ -45,7 +45,7 @@ data class MockIdePlugin(
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val isV2: Boolean = false
-  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
+  override val ideMode: IdeMode = IdeMode.Implicit
   override val hasDotNetPart: Boolean = false
   override val declaredThemes = emptyList<IdeTheme>()
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()

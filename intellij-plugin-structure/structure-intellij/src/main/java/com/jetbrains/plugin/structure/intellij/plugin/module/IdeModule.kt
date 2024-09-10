@@ -40,7 +40,7 @@ class IdeModule(override val pluginId: String) : IdePlugin {
   override val productDescriptor = null
   override val useIdeClassLoader = false
   override val isV2 = true
-  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
+  override val ideMode: IdeMode = IdeMode.Implicit
   override val url = null
   override val changeNotes = null
   override val description = null

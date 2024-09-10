@@ -45,7 +45,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override var isV2: Boolean = false
 
-  override var ideMode: IdeMode = IdeMode.K1OnlyCompatible
+  override var ideMode: IdeMode = IdeMode.Implicit
 
   override var hasDotNetPart: Boolean = false
 

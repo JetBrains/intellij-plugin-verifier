@@ -13,6 +13,10 @@ sealed class IdeMode(val isK1Compatible: Boolean, val isK2Compatible: Boolean) {
     override fun toString() = "K1-only compatible"
   }
 
+  object Implicit : IdeMode(isK1Compatible = true, isK2Compatible = false) {
+    override fun toString() = "Implicit compatibility mode (K1-only)"
+  }
+
   companion object {
     fun parse(isK1Compatible: Boolean, isK2Compatible: Boolean): IdeMode =
       if (isK1Compatible) {

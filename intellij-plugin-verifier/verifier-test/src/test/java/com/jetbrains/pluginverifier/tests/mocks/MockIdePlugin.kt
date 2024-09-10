@@ -43,7 +43,7 @@ data class MockIdePlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val isV2: Boolean = false,
-  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
+  override val ideMode: IdeMode = IdeMode.Implicit
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
