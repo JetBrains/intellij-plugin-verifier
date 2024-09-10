@@ -17,6 +17,12 @@ abstract class BasePluginTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
+  protected val pluginJarPath: Path
+    get() = temporaryFolder.newFile("plugin.jar").toPath()
+
+  protected val ideaPath: Path
+    get() = temporaryFolder.newFolder("idea").toPath()
+
   protected fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
                                       pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
     val pluginFile = buildZipFile(pluginJarPath, pluginContentBuilder)
@@ -24,15 +30,26 @@ abstract class BasePluginTest {
     return ideManager.createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemResolver)
   }
 
-  protected val pluginJarPath: Path
-    get() = temporaryFolder.newFile("plugin.jar").toPath()
-
-  protected val ideaPath: Path
-    get() = temporaryFolder.newFolder("idea").toPath()
-
   protected fun assertEmpty(collectionDescription: String, collection: Collection<*>) {
     if (collection.isNotEmpty()) {
       fail("$collectionDescription not empty (${collection.size} elements): $collection")
     }
   }
+
+  protected fun ideaPlugin(pluginId: String = "someid",
+                           pluginName: String = "someName",
+                           pluginVersion: String = "1",
+                           vendor: String = "vendor",
+                           sinceBuild: String = "131.1",
+                           untilBuild: String = "231.1",
+                           description: String = "this description is looooooooooong enough"): String = """
+    <id>$pluginId</id>
+    <name>$pluginName</name>
+    <version>$pluginVersion</version>
+    ""<vendor email="vendor.com" url="url">$vendor</vendor>""
+    <description>$description</description>
+    <change-notes>these change-notes are looooooooooong enough</change-notes>
+    <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
+    <depends>com.intellij.modules.platform</depends>
+  """
 }

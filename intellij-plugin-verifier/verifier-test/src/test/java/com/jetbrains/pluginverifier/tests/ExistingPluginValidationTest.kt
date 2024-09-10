@@ -556,23 +556,6 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
   }
 
-  private fun ideaPlugin(pluginId: String = "someid",
-                         pluginName: String = "someName",
-                         pluginVersion: String = "1",
-                         vendor: String = "vendor",
-                         sinceBuild: String = "131.1",
-                         untilBuild: String = "231.1",
-                         description: String = "this description is looooooooooong enough") = """
-    <id>$pluginId</id>
-    <name>$pluginName</name>
-    <version>$pluginVersion</version>
-    ""<vendor email="vendor.com" url="url">$vendor</vendor>""
-    <description>$description</description>
-    <change-notes>these change-notes are looooooooooong enough</change-notes>
-    <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
-    <depends>com.intellij.modules.platform</depends>
-  """
-
   private fun paidIdeaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
                          pluginVersion: String = "1",
