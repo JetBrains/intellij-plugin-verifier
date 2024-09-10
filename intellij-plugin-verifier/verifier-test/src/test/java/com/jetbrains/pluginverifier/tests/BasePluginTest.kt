@@ -70,14 +70,19 @@ abstract class BasePluginTest {
     }
   }
 
-  protected fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
+  @Throws(AssertionError::class)
+  protected fun assertSuccess(
+    pluginResult: PluginCreationResult<IdePlugin>,
+    successHandler: PluginCreationSuccess<IdePlugin>.() -> Unit = {}
+  ) {
     when (pluginResult) {
-      is PluginCreationSuccess -> return
+      is PluginCreationSuccess -> return successHandler(pluginResult)
       is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
         fail("Expected successful plugin creation, but got $size problem(s): "
           + joinToString { it.message })
       }
     }
+    throw AssertionError("Expected success but got failure")
   }
 
   protected inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
