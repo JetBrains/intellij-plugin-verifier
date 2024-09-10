@@ -40,6 +40,8 @@ private const val HEADER_WITHOUT_VERSION = """
       <idea-version since-build="131.1"/>
     """
 
+private const val PLUGIN_JAR_NAME = "plugin.jar"
+
 class PluginXmlValidationTest {
 
   @Rule
@@ -244,8 +246,8 @@ class PluginXmlValidationTest {
     }
   }
 
-  private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
-    val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
+  private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
+    val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {
       fail("This plugin was expected to fail during creation, but the creation process was successful." +
               " Please ensure that this is the intended behavior in the unit test.")
@@ -253,16 +255,16 @@ class PluginXmlValidationTest {
     return pluginCreationResult as PluginCreationFail
   }
 
-  private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
-    val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
+  private fun buildCorrectPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
+    val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationSuccess) {
       fail("This plugin has not been created. Creation failed with error(s).")
     }
     return pluginCreationResult as PluginCreationSuccess
   }
 
-  private fun buildIdePlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
+  private fun buildIdePlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
+    val pluginFile = buildZipFile(temporaryFolder.newFile(pluginJarName).toPath(), pluginContentBuilder)
     return IdePluginManager.createManager().createPlugin(pluginFile)
   }
 
