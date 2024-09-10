@@ -42,6 +42,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin {
   override val useIdeClassLoader: Boolean = false
   override val isImplementationDetail: Boolean = false
   override val isV2: Boolean = false
+  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
   override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean = false
   override val hasDotNetPart: Boolean = false
 }

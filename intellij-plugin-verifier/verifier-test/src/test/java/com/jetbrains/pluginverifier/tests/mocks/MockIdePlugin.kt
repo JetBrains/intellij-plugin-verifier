@@ -2,7 +2,15 @@ package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
-import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.IdeMode
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -35,6 +43,7 @@ data class MockIdePlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val isV2: Boolean = false,
+  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
 ) : IdePlugin {
 
   override val useIdeClassLoader = false

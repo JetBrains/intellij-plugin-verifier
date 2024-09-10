@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
+import com.jetbrains.plugin.structure.intellij.plugin.IdeMode
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
@@ -39,6 +40,7 @@ class IdeModule(override val pluginId: String) : IdePlugin {
   override val productDescriptor = null
   override val useIdeClassLoader = false
   override val isV2 = true
+  override val ideMode: IdeMode = IdeMode.K1OnlyCompatible
   override val url = null
   override val changeNotes = null
   override val description = null

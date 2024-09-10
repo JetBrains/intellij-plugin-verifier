@@ -45,6 +45,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override var isV2: Boolean = false
 
+  override var ideMode: IdeMode = IdeMode.K1OnlyCompatible
+
   override var hasDotNetPart: Boolean = false
 
   override var underlyingDocument: Document = Document()
@@ -112,6 +114,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         useIdeClassLoader = old.useIdeClassLoader
         isImplementationDetail = old.isImplementationDetail
         isV2 = old.isV2
+        ideMode = old.ideMode
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)

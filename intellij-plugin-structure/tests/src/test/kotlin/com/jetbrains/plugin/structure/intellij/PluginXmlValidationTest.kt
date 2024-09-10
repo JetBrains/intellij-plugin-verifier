@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.intellij.plugin.IdeMode
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
@@ -19,7 +20,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.time.LocalDate
+import java.util.*
 
 private const val HEADER = """
       <id>someId</id>
@@ -146,6 +147,35 @@ class PluginXmlValidationTest {
   }
 
   @Test
+  fun `plugin IDE mode compatibility for K1 and K2`() {
+    val scenarios = mapOf(
+      "" to IdeMode.K1OnlyCompatible,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='true' />" to IdeMode.K1AndK2Compatible,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='false' />" to IdeMode.K1OnlyCompatible,
+      "<supportsKotlinPluginMode supportsK1='false' supportsK2='true' />" to IdeMode.K2OnlyCompatible,
+    )
+
+    scenarios.forEach { (extensionXml, expectedIdeMode) ->
+      val pluginJar = "plugin${UUID.randomUUID()}.jar"
+      val pluginCreationSuccess = buildCorrectPlugin(pluginJar) {
+        dir("META-INF") {
+          file("plugin.xml") {
+            """
+            <idea-plugin>
+              $HEADER
+              <extensions defaultExtensionNs="org.jetbrains.kotlin">
+                  $extensionXml
+              </extensions>
+            </idea-plugin>
+          """
+          }
+        }
+      }
+      assertEquals(expectedIdeMode, pluginCreationSuccess.plugin.ideMode)
+    }
+  }
+
+  @Test
   fun `paid plugin`() {
     val pluginCreationSuccess = buildCorrectPlugin {
       dir("META-INF") {
@@ -165,7 +195,7 @@ class PluginXmlValidationTest {
     assertNotNull(plugin.productDescriptor)
     with(plugin.productDescriptor!!) {
       assertEquals("PCODE", code)
-      assertEquals(LocalDate.of(2024, 8, 13), releaseDate)
+      assertEquals(java.time.LocalDate.of(2024, 8, 13), releaseDate)
       assertEquals(ProductReleaseVersion(11), version)
     }
   }

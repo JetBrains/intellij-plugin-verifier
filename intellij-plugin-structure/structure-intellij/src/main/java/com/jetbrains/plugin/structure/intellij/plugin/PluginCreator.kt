@@ -379,10 +379,18 @@ internal class PluginCreator private constructor(
           "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
           "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
           "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
-          else -> idePlugin.extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
+          "org.jetbrains.kotlin.supportsKotlinPluginMode" -> {
+            idePlugin.addExtension(epName, extensionElement)
+            idePlugin.ideMode = readIdeMode(extensionElement)
+          }
+          else -> idePlugin.addExtension(epName, extensionElement)
         }
       }
     }
+  }
+
+  private fun IdePluginImpl.addExtension(epName: String, extensionElement: Element) {
+    extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
   }
 
   private fun readExtensionPoints(rootElement: Element, idePlugin: IdePluginImpl) {
@@ -520,6 +528,12 @@ internal class PluginCreator private constructor(
         }
       }
     }
+  }
+
+  private fun readIdeMode(extensionElement: Element): IdeMode {
+    val supportsK1 = extensionElement.getAttributeBooleanValue("supportsK1", true)
+    val supportsK2 = extensionElement.getAttributeBooleanValue("supportsK2", false)
+    return IdeMode.parse(supportsK1, supportsK2)
   }
 
   private fun validatePluginBean(bean: PluginBean, validateDescriptor: Boolean) {
