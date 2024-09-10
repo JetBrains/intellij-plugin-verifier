@@ -1,15 +1,22 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import kotlin.reflect.KClass
 import java.nio.file.Path
 
 abstract class BasePluginTest {
@@ -52,4 +59,54 @@ abstract class BasePluginTest {
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
   """
+
+  protected fun assertMatchingPluginProblems(pluginResult: PluginCreationSuccess<IdePlugin>) {
+    with(pluginResult) {
+      if (plugin is StructurallyValidated) {
+        val plugin = plugin as StructurallyValidated
+        val resultProblems = warnings + unacceptableWarnings
+        assertEquals(resultProblems, plugin.problems)
+      }
+    }
+  }
+
+  protected fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
+    when (pluginResult) {
+      is PluginCreationSuccess -> return
+      is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
+        fail("Expected successful plugin creation, but got $size problem(s): "
+          + joinToString { it.message })
+      }
+    }
+  }
+
+  protected inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
+    val problems = when (this) {
+      is PluginCreationSuccess -> warnings + unacceptableWarnings
+      is PluginCreationFail -> errorsAndWarnings
+    }
+    assertContains(problems, T::class, message)
+  }
+
+  protected fun assertContains(
+    pluginProblems: Collection<PluginProblem>,
+    pluginProblemClass: KClass<out PluginProblem>,
+    message: String
+  ) {
+    val problems = pluginProblems.filter { problem ->
+      problem.isInstance(pluginProblemClass)
+    }
+    if (problems.isEmpty()) {
+      fail("Plugin creation result does not contain any problem of class [${pluginProblemClass.qualifiedName}]")
+      return
+    }
+    val problemsWithMessage = problems.filter { it.message == message }
+    if (problemsWithMessage.isEmpty()) {
+      fail("Plugin creation result has ${problems.size} problem of class [${pluginProblemClass.qualifiedName}], " +
+        "but none has a message '$message'. " +
+        "Found [" + problems.joinToString { it.message } + "]"
+      )
+      return
+    }
+  }
 }
