@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
+import com.jetbrains.plugin.structure.intellij.problems.remapping.getLevelRemapping
+import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
 import java.io.IOException
 import kotlin.reflect.KClass
 

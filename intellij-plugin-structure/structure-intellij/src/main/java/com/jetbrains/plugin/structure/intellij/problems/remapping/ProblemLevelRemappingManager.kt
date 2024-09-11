@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.intellij.problems
+package com.jetbrains.plugin.structure.intellij.problems.remapping
 
 import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.databind.DatabindException
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.*
 import com.jetbrains.plugin.structure.base.problems.PluginProblems.resolveClass
+import com.jetbrains.plugin.structure.intellij.problems.*
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.URL

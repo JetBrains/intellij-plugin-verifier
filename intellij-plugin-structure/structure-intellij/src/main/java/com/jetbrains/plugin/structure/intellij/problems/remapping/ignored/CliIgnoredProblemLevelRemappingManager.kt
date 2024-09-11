@@ -1,11 +1,11 @@
-package com.jetbrains.plugin.structure.intellij.problems.ignored
+package com.jetbrains.plugin.structure.intellij.problems.remapping.ignored
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.intellij.problems.IgnoredLevel
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinition
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinitions
-import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinition
+import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinitions
+import com.jetbrains.plugin.structure.intellij.problems.remapping.ProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.ProblemSolutionHintProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,7 +17,7 @@ typealias PluginProblemId = String
 
 private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
 
-class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager , ProblemSolutionHintProvider {
+class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager, ProblemSolutionHintProvider {
   private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader.fromClassPathJson()
 
   private val problemClasses: List<CliIgnoredPluginProblem> = ignoredProblemDefinitionLoader.load()

@@ -5,13 +5,13 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.problems.ErroneousSinceBuild
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingDefinitions
-import com.jetbrains.plugin.structure.intellij.problems.ProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinitions
+import com.jetbrains.plugin.structure.intellij.problems.remapping.ProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.StandardLevel
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
-import com.jetbrains.plugin.structure.intellij.problems.levelRemappingFromClassPathJson
+import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
@@ -41,7 +41,8 @@ class PluginParsingConfigurationResolutionTest {
   fun `new plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson())
+      levelRemappingFromClassPathJson()
+    )
 
     val errors = listOf(
       ErroneousSinceBuild(PLUGIN_XML, IdeVersion.createIdeVersion("123"))
@@ -57,7 +58,8 @@ class PluginParsingConfigurationResolutionTest {
   fun `existing plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson())
+      levelRemappingFromClassPathJson()
+    )
 
     val problemsThatShouldBeIgnored = listOf(
       ForbiddenPluginIdPrefix(PLUGIN_XML, pluginId, "some.forbidden.plugin.id"),
@@ -115,7 +117,8 @@ class PluginParsingConfigurationResolutionTest {
   fun `plugin configuration with ignored plugin problems specified in CLI`() {
     val config = PluginParsingConfiguration(ignoredPluginProblems = listOf("ForbiddenPluginIdPrefix"))
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson())
+      levelRemappingFromClassPathJson()
+    )
 
     val forbiddenPluginIdPrefix = "com.example"
     val forbiddenPluginId = "$forbiddenPluginIdPrefix.plugin"

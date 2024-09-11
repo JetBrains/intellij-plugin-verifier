@@ -3,7 +3,9 @@ package com.jetbrains.plugin.structure.intellij.problems.ignored
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.IgnoredLevel
-import com.jetbrains.plugin.structure.intellij.problems.emptyLevelRemapping
+import com.jetbrains.plugin.structure.intellij.problems.remapping.emptyLevelRemapping
+import com.jetbrains.plugin.structure.intellij.problems.remapping.ignored.CLI_IGNORED
+import com.jetbrains.plugin.structure.intellij.problems.remapping.ignored.CliIgnoredProblemLevelRemappingManager
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.assertNotNull

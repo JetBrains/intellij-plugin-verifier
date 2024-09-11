@@ -12,6 +12,9 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.remapping.emptyLevelRemapping
+import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
+import com.jetbrains.plugin.structure.intellij.problems.remapping.newDefaultResolver
 import com.jetbrains.pluginverifier.options.EXISTING_PLUGIN_REMAPPING_SET
 import com.jetbrains.pluginverifier.options.NEW_PLUGIN_REMAPPING_SET
 import com.jetbrains.pluginverifier.options.PluginParsingConfiguration
@@ -466,7 +469,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertEquals(1, warnings.size)
     val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
-    Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
   }
 
   @Test
@@ -505,7 +508,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat(creationSuccess.warnings.size, `is`(1))
     val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
       .singleOrNull()
-    Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+    assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
   }
 
   @Test

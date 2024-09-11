@@ -1,6 +1,9 @@
 package com.jetbrains.plugin.structure.intellij.problems
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.PLUGIN_PROBLEMS_FILE_NAME
+import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert

@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.intellij.problems.ignored
+package com.jetbrains.plugin.structure.intellij.problems.remapping.ignored
 
 import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.databind.DatabindException

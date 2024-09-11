@@ -5,8 +5,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ignore
-import com.jetbrains.plugin.structure.intellij.problems.levelRemappingFromClassPathJson
-import com.jetbrains.plugin.structure.intellij.problems.newDefaultResolver
+import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
+import com.jetbrains.plugin.structure.intellij.problems.remapping.newDefaultResolver
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import org.junit.Assert.fail
