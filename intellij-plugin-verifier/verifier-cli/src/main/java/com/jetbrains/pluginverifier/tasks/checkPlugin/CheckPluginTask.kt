@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
+import com.jetbrains.pluginverifier.filtering.KtInternalModifierUsageFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -51,5 +52,5 @@ class CheckPluginTask(private val parameters: CheckPluginParams) : Task {
       listOf(InternalApiUsageFilter())
     } else {
       emptyList()
-    }
+    } + KtInternalModifierUsageFilter()
 }

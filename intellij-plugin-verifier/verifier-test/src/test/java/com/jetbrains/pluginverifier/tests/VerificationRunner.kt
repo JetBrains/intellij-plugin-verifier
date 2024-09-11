@@ -4,13 +4,17 @@
 
 package com.jetbrains.pluginverifier.tests
 
+import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
+import com.jetbrains.pluginverifier.filtering.KtInternalModifierUsageFilter
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -32,6 +36,7 @@ import kotlin.io.path.createTempDirectory
 class VerificationRunner {
 
   fun withPluginVerifier(ide: Ide, idePlugin: IdePlugin, problemsFilters: List<ProblemsFilter> = emptyList(), apiUsageFilters: List<ApiUsageFilter> = emptyList(),
+                         includeKotlinStdLib: Boolean = false,
                          pluginVerifierHandler: (PluginVerifier) -> PluginVerificationResult): PluginVerificationResult {
     val tempDownloadDir = createTempDirectory().toFile().apply { deleteOnExit() }.toPath()
     val pluginFilesBank = PluginFilesBank.create(MarketplaceRepository(URL("https://unused.com")), tempDownloadDir, DiskSpaceSetting(SpaceAmount.ZERO_SPACE))
@@ -45,12 +50,17 @@ class VerificationRunner {
     return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
+      val additionalResolvers = getAdditionalClassResolvers(ide, includeKotlinStdLib)
+
       val classResolverProvider = DefaultClassResolverProvider(
         BundledPluginDependencyFinder(ide, pluginDetailsCache),
         ideDescriptor,
-        externalClassesPackageFilter
+        externalClassesPackageFilter,
+        additionalResolvers
       )
       val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
+
+      val allApiUsagesFilters = apiUsageFilters + getAdditionalApiUsageFilters(includeKotlinStdLib)
 
       val pluginVerifier = PluginVerifier(
         verificationDescriptor,
@@ -58,7 +68,7 @@ class VerificationRunner {
         pluginDetailsCache,
         listOf(DynamicallyLoadedFilter()),
         false,
-        apiUsageFilters
+        allApiUsagesFilters
       )
       pluginVerifierHandler(pluginVerifier)
     }
@@ -68,5 +78,29 @@ class VerificationRunner {
     return withPluginVerifier(ide, idePlugin, problemsFilters, apiUsageFilters) {
       it.loadPluginAndVerify()
     }
+  }
+
+  private fun getAdditionalClassResolvers(ide: Ide, includeKotlinStdLib: Boolean): List<JarFileResolver> {
+    return if (includeKotlinStdLib) {
+      val kotlinStdLibJar = ide.findKotlinStdLib()
+      listOf(JarFileResolver(kotlinStdLibJar, ReadMode.SIGNATURES, IdeLibDirectory(ide)))
+    } else {
+      emptyList()
+    }
+  }
+
+  private fun getAdditionalApiUsageFilters(includeKotlinStdLib: Boolean): List<ApiUsageFilter> {
+    return if(includeKotlinStdLib) {
+      listOf(KtInternalModifierUsageFilter())
+    } else {
+      emptyList()
+    }
+  }
+}
+
+fun runPluginVerification(initSpec: VerificationSpec.() -> Unit): PluginVerificationResult = with(VerificationSpec()) {
+  initSpec()
+  VerificationRunner().withPluginVerifier(ide, plugin, problemsFilters, apiUsageFilters, kotlin) {
+    it.loadPluginAndVerify()
   }
 }
