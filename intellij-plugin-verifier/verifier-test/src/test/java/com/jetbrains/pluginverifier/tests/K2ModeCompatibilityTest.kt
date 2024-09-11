@@ -9,11 +9,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private const val EXPECTED_MESSAGE = "Invalid plugin descriptor 'plugin.xml'. " +
-  "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare a compatibility mode " +
-  "in the <supportsKotlinPluginMode> extension. " +
-  "This feature is available in the IntelliJ IDEA 2024.2.1 or later."
-
+private const val EXPECTED_MESSAGE =  "Invalid plugin descriptor 'plugin.xml'. " +
+  "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
+  "a compatibility mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. " +
+  "This feature is available for IntelliJ IDEA 2024.2.1 or later."
 
 class K2ModeCompatibilityTest : BasePluginTest() {
   @Test

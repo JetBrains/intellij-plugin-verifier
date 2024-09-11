@@ -296,9 +296,10 @@ class PluginXmlValidationTest {
     }
     pluginCreationSuccess.assertContains<UndeclaredKotlinK2CompatibilityMode>(
       "Invalid plugin descriptor 'plugin.xml'. " +
-        "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare a compatibility mode " +
-        "in the <supportsKotlinPluginMode> extension. " +
-        "This feature is available in the IntelliJ IDEA 2024.2.1 or later.")
+        "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
+        "a compatibility mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. " +
+        "This feature is available for IntelliJ IDEA 2024.2.1 or later."
+    )
   }
 
   private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {

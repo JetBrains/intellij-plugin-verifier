@@ -207,8 +207,8 @@ class UnknownServiceClientValue(descriptorPath: String, serviceClient: String) :
  * @see [K2IdeModeCompatibilityVerifier]
  */
 private const val UNDECLARED_KOTLIN_K2_COMPATIBILITY_MODE_MESSAGE = "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
-  "a compatibility mode in the <supportsKotlinPluginMode> extension. " +
-  "This feature is available in the IntelliJ IDEA 2024.2.1 or later."
+  "a compatibility mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. " +
+  "This feature is available for IntelliJ IDEA 2024.2.1 or later."
 
 data class UndeclaredKotlinK2CompatibilityMode(val descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
