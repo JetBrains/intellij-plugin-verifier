@@ -2,22 +2,20 @@ package com.jetbrains.plugin.structure.intellij.problems.remapping.ignored
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isInstance
-import com.jetbrains.plugin.structure.intellij.problems.IgnoredLevel
-import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinition
-import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinitions
-import com.jetbrains.plugin.structure.intellij.problems.remapping.ProblemLevelRemappingManager
-import com.jetbrains.plugin.structure.intellij.problems.ProblemSolutionHintProvider
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.remapping.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
-const val CLI_IGNORED = "cli-ignored"
 
 typealias PluginProblemId = String
 
-private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
-
 class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager, ProblemSolutionHintProvider {
+  companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
+  }
+
   private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader.fromClassPathJson()
 
   private val problemClasses: List<CliIgnoredPluginProblem> = ignoredProblemDefinitionLoader.load()
@@ -26,12 +24,12 @@ class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblem
 
   override fun initialize(): LevelRemappingDefinitions {
     return LevelRemappingDefinitions().apply {
-      set(CLI_IGNORED, LevelRemappingDefinition(CLI_IGNORED, ignoredProblemLevelRemapping))
+      set(RemappingSet.CLI_IGNORED, LevelRemappingDefinition(RemappingSet.CLI_IGNORED, ignoredProblemLevelRemapping))
     }
   }
 
   fun asLevelRemappingDefinition(): LevelRemappingDefinition {
-    return LevelRemappingDefinition(CLI_IGNORED, ignoredProblemLevelRemapping)
+    return LevelRemappingDefinition(RemappingSet.CLI_IGNORED, ignoredProblemLevelRemapping)
   }
 
   private fun ignoreProblems(ignoredProblems: List<PluginProblemId>): Map<KClass<*>, IgnoredLevel> {

@@ -3,15 +3,11 @@ package com.jetbrains.pluginverifier.options
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.intellij.problems.ErroneousSinceBuild
-import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.remapping.LevelRemappingDefinitions
 import com.jetbrains.plugin.structure.intellij.problems.remapping.ProblemLevelRemappingManager
-import com.jetbrains.plugin.structure.intellij.problems.StandardLevel
-import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
-import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
-import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
-import com.jetbrains.plugin.structure.intellij.problems.remapping.levelRemappingFromClassPathJson
+import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
@@ -40,8 +36,9 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `new plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson()
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(
+      config,
+      JsonUrlProblemLevelRemappingManager.fromClassPathJson()
     )
 
     val errors = listOf(
@@ -57,8 +54,9 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `existing plugin configuration is resolved`() {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson()
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(
+      config,
+      JsonUrlProblemLevelRemappingManager.fromClassPathJson()
     )
 
     val problemsThatShouldBeIgnored = listOf(
@@ -78,7 +76,7 @@ class PluginParsingConfigurationResolutionTest {
     val config = PluginParsingConfiguration(pluginSubmissionType = EXISTING)
     val levelMapper = object : ProblemLevelRemappingManager {
       override fun initialize() = LevelRemappingDefinitions().apply {
-        this[EXISTING_PLUGIN_REMAPPING_SET] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
+        this[RemappingSet.EXISTING_PLUGIN_REMAPPING_SET] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
       }
     }
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config, levelMapper)
@@ -98,7 +96,7 @@ class PluginParsingConfigurationResolutionTest {
     val config = PluginParsingConfiguration(pluginSubmissionType = NEW)
     val levelMapper = object : ProblemLevelRemappingManager {
       override fun initialize() = LevelRemappingDefinitions().apply {
-        this["new-plugin"] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
+        this[RemappingSet.NEW_PLUGIN_REMAPPING_SET] = mapOf(ErroneousSinceBuild::class to StandardLevel(PluginProblem.Level.WARNING))
       }
     }
     val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config, levelMapper)
@@ -116,8 +114,9 @@ class PluginParsingConfigurationResolutionTest {
   @Test
   fun `plugin configuration with ignored plugin problems specified in CLI`() {
     val config = PluginParsingConfiguration(ignoredPluginProblems = listOf("ForbiddenPluginIdPrefix"))
-    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(config,
-      levelRemappingFromClassPathJson()
+    val creationResultResolver = configurationResolution.resolveProblemLevelMapping(
+      config,
+      JsonUrlProblemLevelRemappingManager.fromClassPathJson()
     )
 
     val forbiddenPluginIdPrefix = "com.example"

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.exc.StreamReadException
 import com.fasterxml.jackson.databind.DatabindException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
 import java.io.IOException
 import java.net.URL
 
@@ -14,7 +13,7 @@ class CliIgnoredProblemDefinitionLoader(private val jsonUrl: URL) {
   companion object {
     @Throws(IOException::class)
     fun fromClassPathJson(): CliIgnoredProblemDefinitionLoader {
-      val jsonUrl = LevelRemappingPluginCreationResultResolver::class.java.getResource(CLI_IGNORED_PROBLEMS_FILE_NAME)
+      val jsonUrl = this::class.java.getResource(CLI_IGNORED_PROBLEMS_FILE_NAME)
         ?: throw IOException("Definition for problems that can be ignored in the CLI switch " +
           "cannot be found at <$CLI_IGNORED_PROBLEMS_FILE_NAME>")
       return CliIgnoredProblemDefinitionLoader(jsonUrl)

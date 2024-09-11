@@ -13,21 +13,51 @@ import java.net.URL
 import kotlin.reflect.KClass
 
 interface ProblemLevelRemappingManager {
+  companion object {
+    private val LOG = LoggerFactory.getLogger(ProblemLevelRemappingManager::class.java)
+  }
+
+  @Throws(IOException::class)
   fun initialize(): LevelRemappingDefinitions
+
+  fun getLevelRemapping(remappingSet: RemappingSet): LevelRemappingDefinition {
+    val levelRemappings = runCatching {
+      initialize()
+    }.getOrElse {
+      LOG.error(it.message, it)
+      LevelRemappingDefinitions()
+    }
+
+    return levelRemappings[remappingSet]
+      ?: LevelRemappingDefinition(remappingSet).also {
+        LOG.warn(("Plugin problem remapping definition '${remappingSet.id}' was not found. " +
+          "Problem levels will not be remapped"))
+      }
+  }
+
+  fun newDefaultResolver(remappingSet: RemappingSet): PluginCreationResultResolver {
+    val defaultResolver = IntelliJPluginCreationResultResolver()
+    val problemLevelRemapping = getLevelRemapping(remappingSet)
+    val levelRemappingResolver = LevelRemappingPluginCreationResultResolver(defaultResolver, problemLevelRemapping)
+    return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = levelRemappingResolver)
+  }
+
+  fun defaultExistingPluginResolver() = newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
+  fun defaultNewPluginResolver() = newDefaultResolver(RemappingSet.NEW_PLUGIN_REMAPPING_SET)
 }
-
-fun levelRemappingFromClassPathJson(): JsonUrlProblemLevelRemappingManager {
-  val pluginProblemsJsonUrl = JsonUrlProblemLevelRemappingManager::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
-    ?: throw IOException("Plugin problem level remapping definition cannot be found at <$PLUGIN_PROBLEMS_FILE_NAME>")
-  return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
-}
-
-const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
-
-private val LOG = LoggerFactory.getLogger(JsonUrlProblemLevelRemappingManager::class.java)
 
 class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
-  private val json = ObjectMapper()
+  companion object {
+    private val objectMapper = ObjectMapper()
+    const val PLUGIN_PROBLEMS_FILE_NAME = "plugin-problems.json"
+
+    @Throws(IOException::class)
+    fun fromClassPathJson(): JsonUrlProblemLevelRemappingManager {
+      val pluginProblemsJsonUrl = this::class.java.getResource(PLUGIN_PROBLEMS_FILE_NAME)
+        ?: throw IOException("Plugin problem level remapping definition cannot be found at <$PLUGIN_PROBLEMS_FILE_NAME>")
+      return JsonUrlProblemLevelRemappingManager(pluginProblemsJsonUrl)
+    }
+  }
 
   @Throws(IOException::class)
   override fun initialize() = load()
@@ -36,9 +66,10 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
   fun load(): LevelRemappingDefinitions {
     val definitions = LevelRemappingDefinitions()
     try {
-      val rawRemapping: Map<String, Map<String, String>> = json.readValue(pluginProblemsJsonUrl)
+      val rawRemapping: Map<String, Map<String, String>> = objectMapper.readValue(pluginProblemsJsonUrl)
 
-      rawRemapping.map { (problemSetName: String, problemRemapping: Map<String, String>) ->
+      rawRemapping.map { (id: String, problemRemapping: Map<String, String>) ->
+        val remappingSet = RemappingSet.fromId(id)
         val levelRemapping = problemRemapping.mapNotNull { (problemId, problemLevel) ->
           val pluginProblemKClass = resolveClass(problemId) ?: return@mapNotNull null
           when (problemLevel) {
@@ -49,7 +80,7 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
             else -> null
           }
         }.toMap()
-        definitions[problemSetName] = levelRemapping
+        definitions[remappingSet] = levelRemapping
       }
     } catch (e: IOException) {
       throw IOException("Cannot load plugin problems definitions from <$pluginProblemsJsonUrl>", e)
@@ -62,49 +93,27 @@ class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL
   }
 }
 
-fun ProblemLevelRemappingManager.getLevelRemapping(levelRemappingDefinitionName: String): LevelRemappingDefinition {
-  return runCatching {
-    val levelRemappings = initialize()
-    val levelRemappingDefinition = levelRemappings[levelRemappingDefinitionName]
-      ?: emptyLevelRemapping(levelRemappingDefinitionName).also {
-        LOG.warn(("Plugin problem remapping definition '$levelRemappingDefinitionName' was not found. " +
-          "Problem levels will not be remapped"))
-      }
-    levelRemappingDefinition
-  }.getOrElse {
-    LOG.error(it.message, it)
-    emptyLevelRemapping(levelRemappingDefinitionName)
-  }
-}
-
-fun ProblemLevelRemappingManager.newDefaultResolver(levelRemappingDefinitionName: String): PluginCreationResultResolver {
-  val defaultResolver = IntelliJPluginCreationResultResolver()
-  val problemLevelRemapping = getLevelRemapping(levelRemappingDefinitionName)
-  val levelRemappingResolver = LevelRemappingPluginCreationResultResolver(defaultResolver, problemLevelRemapping)
-  return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = levelRemappingResolver)
-}
-
 class LevelRemappingDefinitions {
-  private val definitions = mutableMapOf<String, LevelRemappingDefinition>()
+  private val definitions = mutableMapOf<RemappingSet, LevelRemappingDefinition>()
 
-  operator fun set(name: String, remapping: Map<KClass<out Any>, RemappedLevel>) {
-    definitions[name] = LevelRemappingDefinition(name, remapping)
+  operator fun set(remappingSet: RemappingSet, remapping: Map<KClass<out Any>, RemappedLevel>) {
+    definitions[remappingSet] = LevelRemappingDefinition(remappingSet, remapping)
   }
 
-  operator fun get(name: String): LevelRemappingDefinition? {
-    return definitions[name]
+  operator fun get(remappingSet: RemappingSet): LevelRemappingDefinition? {
+    return definitions[remappingSet]
+  }
+
+  fun getOrEmpty(remappingSet: RemappingSet): LevelRemappingDefinition {
+    return definitions[remappingSet] ?: LevelRemappingDefinition(remappingSet)
   }
 
   val size: Int
     get() = definitions.size
 }
 
-class LevelRemappingDefinition(val name: String, private val d: Map<KClass<out Any>, RemappedLevel> = emptyMap()) : Map<KClass<out Any>, RemappedLevel> by d {
+class LevelRemappingDefinition(val remappingSet: RemappingSet, private val d: Map<KClass<out Any>, RemappedLevel> = emptyMap()) : Map<KClass<out Any>, RemappedLevel> by d {
   fun findProblemsByLevel(level: RemappedLevel): List<KClass<out Any>> {
     return d.filterValues { it == level }.map { it.key }
   }
-}
-
-fun emptyLevelRemapping(name: String): LevelRemappingDefinition {
-  return LevelRemappingDefinition(name, emptyMap())
 }
