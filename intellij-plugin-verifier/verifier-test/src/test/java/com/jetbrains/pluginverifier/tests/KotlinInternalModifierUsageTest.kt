@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -11,6 +12,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.tests.bytecode.Dumps
+import com.jetbrains.pluginverifier.tests.bytecode.JavaDumps
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalClassUsage
@@ -233,6 +236,45 @@ class KotlinInternalModifierUsageTest {
     }
   }
 
+  @Test
+  fun `accidental Kotlin Stdlib internal API usage`() {
+    assertVerified {
+      ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
+      plugin = prepareUsage(pluginSpec, "KotlinUsage", Dumps.KotlinUsage())
+      kotlin = true
+    }.run {
+      with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
+        assertEquals(0, size)
+      }
+    }
+  }
+
+  @Test
+  fun `Kotlin coroutines internal API usage`() {
+    assertVerified {
+      ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
+      plugin = prepareUsage(pluginSpec, "KotlinUsage", Dumps.KotlinSuspendLambda())
+      kotlin = true
+    }.run {
+      with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
+        assertEquals(0, size)
+      }
+    }
+  }
+
+  @Test
+  fun `Kotlin serialization internal API usage`() {
+    assertVerified {
+      ide = buildIdeWithBundledPlugins(includeKotlinStdLib = true) {}
+      plugin = prepareUsage(pluginSpec, "KotlinUsage", JavaDumps.getSerializableVersion())
+      kotlin = true
+    }.run {
+      with(internalApiUsages.filterIsInstance<KtInternalClassUsage>()) {
+        assertEquals(0, size)
+      }
+    }
+  }
+
   private fun verify(ide: Ide, idePlugin: IdePlugin): Set<InternalApiUsage> {
     val apiUsageFilter = InternalApiUsageFilter()
 
@@ -250,12 +292,27 @@ class KotlinInternalModifierUsageTest {
     return verificationResult.ignoredInternalApiUsages.keys
   }
 
+  private fun assertVerified(spec: VerificationSpec.() -> Unit) =
+    runPluginVerification(spec) as PluginVerificationResult.Verified
+
   private fun prepareUsage(
     pluginSpec: IdeaPluginSpec,
     dynamicTypeBuilder: () -> DynamicType.Unloaded<*>
   ): IdePlugin {
     return buildIdePlugin(pluginSpec) {
       usageClass(dynamicTypeBuilder())
+    }
+  }
+
+  private fun prepareUsage(
+    pluginSpec: IdeaPluginSpec,
+    classFileName: String,
+    classFileBinaryContent: ByteArray
+  ): IdePlugin {
+    return buildIdePlugin(pluginSpec) {
+      dir("plugin") {
+       file("$classFileName.class", classFileBinaryContent)
+      }
     }
   }
 
@@ -303,6 +360,7 @@ class KotlinInternalModifierUsageTest {
   }
 
   private fun buildIdeWithBundledPlugins(
+    includeKotlinStdLib: Boolean = false,
     javaPluginClassesBuilder: (ContentBuilder).() -> Unit
   ): Ide {
     val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
@@ -320,6 +378,11 @@ class KotlinInternalModifierUsageTest {
                 </idea-plugin>
                 """.trimIndent()
             }
+          }
+        }
+        if (includeKotlinStdLib) {
+          findKotlinStdLib().apply {
+            file(simpleName, this)
           }
         }
       }

@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
+import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -20,12 +21,12 @@ import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.reflect.KClass
 
 
 class ExistingPluginValidationTest : BasePluginTest() {
@@ -490,7 +491,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
           """
           <idea-plugin>
             $header
-            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
+            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="10"/>
           </idea-plugin>
         """
         }
@@ -507,6 +508,46 @@ class ExistingPluginValidationTest : BasePluginTest() {
     Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
   }
 
+  @Test
+  fun `paid plugin is not built due to invalid release-version but such problem is filtered because it is an existing plugin`() {
+    val singleDigitReleaseVersion = 1
+    val paidIdeaPlugin = paidIdeaPlugin(releaseVersion = singleDigitReleaseVersion)
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $paidIdeaPlugin
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertSuccess(result)
+    assertMatchingPluginProblems(result as PluginCreationSuccess)
+  }
+
+  @Test
+  fun `existing paid plugin has release-version that does not match plugin version and this is an error`() {
+    val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "2.1", releaseVersion = 20)
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $paidIdeaPlugin
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    result.assertContains<ReleaseVersionAndPluginVersionMismatch>("Invalid plugin descriptor 'plugin.xml'. " +
+      "The <release-version> parameter [20] and the plugin version [2.1] should have a matching beginning. " +
+      "For example, release version '20201' should match plugin version 2020.1.1")
+  }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
@@ -521,19 +562,34 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   private fun ideaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
+                         pluginVersion: String = "1",
                          vendor: String = "vendor",
                          sinceBuild: String = "131.1",
                          untilBuild: String = "231.1",
                          description: String = "this description is looooooooooong enough") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
-    <version>someVersion</version>
+    <version>$pluginVersion</version>
     ""<vendor email="vendor.com" url="url">$vendor</vendor>""
     <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
   """
+
+  private fun paidIdeaPlugin(pluginId: String = "someid",
+                         pluginName: String = "someName",
+                         pluginVersion: String = "1",
+                         vendor: String = "vendor",
+                         sinceBuild: String = "131.1",
+                         untilBuild: String = "231.1",
+                         description: String = "this description is looooooooooong enough",
+                         releaseVersion: Int = 20211) =
+    ideaPlugin(pluginId, pluginName, pluginVersion, vendor, sinceBuild, untilBuild, description) +
+      """
+        <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
+      """.trimIndent()
+
 
   private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true): PluginCreationResultResolver {
     val problemLevelMappingManager = levelRemappingFromClassPathJson()
@@ -548,6 +604,46 @@ class ExistingPluginValidationTest : BasePluginTest() {
         val resultProblems = warnings + unacceptableWarnings
         assertEquals(resultProblems, plugin.problems)
       }
+    }
+  }
+
+  private fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
+    when (pluginResult) {
+      is PluginCreationSuccess -> return
+      is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
+        fail("Expected successful plugin creation, but got $size problem(s): "
+          + joinToString { it.message })
+      }
+    }
+  }
+
+  private inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
+    val problems = when (this) {
+      is PluginCreationSuccess -> warnings + unacceptableWarnings
+      is PluginCreationFail -> errorsAndWarnings
+    }
+    assertContains(problems, T::class, message)
+  }
+
+  private fun assertContains(
+    pluginProblems: Collection<PluginProblem>,
+    pluginProblemClass: KClass<out PluginProblem>,
+    message: String
+  ) {
+    val problems = pluginProblems.filter { problem ->
+      problem.isInstance(pluginProblemClass)
+    }
+    if (problems.isEmpty()) {
+      fail("Plugin creation result does not contain any problem of class [${pluginProblemClass.qualifiedName}]")
+      return
+    }
+    val problemsWithMessage = problems.filter { it.message == message }
+    if (problemsWithMessage.isEmpty()) {
+      fail("Plugin creation result has ${problems.size} problem of class [${pluginProblemClass.qualifiedName}], " +
+        "but none has a message '$message'. " +
+        "Found [" + problems.joinToString { it.message } + "]"
+      )
+      return
     }
   }
 }

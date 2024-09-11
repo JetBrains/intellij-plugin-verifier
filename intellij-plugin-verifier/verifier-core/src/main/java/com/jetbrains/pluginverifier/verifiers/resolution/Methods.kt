@@ -147,3 +147,4 @@ fun sameParameters(method: Method, anotherMethod: Method): Boolean {
 }
 
 fun FullyQualifiedClassName.toBinaryClassName(): BinaryClassName = replace('.', '/')
+fun BinaryClassName.toFullyQualifiedClassName(): FullyQualifiedClassName = replace('/', '.')

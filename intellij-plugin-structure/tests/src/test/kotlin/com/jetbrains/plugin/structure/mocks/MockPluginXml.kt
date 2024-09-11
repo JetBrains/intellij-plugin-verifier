@@ -37,7 +37,7 @@ val perfectXmlBuilder: PluginXmlBuilder
   get() = PluginXmlBuilder().apply {
     id = "<id>someId</id>"
     name = "<name>someName</name>"
-    version = "<version>someVersion</version>"
+    version = "<version>1</version>"
     vendor = """<vendor email="vendor.com" url="url">vendor</vendor>"""
     description = "<description>this description is looooooooooong enough</description>"
     changeNotes = "<change-notes>these change-notes are looooooooooong enough</change-notes>"

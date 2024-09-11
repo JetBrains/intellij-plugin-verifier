@@ -60,7 +60,10 @@ private fun parseDescription(block: String, type: DescriptionType): DescriptionH
 
 private fun sourceFiles(): Sequence<String> {
   val javaFiles = findMockPluginSourcePath().listRecursivelyAllFilesWithExtension("java").asSequence()
-  val kotlinFiles = findMockPluginSourcePath().listRecursivelyAllFilesWithExtension("kt").asSequence()
+  val kotlinFiles = listOf(findMockPluginSourcePath(), findMockPluginKotlinSourcePath())
+    .flatMap { it.listRecursivelyAllFilesWithExtension("kt") }
+    .asSequence()
+
   return (javaFiles + kotlinFiles).map { it.readText() }
 }
 
