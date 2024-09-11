@@ -12,9 +12,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.tests.InternalApiUsagePluginTest.IdeaPluginSpec
 import com.jetbrains.pluginverifier.tests.bytecode.Dumps
 import com.jetbrains.pluginverifier.tests.bytecode.JavaDumps
+import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalFieldUsage
