@@ -16,7 +16,7 @@ This tool is useful because plugin authors often specify a wide [\[since; until\
 The IntelliJ Platform API can occasionally change between releases, so binary incompatibilities may arise, leading to `NoClassDefFoundError`, `NoSuchMethodError`, and similar exceptions at runtime.
 
 > [!TIP]
-> In most cases, IntelliJ Plugin Verifier will be used via `runPluginVerifier` task from Gradle IntelliJ Plugin, see [Integration](#integration).
+> In most cases, IntelliJ Plugin Verifier will be used via `verifyPlugin` (2.x) / `runPluginVerifier` (1.x) task from Gradle plugin, see [Integration](#integration).
 
 Example problems the Plugin Verifier can detect:
 
@@ -402,7 +402,10 @@ This is necessary to speed up the verification, which needs to do many searches 
 
 ## Integration
 
-The most straightforward way of integrating the Plugin Verifier with your project is using the Gradle IntelliJ Plugin, which provides [`runPluginVerifier`](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-runpluginverifier) configurable task.
+The most straightforward way of integrating the Plugin Verifier with your project is using dedicated Gradle task:
+
+- IntelliJ Platform Gradle Plugin (2.x): [`verifyPlugin`](https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-tasks.html#verifyPlugin)
+- Gradle IntelliJ Plugin (1.x): [`runPluginVerifier`](https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html#tasks-runpluginverifier)
 
 If you're not using Gradle within your project, there are predefined third-party actions available in the GitHub Actions Marketplace that automate the plugin verification process.
 
