@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.teamcity.action
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
@@ -104,8 +105,9 @@ class ParseValidFullActionTest(
   @Test
   fun `parse full valid TeamCity Action from YAML`() {
     // arrange
+    val fileName = "action.yaml"
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      file("action.yaml") { actionYaml }
+      file(fileName) { actionYaml }
     }
 
     // act
@@ -113,6 +115,8 @@ class ParseValidFullActionTest(
 
     // assert
     with(result.plugin) {
+      assertEquals(fileName, this.yamlFile.fileName)
+      assertArrayEquals(actionYaml.toByteArray(), this.yamlFile.content)
       assertEquals("1.0.0", this.specVersion)
       assertEquals("simple-action", this.pluginName)
       assertEquals("1.2.3", this.pluginVersion)

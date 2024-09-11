@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.dotnet
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.PluginFile
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 
@@ -18,13 +19,13 @@ class ReSharperPlugin(
   override val vendorEmail: String?,
   override val vendorUrl: String?,
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
-  val nuspecFileContent: ByteArray,
   val nonNormalizedVersion: String,
   val summary: String?,
   val authors: List<String>,
   val licenseUrl: String?,
   val copyright: String?,
-  val dependencies: List<DotNetDependency>
+  val dependencies: List<DotNetDependency>,
+  val nuspecFile: PluginFile
 ) : Plugin {
   override val icons: List<PluginIcon> = emptyList()
   val parsedVersion = NugetSemanticVersion.parse(nonNormalizedVersion)

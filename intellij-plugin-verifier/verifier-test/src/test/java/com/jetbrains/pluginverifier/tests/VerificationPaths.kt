@@ -2,6 +2,9 @@ package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.ide.Ide
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -36,3 +39,16 @@ fun findMockPluginKotlinSourcePath(): Path {
   }
   return Paths.get("verifier-test").resolve(mockPluginsKotlinSourcePath).also { check(it.isDirectory) }
 }
+
+fun findKotlinStdLib(): Path = findKotlinStdLib(findMockIdePath())
+
+fun Ide.findKotlinStdLib(): Path = findKotlinStdLib(idePath)
+
+fun findKotlinStdLib(idePath: Path): Path {
+  val libDir = idePath.resolve("lib")
+  return libDir.listFiles()
+    .first { KOTLIN_STDLIB_REGEX.matches(it.simpleName) }
+    .also { check(it.exists()) }
+}
+
+private val KOTLIN_STDLIB_REGEX = Regex("""kotlin-stdlib-[^-]*\.jar""")

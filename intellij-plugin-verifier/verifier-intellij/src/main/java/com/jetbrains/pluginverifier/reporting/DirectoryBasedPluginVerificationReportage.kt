@@ -15,11 +15,16 @@ import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
-import com.jetbrains.pluginverifier.reporting.ignoring.*
+import com.jetbrains.pluginverifier.reporting.ignoring.AllIgnoredProblemsReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredPluginsReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.IgnoredProblemsReporter
+import com.jetbrains.pluginverifier.reporting.ignoring.PluginIgnoredEvent
+import com.jetbrains.pluginverifier.reporting.ignoring.ProblemIgnoredEvent
 import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
 import com.jetbrains.pluginverifier.reporting.telemetry.toPlainString
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
+import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalModifierUsage
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -130,6 +135,7 @@ class DirectoryBasedPluginVerificationReportage(
           reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
           reportVerificationDetails(directory, "experimental-api-usages.txt", experimentalApiUsages)
           reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)
+          reportVerificationDetails(directory, "internal-api-kt-usages.txt", kotlinInternalApiUsages)
           reportVerificationDetails(directory, "override-only-usages.txt", overrideOnlyMethodUsages)
           reportVerificationDetails(directory, "non-extendable-api-usages.txt", nonExtendableApiUsages)
           reportVerificationDetails(directory, "plugin-structure-warnings.txt", pluginStructureWarnings)
@@ -158,6 +164,9 @@ class DirectoryBasedPluginVerificationReportage(
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
   }
+
+  private val PluginVerificationResult.Verified.kotlinInternalApiUsages
+    get() = internalApiUsages.filterIsInstance<KtInternalModifierUsage>()
 }
 
 private fun PluginTelemetry?.withPluginIdAndVersion(verifiedResult: PluginVerificationResult.Verified): PluginTelemetry? {

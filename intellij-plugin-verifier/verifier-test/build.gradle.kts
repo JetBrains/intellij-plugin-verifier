@@ -48,23 +48,26 @@ val prepareAfterIdea by tasks.registering(Copy::class) {
 
   val ideaJar = copySpec {
     from(afterIdeaBuildDir.file("libs/after-idea-1.0.jar"))
-    into("lib")
+    into(lib)
   }
   val additionalJar = copySpec {
     from(additionalAfterIdeaBuildDir.file("libs/additional-after-idea-1.0.jar"))
-    into("lib")
+    into(lib)
   }
 
   val resourcesJar = copySpec {
     from(prepareResourcesJar)
-    into("lib")
+    into(lib)
   }
 
   val buildTxt = copySpec {
     from(afterIdeaBuildDir.file("resources/main/build.txt"))
     into(".")
   }
-  with(ideaJar, additionalJar, resourcesJar, buildTxt)
+
+  val kotlinStdLib = kotlinStdLibCopySpec(lib)
+
+  with(ideaJar, additionalJar, resourcesJar, buildTxt, kotlinStdLib)
 }
 
 tasks.named("test") {
@@ -75,4 +78,15 @@ tasks.named("jar") {
   dependsOn("test")
 }
 
+val lib = "lib"
 
+private fun kotlinStdLibCopySpec(destPath: String) = copySpec {
+  val kotlinLibs = configurations.runtimeClasspath
+    .map { it.resolvedConfiguration.resolvedArtifacts }
+    .get()
+    .filter { it.name.startsWith("kotlin") }
+    .map { it.file }
+
+  from(kotlinLibs)
+  into(destPath)
+}

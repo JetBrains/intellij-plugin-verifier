@@ -116,6 +116,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
       idParts.size > 1 -> idParts[1]
       else -> id
     }
+    val nuspecFileName = "$id.nuspec"
     ReSharperPlugin(
       pluginId = id,
       pluginName = pluginName,
@@ -132,7 +133,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
       summary = summary,
       thirdPartyDependencies = thirdPartyDependencies,
       dependencies = getAllDependencies().map { DotNetDependency(it.id!!, it.version) },
-      nuspecFileContent = nuspecFileContent
+      nuspecFile = PluginFile(nuspecFileName, nuspecFileContent)
     )
   }
 }

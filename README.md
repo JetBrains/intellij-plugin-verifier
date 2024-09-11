@@ -176,7 +176,8 @@ This option is used by JetBrains Marketplace by default.
 
     - `ForbiddenPluginIdPrefix`,
     - `TemplateWordInPluginId`,
-    - `TemplateWordInPluginName`
+    - `TemplateWordInPluginName`,
+    - `ReleaseVersionAndPluginVersionMismatch`,
 
     A comma-separated list of plugin problems is allowed, e.g.:
 

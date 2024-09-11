@@ -10,6 +10,16 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+## 1.375 - 2024-08-30
+
+### Changed
+
+- Update dependencies
+
+### Fixed
+
+- Resolve 'modules' directory in plugin dependencies ([https://youtrack.jetbrains.com/issue/MP-6799](https://youtrack.jetbrains.com/issue/MP-6799), [#1132](https://github.com/JetBrains/intellij-plugin-verifier/pull/1132))
+
 ## 1.373 - 2024-08-05
 
 ### Added

@@ -179,7 +179,6 @@ open class NonexistentReleaseInUntilBuild(
   nonexistentRelease: String = ""
 ) : SuspiciousUntilBuild(untilBuild, "Version '$nonexistentRelease' does not exist")
 
-
 class ForbiddenPluginIdPrefix(
   descriptorPath: String,
   pluginId: String,
