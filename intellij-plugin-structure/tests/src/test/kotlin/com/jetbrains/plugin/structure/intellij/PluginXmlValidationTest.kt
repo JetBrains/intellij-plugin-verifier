@@ -7,9 +7,9 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.IdeMode
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
@@ -152,10 +152,10 @@ class PluginXmlValidationTest {
   @Test
   fun `plugin IDE mode compatibility for K1 and K2`() {
     val scenarios = mapOf(
-      "" to IdeMode.Implicit,
-      "<supportsKotlinPluginMode supportsK1='true' supportsK2='true' />" to IdeMode.K1AndK2Compatible,
-      "<supportsKotlinPluginMode supportsK1='true' supportsK2='false' />" to IdeMode.K1OnlyCompatible,
-      "<supportsKotlinPluginMode supportsK1='false' supportsK2='true' />" to IdeMode.K2OnlyCompatible,
+      "" to KotlinPluginMode.Implicit,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='true' />" to KotlinPluginMode.K1AndK2Compatible,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='false' />" to KotlinPluginMode.K1OnlyCompatible,
+      "<supportsKotlinPluginMode supportsK1='false' supportsK2='true' />" to KotlinPluginMode.K2OnlyCompatible,
     )
 
     scenarios.forEach { (extensionXml, expectedIdeMode) ->
@@ -174,7 +174,7 @@ class PluginXmlValidationTest {
           }
         }
       }
-      assertEquals(expectedIdeMode, pluginCreationSuccess.plugin.ideMode)
+      assertEquals(expectedIdeMode, pluginCreationSuccess.plugin.kotlinPluginMode)
     }
   }
 

@@ -64,7 +64,7 @@ interface IdePlugin : Plugin {
 
   val isV2: Boolean
 
-  val ideMode: IdeMode
+  val kotlinPluginMode: KotlinPluginMode
 
   val hasDotNetPart: Boolean
 

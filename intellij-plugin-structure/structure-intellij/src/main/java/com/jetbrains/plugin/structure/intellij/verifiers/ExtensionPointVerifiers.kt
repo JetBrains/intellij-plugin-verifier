@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdeMode
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor.ServiceDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors.isDevelopedByJetBrains
 import com.jetbrains.plugin.structure.intellij.problems.LanguageBundleExtensionPointIsInternal
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
@@ -80,7 +80,7 @@ class LanguageBundleExtensionPointVerifier {
 class K2IdeModeCompatibilityVerifier {
   fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar, descriptorPath: String) {
     val hasKotlinDependency = plugin.dependencies.any { it.id == KOTLIN_PLUGIN_ID }
-    if (hasKotlinDependency && plugin.ideMode == IdeMode.Implicit) {
+    if (hasKotlinDependency && plugin.kotlinPluginMode == Implicit) {
       problemRegistrar.registerProblem(UndeclaredKotlinK2CompatibilityMode(descriptorPath))
     }
   }
