@@ -24,6 +24,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.problems.KotlinCompatibilityModeProblemResolver
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
@@ -52,6 +53,8 @@ class PluginVerifier(
   private val excludeExternalBuildClassesSelector: Boolean,
   private val apiUsageFilters: List<ApiUsageFilter> = emptyList(),
 ) {
+
+  private val structureProblemsResolver = KotlinCompatibilityModeProblemResolver()
 
   fun loadPluginAndVerify(): PluginVerificationResult {
     pluginDetailsCache.getPluginDetailsCacheEntry(verificationDescriptor.checkedPlugin).use { cacheEntry ->
@@ -125,7 +128,9 @@ class PluginVerifier(
         context.pluginResolver
       )
       groupMissingClassesToMissingPackages(context.compatibilityProblems, context.classResolver)
-      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(context.compatibilityProblems, context)
+
+      val compatibilityProblems = context.compatibilityProblems + structureProblemsResolver.resolveCompatibilityProblems(context)
+      val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(compatibilityProblems, context)
 
       val (reportedInternalApiUsages, ignoredInternalApiUsages) = partitionReportAndIgnoredInternalApiUsages(context.internalApiUsages, context)
 
