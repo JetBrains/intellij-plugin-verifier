@@ -4,10 +4,14 @@ import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.Metadata
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 internal const val KOTLIN_METADATA_ANNOTATION_DESC = "Lkotlin/Metadata;"
 
 private typealias Signature = String
+
+private val LOG: Logger = LoggerFactory.getLogger(KtClassResolver::class.java)
 
 class KtClassResolver {
   private val cache = HashMap<Signature, KtClassNode>()
@@ -28,11 +32,8 @@ class KtClassResolver {
       ?.let { annotation -> getKtClassNode(this, annotation) }
 
   private fun getKtClassNode(classNode: ClassNode, metadataAnnotation: Metadata): KtClassNode? {
-    val metadata = KotlinClassMetadata.readStrict(metadataAnnotation)
-    return if (metadata is KotlinClassMetadata.Class) {
+    return readMetadata(classNode, metadataAnnotation)?.let { metadata ->
       KtClassNode(classNode, metadata)
-    } else {
-      null
     }
   }
 
@@ -40,6 +41,20 @@ class KtClassResolver {
     return classNode.allAnnotations
       .firstOrNull { it.desc == KOTLIN_METADATA_ANNOTATION_DESC }
       ?.toMetadata()
+  }
+
+  private fun readMetadata(classNode: ClassNode, metadataAnnotation: Metadata): KotlinClassMetadata.Class? {
+    return try {
+      if (metadataAnnotation.metadataVersion.isNotEmpty()) {
+        KotlinClassMetadata.readStrict(metadataAnnotation) as? KotlinClassMetadata.Class
+      } else {
+        LOG.debug("Class [${classNode.name}] has @kotlin.Metadata annotation without 'metadataVersion' attribute. It cannot be read")
+        null
+      }
+    } catch (e: IllegalArgumentException) {
+      LOG.debug("Failed to read Kotlin metadata for class ${classNode.name}", e)
+      null
+    }
   }
 
   private fun AnnotationNode.toMetadata() = Metadata(
