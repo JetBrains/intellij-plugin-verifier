@@ -123,7 +123,7 @@ data class Publication(val project: String, val name: String, val readableName: 
     val intellij = Publication("verifier-intellij", "VerifierIntelliJ",
       "JetBrains Plugin Verifier IntelliJ",
       "JetBrains Plugin Verifier Classes for IntelliJ Platform integration with API usage detection and reporting.")
-    val repository = Publication("verifier-repository", "Repository",
+    val repository = Publication("verifier-repository", "VerifierRepository",
       "JetBrains Plugin Verifier Repository Integration",
       "JetBrains Plugin Verifier integration with JetBrains Marketplace plugin repository")
   }
@@ -153,6 +153,9 @@ signing {
   if (isRequired) {
     val signingKey: String? by project
     val signingPassword: String? by project
+
+    println(signingKey)
+    println(signingPassword)
 
     useInMemoryPgpKeys(signingKey, signingPassword)
 
