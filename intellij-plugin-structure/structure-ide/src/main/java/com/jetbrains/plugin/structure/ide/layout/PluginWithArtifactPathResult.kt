@@ -9,8 +9,8 @@ internal sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: 
   data class Success(override val pluginArtifactPath: Path, val plugin: IdePlugin) :
     PluginWithArtifactPathResult(pluginArtifactPath)
 
-  data class Failure(override val pluginArtifactPath: Path, val pluginProblems: List<PluginProblem>) : PluginWithArtifactPathResult(pluginArtifactPath) {
-    constructor(pluginArtifactPath: Path, vararg pluginProblems: PluginProblem) : this(pluginArtifactPath, pluginProblems.toList())
+  data class Failure(override val pluginArtifactPath: Path, val pluginProblems: List<PluginProblem>, val pluginName: String? = null) : PluginWithArtifactPathResult(pluginArtifactPath) {
+    constructor(pluginArtifactPath: Path, pluginName: String?, vararg pluginProblems: PluginProblem) : this(pluginArtifactPath, pluginProblems.toList(), pluginName)
   }
 
   companion object {
@@ -20,22 +20,36 @@ internal sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: 
       idePath: Path
     ) {
       if (failures.isNotEmpty()) {
-        val failedPluginPaths = failures.map {
-          idePath.relativize(it.pluginArtifactPath)
-        }.joinToString(", ")
+        val failedPluginPaths = getFailedPluginPaths(failures, idePath)
         log.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
         if (log.isDebugEnabled) {
           buildString {
             failures
               .filterIsInstance<Failure>()
-              .forEach { (pluginArtifactPath, problems) ->
-                append("Unable to load '")
-                append(idePath.relativize(pluginArtifactPath)).append("': ")
+              .forEach { (pluginArtifactPath, problems, pluginName) ->
+                append("Unable to load")
+                val pluginArtifactRelativePath = idePath.relativize(pluginArtifactPath)
+                if (pluginName != null) {
+                  append(" '$pluginName' from '$pluginArtifactRelativePath")
+                } else {
+                  append("'$pluginArtifactRelativePath'")
+                }.append(": ")
                 append(problems.joinToString("\n* ", "\n* "))
               }
           }.let { log.debug(it) }
         }
       }
     }
+
+    private fun getFailedPluginPaths(
+      failures: List<PluginWithArtifactPathResult>,
+      idePath: Path
+    ) = failures.map {
+      if (it is Failure && it.pluginName != null) {
+        "${it.pluginName}'" + " from '" + idePath.relativize(it.pluginArtifactPath) + "'"
+      } else {
+        idePath.relativize(it.pluginArtifactPath)
+      }
+    }.joinToString(", ")
   }
 }
