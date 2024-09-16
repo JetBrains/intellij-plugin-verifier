@@ -59,6 +59,25 @@ class ProductInfoBasedIdeManagerTest {
     assertIdeAndPluginsIsCreated(ide)
   }
 
+  @Test
+  fun `create IDE manager with nonexistent paths in layout component`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockIdeBuilder(temporaryFolder, "-missing-version-suffix").buildIdeaDirectory {
+      //language=JSON
+      layout = """
+        {
+          "name": "AngularJS",
+          "kind": "plugin",
+          "classPath": [
+            "../../../../../angular-pha3hahghohlu6A.jar"
+          ]
+        }
+      """.trimIndent()
+    }
+    val ide = ideManager.createIde(ideRoot)
+    assertIdeAndPluginsIsCreated(ide)
+  }
+
   private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)
     val uiPlugin = ide.getPluginById("intellij.notebooks.ui")
