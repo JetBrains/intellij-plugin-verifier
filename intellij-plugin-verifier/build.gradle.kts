@@ -154,9 +154,6 @@ signing {
     val signingKey: String? by project
     val signingPassword: String? by project
 
-    println(signingKey)
-    println(signingPassword)
-
     useInMemoryPgpKeys(signingKey, signingPassword)
 
     sign(Publication.cli)
