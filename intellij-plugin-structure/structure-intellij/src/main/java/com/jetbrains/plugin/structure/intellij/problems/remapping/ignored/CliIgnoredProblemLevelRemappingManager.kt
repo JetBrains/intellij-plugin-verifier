@@ -11,11 +11,9 @@ import kotlin.reflect.KClass
 
 typealias PluginProblemId = String
 
-class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager, ProblemSolutionHintProvider {
-  companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
-  }
+private val LOG: Logger = LoggerFactory.getLogger(CliIgnoredProblemLevelRemappingManager::class.java)
 
+class CliIgnoredProblemLevelRemappingManager(ignoredProblems: List<PluginProblemId> = emptyList()) : ProblemLevelRemappingManager, ProblemSolutionHintProvider {
   private val ignoredProblemDefinitionLoader = CliIgnoredProblemDefinitionLoader.fromClassPathJson()
 
   private val problemClasses: List<CliIgnoredPluginProblem> = ignoredProblemDefinitionLoader.load()

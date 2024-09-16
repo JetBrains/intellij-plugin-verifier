@@ -12,11 +12,9 @@ import java.io.IOException
 import java.net.URL
 import kotlin.reflect.KClass
 
-interface ProblemLevelRemappingManager {
-  companion object {
-    private val LOG = LoggerFactory.getLogger(ProblemLevelRemappingManager::class.java)
-  }
+private val LOG = LoggerFactory.getLogger(ProblemLevelRemappingManager::class.java)
 
+interface ProblemLevelRemappingManager {
   @Throws(IOException::class)
   fun initialize(): LevelRemappingDefinitions
 
@@ -44,6 +42,7 @@ interface ProblemLevelRemappingManager {
 
   fun defaultExistingPluginResolver() = newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
   fun defaultNewPluginResolver() = newDefaultResolver(RemappingSet.NEW_PLUGIN_REMAPPING_SET)
+  fun defaultJetBrainsPluginResolver() = newDefaultResolver(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
 }
 
 class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
