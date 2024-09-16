@@ -9,7 +9,9 @@ internal sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: 
   data class Success(override val pluginArtifactPath: Path, val plugin: IdePlugin) :
     PluginWithArtifactPathResult(pluginArtifactPath)
 
-  data class Failure(override val pluginArtifactPath: Path, val pluginProblems: List<PluginProblem>) : PluginWithArtifactPathResult(pluginArtifactPath)
+  data class Failure(override val pluginArtifactPath: Path, val pluginProblems: List<PluginProblem>) : PluginWithArtifactPathResult(pluginArtifactPath) {
+    constructor(pluginArtifactPath: Path, vararg pluginProblems: PluginProblem) : this(pluginArtifactPath, pluginProblems.toList())
+  }
 
   companion object {
     internal fun logFailures(
