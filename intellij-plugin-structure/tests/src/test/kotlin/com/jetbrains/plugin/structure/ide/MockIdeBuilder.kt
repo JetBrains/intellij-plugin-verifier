@@ -180,7 +180,8 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
             "classPath": [
               "plugins/cwm-plugin/lib/cwm-plugin.jar"
             ]
-          }                      
+          }              
+          $layoutJson                  
         ]
       } 
     """.trimIndent()
@@ -192,6 +193,15 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
         "versionSuffix": "$it",
       """.trimIndent()
     } ?: ""
+
+  private val ProductInfo.layoutJson: String
+    get() {
+      return if (layout.isEmpty()) {
+        layout
+      } else {
+        ", $layout"
+      }
+    }
 
   private val platformLangPluginXml: String
     get() = """
@@ -208,6 +218,8 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
 
   class ProductInfo {
     var versionSuffix: String? = "EAP"
+
+    var layout: String = ""
 
     fun omitVersionSuffix() {
       versionSuffix = null
