@@ -5,8 +5,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ignore
-import com.jetbrains.plugin.structure.intellij.problems.levelRemappingFromClassPathJson
-import com.jetbrains.plugin.structure.intellij.problems.newDefaultResolver
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import org.junit.Assert.fail
@@ -15,9 +15,9 @@ import org.junit.Test
 class LevelRemappingTest {
   @Test
   fun `problem is remapped according to JSON rules and then explicitly ignored`() {
-    val problemLevelMappingManager = levelRemappingFromClassPathJson()
-    val levelRemappingDefinitionName = "existing-plugin"
-    val existingPluginResolver = problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
+    val existingPluginResolver = JsonUrlProblemLevelRemappingManager
+      .fromClassPathJson()
+      .newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
     val ignoringProblemResolver = LevelRemappingPluginCreationResultResolver(existingPluginResolver, ignore<ReleaseVersionAndPluginVersionMismatch>())
 
     val problems = listOf(

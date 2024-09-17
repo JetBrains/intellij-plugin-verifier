@@ -4,10 +4,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import java.io.IOException
 import kotlin.reflect.KClass
 
-const val JETBRAINS_PLUGIN_REMAPPING_SET = "jetbrains-plugin"
 
 class JetBrainsPluginCreationResultResolver(private val delegatedResolver: PluginCreationResultResolver,
                                             levelRemapping: Map<KClass<*>, RemappedLevel> = emptyMap()
@@ -35,8 +36,8 @@ class JetBrainsPluginCreationResultResolver(private val delegatedResolver: Plugi
   companion object {
     @Throws(IOException::class)
     fun fromClassPathJson(delegatedResolver: PluginCreationResultResolver): JetBrainsPluginCreationResultResolver {
-      val levelRemappingManager = levelRemappingFromClassPathJson()
-      val levelRemapping = levelRemappingManager.getLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+      val levelRemappingManager = JsonUrlProblemLevelRemappingManager.fromClassPathJson()
+      val levelRemapping = levelRemappingManager.getLevelRemapping(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
 
       return JetBrainsPluginCreationResultResolver(delegatedResolver, levelRemapping)
     }

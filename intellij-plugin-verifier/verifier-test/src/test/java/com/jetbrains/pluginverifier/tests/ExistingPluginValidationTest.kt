@@ -12,15 +12,14 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.pluginverifier.options.EXISTING_PLUGIN_REMAPPING_SET
-import com.jetbrains.pluginverifier.options.NEW_PLUGIN_REMAPPING_SET
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import com.jetbrains.pluginverifier.options.PluginParsingConfiguration
 import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
 import com.jetbrains.pluginverifier.options.SubmissionType.EXISTING
 import org.hamcrest.CoreMatchers.instanceOf
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.junit.Assert
 import org.junit.Assert.*
 import org.junit.Test
 import org.slf4j.LoggerFactory
@@ -145,7 +144,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
   fun `plugin is built with existing plugin verification rules and CLI-like remapping setup`() {
     val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
     val problemResolver = PluginParsingConfigurationResolution()
-      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+      .resolveProblemLevelMapping(configuration, JsonUrlProblemLevelRemappingManager.fromClassPathJson())
 
     val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
     val result = buildPluginWithResult(problemResolver) {
@@ -171,7 +170,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
   fun `plugin and its optional dependency is built with existing plugin verification rules and CLI-like remapping setup`() {
     val configuration = PluginParsingConfiguration(EXISTING, ignoredPluginProblems = emptyList())
     val problemResolver = PluginParsingConfigurationResolution()
-      .resolveProblemLevelMapping(configuration, levelRemappingFromClassPathJson())
+      .resolveProblemLevelMapping(configuration, JsonUrlProblemLevelRemappingManager.fromClassPathJson())
 
     val dependencyPluginId = "com.intellij.dep"
     val header = ideaPlugin("com.intellij", "IntelliJ Plugin Verifier with Forbidden Word in Plugin Name")
@@ -399,9 +398,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val header = ideaPlugin("com.jetbrains.SomePlugin", "IDEA Fountain", vendor = "JetBrains")
     val delegateResolver = IntelliJPluginCreationResultResolver()
 
-    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val levelRemappingDefinition = JsonUrlProblemLevelRemappingManager.fromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition.getOrEmpty(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
     val problemResolver = JetBrainsPluginCreationResultResolver(
       LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
       jetBrainsPluginLevelRemapping)
@@ -430,9 +428,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val header = ideaPlugin(vendor = "JetBrains")
     val delegateResolver = IntelliJPluginCreationResultResolver()
 
-    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val levelRemappingDefinition = JsonUrlProblemLevelRemappingManager.fromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition.getOrEmpty(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
     val problemResolver = JetBrainsPluginCreationResultResolver(
       LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
       jetBrainsPluginLevelRemapping
@@ -466,7 +463,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertEquals(1, warnings.size)
     val warning = warnings.map { it.unwrapped }.filterIsInstance<ServiceExtensionPointPreloadNotSupported>()
       .singleOrNull()
-    Assert.assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
+    assertNotNull("Expected 'Service Extension Point Preload Not Supported' plugin error", warning)
   }
 
   @Test
@@ -477,9 +474,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val header = ideaPlugin(vendor = "JetBrains")
     val delegateResolver = IntelliJPluginCreationResultResolver()
 
-    val levelRemappingDefinition = levelRemappingFromClassPathJson().load()
-    val jetBrainsPluginLevelRemapping = levelRemappingDefinition[JETBRAINS_PLUGIN_REMAPPING_SET]
-      ?: emptyLevelRemapping(JETBRAINS_PLUGIN_REMAPPING_SET)
+    val levelRemappingDefinition = JsonUrlProblemLevelRemappingManager.fromClassPathJson().load()
+    val jetBrainsPluginLevelRemapping = levelRemappingDefinition.getOrEmpty(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
     val problemResolver = JetBrainsPluginCreationResultResolver(
       LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
       jetBrainsPluginLevelRemapping
@@ -491,7 +487,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
           """
           <idea-plugin>
             $header
-            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="10"/>
+            <product-descriptor code="ABC" release-date="$releaseDateInFutureString" release-version="12"/>
           </idea-plugin>
         """
         }
@@ -505,7 +501,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     assertThat(creationSuccess.warnings.size, `is`(1))
     val warning = creationSuccess.warnings.map { it.unwrapped }.filterIsInstance<ReleaseDateInFuture>()
       .singleOrNull()
-    Assert.assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
+    assertNotNull("Expected 'ReleaseDateInFuture' plugin warning", warning)
   }
 
   @Test
@@ -591,11 +587,14 @@ class ExistingPluginValidationTest : BasePluginTest() {
       """.trimIndent()
 
 
-  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true): PluginCreationResultResolver {
-    val problemLevelMappingManager = levelRemappingFromClassPathJson()
-    val levelRemappingDefinitionName = if (isExistingPlugin) EXISTING_PLUGIN_REMAPPING_SET else NEW_PLUGIN_REMAPPING_SET
-    return problemLevelMappingManager.newDefaultResolver(levelRemappingDefinitionName)
-  }
+  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true) =
+    JsonUrlProblemLevelRemappingManager.fromClassPathJson().let {
+      if (isExistingPlugin) {
+        it.defaultExistingPluginResolver()
+      } else {
+        it.defaultNewPluginResolver()
+      }
+    }
 
   private fun assertMatchingPluginProblems(pluginResult: PluginCreationSuccess<IdePlugin>) {
     with(pluginResult) {
