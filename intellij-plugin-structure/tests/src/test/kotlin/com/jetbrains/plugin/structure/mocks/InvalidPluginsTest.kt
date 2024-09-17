@@ -562,6 +562,22 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     )
   }
 
+  @Test
+  fun `neither K1 nor K2 compatible`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        additionalContent = """
+          <depends>org.jetbrains.kotlin</depends>
+          
+          <extensions defaultExtensionNs="org.jetbrains.kotlin">
+              <supportsKotlinPluginMode supportsK1="false" supportsK2="false" />
+          </extensions>
+        """.trimIndent()
+      },
+      listOf(InvalidKotlinPluginMode(PLUGIN_XML))
+    )
+  }
+
   private fun `test plugin xml warnings`(pluginXmlContent: String, expectedWarnings: List<PluginProblem>) {
     val pluginFolder = getTempPluginFolder(pluginXmlContent)
     val successResult = createPluginSuccessfully(pluginFolder)

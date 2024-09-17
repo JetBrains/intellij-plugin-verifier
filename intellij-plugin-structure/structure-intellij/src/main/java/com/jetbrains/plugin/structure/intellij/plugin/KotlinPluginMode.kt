@@ -20,12 +20,16 @@ sealed class KotlinPluginMode(
     override fun toString() = "Implicit compatibility mode (K1-only)"
   }
 
+  object Invalid : KotlinPluginMode(isK1Compatible = false, isK2Compatible = false) {
+    override fun toString() = "Illegal compatibility mode (neither K1 nor K2 compatbile)"
+  }
+
   companion object {
     fun parse(isK1Compatible: Boolean, isK2Compatible: Boolean): KotlinPluginMode =
       if (isK1Compatible) {
         if (isK2Compatible) K1AndK2Compatible else K1OnlyCompatible
       } else {
-        K2OnlyCompatible
+        if (isK2Compatible) K2OnlyCompatible else Invalid
       }
   }
 }

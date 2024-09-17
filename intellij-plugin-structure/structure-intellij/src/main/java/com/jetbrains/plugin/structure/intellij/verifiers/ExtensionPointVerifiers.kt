@@ -3,8 +3,10 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor.ServiceDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors.isDevelopedByJetBrains
+import com.jetbrains.plugin.structure.intellij.problems.InvalidKotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.problems.LanguageBundleExtensionPointIsInternal
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import com.jetbrains.plugin.structure.intellij.problems.StatusBarWidgetFactoryExtensionPointIdMissing
@@ -80,8 +82,12 @@ class LanguageBundleExtensionPointVerifier {
 class K2IdeModeCompatibilityVerifier {
   fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar, descriptorPath: String) {
     val hasKotlinDependency = plugin.dependencies.any { it.id == KOTLIN_PLUGIN_ID }
-    if (hasKotlinDependency && plugin.kotlinPluginMode == Implicit) {
-      problemRegistrar.registerProblem(UndeclaredKotlinK2CompatibilityMode(descriptorPath))
+    if (hasKotlinDependency) {
+      when(plugin.kotlinPluginMode) {
+        Implicit -> problemRegistrar.registerProblem(UndeclaredKotlinK2CompatibilityMode(descriptorPath))
+        KotlinPluginMode.Invalid -> problemRegistrar.registerProblem(InvalidKotlinPluginMode(descriptorPath))
+        else -> Unit
+      }
     }
   }
 }

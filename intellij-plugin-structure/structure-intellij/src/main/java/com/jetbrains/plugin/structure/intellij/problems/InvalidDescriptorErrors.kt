@@ -40,6 +40,28 @@ class InvalidDependencyId(descriptorPath: String, invalidPluginId: String) : Inv
     get() = Level.ERROR
 }
 
+/**
+ * @see [com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier]
+ */
+private const val INVALID_KOTLIN_PLUGIN_MODE_MESSAGE = "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin)," +
+  "but does not declare compatibility with either " +
+  "K1 Mode or K2 mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. Please ensure that the " +
+  "'supportsK1' or 'supportsK2' parameter (or both) is set to 'true'. " +
+  "This feature is available for IntelliJ IDEA 2024.2.1 or later."
+
+class InvalidKotlinPluginMode(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = INVALID_KOTLIN_PLUGIN_MODE_MESSAGE
+) {
+  override val level
+    get() = Level.ERROR
+
+  override val hint = ProblemSolutionHint(
+    """<supportsKotlinPluginMode supportsK1="true" supportsK2="false" />""",
+    "https://kotlin.github.io/analysis-api/migrating-from-k1.html#declaring-compatibility-with-the-k2-kotlin-mode"
+  )
+}
+
 class InvalidModuleBean(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <module value> parameter is empty. It must be specified as <module value=\"my.module\"/>."
