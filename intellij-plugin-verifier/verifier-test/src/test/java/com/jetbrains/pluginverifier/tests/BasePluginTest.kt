@@ -93,6 +93,15 @@ abstract class BasePluginTest {
     assertContains(problems, T::class, message)
   }
 
+  @Throws(AssertionError::class)
+  protected fun assertNoProblems(problems: Collection<PluginProblem>) {
+    with(problems) {
+      if (!isEmpty()) {
+        fail("Expected no problems, but got $size problem(s): " + joinToString { it.message })
+      }
+    }
+  }
+
   protected fun assertContains(
     pluginProblems: Collection<PluginProblem>,
     pluginProblemClass: KClass<out PluginProblem>,

@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeProblem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +18,7 @@ private const val EXPECTED_MESSAGE =  "Invalid plugin descriptor 'plugin.xml'. "
 class K2ModeCompatibilityTest : BasePluginTest() {
   @Test
   fun `plugin does not declare K1-K2 compatibility for IDE 2024-2-1`() {
-    val ide = buildIde("IU-242.1")
+    val ide = buildIde("IU-242.21829.142")
 
     val ideaPlugin = ideaPlugin()
     val creationResult = buildPluginWithResult {
@@ -38,10 +39,13 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
       assertTrue(verificationResult is PluginVerificationResult.Verified)
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
-      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
-      with(structureProblems.filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()) {
+      with(verifiedResult.compatibilityProblems) {
         assertEquals(1, size)
+        assertTrue(first() is UndeclaredKotlinK2CompatibilityModeProblem)
       }
+
+      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
+      assertNoProblems(structureProblems)
     }
   }
 
