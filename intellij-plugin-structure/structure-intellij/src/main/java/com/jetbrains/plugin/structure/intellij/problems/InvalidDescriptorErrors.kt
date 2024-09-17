@@ -57,7 +57,7 @@ class InvalidKotlinPluginMode(descriptorPath: String) : InvalidDescriptorProblem
     get() = Level.ERROR
 
   override val hint = ProblemSolutionHint(
-    """<supportsKotlinPluginMode supportsK1="true" supportsK2="false" />""",
+    """<supportsKotlinPluginMode supportsK1="false" supportsK2="false" />""",
     "https://kotlin.github.io/analysis-api/migrating-from-k1.html#declaring-compatibility-with-the-k2-kotlin-mode"
   )
 }
