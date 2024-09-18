@@ -332,6 +332,7 @@ class IdePluginManager private constructor(
 
   override fun createPlugin(pluginFile: Path) = createPlugin(pluginFile, true)
 
+  @Throws(PluginFileNotFoundException::class)
   fun createPlugin(
     pluginFile: Path,
     validateDescriptor: Boolean,
@@ -342,6 +343,7 @@ class IdePluginManager private constructor(
     return pluginCreator.pluginCreationResult
   }
 
+  @Throws(PluginFileNotFoundException::class)
   fun createBundledPlugin(
     pluginFile: Path,
     ideVersion: IdeVersion,
@@ -365,13 +367,14 @@ class IdePluginManager private constructor(
     }.pluginCreationResult
   }
 
+  @Throws(PluginFileNotFoundException::class)
   private fun getPluginCreatorWithResult(
     pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
-    require(pluginFile.exists()) { "Plugin file $pluginFile does not exist" }
+    if (!pluginFile.exists()) { throw PluginFileNotFoundException(pluginFile) }
     val pluginCreator: PluginCreator
     measureTimeMillis {
       if (pluginFile.isZip()) {
