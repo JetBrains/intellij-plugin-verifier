@@ -6,9 +6,22 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Validate `release-version` for paid plugins. ([#1140](https://github.com/JetBrains/intellij-plugin-verifier/commit/d7de688aa0ff4ead42b13fedafda3eb7716c7c36), [MP-6824](https://youtrack.jetbrains.com/issue/MP-6824))
+- When handling TeamCity Actions, get the content of YAML file for parsed actions ([#1149](https://github.com/JetBrains/intellij-plugin-verifier/pull/1149), [MP-6835](https://youtrack.jetbrains.com/issue/MP-6835/Add-a-way-to-fetch-TeamCity-Action-yaml-file))
+- Support resource bundle `@PropertyKey` in constructors of `enum class`-es ([#1144](https://github.com/JetBrains/intellij-plugin-verifier/pull/1144), [MP-6710](https://youtrack.jetbrains.com/issue/MP-6710))
+- Allow invocation of private interface methods when using `INVOKEDYNAMIC` ([#1146](https://github.com/JetBrains/intellij-plugin-verifier/pull/1146), [MP-6845](https://youtrack.jetbrains.com/issue/MP-6845))
+- Verify compatibility with K2 mode for Kotlin-dependent plugins ([#1150](https://github.com/JetBrains/intellij-plugin-verifier/pull/1150), [MP-6825](https://youtrack.jetbrains.com/issue/MP-6825))
+
 ### Changed
 
+- Ignore specific packages when tracking Kotlin `internal` API usages. Do not track internal  API usages marked as `@PublishedApi`. ([#1135](https://github.com/JetBrains/intellij-plugin-verifier/pull/1135), [MP-6784](https://youtrack.jetbrains.com/issue/MP-6784), [MP-6911](https://youtrack.jetbrains.com/issue/MP-6911))
+- Consolidate plugin problem level remapping rules with JetBrains Marketplace. Common rules have been moved to the IntelliJ Plugin Structure library. ([#1151](https://github.com/JetBrains/intellij-plugin-verifier/pull/1151))  
+- Update dependencies 
+
 ### Fixed
+
+- Handle malformed `kotlinx.Metadata` annotation ([#1152](https://github.com/JetBrains/intellij-plugin-verifier/pull/1152))
+- Handle plugins created from malformed paths in `product-info.json` ([#1153](https://github.com/JetBrains/intellij-plugin-verifier/pull/1153), [MP-6920](https://youtrack.jetbrains.com/issue/MP-6920))
 
 ## 1.375 - 2024-08-30
 
