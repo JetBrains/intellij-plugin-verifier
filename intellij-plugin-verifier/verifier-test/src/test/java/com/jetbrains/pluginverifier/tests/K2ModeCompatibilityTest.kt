@@ -45,8 +45,8 @@ class K2ModeCompatibilityTest : BasePluginTest() {
         assertTrue(first() is UndeclaredKotlinK2CompatibilityModeWarning)
       }
 
-      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
-      assertNoProblems(structureProblems)
+      val structureWarnings = verifiedResult.pluginStructureWarnings.map { it.problem }
+      assertNoProblems(structureWarnings)
     }
   }
 
@@ -75,8 +75,8 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
       assertEmpty("Compatibility Problems", verifiedResult.compatibilityProblems)
       assertEmpty("Compatibility Warnings", verifiedResult.compatibilityWarnings)
-      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
-      with(structureProblems.filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()) {
+      val structureWarnings = verifiedResult.pluginStructureWarnings.map { it.problem }
+      with(structureWarnings.filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()) {
         assertEquals(1, size)
       }
     }
