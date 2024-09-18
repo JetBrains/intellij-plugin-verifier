@@ -24,7 +24,7 @@ internal class PluginFactory(private val pluginLoader: LayoutComponentLoader) : 
     return try {
       pluginLoader.load(pluginArtifactPath = pluginDir, PLUGIN_XML, resourceResolver, ideVersion)
     } catch (e: PluginFileNotFoundException) {
-      PluginWithArtifactPathResult.Failure(pluginDir,layoutComponent.name, MissedFile(pluginDir.toString()))
+      PluginWithArtifactPathResult.Failure(pluginDir, layoutComponent.name, MissedFile(pluginDir.toString()))
     }
   }
 
