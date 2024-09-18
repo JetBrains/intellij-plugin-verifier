@@ -29,6 +29,7 @@ import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.LanguageBundleExtensionPointVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
@@ -379,10 +380,18 @@ internal class PluginCreator private constructor(
           "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
           "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
           "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
-          else -> idePlugin.extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
+          "org.jetbrains.kotlin.supportsKotlinPluginMode" -> {
+            idePlugin.addExtension(epName, extensionElement)
+            idePlugin.kotlinPluginMode = readKotlinPluginMode(extensionElement)
+          }
+          else -> idePlugin.addExtension(epName, extensionElement)
         }
       }
     }
+  }
+
+  private fun IdePluginImpl.addExtension(epName: String, extensionElement: Element) {
+    extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
   }
 
   private fun readExtensionPoints(rootElement: Element, idePlugin: IdePluginImpl) {
@@ -520,6 +529,12 @@ internal class PluginCreator private constructor(
         }
       }
     }
+  }
+
+  private fun readKotlinPluginMode(extensionElement: Element): KotlinPluginMode {
+    val supportsK1 = extensionElement.getAttributeBooleanValue("supportsK1", true)
+    val supportsK2 = extensionElement.getAttributeBooleanValue("supportsK2", false)
+    return KotlinPluginMode.parse(supportsK1, supportsK2)
   }
 
   private fun validatePluginBean(bean: PluginBean, validateDescriptor: Boolean) {
@@ -673,6 +688,7 @@ internal class PluginCreator private constructor(
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
     StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
     LanguageBundleExtensionPointVerifier().verify(plugin, ::registerProblem)
+    K2IdeModeCompatibilityVerifier().verify(plugin, ::registerProblem, descriptorPath)
   }
 
   private fun resolveDocumentAndValidateBean(

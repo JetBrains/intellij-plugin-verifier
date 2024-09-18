@@ -58,6 +58,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     PropertyWithDefaultValue::class,
     InvalidDependencyId::class,
     InvalidModuleBean::class,
+    InvalidKotlinPluginMode::class,
     SinceBuildNotSpecified::class,
     InvalidSinceBuild::class,
     InvalidUntilBuild::class,

@@ -4,22 +4,26 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
+import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.time.LocalDate
+import java.util.*
+import kotlin.reflect.KClass
 
 private const val HEADER = """
       <id>someId</id>
@@ -39,6 +43,8 @@ private const val HEADER_WITHOUT_VERSION = """
       <change-notes>these change-notes are looooooooooong enough</change-notes>
       <idea-version since-build="131.1"/>
     """
+
+private const val PLUGIN_JAR_NAME = "plugin.jar"
 
 class PluginXmlValidationTest {
 
@@ -144,6 +150,35 @@ class PluginXmlValidationTest {
   }
 
   @Test
+  fun `plugin IDE mode compatibility for K1 and K2`() {
+    val scenarios = mapOf(
+      "" to KotlinPluginMode.Implicit,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='true' />" to KotlinPluginMode.K1AndK2Compatible,
+      "<supportsKotlinPluginMode supportsK1='true' supportsK2='false' />" to KotlinPluginMode.K1OnlyCompatible,
+      "<supportsKotlinPluginMode supportsK1='false' supportsK2='true' />" to KotlinPluginMode.K2OnlyCompatible,
+    )
+
+    scenarios.forEach { (extensionXml, expectedIdeMode) ->
+      val pluginJar = "plugin${UUID.randomUUID()}.jar"
+      val pluginCreationSuccess = buildCorrectPlugin(pluginJar) {
+        dir("META-INF") {
+          file("plugin.xml") {
+            """
+            <idea-plugin>
+              $HEADER
+              <extensions defaultExtensionNs="org.jetbrains.kotlin">
+                  $extensionXml
+              </extensions>
+            </idea-plugin>
+          """
+          }
+        }
+      }
+      assertEquals(expectedIdeMode, pluginCreationSuccess.plugin.kotlinPluginMode)
+    }
+  }
+
+  @Test
   fun `paid plugin`() {
     val pluginCreationSuccess = buildCorrectPlugin {
       dir("META-INF") {
@@ -163,7 +198,7 @@ class PluginXmlValidationTest {
     assertNotNull(plugin.productDescriptor)
     with(plugin.productDescriptor!!) {
       assertEquals("PCODE", code)
-      assertEquals(LocalDate.of(2024, 8, 13), releaseDate)
+      assertEquals(java.time.LocalDate.of(2024, 8, 13), releaseDate)
       assertEquals(ProductReleaseVersion(11), version)
     }
   }
@@ -244,8 +279,31 @@ class PluginXmlValidationTest {
     }
   }
 
-  private fun buildMalformedPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
-    val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
+  @Test
+  fun `plugin depends on the Kotlin plugin but does not declare IDE mode compatibility`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.platform</depends>
+              <depends>org.jetbrains.kotlin</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    pluginCreationSuccess.assertContains<UndeclaredKotlinK2CompatibilityMode>(
+      "Invalid plugin descriptor 'plugin.xml'. " +
+        "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
+        "a compatibility mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. " +
+        "This feature is available for IntelliJ IDEA 2024.2.1 or later."
+    )
+  }
+
+  private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
+    val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {
       fail("This plugin was expected to fail during creation, but the creation process was successful." +
               " Please ensure that this is the intended behavior in the unit test.")
@@ -253,19 +311,59 @@ class PluginXmlValidationTest {
     return pluginCreationResult as PluginCreationFail
   }
 
-  private fun buildCorrectPlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
-    val pluginCreationResult = buildIdePlugin(pluginContentBuilder)
+  private fun buildCorrectPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationSuccess<IdePlugin> {
+    val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationSuccess) {
       fail("This plugin has not been created. Creation failed with error(s).")
     }
     return pluginCreationResult as PluginCreationSuccess
   }
 
-  private fun buildIdePlugin(pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath(), pluginContentBuilder)
+  private fun buildIdePlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
+    val pluginFile = buildZipFile(temporaryFolder.newFile(pluginJarName).toPath(), pluginContentBuilder)
     return IdePluginManager.createManager().createPlugin(pluginFile)
   }
 
   val PluginCreationSuccess<IdePlugin>.allWarnings
     get() = warnings + unacceptableWarnings
+
+  private fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
+    when (pluginResult) {
+      is PluginCreationSuccess -> return
+      is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
+        fail("Expected successful plugin creation, but got $size problem(s): "
+          + joinToString { it.message })
+      }
+    }
+  }
+
+  private inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
+    val problems = when (this) {
+      is PluginCreationSuccess -> warnings + unacceptableWarnings
+      is PluginCreationFail -> errorsAndWarnings
+    }
+    assertContains(problems, T::class, message)
+  }
+
+  private fun assertContains(
+    pluginProblems: Collection<PluginProblem>,
+    pluginProblemClass: KClass<out PluginProblem>,
+    message: String
+  ) {
+    val problems = pluginProblems.filter { problem ->
+      problem.isInstance(pluginProblemClass)
+    }
+    if (problems.isEmpty()) {
+      fail("Plugin creation result does not contain any problem of class [${pluginProblemClass.qualifiedName}]")
+      return
+    }
+    val problemsWithMessage = problems.filter { it.message == message }
+    if (problemsWithMessage.isEmpty()) {
+      fail("Plugin creation result has ${problems.size} problem of class [${pluginProblemClass.qualifiedName}], " +
+        "but none has a message '$message'. " +
+        "Found [" + problems.joinToString { it.message } + "]"
+      )
+      return
+    }
+  }
 }

@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -42,6 +43,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin {
   override val useIdeClassLoader: Boolean = false
   override val isImplementationDetail: Boolean = false
   override val isV2: Boolean = false
+  override val kotlinPluginMode: KotlinPluginMode = Implicit
   override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean = false
   override val hasDotNetPart: Boolean = false
 }

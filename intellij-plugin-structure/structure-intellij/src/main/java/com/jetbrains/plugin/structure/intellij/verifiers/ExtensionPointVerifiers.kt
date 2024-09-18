@@ -3,10 +3,16 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor.ServiceDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
 import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors.isDevelopedByJetBrains
+import com.jetbrains.plugin.structure.intellij.problems.InvalidKotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.problems.LanguageBundleExtensionPointIsInternal
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import com.jetbrains.plugin.structure.intellij.problems.StatusBarWidgetFactoryExtensionPointIdMissing
+import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
+
+private const val KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin"
 
 /**
  * Rule: Service Extension Point preloading is deprecated.
@@ -61,6 +67,26 @@ class LanguageBundleExtensionPointVerifier {
       val languageBundles = plugin.extensions[extensionPointName] ?: emptyList()
       if (languageBundles.isNotEmpty()) {
         problemRegistrar.registerProblem(LanguageBundleExtensionPointIsInternal())
+      }
+    }
+  }
+}
+
+/**
+ * Rule: When depending on the Kotlin plugin, an EP
+ * `org.jetbrains.kotlin.supportsKotlinPluginMode` must be declared with corresponding compatibility attributes.
+ * See [Kotlin Analysis API](https://kotlin.github.io/analysis-api/migrating-from-k1.html) documentation.
+ * Applicable for IntelliJ IDEA 2024.2.1 and higher.
+ *
+ */
+class K2IdeModeCompatibilityVerifier {
+  fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar, descriptorPath: String) {
+    val hasKotlinDependency = plugin.dependencies.any { it.id == KOTLIN_PLUGIN_ID }
+    if (hasKotlinDependency) {
+      when(plugin.kotlinPluginMode) {
+        Implicit -> problemRegistrar.registerProblem(UndeclaredKotlinK2CompatibilityMode(descriptorPath))
+        KotlinPluginMode.Invalid -> problemRegistrar.registerProblem(InvalidKotlinPluginMode(descriptorPath))
+        else -> Unit
       }
     }
   }

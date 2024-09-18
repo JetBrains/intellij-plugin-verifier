@@ -6,11 +6,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
-import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.problems.unwrapped
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
@@ -25,7 +23,6 @@ import org.junit.Test
 import org.slf4j.LoggerFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlin.reflect.KClass
 
 
 class ExistingPluginValidationTest : BasePluginTest() {
@@ -556,23 +553,6 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
   }
 
-  private fun ideaPlugin(pluginId: String = "someid",
-                         pluginName: String = "someName",
-                         pluginVersion: String = "1",
-                         vendor: String = "vendor",
-                         sinceBuild: String = "131.1",
-                         untilBuild: String = "231.1",
-                         description: String = "this description is looooooooooong enough") = """
-    <id>$pluginId</id>
-    <name>$pluginName</name>
-    <version>$pluginVersion</version>
-    ""<vendor email="vendor.com" url="url">$vendor</vendor>""
-    <description>$description</description>
-    <change-notes>these change-notes are looooooooooong enough</change-notes>
-    <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
-    <depends>com.intellij.modules.platform</depends>
-  """
-
   private fun paidIdeaPlugin(pluginId: String = "someid",
                          pluginName: String = "someName",
                          pluginVersion: String = "1",
@@ -586,7 +566,6 @@ class ExistingPluginValidationTest : BasePluginTest() {
         <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
       """.trimIndent()
 
-
   private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true) =
     JsonUrlProblemLevelRemappingManager.fromClassPathJson().let {
       if (isExistingPlugin) {
@@ -595,54 +574,4 @@ class ExistingPluginValidationTest : BasePluginTest() {
         it.defaultNewPluginResolver()
       }
     }
-
-  private fun assertMatchingPluginProblems(pluginResult: PluginCreationSuccess<IdePlugin>) {
-    with(pluginResult) {
-      if (plugin is StructurallyValidated) {
-        val plugin = plugin as StructurallyValidated
-        val resultProblems = warnings + unacceptableWarnings
-        assertEquals(resultProblems, plugin.problems)
-      }
-    }
-  }
-
-  private fun assertSuccess(pluginResult: PluginCreationResult<IdePlugin>) {
-    when (pluginResult) {
-      is PluginCreationSuccess -> return
-      is PluginCreationFail -> with(pluginResult.errorsAndWarnings) {
-        fail("Expected successful plugin creation, but got $size problem(s): "
-          + joinToString { it.message })
-      }
-    }
-  }
-
-  private inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContains(message: String) {
-    val problems = when (this) {
-      is PluginCreationSuccess -> warnings + unacceptableWarnings
-      is PluginCreationFail -> errorsAndWarnings
-    }
-    assertContains(problems, T::class, message)
-  }
-
-  private fun assertContains(
-    pluginProblems: Collection<PluginProblem>,
-    pluginProblemClass: KClass<out PluginProblem>,
-    message: String
-  ) {
-    val problems = pluginProblems.filter { problem ->
-      problem.isInstance(pluginProblemClass)
-    }
-    if (problems.isEmpty()) {
-      fail("Plugin creation result does not contain any problem of class [${pluginProblemClass.qualifiedName}]")
-      return
-    }
-    val problemsWithMessage = problems.filter { it.message == message }
-    if (problemsWithMessage.isEmpty()) {
-      fail("Plugin creation result has ${problems.size} problem of class [${pluginProblemClass.qualifiedName}], " +
-        "but none has a message '$message'. " +
-        "Found [" + problems.joinToString { it.message } + "]"
-      )
-      return
-    }
-  }
 }

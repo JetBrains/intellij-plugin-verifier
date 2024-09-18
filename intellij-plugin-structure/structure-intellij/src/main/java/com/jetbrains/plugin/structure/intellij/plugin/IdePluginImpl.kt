@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -44,6 +45,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
   override var isImplementationDetail: Boolean = false
 
   override var isV2: Boolean = false
+
+  override var kotlinPluginMode: KotlinPluginMode = Implicit
 
   override var hasDotNetPart: Boolean = false
 
@@ -112,6 +115,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         useIdeClassLoader = old.useIdeClassLoader
         isImplementationDetail = old.isImplementationDetail
         isV2 = old.isV2
+        kotlinPluginMode = old.kotlinPluginMode
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)

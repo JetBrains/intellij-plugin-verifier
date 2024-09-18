@@ -202,3 +202,25 @@ class UnknownServiceClientValue(descriptorPath: String, serviceClient: String) :
   override val level
     get() = Level.WARNING
 }
+
+/**
+ * @see [K2IdeModeCompatibilityVerifier]
+ */
+private const val UNDECLARED_KOTLIN_K2_COMPATIBILITY_MODE_MESSAGE = "Plugin depends on the Kotlin plugin (org.jetbrains.kotlin) but does not declare " +
+  "a compatibility mode in the <org.jetbrains.kotlin.supportsKotlinPluginMode> extension. " +
+  "This feature is available for IntelliJ IDEA 2024.2.1 or later."
+
+data class UndeclaredKotlinK2CompatibilityMode(val descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = UNDECLARED_KOTLIN_K2_COMPATIBILITY_MODE_MESSAGE
+) {
+  val detailedMessage = UNDECLARED_KOTLIN_K2_COMPATIBILITY_MODE_MESSAGE
+
+  override val level
+    get() = Level.WARNING
+
+  override val hint = ProblemSolutionHint(
+    "<supportsKotlinPluginMode supportsK2=\"true\" />",
+    "https://kotlin.github.io/analysis-api/migrating-from-k1.html#declaring-compatibility-with-the-k2-kotlin-mode"
+  )
+}
