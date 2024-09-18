@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeProblem
+import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeWarning
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,9 +39,10 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
       assertTrue(verificationResult is PluginVerificationResult.Verified)
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
-      with(verifiedResult.compatibilityProblems) {
+      assertEmpty("Compatibility Problems", verifiedResult.compatibilityProblems)
+      with(verifiedResult.compatibilityWarnings) {
         assertEquals(1, size)
-        assertTrue(first() is UndeclaredKotlinK2CompatibilityModeProblem)
+        assertTrue(first() is UndeclaredKotlinK2CompatibilityModeWarning)
       }
 
       val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
@@ -72,7 +73,8 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
       assertTrue(verificationResult is PluginVerificationResult.Verified)
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
-      assertEquals(0, verifiedResult.compatibilityProblems.size)
+      assertEmpty("Compatibility Problems", verifiedResult.compatibilityProblems)
+      assertEmpty("Compatibility Warnings", verifiedResult.compatibilityWarnings)
       val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
       with(structureProblems.filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()) {
         assertEquals(1, size)
