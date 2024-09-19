@@ -36,13 +36,12 @@ interface ProblemLevelRemappingManager {
   fun newDefaultResolver(remappingSet: RemappingSet): PluginCreationResultResolver {
     val defaultResolver = IntelliJPluginCreationResultResolver()
     val problemLevelRemapping = getLevelRemapping(remappingSet)
-    val levelRemappingResolver = LevelRemappingPluginCreationResultResolver(defaultResolver, problemLevelRemapping)
-    return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = levelRemappingResolver)
+    return LevelRemappingPluginCreationResultResolver(defaultResolver, problemLevelRemapping)
   }
 
   fun defaultExistingPluginResolver() = newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
   fun defaultNewPluginResolver() = newDefaultResolver(RemappingSet.NEW_PLUGIN_REMAPPING_SET)
-  fun defaultJetBrainsPluginResolver() = newDefaultResolver(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
+  fun defaultJetBrainsPluginResolver(defaultResolver: PluginCreationResultResolver) = LevelRemappingPluginCreationResultResolver(defaultResolver, getLevelRemapping(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET), unwrapRemappedProblems = true)
 }
 
 class JsonUrlProblemLevelRemappingManager(private val pluginProblemsJsonUrl: URL) : ProblemLevelRemappingManager {
