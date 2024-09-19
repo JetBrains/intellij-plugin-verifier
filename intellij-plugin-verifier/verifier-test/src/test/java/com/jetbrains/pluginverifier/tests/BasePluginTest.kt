@@ -6,7 +6,10 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
@@ -16,8 +19,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import kotlin.reflect.KClass
 import java.nio.file.Path
+import kotlin.reflect.KClass
 
 abstract class BasePluginTest {
   @Rule
@@ -122,5 +125,30 @@ abstract class BasePluginTest {
       )
       return
     }
+  }
+
+  protected fun buildIde(version: String = "IU-192.1"): Ide {
+    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
+      file("build.txt", version)
+      dir("lib") {
+        zip("idea.jar") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              """
+                <idea-plugin>
+                  <id>com.intellij</id>
+                  <name>IDEA CORE</name>
+                  <version>1.0</version>
+                  <module value="com.intellij.modules.all"/>                
+                </idea-plugin>
+                """.trimIndent()
+            }
+          }
+        }
+      }
+    }
+    val ide = IdeManager.createManager().createIde(ideaDirectory)
+    assertEquals(version, ide.version.asString())
+    return ide
   }
 }

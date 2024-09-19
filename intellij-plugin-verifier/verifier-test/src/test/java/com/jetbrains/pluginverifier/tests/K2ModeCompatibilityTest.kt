@@ -1,8 +1,5 @@
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeProblem
@@ -80,28 +77,4 @@ class K2ModeCompatibilityTest : BasePluginTest() {
     }
   }
 
-  private fun buildIde(version: String = "IU-192.1"): Ide {
-    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
-      file("build.txt", version)
-      dir("lib") {
-        zip("idea.jar") {
-          dir("META-INF") {
-            file("plugin.xml") {
-              """
-                <idea-plugin>
-                  <id>com.intellij</id>
-                  <name>IDEA CORE</name>
-                  <version>1.0</version>
-                  <module value="com.intellij.modules.all"/>                
-                </idea-plugin>
-                """.trimIndent()
-            }
-          }
-        }
-      }
-    }
-    val ide = IdeManager.createManager().createIde(ideaDirectory)
-    assertEquals(version, ide.version.asString())
-    return ide
-  }
 }
