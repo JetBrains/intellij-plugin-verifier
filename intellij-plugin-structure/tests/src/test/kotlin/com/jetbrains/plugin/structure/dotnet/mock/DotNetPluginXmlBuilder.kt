@@ -4,7 +4,7 @@ data class DotNetPluginXmlBuilder(
     var dotNetPluginTagOpen: String = "<package><metadata>",
     var dotNetPluginTagClose: String = "</metadata></package>",
     var id: String = "<id>Vendor.PluginName</id>",
-    var title: String = "<title>Some title</title>",
+    var title: String? = "<title>Some title</title>",
     var version: String = "<version>10.2.55</version>",
     var authors: String = "<authors>JetBrains</authors>",
     var owners: String = "<owners>JetBrains</owners>",
@@ -17,22 +17,22 @@ data class DotNetPluginXmlBuilder(
     var dependencies: String = "<dependencies><dependency id=\"ReSharper\" version=\"[8.0, 8.3)\" /><dependency id=\"Wave\"/></dependencies>"
 ) {
 
-  fun asString(): String = """
-  $dotNetPluginTagOpen
-    $id
-    $title
-    $version
-    $authors
-    $owners
-    $licenseUrl
-    $projectUrl
-    $description
-    $summary
-    $releaseNotes
-    $copyright
-    $dependencies
-  $dotNetPluginTagClose
-"""
+  fun asString(): String = listOfNotNull(
+    dotNetPluginTagOpen,
+    id,
+    title,
+    version,
+    authors,
+    owners,
+    licenseUrl,
+    projectUrl,
+    description,
+    summary,
+    releaseNotes,
+    copyright,
+    dependencies,
+    dotNetPluginTagClose
+  ).joinToString(separator = "\n")
 }
 
 val perfectDotNetBuilder: DotNetPluginXmlBuilder = DotNetPluginXmlBuilder().apply {

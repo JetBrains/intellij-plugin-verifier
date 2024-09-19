@@ -17,7 +17,7 @@ import java.nio.file.Paths
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ReSharperPlugin, ReSharperPluginManager>(fileSystemType) {
+class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ReSharperPlugin, ReSharperPluginManager>(fileSystemType) {
   override fun createManager(extractDirectory: Path) =
     ReSharperPluginManager.createManager(extractDirectory)
 
@@ -168,9 +168,45 @@ class DotNetInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginManage
     )
   }
 
+  @Test
+  fun `id as plugin name when empty title`() {
+    testValidPluginXML(perfectDotNetBuilder.modify {
+      id = "<id>Vendor.PluginId</id>"
+      title = "<title></title>"
+    }) { plugin ->
+      Assert.assertEquals("PluginId", plugin.pluginName)
+    }
+  }
+
+  @Test
+  fun `id as plugin name when null title`() {
+    testValidPluginXML(perfectDotNetBuilder.modify {
+      id = "<id>Vendor.PluginId</id>"
+      title = null
+    }) { plugin ->
+      Assert.assertEquals("PluginId", plugin.pluginName)
+    }
+  }
+
+  @Test
+  fun `one component id without wave dependency`() {
+    testValidPluginXML(perfectDotNetBuilder.modify {
+      id = "<id>PluginId</id>"
+      title = "<title></title>"
+      dependencies = "<dependencies><dependency id=\"ReSharper\" version=\"[8.0, 8.3)\" /></dependencies>"
+    }) { plugin ->
+      Assert.assertEquals("PluginId", plugin.pluginName)
+    }
+  }
+
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginArchive(pluginXmlContent)
     assertProblematicPlugin(pluginFolder, expectedProblems)
+  }
+
+  private fun testValidPluginXML(pluginXmlContent: String, checks: (ReSharperPlugin) -> Unit) {
+    val pluginFolder = getTempPluginArchive(pluginXmlContent)
+    checks(createPluginSuccessfully(pluginFolder).plugin)
   }
 
   private fun getTempPluginArchive(pluginXmlContent: String): Path {
