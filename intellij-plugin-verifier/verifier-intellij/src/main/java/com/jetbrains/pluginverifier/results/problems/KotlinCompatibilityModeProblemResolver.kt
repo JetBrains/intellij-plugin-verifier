@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2Compat
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor.IDE
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 
 /**
  Remaps [UndeclaredKotlinK2CompatibilityMode] structure [com.jetbrains.plugin.structure.base.problems.PluginProblem]
@@ -20,22 +21,31 @@ class KotlinCompatibilityModeProblemResolver : CompatibilityProblemResolver {
   private val sinceIdeVersion = IdeVersion.createIdeVersion("242.21829.142")
 
   /**
-   * Remaps any [UndeclaredKotlinK2CompatibilityMode] structure warning to an [UndeclaredKotlinK2CompatibilityModeProblem]
+   * Remaps any [UndeclaredKotlinK2CompatibilityMode] structure warning to an [UndeclaredKotlinK2CompatibilityModeWarning]
    * and removes it from the [plugin verification context][PluginVerificationContext].
    */
-  override fun resolveCompatibilityProblems(context: PluginVerificationContext): List<CompatibilityProblem> {
-    if (!context.isSinceSupportedIdeVersion()) return emptyList()
+  override fun resolveCompatibilityWarnings(context: PluginVerificationContext): List<CompatibilityWarning> {
+    if (!context.isSinceSupportedIdeVersion()) {
+      context.removeUndeclaredKotlinK2CompatibilityModeProblems()
+      return emptyList()
+    }
 
     return context.pluginStructureWarnings
       .map { it.problem }
       .filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()
-      .map { UndeclaredKotlinK2CompatibilityModeProblem(it) }
+      .map { UndeclaredKotlinK2CompatibilityModeWarning(it) }
       .apply {
         if (isNotEmpty()) {
-          context.pluginStructureWarnings.removeIf { it.problem is UndeclaredKotlinK2CompatibilityMode }
+          context.removeUndeclaredKotlinK2CompatibilityModeProblems()
         }
       }
   }
+
+  private fun PluginVerificationContext.removeUndeclaredKotlinK2CompatibilityModeProblems() {
+    pluginStructureWarnings.removeIf { it.problem is UndeclaredKotlinK2CompatibilityMode }
+  }
+
+  override fun resolveCompatibilityProblems(context: PluginVerificationContext) = emptyList<CompatibilityProblem>()
 
   private fun PluginVerificationContext.isSinceSupportedIdeVersion(): Boolean {
     if (verificationDescriptor !is IDE) return false

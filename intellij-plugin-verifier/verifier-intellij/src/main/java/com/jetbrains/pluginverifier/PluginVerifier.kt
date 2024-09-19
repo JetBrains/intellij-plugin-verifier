@@ -130,6 +130,7 @@ class PluginVerifier(
       groupMissingClassesToMissingPackages(context.compatibilityProblems, context.classResolver)
 
       val compatibilityProblems = context.compatibilityProblems + structureProblemsResolver.resolveCompatibilityProblems(context)
+      val compatibilityWarnings = context.compatibilityWarnings + structureProblemsResolver.resolveCompatibilityWarnings(context)
       val (reportProblems, ignoredProblems) = partitionReportAndIgnoredProblems(compatibilityProblems, context)
 
       val (reportedInternalApiUsages, ignoredInternalApiUsages) = partitionReportAndIgnoredInternalApiUsages(context.internalApiUsages, context)

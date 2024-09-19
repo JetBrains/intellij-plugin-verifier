@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeProblem
+import com.jetbrains.pluginverifier.results.problems.UndeclaredKotlinK2CompatibilityModeWarning
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,18 +39,19 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
       assertTrue(verificationResult is PluginVerificationResult.Verified)
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
-      with(verifiedResult.compatibilityProblems) {
+      assertEmpty("Compatibility Problems", verifiedResult.compatibilityProblems)
+      with(verifiedResult.compatibilityWarnings) {
         assertEquals(1, size)
-        assertTrue(first() is UndeclaredKotlinK2CompatibilityModeProblem)
+        assertTrue(first() is UndeclaredKotlinK2CompatibilityModeWarning)
       }
 
-      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
-      assertNoProblems(structureProblems)
+      val structureWarnings = verifiedResult.pluginStructureWarnings.map { it.problem }
+      assertNoProblems(structureWarnings)
     }
   }
 
   @Test
-  fun `plugin does not declare K1-K2 compatibility but such IDE does not provide this feature`() {
+  fun `plugin does not declare K1-K2 compatibility but such IDE does not provide this feature since it is before 2024-2-1`() {
     val ide = buildIde("IU-231.1")
 
     val ideaPlugin = ideaPlugin()
@@ -72,11 +73,38 @@ class K2ModeCompatibilityTest : BasePluginTest() {
       val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
       assertTrue(verificationResult is PluginVerificationResult.Verified)
       val verifiedResult = verificationResult as PluginVerificationResult.Verified
-      assertEquals(0, verifiedResult.compatibilityProblems.size)
-      val structureProblems = verifiedResult.pluginStructureWarnings.map { it.problem }
-      with(structureProblems.filterIsInstance<UndeclaredKotlinK2CompatibilityMode>()) {
-        assertEquals(1, size)
+      assertEmpty("Compatibility Problems", verifiedResult.compatibilityProblems)
+      assertEmpty("Compatibility Warnings", verifiedResult.compatibilityWarnings)
+      val structureWarnings = verifiedResult.pluginStructureWarnings.map { it.problem }
+      assertEmpty("Plugin Structure Warnings", structureWarnings)
+    }
+  }
+
+  @Test
+  fun `plugin does not declare K1-K2 compatibility and in a pre-2024-2-1 IDE the structure warnings will not contain the plugin problem`() {
+    val ide = buildIde("IU-231.1")
+
+    val ideaPlugin = ideaPlugin()
+    val creationResult = buildPluginWithResult {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $ideaPlugin
+              <depends>org.jetbrains.kotlin</depends>
+            </idea-plugin>
+          """
+        }
       }
+    }
+
+    assertSuccess(creationResult) {
+      assertContains<UndeclaredKotlinK2CompatibilityMode>(EXPECTED_MESSAGE)
+      val verificationResult = VerificationRunner().runPluginVerification(ide, plugin)
+      assertTrue(verificationResult is PluginVerificationResult.Verified)
+      val verifiedResult = verificationResult as PluginVerificationResult.Verified
+      val structureWarnings = verifiedResult.pluginStructureWarnings.map { it.problem }
+      assertEmpty("Plugin Structure Warnings", structureWarnings)
     }
   }
 
