@@ -25,7 +25,10 @@ class KotlinCompatibilityModeProblemResolver : CompatibilityProblemResolver {
    * and removes it from the [plugin verification context][PluginVerificationContext].
    */
   override fun resolveCompatibilityWarnings(context: PluginVerificationContext): List<CompatibilityWarning> {
-    if (!context.isSinceSupportedIdeVersion()) return emptyList()
+    if (!context.isSinceSupportedIdeVersion()) {
+      context.removeUndeclaredKotlinK2CompatibilityModeProblems()
+      return emptyList()
+    }
 
     return context.pluginStructureWarnings
       .map { it.problem }
@@ -33,9 +36,13 @@ class KotlinCompatibilityModeProblemResolver : CompatibilityProblemResolver {
       .map { UndeclaredKotlinK2CompatibilityModeWarning(it) }
       .apply {
         if (isNotEmpty()) {
-          context.pluginStructureWarnings.removeIf { it.problem is UndeclaredKotlinK2CompatibilityMode }
+          context.removeUndeclaredKotlinK2CompatibilityModeProblems()
         }
       }
+  }
+
+  private fun PluginVerificationContext.removeUndeclaredKotlinK2CompatibilityModeProblems() {
+    pluginStructureWarnings.removeIf { it.problem is UndeclaredKotlinK2CompatibilityMode }
   }
 
   override fun resolveCompatibilityProblems(context: PluginVerificationContext) = emptyList<CompatibilityProblem>()
