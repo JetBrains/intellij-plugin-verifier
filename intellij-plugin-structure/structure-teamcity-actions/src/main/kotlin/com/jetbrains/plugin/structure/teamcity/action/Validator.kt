@@ -27,12 +27,25 @@ internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequ
   validateSpecVersion(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
 
   validateExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
-  validateNotEmptyIfExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
-  validateMaxLength(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION, ActionName.MAX_LENGTH)
+
+  validateExists(descriptor.getNamespace(), ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION)
+  validateNotEmptyIfExists(descriptor.getNamespace(), ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION)
+  validateMinLength(descriptor.getNamespace(), ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION, ActionName.Namespace.MIN_LENGTH)
+  validateMaxLength(descriptor.getNamespace(), ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION, ActionName.Namespace.MAX_LENGTH)
   validateMatchesRegexIfExistsAndNotEmpty(
-    descriptor.name, ActionName.nameRegex, ActionName.NAME, ActionName.DESCRIPTION,
+    descriptor.getNamespace(), ActionName.idAndNamespaceRegex, ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION,
     "should only contain latin letters, numbers, dashes and underscores. " +
         "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+  )
+
+  validateExists(descriptor.getId(), ActionName.ID.NAME, ActionName.ID.DESCRIPTION)
+  validateNotEmptyIfExists(descriptor.getId(), ActionName.ID.NAME, ActionName.ID.DESCRIPTION)
+  validateMinLength(descriptor.getId(), ActionName.ID.NAME, ActionName.ID.DESCRIPTION, ActionName.ID.MIN_LENGTH)
+  validateMaxLength(descriptor.getId(), ActionName.ID.NAME, ActionName.ID.DESCRIPTION, ActionName.ID.MAX_LENGTH)
+  validateMatchesRegexIfExistsAndNotEmpty(
+    descriptor.getId(), ActionName.idAndNamespaceRegex, ActionName.Namespace.NAME, ActionName.Namespace.DESCRIPTION,
+    "should only contain latin letters, numbers, dashes and underscores. " +
+      "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
   )
 
   validateExistsAndNotEmpty(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
@@ -227,6 +240,17 @@ private suspend fun SequenceScope<PluginProblem>.validateExistsAndNotEmpty(
   validateExists(propertyValue, propertyName, propertyDescription)
   if (propertyValue != null) {
     validateNotEmptyIfExists(propertyValue, propertyName, propertyDescription)
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateMinLength(
+  propertyValue: String?,
+  propertyName: String,
+  propertyDescription: String,
+  minAllowedLength: Int,
+) {
+  if (propertyValue != null && propertyValue.length < minAllowedLength) {
+    yield(TooShortValueProblem(propertyName, propertyDescription, propertyValue.length, minAllowedLength))
   }
 }
 

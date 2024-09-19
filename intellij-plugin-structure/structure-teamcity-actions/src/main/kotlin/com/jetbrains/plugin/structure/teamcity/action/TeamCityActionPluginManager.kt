@@ -93,12 +93,13 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     val plugin = with(descriptor) {
       TeamCityActionPlugin(
         // All the fields are expected to be non-null due to the validations above
-        pluginId = this.name!!, // TODO: It is a temporary way of the pluginID creation, must be changed
+        pluginId = this.name!!, // composite id
         pluginName = this.name,
         description = this.description!!,
         pluginVersion = this.version!!,
         specVersion = this.specVersion!!,
-        yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes())
+        yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
+        namespace = getNamespace()!!
       )
     }
     return PluginCreationSuccess(plugin, validationResult)

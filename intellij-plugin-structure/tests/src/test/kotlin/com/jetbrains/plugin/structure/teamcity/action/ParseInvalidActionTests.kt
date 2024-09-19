@@ -40,7 +40,9 @@ class ParseInvalidActionTests(
         )
       ),
       listOf(
-        MissingValueProblem("name", "action name"),
+        MissingValueProblem("name", "the composite action name that consists of two parts: the `namespace` and the `ID` divided by the `/` symbol"),
+        MissingValueProblem("namespace", "the first part of the composite `name` field"),
+        MissingValueProblem("id", "the second part of the composite `name` field"),
         MissingValueProblem("version", "action version"),
         EmptyValueProblem("description", "action description"),
         EmptyCollectionProblem("steps", "action steps"),
@@ -52,29 +54,18 @@ class ParseInvalidActionTests(
   fun `action without name`() {
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(name = null)),
-      listOf(MissingValueProblem("name", "action name")),
+      listOf(
+        MissingValueProblem("name", "the composite action name that consists of two parts: the `namespace` and the `ID` divided by the `/` symbol"),
+        MissingValueProblem("namespace", "the first part of the composite `name` field"),
+        MissingValueProblem("id", "the second part of the composite `name` field"),
+      ),
     )
   }
 
   @Test
-  fun `action with non-null but empty name`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(name = "")),
-      listOf(EmptyValueProblem("name", "action name")),
-    )
-  }
-
-  @Test
-  fun `action with non-empty invalid name`() {
+  fun `action with non-empty invalid namespace`() {
     val invalidActionNamesProvider = arrayOf(
-      "-a",
-      "_a",
-      "a-",
-      "a_",
-      "a--a",
-      "a__a",
-      "a+a",
-      "абв"
+      "-aaaaa/aaaaaa", "_aaaaa/aaaaaa", "aaaaaa-/aaaaa", "aaaaa_/aaaaa", "a--aa/aaaaa", "a__aa/aaaaa", "a+aaa/aaaaa", "абв23/aaaaa",
     )
     invalidActionNamesProvider.forEach { actionName ->
       Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
@@ -82,8 +73,9 @@ class ParseInvalidActionTests(
         prepareActionYaml(someAction.copy(name = actionName)),
         listOf(
           InvalidPropertyValueProblem(
-            "The property <name> (action name) should only contain latin letters, numbers, dashes and underscores. " +
-                "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+            "The property <namespace> (the first part of the composite `name` field) should only contain latin letters, "
+              + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
+              + "cannot contain several consecutive dashes and underscores."
           )
         ),
       )
@@ -91,10 +83,91 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action with too long name`() {
+  fun `action with non-empty invalid id`() {
+    val invalidActionNamesProvider = arrayOf(
+      "aaaaaa/-aaaaa", "aaaaaa/_aaaaa", "aaaaaa/aaaaaa-", "aaaaaa/aaaaa_", "aaaaaa/aa--a", "aaaaaa/aa__a", "aaaaaa/aa+aa", "aaaaaa/абв23"
+    )
+    invalidActionNamesProvider.forEach { actionName ->
+      Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
+      assertProblematicPlugin(
+        prepareActionYaml(someAction.copy(name = actionName)),
+        listOf(
+          InvalidPropertyValueProblem(
+            "The property <namespace> (the first part of the composite `name` field) should only contain latin letters, "
+              + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
+              + "cannot contain several consecutive dashes and underscores."
+          )
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `action with too short or empty id or namespace`() {
     assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(name = randomAlphanumeric(31))),
-      listOf(TooLongValueProblem("name", "action name", 31, 30)),
+      prepareActionYaml(someAction.copy(name = "/${randomAlphanumeric(10)}")),
+      listOf(
+        EmptyValueProblem("namespace", "the first part of the composite `name` field"),
+        TooShortValueProblem(
+          propertyName = "namespace",
+          propertyDescription = "the first part of the composite `name` field",
+          currentLength = 0,
+          minAllowedLength = 5
+        )
+      )
+    )
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "aaaa/${randomAlphanumeric(10)}")),
+      listOf(TooShortValueProblem(
+        propertyName = "namespace",
+        propertyDescription = "the first part of the composite `name` field",
+        currentLength = 4,
+        minAllowedLength = 5
+      )),
+    )
+
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(10)}/")),
+      listOf(
+        EmptyValueProblem("id", "the second part of the composite `name` field"),
+        TooShortValueProblem(
+          propertyName = "id",
+          propertyDescription = "the second part of the composite `name` field",
+          currentLength = 0,
+          minAllowedLength = 5
+        )
+      )
+    )
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(10)}/aaaa")),
+      listOf(TooShortValueProblem(
+        propertyName = "id",
+        propertyDescription = "the second part of the composite `name` field",
+        currentLength = 4,
+        minAllowedLength = 5
+      ))
+    )
+  }
+
+  @Test
+  fun `action with too long id or namespace`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(31)}/${randomAlphanumeric(10)}")),
+      listOf(TooLongValueProblem(
+        propertyName = "namespace",
+        propertyDescription = "the first part of the composite `name` field",
+        currentLength = 31,
+        maxAllowedLength = 30
+      )),
+    )
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(10)}/${randomAlphanumeric(31)}")),
+      listOf(TooLongValueProblem(
+        propertyName = "id",
+        propertyDescription = "the second part of the composite `name` field",
+        currentLength = 31,
+        maxAllowedLength = 30
+      ))
     )
   }
 

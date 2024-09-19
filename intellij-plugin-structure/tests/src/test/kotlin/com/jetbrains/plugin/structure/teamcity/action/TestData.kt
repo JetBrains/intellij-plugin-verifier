@@ -24,7 +24,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionV
 object Actions {
   val someAction = TeamCityActionBuilder(
     specVersion = "1.0.0",
-    name = "action_name",
+    name = "action_namespace/action_name",
     version = "1.2.3",
     description = "some description",
     steps = listOf(

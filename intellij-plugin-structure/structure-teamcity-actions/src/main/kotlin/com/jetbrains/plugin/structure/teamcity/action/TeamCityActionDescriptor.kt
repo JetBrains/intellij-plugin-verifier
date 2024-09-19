@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity.action
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription
@@ -38,7 +39,12 @@ data class TeamCityActionDescriptor(
   val requirements: List<Map<String, ActionRequirementDescriptor>> = emptyList(),
   @JsonProperty(ActionSteps.NAME)
   val steps: List<ActionStepDescriptor> = emptyList(),
-)
+) {
+  @JsonIgnore
+  fun getNamespace() = name?.substringBefore(ActionName.NAMESPACE_SPLIT_SYMBOL)
+  @JsonIgnore
+  fun getId() = name?.substringAfter(ActionName.NAMESPACE_SPLIT_SYMBOL)
+}
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ActionInputDescriptor(

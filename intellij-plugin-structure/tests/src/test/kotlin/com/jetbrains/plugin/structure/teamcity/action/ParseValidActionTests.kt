@@ -25,13 +25,28 @@ class ParseValidActionTests(
 
   @Test
   fun `parse action with valid name`() {
-    val validActionNamesProvider = arrayOf("a", "aa", "a-a_a")
+    val validActionNamesProvider = arrayOf("aaaaa/aaaaa", "aaaaa/a-a_a", "a-a_a/aaaaa", "${randomAlphanumeric(30)}/${randomAlphanumeric(30)}")
     validActionNamesProvider.forEach { actionName ->
       Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
       val result = createPluginSuccessfully(prepareActionYaml(someAction.copy(name = actionName)))
       with(result) {
         assertEquals(actionName, this.plugin.pluginName)
       }
+    }
+  }
+
+  @Test
+  fun `parse action id and namespace`() {
+    val expectedNamespace = "jetbrains"
+    val expectedActionId = "test_action"
+    val expectedActionName = "$expectedNamespace/$expectedActionId"
+
+    Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
+    val result = createPluginSuccessfully(prepareActionYaml(someAction.copy(name = expectedActionName)))
+    with(result) {
+      assertEquals(expectedActionName, this.plugin.pluginName)
+      assertEquals(expectedActionName, this.plugin.pluginId)
+      assertEquals(expectedNamespace, this.plugin.namespace)
     }
   }
 

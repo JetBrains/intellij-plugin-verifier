@@ -39,4 +39,15 @@ class TooLongValueProblem(
         "The current number of characters is $currentLength."
 }
 
+class TooShortValueProblem(
+  propertyName: String,
+  propertyDescription: String,
+  currentLength: Int,
+  minAllowedLength: Int,
+) : InvalidPropertyProblem() {
+  override val message =
+    "The property <$propertyName> ($propertyDescription) is shorter than $minAllowedLength characters. " +
+      "The current number of characters is $currentLength."
+}
+
 class PropertiesCombinationProblem(override val message: String) : InvalidPropertyProblem()
