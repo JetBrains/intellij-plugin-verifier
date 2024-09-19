@@ -468,15 +468,8 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val releaseDateInFuture = LocalDate.now().plusMonths(1)
     val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
     val releaseDateInFutureString = releaseDateInFuture.format(formatter)
-    val header = ideaPlugin(vendor = "JetBrains")
-    val delegateResolver = IntelliJPluginCreationResultResolver()
-
-    val levelRemappingDefinition = JsonUrlProblemLevelRemappingManager.fromClassPathJson().load()
-    val jetBrainsPluginLevelRemapping = levelRemappingDefinition.getOrEmpty(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
-    val problemResolver = JetBrainsPluginCreationResultResolver(
-      LevelRemappingPluginCreationResultResolver(delegateResolver, error<TemplateWordInPluginName>()),
-      jetBrainsPluginLevelRemapping
-    )
+    val header = ideaPlugin()
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = false, isJetBrainsPlugin = true)
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -566,12 +559,18 @@ class ExistingPluginValidationTest : BasePluginTest() {
         <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
       """.trimIndent()
 
-  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true) =
-    JsonUrlProblemLevelRemappingManager.fromClassPathJson().let {
-      if (isExistingPlugin) {
-        it.defaultExistingPluginResolver()
-      } else {
-        it.defaultNewPluginResolver()
+  private fun getIntelliJPluginCreationResolver(isExistingPlugin: Boolean = true, isJetBrainsPlugin: Boolean = false): PluginCreationResultResolver {
+      JsonUrlProblemLevelRemappingManager.fromClassPathJson().let {
+          val defaultResolver = if (isExistingPlugin) {
+              it.defaultExistingPluginResolver()
+          } else {
+              it.defaultNewPluginResolver()
+          }
+          return if (isJetBrainsPlugin) {
+              it.defaultJetBrainsPluginResolver(defaultResolver)
+          } else {
+              defaultResolver
+          }
       }
-    }
+  }
 }
