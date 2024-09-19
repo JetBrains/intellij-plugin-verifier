@@ -112,7 +112,7 @@ class ReSharperPluginManager private constructor(private val extractDirectory: P
     val vendor = if (idParts.size > 1) idParts[0] else null
     val authors = authors!!.split(',').map { it.trim() }
     val pluginName = when {
-      title != null -> title!!
+      title.isNullOrBlank().not() -> title!!
       idParts.size > 1 -> idParts[1]
       else -> id
     }
