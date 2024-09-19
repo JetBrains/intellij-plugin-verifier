@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.378 - 2024-09-19
+
+### Added
+
 - Validate `release-version` for paid plugins ([#1140](https://github.com/JetBrains/intellij-plugin-verifier/commit/d7de688aa0ff4ead42b13fedafda3eb7716c7c36), [MP-6824](https://youtrack.jetbrains.com/issue/MP-6824))
 - When handling TeamCity Actions, get the content of YAML file for parsed actions ([#1149](https://github.com/JetBrains/intellij-plugin-verifier/pull/1149), [MP-6835](https://youtrack.jetbrains.com/issue/MP-6835/Add-a-way-to-fetch-TeamCity-Action-yaml-file))
 - Support resource bundle `@PropertyKey` in constructors of `enum class`-es ([#1144](https://github.com/JetBrains/intellij-plugin-verifier/pull/1144), [MP-6710](https://youtrack.jetbrains.com/issue/MP-6710))
