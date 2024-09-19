@@ -15,8 +15,8 @@ class PluginParsingConfigurationResolution {
       EXISTING -> RemappingSet.EXISTING_PLUGIN_REMAPPING_SET
       NEW -> RemappingSet.NEW_PLUGIN_REMAPPING_SET
     }
-    return problemLevelMappingManager
-      .newDefaultResolver(remappingSet)
+    val defaultResolver = problemLevelMappingManager.newDefaultResolver(remappingSet)
+    return JetBrainsPluginCreationResultResolver.fromClassPathJson(delegatedResolver = defaultResolver)
       .withCliIgnoredProblemResolver(configuration)
   }
 
