@@ -15,7 +15,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Ignore specific packages when tracking Kotlin `internal` API usages. Do not track internal  API usages marked as `@PublishedApi`. ([#1135](https://github.com/JetBrains/intellij-plugin-verifier/pull/1135), [MP-6784](https://youtrack.jetbrains.com/issue/MP-6784), [MP-6911](https://youtrack.jetbrains.com/issue/MP-6911))
-- Consolidate plugin problem level remapping rules with JetBrains Marketplace. Common rules have been moved to the IntelliJ Plugin Structure library. ([#1151](https://github.com/JetBrains/intellij-plugin-verifier/pull/1151))  
+- Consolidate plugin problem level remapping rules with JetBrains Marketplace. Common rules have been moved to the IntelliJ Plugin Structure library. ([#1151](https://github.com/JetBrains/intellij-plugin-verifier/pull/1151), [#1157](https://github.com/JetBrains/intellij-plugin-verifier/pull/1157))
 - Update dependencies 
 
 ### Fixed
