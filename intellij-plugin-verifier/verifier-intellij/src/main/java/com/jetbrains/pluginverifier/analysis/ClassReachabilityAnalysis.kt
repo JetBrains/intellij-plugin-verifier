@@ -9,11 +9,26 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
+import com.jetbrains.pluginverifier.analysis.Location.Annotation
+import com.jetbrains.pluginverifier.analysis.Location.Field
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import org.objectweb.asm.*
+import org.objectweb.asm.AnnotationVisitor
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.ConstantDynamic
+import org.objectweb.asm.FieldVisitor
+import org.objectweb.asm.Handle
+import org.objectweb.asm.Label
+import org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.Type
+import org.objectweb.asm.TypePath
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.util.*
 
 private typealias ClassName = String
+private typealias Descriptor = String
+
+private val logger: Logger = LoggerFactory.getLogger("com.jetbrains.pluginverifier.analysis.ClassReachabilityAnalysis")
 
 class TypeGraph {
 
@@ -176,8 +191,7 @@ private class TypeReferencesClassVisitor(private val references: TypeReferences)
   }
 
   override fun visitField(access: Int, name: String?, descriptor: String, signature: String?, value: Any?): FieldVisitor {
-    references.addReferences(Type.getType(descriptor))
-    return TypeReferencesFieldVisitor(references)
+    return TypeReferencesFieldVisitor(references.withType(descriptor, field(name)))
   }
 
   override fun visitInnerClass(name: String, outerName: String?, innerName: String?, access: Int) {
@@ -242,8 +256,7 @@ private class TypeReferencesMethodVisitor(private val references: TypeReferences
   }
 
   override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor {
-    references.addReferences(Type.getType(descriptor))
-    return TypeReferencesAnnotationVisitor(references)
+    return TypeReferencesAnnotationVisitor(references.withType(descriptor, Annotation(visible)))
   }
 
   override fun visitTypeAnnotation(typeRef: Int, typePath: TypePath?, descriptor: String, visible: Boolean): AnnotationVisitor {
@@ -306,8 +319,7 @@ private class TypeReferencesMethodVisitor(private val references: TypeReferences
 
 private class TypeReferencesFieldVisitor(private val references: TypeReferences) : FieldVisitor(AsmUtil.ASM_API_LEVEL) {
   override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor {
-    references.addReferences(Type.getType(descriptor))
-    return TypeReferencesAnnotationVisitor(references)
+    return TypeReferencesAnnotationVisitor(references.withType(descriptor, Annotation(visible)))
   }
 
   override fun visitTypeAnnotation(typeRef: Int, typePath: TypePath?, descriptor: String, visible: Boolean): AnnotationVisitor {
@@ -318,8 +330,7 @@ private class TypeReferencesFieldVisitor(private val references: TypeReferences)
 
 private class TypeReferencesAnnotationVisitor(private val references: TypeReferences) : AnnotationVisitor(AsmUtil.ASM_API_LEVEL) {
   override fun visitAnnotation(name: String?, descriptor: String): AnnotationVisitor {
-    references.addReferences(Type.getType(descriptor))
-    return TypeReferencesAnnotationVisitor(references)
+    return TypeReferencesAnnotationVisitor(references.withType(descriptor))
   }
 
   override fun visitEnum(name: String?, descriptor: String, value: String?) {
@@ -330,3 +341,46 @@ private class TypeReferencesAnnotationVisitor(private val references: TypeRefere
     return TypeReferencesAnnotationVisitor(references)
   }
 }
+
+private fun TypeReferences.withType(descriptor: Descriptor): TypeReferences = apply {
+  return withType(descriptor, Location.Unknown)
+}
+
+private fun TypeReferences.withType(descriptor: Descriptor, location: Location): TypeReferences = apply {
+  try {
+    val type: Type = Type.getType(descriptor)
+    addReferences(type)
+  } catch (e: IllegalArgumentException) {
+    logger.debug("Skipping invalid descriptor at {} {}", location, descriptor.toLogString())
+  }
+}
+
+private fun Descriptor.toLogString(): String {
+  val trimmedDesc = this.trim()
+  val len = this.length - trimmedDesc.length
+  return if (len > 0) {
+    "[$trimmedDesc] ($len whitespace characters trimmed)"
+  } else {
+    "[$trimmedDesc]"
+  }
+}
+
+private sealed class Location {
+  data class Field(val fieldName: String) : Location() {
+    override fun toString() = "field $fieldName"
+  }
+  data class Annotation(val isVisible: Boolean) : Location() {
+    override fun toString() = if (isVisible) {
+      "visible"
+    } else {
+      "invisible"
+    } + " annotation"
+  }
+  object Unknown : Location() {
+    override fun toString() = "unknown location"
+  }
+}
+
+private fun field(name: String?): Location = name?.let {
+  Field(it)
+} ?: Location.Unknown
