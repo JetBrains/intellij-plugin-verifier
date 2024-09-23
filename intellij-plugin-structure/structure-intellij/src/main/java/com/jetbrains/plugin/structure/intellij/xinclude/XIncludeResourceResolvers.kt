@@ -17,10 +17,11 @@ class MetaInfResourceResolver(private val delegateResolver: ResourceResolver) : 
     return delegateResolver.resolveResource(relativePath, parentPath.resolve(META_INF).resolve(relativePath))
   }
 
+
   private fun getParent(path: Path): Path? {
     val parent: Path? = path.parent
     return if (parent == null && path.fileSystem != FileSystems.getDefault()) {
-      path.fileSystem.rootDirectories.first()
+      path.fileSystem.rootDirectories.first { root -> root == path.root }
     } else {
       parent
     }
