@@ -27,7 +27,7 @@ abstract class BasePluginTest {
   @JvmField
   val temporaryFolder = TemporaryFolder()
 
-  protected val pluginJarPath: Path
+  protected open val pluginJarPath: Path
     get() = temporaryFolder.newFile("plugin.jar").toPath()
 
   protected val ideaPath: Path
