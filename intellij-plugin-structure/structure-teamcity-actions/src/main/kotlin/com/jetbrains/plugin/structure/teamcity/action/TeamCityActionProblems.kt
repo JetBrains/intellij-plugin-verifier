@@ -46,7 +46,7 @@ class TooShortValueProblem(
   minAllowedLength: Int,
 ) : InvalidPropertyProblem() {
   override val message =
-    "The property <$propertyName> ($propertyDescription) is shorter than $minAllowedLength characters. " +
+    "The property <$propertyName> ($propertyDescription) should not be shorter than $minAllowedLength characters. " +
       "The current number of characters is $currentLength."
 }
 

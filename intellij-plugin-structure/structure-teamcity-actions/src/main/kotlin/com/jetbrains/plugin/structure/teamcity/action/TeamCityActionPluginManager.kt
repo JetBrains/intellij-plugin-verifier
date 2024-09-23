@@ -99,7 +99,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginVersion = this.version!!,
         specVersion = this.specVersion!!,
         yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
-        namespace = getNamespace()!!
+        namespace = TeamCityActionSpec.ActionCompositeName.getNamespace(this.name)!!
       )
     }
     return PluginCreationSuccess(plugin, validationResult)

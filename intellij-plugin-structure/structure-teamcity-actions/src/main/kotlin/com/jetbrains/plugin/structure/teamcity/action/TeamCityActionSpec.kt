@@ -6,14 +6,15 @@ object TeamCityActionSpec {
     const val DESCRIPTION = "the version of action specification"
   }
 
-  object ActionName {
+  object ActionCompositeName {
     const val NAME = "name"
-    const val DESCRIPTION = "the composite action name that consists of two parts: the `namespace` and the `ID` divided by the `/` symbol"
+    const val DESCRIPTION = "the composite action name in the 'namespace/name' format"
 
-    const val NAMESPACE_SPLIT_SYMBOL = "/"
+    // Regular expression pattern for the action's composite name – the namespace and the name separated by '/'
+    private const val COMPOSITE_NAME_PATTERN = "^([^/]+)/([^/]+)$"
 
     /**
-     * Regular expression pattern for both action namespace and id.
+     * Regular expression pattern for both the action's namespace and the action's name.
      *
      * The pattern enforces the following rules for both namespace and id:
      * - cannot be empty.
@@ -22,20 +23,33 @@ object TeamCityActionSpec {
      * - cannot contain several consecutive dashes or underscores.
      */
     private const val ID_AND_NAMESPACE_PATTERN = "^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$"
+    val compositeNameRegex: Regex = Regex(COMPOSITE_NAME_PATTERN)
     val idAndNamespaceRegex: Regex = Regex(ID_AND_NAMESPACE_PATTERN)
 
     object Namespace {
       const val NAME = "namespace"
-      const val DESCRIPTION = "the first part of the composite `${ActionName.NAME}` field"
+      const val DESCRIPTION = "the first part of the composite `${ActionCompositeName.NAME}` field"
       const val MIN_LENGTH = 5
       const val MAX_LENGTH = 30
     }
 
-    object ID {
-      const val NAME = "id"
-      const val DESCRIPTION = "the second part of the composite `${ActionName.NAME}` field"
+    object Name {
+      const val NAME = "name"
+      const val DESCRIPTION = "the second part of the composite `${ActionCompositeName.NAME}` field"
       const val MIN_LENGTH = 5
       const val MAX_LENGTH = 30
+    }
+
+    fun getNamespace(actionName: String?): String? {
+      if (actionName == null) return null
+      val matchResult = compositeNameRegex.matchEntire(actionName)
+      return matchResult?.groupValues?.get(1)
+    }
+
+    fun getNameInNamespace(actionName: String?): String? {
+      if (actionName == null) return null
+      val matchResult = compositeNameRegex.matchEntire(actionName)
+      return matchResult?.groupValues?.get(2)
     }
   }
 
