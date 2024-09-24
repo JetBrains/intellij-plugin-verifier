@@ -2,9 +2,7 @@ package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.problems.LevelRemappingPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
-import com.jetbrains.plugin.structure.intellij.problems.ignore
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
@@ -25,6 +23,21 @@ class LevelRemappingTest {
     )
 
     val remappedProblems = ignoringProblemResolver.classify(IdePluginImpl(), problems)
+    assertEmpty(remappedProblems)
+  }
+
+  @Test
+  fun `problem is remapped according to JSON rules and not remapped again`() {
+    val existingPluginResolver = JsonUrlProblemLevelRemappingManager
+      .fromClassPathJson()
+      .newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
+    val ignoringProblemResolver = LevelRemappingPluginCreationResultResolver(existingPluginResolver, ignore<ReleaseDateInFuture>())
+
+    val problems = listOf(
+      ReleaseVersionWrongFormat(PLUGIN_XML, "1")
+    )
+
+    val remappedProblems = ignoringProblemResolver.classify(IdePluginImpl(), problems).filter { it.level == PluginProblem.Level.ERROR }
     assertEmpty(remappedProblems)
   }
 
