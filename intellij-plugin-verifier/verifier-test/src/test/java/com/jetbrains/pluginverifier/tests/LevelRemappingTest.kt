@@ -27,7 +27,7 @@ class LevelRemappingTest {
   }
 
   @Test
-  fun `problem is remapped according to JSON rules and not remap again`() {
+  fun `problem is remapped according to JSON rules and not remapped again`() {
     val existingPluginResolver = JsonUrlProblemLevelRemappingManager
       .fromClassPathJson()
       .newDefaultResolver(RemappingSet.EXISTING_PLUGIN_REMAPPING_SET)
