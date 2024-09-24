@@ -8,8 +8,6 @@ import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
 val DEFAULT_ILLEGAL_PREFIXES = listOf("com.example", "net.example", "org.example", "edu.example", "com.intellij", "org.jetbrains")
 
-val JETBRAINS_VENDORS = listOf("JetBrains", "JetBrains s.r.o.")
-
 val PRODUCT_ID_RESTRICTED_WORDS = listOf(
   "aqua", "clion",  "datagrip", "datalore",
   "dataspell", "dotcover", "dotmemory", "dotpeek", "dottrace", "fleet", "goland",
@@ -37,9 +35,6 @@ class PluginIdVerifier {
   }
 
   private fun verifyPrefix(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    if (isDevelopedByJetBrains(plugin)) {
-      return
-    }
     val id = plugin.id
     DEFAULT_ILLEGAL_PREFIXES
       .filter(id::startsWith)
@@ -48,10 +43,6 @@ class PluginIdVerifier {
     id.split('.')
       .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }
       .forEach { idComponent -> problemRegistrar.registerProblem(TemplateWordInPluginId(descriptorPath, id, idComponent)) }
-  }
-
-  private fun isDevelopedByJetBrains(plugin: PluginBean): Boolean {
-    return JETBRAINS_VENDORS.contains(plugin.vendor?.name)
   }
 
 }
