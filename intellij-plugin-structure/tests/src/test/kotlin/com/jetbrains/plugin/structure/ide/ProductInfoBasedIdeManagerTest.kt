@@ -78,6 +78,62 @@ class ProductInfoBasedIdeManagerTest {
     assertIdeAndPluginsIsCreated(ide)
   }
 
+  @Test
+  fun `create IDE manager with paths in layout component that are not available in the filesystem`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockIdeBuilder(temporaryFolder, "-missing-layout-component").buildIdeaDirectory {
+      //language=JSON
+      layout = """
+        {
+          "name": "org.jetbrains.plugins.emojipicker",
+          "kind": "plugin",
+          "classPath": [
+            "plugins/emojipicker/lib/emojipicker.jar"
+          ]
+        }
+      """.trimIndent()
+    }
+    val ide = ideManager.createIde(ideRoot)
+    assertEquals(5, ide.bundledPlugins.size)
+    val emojiPickerPlugin = ide.getPluginById("org.jetbrains.plugins.emojipicker")
+    assertNull(emojiPickerPlugin)
+  }
+
+  @Test
+  fun `create IDE manager where plugin xincludes descriptor, but that descriptor is searched in an a plugin that is earlier declared in Product Info, but not present in the filesystem`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    // 'org.jetbrains.plugins.emojipicker' is declared before 'com.intellij.java', however, not available in the filesystem.
+    val ideRoot = MockIdeBuilder(temporaryFolder, "-missing-layout-component-java-plugin").buildIdeaDirectory {
+      layout = """
+        {
+          "name": "org.jetbrains.plugins.emojipicker",
+          "kind": "plugin",
+          "classPath": [
+            "plugins/emojipicker/lib/emojipicker.jar"
+          ]
+        },        
+        {
+          "name": "com.intellij.java",
+          "kind": "plugin",
+          "classPath": [
+            "plugins/java/lib/java-impl.jar"
+          ]
+        }        
+      """.trimIndent()
+    }
+    val ide = ideManager.createIde(ideRoot)
+    assertEquals(6, ide.bundledPlugins.size)
+
+    val emojiPickerPlugin = ide.getPluginById("org.jetbrains.plugins.emojipicker")
+    assertNull(emojiPickerPlugin)
+
+    val javaPlugin = ide.getPluginById("com.intellij.java")
+    assertNotNull(javaPlugin)
+    with(javaPlugin!!) {
+      assertEquals("242.10180.25", pluginVersion)
+    }
+  }
+
   private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)
     val uiPlugin = ide.getPluginById("intellij.notebooks.ui")

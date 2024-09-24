@@ -107,6 +107,23 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
               }
             }
           }
+          zip("java-impl.jar") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.intellij.java</id>
+                  <version>242.20224.38</version>
+                  <idea-version since-build="242.20224.38" until-build="242.20224.38" />
+                  <name>Java</name>
+                  <xi:include href="intellij.java.duplicates.analysis.xml">
+                    <xi:fallback />
+                  </xi:include>
+                </idea-plugin>                                    
+                """.trimIndent()
+              }
+            }
+          }
         }
       }
       dir("cwm-plugin") {
@@ -180,7 +197,7 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
             "classPath": [
               "plugins/cwm-plugin/lib/cwm-plugin.jar"
             ]
-          }              
+          }      
           $layoutJson                  
         ]
       } 
