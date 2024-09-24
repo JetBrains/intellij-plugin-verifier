@@ -56,18 +56,6 @@ class StatusBarWidgetFactoryExtensionPointIdMissing(private val implementationCl
             "value returned from the getId() method of the $implementationClassFqn implementation."
 }
 
-class LanguageBundleExtensionPointIsInternal : PluginProblem() {
-  private val extensionPointName = "com.intellij.languageBundle"
-
-  override val level
-    get() = Level.UNACCEPTABLE_WARNING
-
-  override val message
-    get() = "The extension point in the <${extensionPointName}> element is marked with @ApiStatus.Internal " +
-      "and must be used by JetBrains only."
-}
-
-
 class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "Plugin has no dependencies. Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
