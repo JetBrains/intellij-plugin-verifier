@@ -49,7 +49,9 @@ sealed class LayoutComponent(val kind: String) {
 
   data class PluginAlias(
     @JsonProperty("name") override val name: String,
-  ) : LayoutComponent("pluginAlias")
+  ) : LayoutComponent("pluginAlias") {
+    override fun toString(): String = "Plugin alias '$name'"
+  }
 
   data class ModuleV2(
     override val name: String,
