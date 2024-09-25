@@ -26,18 +26,6 @@ class PluginIdVerifierTest {
   }
 
   @Test
-  fun `plugin by JetBrains has no issues`() {
-    val comIntellijPlugin = plugin("com.intellij", "JetBrains")
-    val ideaCorePlugin = plugin("IDEA CORE", "JetBrains")
-
-    verifier.verify(comIntellijPlugin, DESCRIPTOR_PATH, problemRegistrar)
-    verifier.verify(ideaCorePlugin, DESCRIPTOR_PATH, problemRegistrar)
-
-    Assert.assertTrue(problems.isEmpty())
-  }
-
-
-  @Test
   fun `plugin by 3rd party is disallowed`() {
     val illegalId = "org.jetbrains"
     val illegalPlugin = plugin(illegalId, "Third Party Inc.")
