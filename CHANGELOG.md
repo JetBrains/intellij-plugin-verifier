@@ -6,9 +6,18 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Don't verify that `com.intellij.languageBundle` extension point is internal and must be used by JetBrains only ([#1162](https://github.com/JetBrains/intellij-plugin-verifier/pull/1162))
+- Handle malformed annotation descriptors when using obfuscation ([MP-6950](https://youtrack.jetbrains.com/issue/MP-6950), [#1160](https://github.com/JetBrains/intellij-plugin-verifier/pull/1160))
+- In TeamCity Actions, support composite action names with namespaces ([#1159](https://github.com/JetBrains/intellij-plugin-verifier/pull/1159))
+
 ### Changed
 
+- Remove duplicate vendor check when verifying plugin identifier for JetBrains plugins ([#1161](https://github.com/JetBrains/intellij-plugin-verifier/pull/1161))
+- Use the same logic for plugin problem classification and remapping ([#1163](https://github.com/JetBrains/intellij-plugin-verifier/pull/1163))
+
 ### Fixed
+
+- Fix empty dotnet plugin name if title was empty string ([#1158](https://github.com/JetBrains/intellij-plugin-verifier/pull/1158))
 
 ## 1.378 - 2024-09-19
 
