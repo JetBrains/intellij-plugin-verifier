@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputs
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionName
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirements
@@ -26,7 +26,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionV
 data class TeamCityActionDescriptor(
   @JsonProperty(ActionSpecVersion.NAME)
   val specVersion: String? = null,
-  @JsonProperty(ActionName.NAME)
+  @JsonProperty(ActionCompositeName.NAME)
   val name: String? = null,
   @JsonProperty(ActionVersion.NAME)
   val version: String? = null,

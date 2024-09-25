@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputOptions
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionName
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSpecVersion
@@ -24,16 +24,9 @@ import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
 
 internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequence {
-  validateSpecVersion(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
+  validateName(descriptor.name)
 
-  validateExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
-  validateNotEmptyIfExists(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION)
-  validateMaxLength(descriptor.name, ActionName.NAME, ActionName.DESCRIPTION, ActionName.MAX_LENGTH)
-  validateMatchesRegexIfExistsAndNotEmpty(
-    descriptor.name, ActionName.nameRegex, ActionName.NAME, ActionName.DESCRIPTION,
-    "should only contain latin letters, numbers, dashes and underscores. " +
-        "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
-  )
+  validateSpecVersion(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
 
   validateExistsAndNotEmpty(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
   validateSemver(descriptor.version, ActionVersion.NAME)
@@ -51,6 +44,37 @@ internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequ
   for (requirement in descriptor.requirements) validateActionRequirement(requirement)
   for (step in descriptor.steps) validateActionStep(step)
 }.toList()
+
+private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
+  validateExists(name, ActionCompositeName.NAME, ActionCompositeName.DESCRIPTION)
+  validateNotEmptyIfExists(name, ActionCompositeName.NAME, ActionCompositeName.DESCRIPTION)
+  validateMatchesRegexIfExistsAndNotEmpty(
+    name, ActionCompositeName.compositeNameRegex, ActionCompositeName.NAME, ActionCompositeName.DESCRIPTION,
+    "should consist of namespace and name parts. Both parts should only contain latin letters, numbers, dashes and underscores."
+  )
+
+  val namespace = ActionCompositeName.getNamespace(name)
+  if (namespace != null) {
+    validateMinLength(namespace, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION, ActionCompositeName.Namespace.MIN_LENGTH)
+    validateMaxLength(namespace, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION, ActionCompositeName.Namespace.MAX_LENGTH)
+    validateMatchesRegexIfExistsAndNotEmpty(
+      namespace, ActionCompositeName.idAndNamespaceRegex, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION,
+      "should only contain latin letters, numbers, dashes and underscores. " +
+              "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+    )
+  }
+
+  val nameInNamespace = ActionCompositeName.getNameInNamespace(name)
+  if (nameInNamespace != null) {
+    validateMinLength(nameInNamespace, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION, ActionCompositeName.Name.MIN_LENGTH)
+    validateMaxLength(nameInNamespace, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION, ActionCompositeName.Name.MAX_LENGTH)
+    validateMatchesRegexIfExistsAndNotEmpty(
+      nameInNamespace, ActionCompositeName.idAndNamespaceRegex, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION,
+      "should only contain latin letters, numbers, dashes and underscores. " +
+              "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+    )
+  }
+}
 
 private suspend fun SequenceScope<PluginProblem>.validateActionInput(input: Map<String, ActionInputDescriptor>) {
   if (input.size != 1) {
@@ -227,6 +251,17 @@ private suspend fun SequenceScope<PluginProblem>.validateExistsAndNotEmpty(
   validateExists(propertyValue, propertyName, propertyDescription)
   if (propertyValue != null) {
     validateNotEmptyIfExists(propertyValue, propertyName, propertyDescription)
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateMinLength(
+  propertyValue: String?,
+  propertyName: String,
+  propertyDescription: String,
+  minAllowedLength: Int,
+) {
+  if (propertyValue != null && propertyValue.length < minAllowedLength) {
+    yield(TooShortValueProblem(propertyName, propertyDescription, propertyValue.length, minAllowedLength))
   }
 }
 

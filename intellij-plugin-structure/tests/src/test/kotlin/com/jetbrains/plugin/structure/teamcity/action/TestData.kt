@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputs
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionName
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirements
@@ -24,7 +24,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionV
 object Actions {
   val someAction = TeamCityActionBuilder(
     specVersion = "1.0.0",
-    name = "action_name",
+    name = "action_namespace/action_name",
     version = "1.2.3",
     description = "some description",
     steps = listOf(
@@ -72,7 +72,7 @@ object Steps {
 data class TeamCityActionBuilder(
   @JsonProperty(ActionSpecVersion.NAME)
   var specVersion: String? = null,
-  @JsonProperty(ActionName.NAME)
+  @JsonProperty(ActionCompositeName.NAME)
   var name: String? = null,
   @JsonProperty(ActionVersion.NAME)
   var version: String? = null,

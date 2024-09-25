@@ -40,7 +40,7 @@ class ParseInvalidActionTests(
         )
       ),
       listOf(
-        MissingValueProblem("name", "action name"),
+        MissingValueProblem("name", "the composite action name in the 'namespace/name' format"),
         MissingValueProblem("version", "action version"),
         EmptyValueProblem("description", "action description"),
         EmptyCollectionProblem("steps", "action steps"),
@@ -49,32 +49,19 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action without name`() {
+  fun `action without a composite name`() {
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(name = null)),
-      listOf(MissingValueProblem("name", "action name")),
+      listOf(
+        MissingValueProblem("name", "the composite action name in the 'namespace/name' format")
+      ),
     )
   }
 
   @Test
-  fun `action with non-null but empty name`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(name = "")),
-      listOf(EmptyValueProblem("name", "action name")),
-    )
-  }
-
-  @Test
-  fun `action with non-empty invalid name`() {
+  fun `action with the composite name in an invalid format`() {
     val invalidActionNamesProvider = arrayOf(
-      "-a",
-      "_a",
-      "a-",
-      "a_",
-      "a--a",
-      "a__a",
-      "a+a",
-      "абв"
+      "aaaaabbbbb", "/aaaaabbbbb", "aaaaabbbbb/", "/", "aaaaa/bbbbb/ccccc", "aaaaa//bbbbb", "aaaaa\\bbbbb"
     )
     invalidActionNamesProvider.forEach { actionName ->
       Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
@@ -82,8 +69,8 @@ class ParseInvalidActionTests(
         prepareActionYaml(someAction.copy(name = actionName)),
         listOf(
           InvalidPropertyValueProblem(
-            "The property <name> (action name) should only contain latin letters, numbers, dashes and underscores. " +
-                "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+            "The property <name> (the composite action name in the 'namespace/name' format) " +
+                    "should consist of namespace and name parts. Both parts should only contain latin letters, numbers, dashes and underscores."
           )
         ),
       )
@@ -91,10 +78,94 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action with too long name`() {
+  fun `action with an invalid namespace`() {
+    val invalidActionNamesProvider = arrayOf(
+      "-aaaaa/aaaaaa", "_aaaaa/aaaaaa", "aaaaaa-/aaaaa", "aaaaa_/aaaaa", "a--aa/aaaaa", "a__aa/aaaaa", "a+aaa/aaaaa", "абв23/aaaaa",
+    )
+    invalidActionNamesProvider.forEach { actionName ->
+      Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
+      assertProblematicPlugin(
+        prepareActionYaml(someAction.copy(name = actionName)),
+        listOf(
+          InvalidPropertyValueProblem(
+            "The property <namespace> (the first part of the composite `name` field) should only contain latin letters, "
+              + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
+              + "cannot contain several consecutive dashes and underscores."
+          )
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `action with an invalid name`() {
+    val invalidActionNamesProvider = arrayOf(
+      "aaaaaa/-aaaaa", "aaaaaa/_aaaaa", "aaaaaa/aaaaaa-", "aaaaaa/aaaaa_", "aaaaaa/aa--a", "aaaaaa/aa__a", "aaaaaa/aa+aa", "aaaaaa/абв23"
+    )
+    invalidActionNamesProvider.forEach { actionName ->
+      Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
+      assertProblematicPlugin(
+        prepareActionYaml(someAction.copy(name = actionName)),
+        listOf(
+          InvalidPropertyValueProblem(
+            "The property <name> (the second part of the composite `name` field) should only contain latin letters, "
+              + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
+              + "cannot contain several consecutive dashes and underscores."
+          )
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `action with a namespace that is too short`() {
     assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(name = randomAlphanumeric(31))),
-      listOf(TooLongValueProblem("name", "action name", 31, 30)),
+      prepareActionYaml(someAction.copy(name = "aaaa/${randomAlphanumeric(10)}")),
+      listOf(TooShortValueProblem(
+        propertyName = "namespace",
+        propertyDescription = "the first part of the composite `name` field",
+        currentLength = 4,
+        minAllowedLength = 5
+      )),
+    )
+  }
+
+  @Test
+  fun `action with a namespace that is too long`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(31)}/${randomAlphanumeric(10)}")),
+      listOf(TooLongValueProblem(
+        propertyName = "namespace",
+        propertyDescription = "the first part of the composite `name` field",
+        currentLength = 31,
+        maxAllowedLength = 30
+      )),
+    )
+  }
+
+  @Test
+  fun `action with a name that is too short`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(10)}/aaaa")),
+      listOf(TooShortValueProblem(
+        propertyName = "name",
+        propertyDescription = "the second part of the composite `name` field",
+        currentLength = 4,
+        minAllowedLength = 5
+      )),
+    )
+  }
+
+  @Test
+  fun `action with a name that is too long`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(name = "${randomAlphanumeric(10)}/${randomAlphanumeric(31)}")),
+      listOf(TooLongValueProblem(
+        propertyName = "name",
+        propertyDescription = "the second part of the composite `name` field",
+        currentLength = 31,
+        maxAllowedLength = 30
+      )),
     )
   }
 

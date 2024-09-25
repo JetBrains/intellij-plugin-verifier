@@ -17,6 +17,7 @@ data class TeamCityActionPlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val url: String? = null,
   override val changeNotes: String? = null,
+  val namespace: String,
   val specVersion: String,
   val yamlFile: PluginFile
 ) : Plugin

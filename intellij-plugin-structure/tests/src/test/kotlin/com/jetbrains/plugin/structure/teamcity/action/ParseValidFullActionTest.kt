@@ -19,7 +19,7 @@ class ParseValidFullActionTest(
     """
     ---
     spec-version: 1.0.0
-    name: simple-action
+    name: namespace/simple-action
     version: 1.2.3
     description: this is a simple action
     inputs:
@@ -118,7 +118,8 @@ class ParseValidFullActionTest(
       assertEquals(fileName, this.yamlFile.fileName)
       assertArrayEquals(actionYaml.toByteArray(), this.yamlFile.content)
       assertEquals("1.0.0", this.specVersion)
-      assertEquals("simple-action", this.pluginName)
+      assertEquals("namespace/simple-action", this.pluginName)
+      assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple action", this.description)
     }
