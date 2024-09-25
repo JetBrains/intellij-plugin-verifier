@@ -17,7 +17,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
-- Fix empty dotnet plugin name if title was empty string ([#1158](https://github.com/JetBrains/intellij-plugin-verifier/pull/1158))
+- Fix an empty dotnet plugin name if the title was an empty string ([#1158](https://github.com/JetBrains/intellij-plugin-verifier/pull/1158))
 
 ## 1.378 - 2024-09-19
 
