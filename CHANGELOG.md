@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.379 - 2024-09-25
+
+### Added
+
 - Don't verify that `com.intellij.languageBundle` extension point is internal and must be used by JetBrains only ([#1162](https://github.com/JetBrains/intellij-plugin-verifier/pull/1162))
 - Handle malformed annotation descriptors when using obfuscation ([MP-6950](https://youtrack.jetbrains.com/issue/MP-6950), [#1160](https://github.com/JetBrains/intellij-plugin-verifier/pull/1160))
 - In TeamCity Actions, support composite action names with namespaces ([#1159](https://github.com/JetBrains/intellij-plugin-verifier/pull/1159))
