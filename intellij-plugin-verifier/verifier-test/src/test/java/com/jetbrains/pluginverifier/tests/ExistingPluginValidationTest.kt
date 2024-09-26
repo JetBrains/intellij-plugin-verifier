@@ -496,7 +496,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `paid plugin is not built due to invalid release-version but such problem is filtered because it is an existing plugin`() {
-    val singleDigitReleaseVersion = 1
+    val singleDigitReleaseVersion = "1"
     val paidIdeaPlugin = paidIdeaPlugin(releaseVersion = singleDigitReleaseVersion)
     val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
     val result = buildPluginWithResult(problemResolver) {
@@ -516,7 +516,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
   @Test
   fun `existing paid plugin has release-version that does not match plugin version and this is an error`() {
-    val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "2.1", releaseVersion = 20)
+    val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "2.1", releaseVersion = "20")
     val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -553,7 +553,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
                          sinceBuild: String = "131.1",
                          untilBuild: String = "231.1",
                          description: String = "this description is looooooooooong enough",
-                         releaseVersion: Int = 20211) =
+                         releaseVersion: String = "20211") =
     ideaPlugin(pluginId, pluginName, pluginVersion, vendor, sinceBuild, untilBuild, description) +
       """
         <product-descriptor code="PTESTPLUGIN" release-date="20210818" release-version="$releaseVersion"/>
