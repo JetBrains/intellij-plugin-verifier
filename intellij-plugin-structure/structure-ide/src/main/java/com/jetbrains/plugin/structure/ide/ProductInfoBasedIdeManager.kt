@@ -191,7 +191,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
       val cp = it.getClasspaths().joinToString(", ")
       "Layout component '${it.name}' has some nonexistent 'classPath' elements: '$cp'"
     }
-    LOG.atDebug().log(logMsg)
+    LOG.atWarn().log(logMsg)
   }
 
   private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
