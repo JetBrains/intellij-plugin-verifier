@@ -96,6 +96,14 @@ abstract class BasePluginTest {
     assertContains(problems, T::class, message)
   }
 
+  protected inline fun <reified T : PluginProblem> PluginCreationResult<IdePlugin>.assertContainsWarning(message: String) {
+    val problems = when (this) {
+      is PluginCreationSuccess -> warnings
+      is PluginCreationFail -> errorsAndWarnings.filter { it.level == PluginProblem.Level.WARNING }
+    }
+    assertContains(problems, T::class, message)
+  }
+
   @Throws(AssertionError::class)
   protected fun assertNoProblems(problems: Collection<PluginProblem>) {
     with(problems) {
