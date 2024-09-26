@@ -534,6 +534,27 @@ class ExistingPluginValidationTest : BasePluginTest() {
       "For example, release version '20201' should match plugin version 2020.1.1")
   }
 
+  @Test
+  fun `existing paid plugin has release-version that is zero-bases (03)`() {
+    val paidIdeaPlugin = paidIdeaPlugin(pluginVersion = "0.3.333", releaseVersion = "03")
+    val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+    val result = buildPluginWithResult(problemResolver) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $paidIdeaPlugin
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    assertSuccess(result)
+    result.assertContainsWarning<ReleaseVersionWrongFormat>("Invalid plugin descriptor 'plugin.xml'. " +
+      "The <release-version> parameter (03) format is invalid. " +
+      "Ensure it is an integer with at least two digits.")
+  }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
