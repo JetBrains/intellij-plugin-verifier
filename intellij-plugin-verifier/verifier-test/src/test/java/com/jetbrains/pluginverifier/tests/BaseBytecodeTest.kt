@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
+import com.jetbrains.pluginverifier.tests.mocks.PluginSpec
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
@@ -192,6 +193,47 @@ abstract class BaseBytecodeTest {
     val javaPlugin = ide.bundledPlugins.find { it.pluginId == "com.intellij.java" }!!
     assertEquals("com.intellij.java", javaPlugin.pluginId)
     assertEquals(setOf("com.intellij.modules.java"), javaPlugin.definedModules)
+
+    return ide
+  }
+
+  internal fun buildIdeWithBundledPlugins(
+    bundledPlugins: List<PluginSpec> = emptyList(),
+    includeKotlinStdLib: Boolean = false,
+  ): Ide {
+    val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
+      file("build.txt", "IU-192.1")
+      dir("lib") {
+        zip("idea.jar") {
+          dir("META-INF") {
+            file("plugin.xml") {
+              """
+                <idea-plugin>
+                  <id>com.intellij</id>
+                  <name>IDEA CORE</name>
+                  <version>1.0</version>
+                  <module value="com.intellij.modules.all"/>                
+                </idea-plugin>
+                """.trimIndent()
+            }
+          }
+        }
+        if (includeKotlinStdLib) {
+          findKotlinStdLib().apply {
+            file(simpleName, this)
+          }
+        }
+      }
+      dir("plugins") {
+        bundledPlugins.forEach { plugin ->
+          plugin.build(this)
+        }
+      }
+    }
+
+    // Fast assert IDE is fine
+    val ide = IdeManager.createManager().createIde(ideaDirectory)
+    assertEquals("IU-192.1", ide.version.asString())
 
     return ide
   }
