@@ -9,7 +9,8 @@ internal fun ideaPlugin(pluginId: String = "someid",
                        vendor: String = "vendor",
                        sinceBuild: String = "131.1",
                        untilBuild: String = "231.1",
-                       description: String = "this description is looooooooooong enough") = """
+                       description: String = "this description is looooooooooong enough",
+                       additionalDepends: String = "") = """
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>someVersion</version>
@@ -18,6 +19,7 @@ internal fun ideaPlugin(pluginId: String = "someid",
     <change-notes>these change-notes are looooooooooong enough</change-notes>
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
     <depends>com.intellij.modules.platform</depends>
+    $additionalDepends
   """
 
 internal fun ContentBuilder.descriptor(header: String) {
