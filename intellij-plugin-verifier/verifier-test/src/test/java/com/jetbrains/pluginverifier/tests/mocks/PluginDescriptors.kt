@@ -22,6 +22,8 @@ internal fun ideaPlugin(pluginId: String = "someid",
     $additionalDepends
   """
 
+internal fun String.withRootElement(): String = "<idea-plugin>$this</idea-plugin>"
+
 internal fun ContentBuilder.descriptor(header: String) {
   dir("META-INF") {
     file("plugin.xml") {
