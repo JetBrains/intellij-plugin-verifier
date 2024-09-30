@@ -3,6 +3,9 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 import com.jetbrains.pluginverifier.tests.bytecode.Dumps
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
+import com.jetbrains.pluginverifier.tests.mocks.bundledPlugin
+import com.jetbrains.pluginverifier.tests.mocks.ideaPlugin
+import com.jetbrains.pluginverifier.tests.mocks.withRootElement
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -23,4 +26,29 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
     }
   }
 
+  @Test
+  fun `plugin uses JSON classes, JSON plugin is declared, but without any classes`() {
+    val jsonPluginId = "com.intellij.modules.json"
+    val jsonPlugin = bundledPlugin {
+      id = jsonPluginId
+      descriptorContent = ideaPlugin(
+        pluginId = jsonPluginId,
+        pluginName = "JSON",
+        vendor = "JetBrains s.r.o."
+      ).withRootElement()
+    }
+
+    val targetIde = buildIdeWithBundledPlugins(listOf(jsonPlugin))
+    assertEquals(2, targetIde.bundledPlugins.size)
+
+    assertVerified {
+      ide = targetIde
+      plugin = prepareUsage(pluginSpec, "JsonPluginUsage", Dumps.JsonPluginUsage())
+      kotlin = false
+    }.run {
+      with(compatibilityProblems) {
+        assertContains(this, PackageNotFoundProblem::class)
+      }
+    }
+  }
 }
