@@ -29,6 +29,7 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender.Size
 import net.bytebuddy.jar.asm.Label
 import net.bytebuddy.jar.asm.MethodVisitor
 import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -36,6 +37,7 @@ import org.objectweb.asm.Opcodes.*
 import java.lang.reflect.Modifier
 import java.lang.reflect.Type
 import java.util.*
+import kotlin.reflect.KClass
 
 abstract class BaseBytecodeTest {
   @Rule
@@ -284,5 +286,28 @@ abstract class BaseBytecodeTest {
 
     val implementation: Implementation
       get() = Implementation.Simple(this)
+  }
+
+  protected fun assertContains(
+    compatibilityProblems: Collection<CompatibilityProblem>,
+    compatibilityProblemClass: KClass<out CompatibilityProblem>,
+    fullDescription: String? = null
+  ) {
+    val problems = compatibilityProblems.filterIsInstance(compatibilityProblemClass.java)
+    if (problems.isEmpty()) {
+      fail("There are no compatibility problems of class [${compatibilityProblemClass.qualifiedName}]")
+      return
+    }
+    if (fullDescription == null) {
+      return
+    }
+    val problemsWithMessage = problems.filter { it.fullDescription == fullDescription }
+    if (problemsWithMessage.isEmpty()) {
+      fail("Compatibility problems has ${problems.size} problem(s) of class [${compatibilityProblemClass.qualifiedName}], " +
+        "but none has a full description '$fullDescription'. " +
+        "Found [" + problems.joinToString { it.fullDescription } + "]"
+      )
+      return
+    }
   }
 }
