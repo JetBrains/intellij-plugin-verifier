@@ -25,4 +25,14 @@ class DirectorySpec : ChildrenOwnerSpec {
       spec.generate(childFile)
     }
   }
+
+  override fun toString(): String {
+    return children.map { (name, content) ->
+      if (content is DirectorySpec) {
+        "$name: $content"
+      } else {
+        name
+      }
+    }.joinToString(prefix = "[", postfix = "]")
+  }
 }
