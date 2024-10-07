@@ -48,7 +48,7 @@ fun buildZipFileContent(content: ContentBuilder.() -> Unit): ContentSpec {
   return result
 }
 
-class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : ContentBuilder {
+private class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : ContentBuilder {
   override fun file(name: String) {
     file(name, "")
   }
@@ -79,87 +79,15 @@ class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : ContentBuilder
     when (pathElements.size) {
       0 -> throw IllegalArgumentException("Cannot have empty name")
       1 -> dir(pathElements.first(), content)
+      2 -> dir(pathElements.first()) {
+        dir(pathElements[1], content)
+      }
+
       else -> {
         val firstElement = pathElements.first()
-        // /home/jetbrains/data/
-        // first ->home
-        val w = pathElements.drop(1).windowed(2).reversed()
-        val tree = w.mapIndexed { i, (parent, child) ->
-          val childSpec = if (i == 0) {
-            SingleChildSpec(child, buildDirectoryContent(content))
-          } else {
-            SingleChildSpec(child)
-          }
-          val parentSpec = SingleChildSpec(parent, childSpec)
-          parentSpec
-        }
-
-        val tree2 = ArrayList(tree).apply { add(null) }
-        for (index in 0 until tree2.size - 1) {
-          val current = tree2[index] ?: continue
-          val next = tree2[index + 1]
-          if (next != null) {
-            val n = next.copy(child = current)
-            tree2[index + 1] = n
-          } else {
-            if (index + 1 == tree2.size - 1) {
-              /*
-              current.replaceChild(content)?.let {
-                tree2[index] = it
-              }
-
-               */
-            }
-          }
-        }
-        println(tree2)
-        addChild(firstElement, tree2.dropLast(1).last())
+        val rest = pathElements.drop(1)
+        addChild(firstElement, resolveDirs(rest, content))
       }
-    }
-  }
-
-  private fun SingleChildSpec.deepestChild(): SingleChildSpec? {
-    var c = this.child
-    var result: SingleChildSpec? = null
-    while (true) {
-      if (c is SingleChildSpec) {
-        result = c
-        c = c.child
-      } else {
-        break
-      }
-    }
-    return result
-  }
-
-  private fun SingleChildSpec.replaceChild(content: ContentBuilder.() -> Unit): SingleChildSpec? {
-    return when (child) {
-      is SingleChildSpec -> {
-        val newChild = child.copy(child = buildDirectoryContent(content))
-        copy(child = newChild)
-      }
-
-      is DirectorySpec -> {
-        copy(child = buildDirectoryContent(content))
-      }
-
-      else -> {
-        null
-      }
-    }
-  }
-
-  private data class SingleChildSpec(val name: String, val child: ContentSpec) : ContentSpec {
-    constructor(name: String) : this(name, DirectorySpec())
-
-    override fun generate(target: Path) {
-      target.createDir()
-      val childFile = target.resolve(name)
-      child.generate(childFile)
-    }
-
-    override fun toString(): String {
-      return "$name/$child"
     }
   }
 
@@ -183,5 +111,41 @@ class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : ContentBuilder
 
   private fun addChild(name: String, spec: ContentSpec) {
     result.addChild(name, spec)
+  }
+
+  private fun resolveDirs(pathElements: List<String>, content: ContentBuilder.() -> Unit): SingleChildSpec {
+    val parentAndChildPairs = pathElements.windowedPairs()
+    val directorySpecs = parentAndChildPairs.mapIndexed { i, (parent, child) ->
+      val childContent = if (i < parentAndChildPairs.lastIndex) DirectorySpec() else buildDirectoryContent(content)
+      SingleChildSpec(parent, child, childContent)
+    }
+    return buildHierarchy(directorySpecs)
+  }
+
+  private fun buildHierarchy(specs: List<SingleChildSpec>): SingleChildSpec = with(ArrayDeque(specs)) {
+    while (size > 1) {
+      val child = removeLast()
+      val parent = removeLast()
+      addLast(parent.copy(child = child))
+    }
+    first()
+  }
+
+  private fun List<String>.windowedPairs() = windowed(2) { ParentAndChild(it.first(), it.last()) }
+
+  private data class ParentAndChild(val parent: String, val child: String)
+
+  private data class SingleChildSpec(val name: String, val child: ContentSpec) : ContentSpec {
+    constructor(name: String, child: String, childContent: ContentSpec) : this(name, SingleChildSpec(child, childContent))
+
+    override fun generate(target: Path) {
+      target.createDir()
+      val childFile = target.resolve(name)
+      child.generate(childFile)
+    }
+
+    override fun toString(): String {
+      return "$name/$child"
+    }
   }
 }
