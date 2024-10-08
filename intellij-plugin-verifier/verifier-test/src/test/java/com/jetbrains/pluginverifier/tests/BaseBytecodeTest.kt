@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.tests.bytecode.Dumps.ComIntellijTasks_TaskRepositorySubtype
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
 import com.jetbrains.pluginverifier.tests.mocks.PluginSpec
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -242,6 +243,18 @@ abstract class BaseBytecodeTest {
         if (includeKotlinStdLib) {
           findKotlinStdLib().apply {
             file(simpleName, this)
+          }
+        }
+        /* A JAR with at least one file in the `com.intellij` package.
+          This mimics a regular IDE in order to align with unit tests.
+        */
+        zip("app.jar") {
+          dir("com") {
+            dir("intellij") {
+              dir("tasks") {
+                file("Task.class", ComIntellijTasks_TaskRepositorySubtype())
+              }
+            }
           }
         }
       }
