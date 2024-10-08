@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier
@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.analysis.ExtractedJsonPluginAnalyzer
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -55,6 +56,8 @@ class PluginVerifier(
 ) {
 
   private val structureProblemsResolver = KotlinCompatibilityModeProblemResolver()
+
+  private val extractedJsonPluginAnalyzer = ExtractedJsonPluginAnalyzer()
 
   fun loadPluginAndVerify(): PluginVerificationResult {
     pluginDetailsCache.getPluginDetailsCacheEntry(verificationDescriptor.checkedPlugin).use { cacheEntry ->
@@ -120,6 +123,8 @@ class PluginVerifier(
           )
         )
       ).verify(classesToCheck, context) {}
+
+      context.runAnalyzers()
 
       analyzeMissingClassesCausedByMissingOptionalDependencies(
         context.compatibilityProblems,
@@ -231,6 +236,18 @@ class PluginVerifier(
       }
     }
     return null
+  }
+
+  private fun PluginVerificationContext.runAnalyzers() {
+    if (verificationDescriptor is PluginVerificationDescriptor.IDE) {
+      val analyzedProblems = extractedJsonPluginAnalyzer.analyze(
+        verificationDescriptor.ide,
+        idePlugin,
+        compatibilityProblems
+      )
+      compatibilityProblems += analyzedProblems.addedProblems
+      compatibilityProblems -= analyzedProblems.removedProblems
+    }
   }
 
   private fun analyzeMissingClassesCausedByMissingOptionalDependencies(
