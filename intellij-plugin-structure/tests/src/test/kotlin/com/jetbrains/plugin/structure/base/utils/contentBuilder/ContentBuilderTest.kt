@@ -5,9 +5,7 @@ import com.google.common.jimfs.Jimfs
 import com.jetbrains.plugin.structure.base.utils.exists
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.streams.toList
 
 class ContentBuilderTest {
   @Test
@@ -15,12 +13,11 @@ class ContentBuilderTest {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
 
-      val resultPath = buildDirectory(rootDir) {
+      buildDirectory(rootDir) {
         dirs("jetbrains") {
           file("build.txt", "IU-243.12818.78")
         }
       }
-      Files.walk(resultPath).use { it.toList() }.run { println(this) }
       val expectedPath = jimFs.getPath("/jetbrains/build.txt")
       assertTrue(expectedPath.exists())
     }
@@ -57,12 +54,11 @@ class ContentBuilderTest {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
 
-      val resultPath = buildDirectory(rootDir) {
+      buildDirectory(rootDir) {
         dirs("jetbrains/ide/idea") {
           file("build.txt", "IU-243.12818.78")
         }
       }
-      Files.walk(resultPath).use { it.toList() }.run { println(this) }
       val expectedPath = jimFs.getPath("/jetbrains/ide/idea/build.txt")
       assertTrue(expectedPath.exists())
     }
@@ -73,12 +69,11 @@ class ContentBuilderTest {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
 
-      val resultPath = buildDirectory(rootDir) {
+      buildDirectory(rootDir) {
         dirs("jetbrains/products/ide/idea") {
           file("build.txt", "IU-243.12818.78")
         }
       }
-      Files.walk(resultPath).use { it.toList() }.run { println(this) }
       val expectedPath = jimFs.getPath("/jetbrains/products/ide/idea/build.txt")
       assertTrue(expectedPath.exists())
     }
@@ -89,12 +84,11 @@ class ContentBuilderTest {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
 
-      val resultPath = buildDirectory(rootDir) {
+      buildDirectory(rootDir) {
         dirs("dev/jetbrains/products/ide/idea") {
           file("build.txt", "IU-243.12818.78")
         }
       }
-      Files.walk(resultPath).use { it.toList() }.run { println(this) }
       val expectedPath = jimFs.getPath("/dev/jetbrains/products/ide/idea/build.txt")
       assertTrue(expectedPath.exists())
     }
@@ -122,14 +116,13 @@ class ContentBuilderTest {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
 
-      val resultPath = buildDirectory(rootDir) {
+      buildDirectory(rootDir) {
         dirs("idea/lib") {
           dir("rt") {
             file("servlet.jar")
           }
         }
       }
-      Files.walk(resultPath).use { it.toList() }.run { println(this) }
       val expectedPath = jimFs.getPath("/idea/lib/rt/servlet.jar")
       assertTrue(expectedPath.exists())
     }
