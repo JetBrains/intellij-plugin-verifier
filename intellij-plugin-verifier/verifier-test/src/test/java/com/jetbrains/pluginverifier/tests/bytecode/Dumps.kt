@@ -420,4 +420,34 @@ object Dumps {
 
     return classWriter.toByteArray()
   }
+
+  /**
+   * A `com.intellij.tasks.TaskRepositorySubtype` dump as of IU-242.21713.
+   *
+   */
+  fun ComIntellijTasks_TaskRepositorySubtype(): ByteArray = ClassWriter(0).apply {
+    visit(
+      V17,
+      ACC_PUBLIC or ACC_ABSTRACT or ACC_INTERFACE,
+      "com/intellij/tasks/TaskRepositorySubtype",
+      null,
+      "java/lang/Object",
+      null
+    )
+
+    visitMethod(ACC_PUBLIC or ACC_ABSTRACT, "getName", "()Ljava/lang/String;", null, null).apply {
+      visitEnd()
+    }
+    visitMethod(ACC_PUBLIC or ACC_ABSTRACT, "getIcon", "()Ljavax/swing/Icon;", null, null).apply {
+      visitEnd()
+    }
+
+    visitMethod(
+      ACC_PUBLIC or ACC_ABSTRACT, "createRepository", "()Lcom/intellij/tasks/TaskRepository;", null, null
+    ).apply {
+      visitEnd()
+    }
+
+    visitEnd()
+  }.toByteArray()
 }
