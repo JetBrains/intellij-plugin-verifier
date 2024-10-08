@@ -27,6 +27,32 @@ class ContentBuilderTest {
   }
 
   @Test
+  fun `single directory with empty content is properly constructed`() {
+    Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
+      val rootDir: Path = jimFs.rootDirectories.first()
+
+      buildDirectory(rootDir) {
+        dirs("jetbrains") { /* empty directory */ }
+      }
+      val expectedPath = jimFs.getPath("/jetbrains")
+      assertTrue(expectedPath.exists())
+    }
+  }
+
+  @Test
+  fun `directory with a subdirectory that contains an empty content is properly constructed`() {
+    Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
+      val rootDir: Path = jimFs.rootDirectories.first()
+
+      buildDirectory(rootDir) {
+        dirs("jetbrains/ide") { /* empty directory */ }
+      }
+      val expectedPath = jimFs.getPath("/jetbrains/ide")
+      assertTrue(expectedPath.exists())
+    }
+  }
+
+  @Test
   fun `directories are properly constructed`() {
     Jimfs.newFileSystem(Configuration.unix()).use { jimFs ->
       val rootDir: Path = jimFs.rootDirectories.first()
