@@ -13,8 +13,25 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+private const val JSON_PLUGIN_ID = "com.intellij.modules.json"
+
 class JsonPluginUsageTest : BaseBytecodeTest() {
   private val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.")
+
+  private val jsonPlugin
+    get() = bundledPlugin {
+      id = JSON_PLUGIN_ID
+      descriptorContent = ideaPlugin(
+        pluginId = JSON_PLUGIN_ID,
+        pluginName = "JSON",
+        vendor = "JetBrains s.r.o."
+      ).withRootElement()
+      classContentBuilder = {
+        dirs("com/intellij/json") {
+          file("JsonParserDefinition.class", JsonParserDefinition())
+        }
+      }
+    }
 
   @Test
   fun `plugin uses JSON classes but they are not available in the IDE`() {
@@ -32,16 +49,6 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
 
   @Test
   fun `plugin uses JSON classes, JSON plugin is declared, but without any classes`() {
-    val jsonPluginId = "com.intellij.modules.json"
-    val jsonPlugin = bundledPlugin {
-      id = jsonPluginId
-      descriptorContent = ideaPlugin(
-        pluginId = jsonPluginId,
-        pluginName = "JSON",
-        vendor = "JetBrains s.r.o."
-      ).withRootElement()
-    }
-
     val targetIde = buildIdeWithBundledPlugins(listOf(jsonPlugin))
     assertEquals(2, targetIde.bundledPlugins.size)
 
@@ -58,21 +65,6 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
 
   @Test
   fun `plugin uses JSON classes, JSON plugin is declared and includes classes`() {
-    val jsonPluginId = "com.intellij.modules.json"
-    val jsonPlugin = bundledPlugin {
-      id = jsonPluginId
-      descriptorContent = ideaPlugin(
-        pluginId = jsonPluginId,
-        pluginName = "JSON",
-        vendor = "JetBrains s.r.o."
-      ).withRootElement()
-      classContentBuilder = {
-        dirs("com/intellij/json") {
-          file("JsonParserDefinition.class", JsonParserDefinition())
-        }
-      }
-    }
-
     val targetIde = buildIdeWithBundledPlugins(bundledCorePlugins = listOf(jsonPlugin))
     assertEquals(2, targetIde.bundledPlugins.size)
 
