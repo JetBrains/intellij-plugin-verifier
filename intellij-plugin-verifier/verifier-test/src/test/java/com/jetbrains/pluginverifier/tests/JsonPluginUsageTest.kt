@@ -1,7 +1,13 @@
+/*
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.UndeclaredPluginDependencyProblem
 import com.jetbrains.pluginverifier.tests.bytecode.Dumps
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
 import com.jetbrains.pluginverifier.tests.mocks.bundledPlugin
@@ -21,6 +27,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
   private val jsonPlugin
     get() = bundledPlugin {
       id = JSON_PLUGIN_ID
+      artifactName = "json"
       descriptorContent = ideaPlugin(
         pluginId = JSON_PLUGIN_ID,
         pluginName = "JSON",
@@ -79,6 +86,36 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
     }
   }
 
+  @Test
+  fun `plugin uses JSON classes in the 242 IDE, but the JSON plugin dependency is not declared`() {
+    val targetIde = buildIdeWithBundledPlugins(
+      bundledPlugins = listOf(jsonPlugin),
+      productInfo = onlyJsonPluginProductInfoValue,
+      version = "IC-243.16128",
+      hasModuleDescriptors = true
+    )
+    assertEquals(2, targetIde.bundledPlugins.size)
+    targetIde.assertHasBundledPluginWithPath(Paths.get("plugins/json/lib/json.jar"))
+
+    assertVerified {
+      ide = targetIde
+      plugin = prepareUsage(pluginSpec, "JsonPluginUsage", Dumps.JsonPluginUsage())
+      kotlin = false
+    }.run {
+      with(compatibilityProblems) {
+        assertEquals(1, size)
+        assertContains(this, UndeclaredPluginDependencyProblem::class)
+      }
+    }
+  }
+
+  private fun Ide.assertHasBundledPluginWithPath(path: Path) {
+    val hasPlugin = bundledPlugins.any {
+      it.originalFile?.endsWith(path) ?: false
+    }
+    if (!hasPlugin) throw AssertionError("IDE does not contain plugin that has a path ending with '$path'")
+  }
+
   fun findAfterIdeaBuildClassPath(): Path {
     val directory = Paths.get("after-idea", "build", "classes", "java", "main")
     return if (directory.exists()) {
@@ -94,4 +131,26 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
       .let { Files.readAllBytes(it) }
   }
 
+  private val onlyJsonPluginProductInfoValue = """
+    {
+      "name": "IntelliJ IDEA",
+      "version": "2024.3",
+      "buildNumber": "243.16128",
+      "productCode": "IC",
+      "dataDirectoryName": "IntelliJIdea2024.3",
+      "svgIconPath": "bin/idea.svg",
+      "productVendor": "JetBrains",
+      "bundledPlugins": [],
+      "modules": [],
+      "layout": [
+        {
+          "name": "com.intellij.modules.json",
+          "kind": "plugin",
+          "classPath": [
+            "plugins/json/lib/json.jar"
+          ]
+        }            
+      ]
+    } 
+  """.trimIndent()
 }
