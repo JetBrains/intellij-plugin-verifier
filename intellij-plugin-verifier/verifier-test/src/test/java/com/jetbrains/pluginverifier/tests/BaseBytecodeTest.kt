@@ -198,20 +198,29 @@ abstract class BaseBytecodeTest {
   }
 
   /**
-   * Builds an instance of the IDE with specified bundled plugins and.
+   * Builds an instance of the IDE with specified bundled plugins.
    *
    * @param bundledPlugins List of plugins to include in the `plugins` directory.
    * @param bundledCorePlugins List of plugins to include in the `lib` directory of the IDE.
-   * @param includeKotlinStdLib whether to include the Kotlin standard library.
+   * @param includeKotlinStdLib Whether to include the Kotlin standard library.
+   * @param productInfo JSON contents of `product-info.json`
+   * @param version The version string of this IDE.
+   * @param hasModuleDescriptors If the `module-descriptors.jar` should be created as an empty file.
    * @return The created instance of the IDE.
    */
   internal fun buildIdeWithBundledPlugins(
     bundledPlugins: List<PluginSpec> = emptyList(),
     bundledCorePlugins: List<PluginSpec> = emptyList(),
     includeKotlinStdLib: Boolean = false,
+    productInfo: String? = null,
+    version: String = "IU-192.1",
+    hasModuleDescriptors: Boolean = false
   ): Ide {
     val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
-      file("build.txt", "IU-192.1")
+      file("build.txt", version)
+      productInfo?.let {
+        file("product-info.json", it)
+      }
       dir("lib") {
         zip("idea.jar") {
           dir("META-INF") {
@@ -241,11 +250,16 @@ abstract class BaseBytecodeTest {
           plugin.build(this)
         }
       }
+      if (hasModuleDescriptors) {
+        dir("modules") {
+          zip("module-descriptors.jar") { /* empty file */ }
+        }
+      }
     }
 
     // Fast assert IDE is fine
     val ide = IdeManager.createManager().createIde(ideaDirectory)
-    assertEquals("IU-192.1", ide.version.asString())
+    assertEquals(version, ide.version.asString())
 
     return ide
   }
