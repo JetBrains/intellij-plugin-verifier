@@ -197,8 +197,17 @@ abstract class BaseBytecodeTest {
     return ide
   }
 
+  /**
+   * Builds an instance of the IDE with specified bundled plugins and.
+   *
+   * @param bundledPlugins List of plugins to include in the `plugins` directory.
+   * @param bundledCorePlugins List of plugins to include in the `lib` directory of the IDE.
+   * @param includeKotlinStdLib whether to include the Kotlin standard library.
+   * @return The created instance of the IDE.
+   */
   internal fun buildIdeWithBundledPlugins(
     bundledPlugins: List<PluginSpec> = emptyList(),
+    bundledCorePlugins: List<PluginSpec> = emptyList(),
     includeKotlinStdLib: Boolean = false,
   ): Ide {
     val ideaDirectory = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
@@ -217,6 +226,9 @@ abstract class BaseBytecodeTest {
                 """.trimIndent()
             }
           }
+        }
+        bundledCorePlugins.forEach { plugin ->
+          plugin.buildJar(this)
         }
         if (includeKotlinStdLib) {
           findKotlinStdLib().apply {

@@ -72,6 +72,8 @@ internal class PluginSpec {
                     </idea-plugin>
                     """.trimIndent()
 
+  var classContentBuilder: (ContentBuilder.() -> Unit)? = null
+
   fun build(): ContentSpec = buildDirectoryContent {
     dir(id) {
       dir("lib") {
@@ -87,12 +89,17 @@ internal class PluginSpec {
   fun build(contentBuilder: ContentBuilder) = with(contentBuilder) {
     dir(id) {
       dir("lib") {
-        zip("$id.jar") {
-          dir("META-INF") {
-            file("plugin.xml", descriptorContent)
-          }
-        }
+        buildJar(this)
       }
+    }
+  }
+
+  internal fun buildJar(contentBuilder: ContentBuilder) = with(contentBuilder) {
+    zip("$id.jar") {
+      dir("META-INF") {
+        file("plugin.xml", descriptorContent)
+      }
+      classContentBuilder?.invoke(this)
     }
   }
 }
