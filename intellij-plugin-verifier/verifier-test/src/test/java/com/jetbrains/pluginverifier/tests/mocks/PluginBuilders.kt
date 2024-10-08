@@ -65,6 +65,11 @@ internal fun bundledPlugin(s: PluginSpec.() -> Unit): PluginSpec {
 internal class PluginSpec {
   var id: String = "simple-plugin"
 
+  /**
+   * Plugin artifact name. Mapped to directory name or JAR name (without `.jar` suffix).
+   */
+  var artifactName: String? = null
+
   var descriptorContent: String = """
                     <idea-plugin>
                       <id>$id</id>
@@ -74,10 +79,16 @@ internal class PluginSpec {
 
   var classContentBuilder: (ContentBuilder.() -> Unit)? = null
 
+  private val dirName: String
+    get() = artifactName?.let { return it } ?: id
+
+  private val jarName: String
+    get() = "$dirName.jar"
+
   fun build(): ContentSpec = buildDirectoryContent {
-    dir(id) {
+    dir(dirName) {
       dir("lib") {
-        zip("$id.jar") {
+        zip("${artifactName}.jar") {
           dir("META-INF") {
             file("plugin.xml", descriptorContent)
           }
@@ -87,7 +98,7 @@ internal class PluginSpec {
   }
 
   fun build(contentBuilder: ContentBuilder) = with(contentBuilder) {
-    dir(id) {
+    dir(dirName) {
       dir("lib") {
         buildJar(this)
       }
@@ -95,7 +106,7 @@ internal class PluginSpec {
   }
 
   internal fun buildJar(contentBuilder: ContentBuilder) = with(contentBuilder) {
-    zip("$id.jar") {
+    zip(jarName) {
       dir("META-INF") {
         file("plugin.xml", descriptorContent)
       }
