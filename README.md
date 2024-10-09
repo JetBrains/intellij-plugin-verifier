@@ -158,7 +158,7 @@ This command is used to check one or more plugins against one or more IDEs ([opt
 
 `<plugins>` is either `<plugin path>` or `'@<file>'` with a list of plugin paths to verify, separated by a newline.
 
-`<IDE>` is either a path to local IDE installation, or an IDE pattern (see bellow in the [common options](#common-options)) 
+`<IDE>` is either a path to local IDE installation, or an IDE pattern (see below in the [common options](#common-options)). 
 
 #### Specific options
 
