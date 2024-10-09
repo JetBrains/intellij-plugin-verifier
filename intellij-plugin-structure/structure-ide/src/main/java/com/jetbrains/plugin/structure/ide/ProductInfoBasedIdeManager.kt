@@ -44,6 +44,8 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::cl
 class ProductInfoBasedIdeManager : IdeManager() {
   private val productInfoParser = ProductInfoParser()
 
+  private val excludeMissingProductInfoLayoutComponents = true
+
   /**
    * Problem level remapping used for bundled plugins.
    */
@@ -79,27 +81,33 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
+    val layoutComponents = getLayoutComponents(idePath, productInfo)
+    val platformResourceResolver = getPlatformResourceResolver(layoutComponents)
+
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
     val pluginFactory = PluginFactory(::createPlugin)
 
-    val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
-      when (layoutComponent) {
-        is LayoutComponent.ModuleV2,
-        is LayoutComponent.ProductModuleV2 -> {
-          moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+    val moduleLoadingResults = layoutComponents
+      .map { it.layoutComponent }
+      .mapNotNull { layoutComponent ->
+        when (layoutComponent) {
+          is LayoutComponent.ModuleV2,
+          is LayoutComponent.ProductModuleV2 -> {
+            moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+          }
+
+          is LayoutComponent.Plugin -> {
+            pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+          }
+
+          is LayoutComponent.PluginAlias -> {
+            // References to plugin IDs that are already loaded in the other types of layout components
+            null
+          }
         }
-        is LayoutComponent.Plugin -> {
-          pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
-        is LayoutComponent.PluginAlias -> {
-          // References to plugin IDs that are already loaded in the other types of layout components
-          null
-        }
-      }
-    }.fold(LoadingResults(), LoadingResults::add)
+      }.fold(LoadingResults(), LoadingResults::add)
 
     logFailures(LOG, moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
@@ -111,12 +119,23 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
-  private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
-    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
-      if (it is LayoutComponent.Classpathable) {
-        getResourceResolver(it, idePath)
+  private fun getLayoutComponents(idePath: Path, productInfo: ProductInfo): LayoutComponents {
+    val layoutComponents = LayoutComponents.of(idePath, productInfo)
+    return if (excludeMissingProductInfoLayoutComponents) {
+      val (okComponents, failedComponents) = layoutComponents.partition { it.allClasspathsExist() }
+      logUnavailableClasspath(failedComponents)
+      LayoutComponents(okComponents)
+    } else {
+      layoutComponents
+    }
+  }
+
+  private fun getPlatformResourceResolver(layoutComponents: LayoutComponents): CompositeResourceResolver {
+    val resourceResolvers = layoutComponents.mapNotNull {
+      if (it.isClasspathable) {
+        getResourceResolver(it)
       } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
+        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it.layoutComponent)
         null
       }
     }
@@ -155,16 +174,24 @@ class ProductInfoBasedIdeManager : IdeManager() {
     return IdeVersion.createIdeVersion(versionString)
   }
 
-  private fun getResourceResolver(layoutComponent: LayoutComponent, idePath: Path): NamedResourceResolver? {
-    return if (layoutComponent is LayoutComponent.Classpathable) {
-      val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
-        val fullyQualifiedJarFile = idePath.resolve(jarPath)
-        NamedResourceResolver(layoutComponent.name + "#" + jarPath, JarFilesResourceResolver(listOf(fullyQualifiedJarFile)))
-      }
-      NamedResourceResolver(layoutComponent.name, CompositeResourceResolver(itemJarResolvers))
-    } else {
-      null
+  private fun getResourceResolver(layoutComponent: ResolvedLayoutComponent): NamedResourceResolver? {
+    if (!layoutComponent.isClasspathable) {
+      return null
     }
+    val itemJarResolvers = layoutComponent.resolveClasspaths().map {
+      NamedResourceResolver(
+        layoutComponent.name + "#" + it.relativePath, JarFilesResourceResolver(it.toList())
+      )
+    }
+    return NamedResourceResolver(layoutComponent.name, CompositeResourceResolver(itemJarResolvers))
+  }
+
+  private fun logUnavailableClasspath(failedComponents: List<ResolvedLayoutComponent>) {
+    val logMsg = failedComponents.joinToString("\n") {
+      val cp = it.getClasspaths().joinToString(", ")
+      "Layout component '${it.name}' has some nonexistent 'classPath' elements: '$cp'"
+    }
+    LOG.atWarn().log(logMsg)
   }
 
   private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
@@ -198,3 +225,51 @@ class ProductInfoBasedIdeManager : IdeManager() {
   }
 }
 
+private class LayoutComponents(val layoutComponents: List<ResolvedLayoutComponent>) : Iterable<ResolvedLayoutComponent> {
+  companion object {
+    fun of(idePath: Path, productInfo: ProductInfo): LayoutComponents {
+      val resolvedLayoutComponents = productInfo.layout
+        .map { ResolvedLayoutComponent(idePath, it) }
+      return LayoutComponents(resolvedLayoutComponents)
+    }
+  }
+
+  override fun iterator() = layoutComponents.iterator()
+}
+
+private data class IdeRelativePath(val idePath: Path, val relativePath: Path) {
+  val resolvedPath: Path? = idePath.resolve(relativePath)
+
+  val exists: Boolean
+    get() = resolvedPath?.exists() ?: false
+
+  fun toList(): List<Path> = if (resolvedPath != null) listOf(resolvedPath) else emptyList()
+}
+
+private data class ResolvedLayoutComponent(val idePath: Path, val layoutComponent: LayoutComponent) {
+  val name: String
+    get() = layoutComponent.name
+
+  fun getClasspaths(): List<Path> {
+    return if (layoutComponent is LayoutComponent.Classpathable) {
+      layoutComponent.getClasspath()
+    } else {
+      emptyList()
+    }
+  }
+
+  fun resolveClasspaths(): List<IdeRelativePath> {
+    return if (layoutComponent is LayoutComponent.Classpathable) {
+      layoutComponent.getClasspath().map { IdeRelativePath(idePath, it) }
+    } else {
+      emptyList()
+    }
+  }
+
+  fun allClasspathsExist(): Boolean {
+    return resolveClasspaths().all { it.exists }
+  }
+
+  val isClasspathable: Boolean
+    get() = layoutComponent is LayoutComponent.Classpathable
+}
