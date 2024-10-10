@@ -44,7 +44,7 @@ class ExtractedJsonPluginAnalyzerTest {
     problem as UndeclaredPluginDependencyProblem
     assertEquals(
       "Plugin 'com.intellij.modules.json' is not declared in the plugin descriptor as a dependency for " +
-        "class [com.intellij.json.JsonElementType]. " +
+        "class com.intellij.json.JsonElementType. " +
         "JSON support has been extracted to a separate plugin.",
       problem.fullDescription
     )
@@ -62,7 +62,7 @@ class ExtractedJsonPluginAnalyzerTest {
     problem as UndeclaredPluginDependencyProblem
     assertEquals(
       "Plugin 'com.intellij.modules.json' is not declared in the plugin descriptor as a dependency for " +
-        "class [com.intellij.json.JsonElementTypes]. " +
+        "class com.intellij.json.JsonElementTypes. " +
         "JSON support has been extracted to a separate plugin.",
       problem.fullDescription
     )
