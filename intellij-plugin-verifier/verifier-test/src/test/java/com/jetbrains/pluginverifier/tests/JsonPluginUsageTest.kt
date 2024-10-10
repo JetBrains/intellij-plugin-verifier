@@ -72,7 +72,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
 
   @Test
   fun `plugin uses JSON classes, JSON plugin is declared and includes classes`() {
-    val targetIde = buildIdeWithBundledPlugins(bundledCorePlugins = listOf(jsonPlugin))
+    val targetIde = buildIdeWithBundledPlugins(additionalCorePlugins = listOf(jsonPlugin))
     assertEquals(2, targetIde.bundledPlugins.size)
 
     assertVerified {
