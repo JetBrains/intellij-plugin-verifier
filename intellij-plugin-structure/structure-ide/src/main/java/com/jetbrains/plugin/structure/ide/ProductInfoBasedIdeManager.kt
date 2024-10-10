@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
+import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -79,7 +80,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
@@ -109,18 +110,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val corePluginManager =
       CorePluginManager(::createPlugin)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
-  }
-
-  private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
-    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
-      if (it is LayoutComponent.Classpathable) {
-        getResourceResolver(it, idePath)
-      } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
-        null
-      }
-    }
-    return CompositeResourceResolver(resourceResolvers)
   }
 
   private fun createModule(
