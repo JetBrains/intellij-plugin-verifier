@@ -19,11 +19,11 @@ data class UndeclaredPluginDependencyProblem(
 
   sealed class ApiElement {
     data class Class(val className: String) : ApiElement() {
-      override fun toString(): String = "class [$className]"
+      override fun toString(): String = "class $className"
     }
 
     data class Package(val packageName: String) : ApiElement() {
-      override fun toString(): String = "package [$packageName]"
+      override fun toString(): String = "package $packageName"
     }
   }
 }
