@@ -51,9 +51,10 @@ class ExtractedJsonPluginAnalyzerTest {
   }
 
   @Test
-  fun `class package references an undeclared JSON package`() {
+  fun `class references an another class that is not explicitly removed but the parent package is`() {
+    val explicitlyRemovedClassInGeneralPackage = "com.intellij.json.JsonLexer"
     val compatibilityProblems = mutableSetOf<CompatibilityProblem>(
-      ClassNotFoundProblem(ClassReference("com.intellij.json.JsonElementTypes".toBinaryClassName()), usage)
+      ClassNotFoundProblem(ClassReference(explicitlyRemovedClassInGeneralPackage.toBinaryClassName()), usage)
     )
     val problems = jsonPluginAnalyzer.analyze(targetIde, plugin, compatibilityProblems)
     assertEquals(1, problems.size)
@@ -62,7 +63,7 @@ class ExtractedJsonPluginAnalyzerTest {
     problem as UndeclaredPluginDependencyProblem
     assertEquals(
       "Plugin 'com.intellij.modules.json' is not declared in the plugin descriptor as a dependency for " +
-        "class com.intellij.json.JsonElementTypes. " +
+        "class com.intellij.json.JsonLexer. " +
         "JSON support has been extracted to a separate plugin.",
       problem.fullDescription
     )
