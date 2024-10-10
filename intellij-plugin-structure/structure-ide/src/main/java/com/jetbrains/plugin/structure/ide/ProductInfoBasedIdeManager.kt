@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
+import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -22,12 +23,9 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseExceptio
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
-import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
@@ -79,17 +77,13 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val layoutComponents = getLayoutComponents(idePath, productInfo)
-    val platformResourceResolver = getPlatformResourceResolver(layoutComponents)
-
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
     val pluginFactory = PluginFactory(::createPlugin)
 
-    val moduleLoadingResults = layoutComponents
-      .map { it.layoutComponent }
-      .mapNotNull { layoutComponent ->
+    val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
         when (layoutComponent) {
           is LayoutComponent.ModuleV2,
           is LayoutComponent.ProductModuleV2 -> {
@@ -115,29 +109,6 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     val corePluginManager =
       CorePluginManager(::createPlugin)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
-  }
-
-  private fun getLayoutComponents(idePath: Path, productInfo: ProductInfo): LayoutComponents {
-    val layoutComponents = LayoutComponents.of(idePath, productInfo)
-    return if (excludeMissingProductInfoLayoutComponents) {
-      val (okComponents, failedComponents) = layoutComponents.partition { it.allClasspathsExist() }
-      logUnavailableClasspath(failedComponents)
-      LayoutComponents(okComponents)
-    } else {
-      layoutComponents
-    }
-  }
-
-  private fun getPlatformResourceResolver(layoutComponents: LayoutComponents): CompositeResourceResolver {
-    val resourceResolvers = layoutComponents.mapNotNull {
-      if (it.isClasspathable) {
-        getResourceResolver(it)
-      } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it.layoutComponent)
-        null
-      }
-    }
-    return CompositeResourceResolver(resourceResolvers)
   }
 
   private fun createModule(
@@ -170,26 +141,6 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
       }
     }
     return IdeVersion.createIdeVersion(versionString)
-  }
-
-  private fun getResourceResolver(layoutComponent: ResolvedLayoutComponent): NamedResourceResolver? {
-    if (!layoutComponent.isClasspathable) {
-      return null
-    }
-    val itemJarResolvers = layoutComponent.resolveClasspaths().map {
-      NamedResourceResolver(
-        layoutComponent.name + "#" + it.relativePath, JarFilesResourceResolver(it.toList())
-      )
-    }
-    return NamedResourceResolver(layoutComponent.name, CompositeResourceResolver(itemJarResolvers))
-  }
-
-  private fun logUnavailableClasspath(failedComponents: List<ResolvedLayoutComponent>) {
-    val logMsg = failedComponents.joinToString("\n") {
-      val cp = it.getClasspaths().joinToString(", ")
-      "Layout component '${it.name}' has some nonexistent 'classPath' elements: '$cp'"
-    }
-    LOG.atWarn().log(logMsg)
   }
 
   private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
