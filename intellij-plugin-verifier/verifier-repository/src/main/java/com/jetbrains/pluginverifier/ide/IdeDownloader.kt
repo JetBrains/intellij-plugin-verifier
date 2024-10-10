@@ -4,7 +4,14 @@
 
 package com.jetbrains.pluginverifier.ide
 
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.deleteQuietly
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.extractTo
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
 import com.jetbrains.pluginverifier.repository.downloader.Downloader
@@ -53,7 +60,7 @@ class IdeDownloader : Downloader<AvailableIde> {
       archivedIde.extractTo(destinationDir)
       if (destinationDir.resolve("__MACOSX").isDirectory) {
         /**
-         * If this is a MacOS IDE, the root directory of extracted archive must contain
+         * If this is a macOS IDE, the root directory of extracted archive must contain
          * /
          *   __MACOS/
          *   AppCode.app/
@@ -71,7 +78,7 @@ class IdeDownloader : Downloader<AvailableIde> {
        * of `<build>.zip/<single>/...`
        * where the <single> is the only directory under .zip.
        *
-       * This also applies to MacOS IDEs where the Contents/ directory is at the top level.
+       * This also applies to macOS IDEs where the Contents/ directory is at the top level.
        */
       stripTopLevelDirectory(destinationDir)
       DownloadResult.Downloaded(destinationDir, "", true)

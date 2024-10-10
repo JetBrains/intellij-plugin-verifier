@@ -28,17 +28,17 @@ data class IgnoreCondition(
 
     /**
      * Parses [IgnoreCondition] from this [line], which must be in one of the following forms:
-     * 1) "<plugin-id>:<version>:<ignoring-pattern>"
-     * 2) "<plugin-id>:<ignoring-pattern>"
-     * 3) "<ignoring-pattern>"
+     * 1. `<ignoring-pattern>`
+     * 2. `<plugin-id>:<ignoring-pattern>`
+     * 3. `<plugin-id>:<version>:<ignoring-pattern>`.
      */
     fun parseCondition(line: String): IgnoreCondition {
       val tokens = line.split(":").map { it.trim() }
       val parseRegexp = { s: String -> Regex(s, RegexOption.IGNORE_CASE) }
-      return when {
-        tokens.size == 1 -> IgnoreCondition(null, null, parseRegexp(tokens[0]))
-        tokens.size == 2 -> IgnoreCondition(tokens[0], null, parseRegexp(tokens[1]))
-        tokens.size == 3 -> IgnoreCondition(tokens[0].takeIf { it.isNotEmpty() }, tokens[1].takeIf { it.isNotEmpty() }, parseRegexp(tokens[2]))
+      return when (tokens.size) {
+        1 -> IgnoreCondition(pluginId = null, version = null, parseRegexp(tokens[0]))
+        2 -> IgnoreCondition(tokens[0], version = null, parseRegexp(tokens[1]))
+        3 -> IgnoreCondition(tokens[0].takeIf(String::isNotEmpty), tokens[1].takeIf(String::isNotEmpty), parseRegexp(tokens[2]))
         else -> throw IllegalArgumentException("Incorrect problem ignoring line\n$line\n$USAGE")
       }
     }
