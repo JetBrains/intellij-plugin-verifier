@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
+import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -22,12 +23,9 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseExceptio
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
-import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
@@ -79,7 +77,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val platformResourceResolver = getPlatformResourceResolver(productInfo, idePath)
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
@@ -109,18 +107,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
     val corePluginManager =
       CorePluginManager(::createPlugin)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
-  }
-
-  private fun getPlatformResourceResolver(productInfo: ProductInfo, idePath: Path): CompositeResourceResolver {
-    val resourceResolvers = productInfo.layout.mapNotNull { it: LayoutComponent ->
-      if (it is LayoutComponent.Classpathable) {
-        getResourceResolver(it, idePath)
-      } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it)
-        null
-      }
-    }
-    return CompositeResourceResolver(resourceResolvers)
   }
 
   private fun createModule(
@@ -153,18 +139,6 @@ class ProductInfoBasedIdeManager : IdeManager() {
       }
     }
     return IdeVersion.createIdeVersion(versionString)
-  }
-
-  private fun getResourceResolver(layoutComponent: LayoutComponent, idePath: Path): NamedResourceResolver? {
-    return if (layoutComponent is LayoutComponent.Classpathable) {
-      val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
-        val fullyQualifiedJarFile = idePath.resolve(jarPath)
-        NamedResourceResolver(layoutComponent.name + "#" + jarPath, JarFilesResourceResolver(listOf(fullyQualifiedJarFile)))
-      }
-      NamedResourceResolver(layoutComponent.name, CompositeResourceResolver(itemJarResolvers))
-    } else {
-      null
-    }
   }
 
   private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
