@@ -207,25 +207,25 @@ Check `Kotlin` plugin against IDEA Ultimate 162.2032.8, 163.1024, and 163.7277:
 
     java -jar verifier-all.jar -runtime-dir /home/user/.jdks/corretto-11.0.8 check-plugin /tmp/Kotlin /tmp/IU-162.2032.8 /tmp/IU-163.1024 /tmp/IU-163.7277
 
-Check an individual plugin packaged as a ZIP file against IDEA Ultimate 162.2032.8 on MacOS:
+Check an individual plugin packaged as a ZIP file against IDEA Ultimate 162.2032.8 on macOS:
 
      java -jar verifier-all.jar check-plugin ~/counter/build/distributions/counter-12.0.0.zip /tmp/IU-162.2032.8/Contents
 
-Check all versions of plugin with ID `training` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS:
+Check all versions of plugin with ID `training` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on macOS:
 
     java -jar verifier-all.jar check-plugin training /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
 
-Check all versions of plugin with ID `training` and version `231.8770.31` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS:
+Check all versions of plugin with ID `training` and version `231.8770.31` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on macOS:
 
     java -jar verifier-all.jar check-plugin version:training:231.8770.31 /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
 
-Check a specific plugin update by its ID against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS. The update `#323705` corresponds to the plugin `training` with version version `231.8770.31`.
+Check a specific plugin update by its ID against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on macOS. The update `#323705` corresponds to the plugin `training` with version version `231.8770.31`.
 
     java -jar verifier-all.jar check-plugin '#323705' /tmp/idea-edu-2022.2.2/Contents tmp/PC-203.7717.81.app/Contents
 
 Note that the update ID is quoted to prevent shell mangling.
 
-Check a list of plugins specified in a plaintext file `jetbrains-plugins.txt` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on MacOS.
+Check a list of plugins specified in a plaintext file `jetbrains-plugins.txt` against IDEA Ultimate 162.2032.8 and PyCharm PC-203.7717.81 on macOS.
 
     java -jar verifier-all.jar check-plugin @jetbrains-plugins.txt /tmp/idea-edu-2022.2.2/Contents /tmp/PC-203.7717.81.app/Contents
 
