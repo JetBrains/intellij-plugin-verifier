@@ -338,5 +338,116 @@ object Dumps {
     return classWriter.toByteArray()
   }
 
+  @Suppress("TestFunctionName")
+  @Throws(Exception::class)
+  fun JsonPluginUsage(): ByteArray {
+    val classWriter = ClassWriter(0)
+    var methodVisitor: MethodVisitor
+    var annotationVisitor0: AnnotationVisitor
 
+    classWriter.visit(
+      V17,
+      ACC_PUBLIC or ACC_FINAL or ACC_SUPER,
+      "plugin/JsonPluginUsage",
+      null,
+      "java/lang/Object",
+      null
+    )
+
+    run {
+      annotationVisitor0 = classWriter.visitAnnotation("Lcom/intellij/openapi/components/Service;", true)
+      run {
+        val annotationVisitor1 = annotationVisitor0.visitArray("value")
+        annotationVisitor1.visitEnum(null, "Lcom/intellij/openapi/components/Service\$Level;", "PROJECT")
+        annotationVisitor1.visitEnd()
+      }
+      annotationVisitor0.visitEnd()
+    }
+    run {
+      annotationVisitor0 = classWriter.visitAnnotation("Lkotlin/Metadata;", true)
+      annotationVisitor0.visit("mv", intArrayOf(2, 0, 0))
+      annotationVisitor0.visit("k", 1)
+      annotationVisitor0.visit("xi", 48)
+      run {
+        val annotationVisitor1 = annotationVisitor0.visitArray("d1")
+        annotationVisitor1.visit(
+          null,
+          "\u0000\u0012\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0002\u0008\u0003\n\u0002\u0010\u0002\n\u0000\u0008\u0007\u0018\u00002\u00020\u0001B\u0007\u00a2\u0006\u0004\u0008\u0002\u0010\u0003J\u0006\u0010\u0004\u001a\u00020\u0005\u00a8\u0006\u0006"
+        )
+        annotationVisitor1.visitEnd()
+      }
+      run {
+        val annotationVisitor1 = annotationVisitor0.visitArray("d2")
+        annotationVisitor1.visit(null, "Lplugin/JsonPluginUsage;")
+        annotationVisitor1.visit(null, "")
+        annotationVisitor1.visit(null, "<init>")
+        annotationVisitor1.visit(null, "()V")
+        annotationVisitor1.visit(null, "serve")
+        annotationVisitor1.visit(null, "")
+        annotationVisitor1.visit(null, "kotlin-plugin-idea-plugin")
+        annotationVisitor1.visitEnd()
+      }
+      annotationVisitor0.visitEnd()
+    }
+    classWriter.visitInnerClass(
+      "com/intellij/openapi/components/Service\$Level",
+      "com/intellij/openapi/components/Service",
+      "Level",
+      ACC_PUBLIC or ACC_FINAL or ACC_STATIC or ACC_ENUM
+    )
+
+    run {
+      methodVisitor = classWriter.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null)
+      methodVisitor.visitCode()
+      methodVisitor.visitVarInsn(ALOAD, 0)
+      methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false)
+      methodVisitor.visitInsn(RETURN)
+      methodVisitor.visitMaxs(1, 1)
+      methodVisitor.visitEnd()
+    }
+    run {
+      methodVisitor = classWriter.visitMethod(ACC_PUBLIC or ACC_FINAL, "serve", "()V", null, null)
+      methodVisitor.visitCode()
+      methodVisitor.visitTypeInsn(NEW, "com/intellij/json/JsonParserDefinition")
+      methodVisitor.visitInsn(DUP)
+      methodVisitor.visitMethodInsn(INVOKESPECIAL, "com/intellij/json/JsonParserDefinition", "<init>", "()V", false)
+      methodVisitor.visitInsn(POP)
+      methodVisitor.visitInsn(RETURN)
+      methodVisitor.visitMaxs(2, 1)
+      methodVisitor.visitEnd()
+    }
+    classWriter.visitEnd()
+
+    return classWriter.toByteArray()
+  }
+
+  /**
+   * A `com.intellij.tasks.TaskRepositorySubtype` dump as of IU-242.21713.
+   *
+   */
+  fun ComIntellijTasks_TaskRepositorySubtype(): ByteArray = ClassWriter(0).apply {
+    visit(
+      V17,
+      ACC_PUBLIC or ACC_ABSTRACT or ACC_INTERFACE,
+      "com/intellij/tasks/TaskRepositorySubtype",
+      null,
+      "java/lang/Object",
+      null
+    )
+
+    visitMethod(ACC_PUBLIC or ACC_ABSTRACT, "getName", "()Ljava/lang/String;", null, null).apply {
+      visitEnd()
+    }
+    visitMethod(ACC_PUBLIC or ACC_ABSTRACT, "getIcon", "()Ljavax/swing/Icon;", null, null).apply {
+      visitEnd()
+    }
+
+    visitMethod(
+      ACC_PUBLIC or ACC_ABSTRACT, "createRepository", "()Lcom/intellij/tasks/TaskRepository;", null, null
+    ).apply {
+      visitEnd()
+    }
+
+    visitEnd()
+  }.toByteArray()
 }
