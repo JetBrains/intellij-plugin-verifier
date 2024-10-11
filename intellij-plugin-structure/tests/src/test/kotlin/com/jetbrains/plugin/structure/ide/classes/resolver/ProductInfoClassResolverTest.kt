@@ -1,9 +1,11 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -12,6 +14,8 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipOutputStream
+
+private const val IDEA_ULTIMATE_2024_2 = "IU-242.18071.24"
 
 class ProductInfoClassResolverTest {
   @Rule
@@ -27,24 +31,33 @@ class ProductInfoClassResolverTest {
       val productInfoJsonPath = ideRoot.resolve("product-info.json")
       copyResource("/ide/productInfo/product-info_mini.json", productInfoJsonPath)
 
+      ideRoot.resolve("build.txt").writeText(IDEA_ULTIMATE_2024_2)
+
       createEmptyIdeFiles()
     }
   }
 
   @Test
   fun `resolver is created from an IDE instance`() {
-    val ide = MockIde(IdeVersion.createIdeVersion("IU-242.18071.24"), ideRoot)
+    val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot)
     val resolver = ProductInfoClassResolver.of(ide)
     with(resolver.layoutComponentResolverNames) {
       assertEquals(5, size)
-      assertEquals(listOf(
-        "Git4Idea",
-        "com.intellij",
-        "intellij.copyright.vcs",
-        "intellij.execution.process.elevation",
-        "intellij.java.featuresTrainer"
-      ), this)
+      assertEquals(
+        listOf(
+          "Git4Idea",
+          "com.intellij",
+          "intellij.copyright.vcs",
+          "intellij.execution.process.elevation",
+          "intellij.java.featuresTrainer"
+        ), this
+      )
     }
+  }
+
+  @Test
+  fun `resolver supports 242+ IDE`() {
+    assertTrue(ProductInfoClassResolver.supports(ideRoot))
   }
 
   private fun copyResource(resource: String, targetFile: Path) {
