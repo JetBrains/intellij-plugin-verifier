@@ -30,7 +30,7 @@ class ProductInfoClassResolver(
   productInfo: ProductInfo, private val ide: Ide, override val readMode: ReadMode = FULL
 ) : Resolver() {
 
-  val layoutComponentResolvers =  productInfo.layout
+  val layoutComponentResolvers: List<NamedResolver> =  productInfo.layout
     .mapNotNull(::getResourceResolver)
 
   private val delegateResolver = layoutComponentResolvers.asResolver()
