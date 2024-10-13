@@ -30,12 +30,10 @@ class ProductInfoClassResolver(
   productInfo: ProductInfo, private val ide: Ide, override val readMode: ReadMode = FULL
 ) : Resolver() {
 
-  val layoutComponentResolverNames = mutableListOf<String>()
-
-  private val delegateResolver = productInfo.layout
+  val layoutComponentResolvers =  productInfo.layout
     .mapNotNull(::getResourceResolver)
-    .map(::resolveDescriptions)
-    .asResolver()
+
+  private val delegateResolver = layoutComponentResolvers.asResolver()
 
   private fun getResourceResolver(layoutComponent: LayoutComponent): NamedResolver? {
     return if (layoutComponent is LayoutComponent.Classpathable) {
@@ -53,8 +51,6 @@ class ProductInfoClassResolver(
     }
   }
 
-  private fun resolveDescriptions(resolver: NamedResolver) =
-    resolver.apply { layoutComponentResolverNames.add(resolver.name) }
 
   override val allClasses get() = delegateResolver.allClasses
 
