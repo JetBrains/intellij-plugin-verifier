@@ -21,6 +21,7 @@ import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledCom
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isCompiledUltimate
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributionIde
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
+import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.ide.getRepositoryLibrariesJars
 import java.nio.file.Path
 
@@ -33,7 +34,7 @@ object IdeResolverCreator {
   fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver {
     val idePath = ide.idePath
     return when {
-      isDistributionIde(idePath) -> getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory(ide))
+      isDistributionIde(idePath) -> getIdeResolverFromDistribution(ide, readMode)
       isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode, ide)
       else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
@@ -52,6 +53,14 @@ object IdeResolverCreator {
     val antJars = libDirectory.resolve("ant").resolve("lib").listJars()
     val moduleJars = libDirectory.resolve("modules").listJars()
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars + moduleJars, readMode, parentOrigin))
+  }
+
+  private fun getIdeResolverFromDistribution(ide: Ide, readMode: Resolver.ReadMode): Resolver = with(ide) {
+    return if (ProductInfoClassResolver.supports(idePath)) {
+      ProductInfoClassResolver.of(ide, readMode)
+    } else {
+      getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory(ide))
+    }
   }
 
   //TODO: Resolver created this way contains all libraries declared in the project,
