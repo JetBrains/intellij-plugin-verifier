@@ -41,7 +41,7 @@ class ProductInfoClassResolverTest {
   fun `resolver is created from an IDE instance`() {
     val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot)
     val resolver = ProductInfoClassResolver.of(ide)
-    with(resolver.layoutComponentResolverNames) {
+    with(resolver.layoutComponentResolvers.map { it.name }) {
       assertEquals(5, size)
       assertEquals(
         listOf(
