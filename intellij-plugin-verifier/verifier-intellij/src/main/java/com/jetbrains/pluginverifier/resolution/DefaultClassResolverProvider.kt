@@ -8,6 +8,10 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
+import com.jetbrains.plugin.structure.ide.classes.resolver.PluginDependencyFilteredResolver
+import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
@@ -43,7 +47,7 @@ class DefaultClassResolverProvider(
       val resolvers = listOf(
         pluginResolver,
         ideDescriptor.jdkDescriptor.jdkResolver,
-        ideDescriptor.ideResolver,
+        getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor),
         dependenciesClassResolver
       ) + additionalClassResolvers
 
@@ -53,6 +57,14 @@ class DefaultClassResolverProvider(
   }
 
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
+
+  private fun getIdeResolver(plugin: IdePlugin, ideDescriptor: IdeDescriptor): Resolver {
+    return if (ideDescriptor.ide is ProductInfoBasedIde && ideDescriptor.ideResolver is ProductInfoClassResolver) {
+      PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver)
+    } else {
+      ideDescriptor.ideResolver
+    }
+  }
 
   private fun createPluginResolver(pluginDependency: PluginDetails): Resolver =
     when (pluginDependency.pluginInfo) {

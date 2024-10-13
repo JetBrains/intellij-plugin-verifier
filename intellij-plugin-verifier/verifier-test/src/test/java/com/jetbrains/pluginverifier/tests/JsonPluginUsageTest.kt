@@ -109,6 +109,29 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
     }
   }
 
+  @Test
+  fun `plugin uses JSON classes in the 243 IDE and declares JSON plugin dependency`() {
+    val targetIde = buildIdeWithBundledPlugins(
+      bundledPlugins = listOf(jsonPlugin),
+      productInfo = onlyJsonPluginProductInfoValue,
+      version = "IC-243.16128",
+      hasModuleDescriptors = true
+    )
+    assertEquals(2, targetIde.bundledPlugins.size)
+    targetIde.assertHasBundledPluginWithPath(Paths.get("plugins/json/lib/json.jar"))
+
+
+    val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.", dependencies = listOf(JSON_PLUGIN_ID))
+
+    assertVerified {
+      ide = targetIde
+      plugin = prepareUsage(pluginSpec, "JsonPluginUsage", Dumps.JsonPluginUsage())
+      kotlin = false
+    }.run {
+      assertNoCompatibilityProblems()
+    }
+  }
+
   private fun Ide.assertHasBundledPluginWithPath(path: Path) {
     val hasPlugin = bundledPlugins.any {
       it.originalFile?.endsWith(path) ?: false
