@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
-import com.jetbrains.plugin.structure.base.problems.SemverComponentLimitExceeded
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -27,6 +26,31 @@ class ParseInvalidActionTests(
 
   override fun createManager(extractDirectory: Path): TeamCityActionPluginManager =
     TeamCityActionPluginManager.createManager(extractDirectory)
+
+  @Test
+  fun `action with incorrect YAML`() {
+    assertProblematicPlugin(
+      prepareActionYaml("some random text"),
+      listOf(ParseYamlProblem),
+    )
+  }
+
+  @Test
+  fun `action with unknown property in YAML`() {
+    val actionYaml = """
+        name: namespace/action_name
+        unknown_property: this property should fail deserialization
+        version: 1.2.3
+        description: abc
+        steps:
+          - name: step_1
+            script: echo "kek"
+        """.trimIndent()
+    assertProblematicPlugin(
+      prepareActionYaml(actionYaml),
+      listOf(UnknownPropertyProblem("unknown_property")),
+    )
+  }
 
   @Test
   fun `action with multiple problems`() {
@@ -166,65 +190,6 @@ class ParseInvalidActionTests(
         currentLength = 31,
         maxAllowedLength = 30
       )),
-    )
-  }
-
-  @Test
-  fun `action without spec_version`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(specVersion = null)),
-      listOf(MissingValueProblem("spec-version", "the version of action specification")),
-    )
-  }
-
-  @Test
-  fun `invalid semver spec versions`() {
-    val invalidSpecVersions = listOf(
-      "invalid_version", "-test", "+12354", "^1.2.3", "1.1.x", "1.2.*", "~1.2.3"
-    )
-    invalidSpecVersions.forEach { specVersion ->
-      assertProblematicPlugin(
-        prepareActionYaml(someAction.copy(specVersion = specVersion)),
-        listOf(
-          InvalidSemverFormat(
-            "spec-version",
-            specVersion
-          )
-        )
-      )
-    }
-  }
-
-  @Test
-  fun `invalid spec version limits`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(specVersion = "10000")),
-      listOf(SemverComponentLimitExceeded(
-        componentName = "major",
-        versionName = "spec-version",
-        version = "10000",
-        limit = TeamCityActionSpecVersionUtils.MAX_MAJOR_VALUE - 1
-      ))
-    )
-
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(specVersion = "0.10000")),
-      listOf(SemverComponentLimitExceeded(
-        componentName = "minor",
-        versionName = "spec-version",
-        version = "0.10000",
-        limit = TeamCityActionSpecVersionUtils.VERSION_MINOR_LENGTH - 1
-      ))
-    )
-
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(specVersion = "0.0.10000")),
-      listOf(SemverComponentLimitExceeded(
-        componentName = "patch",
-        versionName = "spec-version",
-        version = "0.0.10000",
-        limit = TeamCityActionSpecVersionUtils.VERSION_PATCH_LENGTH - 1
-      ))
     )
   }
 
@@ -497,11 +462,15 @@ class ParseInvalidActionTests(
     )
   }
 
-  private fun prepareActionYaml(actionBuilder: TeamCityActionBuilder) =
-    buildZipFile(temporaryFolder.newFile("plugin-${UUID.randomUUID()}.zip")) {
-      val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
-      file("action.yaml") {
-        mapper.writeValueAsString(actionBuilder)
-      }
+  private fun prepareActionYaml(actionBuilder: TeamCityActionBuilder): Path {
+    val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+    val actionYaml = mapper.writeValueAsString(actionBuilder)
+    return prepareActionYaml(actionYaml)
+  }
+
+  private fun prepareActionYaml(actionYaml: String): Path {
+    return buildZipFile(temporaryFolder.newFile("plugin-${UUID.randomUUID()}.zip")) {
+      file("action.yaml") { actionYaml }
     }
+  }
 }

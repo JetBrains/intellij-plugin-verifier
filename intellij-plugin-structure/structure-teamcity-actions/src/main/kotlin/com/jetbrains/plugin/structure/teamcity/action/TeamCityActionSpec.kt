@@ -1,11 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity.action
 
 object TeamCityActionSpec {
-  object ActionSpecVersion {
-    const val NAME = "spec-version"
-    const val DESCRIPTION = "the version of action specification"
-  }
-
   object ActionCompositeName {
     const val NAME = "name"
     const val DESCRIPTION = "the composite action name in the 'namespace/name' format"

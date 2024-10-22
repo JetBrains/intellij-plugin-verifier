@@ -69,26 +69,6 @@ class ParseValidActionTests(
   }
 
   @Test
-  fun `parse action with loose semver spec version`() {
-    val validVersions = listOf(
-      "1", "1.2", "1.2.3", "1.2-test", "1.2.3-test+12333"
-    )
-    validVersions.forEach { specVersion ->
-      createPluginSuccessfully(prepareActionYaml(someAction.copy(specVersion = specVersion)))
-    }
-  }
-
-  @Test
-  fun `parse action with spec version limits`() {
-    val validVersions = listOf(
-      "9999", "0.9999", "0.0.9999", "9999.9999.9999"
-    )
-    validVersions.forEach { specVersion ->
-      createPluginSuccessfully(prepareActionYaml(someAction.copy(specVersion = specVersion)))
-    }
-  }
-
-  @Test
   fun `parse action when non-archived YAML file is provided`() {
     val yaml = temporaryFolder.newFile("action.yaml")
     val action = someAction.copy()

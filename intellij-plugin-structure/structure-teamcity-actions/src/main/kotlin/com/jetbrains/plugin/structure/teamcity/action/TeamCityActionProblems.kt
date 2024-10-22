@@ -10,6 +10,10 @@ object ParseYamlProblem : InvalidPropertyProblem() {
   override val message = "The action specification should follow valid YAML syntax."
 }
 
+data class UnknownPropertyProblem(val propertyName: String) : InvalidPropertyProblem() {
+  override val message = "Unknown property <$propertyName>."
+}
+
 class InvalidPropertyValueProblem(override val message: String) : InvalidPropertyProblem()
 
 class MissingValueProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {

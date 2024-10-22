@@ -17,7 +17,7 @@ object TeamCityActionSpecVersionUtils {
     }
   }
 
-  fun getSemverFromString(specVersion: String): Semver {
-    return Semver(specVersion, Semver.SemverType.LOOSE)
+  fun getSemverFromString(version: String): Semver {
+    return Semver(version, Semver.SemverType.LOOSE)
   }
 }
