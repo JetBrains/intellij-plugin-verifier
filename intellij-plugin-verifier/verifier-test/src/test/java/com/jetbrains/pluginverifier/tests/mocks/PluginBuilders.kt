@@ -13,7 +13,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import org.junit.Assert.assertEquals
 import java.nio.file.Path
 
-internal data class IdeaPluginSpec(val id: String, val vendor: String)
+internal data class IdeaPluginSpec(val id: String, val vendor: String, val dependencies: List<String> = emptyList())
 
 internal fun Path.buildIdePlugin(pluginContentBuilder: (ContentBuilder).() -> Unit): IdePlugin {
   val pluginFile = buildZipFile(zipFile = this) {
