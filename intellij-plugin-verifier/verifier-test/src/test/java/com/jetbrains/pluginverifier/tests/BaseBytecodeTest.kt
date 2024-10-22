@@ -286,6 +286,8 @@ abstract class BaseBytecodeTest {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
       pluginClassesContentBuilder()
 
+      val additionalDepends = ideaPluginSpec.dependencies.joinToString("\n") { "<depends>$it</depends>" }
+
       dir("META-INF") {
         file("plugin.xml") {
           """
@@ -298,6 +300,7 @@ abstract class BaseBytecodeTest {
               <change-notes>these change-notes are looooooooooong enough</change-notes>
               <idea-version since-build="131.1"/>
               <depends>com.intellij.modules.java</depends>
+              $additionalDepends
             </idea-plugin>
             """.trimIndent()
         }
@@ -391,6 +394,13 @@ abstract class BaseBytecodeTest {
         "Found [" + problems.joinToString { it.fullDescription } + "]"
       )
       return
+    }
+  }
+
+  @Throws(AssertionError::class)
+  protected fun PluginVerificationResult.Verified.assertNoCompatibilityProblems() = with(compatibilityProblems) {
+    if (isNotEmpty()) {
+      fail("Expected no problems, but got $size problem(s): " + joinToString { it.fullDescription })
     }
   }
 }
