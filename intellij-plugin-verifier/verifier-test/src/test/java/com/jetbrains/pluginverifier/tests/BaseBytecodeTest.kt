@@ -293,7 +293,7 @@ abstract class BaseBytecodeTest {
               <id>${ideaPluginSpec.id}</id>
               <name>someName</name>
               <version>someVersion</version>
-              ""<vendor email="vendor.com" url="url">${ideaPluginSpec.vendor}</vendor>""
+              <vendor email="vendor.com" url="url">${ideaPluginSpec.vendor}</vendor>
               <description>this description is looooooooooong enough</description>
               <change-notes>these change-notes are looooooooooong enough</change-notes>
               <idea-version since-build="131.1"/>
