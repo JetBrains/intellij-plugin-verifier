@@ -87,7 +87,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin uses JSON classes in the 242 IDE, but the JSON plugin dependency is not declared`() {
+  fun `plugin uses JSON classes in the 243 IDE, but the JSON plugin dependency is not declared`() {
     val targetIde = buildIdeWithBundledPlugins(
       bundledPlugins = listOf(jsonPlugin),
       productInfo = onlyJsonPluginProductInfoValue,
