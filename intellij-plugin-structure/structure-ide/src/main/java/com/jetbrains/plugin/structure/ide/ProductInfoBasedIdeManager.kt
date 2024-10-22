@@ -70,7 +70,7 @@ class ProductInfoBasedIdeManager : IdeManager() {
     }
     val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
-    return IdeImpl(idePath, ideVersion, corePlugin + plugins)
+    return ProductInfoBasedIde(idePath, ideVersion, corePlugin + plugins, productInfo)
   }
 
   private fun readPlugins(
