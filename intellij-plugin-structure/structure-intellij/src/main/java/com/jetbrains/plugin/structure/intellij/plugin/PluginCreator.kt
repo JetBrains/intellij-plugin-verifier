@@ -287,7 +287,7 @@ internal class PluginCreator private constructor(
     // dependencies from `<depends>`
     dependencies += bean.dependenciesV1.map { depBean ->
       PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
-        registerOptionalDependency(it, depBean)
+        registerIfOptionalDependency(it, depBean)
       }
     }
     // dependencies from `<dependencies>`
@@ -945,7 +945,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  fun registerOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
+  fun registerIfOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
     if (pluginDependency.isOptional && dependencyBean.configFile != null) {
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
