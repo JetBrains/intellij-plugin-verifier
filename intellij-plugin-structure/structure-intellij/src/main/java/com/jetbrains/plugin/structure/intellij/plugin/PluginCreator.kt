@@ -173,20 +173,14 @@ internal class PluginCreator private constructor(
   internal val resolvedProblems: List<PluginProblem>
     get() = problemResolver.classify(plugin, problems)
 
-  private fun isIncluding(pluginDependency: PluginDependency) =
-    plugin.dependencies.map { it.id }.contains(pluginDependency.id)
-
   fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       // Content module should be in v2 model
       if (pluginCreationResult.plugin.isV2) {
         val module = pluginCreationResult.plugin
-        module.dependencies.forEach { pluginDependency ->
-          if (!isIncluding(pluginDependency)) {
-            plugin.dependencies += pluginDependency
-          }
-        }
+
+        plugin += module.dependencies
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
         plugin.definedModules.add(moduleName)
 
@@ -915,6 +909,12 @@ internal class PluginCreator private constructor(
 
     val sinceBuild = versionBean.sinceBuild
     validateSinceBuild(sinceBuild)
+  }
+
+  private operator fun IdePluginImpl.plusAssign(additionalDependencies: List<PluginDependency>) {
+    additionalDependencies
+      .filter { dependency -> dependencies.none { it.id == dependency.id } }
+      .forEach { dependencies += it }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
