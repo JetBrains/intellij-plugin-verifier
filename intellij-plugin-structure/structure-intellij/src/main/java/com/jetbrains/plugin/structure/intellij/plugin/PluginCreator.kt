@@ -285,20 +285,12 @@ internal class PluginCreator private constructor(
     val modulePrefix = "com.intellij.modules."
 
     // dependencies from `<depends>`
-    for (dependencyBean in bean.dependenciesV1) {
-      val id = dependencyBean.dependencyId
-      val isModule = id.startsWith(modulePrefix)
-      val isOptional = dependencyBean.isOptional
-      val dependency = PluginDependencyImpl(id, isOptional, isModule)
-      dependencies += dependency
-
-      if (isOptional && dependencyBean.configFile != null) {
-        //V2 dependency configs can be located only in root
-        optionalDependenciesConfigFiles[dependency] =
-          if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
+    dependencies += bean.dependenciesV1.map { depBean ->
+      PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
+        registerOptionalDependency(it, depBean)
       }
     }
-
+    // dependencies from `<dependencies>`
     dependencies += bean.dependentModules.map { PluginDependencyImpl(it.moduleName, false, true) }
     dependencies += bean.dependentPlugins.map { PluginDependencyImpl(it.dependencyId, false, it.isModule) }
 
@@ -950,6 +942,13 @@ internal class PluginCreator private constructor(
         LOG.debug("Plugin '${context.id}' has $size error(s): $errorMsg")
       }
       true
+    }
+  }
+
+  fun registerOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
+    if (pluginDependency.isOptional && dependencyBean.configFile != null) {
+      optionalDependenciesConfigFiles[pluginDependency] =
+        if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
     }
   }
 }

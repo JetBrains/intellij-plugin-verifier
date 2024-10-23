@@ -24,3 +24,6 @@ internal val PluginDependenciesPluginBean.isModule: Boolean
 internal val PluginDependencyBean.isOptional: Boolean
    get() = optional ?: false
 
+internal val PluginDependencyBean.isModule: Boolean
+  get() = dependencyId?.startsWith(INTELLIJ_MODULE_PREFIX) == true
+
