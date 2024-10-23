@@ -284,20 +284,18 @@ internal class PluginCreator private constructor(
 
     val modulePrefix = "com.intellij.modules."
 
-    if (bean.dependencies != null) {
-      for (dependencyBean in bean.dependencies) {
-        if (dependencyBean.dependencyId != null) {
-          val isModule = dependencyBean.dependencyId.startsWith(modulePrefix)
-          val isOptional = java.lang.Boolean.TRUE == dependencyBean.optional
-          val dependency = PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule)
-          dependencies += dependency
+    // dependencies from `<depends>`
+    for (dependencyBean in bean.dependenciesV1) {
+      val id = dependencyBean.dependencyId
+      val isModule = id.startsWith(modulePrefix)
+      val isOptional = dependencyBean.isOptional
+      val dependency = PluginDependencyImpl(id, isOptional, isModule)
+      dependencies += dependency
 
-          if (dependency.isOptional && dependencyBean.configFile != null) {
-            //V2 dependency configs can be located only in root
-            optionalDependenciesConfigFiles[dependency] =
-              if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
-          }
-        }
+      if (isOptional && dependencyBean.configFile != null) {
+        //V2 dependency configs can be located only in root
+        optionalDependenciesConfigFiles[dependency] =
+          if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
       }
     }
 
@@ -968,6 +966,13 @@ internal class PluginCreator private constructor(
     }
   }
 
+  private val PluginDependencyBean.isOptional: Boolean
+    get() = optional ?: false
+
+  private val PluginBean.dependenciesV1: List<PluginDependencyBean>
+    get() = dependencies
+      ?.filter { it.dependencyId != null }
+      ?: emptyList()
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {
