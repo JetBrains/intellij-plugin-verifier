@@ -173,19 +173,18 @@ internal class PluginCreator private constructor(
   internal val resolvedProblems: List<PluginProblem>
     get() = problemResolver.classify(plugin, problems)
 
+  private fun isIncluding(pluginDependency: PluginDependency) =
+    plugin.dependencies.map { it.id }.contains(pluginDependency.id)
+
   fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       // Content module should be in v2 model
       if (pluginCreationResult.plugin.isV2) {
         val module = pluginCreationResult.plugin
-        // TODO: should we distinguish if it's module or plugin dependency
-        // Module dependencies are required for module but optional for plugin
         module.dependencies.forEach { pluginDependency ->
-          // no need to add already existing dependency
-          if (!plugin.dependencies.map { it.id }.contains(pluginDependency.id)) {
-            val moduleDependency = PluginDependencyImpl(pluginDependency.id, true, pluginDependency.isModule)
-            plugin.dependencies += moduleDependency
+          if (!isIncluding(pluginDependency)) {
+            plugin.dependencies += pluginDependency
           }
         }
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
@@ -291,8 +290,8 @@ internal class PluginCreator private constructor(
       }
     }
     // dependencies from `<dependencies>`
-    dependencies += bean.dependentModules.map { PluginDependencyImpl(it.moduleName, false, true) }
-    dependencies += bean.dependentPlugins.map { PluginDependencyImpl(it.dependencyId, false, it.isModule) }
+    dependencies += bean.dependentModules.map { ModuleV2Dependency(it.moduleName) }
+    dependencies += bean.dependentPlugins.map { PluginV2Dependency(it.dependencyId) }
 
     if (bean.pluginContent != null) {
       val modules = bean.pluginContent.flatMap { it.modules }

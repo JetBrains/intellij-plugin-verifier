@@ -3,12 +3,17 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -196,12 +201,12 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     )
 
     assertEquals(
-      listOf(false, false),
+      listOf(true, false),
       moduleDependencies.map { it.isOptional }
     )
 
     assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("intellij.clouds.docker.remoteRun"))
-    assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))
+    assertTrue(plugin.dependencies.filterNot { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))
 
 
     assertEquals(
@@ -224,13 +229,19 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertEquals(5, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
-      PluginDependencyImpl("intellij.module.dependency", false, false),
-      PluginDependencyImpl("mandatoryDependencyV2", false, false),
-      PluginDependencyImpl("com.intellij.modules.mandatoryDependencyV2", false, true),
-      PluginDependencyImpl("intellij.clouds.docker.remoteRun", true, false),
-      PluginDependencyImpl("com.intellij.copyright", true, false),
+      ModuleV2Dependency("intellij.module.dependency"),
+      PluginV2Dependency("mandatoryDependencyV2"),
+      PluginV2Dependency("com.intellij.modules.mandatoryDependencyV2"),
+      ModuleV2Dependency("intellij.clouds.docker.remoteRun"),
+      PluginV2Dependency("com.intellij.copyright"),
     )
     assertEquals(expectedDependencies, plugin.dependencies)
+
+    val expectedOptionalDependencies = listOf(
+      ModuleV2Dependency("intellij.module.dependency"),
+      ModuleV2Dependency("intellij.clouds.docker.remoteRun")
+    )
+    assertEquals(expectedOptionalDependencies, plugin.dependencies.filter { it.isOptional })
   }
 
   private fun checkPluginContents(plugin: IdePluginImpl) {
@@ -276,4 +287,24 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     )
   }
 
+  private fun <T> assertEquals(expected: List<T>, actual: List<T>) {
+    if (expected.size != actual.size) {
+      fail("size mismatch. expected:<${expected.size}> but was:<${actual.size}>")
+    } else {
+      val mismatches = expected.mapIndexedNotNull { index, t ->
+        if (expected[index] != actual[index]) {
+          Triple(index, expected[index], actual[index])
+        } else {
+          null
+        }
+      }
+      if (mismatches.isNotEmpty()) {
+        val mismatchesString =
+          mismatches.joinToString(separator = ", ") { (index, expected, actual) ->
+            "[$index]: \"$expected\" != \"$actual\""
+          }
+        fail("expected:<$expected> but was:<$$mismatchesString>")
+      }
+    }
+  }
 }
