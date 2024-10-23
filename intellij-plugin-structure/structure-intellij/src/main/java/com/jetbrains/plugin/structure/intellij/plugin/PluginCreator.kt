@@ -299,21 +299,8 @@ internal class PluginCreator private constructor(
       }
     }
 
-    if (bean.dependenciesV2 != null) {
-      for (dependencyBeanV2 in bean.dependenciesV2.modules) {
-        if (dependencyBeanV2.moduleName != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.moduleName, false, true)
-          dependencies += dependency
-        }
-      }
-      for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
-        if (dependencyBeanV2.dependencyId != null) {
-          val isModule = dependencyBeanV2.dependencyId.startsWith(modulePrefix)
-          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, isModule)
-          dependencies += dependency
-        }
-      }
-    }
+    dependencies += bean.dependentModules.map { PluginDependencyImpl(it.moduleName, false, true) }
+    dependencies += bean.dependentPlugins.map { PluginDependencyImpl(it.dependencyId, false, it.isModule) }
 
     if (bean.pluginContent != null) {
       val modules = bean.pluginContent.flatMap { it.modules }
@@ -965,14 +952,6 @@ internal class PluginCreator private constructor(
       true
     }
   }
-
-  private val PluginDependencyBean.isOptional: Boolean
-    get() = optional ?: false
-
-  private val PluginBean.dependenciesV1: List<PluginDependencyBean>
-    get() = dependencies
-      ?.filter { it.dependencyId != null }
-      ?: emptyList()
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {
