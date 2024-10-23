@@ -18,7 +18,6 @@ class ParseValidFullActionTest(
   private val actionYaml =
     """
     ---
-    spec-version: 1.0.0
     name: namespace/simple-action
     version: 1.2.3
     description: this is a simple action

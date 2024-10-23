@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.teamcity.action
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
@@ -18,7 +20,12 @@ import java.nio.file.Paths
 class TeamCityActionPluginManager
 private constructor(private val extractDirectory: Path) : PluginManager<TeamCityActionPlugin> {
 
-  private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+  private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule().apply {
+    // We fail on unknown properties to minimize the chance that we improperly calculate the specification version of an uploaded action.
+    // Since the action's properties are used to calculate its specification version,
+    // omitting any of the recipe's properties from calculation can lead to an error in calculation.
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+  }
 
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TeamCityActionPluginManager::class.java)
@@ -81,6 +88,9 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     val descriptor = try {
       val yamlContent = yamlPath.readText()
       objectMapper.readValue(yamlContent, TeamCityActionDescriptor::class.java)
+    } catch (e: UnrecognizedPropertyException) {
+      LOG.warn("Failed to parse TeamCity Action. Encountered unknown property '${e.propertyName}'", e)
+      return PluginCreationFail(UnknownPropertyProblem(e.propertyName))
     } catch (e: Exception) {
       LOG.warn("Failed to parse TeamCity Action", e)
       return PluginCreationFail(ParseYamlProblem)
@@ -97,7 +107,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginName = this.name,
         description = this.description!!,
         pluginVersion = this.version!!,
-        specVersion = this.specVersion!!,
+        specVersion = getSpecVersion(),
         yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
         namespace = TeamCityActionSpec.ActionCompositeName.getNamespace(this.name)!!
       )
@@ -105,6 +115,9 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     return PluginCreationSuccess(plugin, validationResult)
   }
 }
+
+// Always 1.0.0 for now
+private fun getSpecVersion(): String = "1.0.0"
 
 private fun fileFormatError(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> =
   PluginCreationFail(IncorrectPluginFile(pluginFile.simpleName, "ZIP archive or YAML file"))

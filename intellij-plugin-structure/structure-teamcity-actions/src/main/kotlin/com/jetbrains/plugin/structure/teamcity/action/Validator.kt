@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.SemverComponentLimitExceeded
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDefault
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDescription
@@ -14,7 +13,6 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSpecVersion
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepScript
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith
@@ -25,8 +23,6 @@ import com.vdurmont.semver4j.SemverException
 
 internal fun validateTeamCityAction(descriptor: TeamCityActionDescriptor) = sequence {
   validateName(descriptor.name)
-
-  validateSpecVersion(descriptor.specVersion, ActionSpecVersion.NAME, ActionSpecVersion.DESCRIPTION)
 
   validateExistsAndNotEmpty(descriptor.version, ActionVersion.NAME, ActionVersion.DESCRIPTION)
   validateSemver(descriptor.version, ActionVersion.NAME)
@@ -291,58 +287,6 @@ private suspend fun SequenceScope<PluginProblem>.validateSemver(
     }
   }
   return null
-}
-
-private suspend fun SequenceScope<PluginProblem>.validateSpecVersion(
-  version: String?,
-  propertyName: String,
-  propertyDescription: String
-) {
-  validateExistsAndNotEmpty(version, propertyName, propertyDescription)
-  val semver = validateSemver(version, propertyName) ?: return
-
-  validateSemverComponentLimits(
-    component = semver.major,
-    componentName = "major",
-    limit = TeamCityActionSpecVersionUtils.MAX_MAJOR_VALUE,
-    propertyName = propertyName,
-    propertyValue = semver.originalValue
-  )
-  validateSemverComponentLimits(
-    component = semver.minor,
-    componentName = "minor",
-    limit = TeamCityActionSpecVersionUtils.VERSION_MINOR_LENGTH,
-    propertyName = propertyName,
-    propertyValue = semver.originalValue
-  )
-  validateSemverComponentLimits(
-    component = semver.patch,
-    componentName = "patch",
-    limit = TeamCityActionSpecVersionUtils.VERSION_PATCH_LENGTH,
-    propertyName = propertyName,
-    propertyValue = semver.originalValue
-  )
-}
-
-private suspend fun SequenceScope<PluginProblem>.validateSemverComponentLimits(
-  component: Int?,
-  componentName: String,
-  limit: Int,
-  propertyName: String,
-  propertyValue: String
-) {
-  if (component == null) return
-
-  if (component >= limit) {
-    yield(
-      SemverComponentLimitExceeded(
-        componentName = componentName,
-        versionName = propertyName,
-        version = propertyValue,
-        limit = limit - 1
-      )
-    )
-  }
 }
 
 private suspend fun SequenceScope<PluginProblem>.validateBooleanIfExists(

@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionC
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirements
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSpecVersion
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepParams
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepScript
@@ -22,10 +21,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionS
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSteps
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionVersion
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class TeamCityActionDescriptor(
-  @JsonProperty(ActionSpecVersion.NAME)
-  val specVersion: String? = null,
   @JsonProperty(ActionCompositeName.NAME)
   val name: String? = null,
   @JsonProperty(ActionVersion.NAME)
