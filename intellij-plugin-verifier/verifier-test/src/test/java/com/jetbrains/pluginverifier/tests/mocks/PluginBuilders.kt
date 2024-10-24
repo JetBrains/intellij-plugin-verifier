@@ -2,7 +2,9 @@ package com.jetbrains.pluginverifier.tests.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentSpec
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectoryContent
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
@@ -11,7 +13,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import org.junit.Assert.assertEquals
 import java.nio.file.Path
 
-internal data class IdeaPluginSpec(val id: String, val vendor: String)
+internal data class IdeaPluginSpec(val id: String, val vendor: String, val dependencies: List<String> = emptyList())
 
 internal fun Path.buildIdePlugin(pluginContentBuilder: (ContentBuilder).() -> Unit): IdePlugin {
   val pluginFile = buildZipFile(zipFile = this) {
@@ -52,4 +54,63 @@ internal fun Path.buildCoreIde(): Ide {
   val ide = IdeManager.createManager().createIde(ideaDirectory)
   assertEquals("IU-192.1", ide.version.asString())
   return ide
+}
+
+internal fun bundledPlugin(s: PluginSpec.() -> Unit): PluginSpec {
+  val builder = PluginSpec()
+  s(builder)
+  return builder
+}
+
+internal class PluginSpec {
+  var id: String = "simple-plugin"
+
+  /**
+   * Plugin artifact name. Mapped to directory name or JAR name (without `.jar` suffix).
+   */
+  var artifactName: String? = null
+
+  var descriptorContent: String = """
+                    <idea-plugin>
+                      <id>$id</id>
+                      <module value="com.intellij.modules.all" />
+                    </idea-plugin>
+                    """.trimIndent()
+
+  var classContentBuilder: (ContentBuilder.() -> Unit)? = null
+
+  private val dirName: String
+    get() = artifactName?.let { return it } ?: id
+
+  private val jarName: String
+    get() = "$dirName.jar"
+
+  fun build(): ContentSpec = buildDirectoryContent {
+    dir(dirName) {
+      dir("lib") {
+        zip("${artifactName}.jar") {
+          dir("META-INF") {
+            file("plugin.xml", descriptorContent)
+          }
+        }
+      }
+    }
+  }
+
+  fun build(contentBuilder: ContentBuilder) = with(contentBuilder) {
+    dir(dirName) {
+      dir("lib") {
+        buildJar(this)
+      }
+    }
+  }
+
+  internal fun buildJar(contentBuilder: ContentBuilder) = with(contentBuilder) {
+    zip(jarName) {
+      dir("META-INF") {
+        file("plugin.xml", descriptorContent)
+      }
+      classContentBuilder?.invoke(this)
+    }
+  }
 }
