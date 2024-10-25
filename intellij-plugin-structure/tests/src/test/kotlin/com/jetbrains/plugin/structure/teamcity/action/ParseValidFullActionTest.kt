@@ -88,9 +88,8 @@ class ParseValidFullActionTest(
       - name: step 1
         with: runner/maven
         params:
-          pomLocation: pom.xml
+          pom-location: pom.xml
           goals: build
-          one more param: one more value
       - script: echo "step 2 output"
         name: step 2
       - name: step 3

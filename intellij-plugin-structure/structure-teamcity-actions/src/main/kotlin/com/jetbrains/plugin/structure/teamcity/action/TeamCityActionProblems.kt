@@ -54,4 +54,31 @@ class TooShortValueProblem(
       "The current number of characters is $currentLength."
 }
 
+data class UnsupportedRunnerProblem(
+  val runnerName: String,
+  val supportedRunners: Collection<String>,
+) : InvalidPropertyProblem() {
+  override val message = "Unsupported runner $runnerName. Supported runners: ${supportedRunners.joinToString(", ")}"
+}
+
+data class UnsupportedRunnerParamsProblem(
+  val runnerName: String,
+  val unsupportedParams: Collection<String>,
+  val supportedParams: Collection<String>,
+) : InvalidPropertyProblem() {
+  override val message: String
+    get() {
+      check(supportedParams.isNotEmpty())
+      val paramsPrefix = when (unsupportedParams.size) {
+        1 -> """Parameter "${unsupportedParams.first()}" is"""
+        else -> "Parameters ${unsupportedParams.joinUsingDoubleQuotes()} are"
+      }
+      return "$paramsPrefix not supported by $runnerName runner. " +
+          "Supported parameters: ${supportedParams.joinUsingDoubleQuotes()}"
+    }
+
+  private fun Collection<String>.joinUsingDoubleQuotes() =
+    joinToString(prefix = "\"", separator = "\", \"", postfix = "\"")
+}
+
 class PropertiesCombinationProblem(override val message: String) : InvalidPropertyProblem()

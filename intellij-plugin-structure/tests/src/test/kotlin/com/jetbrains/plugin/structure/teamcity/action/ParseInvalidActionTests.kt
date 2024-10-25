@@ -15,10 +15,11 @@ import com.jetbrains.plugin.structure.teamcity.action.Inputs.someSelectTextInput
 import com.jetbrains.plugin.structure.teamcity.action.Requirements.someExistsRequirement
 import com.jetbrains.plugin.structure.teamcity.action.Steps.someScriptStep
 import com.jetbrains.plugin.structure.teamcity.action.Steps.someWithStep
+import org.junit.Assert
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 
 class ParseInvalidActionTests(
   fileSystemType: FileSystemType,
@@ -420,16 +421,6 @@ class ParseInvalidActionTests(
   }
 
   @Test
-  fun `action with too long 'with' property for action step`() {
-    assertProblematicPlugin(
-      prepareActionYaml(someAction.copy(steps = listOf(someWithStep.copy(with = "runner/" + randomAlphanumeric(94))))),
-      listOf(
-        TooLongValueProblem("with", "runner or action reference", 101, 100)
-      )
-    )
-  }
-
-  @Test
   fun `action with too long 'script' property for action step`() {
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(steps = listOf(someScriptStep.copy(script = randomAlphanumeric(50_001))))),
@@ -449,6 +440,46 @@ class ParseInvalidActionTests(
               "starting with one of the following prefixes: runner/, action/"
         )
       )
+    )
+  }
+
+  @Test
+  fun `action with unknown runner`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(steps = listOf(someWithStep.copy(with = "runner/unknown-runner")))),
+      listOf(UnsupportedRunnerProblem("unknown-runner", allowedRunnerToAllowedParams.keys))
+    )
+  }
+
+  @Test
+  fun `action with one unknown runner parameter`() {
+    val runner = "maven"
+    val allowedParams = allowedRunnerToAllowedParams[runner]!!
+    val step = someWithStep.copy(with = "runner/$runner", params = mapOf("unknownParam" to "val", "path" to "somePath"))
+    val result = assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(steps = listOf(step))),
+      listOf(UnsupportedRunnerParamsProblem(runner, listOf("unknownParam"), allowedParams))
+    )
+    Assert.assertEquals(
+      "Parameter \"unknownParam\" is not supported by $runner runner. " +
+          "Supported parameters: ${allowedParams.joinUsingDoubleQuotes()}",
+      result.errorsAndWarnings.first().message,
+    )
+  }
+
+  @Test
+  fun `action with multiple unknown runner parameters`() {
+    val runner = "gradle"
+    val allowedParams = allowedRunnerToAllowedParams[runner]!!
+    val step = someWithStep.copy(with = "runner/$runner", params = mapOf("unknown1" to "val", "unknown2" to "val"))
+    val result = assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(steps = listOf(step))),
+      listOf(UnsupportedRunnerParamsProblem(runner, listOf("unknown1", "unknown2"), allowedParams))
+    )
+    Assert.assertEquals(
+      """Parameters "unknown1", "unknown2" are not supported by $runner runner. """ +
+          "Supported parameters: ${allowedParams.joinUsingDoubleQuotes()}",
+      result.errorsAndWarnings.first().message,
     )
   }
 
@@ -473,4 +504,7 @@ class ParseInvalidActionTests(
       file("action.yaml") { actionYaml }
     }
   }
+
+  private fun Collection<String>.joinUsingDoubleQuotes() =
+    joinToString(prefix = "\"", separator = "\", \"", postfix = "\"")
 }
