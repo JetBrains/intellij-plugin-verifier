@@ -28,6 +28,12 @@ class ParseValidFullActionTest(
           default: a default text value
           required: false
           description: a description for the text input
+      - some boolean input:
+          type: boolean
+          default: true
+      - some number input:
+          type: number
+          default: 100
       - some select input:
           type: select
           label: select input
@@ -37,9 +43,9 @@ class ParseValidFullActionTest(
           default: first select option
           required: true
           description: description for select input
-      - some boolean input:
-          type: boolean
-          default: false
+      - some password input:
+          type: password
+          default: qwerty
     requirements:
       - requirement 0:
           type: exists
@@ -96,8 +102,10 @@ class ParseValidFullActionTest(
         with: action/name@1.2.3
         params:
           text-input: passed text parameter value
-          select-input: first select option
           boolean-input: true
+          number-input: 123
+          select-input: first select option
+          password-input: asdad
     """.trimIndent()
 
   @Test

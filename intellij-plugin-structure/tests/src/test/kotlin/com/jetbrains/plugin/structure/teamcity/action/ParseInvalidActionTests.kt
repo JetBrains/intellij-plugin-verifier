@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.action.Actions.someAction
 import com.jetbrains.plugin.structure.teamcity.action.Inputs.someActionTextInput
 import com.jetbrains.plugin.structure.teamcity.action.Inputs.someBooleanTextInput
+import com.jetbrains.plugin.structure.teamcity.action.Inputs.someNumberInput
 import com.jetbrains.plugin.structure.teamcity.action.Inputs.someSelectTextInput
 import com.jetbrains.plugin.structure.teamcity.action.Requirements.someExistsRequirement
 import com.jetbrains.plugin.structure.teamcity.action.Steps.someScriptStep
@@ -261,7 +262,7 @@ class ParseInvalidActionTests(
     val input = someActionTextInput.copy(type = "wrongType")
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(inputs = listOf(mapOf("input_name" to input)))),
-      listOf(InvalidPropertyValueProblem("Wrong action input type: wrongType. Supported values are: text, boolean, select"))
+      listOf(InvalidPropertyValueProblem("Wrong action input type: wrongType. Supported values are: text, boolean, number, select, password"))
     )
   }
 
@@ -271,6 +272,15 @@ class ParseInvalidActionTests(
     assertProblematicPlugin(
       prepareActionYaml(someAction.copy(inputs = listOf(mapOf("input_name" to input)))),
       listOf(InvalidBooleanProblem("required", "indicates whether the input is required"))
+    )
+  }
+
+  @Test
+  fun `action with incorrect number input`() {
+    val input = someNumberInput.copy(defaultValue = "notANumber")
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(inputs = listOf(mapOf("input_name" to input)))),
+      listOf(InvalidNumberProblem("default", "action input default value"))
     )
   }
 
@@ -436,8 +446,21 @@ class ParseInvalidActionTests(
       prepareActionYaml(someAction.copy(steps = listOf(someWithStep.copy(with = "wrong_value")))),
       listOf(
         InvalidPropertyValueProblem(
-          "The property <with> (runner or action reference) should have a value " +
-              "starting with one of the following prefixes: runner/, action/"
+          "The property <with> (runner or action reference) should be either a runner or an action reference. " +
+              "The value should start with 'runner/' or 'action/' prefix"
+        )
+      )
+    )
+  }
+
+  @Test
+  fun `action with incorrect action reference in 'with' property`() {
+    assertProblematicPlugin(
+      prepareActionYaml(someAction.copy(steps = listOf(someWithStep.copy(with = "action/actionName")))),
+      listOf(
+        InvalidPropertyValueProblem(
+          "The property <with> (runner or action reference) has an invalid action reference: actionName. " +
+              "The reference must follow 'actionName@actionVersion' format"
         )
       )
     )

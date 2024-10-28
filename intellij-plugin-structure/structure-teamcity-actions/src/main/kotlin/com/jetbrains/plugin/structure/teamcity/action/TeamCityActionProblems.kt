@@ -32,6 +32,10 @@ class InvalidBooleanProblem(propertyName: String, propertyDescription: String) :
   override val message = "The property <$propertyName> ($propertyDescription) should be either 'true' or 'false'."
 }
 
+class InvalidNumberProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {
+  override val message = "The property <$propertyName> ($propertyDescription) should be a valid number."
+}
+
 class TooLongValueProblem(
   propertyName: String,
   propertyDescription: String,

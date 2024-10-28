@@ -5,8 +5,8 @@ object TeamCityActionSpec {
     const val NAME = "name"
     const val DESCRIPTION = "the composite action name in the 'namespace/name' format"
 
-    // Regular expression pattern for the action's composite name – the namespace and the name separated by '/'
-    private const val COMPOSITE_NAME_PATTERN = "^([^/]+)/([^/]+)$"
+    // Regular expression for the action's composite name – the namespace and the name separated by '/'
+    val compositeNameRegex: Regex = Regex("^([^/]+)/([^/]+)$")
 
     /**
      * Regular expression pattern for both the action's namespace and the action's name.
@@ -17,9 +17,7 @@ object TeamCityActionSpec {
      * - cannot start or end with a dash or underscore.
      * - cannot contain several consecutive dashes or underscores.
      */
-    private const val ID_AND_NAMESPACE_PATTERN = "^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$"
-    val compositeNameRegex: Regex = Regex(COMPOSITE_NAME_PATTERN)
-    val idAndNamespaceRegex: Regex = Regex(ID_AND_NAMESPACE_PATTERN)
+    val meaningfulPartRegex: Regex = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$")
 
     object Namespace {
       const val NAME = "namespace"
@@ -35,16 +33,14 @@ object TeamCityActionSpec {
       const val MAX_LENGTH = 30
     }
 
-    fun getNamespace(actionName: String?): String? {
-      if (actionName == null) return null
-      val matchResult = compositeNameRegex.matchEntire(actionName)
-      return matchResult?.groupValues?.get(1)
-    }
+    fun getNamespace(actionName: String?): String? = getNamespaceAndNameGroups(actionName)?.get(1)
 
-    fun getNameInNamespace(actionName: String?): String? {
+    fun getNameInNamespace(actionName: String?): String? = getNamespaceAndNameGroups(actionName)?.get(2)
+
+    private fun getNamespaceAndNameGroups(actionName: String?): List<String>? {
       if (actionName == null) return null
       val matchResult = compositeNameRegex.matchEntire(actionName)
-      return matchResult?.groupValues?.get(2)
+      return matchResult?.groupValues
     }
   }
 
@@ -134,9 +130,9 @@ object TeamCityActionSpec {
   object ActionStepWith {
     const val NAME = "with"
     const val DESCRIPTION = "runner or action reference"
+    const val MAX_LENGTH = 100
     const val RUNNER_PREFIX = "runner/"
-    private const val ACTION_PREFIX = "action/"
-    val allowedPrefixes = listOf(RUNNER_PREFIX, ACTION_PREFIX)
+    const val ACTION_PREFIX = "action/"
   }
 
   object ActionStepScript {

@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDefault
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDescription
@@ -10,12 +11,12 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputOptions
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepScript
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.ACTION_PREFIX
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.RUNNER_PREFIX
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSteps
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionVersion
@@ -52,23 +53,49 @@ private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
 
   val namespace = ActionCompositeName.getNamespace(name)
   if (namespace != null) {
-    validateMinLength(namespace, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION, ActionCompositeName.Namespace.MIN_LENGTH)
-    validateMaxLength(namespace, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION, ActionCompositeName.Namespace.MAX_LENGTH)
+    validateMinLength(
+      namespace,
+      ActionCompositeName.Namespace.NAME,
+      ActionCompositeName.Namespace.DESCRIPTION,
+      ActionCompositeName.Namespace.MIN_LENGTH,
+    )
+    validateMaxLength(
+      namespace,
+      ActionCompositeName.Namespace.NAME,
+      ActionCompositeName.Namespace.DESCRIPTION,
+      ActionCompositeName.Namespace.MAX_LENGTH,
+    )
     validateMatchesRegexIfExistsAndNotEmpty(
-      namespace, ActionCompositeName.idAndNamespaceRegex, ActionCompositeName.Namespace.NAME, ActionCompositeName.Namespace.DESCRIPTION,
+      namespace,
+      ActionCompositeName.meaningfulPartRegex,
+      ActionCompositeName.Namespace.NAME,
+      ActionCompositeName.Namespace.DESCRIPTION,
       "should only contain latin letters, numbers, dashes and underscores. " +
-              "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+          "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.",
     )
   }
 
   val nameInNamespace = ActionCompositeName.getNameInNamespace(name)
   if (nameInNamespace != null) {
-    validateMinLength(nameInNamespace, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION, ActionCompositeName.Name.MIN_LENGTH)
-    validateMaxLength(nameInNamespace, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION, ActionCompositeName.Name.MAX_LENGTH)
+    validateMinLength(
+      nameInNamespace,
+      ActionCompositeName.Name.NAME,
+      ActionCompositeName.Name.DESCRIPTION,
+      ActionCompositeName.Name.MIN_LENGTH,
+    )
+    validateMaxLength(
+      nameInNamespace,
+      ActionCompositeName.Name.NAME,
+      ActionCompositeName.Name.DESCRIPTION,
+      ActionCompositeName.Name.MAX_LENGTH,
+    )
     validateMatchesRegexIfExistsAndNotEmpty(
-      nameInNamespace, ActionCompositeName.idAndNamespaceRegex, ActionCompositeName.Name.NAME, ActionCompositeName.Name.DESCRIPTION,
+      nameInNamespace,
+      ActionCompositeName.meaningfulPartRegex,
+      ActionCompositeName.Name.NAME,
+      ActionCompositeName.Name.DESCRIPTION,
       "should only contain latin letters, numbers, dashes and underscores. " +
-              "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores."
+          "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.",
     )
   }
 }
@@ -95,7 +122,7 @@ private suspend fun SequenceScope<PluginProblem>.validateActionInput(input: Map<
     )
   }
 
-  validateBooleanIfExists(value.isRequired, ActionInputRequired.NAME, ActionInputRequired.DESCRIPTION)
+  validateBooleanIfExists(value.required, ActionInputRequired.NAME, ActionInputRequired.DESCRIPTION)
 
   validateNotEmptyIfExists(value.label, ActionInputLabel.NAME, ActionInputLabel.DESCRIPTION)
   validateMaxLength(value.label, ActionInputLabel.NAME, ActionInputLabel.DESCRIPTION, ActionInputLabel.MAX_LENGTH)
@@ -111,6 +138,12 @@ private suspend fun SequenceScope<PluginProblem>.validateActionInput(input: Map<
   validateNotEmptyIfExists(value.defaultValue, ActionInputDefault.NAME, ActionInputDefault.DESCRIPTION)
   when (value.type) {
     ActionInputTypeDescriptor.boolean.name -> validateBooleanIfExists(
+      value.defaultValue,
+      ActionInputDefault.NAME,
+      ActionInputDefault.DESCRIPTION,
+    )
+
+    ActionInputTypeDescriptor.number.name -> validateNumberIfExists(
       value.defaultValue,
       ActionInputDefault.NAME,
       ActionInputDefault.DESCRIPTION,
@@ -190,15 +223,22 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
       )
     )
   } else if (step.with != null) {
-    if (ActionStepWith.allowedPrefixes.none { step.with.startsWith(it) }) {
-      yield(
-        InvalidPropertyValueProblem(
-          "The property <${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) should have " +
-              "a value starting with one of the following prefixes: ${ActionStepWith.allowedPrefixes.joinToString()}"
-        )
-      )
-    }
-    if (step.with.startsWith(RUNNER_PREFIX)) {
+    validateStepReference(step)
+  } else {
+    validateNotEmptyIfExists(step.script, ActionStepScript.NAME, ActionStepScript.DESCRIPTION)
+    validateMaxLength(
+      step.script,
+      ActionStepScript.NAME,
+      ActionStepScript.DESCRIPTION,
+      ActionStepScript.MAX_LENGTH,
+    )
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateStepReference(step: ActionStepDescriptor) {
+  validateMaxLength(step.with, ActionStepWith.NAME, ActionStepWith.DESCRIPTION, ActionStepWith.MAX_LENGTH)
+  when {
+    step.with!!.startsWith(RUNNER_PREFIX) -> {
       val runnerName = step.with.substringAfter(RUNNER_PREFIX)
       val allowedParams = allowedRunnerToAllowedParams[runnerName]
       if (allowedParams == null) {
@@ -210,14 +250,28 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
         }
       }
     }
-  } else {
-    validateNotEmptyIfExists(step.script, ActionStepScript.NAME, ActionStepScript.DESCRIPTION)
-    validateMaxLength(
-      step.script,
-      ActionStepScript.NAME,
-      ActionStepScript.DESCRIPTION,
-      ActionStepScript.MAX_LENGTH,
-    )
+
+    step.with.startsWith(ACTION_PREFIX) -> {
+      val actionId = step.with.substringAfter(ACTION_PREFIX)
+      val actionIdParts = actionId.split("@")
+      if (actionIdParts.size != 2) {
+        yield(
+          InvalidPropertyValueProblem(
+            "The property <${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) has an invalid action reference: $actionId. " +
+                "The reference must follow 'actionName@actionVersion' format"
+          )
+        )
+      }
+    }
+
+    else -> {
+      yield(
+        InvalidPropertyValueProblem(
+          "The property <${ActionStepWith.NAME}> (${ActionStepWith.DESCRIPTION}) should be either a runner or an action reference. " +
+              "The value should start with '$RUNNER_PREFIX' or '$ACTION_PREFIX' prefix"
+        )
+      )
+    }
   }
 }
 
@@ -292,10 +346,12 @@ private suspend fun SequenceScope<PluginProblem>.validateSemver(
     try {
       return TeamCityActionSpecVersionUtils.getSemverFromString(version)
     } catch (e: SemverException) {
-      yield(InvalidSemverFormat(
-        versionName = propertyName,
-        version = version
-      ))
+      yield(
+        InvalidSemverFormat(
+          versionName = propertyName,
+          version = version,
+        )
+      )
     }
   }
   return null
@@ -308,6 +364,16 @@ private suspend fun SequenceScope<PluginProblem>.validateBooleanIfExists(
 ) {
   if (propertyValue != null && propertyValue != "true" && propertyValue != "false") {
     yield(InvalidBooleanProblem(propertyName, propertyDescription))
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateNumberIfExists(
+  propertyValue: String?,
+  propertyName: String,
+  propertyDescription: String,
+) {
+  if (propertyValue != null && propertyValue.toLongOrNull() == null) {
+    yield(InvalidNumberProblem(propertyName, propertyDescription))
   }
 }
 

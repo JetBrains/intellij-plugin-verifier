@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.teamcity.action
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDefault
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDescription
@@ -10,7 +11,6 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputs
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirements
@@ -41,7 +41,7 @@ data class ActionInputDescriptor(
   @JsonProperty(ActionInputType.NAME)
   val type: String? = null,
   @JsonProperty(ActionInputRequired.NAME)
-  val isRequired: String? = null,
+  val required: String? = null,
   @JsonProperty(ActionInputLabel.NAME)
   val label: String? = null,
   @JsonProperty(ActionInputDescription.NAME)
@@ -56,7 +56,9 @@ data class ActionInputDescriptor(
 enum class ActionInputTypeDescriptor {
   text,
   boolean,
+  number,
   select,
+  password,
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

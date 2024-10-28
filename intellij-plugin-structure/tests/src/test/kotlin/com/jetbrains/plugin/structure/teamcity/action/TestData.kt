@@ -47,6 +47,10 @@ object Inputs {
     type = "select",
     selectOptions = listOf("option 1", "option 2"),
   )
+
+  val someNumberInput = ActionInputBuilder(
+    type = "number",
+  )
 }
 
 object Requirements {
