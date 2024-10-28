@@ -28,7 +28,7 @@ object Actions {
     steps = listOf(
       ActionStepBuilder(
         stepName = "step name",
-        with = "runner/someRunnerName",
+        with = "runner/command-line",
       )
     ),
   )
@@ -58,7 +58,7 @@ object Requirements {
 object Steps {
   val someWithStep = ActionStepBuilder(
     stepName = "some step",
-    with = "runner/some_runner"
+    with = "runner/command-line"
   )
 
   val someScriptStep = ActionStepBuilder(

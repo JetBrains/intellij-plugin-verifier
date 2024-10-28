@@ -52,8 +52,11 @@ class ParseValidActionTests(
 
   @Test
   fun `parse action with runner-based step`() {
-    val step = someWithStep.copy(with = "runner/runnerName")
-    createPluginSuccessfully(prepareActionYaml(someAction.copy(steps = listOf(step))))
+    val runners = listOf("gradle", "maven", "node-js", "command-line")
+    runners.forEach { runnerName ->
+      val step = someWithStep.copy(with = "runner/$runnerName")
+      createPluginSuccessfully(prepareActionYaml(someAction.copy(steps = listOf(step))))
+    }
   }
 
   @Test

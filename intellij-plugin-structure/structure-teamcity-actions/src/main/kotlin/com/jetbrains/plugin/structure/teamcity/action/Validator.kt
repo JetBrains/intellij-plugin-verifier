@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionR
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepScript
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith.RUNNER_PREFIX
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSteps
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionVersion
 import com.vdurmont.semver4j.Semver
@@ -189,7 +190,6 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
       )
     )
   } else if (step.with != null) {
-    validateMaxLength(step.with, ActionStepWith.NAME, ActionStepWith.DESCRIPTION, ActionStepWith.MAX_LENGTH)
     if (ActionStepWith.allowedPrefixes.none { step.with.startsWith(it) }) {
       yield(
         InvalidPropertyValueProblem(
@@ -197,6 +197,18 @@ private suspend fun SequenceScope<PluginProblem>.validateActionStep(step: Action
               "a value starting with one of the following prefixes: ${ActionStepWith.allowedPrefixes.joinToString()}"
         )
       )
+    }
+    if (step.with.startsWith(RUNNER_PREFIX)) {
+      val runnerName = step.with.substringAfter(RUNNER_PREFIX)
+      val allowedParams = allowedRunnerToAllowedParams[runnerName]
+      if (allowedParams == null) {
+        yield(UnsupportedRunnerProblem(runnerName, allowedRunnerToAllowedParams.keys))
+      } else {
+        val unsupportedParams = step.parameters.filter { !allowedParams.contains(it.key) }.keys
+        if (unsupportedParams.isNotEmpty()) {
+          yield(UnsupportedRunnerParamsProblem(runnerName, unsupportedParams, allowedParams))
+        }
+      }
     }
   } else {
     validateNotEmptyIfExists(step.script, ActionStepScript.NAME, ActionStepScript.DESCRIPTION)
