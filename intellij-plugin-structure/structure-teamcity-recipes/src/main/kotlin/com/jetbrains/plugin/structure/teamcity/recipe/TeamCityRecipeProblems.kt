@@ -1,10 +1,10 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
 object NotYamlFileProblem : PluginProblem() {
   override val level: Level = Level.ERROR
-  override val message = "The file with action specification should be in YAML format"
+  override val message = "The file with recipe specification should be in YAML format"
 }
 
 abstract class InvalidPropertyProblem : PluginProblem() {
@@ -12,7 +12,7 @@ abstract class InvalidPropertyProblem : PluginProblem() {
 }
 
 object ParseYamlProblem : InvalidPropertyProblem() {
-  override val message = "The action specification should follow valid YAML syntax."
+  override val message = "The recipe specification should follow valid YAML syntax."
 }
 
 data class UnknownPropertyProblem(val propertyName: String) : InvalidPropertyProblem() {

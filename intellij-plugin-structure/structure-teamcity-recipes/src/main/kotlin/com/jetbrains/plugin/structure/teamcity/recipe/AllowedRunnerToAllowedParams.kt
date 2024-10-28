@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 val allowedRunnerToAllowedParams = mapOf(
   "gradle" to setOf(

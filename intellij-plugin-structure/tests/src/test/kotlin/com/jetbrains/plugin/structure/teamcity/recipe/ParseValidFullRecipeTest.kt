@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -7,19 +7,19 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
 
-class ParseValidFullActionTest(
+class ParseValidFullRecipeTest(
   fileSystemType: FileSystemType,
-) : BasePluginManagerTest<TeamCityActionPlugin, TeamCityActionPluginManager>(fileSystemType) {
+) : BasePluginManagerTest<TeamCityRecipePlugin, TeamCityRecipePluginManager>(fileSystemType) {
 
-  override fun createManager(extractDirectory: Path): TeamCityActionPluginManager =
-    TeamCityActionPluginManager.createManager(extractDirectory)
+  override fun createManager(extractDirectory: Path): TeamCityRecipePluginManager =
+    TeamCityRecipePluginManager.createManager(extractDirectory)
 
-  private val actionYaml =
+  private val recipeYaml =
     """
     ---
-    name: namespace/simple-action
+    name: namespace/simple-recipe
     version: 1.2.3
-    description: this is a simple action
+    description: this is a simple recipe
     inputs:
       - some text input:
           type: text
@@ -98,7 +98,7 @@ class ParseValidFullActionTest(
       - script: echo "step 2 output"
         name: step 2
       - name: step 3
-        with: action/name@1.2.3
+        with: recipe/name@1.2.3
         params:
           text-input: passed text parameter value
           boolean-input: true
@@ -108,22 +108,22 @@ class ParseValidFullActionTest(
     """.trimIndent()
 
   @Test
-  fun `parse full valid TeamCity Action from YAML`() {
+  fun `parse full valid TeamCity Recipe from YAML`() {
     // arrange
-    val pluginFile = temporaryFolder.prepareActionYaml(actionYaml)
+    val pluginFile = temporaryFolder.prepareRecipeYaml(recipeYaml)
 
     // act
     val result = createPluginSuccessfully(pluginFile)
 
     // assert
     with(result.plugin) {
-      assertEquals("action.yaml", this.yamlFile.fileName)
-      assertArrayEquals(actionYaml.toByteArray(), this.yamlFile.content)
+      assertEquals("recipe.yaml", this.yamlFile.fileName)
+      assertArrayEquals(recipeYaml.toByteArray(), this.yamlFile.content)
       assertEquals("1.0.0", this.specVersion)
-      assertEquals("namespace/simple-action", this.pluginName)
+      assertEquals("namespace/simple-recipe", this.pluginName)
       assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
-      assertEquals("this is a simple action", this.description)
+      assertEquals("this is a simple recipe", this.description)
     }
   }
 }

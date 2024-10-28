@@ -1,4 +1,4 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -17,72 +17,72 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class TeamCityActionPluginManager
-private constructor(private val extractDirectory: Path) : PluginManager<TeamCityActionPlugin> {
+class TeamCityRecipePluginManager
+private constructor(private val extractDirectory: Path) : PluginManager<TeamCityRecipePlugin> {
 
   private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule().apply {
-    // We fail on unknown properties to minimize the chance that we improperly calculate the specification version of an uploaded action.
-    // Since the action's properties are used to calculate its specification version,
+    // We fail on unknown properties to minimize the chance that we improperly calculate the specification version of an uploaded recipe.
+    // Since the recipe's properties are used to calculate its specification version,
     // omitting any of the recipe's properties from calculation can lead to an error in calculation.
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
   }
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(TeamCityActionPluginManager::class.java)
+    private val LOG: Logger = LoggerFactory.getLogger(TeamCityRecipePluginManager::class.java)
 
     fun createManager(extractDirectory: Path = Paths.get(EXTRACT_DIRECTORY.get())) =
-      TeamCityActionPluginManager(extractDirectory.createDir())
+      TeamCityRecipePluginManager(extractDirectory.createDir())
   }
 
-  override fun createPlugin(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> {
-    require(pluginFile.exists()) { "TeamCity Action file ${pluginFile.toAbsolutePath()} does not exist" }
+  override fun createPlugin(pluginFile: Path): PluginCreationResult<TeamCityRecipePlugin> {
+    require(pluginFile.exists()) { "TeamCity Recipe file ${pluginFile.toAbsolutePath()} does not exist" }
     return when {
       pluginFile.isYaml() -> createPluginFrom(pluginFile)
-      else -> fileFormatError()
+      else -> PluginCreationFail(NotYamlFileProblem)
     }
   }
 
-  private fun createPluginFrom(actionPath: Path): PluginCreationResult<TeamCityActionPlugin> {
-    val sizeLimit = Settings.TEAM_CITY_ACTION_SIZE_LIMIT.getAsLong()
-    if (Files.size(actionPath) > sizeLimit) {
-      return PluginCreationFail(FileTooBig(actionPath.simpleName, sizeLimit))
+  private fun createPluginFrom(recipePath: Path): PluginCreationResult<TeamCityRecipePlugin> {
+    val sizeLimit = Settings.TEAM_CITY_RECIPE_SIZE_LIMIT.getAsLong()
+    if (Files.size(recipePath) > sizeLimit) {
+      return PluginCreationFail(FileTooBig(recipePath.simpleName, sizeLimit))
     }
 
     return when {
-      actionPath.isYaml() -> parseYaml(actionPath)
-      else -> fileFormatError()
+      recipePath.isYaml() -> parseYaml(recipePath)
+      else -> PluginCreationFail(NotYamlFileProblem)
     }
   }
 
-  private fun parseYaml(yamlPath: Path): PluginCreationResult<TeamCityActionPlugin> {
+  private fun parseYaml(yamlPath: Path): PluginCreationResult<TeamCityRecipePlugin> {
     try {
       return parse(yamlPath)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      val errorMessage = "An unexpected error occurred while parsing the TeamCity Action descriptor"
+      val errorMessage = "An unexpected error occurred while parsing the TeamCity Recipe descriptor"
       LOG.warn(errorMessage, e)
       return PluginCreationFail(UnableToReadDescriptor(yamlPath.toAbsolutePath().toString(), errorMessage))
     }
   }
 
-  private fun parse(yamlPath: Path): PluginCreationResult<TeamCityActionPlugin> {
+  private fun parse(yamlPath: Path): PluginCreationResult<TeamCityRecipePlugin> {
     val descriptor = try {
       val yamlContent = yamlPath.readText()
-      objectMapper.readValue(yamlContent, TeamCityActionDescriptor::class.java)
+      objectMapper.readValue(yamlContent, TeamCityRecipeDescriptor::class.java)
     } catch (e: UnrecognizedPropertyException) {
-      LOG.warn("Failed to parse TeamCity Action. Encountered unknown property '${e.propertyName}'", e)
+      LOG.warn("Failed to parse TeamCity Recipe. Encountered unknown property '${e.propertyName}'", e)
       return PluginCreationFail(UnknownPropertyProblem(e.propertyName))
     } catch (e: Exception) {
-      LOG.warn("Failed to parse TeamCity Action", e)
+      LOG.warn("Failed to parse TeamCity Recipe", e)
       return PluginCreationFail(ParseYamlProblem)
     }
 
-    val validationResult = validateTeamCityAction(descriptor)
+    val validationResult = validateTeamCityRecipe(descriptor)
     if (validationResult.any { it.isError }) {
       return PluginCreationFail(validationResult)
     }
     val plugin = with(descriptor) {
-      TeamCityActionPlugin(
+      TeamCityRecipePlugin(
         // All the fields are expected to be non-null due to the validations above
         pluginId = this.name!!, // composite id
         pluginName = this.name,
@@ -90,7 +90,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginVersion = this.version!!,
         specVersion = getSpecVersion(),
         yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
-        namespace = TeamCityActionSpec.ActionCompositeName.getNamespace(this.name)!!
+        namespace = TeamCityRecipeSpec.RecipeCompositeName.getNamespace(this.name)!!,
       )
     }
     return PluginCreationSuccess(plugin, validationResult)
@@ -99,8 +99,5 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
 
 // Always 1.0.0 for now
 private fun getSpecVersion(): String = "1.0.0"
-
-private fun fileFormatError(): PluginCreationResult<TeamCityActionPlugin> =
-  PluginCreationFail(NotYamlFileProblem)
 
 private fun Path.isYaml(): Boolean = this.hasExtension("yaml") || this.hasExtension("yml")
