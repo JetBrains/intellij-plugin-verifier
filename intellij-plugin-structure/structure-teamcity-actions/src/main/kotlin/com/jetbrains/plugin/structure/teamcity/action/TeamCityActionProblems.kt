@@ -2,6 +2,11 @@ package com.jetbrains.plugin.structure.teamcity.action
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
+object NotYamlFileProblem : PluginProblem() {
+  override val level: Level = Level.ERROR
+  override val message = "The file with action specification should be in YAML format"
+}
+
 abstract class InvalidPropertyProblem : PluginProblem() {
   override val level: Level = Level.ERROR
 }
@@ -55,7 +60,7 @@ class TooShortValueProblem(
 ) : InvalidPropertyProblem() {
   override val message =
     "The property <$propertyName> ($propertyDescription) should not be shorter than $minAllowedLength characters. " +
-      "The current number of characters is $currentLength."
+        "The current number of characters is $currentLength."
 }
 
 data class UnsupportedRunnerProblem(

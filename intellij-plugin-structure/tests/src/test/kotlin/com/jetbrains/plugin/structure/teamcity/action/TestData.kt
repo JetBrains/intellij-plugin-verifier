@@ -1,6 +1,12 @@
 package com.jetbrains.plugin.structure.teamcity.action
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.jetbrains.plugin.structure.base.utils.writeBytes
+import com.jetbrains.plugin.structure.rules.FileSystemAwareTemporaryFolder
+import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionDescription
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDefault
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputDescription
@@ -9,7 +15,6 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionI
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputRequired
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionInputs
-import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionCompositeName
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementType
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirementValue
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionRequirements
@@ -19,6 +24,7 @@ import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionS
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionStepWith
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionSteps
 import com.jetbrains.plugin.structure.teamcity.action.TeamCityActionSpec.ActionVersion
+import java.nio.file.Path
 
 object Actions {
   val someAction = TeamCityActionBuilder(
@@ -124,4 +130,17 @@ fun randomAlphanumeric(len: Int): String {
   return (1..len)
     .map { allowedChars.random() }
     .joinToString("")
+}
+
+fun FileSystemAwareTemporaryFolder.prepareActionYaml(builder: TeamCityActionBuilder): Path {
+  val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+  val actionYaml = mapper.writeValueAsString(builder)
+  return prepareActionYaml(actionYaml)
+}
+
+fun FileSystemAwareTemporaryFolder.prepareActionYaml(actionYaml: String): Path {
+  val directory = this.newFolder("plugin")
+  val file = directory.resolve("action.yaml")
+  file.writeBytes(actionYaml.toByteArray())
+  return file
 }

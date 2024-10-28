@@ -3,7 +3,6 @@ package com.jetbrains.plugin.structure.teamcity.action
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -14,7 +13,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 
 class ParseValidActionTests(
   fileSystemType: FileSystemType,
@@ -25,10 +23,11 @@ class ParseValidActionTests(
 
   @Test
   fun `parse action with valid name`() {
-    val validActionNamesProvider = arrayOf("aaaaa/aaaaa", "aaaaa/a-a_a", "a-a_a/aaaaa", "${randomAlphanumeric(30)}/${randomAlphanumeric(30)}")
+    val validActionNamesProvider =
+      arrayOf("aaaaa/aaaaa", "aaaaa/a-a_a", "a-a_a/aaaaa", "${randomAlphanumeric(30)}/${randomAlphanumeric(30)}")
     validActionNamesProvider.forEach { actionName ->
       Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
-      val result = createPluginSuccessfully(prepareActionYaml(someAction.copy(name = actionName)))
+      val result = createPluginSuccessfully(temporaryFolder.prepareActionYaml(someAction.copy(name = actionName)))
       with(result) {
         assertEquals(actionName, this.plugin.pluginName)
       }
@@ -42,7 +41,7 @@ class ParseValidActionTests(
     val expectedActionName = "$expectedNamespace/$expectedActionId"
 
     Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
-    val result = createPluginSuccessfully(prepareActionYaml(someAction.copy(name = expectedActionName)))
+    val result = createPluginSuccessfully(temporaryFolder.prepareActionYaml(someAction.copy(name = expectedActionName)))
     with(result) {
       assertEquals(expectedActionName, this.plugin.pluginName)
       assertEquals(expectedActionName, this.plugin.pluginId)
@@ -55,20 +54,20 @@ class ParseValidActionTests(
     val runners = listOf("gradle", "maven", "node-js", "command-line")
     runners.forEach { runnerName ->
       val step = someWithStep.copy(with = "runner/$runnerName")
-      createPluginSuccessfully(prepareActionYaml(someAction.copy(steps = listOf(step))))
+      createPluginSuccessfully(temporaryFolder.prepareActionYaml(someAction.copy(steps = listOf(step))))
     }
   }
 
   @Test
   fun `parse action with action-based step`() {
     val step = someWithStep.copy(with = "action/actionName@1.2.3")
-    createPluginSuccessfully(prepareActionYaml(someAction.copy(steps = listOf(step))))
+    createPluginSuccessfully(temporaryFolder.prepareActionYaml(someAction.copy(steps = listOf(step))))
   }
 
   @Test
   fun `parse action with script step`() {
     val step = someScriptStep.copy()
-    createPluginSuccessfully(prepareActionYaml(someAction.copy(steps = listOf(step))))
+    createPluginSuccessfully(temporaryFolder.prepareActionYaml(someAction.copy(steps = listOf(step))))
   }
 
   @Test
@@ -87,12 +86,4 @@ class ParseValidActionTests(
       assertEquals(action.version, this.pluginVersion)
     }
   }
-
-  private fun prepareActionYaml(actionBuilder: TeamCityActionBuilder) =
-    buildZipFile(temporaryFolder.newFile("plugin-${UUID.randomUUID()}.zip")) {
-      val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
-      file("action.yaml") {
-        mapper.writeValueAsString(actionBuilder)
-      }
-    }
 }

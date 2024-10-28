@@ -5,15 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.jetbrains.plugin.structure.base.decompress.DecompressorSizeLimitExceededException
 import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.plugin.Settings.EXTRACT_DIRECTORY
-import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.problems.FileTooBig
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.isError
 import com.jetbrains.plugin.structure.base.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
-import java.nio.file.Files.createTempDirectory
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -37,8 +37,8 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
   override fun createPlugin(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> {
     require(pluginFile.exists()) { "TeamCity Action file ${pluginFile.toAbsolutePath()} does not exist" }
     return when {
-      pluginFile.isZip() || pluginFile.isYaml() -> createPluginFrom(pluginFile)
-      else -> fileFormatError(pluginFile)
+      pluginFile.isYaml() -> createPluginFrom(pluginFile)
+      else -> fileFormatError()
     }
   }
 
@@ -49,27 +49,8 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     }
 
     return when {
-      actionPath.isZip() -> extractActionFromZip(actionPath, sizeLimit)
       actionPath.isYaml() -> parseYaml(actionPath)
-      else -> fileFormatError(actionPath)
-    }
-  }
-
-  private fun extractActionFromZip(zipPath: Path, sizeLimit: Long): PluginCreationResult<TeamCityActionPlugin> {
-    val tempDirectory = createTempDirectory(extractDirectory, "teamcity_action_extracted_${zipPath.simpleName}_")
-    return try {
-      extractZip(zipPath, tempDirectory, sizeLimit)
-      val yaml = Files.walk(tempDirectory)
-        .filter { item -> item.isYaml() }
-        .findFirst()
-      if (yaml.isEmpty) {
-        return PluginCreationFail(MissedFile("action.yaml"))
-      }
-      parseYaml(yaml.get())
-    } catch (e: DecompressorSizeLimitExceededException) {
-      return PluginCreationFail(PluginFileSizeIsTooLarge(e.sizeLimit))
-    } finally {
-      tempDirectory.deleteLogged()
+      else -> fileFormatError()
     }
   }
 
@@ -119,7 +100,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
 // Always 1.0.0 for now
 private fun getSpecVersion(): String = "1.0.0"
 
-private fun fileFormatError(pluginFile: Path): PluginCreationResult<TeamCityActionPlugin> =
-  PluginCreationFail(IncorrectPluginFile(pluginFile.simpleName, "ZIP archive or YAML file"))
+private fun fileFormatError(): PluginCreationResult<TeamCityActionPlugin> =
+  PluginCreationFail(NotYamlFileProblem)
 
 private fun Path.isYaml(): Boolean = this.hasExtension("yaml") || this.hasExtension("yml")
