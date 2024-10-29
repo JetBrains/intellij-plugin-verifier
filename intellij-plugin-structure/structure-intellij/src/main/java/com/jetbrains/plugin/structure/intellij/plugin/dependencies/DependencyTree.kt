@@ -43,7 +43,6 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
         when (dependencyPlugin) {
           is Module,
           is Plugin -> {
-            @Suppress("USELESS_IS_CHECK")
             if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
               graph.addEdge(pluginId, dependencyPlugin)
               getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1)
