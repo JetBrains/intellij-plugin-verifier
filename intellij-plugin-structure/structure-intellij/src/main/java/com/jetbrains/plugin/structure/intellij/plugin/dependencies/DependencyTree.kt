@@ -93,17 +93,17 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
-  private fun DiGraph<PluginId, Dependency>.debugPrint(id: PluginId, indentSize: Int = 0, visited: MutableSet<PluginId> = hashSetOf()) {
+  private fun DiGraph<PluginId, Dependency>.toDebugString(id: PluginId, indentSize: Int, visited: MutableSet<PluginId>, printer: StringBuilder) {
     val indent = "  ".repeat(indentSize)
     this[id].forEach { dep ->
       if (dep is PluginAware) {
-        val id = dep.plugin.pluginId!!
-        if (id !in visited) {
-          visited += id
-          println("${indent}* " + dep)
-          debugPrint(id, indentSize + 1, visited)
+        val depId = dep.plugin.pluginId!!
+        if (depId !in visited) {
+          visited += depId
+          printer.appendLine("${indent}* " + dep)
+          toDebugString(depId, indentSize + 1, visited, printer)
         } else {
-          println("${indent}* $dep (already visited)")
+          printer.appendLine("${indent}* $dep (already visited)")
         }
       }
     }
@@ -117,7 +117,9 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
-  fun debugPrint(pluginId: String) {
-    DiGraph<PluginId, Dependency>().debugPrint(pluginId)
+  fun toDebugString(pluginId: String): CharSequence {
+    return StringBuilder().apply {
+      DiGraph<PluginId, Dependency>().toDebugString(pluginId, 0, mutableSetOf(), printer = this)
+    }
   }
 }
