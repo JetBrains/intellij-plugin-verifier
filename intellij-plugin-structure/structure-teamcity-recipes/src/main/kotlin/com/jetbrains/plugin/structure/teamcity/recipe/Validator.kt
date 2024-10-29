@@ -102,7 +102,7 @@ private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
 
 private suspend fun SequenceScope<PluginProblem>.validateRecipeInput(input: Map<String, RecipeInputDescriptor>) {
   if (input.size != 1) {
-    yield(InvalidPropertyValueProblem("Wrong recipe input format. The input should consist of a name and body."))
+    yield(InvalidPropertyValueProblem("Wrong recipe input format. The input should consist of a name and a body."))
     return
   }
 
@@ -159,7 +159,7 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeInput(input: Map<
 
 private suspend fun SequenceScope<PluginProblem>.validateRecipeRequirement(requirement: Map<String, RecipeRequirementDescriptor>) {
   if (requirement.size != 1) {
-    yield(InvalidPropertyValueProblem("Wrong recipe requirement format. The requirement should consist of a name and body."))
+    yield(InvalidPropertyValueProblem("Wrong recipe requirement format. The requirement should consist of a name and a body."))
     return
   }
 
