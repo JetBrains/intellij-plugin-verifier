@@ -1,0 +1,17 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <id>com.intellij.java</id>
+    <dependencies>
+        <plugin id="com.intellij.modules.lang"/>
+        <plugin id="com.intellij.modules.vcs"/>
+        <plugin id="com.intellij.modules.xdebugger"/>
+        <plugin id="com.intellij.modules.xml"/>
+        <plugin id="com.intellij.modules.java-capable"/>
+    </dependencies>
+    <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
+    <module value="com.intellij.modules.java"/>
+    <depends optional="true" config-file="images-integration.xml">com.intellij.platform.images</depends>
+    <depends optional="true" config-file="community-integration.xml">com.intellij.modules.idea.community</depends>
+    <module value="com.intellij.java.frontback.psi.impl"/>
+    <module value="com.intellij.java.frontback.impl"/>
+    <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
+    </idea-plugin>
