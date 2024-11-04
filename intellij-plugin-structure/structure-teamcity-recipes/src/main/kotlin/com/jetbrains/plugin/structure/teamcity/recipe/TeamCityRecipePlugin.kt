@@ -1,11 +1,11 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginFile
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 
-data class TeamCityActionPlugin(
+data class TeamCityRecipePlugin(
   override val pluginName: String,
   override val description: String,
   override var vendor: String? = null,

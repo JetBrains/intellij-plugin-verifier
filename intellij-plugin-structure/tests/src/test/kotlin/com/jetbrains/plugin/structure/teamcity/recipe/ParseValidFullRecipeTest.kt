@@ -1,6 +1,5 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.assertArrayEquals
@@ -8,19 +7,19 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
 
-class ParseValidFullActionTest(
+class ParseValidFullRecipeTest(
   fileSystemType: FileSystemType,
-) : BasePluginManagerTest<TeamCityActionPlugin, TeamCityActionPluginManager>(fileSystemType) {
+) : BasePluginManagerTest<TeamCityRecipePlugin, TeamCityRecipePluginManager>(fileSystemType) {
 
-  override fun createManager(extractDirectory: Path): TeamCityActionPluginManager =
-    TeamCityActionPluginManager.createManager(extractDirectory)
+  override fun createManager(extractDirectory: Path): TeamCityRecipePluginManager =
+    TeamCityRecipePluginManager.createManager(extractDirectory)
 
-  private val actionYaml =
+  private val recipeYaml =
     """
     ---
-    name: namespace/simple-action
+    name: namespace/simple-recipe
     version: 1.2.3
-    description: this is a simple action
+    description: this is a simple recipe
     inputs:
       - some text input:
           type: text
@@ -28,6 +27,12 @@ class ParseValidFullActionTest(
           default: a default text value
           required: false
           description: a description for the text input
+      - some boolean input:
+          type: boolean
+          default: true
+      - some number input:
+          type: number
+          default: 100
       - some select input:
           type: select
           label: select input
@@ -37,9 +42,9 @@ class ParseValidFullActionTest(
           default: first select option
           required: true
           description: description for select input
-      - some boolean input:
-          type: boolean
-          default: false
+      - some password input:
+          type: password
+          default: qwerty
     requirements:
       - requirement 0:
           type: exists
@@ -93,33 +98,32 @@ class ParseValidFullActionTest(
       - script: echo "step 2 output"
         name: step 2
       - name: step 3
-        with: action/name@1.2.3
+        with: recipe/name@1.2.3
         params:
           text-input: passed text parameter value
-          select-input: first select option
           boolean-input: true
+          number-input: 123
+          select-input: first select option
+          password-input: asdad
     """.trimIndent()
 
   @Test
-  fun `parse full valid TeamCity Action from YAML`() {
+  fun `parse full valid TeamCity Recipe from YAML`() {
     // arrange
-    val fileName = "action.yaml"
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      file(fileName) { actionYaml }
-    }
+    val pluginFile = temporaryFolder.prepareRecipeYaml(recipeYaml)
 
     // act
     val result = createPluginSuccessfully(pluginFile)
 
     // assert
     with(result.plugin) {
-      assertEquals(fileName, this.yamlFile.fileName)
-      assertArrayEquals(actionYaml.toByteArray(), this.yamlFile.content)
+      assertEquals("recipe.yaml", this.yamlFile.fileName)
+      assertArrayEquals(recipeYaml.toByteArray(), this.yamlFile.content)
       assertEquals("1.0.0", this.specVersion)
-      assertEquals("namespace/simple-action", this.pluginName)
+      assertEquals("namespace/simple-recipe", this.pluginName)
       assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
-      assertEquals("this is a simple action", this.description)
+      assertEquals("this is a simple recipe", this.description)
     }
   }
 }

@@ -1,8 +1,8 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.vdurmont.semver4j.Semver
 
-object TeamCityActionSpecVersionUtils {
+object TeamCityRecipeSpecVersionUtils {
   const val MAX_MAJOR_VALUE = 10000
   const val VERSION_MINOR_LENGTH = 10000
   const val VERSION_PATCH_LENGTH = 10000

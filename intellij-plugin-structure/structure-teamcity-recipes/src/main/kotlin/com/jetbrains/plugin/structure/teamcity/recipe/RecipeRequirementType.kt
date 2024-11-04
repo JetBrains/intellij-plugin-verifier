@@ -1,6 +1,6 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
-enum class ActionRequirementType(
+enum class RecipeRequirementType(
   val type: String,
   val isValueRequired: Boolean,
   val valueCanBeEmpty: Boolean,
@@ -27,12 +27,12 @@ enum class ActionRequirementType(
   ;
 
   companion object {
-    fun from(type: String): ActionRequirementType {
-      return ActionRequirementType
+    fun from(type: String): RecipeRequirementType {
+      return RecipeRequirementType
         .values()
         .find { it.type.equals(type, ignoreCase = true) }
         ?: throw IllegalArgumentException(
-          "Unsupported requirement type $type. Supported values are: " + ActionRequirementType.values().joinToString()
+          "Unsupported requirement type $type. Supported values are: " + RecipeRequirementType.values().joinToString()
         )
     }
   }

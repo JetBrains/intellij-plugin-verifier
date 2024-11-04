@@ -1,13 +1,18 @@
-package com.jetbrains.plugin.structure.teamcity.action
+package com.jetbrains.plugin.structure.teamcity.recipe
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+
+object NotYamlFileProblem : PluginProblem() {
+  override val level: Level = Level.ERROR
+  override val message = "The file with recipe specification should be in YAML format"
+}
 
 abstract class InvalidPropertyProblem : PluginProblem() {
   override val level: Level = Level.ERROR
 }
 
 object ParseYamlProblem : InvalidPropertyProblem() {
-  override val message = "The action specification should follow valid YAML syntax."
+  override val message = "The recipe specification should follow valid YAML syntax."
 }
 
 data class UnknownPropertyProblem(val propertyName: String) : InvalidPropertyProblem() {
@@ -32,6 +37,10 @@ class InvalidBooleanProblem(propertyName: String, propertyDescription: String) :
   override val message = "The property <$propertyName> ($propertyDescription) should be either 'true' or 'false'."
 }
 
+class InvalidNumberProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {
+  override val message = "The property <$propertyName> ($propertyDescription) should be a valid number."
+}
+
 class TooLongValueProblem(
   propertyName: String,
   propertyDescription: String,
@@ -51,7 +60,7 @@ class TooShortValueProblem(
 ) : InvalidPropertyProblem() {
   override val message =
     "The property <$propertyName> ($propertyDescription) should not be shorter than $minAllowedLength characters. " +
-      "The current number of characters is $currentLength."
+        "The current number of characters is $currentLength."
 }
 
 data class UnsupportedRunnerProblem(
