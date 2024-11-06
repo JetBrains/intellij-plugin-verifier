@@ -114,6 +114,25 @@ class XmlTest {
     assertEquals(expectedXml, filteredXml)
   }
 
+  @Test
+  fun `non-plugin-XML with minimal structure and incorrect XML declaration is not even parsed`() {
+    val xml = """
+      <?xml?>
+      <model-external-data>
+      </model-external-data>      
+    """.trimIndent()
+
+    // STaX parser has issues with wrong PIs
+    val expectedXml = ""
+
+    val pluginXmFilter = PluginXmlDependencyFilter()
+    val filteredXml: String = captureToString {
+      pluginXmFilter.filter(xml.toInputStream(), this)
+    }
+
+    assertEquals(expectedXml, filteredXml)
+  }
+
   private fun captureToString(capturer: ByteArrayOutputStream.() -> Unit): String {
     return ByteArrayOutputStream().use {
       capturer(it)
