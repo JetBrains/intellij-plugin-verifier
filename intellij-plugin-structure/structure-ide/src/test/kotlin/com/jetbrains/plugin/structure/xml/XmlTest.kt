@@ -180,6 +180,50 @@ class XmlTest {
     assertEquals(expectedXml, filteredXml)
   }
 
+  @Test
+  fun `plugin with declared modules in v1 and v2 versions is parsed`() {
+    @Language("XML") val xml = """
+      <idea-plugin>
+        <id>com.intellij</id>
+        <module value="com.intellij.modules.idea" />
+        <content>
+          <module name="intellij.platform.coverage"><![CDATA[<idea-plugin>
+            <module value="com.intellij.modules.coverage" />
+              <dependencies>
+                <module name="com.intellij.modules.idea" />
+              </dependencies>
+            </module>                 
+          </idea-plugin>
+          ]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+
+    @Language("XML") val expectedXml = """
+      <idea-plugin>
+        <id>com.intellij</id>
+        <module value="com.intellij.modules.idea"/>
+        <content>
+          <module name="intellij.platform.coverage"><![CDATA[<idea-plugin>
+            <module value="com.intellij.modules.coverage" />
+              <dependencies>
+                <module name="com.intellij.modules.idea" />
+              </dependencies>
+            </module>                 
+          </idea-plugin>
+          ]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+
+    val pluginXmFilter = PluginXmlDependencyFilter()
+    val filteredXml: String = captureToString {
+      pluginXmFilter.filter(xml.toInputStream(), this)
+    }
+
+    assertEquals(expectedXml, filteredXml)
+  }
+
   private fun captureToString(capturer: ByteArrayOutputStream.() -> Unit): String {
     return ByteArrayOutputStream().use {
       capturer(it)

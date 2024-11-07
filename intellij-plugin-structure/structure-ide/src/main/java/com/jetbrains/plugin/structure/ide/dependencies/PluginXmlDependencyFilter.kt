@@ -34,7 +34,7 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
       val outputFactory: XMLOutputFactory = XMLOutputFactory.newInstance()
 
       val elementNameFilter = ElementNamesFilter(
-        "idea-plugin", "id", "depends", "dependencies", "plugin", "module", "/idea-plugin/dependencies/module")
+        "idea-plugin", "id", "depends", "dependencies", "plugin", "module", "content", "/idea-plugin/dependencies/module", "/idea-plugin/content/module")
       val eventFilter = mutableListOf<EventFilter>().apply {
         add(elementNameFilter)
         if (ignoreXmlDeclaration) add(EventTypeExcludingEventFilter(START_DOCUMENT))
