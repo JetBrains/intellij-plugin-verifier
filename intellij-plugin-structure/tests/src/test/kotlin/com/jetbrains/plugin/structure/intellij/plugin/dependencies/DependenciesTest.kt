@@ -675,6 +675,56 @@ class DependenciesTest {
         "com.intellij.properties"
       ).forEach(::assertContains)
     }
+
+    val expectedDebugString = """
+    * Plugin dependency: 'com.jetbrains.performancePlugin'
+      * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij'
+    * Plugin dependency: 'org.jetbrains.plugins.terminal'
+      * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+      * Plugin dependency: 'com.jetbrains.sh'
+        * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+        * Plugin dependency: 'org.jetbrains.plugins.terminal' (already visited)
+        * Plugin dependency: 'com.intellij.copyright'
+          * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+          * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+        * Plugin dependency: 'org.intellij.plugins.markdown'
+          * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+          * Plugin dependency: 'org.intellij.intelliLang'
+            * Plugin dependency: 'XPathView'
+              * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+            * Module 'com.intellij.modules.java' provided by plugin 'com.intellij.java'
+              * Plugin dependency: 'com.intellij.copyright' (already visited)
+              * Plugin dependency: 'com.intellij.platform.images'
+                * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+              * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+              * Module 'com.intellij.modules.xdebugger' provided by plugin 'com.intellij' (already visited)
+              * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+              * Module 'com.intellij.modules.java-capable' provided by plugin 'com.intellij' (already visited)
+              * Module 'intellij.performanceTesting.vcs' provided by plugin 'com.jetbrains.performancePlugin' (already visited)
+              * Plugin dependency: 'com.jetbrains.performancePlugin' (already visited)
+            * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+          * Plugin dependency: 'com.intellij.modules.json'
+          * Plugin dependency: 'org.jetbrains.plugins.yaml'
+            * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+            * Plugin dependency: 'com.intellij.modules.json' (already visited)
+          * Plugin dependency: 'org.toml.lang'
+            * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
+            * Plugin dependency: 'com.intellij.modules.json' (already visited)
+            * Plugin dependency: 'tanvd.grazi'
+              * Plugin dependency: 'com.intellij.java' (already visited)
+              * Plugin dependency: 'com.intellij.modules.json' (already visited)
+              * Plugin dependency: 'org.intellij.plugins.markdown' (already visited)
+              * Plugin dependency: 'com.intellij.properties'
+                * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+                * Plugin dependency: 'com.intellij.copyright' (already visited)
+              * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+              * Plugin dependency: 'org.jetbrains.plugins.yaml' (already visited)
+          * Plugin dependency: 'com.intellij.platform.images' (already visited)
+          * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
+
+    """.trimIndent()
+
+    assertEquals(expectedDebugString, dependencyTree.toDebugString(git4Idea.pluginId!!).toString())
   }
 }
 

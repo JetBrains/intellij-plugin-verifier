@@ -118,7 +118,9 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
   fun toDebugString(pluginId: String): CharSequence {
     return StringBuilder().apply {
-      DiGraph<PluginId, Dependency>().toDebugString(pluginId, 0, mutableSetOf(), printer = this)
+       pluginProvider.getPluginById(pluginId)?.let { plugin ->
+        getDependencyGraph(plugin).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
+      }
     }
   }
 }
