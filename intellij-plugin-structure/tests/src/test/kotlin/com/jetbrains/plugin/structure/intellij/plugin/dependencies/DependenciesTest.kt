@@ -3,12 +3,13 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.ide.IdeManager
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class DependenciesTest {
   @Rule
@@ -623,7 +624,60 @@ class DependenciesTest {
       assertContains("com.intellij.modules.lang")
     }
   }
+
+  @Test
+  fun test243Dump() {
+    val ideResourceLocation = "/ide-dumps/243.12818.47-1"
+    val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
+    if (ideUrl == null) {
+      fail("Dumped IDE not found in the resources [$ideResourceLocation]")
+      return
+    }
+    val ideRoot = Paths.get(ideUrl.toURI())
+
+    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+      .createIde(ideRoot)
+    with(ide.bundledPlugins) {
+      assertEquals(170, size)
+    }
+
+    val git4Idea = ide.getPluginById("Git4Idea")
+    if (git4Idea == null) {
+      fail("No Git4Idea plugin found in the IDE")
+      return
+    }
+
+    val dependencyTree = DependencyTree(ide)
+    with(dependencyTree.getTransitiveDependencies(git4Idea)) {
+      assertEquals(22, size)
+      val expectedDependencies = listOf(
+        "com.jetbrains.performancePlugin",
+        "com.intellij.modules.lang",
+        "org.jetbrains.plugins.terminal",
+        "com.jetbrains.sh",
+        "org.jetbrains.plugins.terminal",
+        "com.intellij.copyright",
+        "com.intellij.modules.xml",
+        "org.intellij.plugins.markdown",
+        "org.intellij.intelliLang",
+        "XPathView",
+        "com.intellij.modules.java",
+        "com.intellij.platform.images",
+        "com.intellij.modules.xdebugger",
+        "com.intellij.modules.java-capable",
+        "intellij.performanceTesting.vcs",
+        "com.jetbrains.performancePlugin",
+        "com.intellij.modules.json",
+        "org.jetbrains.plugins.yaml",
+        "org.toml.lang",
+        "tanvd.grazi",
+        "com.intellij.java",
+        "com.intellij.properties"
+      ).forEach(::assertContains)
+    }
+  }
 }
+
 
 private fun Set<Dependency>.assertContains(id: String): Boolean =
   filterIsInstance<PluginAware>()
