@@ -1,13 +1,17 @@
 package com.jetbrains.plugin.structure.ide.traversal
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
 import com.jetbrains.plugin.structure.ide.dependencies.PluginXmlDependencyFilter
 import com.jetbrains.plugin.structure.ide.dependencies.PluginXmlDependencyFilter.Companion.toByteArray
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.temporal.ChronoUnit.NANOS
@@ -18,19 +22,38 @@ import kotlin.system.measureNanoTime
 typealias ZipFilePath = Path
 typealias ZipEntryPath = String
 
+private val LOG: Logger = LoggerFactory.getLogger(TestIdeDumper::class.java)
+
 class TestIdeDumper {
   private val xmlFilter = { it: ZipEntry -> it.name.endsWith(".xml") }
   private val platformXmlSearcher = PlatformSearcher(xmlFilter)
   private val pluginXmlDependencyFilter = PluginXmlDependencyFilter()
+  private val additionalFiles = listOf("product-info.json", "build.txt")
 
   fun dumpIde(ideRoot: Path, targetIdeRoot: Path) {
-    val ideEntries = platformXmlSearcher.search(ideRoot)
-    ideEntries.forEach { (zipFilePath, zipFileEntries) ->
-      newZipOutputStream(getTargetPath(ideRoot, targetIdeRoot, zipFilePath)).use { zipStream ->
-        zipFileEntries.forEach { zipEntryUri ->
-          zipStream.dumpZipEntry(zipFilePath, zipEntryUri)
+    platformXmlSearcher
+      .search(ideRoot)
+      .forEach { (zipFilePath, zipFileEntries) ->
+        newZipOutputStream(getTargetPath(ideRoot, targetIdeRoot, zipFilePath)).use { zipStream ->
+          zipFileEntries.forEach { zipEntryUri ->
+            zipStream.dumpZipEntry(zipFilePath, zipEntryUri)
+          }
         }
       }
+    dumpAdditionalFiles(ideRoot, targetIdeRoot)
+  }
+
+  private fun dumpAdditionalFiles(ideRoot: Path, targetIdeRoot: Path) {
+    additionalFiles
+      .map { it to ideRoot.resolve(it) }
+      .filter { (_, sourcePath) -> sourcePath.exists() }
+      .forEach { (fileName, sourcePath) ->
+        val targetPath = targetIdeRoot.resolve(fileName)
+        try {
+          Files.copy(sourcePath, targetPath)
+        } catch (e: IOException) {
+          LOG.atError().log("Cannot copy {} to {}", sourcePath, targetPath, e)
+        }
     }
   }
 
