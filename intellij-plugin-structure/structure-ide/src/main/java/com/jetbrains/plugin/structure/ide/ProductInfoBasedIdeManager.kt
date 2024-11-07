@@ -41,10 +41,8 @@ private val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
 
-class ProductInfoBasedIdeManager : IdeManager() {
+class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComponents: Boolean = true) : IdeManager() {
   private val productInfoParser = ProductInfoParser()
-
-  private val excludeMissingProductInfoLayoutComponents = true
 
   /**
    * Problem level remapping used for bundled plugins.
