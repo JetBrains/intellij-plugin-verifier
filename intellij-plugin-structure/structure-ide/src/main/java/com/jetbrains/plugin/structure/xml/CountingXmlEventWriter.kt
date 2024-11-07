@@ -1,0 +1,52 @@
+package com.jetbrains.plugin.structure.xml
+
+import com.jetbrains.plugin.structure.ide.dependencies.PluginXmlDependencyFilter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.Closeable
+import javax.xml.stream.XMLEventWriter
+import javax.xml.stream.XMLStreamException
+import javax.xml.stream.events.XMLEvent
+
+private val LOG: Logger = LoggerFactory.getLogger(PluginXmlDependencyFilter::class.java)
+
+class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWriter by delegate, Closeable {
+  private val eventCounter = hashMapOf<XmlEventType, Int>()
+
+  override fun add(event: XMLEvent) {
+    delegate.add(event)
+    val type = event.eventType
+    eventCounter[type] = (eventCounter[type] ?: 0) + 1
+  }
+
+  private fun count(type: XmlEventType) = eventCounter[type] ?: 0
+
+  private fun processingInstructions(): Int {
+    return count(XMLEvent.PROCESSING_INSTRUCTION)
+  }
+
+  @Throws(XMLStreamException::class)
+  override fun close() {
+    if ((eventCounter.size == 1 && eventCounter[XMLEvent.START_DOCUMENT] == 1)
+      || (eventCounter.size == 1 && processingInstructions() > 0)
+      || eventCounter.isEmpty()) {
+      // closing without an actual document being written
+      try {
+        delegate.close()
+      } catch (e: Exception) {
+        when (e) {
+          is RuntimeException, is XMLStreamException -> {
+            LOG.atError().log("Failed to close delegate XML event writer: {}", e.message)
+            return
+          }
+        }
+      }
+    } else {
+      try {
+        delegate.close()
+      } catch (e: Exception) {
+        throw e
+      }
+    }
+  }
+}
