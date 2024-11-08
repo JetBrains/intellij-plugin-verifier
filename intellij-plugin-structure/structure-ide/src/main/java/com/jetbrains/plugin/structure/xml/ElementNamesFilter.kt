@@ -12,8 +12,7 @@ import javax.xml.stream.events.EndElement
 import javax.xml.stream.events.StartElement
 import javax.xml.stream.events.XMLEvent
 
-class ElementNamesFilter(vararg elementLocalNames: String) : EventFilter {
-  private val elementLocalNames = elementLocalNames.toSet()
+class ElementNamesFilter(private val elementLocalNames: List<String>) : EventFilter {
 
   private var isAccepting = true
 
@@ -37,10 +36,9 @@ class ElementNamesFilter(vararg elementLocalNames: String) : EventFilter {
       }
 
       is EndElement -> {
-        val accepts = supports(event.name)
-        isAccepting = accepts
+        isAccepting = supports(event.name)
         eventStack.popIf(currentEvent = event)
-        accepts
+        isAccepting
       }
 
       else -> {

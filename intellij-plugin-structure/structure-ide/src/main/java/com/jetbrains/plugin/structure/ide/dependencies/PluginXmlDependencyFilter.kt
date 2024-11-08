@@ -30,6 +30,9 @@ import javax.xml.stream.events.XMLEvent.START_DOCUMENT
 private val LOG: Logger = LoggerFactory.getLogger(PluginXmlDependencyFilter::class.java)
 
 class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, private val ignoreXmlDeclaration: Boolean = true) {
+  private val allowedElements = listOf("idea-plugin", "id", "depends", "dependencies", "plugin",
+    "module", "content", "/idea-plugin/dependencies/module", "/idea-plugin/content/module")
+
   @Throws(IOException::class)
   fun filter(pluginXmlInputStream: InputStream, pluginXmlOutputStream: OutputStream) {
     val closeables = mutableListOf<Closeable>()
@@ -37,8 +40,7 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
       val inputFactory: XMLInputFactory = newXmlInputFactory()
       val outputFactory: XMLOutputFactory = XMLOutputFactory.newInstance()
 
-      val elementNameFilter = ElementNamesFilter(
-        "idea-plugin", "id", "depends", "dependencies", "plugin", "module", "content", "/idea-plugin/dependencies/module", "/idea-plugin/content/module")
+      val elementNameFilter = ElementNamesFilter(allowedElements)
       val eventFilter = mutableListOf<EventFilter>().apply {
         add(elementNameFilter)
         if (ignoreXmlDeclaration) add(EventTypeExcludingEventFilter(START_DOCUMENT))
