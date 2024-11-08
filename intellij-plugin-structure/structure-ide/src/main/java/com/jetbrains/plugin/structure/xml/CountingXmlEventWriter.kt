@@ -14,6 +14,11 @@ import javax.xml.stream.events.XMLEvent
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginXmlDependencyFilter::class.java)
 
+/**
+ * STaX Event Writer that counts occurrences of STaX events.
+ * It handles various peculiarities of underlying STaX implementations that prevent correct filtering
+ * of semi-well-formed documents in the Platform.
+ */
 class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWriter by delegate, Closeable {
   private val eventCounter = hashMapOf<XmlEventType, Int>()
 
@@ -29,9 +34,13 @@ class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWri
     return count(XMLEvent.PROCESSING_INSTRUCTION)
   }
 
+  private fun startDocuments(): Int {
+    return count(XMLEvent.START_DOCUMENT)
+  }
+
   @Throws(XMLStreamException::class)
   override fun close() {
-    if ((eventCounter.size == 1 && eventCounter[XMLEvent.START_DOCUMENT] == 1)
+    if ((eventCounter.size == 1 && startDocuments() == 1)
       || (eventCounter.size == 1 && processingInstructions() > 0)
       || eventCounter.isEmpty()) {
       // closing without an actual document being written
