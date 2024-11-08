@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
-class XmlTest {
+class PluginXmlDependencyFilterTest {
 
   @Test
   fun `XML for Java plugin with XML comment embedded in DTD entity is not parsed`() {
@@ -236,7 +236,7 @@ class XmlTest {
   }
 
   private fun resourceStream(name: String): InputStream {
-    val resourceAsStream: InputStream? = XmlTest::class.java.getResourceAsStream(name)
+    val resourceAsStream: InputStream? = PluginXmlDependencyFilterTest::class.java.getResourceAsStream(name)
     checkNotNull(resourceAsStream)
     return resourceAsStream
   }
