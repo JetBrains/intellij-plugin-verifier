@@ -13,8 +13,6 @@ import javax.xml.stream.XMLEventWriter
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
-import javax.xml.stream.XMLStreamReader
-import javax.xml.stream.XMLStreamWriter
 
 fun XMLInputFactory.newEventReader(inputStream: InputStream): CloseableXmlEventReader =
   CloseableXmlEventReader(createXMLEventReader(inputStream))
@@ -33,20 +31,6 @@ class CloseableXmlEventReader(private val delegate: XMLEventReader) : XMLEventRe
 }
 
 class CloseableXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWriter by delegate, Closeable {
-  @Throws(XMLStreamException::class)
-  override fun close() {
-    delegate.close()
-  }
-}
-
-class CloseableXmlStreamReader(private val delegate: XMLStreamReader) : XMLStreamReader by delegate, Closeable {
-  @Throws(XMLStreamException::class)
-  override fun close() {
-    delegate.close()
-  }
-}
-
-class CloseableXmlStreamWriter(private val delegate: XMLStreamWriter) : XMLStreamWriter by delegate, Closeable {
   @Throws(XMLStreamException::class)
   override fun close() {
     delegate.close()
