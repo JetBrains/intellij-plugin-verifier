@@ -77,7 +77,7 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     ideVersion: IdeVersion
   ): List<IdePlugin> {
 
-    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath)
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, excludeMissingProductInfoLayoutComponents)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
