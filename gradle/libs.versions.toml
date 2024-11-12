@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.8.21"
 
+byteBuddy = "1.15.10"
 caffeine = "3.1.8"
 commons-io = "2.16.1"
 gson = "2.10.1"
@@ -22,6 +23,7 @@ spullara-cliParser = "1.1.6"
 xz = "1.9"
 
 [libraries]
+byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
