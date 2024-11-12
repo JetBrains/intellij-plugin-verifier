@@ -212,6 +212,62 @@ class PluginDependencyFilteredResolverTest {
     )
   }
 
+  @Test
+  fun `two-tier transitive plugin dependencies are filtered`() {
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+
+    val plugin = MockIdePlugin(
+      pluginId = "com.example.somePlugin",
+      vendor = "JetBrains",
+      dependencies = listOf(
+        PluginDependencyImpl(/* id = */ "com.intellij.java",
+          /* isOptional = */ false,
+          /* isModule = */ false
+        ),
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+      )
+    )
+
+    val productInfo = ProductInfo(
+      name = "IntelliJ IDEA",
+      version = "2024.3",
+      versionSuffix = "EAP",
+      buildNumber = ideVersion.asStringWithoutProductCode(),
+      productCode = "IU",
+      dataDirectoryName = "IntelliJIdea2024.3",
+      productVendor = "JetBrains",
+      svgIconPath = "bin/idea.svg",
+      modules = emptyList(),
+      bundledPlugins = emptyList(),
+      layout = listOf(
+        Plugin("com.intellij.modules.json", listOf("plugins/json/lib/json.jar")),
+        Plugin("com.intellij.java", listOf("plugins/java/lib/java-impl.jar")),
+        PluginAlias("com.intellij.modules.lang"),
+      ),
+      launch = listOf(
+        Launch(bootClassPathJarNames = listOf("product.jar"))
+      )
+    )
+
+    productInfo.createEmptyLayoutComponentPaths(ideRoot)
+
+    val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin, javaPlugin)
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
+
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
+    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+
+    val editorCaretClassName = "com/intellij/openapi/editor/Caret"
+    val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
+    assertTrue(
+      "Class '$editorCaretClassName' must be 'Found', but is '${editorCaretClassResolution.javaClass}'",
+      editorCaretClassResolution is ResolutionResult.Found
+    )
+  }
+
   private fun List<NamedResolver>.containsName(name: String) = any { it.name == name }
 
   private fun ProductInfo.createEmptyLayoutComponentPaths(ideRoot: Path) {
