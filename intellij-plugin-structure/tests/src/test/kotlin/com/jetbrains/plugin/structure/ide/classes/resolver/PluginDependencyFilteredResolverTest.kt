@@ -296,8 +296,4 @@ class PluginDependencyFilteredResolverTest {
     val folder: File = newFolder(*dirComponents)
     return File(folder, fileComponent).toPath()
   }
-
-  private fun getExtension(filePath: String): String {
-    return filePath.substringAfterLast(".")
-  }
 }

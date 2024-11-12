@@ -55,7 +55,6 @@ class ProductInfoClassResolverTest {
     }
     with(resolver.bootClasspathResolver) {
       assertNotNull(this)
-      this!!
       assertTrue(delegateResolver is CompositeResolver)
     }
   }
@@ -73,7 +72,7 @@ class ProductInfoClassResolverTest {
   }
 
   private fun createEmptyIdeFiles() {
-    ideFiles.flatMap { (pluginId, files) -> files }
+    ideFiles.flatMap { (_, files) -> files }
       .map { file ->
         ideRoot.resolve(file).apply {
           createParentDirs()
