@@ -57,9 +57,10 @@ class ProductInfoParserTest {
       "dataDirectoryName",
       "svgIconPath",
       "productVendor",
-      emptyList(),
-      emptyList(),
-      listOf(
+      launch = emptyList(),
+      bundledPlugins = emptyList(),
+      modules = emptyList(),
+      layout = listOf(
         LayoutComponent.Plugin("Coverage", listOf(
           "plugins/java-coverage/lib/java-coverage.jar",
           "plugins/java-coverage/lib/java-coverage-rt.jar",
