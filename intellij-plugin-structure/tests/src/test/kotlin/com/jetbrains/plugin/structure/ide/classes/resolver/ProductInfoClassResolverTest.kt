@@ -2,10 +2,10 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.writeText
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -53,6 +53,11 @@ class ProductInfoClassResolverTest {
         ), this
       )
     }
+    with(resolver.bootClasspathResolver) {
+      assertNotNull(this)
+      this!!
+      assertTrue(delegateResolver is CompositeResolver)
+    }
   }
 
   @Test
@@ -84,6 +89,37 @@ class ProductInfoClassResolverTest {
 
 
   private val ideFiles = mapOf<PluginId, List<String>>(
+    // boot classpath, generally mapped to "bootClassPathJarNames" from product-info.json
+    "IDEA Core" to listOf(
+      "lib/platform-loader.jar",
+      "lib/util-8.jar",
+      "lib/util.jar",
+      "lib/app-client.jar",
+      "lib/util_rt.jar",
+      "lib/product.jar",
+      "lib/opentelemetry.jar",
+      "lib/app.jar",
+      "lib/product-client.jar",
+      "lib/lib-client.jar",
+      "lib/stats.jar",
+      "lib/jps-model.jar",
+      "lib/external-system-rt.jar",
+      "lib/rd.jar",
+      "lib/bouncy-castle.jar",
+      "lib/protobuf.jar",
+      "lib/intellij-test-discovery.jar",
+      "lib/forms_rt.jar",
+      "lib/lib.jar",
+      "lib/externalProcess-rt.jar",
+      "lib/groovy.jar",
+      "lib/annotations.jar",
+      "lib/idea_rt.jar",
+      "lib/jsch-agent.jar",
+      "lib/junit4.jar",
+      "lib/nio-fs.jar",
+      "lib/trove.jar"
+    ),
+
     "Git4Idea" to listOf(
       "plugins/vcs-git/lib/vcs-git.jar",
       "plugins/vcs-git/lib/git4idea-rt.jar"

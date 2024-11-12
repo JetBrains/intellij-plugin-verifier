@@ -1,20 +1,29 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.intellij.platform.Launch
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAlias
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
+import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class PluginDependencyFilteredResolverTest {
@@ -24,15 +33,139 @@ class PluginDependencyFilteredResolverTest {
 
   private lateinit var ideRoot: Path
 
-  @Test
-  fun `plugin dependency-based resolvers are resolved`() {
+  private lateinit var ideaCorePlugin: IdePlugin
+  private lateinit var javaPlugin: IdePlugin
+  private lateinit var jsonPlugin: IdePlugin
+
+  private lateinit var byteBuddy: ByteBuddy
+
+  private fun zip(zipPath: Path, fullyQualifiedName: String) {
+    ZipOutputStream(FileOutputStream(zipPath.toFile())).use {
+      val zipEntryName = fullyQualifiedName.replace('.', '/') + ".class"
+      it.putNextEntry(ZipEntry(zipEntryName))
+      it.write(emptyClass(fullyQualifiedName))
+      it.closeEntry()
+    }
+  }
+
+  private fun emptyClass(fullyQualifiedName: String): ByteArray {
+    return byteBuddy
+      .subclass(Object::class.java)
+      .name(fullyQualifiedName)
+      .make()
+      .bytes
+  }
+
+  private fun IdePlugin.writeEmptyClass(fullyQualifiedName: String): IdePlugin {
+    originalFile?.let { pluginArtifact: Path ->
+      zip(pluginArtifact, fullyQualifiedName)
+    }
+    return this
+  }
+
+  @Before
+  fun setUp() {
+    byteBuddy = ByteBuddy()
+
     ideRoot = temporaryFolder.newFolder("idea").toPath()
 
+    ideaCorePlugin = MockIdePlugin(
+      pluginId = "com.intellij",
+      pluginName = "IDEA CORE",
+      originalFile = temporaryFolder.newTemporaryFile("idea/lib/product.jar"),
+      definedModules = setOf(
+        "com.intellij.modules.platform",
+        "com.intellij.modules.lang",
+        "com.intellij.modules.java",
+      )
+    ).also {
+      it.writeEmptyClass("com.intellij.openapi.editor.Caret")
+    }
+
+    javaPlugin = MockIdePlugin(
+      pluginId = "com.intellij.java",
+      pluginName = "Java",
+      originalFile = temporaryFolder.newTemporaryFile("idea/plugins/java/lib/java-impl.jar"),
+      definedModules = setOf(
+        "com.intellij.modules.java",
+      ),
+      dependencies = listOf(
+        ModuleV2Dependency("com.intellij.modules.lang")
+      )
+    )
+
+    jsonPlugin = MockIdePlugin(
+      pluginId = "com.intellij.modules.json",
+      pluginName = "JSON",
+      originalFile = temporaryFolder.newTemporaryFile("idea/plugins/json/lib/json.jar")
+    )
+  }
+
+  @Test
+  fun `plugin dependency-based resolvers are resolved`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
     val plugin = MockIdePlugin(
+      pluginId = "com.example.somePlugin",
       dependencies = listOf(
         PluginDependencyImpl(/* id = */ "com.intellij.modules.platform",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+      )
+    )
+
+    val productInfo = ProductInfo(
+      name = "IntelliJ IDEA",
+      version = "2024.3",
+      versionSuffix = "EAP",
+      buildNumber = ideVersion.asStringWithoutProductCode(),
+      productCode = "IU",
+      dataDirectoryName = "IntelliJIdea2024.3",
+      productVendor = "JetBrains",
+      launch = emptyList(),
+      svgIconPath = "bin/idea.svg",
+      modules = emptyList(),
+      bundledPlugins = emptyList(),
+      layout = listOf(
+        PluginAlias("com.intellij.modules.platform"),
+        Plugin("com.intellij.modules.json", listOf("plugins/json/lib/json.jar")),
+        Plugin("Git4Idea", listOf("plugins/vcs-git/lib/vcs-git.jar", "plugins/vcs-git/lib/git4idea-rt.jar")),
+      ),
+    )
+
+    productInfo.createEmptyLayoutComponentPaths(ideRoot)
+
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
+
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
+    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+
+    with(pluginDependencyFilteredResolver.filteredResolvers) {
+      assertEquals(2, size)
+
+      // pluginAlias has no classpath, hence no resolver
+      assertFalse(containsName("com.intellij.modules.platform"))
+      // JSON plugin is declared
+      assertTrue(containsName("com.intellij.modules.json"))
+      // Git4Idea is not a plugin dependency
+      assertFalse(containsName("Git4Idea"))
+    }
+  }
+
+  @Test
+  fun `transitive plugin dependencies are filtered`() {
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+
+    val plugin = MockIdePlugin(
+      pluginId = "com.example.somePlugin",
+      vendor = "JetBrains",
+      dependencies = listOf(
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
           /* isOptional = */ false,
           /* isModule = */ true
         ),
@@ -55,29 +188,28 @@ class PluginDependencyFilteredResolverTest {
       modules = emptyList(),
       bundledPlugins = emptyList(),
       layout = listOf(
-        PluginAlias("com.intellij.modules.platform"),
         Plugin("com.intellij.modules.json", listOf("plugins/json/lib/json.jar")),
-        Plugin("Git4Idea", listOf("plugins/vcs-git/lib/vcs-git.jar", "plugins/vcs-git/lib/git4idea-rt.jar")),
+        PluginAlias("com.intellij.modules.lang"),
+      ),
+      launch = listOf(
+        Launch(bootClassPathJarNames = listOf("product.jar"))
       )
     )
 
     productInfo.createEmptyLayoutComponentPaths(ideRoot)
 
-    val ide = MockIde(ideVersion, ideRoot)
+    val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin)
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
     val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
-    with(pluginDependencyFilteredResolver.filteredResolvers) {
-      assertEquals(1, size)
-
-      // pluginAlias has no classpath, hence no resolver
-      assertFalse(containsName("com.intellij.modules.platform"))
-      // JSON plugin is declared
-      assertTrue(containsName("com.intellij.modules.json"))
-      // Git4Idea is not a plugin dependency
-      assertFalse(containsName("Git4Idea"))
-    }
+    val editorCaretClassName = "com/intellij/openapi/editor/Caret"
+    val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
+    assertTrue(
+      "Class '$editorCaretClassName' must be 'Found', but is '${editorCaretClassResolution.javaClass}'",
+      editorCaretClassResolution is ResolutionResult.Found
+    )
   }
 
   private fun List<NamedResolver>.containsName(name: String) = any { it.name == name }
@@ -98,4 +230,18 @@ class PluginDependencyFilteredResolverTest {
     ZipOutputStream(Files.newOutputStream(this)).use {}
   }
 
+  private fun TemporaryFolder.newTemporaryFile(filePath: String): Path {
+    val pathComponents = filePath.split("/")
+    val dirComponents = pathComponents.dropLast(1).toTypedArray()
+    if (dirComponents.isEmpty()) {
+      throw IllegalArgumentException("Cannot create temporary file '$filePath'")
+    }
+    val fileComponent = pathComponents.last()
+    val folder: File = newFolder(*dirComponents)
+    return File(folder, fileComponent).toPath()
+  }
+
+  private fun getExtension(filePath: String): String {
+    return filePath.substringAfterLast(".")
+  }
 }

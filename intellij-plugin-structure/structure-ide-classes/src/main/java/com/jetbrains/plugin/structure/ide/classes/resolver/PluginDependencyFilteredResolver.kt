@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
@@ -15,10 +16,17 @@ import java.util.*
  * and includes only those that are declared as dependencies in the plugin.
  */
 class PluginDependencyFilteredResolver(plugin: IdePlugin, productInfoClassResolver: ProductInfoClassResolver) : Resolver() {
-  val filteredResolvers: List<NamedResolver> = productInfoClassResolver.layoutComponentResolvers
-    .filter { resolver ->
-      plugin.dependencies.any { pluginDep -> pluginDep.id == resolver.name }
-    }
+  val filteredResolvers: List<NamedResolver> = getResolvers(plugin, productInfoClassResolver)
+
+  private fun getResolvers(plugin: IdePlugin, productInfoClassResolver: ProductInfoClassResolver): List<NamedResolver> {
+    val dependencyTree = DependencyTree(productInfoClassResolver.ide)
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin)
+
+    return transitiveDependencies.map { dependency ->
+        productInfoClassResolver.layoutComponentResolvers.firstOrNull { component -> dependency.matches(component.name) }
+          ?: productInfoClassResolver.bootClasspathResolver
+      }
+  }
 
   private val delegateResolver = filteredResolvers.asResolver()
 

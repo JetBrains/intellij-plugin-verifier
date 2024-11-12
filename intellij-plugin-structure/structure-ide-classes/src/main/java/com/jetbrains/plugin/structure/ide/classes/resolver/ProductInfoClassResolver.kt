@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -27,30 +28,22 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoClassResolver::clas
 private const val PRODUCT_INFO_JSON = "product-info.json"
 
 class ProductInfoClassResolver(
-  productInfo: ProductInfo, val ide: Ide, override val readMode: ReadMode = FULL
+  private val productInfo: ProductInfo, val ide: Ide, override val readMode: ReadMode = FULL
 ) : Resolver() {
 
   val layoutComponentResolvers: List<NamedResolver> =  productInfo.layout
     .mapNotNull(::getResourceResolver)
 
-  private val delegateResolver = layoutComponentResolvers.asResolver()
+  private val delegateResolver = bootClasspathResolver + layoutComponentResolvers
 
   private fun getResourceResolver(layoutComponent: LayoutComponent): NamedResolver? {
     return if (layoutComponent is LayoutComponent.Classpathable) {
-      val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
-        val fullyQualifiedJarFile = ide.idePath.resolve(jarPath)
-        NamedResolver(
-          layoutComponent.name + "#" + jarPath,
-          JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide))
-        )
-      }
-      NamedResolver(layoutComponent.name, CompositeResolver.create(itemJarResolvers))
+      getClasspathableResolver(layoutComponent)
     } else {
       LOG.atDebug().log("No classpath declared for '{}'. Skipping", layoutComponent)
       null
     }
   }
-
 
   override val allClasses get() = delegateResolver.allClasses
 
@@ -72,9 +65,35 @@ class ProductInfoClassResolver(
 
   override fun close() = delegateResolver.close()
 
-  private fun List<Resolver>.asResolver(): Resolver {
-    return CompositeResolver.create(this)
+  val bootClasspathResolver: NamedResolver
+    get() {
+      val bootJars = productInfo.launches.firstOrNull()?.bootClassPathJarNames
+      val bootResolver = bootJars?.map { getBootJarResolver(it) }?.asResolver()
+        ?: EmptyResolver
+      return NamedResolver("bootClassPathJarNames", bootResolver)
+    }
+
+  private fun <C> getClasspathableResolver(layoutComponent: C): NamedResolver
+    where C : LayoutComponent.Classpathable, C : LayoutComponent {
+    val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
+      val fullyQualifiedJarFile = ide.idePath.resolve(jarPath)
+      NamedResolver(
+        layoutComponent.name + "#" + jarPath,
+        JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide))
+      )
+    }
+    return NamedResolver(layoutComponent.name, CompositeResolver.create(itemJarResolvers))
   }
+
+  private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
+    val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
+    return NamedResolver(relativeJarPath, JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
+  }
+
+  private operator fun Resolver.plus(moreResolvers: Collection<NamedResolver>) =
+    CompositeResolver.create(listOf(this) + moreResolvers)
+
+  private fun List<NamedResolver>.asResolver() = CompositeResolver.create(this)
 
   companion object {
     @Throws(InvalidIdeException::class)
@@ -115,6 +134,4 @@ class ProductInfoClassResolver(
         return resolve(PRODUCT_INFO_JSON)
       }
   }
-
-
 }
