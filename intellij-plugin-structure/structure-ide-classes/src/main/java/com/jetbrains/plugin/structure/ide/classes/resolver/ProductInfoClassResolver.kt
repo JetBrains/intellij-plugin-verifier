@@ -27,7 +27,7 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoClassResolver::clas
 private const val PRODUCT_INFO_JSON = "product-info.json"
 
 class ProductInfoClassResolver(
-  productInfo: ProductInfo, private val ide: Ide, override val readMode: ReadMode = FULL
+  productInfo: ProductInfo, val ide: Ide, override val readMode: ReadMode = FULL
 ) : Resolver() {
 
   val layoutComponentResolvers: List<NamedResolver> =  productInfo.layout
