@@ -46,7 +46,7 @@ class ProductInfoParserTest {
     val jackson = ObjectMapper()
 
     val expectedJson = """
-          {"name":"name","version":"version","versionSuffix":"versionSuffix","buildNumber":"buildNumber","productCode":"productCode","dataDirectoryName":"dataDirectoryName","svgIconPath":"svgIconPath","productVendor":"productVendor","bundledPlugins":[],"modules":[],"layout":[{"name":"Coverage","kind":"plugin","classPaths":["plugins/java-coverage/lib/java-coverage.jar","plugins/java-coverage/lib/java-coverage-rt.jar"]},{"name":"com.intellij.modules.json","kind":"pluginAlias"}]}
+          {"name":"name","version":"version","versionSuffix":"versionSuffix","buildNumber":"buildNumber","productCode":"productCode","dataDirectoryName":"dataDirectoryName","svgIconPath":"svgIconPath","productVendor":"productVendor","launch":[],"bundledPlugins":[],"modules":[],"layout":[{"name":"Coverage","kind":"plugin","classPaths":["plugins/java-coverage/lib/java-coverage.jar","plugins/java-coverage/lib/java-coverage-rt.jar"]},{"name":"com.intellij.modules.json","kind":"pluginAlias"}],"launches":[]}
     """.trimIndent()
     val productInfo = ProductInfo(
       "name",
