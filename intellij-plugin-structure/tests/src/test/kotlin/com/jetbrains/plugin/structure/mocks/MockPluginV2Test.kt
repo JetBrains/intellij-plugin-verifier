@@ -18,6 +18,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClasse
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Paths
@@ -183,27 +185,29 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
 
   private fun checkModulesDescriptors(plugin: IdePlugin) {
     val modulesDescriptors = plugin.modulesDescriptors
-    assertEquals(
-      listOf(
-        "../intellij.v2.module-ultimate.xml",
-        "../intellij.v2.module.xml"
-      ),
-      modulesDescriptors.map { it.configurationFilePath }
+
+    val moduleConfigs = modulesDescriptors.map { it.configurationFilePath }
+    assertThat(
+      moduleConfigs, `is`(
+        listOf(
+          "../intellij.v2.module-ultimate.xml", "../intellij.v2.module.xml"
+        )
+      )
     )
 
-    val moduleDependencies = modulesDescriptors.find { it.name == "intellij.v2.module" }!!.dependencies
-    assertEquals(
-      listOf(
-        "intellij.clouds.docker.remoteRun",
-        "com.intellij.copyright"
-      ),
-      moduleDependencies.map { it.id }
+    val moduleDependencies = modulesDescriptors
+      .find { it.name == "intellij.v2.module" }!!
+      .dependencies
+
+    assertThat(
+      moduleDependencies.map { it.id }, `is`(
+        listOf(
+          "intellij.clouds.docker.remoteRun", "com.intellij.copyright"
+        )
+      )
     )
 
-    assertEquals(
-      listOf(true, false),
-      moduleDependencies.map { it.isOptional }
-    )
+    assertThat(moduleDependencies.map { it.isOptional }, `is`(listOf(true, false)))
 
     assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("intellij.clouds.docker.remoteRun"))
     assertTrue(plugin.dependencies.filterNot { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))
@@ -235,13 +239,13 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       ModuleV2Dependency("intellij.clouds.docker.remoteRun"),
       PluginV2Dependency("com.intellij.copyright"),
     )
-    assertEquals(expectedDependencies, plugin.dependencies)
+    assertThat(plugin.dependencies, `is`(expectedDependencies))
 
     val expectedOptionalDependencies = listOf(
       ModuleV2Dependency("intellij.module.dependency"),
       ModuleV2Dependency("intellij.clouds.docker.remoteRun")
     )
-    assertEquals(expectedOptionalDependencies, plugin.dependencies.filter { it.isOptional })
+    assertThat(plugin.dependencies.filter { it.isOptional }, `is`(expectedOptionalDependencies))
   }
 
   private fun checkPluginContents(plugin: IdePluginImpl) {
@@ -285,26 +289,5 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       setOf("org.jetbrains.vuejs2.optionalUpdaterV2Ultimate"),
       module.appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
-  }
-
-  private fun <T> assertEquals(expected: List<T>, actual: List<T>) {
-    if (expected.size != actual.size) {
-      fail("size mismatch. expected:<${expected.size}> but was:<${actual.size}>")
-    } else {
-      val mismatches = expected.mapIndexedNotNull { index, t ->
-        if (expected[index] != actual[index]) {
-          Triple(index, expected[index], actual[index])
-        } else {
-          null
-        }
-      }
-      if (mismatches.isNotEmpty()) {
-        val mismatchesString =
-          mismatches.joinToString(separator = ", ") { (index, expected, actual) ->
-            "[$index]: \"$expected\" != \"$actual\""
-          }
-        fail("expected:<$expected> but was:<$$mismatchesString>")
-      }
-    }
   }
 }
