@@ -180,7 +180,7 @@ internal class PluginCreator private constructor(
       if (pluginCreationResult.plugin.isV2) {
         val module = pluginCreationResult.plugin
 
-        plugin += module.dependencies
+        plugin.addDependencies(module)
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
         plugin.definedModules.add(moduleName)
 
@@ -911,8 +911,8 @@ internal class PluginCreator private constructor(
     validateSinceBuild(sinceBuild)
   }
 
-  private operator fun IdePluginImpl.plusAssign(additionalDependencies: List<PluginDependency>) {
-    additionalDependencies
+  private fun IdePluginImpl.addDependencies(module: IdePlugin) {
+    module.dependencies
       .filter { dependency -> dependencies.none { it.id == dependency.id } }
       .forEach { dependencies += it }
   }
