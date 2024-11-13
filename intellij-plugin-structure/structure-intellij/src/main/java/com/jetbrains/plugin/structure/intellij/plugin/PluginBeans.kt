@@ -18,9 +18,6 @@ internal val PluginBean.dependentModules: List<PluginModuleBean>
 internal val PluginBean.dependentPlugins: List<PluginDependenciesPluginBean>
   get() = dependenciesV2?.plugins?.filter { it.dependencyId != null } ?: emptyList()
 
-internal val PluginDependenciesPluginBean.isModule: Boolean
-  get() = dependencyId.startsWith(INTELLIJ_MODULE_PREFIX)
-
 internal val PluginDependencyBean.isOptional: Boolean
    get() = optional ?: false
 
