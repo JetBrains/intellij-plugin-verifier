@@ -34,7 +34,12 @@ class ProductInfoClassResolver(
   val layoutComponentResolvers: List<NamedResolver> =  productInfo.layout
     .mapNotNull(::getResourceResolver)
 
-  private val delegateResolver = bootClasspathResolver + layoutComponentResolvers
+  private val delegateResolver = getDelegateResolver()
+
+  private fun getDelegateResolver(): Resolver = mutableListOf<NamedResolver>().apply {
+    add(bootClasspathResolver)
+    addAll(layoutComponentResolvers)
+  }.asResolver()
 
   private fun getResourceResolver(layoutComponent: LayoutComponent): NamedResolver? {
     return if (layoutComponent is LayoutComponent.Classpathable) {
@@ -89,9 +94,6 @@ class ProductInfoClassResolver(
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
     return NamedResolver(relativeJarPath, JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
   }
-
-  private operator fun Resolver.plus(moreResolvers: Collection<NamedResolver>) =
-    CompositeResolver.create(listOf(this) + moreResolvers)
 
   private fun List<NamedResolver>.asResolver() = CompositeResolver.create(this)
 
