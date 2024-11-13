@@ -944,7 +944,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  fun registerIfOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
+  private fun registerIfOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
     if (pluginDependency.isOptional && dependencyBean.configFile != null) {
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
