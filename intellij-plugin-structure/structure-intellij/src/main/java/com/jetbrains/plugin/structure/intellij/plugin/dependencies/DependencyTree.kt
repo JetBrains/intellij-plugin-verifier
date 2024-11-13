@@ -127,4 +127,16 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
       }
     }
   }
+
+  private class DiGraph<I, O> {
+    private val adjacency = hashMapOf<I, MutableList<O>>()
+
+    operator fun get(from: I): List<O> = adjacency[from] ?: emptyList()
+
+    fun addEdge(from: I, to: O) {
+      adjacency.getOrPut(from) { mutableListOf() } += to
+    }
+
+    fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
+  }
 }
