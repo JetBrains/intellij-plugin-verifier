@@ -629,10 +629,8 @@ class DependenciesTest {
   fun test243Dump() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
-    if (ideUrl == null) {
-      fail("Dumped IDE not found in the resources [$ideResourceLocation]")
-      return
-    }
+    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
+    ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
     val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
@@ -642,10 +640,8 @@ class DependenciesTest {
     }
 
     val git4Idea = ide.getPluginById("Git4Idea")
-    if (git4Idea == null) {
-      fail("No Git4Idea plugin found in the IDE")
-      return
-    }
+    assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
+    git4Idea!!
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
