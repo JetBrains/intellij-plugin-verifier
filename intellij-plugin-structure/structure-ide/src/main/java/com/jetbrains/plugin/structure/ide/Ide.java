@@ -43,7 +43,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin getPluginById(@NotNull String pluginId) {
+  final public IdePlugin findPluginById(@NotNull String pluginId) {
     for (IdePlugin plugin : getBundledPlugins()) {
       String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
       if (Objects.equals(id, pluginId))
@@ -60,7 +60,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin getPluginByModule(@NotNull String moduleId) {
+  final public IdePlugin findPluginByModule(@NotNull String moduleId) {
     for (IdePlugin plugin : getBundledPlugins()) {
       if (plugin.getDefinedModules().contains(moduleId)) {
         return plugin;

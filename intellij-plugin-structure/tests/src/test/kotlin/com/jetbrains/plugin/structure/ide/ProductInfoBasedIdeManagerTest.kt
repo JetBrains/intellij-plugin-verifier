@@ -35,7 +35,7 @@ class ProductInfoBasedIdeManagerTest {
     val ideRoot = MockRiderBuilder(temporaryFolder).buildIdeaDirectory()
     val ide = ideManager.createIde(ideRoot)
 
-    val ideCore = ide.getPluginById("com.intellij")
+    val ideCore = ide.findPluginById("com.intellij")
     assertNotNull(ideCore)
     with(ideCore!!) {
       with(definedModules) {
@@ -43,7 +43,7 @@ class ProductInfoBasedIdeManagerTest {
         assertEquals("com.intellij.modules.rider", definedModules.first())
       }
     }
-    val riderModule = ide.getPluginByModule("com.intellij.modules.rider")
+    val riderModule = ide.findPluginByModule("com.intellij.modules.rider")
     assertNotNull(riderModule)
     riderModule!!
     assertTrue(ideCore.pluginId == riderModule.pluginId)
@@ -95,7 +95,7 @@ class ProductInfoBasedIdeManagerTest {
     }
     val ide = ideManager.createIde(ideRoot)
     assertEquals(5, ide.bundledPlugins.size)
-    val emojiPickerPlugin = ide.getPluginById("org.jetbrains.plugins.emojipicker")
+    val emojiPickerPlugin = ide.findPluginById("org.jetbrains.plugins.emojipicker")
     assertNull(emojiPickerPlugin)
   }
 
@@ -124,10 +124,10 @@ class ProductInfoBasedIdeManagerTest {
     val ide = ideManager.createIde(ideRoot)
     assertEquals(6, ide.bundledPlugins.size)
 
-    val emojiPickerPlugin = ide.getPluginById("org.jetbrains.plugins.emojipicker")
+    val emojiPickerPlugin = ide.findPluginById("org.jetbrains.plugins.emojipicker")
     assertNull(emojiPickerPlugin)
 
-    val javaPlugin = ide.getPluginById("com.intellij.java")
+    val javaPlugin = ide.findPluginById("com.intellij.java")
     assertNotNull(javaPlugin)
     with(javaPlugin!!) {
       assertEquals("242.10180.25", pluginVersion)
@@ -136,7 +136,7 @@ class ProductInfoBasedIdeManagerTest {
 
   private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)
-    val uiPlugin = ide.getPluginById("intellij.notebooks.ui")
+    val uiPlugin = ide.findPluginById("intellij.notebooks.ui")
     assertNotNull(uiPlugin)
     assertTrue(uiPlugin is IdeModule)
     with(uiPlugin as IdeModule) {
@@ -145,7 +145,7 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(1, resources.size)
     }
 
-    val visualizationPlugin = ide.getPluginById("intellij.notebooks.visualization")
+    val visualizationPlugin = ide.findPluginById("intellij.notebooks.visualization")
     assertNotNull(visualizationPlugin)
     assertTrue(visualizationPlugin is IdeModule)
 
@@ -155,7 +155,7 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(1, resources.size)
     }
 
-    val javaFeaturesTrainer = ide.getPluginById("intellij.java.featuresTrainer")
+    val javaFeaturesTrainer = ide.findPluginById("intellij.java.featuresTrainer")
     assertNotNull(javaFeaturesTrainer)
     assertTrue(javaFeaturesTrainer is IdeModule)
     with(javaFeaturesTrainer as IdeModule) {
@@ -164,13 +164,13 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(1, resources.size)
     }
 
-    val ideCore = ide.getPluginById("com.intellij")
+    val ideCore = ide.findPluginById("com.intellij")
     assertNotNull(ideCore)
     with(ideCore!!) {
       assertEquals(4, definedModules.size)
     }
 
-    val codeWithMe = ide.getPluginById("com.jetbrains.codeWithMe")
+    val codeWithMe = ide.findPluginById("com.jetbrains.codeWithMe")
     assertNotNull(codeWithMe)
     with(codeWithMe!!) {
       assertNotNull(productDescriptor)

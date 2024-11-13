@@ -614,7 +614,7 @@ class DependenciesTest {
       assertTrue(any { it.pluginId == "com.jetbrains.performancePlugin" })
     }
 
-    val git4Idea = ide.getPluginById("Git4Idea") ?: return
+    val git4Idea = ide.findPluginById("Git4Idea") ?: return
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
@@ -639,7 +639,7 @@ class DependenciesTest {
       assertEquals(170, size)
     }
 
-    val git4Idea = ide.getPluginById("Git4Idea")
+    val git4Idea = ide.findPluginById("Git4Idea")
     assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
     git4Idea!!
 

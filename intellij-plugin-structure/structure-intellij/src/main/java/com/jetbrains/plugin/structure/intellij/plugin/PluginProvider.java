@@ -15,7 +15,7 @@ public interface PluginProvider {
      * @return bundled plugin with the specified ID or {@code null}, if such a plugin is not found
      */
     @Nullable
-    IdePlugin getPluginById(@NotNull String pluginId);
+    IdePlugin findPluginById(@NotNull String pluginId);
 
     /**
      * Finds bundled plugin containing the definition of the given module.
@@ -24,5 +24,5 @@ public interface PluginProvider {
      * @return bundled plugin with a definition of the module or {@code null}, if such a plugin is not found
      */
     @Nullable
-    public IdePlugin getPluginByModule(@NotNull String moduleId);
+    IdePlugin findPluginByModule(@NotNull String moduleId);
 }

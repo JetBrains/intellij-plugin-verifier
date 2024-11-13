@@ -82,7 +82,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   }
 
   private fun PluginProvider.getPluginOrModule(id: String): Dependency {
-    val plugin = this.getPluginById(id)
+    val plugin = this.findPluginById(id)
     return if (plugin != null) {
       if (plugin is IdeModule) {
         Module(plugin, id)
@@ -90,7 +90,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
         Plugin(plugin)
       }
     } else {
-      this.getPluginByModule(id)?.let {
+      this.findPluginByModule(id)?.let {
         Module(it, id)
       } ?: None
     }
@@ -122,7 +122,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
   fun toDebugString(pluginId: String): CharSequence {
     return StringBuilder().apply {
-       pluginProvider.getPluginById(pluginId)?.let { plugin ->
+       pluginProvider.findPluginById(pluginId)?.let { plugin ->
         getDependencyGraph(plugin).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
       }
     }
