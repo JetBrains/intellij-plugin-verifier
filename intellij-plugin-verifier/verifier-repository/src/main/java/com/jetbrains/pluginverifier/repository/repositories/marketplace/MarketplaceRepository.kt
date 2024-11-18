@@ -8,6 +8,7 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.tracing.withLogging
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
 import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
 import org.jetbrains.intellij.pluginRepository.model.PluginId
@@ -20,7 +21,8 @@ import java.util.concurrent.TimeUnit
 
 class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginRepository {
 
-  private val pluginRepositoryInstance = PluginRepositoryFactory.create(host = repositoryURL.toExternalForm())
+  private val pluginRepositoryInstance =
+    PluginRepositoryFactory.create(host = repositoryURL.toExternalForm()).withLogging()
 
   //This mapping never changes. Updates in JetBrains Marketplace have constant plugin ID.
   private val updateIdToPluginIdMapping = ConcurrentHashMap<Int, Int>()
