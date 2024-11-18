@@ -4,7 +4,8 @@ import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultDependenciesProvider
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependenciesProvider
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
@@ -15,14 +16,17 @@ import java.util.*
  * It takes classes and resource bundles from the IDE
  * and includes only those that are declared as dependencies in the plugin.
  */
-class PluginDependencyFilteredResolver(plugin: IdePlugin, productInfoClassResolver: ProductInfoClassResolver) : Resolver() {
+class PluginDependencyFilteredResolver(
+  plugin: IdePlugin,
+  productInfoClassResolver: ProductInfoClassResolver,
+  private val dependenciesProvider: DependenciesProvider = DefaultDependenciesProvider(productInfoClassResolver.ide)
+) : Resolver() {
   val filteredResolvers: List<NamedResolver> = getResolvers(plugin, productInfoClassResolver)
 
   private fun getResolvers(plugin: IdePlugin, productInfoClassResolver: ProductInfoClassResolver): List<NamedResolver> {
-    val dependencyTree = DependencyTree(productInfoClassResolver.ide)
-    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin)
-
-    return transitiveDependencies.map { dependency ->
+    return dependenciesProvider
+      .getDependencies(plugin)
+      .map { dependency ->
         productInfoClassResolver.layoutComponentResolvers.firstOrNull { component -> dependency.matches(component.name) }
           ?: productInfoClassResolver.bootClasspathResolver
       }
