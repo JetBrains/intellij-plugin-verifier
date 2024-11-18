@@ -225,7 +225,7 @@ abstract class BaseBytecodeTest {
         file("product-info.json", it)
       }
       dir("lib") {
-        zip("idea.jar") {
+        zip("idea_rt.jar") {
           dir("META-INF") {
             file("plugin.xml") {
               """
