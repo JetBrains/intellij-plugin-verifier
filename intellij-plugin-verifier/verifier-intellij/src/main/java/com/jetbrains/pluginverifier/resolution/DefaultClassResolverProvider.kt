@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.classes.resolver.PluginDependencyFilteredResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.pluginverifier.analysis.LegacyPluginAnalysis
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
@@ -31,6 +32,8 @@ class DefaultClassResolverProvider(
 ) : ClassResolverProvider {
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
+
+  private val legacyPluginAnalysis = LegacyPluginAnalysis()
 
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
@@ -59,7 +62,10 @@ class DefaultClassResolverProvider(
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
 
   private fun getIdeResolver(plugin: IdePlugin, ideDescriptor: IdeDescriptor): Resolver {
-    return if (ideDescriptor.ide is ProductInfoBasedIde && ideDescriptor.ideResolver is ProductInfoClassResolver) {
+    return if (ideDescriptor.ide is ProductInfoBasedIde
+      && ideDescriptor.ideResolver is ProductInfoClassResolver
+      && !legacyPluginAnalysis.isLegacyPlugin(plugin)
+    ) {
       PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver)
     } else {
       ideDescriptor.ideResolver
