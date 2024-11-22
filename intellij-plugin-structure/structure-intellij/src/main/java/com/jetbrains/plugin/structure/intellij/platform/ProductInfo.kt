@@ -18,10 +18,13 @@ data class ProductInfo(
   @JsonProperty("dataDirectoryName") val dataDirectoryName: String,
   @JsonProperty("svgIconPath") val svgIconPath: String,
   @JsonProperty("productVendor") val productVendor: String,
+  @JsonProperty("launch") val launch: List<Launch>?,
   @JsonProperty("bundledPlugins") val bundledPlugins: List<String>,
   @JsonProperty("modules") val modules: List<String>,
   @JsonProperty("layout") val layout: List<LayoutComponent>
-)
+) {
+  val launches: List<Launch> = launch ?: emptyList()
+}
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "kind")
 @JsonSubTypes(
@@ -81,5 +84,9 @@ sealed class LayoutComponent(val kind: String) {
     get() = map { Path.of(it) }
 }
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class Launch(
+  @JsonProperty("bootClassPathJarNames") val bootClassPathJarNames: List<String>
+)
 
 

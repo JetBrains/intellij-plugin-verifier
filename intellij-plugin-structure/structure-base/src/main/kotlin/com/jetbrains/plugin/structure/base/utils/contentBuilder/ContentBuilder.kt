@@ -4,8 +4,12 @@
 
 package com.jetbrains.plugin.structure.base.utils.contentBuilder
 
-import com.jetbrains.plugin.structure.base.utils.*
-import java.io.File
+import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isFile
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.readBytes
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import java.nio.file.Path
 
 interface ContentBuilder {
@@ -16,6 +20,7 @@ interface ContentBuilder {
   fun file(name: String, localFile: Path)
   fun dir(name: String, localDirectory: Path)
   fun dir(name: String, content: ContentBuilder.() -> Unit)
+  fun dirs(name: String, content: ContentBuilder.() -> Unit)
   fun zip(name: String, content: ContentBuilder.() -> Unit)
 }
 
@@ -69,6 +74,23 @@ private class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : Conten
     addChild(name, directorySpec)
   }
 
+  override fun dirs(name: String, content: ContentBuilder.() -> Unit) {
+    val pathElements = name.split("/")
+    when (pathElements.size) {
+      0 -> throw IllegalArgumentException("Cannot have empty name")
+      1 -> dir(pathElements.first(), content)
+      2 -> dir(pathElements.first()) {
+        dir(pathElements[1], content)
+      }
+
+      else -> {
+        val firstElement = pathElements.first()
+        val rest = pathElements.drop(1)
+        addChild(firstElement, resolveDirs(rest, content))
+      }
+    }
+  }
+
   override fun dir(name: String, localDirectory: Path) {
     check(localDirectory.isDirectory) { "Not a directory: $localDirectory" }
     dir(name) {
@@ -89,5 +111,41 @@ private class ContentBuilderImpl(private val result: ChildrenOwnerSpec) : Conten
 
   private fun addChild(name: String, spec: ContentSpec) {
     result.addChild(name, spec)
+  }
+
+  private fun resolveDirs(pathElements: List<String>, content: ContentBuilder.() -> Unit): SingleChildSpec {
+    val parentAndChildPairs = pathElements.windowedPairs()
+    val directorySpecs = parentAndChildPairs.mapIndexed { i, (parent, child) ->
+      val childContent = if (i < parentAndChildPairs.lastIndex) DirectorySpec() else buildDirectoryContent(content)
+      SingleChildSpec(parent, child, childContent)
+    }
+    return buildHierarchy(directorySpecs)
+  }
+
+  private fun buildHierarchy(specs: List<SingleChildSpec>): SingleChildSpec = with(ArrayDeque(specs)) {
+    while (size > 1) {
+      val child = removeLast()
+      val parent = removeLast()
+      addLast(parent.copy(child = child))
+    }
+    first()
+  }
+
+  private fun List<String>.windowedPairs() = windowed(2) { ParentAndChild(it.first(), it.last()) }
+
+  private data class ParentAndChild(val parent: String, val child: String)
+
+  private data class SingleChildSpec(val name: String, val child: ContentSpec) : ContentSpec {
+    constructor(name: String, child: String, childContent: ContentSpec) : this(name, SingleChildSpec(child, childContent))
+
+    override fun generate(target: Path) {
+      target.createDir()
+      val childFile = target.resolve(name)
+      child.generate(childFile)
+    }
+
+    override fun toString(): String {
+      return "$name/$child"
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.classes.plugin
@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.Closeable
 
 /**
- * Holder of the class files of the [plugin] [idePlugin]
+ * Holder of the class files of the [idePlugin] [idePlugin]
  * that could reside in different [locations] [LocationKey].
  */
 data class IdePluginClassesLocations(
@@ -35,4 +35,5 @@ data class IdePluginClassesLocations(
 
   fun getResolvers(key: LocationKey): List<Resolver> = locations[key].orEmpty()
 
+  val locationKeys = locations.keys
 }

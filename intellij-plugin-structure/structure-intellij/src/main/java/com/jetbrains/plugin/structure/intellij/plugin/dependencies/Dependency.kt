@@ -16,7 +16,7 @@ sealed class Dependency {
   abstract val isTransitive: Boolean
 
   data class Module(override val plugin: IdePlugin, val id: PluginId, override val isTransitive: Boolean = false) : Dependency(), PluginAware {
-    override fun matches(id: PluginId) = plugin.pluginId == id
+    override fun matches(id: PluginId) = plugin.pluginId == id || plugin.definedModules.contains(id)
 
     override fun toString() =
       "${if (isTransitive) "Transitive " else ""}Module '$id' provided by plugin '${plugin.pluginId}'"

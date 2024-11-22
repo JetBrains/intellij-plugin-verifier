@@ -1,0 +1,113 @@
+{
+  "name": "IntelliJ IDEA",
+  "version": "2024.2",
+  "versionSuffix": "EAP",
+  "buildNumber": "242.10180.25",
+  "productCode": "IU",
+  "dataDirectoryName": "IntelliJIdea2024.2",
+  "svgIconPath": "bin/idea.svg",
+  "productVendor": "JetBrains",
+  "launch": [
+    {
+      "os": "Linux",
+      "arch": "amd64",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "util.jar",
+        "app-client.jar",
+        "util_rt.jar",
+        "product.jar",
+        "opentelemetry.jar",
+        "app.jar",
+        "product-client.jar",
+        "lib-client.jar",
+        "stats.jar",
+        "jps-model.jar",
+        "external-system-rt.jar",
+        "rd.jar",
+        "bouncy-castle.jar",
+        "protobuf.jar",
+        "intellij-test-discovery.jar",
+        "forms_rt.jar",
+        "lib.jar",
+        "externalProcess-rt.jar",
+        "groovy.jar",
+        "annotations.jar",
+        "idea_rt.jar",
+        "jsch-agent.jar",
+        "junit4.jar",
+        "nio-fs.jar",
+        "trove.jar"
+      ]
+    }
+  ],
+  "bundledPlugins": [],
+  "modules": [],
+  "fileExtensions": [],
+  "layout": [
+    {
+      "name": "Git4Idea",
+      "kind": "plugin",
+      "classPath": [
+        "plugins/vcs-git/lib/vcs-git.jar",
+        "plugins/vcs-git/lib/git4idea-rt.jar"
+      ]
+    },
+    {
+      "name": "com.intellij",
+      "kind": "plugin",
+      "classPath": [
+        "lib/platform-loader.jar",
+        "lib/util-8.jar",
+        "lib/util.jar",
+        "lib/util_rt.jar",
+        "lib/product.jar",
+        "lib/opentelemetry.jar",
+        "lib/app.jar",
+        "lib/stats.jar",
+        "lib/jps-model.jar",
+        "lib/external-system-rt.jar",
+        "lib/rd.jar",
+        "lib/bouncy-castle.jar",
+        "lib/protobuf.jar",
+        "lib/intellij-test-discovery.jar",
+        "lib/forms_rt.jar",
+        "lib/lib.jar",
+        "lib/externalProcess-rt.jar",
+        "lib/groovy.jar",
+        "lib/annotations.jar",
+        "lib/idea_rt.jar",
+        "lib/intellij-coverage-agent-1.0.750.jar",
+        "lib/jsch-agent.jar",
+        "lib/junit.jar",
+        "lib/junit4.jar",
+        "lib/nio-fs.jar",
+        "lib/testFramework.jar",
+        "lib/trove.jar"
+      ]
+    },
+    {
+      "name": "com.intellij.modules.all",
+      "kind": "pluginAlias"
+    },
+    {
+      "name": "intellij.copyright.vcs",
+      "kind": "moduleV2"
+    },
+    {
+      "name": "intellij.execution.process.elevation",
+      "kind": "productModuleV2",
+      "classPath": [
+        "lib/modules/intellij.execution.process.elevation.jar"
+      ]
+    },
+    {
+      "name": "intellij.java.featuresTrainer",
+      "kind": "moduleV2",
+      "classPath": [
+        "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
+      ]
+    }
+  ]
+}
