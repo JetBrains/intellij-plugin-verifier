@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.io.Closeable
 
 /**
- * Holder of the class files of the [plugin] [idePlugin]
+ * Holder of the class files of the [idePlugin] [idePlugin]
  * that could reside in different [locations] [LocationKey].
  */
 data class IdePluginClassesLocations(
