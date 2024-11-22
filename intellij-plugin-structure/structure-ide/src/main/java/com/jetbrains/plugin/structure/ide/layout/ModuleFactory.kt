@@ -26,13 +26,12 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     val moduleName = layoutComponent.name
     val moduleDescriptor = moduleManager.findModuleByName(moduleName)
     if (moduleDescriptor == null) {
-      LOG.atDebug().log("No module descriptor found for $moduleName")
+      LOG.debug("No module descriptor found for {}", moduleName)
       return null
     }
     val loadingContext = getLoadingContext(moduleDescriptor, idePath)
     if (loadingContext == null) {
-      LOG.atDebug()
-        .log("No module plugin descriptor found for $moduleName in resource roots [{}]",
+      LOG.debug("No module plugin descriptor found for {} in resource roots [{}]", moduleName,
           moduleDescriptor.resources.joinToString { it.path.toString() })
       return null
     }

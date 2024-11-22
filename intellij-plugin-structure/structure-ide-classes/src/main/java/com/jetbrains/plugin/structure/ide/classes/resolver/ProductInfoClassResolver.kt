@@ -52,7 +52,7 @@ class ProductInfoClassResolver(
         if (layoutComponent is LayoutComponent.Classpathable) {
           getClasspathableResolver(layoutComponent)
         } else {
-          LOG.atDebug().log("No classpath declared for '{}'. Skipping", layoutComponent)
+          LOG.debug("No classpath declared for '{}'. Skipping", layoutComponent)
           null
         }
       }

@@ -32,7 +32,7 @@ class ProductInfoResourceResolver(
       if (it.isClasspathable) {
         getResourceResolver(it)
       } else {
-        LOG.atDebug().log("No classpath declared for '{}'. Skipping", it.layoutComponent)
+        LOG.debug("No classpath declared for '{}'. Skipping", it.layoutComponent)
         null
       }
     }

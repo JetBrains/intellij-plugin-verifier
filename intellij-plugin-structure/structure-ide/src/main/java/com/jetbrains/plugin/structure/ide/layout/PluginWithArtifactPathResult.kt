@@ -21,7 +21,7 @@ internal sealed class PluginWithArtifactPathResult(open val pluginArtifactPath: 
     ) {
       if (failures.isNotEmpty()) {
         val failedPluginPaths = getFailedPluginPaths(failures, idePath)
-        log.atWarn().log("Following ${failures.size} plugins could not be created: $failedPluginPaths")
+        log.warn("Following {} plugins could not be created: {}", failures.size, failedPluginPaths)
         if (log.isDebugEnabled) {
           buildString {
             append("The following problems were encountered:\n")

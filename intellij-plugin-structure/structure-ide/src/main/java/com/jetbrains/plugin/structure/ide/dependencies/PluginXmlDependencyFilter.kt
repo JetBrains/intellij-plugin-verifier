@@ -72,10 +72,10 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
     return try {
       hasNext()
     } catch (e: XMLStreamException) {
-      LOG.atError().log("Cannot retrieve next event", e)
+      LOG.error("Cannot retrieve next event", e)
       false
     } catch (e: RuntimeException) {
-      LOG.atError().log("Cannot retrieve next event", e)
+      LOG.error("Cannot retrieve next event", e)
       false
     }
   }
