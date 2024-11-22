@@ -8,12 +8,15 @@ import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
+
+private const val DEFAULT_COMPOSITE_RESOLVER_NAME = "Unnamed Composite Resolver"
 /**
  * [Resolver] that combines several [resolvers] with the Java classpath search strategy.
  */
 class CompositeResolver private constructor(
   private val resolvers: List<Resolver>,
-  override val readMode: ReadMode
+  override val readMode: ReadMode,
+  val name: String
 ) : Resolver() {
 
   private val packageToResolvers: MutableMap<String, MutableList<Resolver>> = hashMapOf()
@@ -93,7 +96,7 @@ class CompositeResolver private constructor(
     resolvers.closeAll()
   }
 
-  override fun toString() = "Union of ${resolvers.size} resolver" + (if (resolvers.size != 1) "s" else "")
+  override fun toString() = "$name is a union of ${resolvers.size} resolver" + (if (resolvers.size != 1) "s" else "")
 
   companion object {
 
@@ -102,9 +105,14 @@ class CompositeResolver private constructor(
 
     @JvmStatic
     fun create(resolvers: Iterable<Resolver>): Resolver {
+      return create(resolvers, DEFAULT_COMPOSITE_RESOLVER_NAME)
+    }
+
+    @JvmStatic
+    fun create(resolvers: Iterable<Resolver>, resolverName: String): Resolver {
       val list = resolvers.toList()
       return when(list.size) {
-        0 -> EmptyResolver
+        0 -> EmptyNamedResolver(resolverName)
         1 -> list.first()
         else -> {
           val readMode = if (list.all { it.readMode == ReadMode.FULL }) {
@@ -112,7 +120,7 @@ class CompositeResolver private constructor(
           } else {
             ReadMode.SIGNATURES
           }
-          CompositeResolver(list, readMode)
+          CompositeResolver(list, readMode, resolverName)
         }
       }
     }
