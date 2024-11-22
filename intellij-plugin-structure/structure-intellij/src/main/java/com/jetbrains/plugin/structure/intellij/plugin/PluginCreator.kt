@@ -179,15 +179,8 @@ internal class PluginCreator private constructor(
       // Content module should be in v2 model
       if (pluginCreationResult.plugin.isV2) {
         val module = pluginCreationResult.plugin
-        // TODO: should we distinguish if it's module or plugin dependency
-        // Module dependencies are required for module but optional for plugin
-        module.dependencies.forEach { pluginDependency ->
-          // no need to add already existing dependency
-          if (!plugin.dependencies.map { it.id }.contains(pluginDependency.id)) {
-            val moduleDependency = PluginDependencyImpl(pluginDependency.id, true, pluginDependency.isModule)
-            plugin.dependencies += moduleDependency
-          }
-        }
+
+        plugin.addDependencies(module)
         plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
         plugin.definedModules.add(moduleName)
 
@@ -284,38 +277,15 @@ internal class PluginCreator private constructor(
 
     val modulePrefix = "com.intellij.modules."
 
-    if (bean.dependencies != null) {
-      for (dependencyBean in bean.dependencies) {
-        if (dependencyBean.dependencyId != null) {
-          val isModule = dependencyBean.dependencyId.startsWith(modulePrefix)
-          val isOptional = java.lang.Boolean.TRUE == dependencyBean.optional
-          val dependency = PluginDependencyImpl(dependencyBean.dependencyId, isOptional, isModule)
-          dependencies += dependency
-
-          if (dependency.isOptional && dependencyBean.configFile != null) {
-            //V2 dependency configs can be located only in root
-            optionalDependenciesConfigFiles[dependency] =
-              if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
-          }
-        }
+    // dependencies from `<depends>`
+    dependencies += bean.dependenciesV1.map { depBean ->
+      PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
+        registerIfOptionalDependency(it, depBean)
       }
     }
-
-    if (bean.dependenciesV2 != null) {
-      for (dependencyBeanV2 in bean.dependenciesV2.modules) {
-        if (dependencyBeanV2.moduleName != null) {
-          val dependency = PluginDependencyImpl(dependencyBeanV2.moduleName, false, true)
-          dependencies += dependency
-        }
-      }
-      for (dependencyBeanV2 in bean.dependenciesV2.plugins) {
-        if (dependencyBeanV2.dependencyId != null) {
-          val isModule = dependencyBeanV2.dependencyId.startsWith(modulePrefix)
-          val dependency = PluginDependencyImpl(dependencyBeanV2.dependencyId, false, isModule)
-          dependencies += dependency
-        }
-      }
-    }
+    // dependencies from `<dependencies>`
+    dependencies += bean.dependentModules.map { ModuleV2Dependency(it.moduleName) }
+    dependencies += bean.dependentPlugins.map { PluginV2Dependency(it.dependencyId) }
 
     if (bean.pluginContent != null) {
       val modules = bean.pluginContent.flatMap { it.modules }
@@ -941,6 +911,12 @@ internal class PluginCreator private constructor(
     validateSinceBuild(sinceBuild)
   }
 
+  private fun IdePluginImpl.addDependencies(module: IdePlugin) {
+    module.dependencies
+      .filter { dependency -> dependencies.none { it.id == dependency.id } }
+      .forEach { dependencies += it }
+  }
+
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
     get() = when (this) {
       is PluginCreationSuccess -> emptyList()
@@ -968,6 +944,12 @@ internal class PluginCreator private constructor(
     }
   }
 
+  private fun registerIfOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
+    if (pluginDependency.isOptional && dependencyBean.configFile != null) {
+      optionalDependenciesConfigFiles[pluginDependency] =
+        if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
+    }
+  }
 }
 
 private fun PluginCreationResult<IdePlugin>.add(telemetry: PluginTelemetry): PluginCreationResult<IdePlugin> {

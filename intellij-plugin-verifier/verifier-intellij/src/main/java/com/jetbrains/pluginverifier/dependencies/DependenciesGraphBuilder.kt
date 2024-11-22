@@ -156,7 +156,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     graph: Graph<DepVertex, DepEdge>,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ) {
-    if (ide.getPluginByModule(ALL_MODULES_ID) == null) {
+    if (ide.findPluginByModule(ALL_MODULES_ID) == null) {
       return
     }
     val isLegacyPlugin = plugin.dependencies.none { it.isModule }

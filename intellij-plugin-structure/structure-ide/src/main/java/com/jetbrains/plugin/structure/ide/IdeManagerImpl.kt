@@ -201,7 +201,7 @@ class IdeManagerImpl : IdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
     val platformPlugins = arrayListOf<IdePlugin>()
-    val descriptorPaths = listOf(product.platformPrefix + "Plugin.xml", IdePluginManager.PLUGIN_XML, PLATFORM_PLUGIN_XML)
+    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml", PLATFORM_PLUGIN_XML)
 
     for (jarFile in jarFiles) {
       val descriptorPath = FileSystems.newFileSystem(jarFile, IdeManagerImpl::class.java.classLoader).use { jarFs ->

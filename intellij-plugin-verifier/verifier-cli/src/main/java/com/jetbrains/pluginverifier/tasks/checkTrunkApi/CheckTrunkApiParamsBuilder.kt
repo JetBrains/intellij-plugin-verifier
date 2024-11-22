@@ -10,7 +10,12 @@ import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.resolution.*
+import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.LastCompatibleVersionSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -241,7 +246,7 @@ class CheckTrunkApiParamsBuilder(
 
   private class IgnoreBundledPluginsFilter(val ide: Ide) : PluginFilter {
     override fun shouldVerifyPlugin(pluginInfo: PluginInfo): PluginFilter.Result {
-      if (ide.getPluginById(pluginInfo.pluginId) != null) {
+      if (ide.findPluginById(pluginInfo.pluginId) != null) {
         return PluginFilter.Result.Ignore("Plugin is bundled with $ide")
       }
       return PluginFilter.Result.Verify

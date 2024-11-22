@@ -6,6 +6,8 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class PluginDependencyImpl implements PluginDependency {
   private final String myId;
   private final boolean myIsOptional;
@@ -40,19 +42,13 @@ public class PluginDependencyImpl implements PluginDependency {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     PluginDependencyImpl that = (PluginDependencyImpl) o;
-
-    return myIsOptional == that.myIsOptional && myId.equals(that.myId);
-
+    return myIsOptional == that.myIsOptional && myIsModule == that.myIsModule && Objects.equals(myId, that.myId);
   }
 
   @Override
   public int hashCode() {
-    int result = myId.hashCode();
-    result = 31 * result + (myIsOptional ? 1 : 0);
-    return result;
+    return Objects.hash(myId, myIsOptional, myIsModule);
   }
 }

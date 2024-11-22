@@ -109,7 +109,7 @@ class IdeTest {
     assertEquals("com.intellij", ideaCorePlugin.pluginId)
     assertEquals("IDEA CORE", ideaCorePlugin.pluginName)
     assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
-    assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
+    assertEquals(ideaCorePlugin, ide.findPluginByModule("some.idea.module"))
   }
 
   /**
@@ -336,6 +336,6 @@ class IdeTest {
     assertEquals("com.intellij", ideaCorePlugin.pluginId)
     assertEquals("IDEA CORE", ideaCorePlugin.pluginName)
     assertEquals("some.idea.module", ideaCorePlugin.definedModules.single())
-    assertEquals(ideaCorePlugin, ide.getPluginByModule("some.idea.module"))
+    assertEquals(ideaCorePlugin, ide.findPluginByModule("some.idea.module"))
   }
 }
