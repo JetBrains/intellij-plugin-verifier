@@ -142,6 +142,30 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     assertTrue(classResolver.allResolver.containsClass("com/intellij/tasks/Task"))
   }
 
+  @Test
+  fun `plugin with a bundled dependency unavailable in the Platform 223, but downloaded`() {
+    val ide = buildIdeWithBundledPlugins(version = "223.8836.41")
+    val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
+
+    val dependencyFinder = RuleBasedDependencyFinder.create(
+      ide,
+      Rule("com.intellij.modules.python", mockPythonPlugin),
+      Rule(
+        "com.intellij.modules.platform", mockIdeaCorePlugin, listOf(
+          publicClass("com/intellij/tasks/Task")
+        ), isBundledPlugin = true
+      ),
+    )
+
+    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter)
+
+    val plugin = plugin.copy(dependencies = listOf(pythonModuleDependency))
+
+    val classResolver = resolverProvider.provide(plugin.getDetails())
+    // class from app.jar from mock IDE
+    assertTrue(classResolver.allResolver.containsClass("com/intellij/tasks/Task"))
+  }
+
   private val mockPythonPlugin = MockIdePlugin(
     pluginId = "Pythonid",
     pluginVersion = "243.21565.193",
