@@ -87,7 +87,7 @@ class ProductInfoClassResolver(
         JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide))
       )
     }
-    return NamedResolver(layoutComponent.name, CompositeResolver.create(itemJarResolvers))
+    return NamedResolver(layoutComponent.name, CompositeResolver.create(itemJarResolvers, layoutComponent.name))
   }
 
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
