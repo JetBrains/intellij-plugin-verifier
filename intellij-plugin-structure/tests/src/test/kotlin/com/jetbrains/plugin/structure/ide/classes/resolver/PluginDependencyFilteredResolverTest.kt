@@ -2,6 +2,9 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.intellij.platform.Launch
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
@@ -62,6 +65,8 @@ class PluginDependencyFilteredResolverTest {
     }
     return this
   }
+
+  private val resolverConfiguration = IdeResolverConfiguration(ReadMode.FULL, MissingLayoutFileMode.SKIP_AND_WARN)
 
   @Before
   fun setUp() {
@@ -142,7 +147,7 @@ class PluginDependencyFilteredResolverTest {
 
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
     with(pluginDependencyFilteredResolver.filteredResolvers) {
@@ -201,7 +206,7 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"
@@ -257,7 +262,7 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin, javaPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide)
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"

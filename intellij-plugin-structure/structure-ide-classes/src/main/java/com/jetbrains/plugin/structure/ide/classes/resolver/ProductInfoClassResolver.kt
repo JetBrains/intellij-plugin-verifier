@@ -12,6 +12,8 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeVersionResolution
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
@@ -28,11 +30,13 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoClassResolver::clas
 private const val PRODUCT_INFO_JSON = "product-info.json"
 
 class ProductInfoClassResolver(
-  private val productInfo: ProductInfo, val ide: Ide, override val readMode: ReadMode = FULL
+  private val productInfo: ProductInfo, val ide: Ide,
+  private val resolverConfiguration: IdeResolverConfiguration
 ) : Resolver() {
 
-  val layoutComponentResolvers: List<NamedResolver> =  productInfo.layout
-    .mapNotNull(::getResourceResolver)
+  private val layoutComponentsProvider = LayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
+
+  val layoutComponentResolvers: List<NamedResolver> = resolveLayout()
 
   private val delegateResolver = getDelegateResolver()
 
@@ -41,14 +45,19 @@ class ProductInfoClassResolver(
     addAll(layoutComponentResolvers)
   }.asResolver()
 
-  private fun getResourceResolver(layoutComponent: LayoutComponent): NamedResolver? {
-    return if (layoutComponent is LayoutComponent.Classpathable) {
-      getClasspathableResolver(layoutComponent)
-    } else {
-      LOG.atDebug().log("No classpath declared for '{}'. Skipping", layoutComponent)
-      null
-    }
-  }
+  private fun resolveLayout(): List<NamedResolver> =
+    layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
+      .map { it.layoutComponent }
+      .mapNotNull { layoutComponent ->
+        if (layoutComponent is LayoutComponent.Classpathable) {
+          getClasspathableResolver(layoutComponent)
+        } else {
+          LOG.atDebug().log("No classpath declared for '{}'. Skipping", layoutComponent)
+          null
+        }
+      }
+
+  override val readMode: ReadMode get() = resolverConfiguration.readMode
 
   override val allClasses get() = delegateResolver.allClasses
 
@@ -99,17 +108,21 @@ class ProductInfoClassResolver(
 
   companion object {
     @Throws(InvalidIdeException::class)
-    fun of(ide: Ide, readMode: ReadMode = FULL): ProductInfoClassResolver {
+    fun of(ide: Ide, resolverConfiguration: IdeResolverConfiguration): ProductInfoClassResolver {
       val idePath = ide.idePath
       assertProductInfoPresent(idePath)
       val productInfoParser = ProductInfoParser()
       try {
         val productInfo = productInfoParser.parse(idePath.productInfoJson)
-        return ProductInfoClassResolver(productInfo, ide, readMode)
+        return ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
       } catch (e: ProductInfoParseException) {
         throw InvalidIdeException(idePath, e)
       }
     }
+
+
+    @Throws(InvalidIdeException::class)
+    fun of(ide: Ide, readMode: ReadMode = FULL): ProductInfoClassResolver = of(ide, IdeResolverConfiguration(readMode))
 
     @Throws(InvalidIdeException::class)
     private fun assertProductInfoPresent(idePath: Path) {

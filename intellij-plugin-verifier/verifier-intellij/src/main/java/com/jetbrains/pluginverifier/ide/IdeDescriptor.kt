@@ -7,9 +7,12 @@ package com.jetbrains.pluginverifier.ide
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider.Result.Found
@@ -57,8 +60,24 @@ data class IdeDescriptor(
       defaultJdkPath: Path?,
       ideFileLock: FileLock?
     ): IdeDescriptor {
+      return create(idePath, defaultJdkPath, ideFileLock, MissingLayoutFileMode.SKIP_AND_WARN)
+    }
+
+    /**
+     * Creates [IdeDescriptor] for specified [idePath].
+     * [ideFileLock] will be released when this [IdeDescriptor] is closed.
+     *
+     * @param missingLayoutClasspathFileMode Behavior what to do on missing layout classpath entries.
+     */
+    fun create(
+      idePath: Path,
+      defaultJdkPath: Path?,
+      ideFileLock: FileLock?,
+      missingLayoutClasspathFileMode: MissingLayoutFileMode
+    ): IdeDescriptor {
+      val ideResolverConfiguration = IdeResolverConfiguration(ReadMode.FULL, missingLayoutClasspathFileMode)
       val ide = IdeManager.createManager().createIde(idePath)
-      val ideResolver = IdeResolverCreator.createIdeResolver(ide)
+      val ideResolver = IdeResolverCreator.createIdeResolver(ide, ideResolverConfiguration)
       ideResolver.closeOnException {
         when (val result = jdkDescriptorProvider.getJdkDescriptor(ide, defaultJdkPath)) {
           is Found -> return IdeDescriptor(ide, ideResolver, result.jdkDescriptor, ideFileLock)
