@@ -85,9 +85,9 @@ class IdeResolverCreatorTest {
       """.trimIndent()
 
   private val ideaCorePluginXml: String
-    @Language("JSON")
+    @Language("XML")
     get() = """
-    <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <idea-plugin>
       <id>com.intellij</id>
       <name>IDEA CORE</name>
     </idea-plugin>        
