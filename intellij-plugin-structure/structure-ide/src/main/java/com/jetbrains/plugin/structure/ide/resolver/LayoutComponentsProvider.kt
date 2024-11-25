@@ -24,10 +24,10 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
       layoutComponents
     } else {
       val (okComponents, failedComponents) = layoutComponents.partition { it.allClasspathsExist() }
-      if (missingLayoutFileMode == FAIL) {
-        throw MissingClasspathFileInLayoutComponentException.of(idePath, failedComponents)
+      if (failedComponents.isNotEmpty()) {
+        if (missingLayoutFileMode == FAIL) throw MissingClasspathFileInLayoutComponentException.of(idePath, failedComponents)
+        logUnavailableClasspath(failedComponents)
       }
-      logUnavailableClasspath(failedComponents)
       LayoutComponents(okComponents)
     }
   }
