@@ -87,5 +87,15 @@ open class CmdOpts(
     description = "The problems that will be ignored. Comma-separated list of plugin problem identifiers.\n" +
       "\tExample: -mute ForbiddenPluginIdPrefix,TemplateWordInPluginId"
   )
-  var mutedPluginProblems: Array<String> = emptyArray()
+  var mutedPluginProblems: Array<String> = emptyArray(),
+
+  @set:Argument(
+    "missing-layout-classpath-file",
+    description = "Sets the behavior when a product info layout declares a missing classpath. " +
+      "Available options: skip-warn (skip the entire layout component and log a warning, the default); " +
+      "skip-silently (skip the entire layout component);  " +
+      "fail (fails the verification with an error indicating an incorrect IDE); " +
+      "ignore (process the layout component as is)"
+    )
+  var missingLayoutClasspathFile: String? = "skip-warn"
 )

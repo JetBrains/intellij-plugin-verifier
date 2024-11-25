@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tests.cli
 
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.output.OutputFormat
@@ -91,6 +92,32 @@ class OptionsParserTest {
     with(options) {
       assertEquals(2, outputFormats.size)
       assertEquals(listOf(OutputFormat.PLAIN, OutputFormat.HTML), outputFormats)
+    }
+  }
+
+  @Test
+  fun `missing layout classpath file parameter is handled by skipping silently`() {
+    val args = arrayOf("-missing-layout-classpath-file", "skip-silently")
+
+    val opts = CmdOpts()
+    Args.parse(opts, args, false)
+
+    val options = OptionsParser.createMissingLayoutClasspathFile(opts)
+    with(options) {
+      assertEquals(MissingLayoutFileMode.SKIP_SILENTLY, this)
+    }
+  }
+
+  @Test
+  fun `missing layout classpath file parameter is handled by skipping skipping with a warning`() {
+    val args = arrayOf("")
+
+    val opts = CmdOpts()
+    Args.parse(opts, args, false)
+
+    val options = OptionsParser.createMissingLayoutClasspathFile(opts)
+    with(options) {
+      assertEquals(MissingLayoutFileMode.SKIP_AND_WARN, this)
     }
   }
 

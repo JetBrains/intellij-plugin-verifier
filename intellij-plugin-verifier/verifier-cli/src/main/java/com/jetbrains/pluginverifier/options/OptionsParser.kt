@@ -4,8 +4,22 @@
 
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.pluginverifier.filtering.*
+import com.jetbrains.plugin.structure.base.utils.createDir
+import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.forEachLine
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
+import com.jetbrains.pluginverifier.filtering.AndroidProblemsFilter
+import com.jetbrains.pluginverifier.filtering.IdeaOnlyProblemsFilter
+import com.jetbrains.pluginverifier.filtering.IgnoreCondition
+import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
+import com.jetbrains.pluginverifier.filtering.KeepOnlyCondition
+import com.jetbrains.pluginverifier.filtering.KeepOnlyProblemsFilter
+import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsFilter
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsPagesFetcher
 import com.jetbrains.pluginverifier.filtering.documented.DocumentedProblemsParser
@@ -14,7 +28,11 @@ import com.jetbrains.pluginverifier.ide.IdeDownloader
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.IntelliJIdeRepository
 import com.jetbrains.pluginverifier.ide.repositories.ReleaseIdeRepository
-import com.jetbrains.pluginverifier.output.*
+import com.jetbrains.pluginverifier.output.DEFAULT_OUTPUT_FORMATS
+import com.jetbrains.pluginverifier.output.OutputFormat
+import com.jetbrains.pluginverifier.output.OutputOptions
+import com.jetbrains.pluginverifier.output.READING_IDE_FROM
+import com.jetbrains.pluginverifier.output.VERIFICATION_REPORTS_DIRECTORY
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
@@ -111,7 +129,8 @@ object OptionsParser {
         LOG.info("Using Java runtime from $it")
       }
     }
-    return IdeDescriptor.create(idePath, defaultJdkPath, null)
+    val missingLayoutClasspathFileMode = createMissingLayoutClasspathFile(opts)
+    return IdeDescriptor.create(idePath, defaultJdkPath, null, missingLayoutClasspathFileMode)
   }
 
   fun createPluginParsingConfiguration(opts: CmdOpts): PluginParsingConfiguration = with(opts) {
@@ -121,6 +140,16 @@ object OptionsParser {
       else -> SubmissionType.NEW
     }
     PluginParsingConfiguration(submissionType, mutedPluginProblems.toList())
+  }
+
+  fun createMissingLayoutClasspathFile(opts: CmdOpts): MissingLayoutFileMode = with(opts) {
+    when (missingLayoutClasspathFile) {
+      "skip-warn" -> MissingLayoutFileMode.SKIP_AND_WARN
+      "skip-silently" -> MissingLayoutFileMode.SKIP_SILENTLY
+      "fail" -> MissingLayoutFileMode.FAIL
+      "ignore" -> MissingLayoutFileMode.IGNORE
+      else -> MissingLayoutFileMode.SKIP_AND_WARN
+    }
   }
 
   private val ideLatestRegexp = Regex("\\[latest(-([A-Z]+))?]")
