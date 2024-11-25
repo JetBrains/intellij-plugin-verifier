@@ -23,6 +23,7 @@ import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributio
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.ide.getRepositoryLibrariesJars
+import com.jetbrains.plugin.structure.ide.layout.InvalidIdeLayoutException
 import java.nio.file.Path
 
 object IdeResolverCreator {
@@ -31,11 +32,14 @@ object IdeResolverCreator {
   fun createIdeResolver(ide: Ide): Resolver = createIdeResolver(Resolver.ReadMode.FULL, ide)
 
   @JvmStatic
-  fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver {
+  fun createIdeResolver(readMode: Resolver.ReadMode, ide: Ide): Resolver = createIdeResolver(ide, IdeResolverConfiguration(readMode))
+
+  @JvmStatic
+  fun createIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
     val idePath = ide.idePath
     return when {
-      isDistributionIde(idePath) -> getIdeResolverFromDistribution(ide, readMode)
-      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, readMode, ide)
+      isDistributionIde(idePath) -> getIdeResolverFromDistribution(ide, configuration)
+      isCompiledCommunity(idePath) || isCompiledUltimate(idePath) -> getIdeResolverFromCompiledSources(idePath, configuration.readMode, ide)
       else -> throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
   }
@@ -55,11 +59,19 @@ object IdeResolverCreator {
     return CompositeResolver.create(buildJarOrZipFileResolvers(jars + antJars + moduleJars, readMode, parentOrigin))
   }
 
-  private fun getIdeResolverFromDistribution(ide: Ide, readMode: Resolver.ReadMode): Resolver = with(ide) {
+  private fun getIdeResolverFromDistribution(ide: Ide, resolverConfiguration: IdeResolverConfiguration): Resolver = with(ide) {
     return if (ProductInfoClassResolver.supports(idePath)) {
-      ProductInfoClassResolver.of(ide, readMode)
+      getProductInfoClassResolver(ide, resolverConfiguration)
     } else {
-      getJarsResolver(idePath.resolve("lib"), readMode, IdeFileOrigin.IdeLibDirectory(ide))
+      getJarsResolver(idePath.resolve("lib"), resolverConfiguration.readMode, IdeFileOrigin.IdeLibDirectory(ide))
+    }
+  }
+
+  private fun getProductInfoClassResolver(ide: Ide, resolverConfiguration: IdeResolverConfiguration): ProductInfoClassResolver {
+    try {
+      return ProductInfoClassResolver.of(ide, resolverConfiguration)
+    } catch (e: InvalidIdeLayoutException) {
+      throw InvalidIdeException(ide.idePath, e)
     }
   }
 

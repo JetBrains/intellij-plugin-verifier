@@ -633,7 +633,7 @@ class DependenciesTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+    val ide = ProductInfoBasedIdeManager()
       .createIde(ideRoot)
     with(ide.bundledPlugins) {
       assertEquals(170, size)
@@ -646,7 +646,7 @@ class DependenciesTest {
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
       assertEquals(22, size)
-      val expectedDependencies = listOf(
+      listOf(
         "com.jetbrains.performancePlugin",
         "com.intellij.modules.lang",
         "org.jetbrains.plugins.terminal",
