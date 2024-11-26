@@ -20,7 +20,6 @@
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning",
     "com.jetbrains.plugin.structure.intellij.problems.ReleaseDateInFuture": "warning",
-    "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch": "ignore",
-    "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat": "warning"
+    "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch": "ignore"
   }
 }
