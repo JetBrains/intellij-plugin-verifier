@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.380 - 2024-11-26
+
+### Added
+
 - Detect extracted JSON plugin for Platform 2024.3 and newer ([#1173](https://github.com/JetBrains/intellij-plugin-verifier/pull/1173))
 - Transitive dependency tree resolution for plugins and modules ([#1185](https://github.com/JetBrains/intellij-plugin-verifier/pull/1185))
 - Validate supported runners in TeamCity Actions
@@ -18,8 +26,6 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Align code with the TeamCity Recipes ([#1182](https://github.com/JetBrains/intellij-plugin-verifier/pull/1182))
 - Remove Unity from supported runners in TeamCity Actions
 - Update dependencies
-
-### Fixed
 
 ## 1.379 - 2024-09-25
 
