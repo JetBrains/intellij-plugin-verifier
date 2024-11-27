@@ -35,6 +35,7 @@ import java.io.IOException
 import java.nio.file.Path
 
 private const val PRODUCT_INFO_JSON = "product-info.json"
+private const val MACOS_RESOURCES_DIRECTORY = "Resources"
 private val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
@@ -54,7 +55,7 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
   override fun createIde(idePath: Path, version: IdeVersion?): Ide {
     assertProductInfoPresent(idePath)
     try {
-      val productInfo = productInfoParser.parse(idePath.productInfoJson)
+      val productInfo = productInfoParser.parse(idePath.productInfoJson!!)
       val ideVersion = version ?: createIdeVersion(productInfo)
       return createIde(idePath, ideVersion, productInfo)
     } catch (e: ProductInfoParseException) {
@@ -143,21 +144,21 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     return IdeVersion.createIdeVersion(versionString)
   }
 
-  private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
-
-  private val Path.productInfoJson: Path
+  private val Path.productInfoJson: Path?
     get() {
-      return resolve(PRODUCT_INFO_JSON)
+      val locations = listOf<Path>(
+        resolve(PRODUCT_INFO_JSON),
+        resolve(MACOS_RESOURCES_DIRECTORY).resolve(PRODUCT_INFO_JSON)
+      )
+      return locations.firstOrNull { it.exists() }
     }
 
   @Throws(InvalidIdeException::class)
-  private fun assertProductInfoPresent(idePath: Path) {
-    if (!idePath.containsProductInfoJson()) {
-      throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
-    }
+  private fun assertProductInfoPresent(idePath: Path): Path {
+    return idePath.productInfoJson ?: throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
   }
 
-  fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
+  fun supports(idePath: Path): Boolean = idePath.productInfoJson != null
     && isAtLeastVersion(idePath, "242")
 
   private fun isAtLeastVersion(idePath: Path, expectedVersion: String): Boolean {

@@ -30,6 +30,16 @@ class ProductInfoBasedIdeManagerTest {
   }
 
   @Test
+  fun `create IDE manager from mock IDE on macOS`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockIdeBuilder(temporaryFolder, folderSuffix = "-mac").buildCoreIdeDirectoryForMacOs()
+    val ide = ideManager.createIde(ideRoot)
+    assertEquals(1, ide.bundledPlugins.size)
+    val corePlugin = ide.findPluginById("com.intellij")
+    assertNotNull(corePlugin)
+  }
+
+  @Test
   fun `create nonIDEA IDE manager from mock IDE`() {
     val ideManager = ProductInfoBasedIdeManager()
     val ideRoot = MockRiderBuilder(temporaryFolder).buildIdeaDirectory()
