@@ -633,7 +633,7 @@ class DependenciesTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager()
+    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
       .createIde(ideRoot)
     with(ide.bundledPlugins) {
       assertEquals(170, size)

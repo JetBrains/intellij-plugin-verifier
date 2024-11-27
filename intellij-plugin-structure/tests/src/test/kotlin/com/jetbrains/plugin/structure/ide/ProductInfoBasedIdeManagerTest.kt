@@ -1,11 +1,15 @@
 package com.jetbrains.plugin.structure.ide
 
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
+import ch.qos.logback.core.spi.AppenderAttachable
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.time.LocalDate
 
@@ -32,11 +36,61 @@ class ProductInfoBasedIdeManagerTest {
   @Test
   fun `create IDE manager from mock IDE on macOS`() {
     val ideManager = ProductInfoBasedIdeManager()
-    val ideRoot = MockIdeBuilder(temporaryFolder, folderSuffix = "-mac").buildCoreIdeDirectoryForMacOs()
+    val ideRoot = MockIdeBuilder(temporaryFolder, folderSuffix = "-mac").buildCoreIdeDirectoryForMacOs(miniProductInfoJson)
     val ide = ideManager.createIde(ideRoot)
     assertEquals(1, ide.bundledPlugins.size)
     val corePlugin = ide.findPluginById("com.intellij")
     assertNotNull(corePlugin)
+  }
+
+  @Test
+  fun `create IDE manager from mock IDE on macOS with paths in layout component that are not available in the filesystem`() {
+    val appender = ListAppender<ILoggingEvent>()
+    @Suppress("UNCHECKED_CAST")
+    val logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
+      as AppenderAttachable<ILoggingEvent>
+    logger.addAppender(appender)
+    appender.start()
+
+    val ideManager = ProductInfoBasedIdeManager()
+    val ideRoot = MockIdeBuilder(temporaryFolder, folderSuffix = "-mac").buildCoreIdeDirectoryForMacOs {
+      """
+      {
+        "name": "IntelliJ IDEA",
+        "version": "2024.2",
+        "buildNumber": "242.10180.25",
+        "productCode": "IU",
+        "dataDirectoryName": "IntelliJIdea2024.2",
+        "svgIconPath": "bin/idea.svg",
+        "productVendor": "JetBrains",
+        "launch": [],
+        "bundledPlugins": [],
+        "modules": [],
+        "fileExtensions": [],
+        "layout": [
+          {
+            "name": "org.jetbrains.plugins.emojipicker",
+            "kind": "plugin",
+            "classPath": [
+              "plugins/emojipicker/lib/emojipicker.jar"
+            ]
+          }
+        ]
+      }
+      """.trimIndent()
+    }
+    val ide = ideManager.createIde(ideRoot)
+    assertEquals(1, ide.bundledPlugins.size)
+    val corePlugin = ide.findPluginById("com.intellij")
+    assertNotNull(corePlugin)
+
+    assertTrue(appender.list.none {
+      it.formattedMessage == "Following 1 plugins could not be created: " +
+        "org.jetbrains.plugins.emojipicker' from 'plugins/emojipicker/lib/emojipicker.jar'"
+    })
+
+    appender.stop()
+    logger.detachAppender(appender)
   }
 
   @Test
@@ -188,4 +242,21 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals(LocalDate.of(4000, 1, 1), productDescriptor.releaseDate)
     }
   }
+
+  private val miniProductInfoJson = """
+      {
+        "name": "IntelliJ IDEA",
+        "version": "2024.2",
+        "buildNumber": "242.10180.25",
+        "productCode": "IU",
+        "dataDirectoryName": "IntelliJIdea2024.2",
+        "svgIconPath": "bin/idea.svg",
+        "productVendor": "JetBrains",
+        "launch": [],
+        "bundledPlugins": [],
+        "modules": [],
+        "fileExtensions": [],
+        "layout": []
+      }
+      """.trimIndent()
 }

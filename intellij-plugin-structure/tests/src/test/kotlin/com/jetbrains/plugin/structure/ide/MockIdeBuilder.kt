@@ -153,11 +153,16 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     }
   }
 
-  internal fun buildCoreIdeDirectoryForMacOs(productInfo: ProductInfo.() -> Unit = {}) =
+  internal fun buildCoreIdeDirectoryForMacOs(productInfoJson: String = ""): Path
+    = buildCoreIdeDirectoryForMacOs({ productInfoJson })
+
+  internal fun buildCoreIdeDirectoryForMacOs(productInfoJson: () -> String = { "" }) =
     buildDirectory(directory = ideRoot) {
       dir("Resources") {
-        file("build.txt", "IU-192.1")
-        file("product-info.json", productInfoJson(productInfo))
+        file("build.txt", "242.10180.25")
+        with(productInfoJson()) {
+          if (isNotEmpty()) file("product-info.json", this)
+        }
       }
       dir("lib") {
         zip("idea.jar") {
