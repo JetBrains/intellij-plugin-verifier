@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.layout
 
 enum class MissingLayoutFileMode {
   IGNORE,
+  SKIP_CLASSPATH,
   SKIP_SILENTLY,
   SKIP_AND_WARN,
   FAIL

@@ -1,8 +1,6 @@
 package com.jetbrains.plugin.structure.ide.resolver
 
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.FAIL
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
 import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
@@ -18,12 +16,8 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoResourceResolver::c
 class ProductInfoResourceResolver(
   productInfo: ProductInfo,
   idePath: Path,
-  excludeMissingProductInfoLayoutComponents: Boolean = true
+  layoutComponentsProvider: LayoutComponentsProvider
 ) : ResourceResolver {
-
-  private val missingLayoutFileMode = if (excludeMissingProductInfoLayoutComponents) SKIP_AND_WARN else FAIL
-
-  private val layoutComponentsProvider = LayoutComponentsProvider(missingLayoutFileMode)
 
   private val delegateResolver = getPlatformResourceResolver(layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath))
 

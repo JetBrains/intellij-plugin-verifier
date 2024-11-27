@@ -17,7 +17,8 @@ dependencies {
   testImplementation(libs.jimfs)
   testImplementation(libs.jackson.yaml)
   testImplementation(libs.semver4j)
-  testRuntimeOnly(sharedLibs.logback.classic)
+  testImplementation(sharedLibs.logback.core)
+  testImplementation(sharedLibs.logback.classic)
 
   testImplementation(sharedLibs.byteBuddy)
 }

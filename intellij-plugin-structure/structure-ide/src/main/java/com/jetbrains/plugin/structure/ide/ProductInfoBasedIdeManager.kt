@@ -7,6 +7,8 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_CLASSPATH
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
@@ -14,6 +16,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
+import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
@@ -35,12 +38,16 @@ import java.io.IOException
 import java.nio.file.Path
 
 private const val PRODUCT_INFO_JSON = "product-info.json"
+private const val MACOS_RESOURCES_DIRECTORY = "Resources"
 private val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
 
-class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComponents: Boolean = true) : IdeManager() {
+class ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents: Boolean = true) : IdeManager() {
   private val productInfoParser = ProductInfoParser()
+
+  private val layoutComponentProvider =
+    LayoutComponentsProvider(missingLayoutFileMode = if (excludeMissingProductInfoLayoutComponents) SKIP_AND_WARN else SKIP_CLASSPATH)
 
   /**
    * Problem level remapping used for bundled plugins.
@@ -54,7 +61,7 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
   override fun createIde(idePath: Path, version: IdeVersion?): Ide {
     assertProductInfoPresent(idePath)
     try {
-      val productInfo = productInfoParser.parse(idePath.productInfoJson)
+      val productInfo = productInfoParser.parse(idePath.productInfoJson!!)
       val ideVersion = version ?: createIdeVersion(productInfo)
       return createIde(idePath, ideVersion, productInfo)
     } catch (e: ProductInfoParseException) {
@@ -76,14 +83,15 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     productInfo: ProductInfo,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
+    val layoutComponents = layoutComponentProvider.resolveLayoutComponents(productInfo, idePath)
 
-    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, excludeMissingProductInfoLayoutComponents)
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, layoutComponentProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
     val pluginFactory = PluginFactory(::createPlugin)
 
-    val moduleLoadingResults = productInfo.layout.mapNotNull { layoutComponent ->
+    val moduleLoadingResults = layoutComponents.content.mapNotNull { layoutComponent ->
         when (layoutComponent) {
           is LayoutComponent.ModuleV2,
           is LayoutComponent.ProductModuleV2 -> {
@@ -143,21 +151,21 @@ class ProductInfoBasedIdeManager(private val excludeMissingProductInfoLayoutComp
     return IdeVersion.createIdeVersion(versionString)
   }
 
-  private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
-
-  private val Path.productInfoJson: Path
+  private val Path.productInfoJson: Path?
     get() {
-      return resolve(PRODUCT_INFO_JSON)
+      val locations = listOf<Path>(
+        resolve(PRODUCT_INFO_JSON),
+        resolve(MACOS_RESOURCES_DIRECTORY).resolve(PRODUCT_INFO_JSON)
+      )
+      return locations.firstOrNull { it.exists() }
     }
 
   @Throws(InvalidIdeException::class)
-  private fun assertProductInfoPresent(idePath: Path) {
-    if (!idePath.containsProductInfoJson()) {
-      throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
-    }
+  private fun assertProductInfoPresent(idePath: Path): Path {
+    return idePath.productInfoJson ?: throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
   }
 
-  fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
+  fun supports(idePath: Path): Boolean = idePath.productInfoJson != null
     && isAtLeastVersion(idePath, "242")
 
   private fun isAtLeastVersion(idePath: Path, expectedVersion: String): Boolean {

@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutCom
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.*
 import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -24,13 +25,33 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
       layoutComponents
     } else {
       val (okComponents, failedComponents) = layoutComponents.partition { it.allClasspathsExist() }
+      val acceptedComponents = mutableListOf<ResolvedLayoutComponent>()
       if (failedComponents.isNotEmpty()) {
         if (missingLayoutFileMode == FAIL) throw MissingClasspathFileInLayoutComponentException.of(idePath, failedComponents)
+        if (missingLayoutFileMode == SKIP_CLASSPATH) {
+          acceptedComponents += failedComponents.map { it.skipMissingClasspathElements() }
+        }
         logUnavailableClasspath(failedComponents)
       }
-      LayoutComponents(okComponents)
+      LayoutComponents(okComponents + acceptedComponents)
     }
   }
+
+  private fun ResolvedLayoutComponent.skipMissingClasspathElements() = with(layoutComponent) {
+    when (this) {
+      is LayoutComponent.ModuleV2 -> copy(classPaths = existingClasspaths)
+      is LayoutComponent.Plugin -> copy(classPaths = existingClasspaths)
+      is LayoutComponent.ProductModuleV2 -> copy(classPaths = existingClasspaths)
+      is LayoutComponent.PluginAlias -> this
+    }
+  }.let {
+    ResolvedLayoutComponent(idePath, it)
+  }
+
+  private val ResolvedLayoutComponent.existingClasspaths
+    get() = resolveClasspaths()
+      .filter { it.exists }
+      .map { it.relativePath.toString() }
 
   private fun logUnavailableClasspath(failedComponents: List<ResolvedLayoutComponent>) {
     if (missingLayoutFileMode == SKIP_SILENTLY || !LOG.isWarnEnabled) return

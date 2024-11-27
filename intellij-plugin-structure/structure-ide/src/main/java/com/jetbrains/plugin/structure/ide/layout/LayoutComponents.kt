@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.layout
 
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import java.nio.file.Path
 
@@ -18,4 +19,7 @@ class LayoutComponents(val layoutComponents: List<ResolvedLayoutComponent>) :
     }
 
     override fun iterator() = layoutComponents.iterator()
+
+  val content: List<LayoutComponent>
+    get() = layoutComponents.map { it.layoutComponent }
   }
