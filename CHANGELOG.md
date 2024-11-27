@@ -8,10 +8,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+### Fixed
+
+## 1.381 - 2024-11-27
+
+### Changed
+
 - Improve compatibility with SLF4J 1.x ([#1187](https://github.com/JetBrains/intellij-plugin-verifier/pull/1187))
 - Support product-info.json in macOS distributions ([#1190](https://github.com/JetBrains/intellij-plugin-verifier/pull/1190))
-
-### Fixed
 
 ## 1.380 - 2024-11-26
 
