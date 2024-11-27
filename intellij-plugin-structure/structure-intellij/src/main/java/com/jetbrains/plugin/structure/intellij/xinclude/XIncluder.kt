@@ -10,7 +10,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
-import org.jdom2.*
+import org.jdom2.Comment
+import org.jdom2.Content
+import org.jdom2.Document
+import org.jdom2.Element
+import org.jdom2.Namespace
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Boolean.parseBoolean
@@ -299,7 +303,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     } else {
       include
     }
-    LOG.atDebug().log("XIncluding '{}' from '{}'. Chain {}", include, resourceResult.description, chain)
+    LOG.debug("XIncluding '{}' from '{}'. Chain {}", include, resourceResult.description, chain)
   }
 
 

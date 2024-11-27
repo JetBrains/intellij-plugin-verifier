@@ -90,11 +90,10 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
        overriddenMethod.isMemberEffectivelyAnnotatedWith(overrideOnlyAnnotationResolver, verificationContext.classResolver)
     }
     return if (overriddenMethod == null) {
-      LOG.atTrace().log("No overridden method for $name is annotated by [$annotationFqn]")
+      LOG.trace("No overridden method for {} is annotated by [{}]", name, annotationFqn)
       false
     } else {
-      LOG.atDebug()
-        .log("Method '${overriddenMethod.method.name}' in [${overriddenMethod.klass.name}] is annotated by [$annotationFqn]")
+      LOG.debug("Method {} in [{}] is annotated by [{}]", overriddenMethod.method.name, overriddenMethod.klass.name, annotationFqn)
       true
     }
   }

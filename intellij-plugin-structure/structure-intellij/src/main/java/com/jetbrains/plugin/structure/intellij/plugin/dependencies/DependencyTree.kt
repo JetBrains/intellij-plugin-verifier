@@ -32,18 +32,18 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     with(plugin) {
       val pluginId = pluginId ?: return@with
       val indent = "  ".repeat(resolutionDepth)
-      LOG.atDebug().log("${indent}Resolving ${dependencies.size} dependencies for '$pluginId': " + dependencies.joinToString { it.id })
+      debugLog(indent, "Resolving {} dependencies for '{}': {}", dependencies.size, pluginId, dependencies.joinToString { it.id })
       dependencies.forEachIndexed { i, dep ->
         val dependencyPlugin = pluginProvider.getPluginOrModule(dep.id)
         if (ignore(plugin, dep)) {
-          LOG.atDebug().log("$indent  ${i + 1}) Plugin declares dependency '${dep.id}' in its modules")
+          debugLog(indent, i + 1, "Ignoring dependency '{}' in its modules", dep.id)
           return@forEachIndexed
         }
         if (graph.contains(pluginId, dependencyPlugin)) {
-          LOG.atDebug().log("$indent  ${i + 1}) Resolved cached dependency ${dep.id}")
+          debugLog(indent, i + 1, "Resolved cached dependency '{}'", dep.id)
           return@forEachIndexed
         }
-        LOG.atDebug().log("$indent  ${i + 1}) Resolving dependency for ${dep.id}")
+        debugLog(indent, i + 1, "Resolving dependency for '{}'", dep.id)
         when (dependencyPlugin) {
           is Module,
           is Plugin -> {
@@ -53,7 +53,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
             }
           }
 
-          is None -> LOG.atDebug().log("$indent  Plugin '$pluginId' depends on a plugin '${dep.id}' that is not resolved in the IDE. Skipping")
+          is None -> debugLog(indent, "Plugin '{}' depends on a plugin '{}' that is not resolved in the IDE. Skipping", pluginId, dep.id)
         }
       }
     }
@@ -125,6 +125,22 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
        pluginProvider.findPluginById(pluginId)?.let { plugin ->
         getDependencyGraph(plugin).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
       }
+    }
+  }
+
+  private fun debugLog(indent: String, message: String, vararg params: Any) {
+    debugLog(indent, additionalIndentSize = 0, message, *params)
+  }
+
+  private fun debugLog(indent: String, additionalIndentSize: Int, message: String, vararg params: Any) {
+    if (LOG.isDebugEnabled) {
+      val additionalIndent = if (additionalIndentSize > 0) "  ${additionalIndentSize + 1}) " else ""
+      val msg = buildString {
+        append(indent)
+        append(additionalIndent)
+        append(message)
+      }
+      LOG.debug(msg, *params)
     }
   }
 

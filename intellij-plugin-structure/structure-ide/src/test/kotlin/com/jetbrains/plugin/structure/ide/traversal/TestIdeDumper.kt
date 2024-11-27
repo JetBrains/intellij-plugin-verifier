@@ -56,7 +56,7 @@ class TestIdeDumper {
         try {
           Files.copy(sourcePath, targetPath)
         } catch (e: IOException) {
-          LOG.atError().log("Cannot copy {} to {}", sourcePath, targetPath, e)
+          LOG.error("Cannot copy {} to {}", sourcePath, targetPath, e)
         }
     }
   }

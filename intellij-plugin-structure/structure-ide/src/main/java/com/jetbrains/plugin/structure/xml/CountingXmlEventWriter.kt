@@ -49,7 +49,7 @@ class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWri
       } catch (e: Exception) {
         when (e) {
           is RuntimeException, is XMLStreamException -> {
-            LOG.atError().log("Failed to close delegate XML event writer: {}", e.message)
+            LOG.error("Failed to close delegate XML event writer: {}", e.message)
             return
           }
         }
