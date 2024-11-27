@@ -29,7 +29,7 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
       if (failedComponents.isNotEmpty()) {
         if (missingLayoutFileMode == FAIL) throw MissingClasspathFileInLayoutComponentException.of(idePath, failedComponents)
         if (missingLayoutFileMode == SKIP_CLASSPATH) {
-          acceptedComponents += skipClasspath(failedComponents)
+          acceptedComponents += failedComponents.map { it.skipMissingClasspathElements() }
         }
         logUnavailableClasspath(failedComponents)
       }
@@ -37,13 +37,7 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
     }
   }
 
-  private fun skipClasspath(failedComponents: List<ResolvedLayoutComponent>): List<ResolvedLayoutComponent> {
-    return failedComponents.map {
-      it.skipClassPath()
-    }
-  }
-
-  private fun ResolvedLayoutComponent.skipClassPath() = with(layoutComponent) {
+  private fun ResolvedLayoutComponent.skipMissingClasspathElements() = with(layoutComponent) {
     when (this) {
       is LayoutComponent.ModuleV2 -> copy(classPaths = existingClasspaths)
       is LayoutComponent.Plugin -> copy(classPaths = existingClasspaths)
