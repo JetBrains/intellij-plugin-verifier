@@ -6,7 +6,11 @@ package com.jetbrains.pluginverifier.tasks.checkPlugin
 
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.resolution.*
+import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
@@ -18,11 +22,10 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
-import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.FULL
-import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS
 import java.nio.file.Paths
 
 const val JETBRAINS_PLUGINS_API_USAGE_MODE = "jetbrains-plugins"
+const val STANDARD_API_USAGE_MODE = "no"
 
 class CheckPluginParamsBuilder(
   val pluginRepository: PluginRepository,
@@ -32,6 +35,7 @@ class CheckPluginParamsBuilder(
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginParams {
+    val internalApiVerificationMode = OptionsParser.parseInternalApiVerificationMode(opts)
     require(freeArgs.size > 1) {
       "You must specify plugin to check and IDE(s), example:\n" +
         "java -jar verifier.jar check-plugin ~/work/myPlugin/myPlugin.zip ~/EAPs/idea-IU-117.963\n" +
@@ -90,16 +94,9 @@ class CheckPluginParamsBuilder(
       verificationDescriptors,
       pluginsSet.invalidPluginFiles,
       opts.excludeExternalBuildClassesSelector,
-      opts.internalApiVerificationMode
+      internalApiVerificationMode
     )
   }
-
-  private val CmdOpts.internalApiVerificationMode: InternalApiVerificationMode
-    get() = if (suppressInternalApiUsageWarnings?.equals(JETBRAINS_PLUGINS_API_USAGE_MODE) == true) {
-      IGNORE_IN_JETBRAINS_PLUGINS
-    } else {
-      FULL
-    }
 
   /**
    * Creates the [DependencyFinder] that firstly tries to resolve the dependency among the verified plugins.
