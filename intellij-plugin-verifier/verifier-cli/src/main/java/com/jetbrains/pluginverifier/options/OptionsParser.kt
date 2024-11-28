@@ -37,6 +37,11 @@ import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.FULL
+import com.jetbrains.pluginverifier.tasks.checkPlugin.InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS
+import com.jetbrains.pluginverifier.tasks.checkPlugin.JETBRAINS_PLUGINS_API_USAGE_MODE
+import com.jetbrains.pluginverifier.tasks.checkPlugin.STANDARD_API_USAGE_MODE
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import com.jetbrains.pluginverifier.verifiers.packages.PackageFilter
 import org.slf4j.LoggerFactory
@@ -304,6 +309,16 @@ object OptionsParser {
     }
 
     return KeepOnlyProblemsFilter(keepOnlyConditions)
+  }
+
+  @Throws(IllegalArgumentException::class)
+  fun parseInternalApiVerificationMode(opts: CmdOpts) : InternalApiVerificationMode {
+    val supportedValues = listOf(STANDARD_API_USAGE_MODE, JETBRAINS_PLUGINS_API_USAGE_MODE)
+    return when (opts.suppressInternalApiUsageWarnings) {
+      STANDARD_API_USAGE_MODE -> FULL
+      JETBRAINS_PLUGINS_API_USAGE_MODE -> IGNORE_IN_JETBRAINS_PLUGINS
+      else -> throw IllegalArgumentException("Unknown value of -suppress-internal-api-usage-warnings: ${opts.suppressInternalApiUsageWarnings}. Supported values: $supportedValues")
+    }
   }
 
   /**
