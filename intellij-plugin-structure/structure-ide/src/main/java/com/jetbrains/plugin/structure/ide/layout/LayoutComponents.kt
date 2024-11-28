@@ -9,17 +9,17 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import java.nio.file.Path
 
 class LayoutComponents(val layoutComponents: List<ResolvedLayoutComponent>) :
-    Iterable<ResolvedLayoutComponent> {
-    companion object {
-      fun of(idePath: Path, productInfo: ProductInfo): LayoutComponents {
-        val resolvedLayoutComponents = productInfo.layout
-          .map { ResolvedLayoutComponent(idePath, it) }
-        return LayoutComponents(resolvedLayoutComponents)
-      }
+  Iterable<ResolvedLayoutComponent> {
+  companion object {
+    fun of(idePath: Path, productInfo: ProductInfo): LayoutComponents {
+      val resolvedLayoutComponents = productInfo.layout
+        .map { ResolvedLayoutComponent(idePath, it) }
+      return LayoutComponents(resolvedLayoutComponents)
     }
+  }
 
-    override fun iterator() = layoutComponents.iterator()
+  override fun iterator() = layoutComponents.iterator()
 
   val content: List<LayoutComponent>
     get() = layoutComponents.map { it.layoutComponent }
-  }
+}
