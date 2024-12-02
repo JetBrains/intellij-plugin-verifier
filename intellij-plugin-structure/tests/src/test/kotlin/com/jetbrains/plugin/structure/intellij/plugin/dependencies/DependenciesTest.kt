@@ -626,6 +626,63 @@ class DependenciesTest {
   }
 
   @Test
+  fun `IntelliJ IDEA Community Edition 2024-2 is tested`() {
+    val ideResourceLocation = "/ide-dumps/IC-242.24807.4"
+    val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
+    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
+    ideUrl!!
+    val ideRoot = Paths.get(ideUrl.toURI())
+
+    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+      .createIde(ideRoot)
+    with(ide.bundledPlugins) {
+      assertEquals(280, size)
+    }
+
+    val git4Idea = ide.findPluginById("Git4Idea")
+    assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
+    git4Idea!!
+
+    val dependencyTree = DependencyTree(ide)
+    with(dependencyTree.getTransitiveDependencies(git4Idea)) {
+      assertEquals(31, size)
+      listOf(
+        "XPathView",
+        "com.intellij.copyright",
+        "com.intellij.java",
+        "com.intellij.modules.java",
+        "com.intellij.modules.java-capable",
+        "com.intellij.modules.json",
+        "com.intellij.modules.lang",
+        "com.intellij.modules.vcs",
+        "com.intellij.modules.xdebugger",
+        "com.intellij.modules.xml",
+        "com.intellij.platform.images",
+        "com.intellij.properties",
+        "com.jetbrains.performancePlugin",
+        "com.jetbrains.performancePlugin",
+        "com.jetbrains.sh",
+        "intellij.libraries.microba",
+        "intellij.performanceTesting.vcs",
+        "intellij.platform.collaborationTools",
+        "intellij.platform.coverage",
+        "intellij.platform.coverage.agent",
+        "intellij.platform.ide.newUiOnboarding",
+        "intellij.platform.vcs.dvcs.impl",
+        "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.log.impl",
+        "org.intellij.intelliLang",
+        "org.intellij.plugins.markdown",
+        "org.jetbrains.plugins.terminal",
+        "org.jetbrains.plugins.terminal",
+        "org.jetbrains.plugins.yaml",
+        "org.toml.lang",
+        "tanvd.grazi",
+      ).forEach(::assertContains)
+    }
+  }
+
+  @Test
   fun test243Dump() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
