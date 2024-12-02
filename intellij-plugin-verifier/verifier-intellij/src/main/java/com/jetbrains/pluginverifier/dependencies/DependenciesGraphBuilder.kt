@@ -9,11 +9,16 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+private val LOG: Logger = LoggerFactory.getLogger(DependenciesGraphBuilder::class.java)
 
 /**
  * Builds the dependencies graph using the [dependencyFinder].
@@ -114,7 +119,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       return registerMissingDependency(sameReason)
     }
 
-    return when (val result = dependencyFinder.findPluginDependency(depId.id, depId.isModule)) {
+    return when (val result = findPluginDependency(pluginDependency)) {
       is DependencyFinder.Result.FoundPlugin -> DepVertex(result.plugin, result)
       is DependencyFinder.Result.DetailsProvided -> {
         when (val cacheResult = result.pluginDetailsCacheResult) {
@@ -128,6 +133,24 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       }
       is DependencyFinder.Result.NotFound -> registerMissingDependency(result.reason)
     }
+  }
+
+  private fun findPluginDependency(pluginDependency: PluginDependency): DependencyFinder.Result {
+    val depId = pluginDependency.id
+    val finders = if (dependencyFinder is CompositeDependencyFinder) {
+      dependencyFinder.flatten()
+    } else {
+      listOf(dependencyFinder)
+    }
+    for (finder in finders) {
+      LOG.debug("Resolving dependency '{}' with {}", depId, finder.presentableName)
+      val result = finder.findPluginDependency(depId, pluginDependency.isModule)
+      if (result !is DependencyFinder.Result.NotFound) {
+        LOG.debug("Found dependency '{}' in {}", depId, finder.presentableName)
+        return result
+      }
+    }
+    return DependencyFinder.Result.NotFound("Dependency '${depId}' is not found among ${finders.joinToString { it.presentableName }}")
   }
 
   private fun getRecursiveOptionalDependencies(plugin: IdePlugin): List<PluginDependency> {
