@@ -53,13 +53,27 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
             }
           }
 
-          is None -> debugLog(indent, "Plugin '{}' depends on a plugin '{}' that is not resolved in the IDE. Skipping", pluginId, dep.id)
+          is None -> debugLogMissingPlugin(indent, pluginId, dep)
         }
       }
     }
 
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
     return dependency.isModule && plugin.definedModules.contains(dependency.id)
+  }
+
+  private fun debugLogMissingPlugin(indent: String, pluginId: PluginId, dep: PluginDependency) {
+    val type = if (dep.isModule) "module" else "plugin"
+    if (dep.isOptional) {
+      debugLog(indent, "Plugin '{}' depends on an optional $type '{}' that is not resolved in the IDE. Ignoring", pluginId, dep.id)
+    } else {
+      debugLog(
+        indent,
+        "Plugin '{}' depends on a $type '{}' that is not resolved in the IDE. Skipping",
+        pluginId,
+        dep.id
+      )
+    }
   }
 
   private fun DiGraph<PluginId, Dependency>.collectDependencies(id: PluginId): Set<Dependency> {
