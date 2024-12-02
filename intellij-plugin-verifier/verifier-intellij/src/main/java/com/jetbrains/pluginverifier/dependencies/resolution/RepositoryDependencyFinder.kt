@@ -23,7 +23,7 @@ class RepositoryDependencyFinder(
   private val pluginRepository = DependencyPluginRepository(pluginRepository)
 
   override val presentableName
-    get() = pluginRepository.toString()
+    get() = pluginRepository.presentableName
 
   override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result =
     retry("Resolve dependency $dependencyId") {

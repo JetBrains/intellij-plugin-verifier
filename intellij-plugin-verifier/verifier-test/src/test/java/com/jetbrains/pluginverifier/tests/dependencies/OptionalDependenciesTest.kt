@@ -158,8 +158,8 @@ class OptionalDependenciesTest {
       mapOf(
         somePluginNode to setOf(
           //Mandatory dependency "missingMandatoryPluginId" of file "optionalPlugin.xml" becomes missing direct optional dependency of "somePlugin"
-          MissingDependency(PluginDependencyImpl("missingMandatoryPluginId", true, false), "missingMandatoryPluginId mandatory plugin is not found"),
-          MissingDependency(PluginDependencyImpl("missingOptionalPluginId", true, false), "missingOptionalPluginId optional plugin is not found")
+          MissingDependency(PluginDependencyImpl("missingMandatoryPluginId", true, false), "Dependency 'missingMandatoryPluginId' is not found in test"),
+          MissingDependency(PluginDependencyImpl("missingOptionalPluginId", true, false), "Dependency 'missingOptionalPluginId' is not found in test")
         )
       ),
       dependenciesGraph.missingDependencies

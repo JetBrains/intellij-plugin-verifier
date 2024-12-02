@@ -150,7 +150,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
         return result
       }
     }
-    return DependencyFinder.Result.NotFound("Dependency '${depId}' is not found among ${finders.joinToString { it.presentableName }}")
+    return notFound(finders, pluginDependency)
   }
 
   private fun getRecursiveOptionalDependencies(plugin: IdePlugin): List<PluginDependency> {
@@ -221,6 +221,14 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     }
   }
 
+  private fun notFound(finders: List<DependencyFinder>, pluginDependency: PluginDependency): DependencyFinder.Result.NotFound {
+    val reason = if (finders.size == 1) {
+      "Dependency '${pluginDependency.id}' is not found in " + finders.first().presentableName
+    } else {
+      "Dependency '${pluginDependency.id}' is not found among ${finders.joinToString { it.presentableName }}"
+    }
+    return DependencyFinder.Result.NotFound(reason)
+  }
 }
 
 private data class DepVertex(val plugin: IdePlugin, val dependencyResult: DependencyFinder.Result) {
