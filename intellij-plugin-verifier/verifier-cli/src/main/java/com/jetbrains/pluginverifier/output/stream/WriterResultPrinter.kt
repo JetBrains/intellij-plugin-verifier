@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isError
 import com.jetbrains.plugin.structure.intellij.problems.remapping.ignored.CliIgnoredProblemLevelRemappingManager
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.dependencies.mandatory
+import com.jetbrains.pluginverifier.dependencies.optional
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_FAIL
@@ -67,18 +69,24 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
   }
 
   private fun PluginVerificationResult.Verified.printVerificationResult(): String = buildString {
-    if (pluginStructureWarnings.isNotEmpty()) {
-      appendLine("Plugin structure warnings (${pluginStructureWarnings.size}): ")
+    val missingDependencies = dependenciesGraph.getDirectMissingDependencies()
+    val warningCount  = pluginStructureWarnings.size + missingDependencies.optional.size
+    if (warningCount > 0) {
+      appendLine("Plugin structure warnings (${warningCount}): ")
       for (warning in pluginStructureWarnings) {
         appendLine("$INDENT${warning.message}")
         warning.problem.solutionHint.takeUnless { it.isBlank() }?.let { appendLine(INDENT + INDENT + it) }
       }
+      for (dependency in missingDependencies.optional) {
+        val depType = if (dependency.dependency.isModule) "module" else "plugin"
+        appendLine("${INDENT}Optional dependency on $depType '${dependency.dependency.id}' is missing.")
+      }
     }
 
-    val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
-    if (directMissingDependencies.isNotEmpty()) {
+    val directMissingMandatoryDependencies = missingDependencies.mandatory
+    if (directMissingMandatoryDependencies.isNotEmpty()) {
       appendLine("Missing dependencies: ")
-      for (missingDependency in directMissingDependencies) {
+      for (missingDependency in directMissingMandatoryDependencies) {
         appendLine("$INDENT${missingDependency.dependency}: ${missingDependency.missingReason}")
       }
     }

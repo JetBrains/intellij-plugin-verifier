@@ -6,3 +6,6 @@ package com.jetbrains.pluginverifier.dependencies
 
 val Set<MissingDependency>.optional: Set<MissingDependency>
   get() = filter { it.dependency.isOptional }.toSet()
+
+val Set<MissingDependency>.mandatory: Set<MissingDependency>
+  get() = filterNot { it.dependency.isOptional }.toSet()
