@@ -17,9 +17,9 @@ import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.events.XMLEvent
 
-private val LOG: Logger = LoggerFactory.getLogger(XmlFilter::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(XmlStreamEventFilter::class.java)
 
-class XmlFilter {
+class XmlStreamEventFilter {
   @Throws(IOException::class)
   fun filter(eventFilter: EventFilter, pluginXmlInputStream: InputStream, pluginXmlOutputStream: OutputStream) {
     val closeables = mutableListOf<Closeable>()

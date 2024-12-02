@@ -34,11 +34,11 @@ class DocumentTypeEventFilterTest : BaseEventFilterTest() {
 
 
     val eventLog = EventLogFilter()
-    val xmlFilter = XmlFilter()
+    val xmlStreamEventFilter = XmlStreamEventFilter()
 
     val documentTypeFilter = DocumentTypeFilter(setOf("module"), eventLog)
     val filteredXml = captureToString {
-      xmlFilter.filter(documentTypeFilter, xml.toInputStream(), this)
+      xmlStreamEventFilter.filter(documentTypeFilter, xml.toInputStream(), this)
     }
 
     assertEquals(expectedXml, filteredXml)
@@ -53,11 +53,11 @@ class DocumentTypeEventFilterTest : BaseEventFilterTest() {
     """.trimIndent()
 
     val eventLog = EventLogFilter(isDeduplicating = true)
-    val xmlFilter = XmlFilter()
+    val xmlStreamEventFilter = XmlStreamEventFilter()
 
     val documentTypeFilter = DocumentTypeFilter(setOf("module"), eventLog)
     val filteredXml = captureToString {
-      xmlFilter.filter(documentTypeFilter, xml.toInputStream(), this)
+      xmlStreamEventFilter.filter(documentTypeFilter, xml.toInputStream(), this)
     }
 
     assertEquals(5, eventLog.events.size)
@@ -66,11 +66,11 @@ class DocumentTypeEventFilterTest : BaseEventFilterTest() {
   @Test
   fun `XML with supported element that is not a root is handled`() {
     val eventLog = EventLogFilter(isDeduplicating = true)
-    val xmlFilter = XmlFilter()
+    val xmlStreamEventFilter = XmlStreamEventFilter()
 
     val documentTypeFilter = DocumentTypeFilter(setOf("module"), eventLog)
     val filteredXml = captureToString {
-      xmlFilter.filter(documentTypeFilter, projectXml.toInputStream(), this)
+      xmlStreamEventFilter.filter(documentTypeFilter, projectXml.toInputStream(), this)
     }
 
     @Language("XML")
