@@ -20,15 +20,9 @@ class DocumentTypeFilter(private val supportedRootElements: Set<String>, private
         rootElement = event.name
         if (event.name.localPart in supportedRootElements) {
           isPassThruMode = true
-          return true
-        } else {
-          return delegateEventFilter.accept(event)
         }
-      } else {
-        return if (isPassThruMode) true else delegateEventFilter.accept(event)
       }
-    } else {
-      return if (isPassThruMode) true else delegateEventFilter.accept(event)
     }
+    return if (isPassThruMode) true else delegateEventFilter.accept(event)
   }
 }
