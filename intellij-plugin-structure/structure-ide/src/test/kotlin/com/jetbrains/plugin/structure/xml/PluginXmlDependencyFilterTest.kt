@@ -9,11 +9,8 @@ import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.BufferedReader
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
 
-class PluginXmlDependencyFilterTest {
+class PluginXmlDependencyFilterTest: BaseEventFilterTest() {
 
   @Test
   fun `XML for Java plugin with XML comment embedded in DTD entity is not parsed`() {
@@ -227,19 +224,4 @@ class PluginXmlDependencyFilterTest {
 
     assertEquals(expectedXml, filteredXml)
   }
-
-  private fun captureToString(capturer: ByteArrayOutputStream.() -> Unit): String {
-    return ByteArrayOutputStream().use {
-      capturer(it)
-      it.toString(Charsets.UTF_8)
-    }
-  }
-
-  private fun resourceStream(name: String): InputStream {
-    val resourceAsStream: InputStream? = PluginXmlDependencyFilterTest::class.java.getResourceAsStream(name)
-    checkNotNull(resourceAsStream)
-    return resourceAsStream
-  }
-
-  private fun String.toInputStream() = ByteArrayInputStream(this.toByteArray())
 }
