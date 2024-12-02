@@ -3,48 +3,55 @@ package com.jetbrains.pluginverifier.tests.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.*
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.optional
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
+import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder
+import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder.Rule
 import org.junit.Assert
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import org.junit.Test
 
-/*
-  Given the following structure of plugin.xml and optional dependencies' configuration files.
 
-      plugin.xml
-        <id>someId</id>
-        <version>1.0</version>
-        <depends optional="true" config-file="optionalPlugin.mxl">optionalPluginId</depends>
-        <depends>duplicatedMandatoryDependencyId</depends>
-
-      optionalPlugin.xml
-        <depends>optionalMandatoryPluginId</depends>
-        <depends optional="true" config-file="otherOptionalPlugin.mxl">otherOptionalPluginId</depends>
-
-        <depends>missingMandatoryPluginId</depends>
-        <depends optional="true" config-file="missingOptionalPlugin.mxl">missingOptionalPluginId</depends>
-
-        <depends>duplicatedMandatoryDependencyId</depends>
-
-      otherOptionalPlugin.xml
-        <empty>
-
-      missingOptionalPlugin.xml
-        <empty>
-
-
-  The test checks:
-   1) "optionalMandatoryPluginId" becomes direct optional dependency of "someId" (because it is referenced via optional "optionalPlugin.xml").
-   2) "otherOptionalPluginId" becomes direct optional dependency of "someId" (for the same reason).
-   3) "missingMandatoryPluginId" becomes direct missing optional dependency of "someId" (for the same reason).
-   4) "missingOptionalPluginId" becomes direct missing optional dependency of "someId" (for the same reason).
-   5) "duplicatedMandatoryDependencyId" stays mandatory dependency of "someId", although it is optional via "optionalPlugin.xml"
-*/
 class OptionalDependenciesTest {
+  /*
+    Given the following structure of plugin.xml and optional dependencies' configuration files.
 
+        plugin.xml
+          <id>someId</id>
+          <version>1.0</version>
+          <depends optional="true" config-file="optionalPlugin.mxl">optionalPluginId</depends>
+          <depends>duplicatedMandatoryDependencyId</depends>
+
+        optionalPlugin.xml
+          <depends>optionalMandatoryPluginId</depends>
+          <depends optional="true" config-file="otherOptionalPlugin.mxl">otherOptionalPluginId</depends>
+
+          <depends>missingMandatoryPluginId</depends>
+          <depends optional="true" config-file="missingOptionalPlugin.mxl">missingOptionalPluginId</depends>
+
+          <depends>duplicatedMandatoryDependencyId</depends>
+
+        otherOptionalPlugin.xml
+          <empty>
+
+        missingOptionalPlugin.xml
+          <empty>
+
+
+    The test checks:
+     1) "optionalMandatoryPluginId" becomes direct optional dependency of "someId" (because it is referenced via optional "optionalPlugin.xml").
+     2) "otherOptionalPluginId" becomes direct optional dependency of "someId" (for the same reason).
+     3) "missingMandatoryPluginId" becomes direct missing optional dependency of "someId" (for the same reason).
+     4) "missingOptionalPluginId" becomes direct missing optional dependency of "someId" (for the same reason).
+     5) "duplicatedMandatoryDependencyId" stays mandatory dependency of "someId", although it is optional via "optionalPlugin.xml"
+  */
   @Test
   fun `test resolution of transitive dependencies from optional dependencies configuration files`() {
     //Plugin descriptor corresponding to "otherOptionalPlugin.xml".
@@ -157,6 +164,36 @@ class OptionalDependenciesTest {
       ),
       dependenciesGraph.missingDependencies
     )
+  }
+
+  @Test
+  fun `plugin with optional dependency that is not found in any repository`() {
+    val ide = MockIde(IdeVersion.createIdeVersion("1.0"))
+    val (pluginId, pluginVersion) = "somePlugin" to "1.0"
+    val riderDependency = PluginDependencyImpl("com.intellij.modules.rider", true, true)
+    val plugin = MockIdePlugin(
+      pluginId = pluginId,
+      pluginVersion = pluginVersion,
+      dependencies = listOf(riderDependency)
+    )
+    val dependencyFinder = RuleBasedDependencyFinder.create(ide, rules = emptyList<Rule>())
+
+    val (graph) = DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(plugin, ide)
+    val pluginNode = DependencyNode(pluginId, pluginVersion)
+    with(graph.missingDependencies) {
+      assertEquals(1, size)
+      this[pluginNode].let { deps ->
+        assertNotNull(deps)
+        deps as Set<MissingDependency>
+        assertEquals(1, deps.size)
+        val missingRiderDependency = deps.first().dependency
+        assertEquals(riderDependency, missingRiderDependency)
+        assertTrue(missingRiderDependency.isOptional)
+
+        assertEquals(1, deps.optional.size)
+        assertEquals(riderDependency, deps.optional.first().dependency)
+      }
+    }
   }
 
   private fun DependenciesGraph.assertContainsEdge(edge: DependencyEdge) {
