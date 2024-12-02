@@ -28,4 +28,11 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
       ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
   }
 
+  fun flatten(): List<DependencyFinder> = dependencyFinders.flatMap {
+    when (it) {
+      is CompositeDependencyFinder -> it.flatten()
+      else -> listOf(it)
+    }
+  }
+
 }
