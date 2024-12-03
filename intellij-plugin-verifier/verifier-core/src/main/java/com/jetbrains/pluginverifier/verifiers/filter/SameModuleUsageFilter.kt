@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.verifiers.hasAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.hasSameOrigin
 import com.jetbrains.pluginverifier.verifiers.resolution.searchParentOverrides
 import org.objectweb.asm.tree.AbstractInsnNode
 
@@ -20,7 +21,7 @@ class SameModuleUsageFilter(private val annotation: BinaryClassName) : ApiUsageF
   ) =
     invokedMethod
       .findAnnotatedElement(annotation, context)
-      ?.let { isSameOrigin(it, callerMethod) } ?: false
+      ?.hasSameOrigin(callerMethod) == true
 
   private fun isSameOrigin(method: Method, anotherMethod: Method): Boolean =
     method.containingClassFile.classFileOrigin == anotherMethod.containingClassFile.classFileOrigin
