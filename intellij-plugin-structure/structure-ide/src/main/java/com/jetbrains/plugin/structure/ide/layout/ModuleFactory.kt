@@ -36,7 +36,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
       return null
     }
 
-    val moduleLoadingResult = moduleLoader.load(loadingContext.artifactPath, loadingContext.descriptorName, resourceResolver, ideVersion)
+    val moduleLoadingResult = moduleLoader.load(loadingContext.artifactPath, loadingContext.descriptorName, resourceResolver, ideVersion, layoutComponent.name)
     return when (moduleLoadingResult) {
       is Success -> {
         IdeModule

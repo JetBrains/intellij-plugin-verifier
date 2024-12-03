@@ -22,6 +22,9 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(CorePluginManager::class.java)
 
 private val LIB_DIRECTORY = "lib"
+
+private const val CORE_IDE_PLUGIN_ID = "com.intellij"
+
 /**
  * Manages the core plugin represented `IDE_HOME/lib` directory.
  * These JARs are the content of a special plugin (ID: `com.intellij`)
@@ -61,7 +64,7 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
 
   private fun loadPlugin(jarPath: Path, ideVersion: IdeVersion, platformResourceResolver: ResourceResolver): PluginWithArtifactPathResult? {
     return findDescriptor(jarPath, ideVersion)?.let { descriptor ->
-      pluginLoader.load(jarPath, descriptor, platformResourceResolver, ideVersion)
+      pluginLoader.load(jarPath, descriptor, platformResourceResolver, ideVersion, CORE_IDE_PLUGIN_ID)
     }
   }
 

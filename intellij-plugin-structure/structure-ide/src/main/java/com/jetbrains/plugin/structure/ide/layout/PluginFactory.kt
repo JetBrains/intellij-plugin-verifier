@@ -22,7 +22,7 @@ internal class PluginFactory(private val pluginLoader: LayoutComponentLoader) : 
     val relativePluginDir = getRelativePluginDirectory(layoutComponent) ?: return null
     val pluginDir = idePath.resolve(relativePluginDir)
     return try {
-      pluginLoader.load(pluginArtifactPath = pluginDir, PLUGIN_XML, resourceResolver, ideVersion)
+      pluginLoader.load(pluginArtifactPath = pluginDir, PLUGIN_XML, resourceResolver, ideVersion, layoutComponent.name)
     } catch (e: PluginFileNotFoundException) {
       PluginWithArtifactPathResult.Failure(pluginDir, layoutComponent.name, MissedFile(pluginDir.toString()))
     }

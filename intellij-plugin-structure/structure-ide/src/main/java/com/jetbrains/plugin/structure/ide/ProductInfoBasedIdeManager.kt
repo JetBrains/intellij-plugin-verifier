@@ -123,7 +123,8 @@ class ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents: Bool
     pluginArtifactPath: Path,
     descriptorName: String,
     pathResolver: ResourceResolver,
-    ideVersion: IdeVersion
+    ideVersion: IdeVersion,
+    @Suppress("unused") layoutComponentName: String
   ): PluginWithArtifactPathResult {
     return IdePluginManager
       .createManager(pathResolver)
@@ -135,10 +136,11 @@ class ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents: Bool
     pluginArtifactPath: Path,
     descriptorPath: String = PLUGIN_XML,
     resourceResolver: ResourceResolver,
-    ideVersion: IdeVersion
+    ideVersion: IdeVersion,
+    layoutComponentName: String
   ) = IdePluginManager
     .createManager(resourceResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, bundledPluginCreationResultResolver)
+    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, bundledPluginCreationResultResolver, fallbackPluginId = layoutComponentName)
     .withPath(pluginArtifactPath)
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {

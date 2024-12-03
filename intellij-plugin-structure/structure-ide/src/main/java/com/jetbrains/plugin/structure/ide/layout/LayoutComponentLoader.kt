@@ -9,6 +9,7 @@ internal fun interface LayoutComponentLoader {
     pluginArtifactPath: Path,
     descriptorName: String,
     resourceResolver: ResourceResolver,
-    ideVersion: IdeVersion
+    ideVersion: IdeVersion,
+    layoutComponentName: String
   ): PluginWithArtifactPathResult
 }
