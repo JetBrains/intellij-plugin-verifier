@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
 import com.jetbrains.pluginverifier.analysis.Location.Annotation
 import com.jetbrains.pluginverifier.analysis.Location.Field
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.optional
 import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ConstantDynamic
@@ -104,7 +105,7 @@ fun buildClassReachabilityGraph(
     reachabilityGraph.markClass(className, ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN)
   }
 
-  val missingOptionalDependencies = dependenciesGraph.getDirectMissingDependencies().filter { it.dependency.isOptional }
+  val missingOptionalDependencies = dependenciesGraph.getDirectMissingDependencies().optional
   for (missingOptionalDependency in missingOptionalDependencies) {
     val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
     val modules = idePlugin.modulesDescriptors
