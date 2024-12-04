@@ -25,7 +25,9 @@ import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy
 import net.bytebuddy.implementation.FixedValue
 import net.bytebuddy.implementation.MethodDelegation
-import net.bytebuddy.jar.asm.*
+import net.bytebuddy.jar.asm.AnnotationVisitor
+import net.bytebuddy.jar.asm.ClassWriter
+import net.bytebuddy.jar.asm.Opcodes
 import net.bytebuddy.jar.asm.Opcodes.*
 import net.bytebuddy.matcher.ElementMatchers.named
 import org.junit.Assert.assertEquals
@@ -104,21 +106,71 @@ class InternalApiUsagePluginTest {
     assertEquals(internalClassUsageMsg, relevantInternalClassUsages[0].fullDescription)
   }
 
-  private fun prepareIde(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
+  @Test
+  fun `in the same plugin, a class overrides an internal API method of another class`() {
+    val (idePlugin, ide) = prepareServiceAndOverrider(IdeaPluginSpec("com.example.somePlugin", "Some Vendor"))
+
+    val apiUsageFilter = InternalApiUsageFilter()
+
+    // Run verification
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin,
+      apiUsageFilters = listOf(apiUsageFilter)) as PluginVerificationResult.Verified
+
+    assertEquals(0, verificationResult.internalApiUsages.size)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun prepareServiceAndOverrider(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
     val classLoader = this::class.java.classLoader
     val byteBuddy = ByteBuddy()
 
-    @Suppress("UNCHECKED_CAST") val intellijInternalApiClass = Class
+    val internalServiceClassName = "com.example.plugin.InternalService"
+    val internalServiceUdt = byteBuddy
+      .subclass(Object::class.java)
+      .name(internalServiceClassName)
+      .annotateType(intelliJInternalApi())
+      .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
+      .make()
+    val internalServiceClass = load(internalServiceUdt, classLoader, internalServiceClassName)
+
+    val overriderClassName = "com.example.plugin.Overrider"
+    val overriderUdt = byteBuddy
+      .subclass(internalServiceClass)
+      .name(overriderClassName)
+      // override method from parent
+      .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
+      .make() as DynamicType.Unloaded<Object>
+
+    val idePlugin = buildIdePlugin(pluginSpec) {
+      dirs("com/example/plugin") {
+        file("InternalService.class", internalServiceUdt.bytes)
+        file("Overrider.class", overriderUdt.bytes)
+      }
+    }
+
+    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {}, groovyPluginClassesBuilder = {})
+
+    return idePlugin to ide
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun intelliJInternalApi(): AnnotationDescription {
+     val intellijInternalApiClass = Class
       .forName("com.intellij.openapi.util.IntellijInternalApi") as Class<Annotation>
-    val intellijInternalApiAnnDesc = AnnotationDescription.Builder
+    return AnnotationDescription.Builder
       .ofType(intellijInternalApiClass)
       .build()
+  }
+
+  private fun prepareIde(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
+    val classLoader = this::class.java.classLoader
+    val byteBuddy = ByteBuddy()
 
     val internalApiServiceClassName = "com.intellij.openapi.InternalApiService"
     val internalApiServiceClassUdt = byteBuddy
       .subclass(Object::class.java)
       .name(internalApiServiceClassName)
-      .annotateType(intellijInternalApiAnnDesc)
+      .annotateType(intelliJInternalApi())
       .defineMethod("fortyTwo", Integer.TYPE, Modifier.PUBLIC).intercept(FixedValue.value(42))
       .make()
 

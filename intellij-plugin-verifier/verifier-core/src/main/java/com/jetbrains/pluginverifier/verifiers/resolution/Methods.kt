@@ -51,6 +51,11 @@ private fun sameOrBroaderVisibility(method: Method, anotherMethod: Method): Bool
   return method.visibilityRating >= anotherMethod.visibilityRating
 }
 
+fun Method.hasSameOrigin(method: Method): Boolean =
+  containingClassFile.classFileOrigin == method.containingClassFile.classFileOrigin
+
+fun Method.hasDifferentOrigin(method: Method): Boolean = !hasSameOrigin(method)
+
 private val Method.visibilityRating: Int
   get() = when {
     isPublic -> 3
