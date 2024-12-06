@@ -1,5 +1,7 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin>
     <id>com.intellij.java</id>
+    <name>Java</name>
+    <vendor>JetBrains</vendor>
     <dependencies>
         <plugin id="com.intellij.modules.lang"/>
         <plugin id="com.intellij.modules.vcs"/>
