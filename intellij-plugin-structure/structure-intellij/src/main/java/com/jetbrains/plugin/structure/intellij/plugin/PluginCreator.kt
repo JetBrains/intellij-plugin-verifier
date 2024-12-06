@@ -233,6 +233,12 @@ internal class PluginCreator private constructor(
     plugin.hasDotNetPart = hasDotNetPart
   }
 
+  fun setPluginIdIfNull(id: String) {
+    if (plugin.pluginId == null) {
+      plugin.pluginId = id
+    }
+  }
+
   /**
    * Create an instance of an invalid plugin with the most basic information.
    *

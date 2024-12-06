@@ -3,9 +3,33 @@
  */
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.*
-import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.plugin.IconTheme
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginIcon
+import com.jetbrains.plugin.structure.base.plugin.PluginManager
+import com.jetbrains.plugin.structure.base.plugin.Settings
+import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
+import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
+import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
+import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
+import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.problems.isInvalidDescriptorProblem
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.getShortExceptionMessage
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.utils.pluginSize
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.withPathSeparatorOf
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extractPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
@@ -18,16 +42,19 @@ import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.jar.*
+import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
+import com.jetbrains.plugin.structure.jar.PluginJar
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.jdom2.Document
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Duration
-import java.util.*
 import java.util.stream.Collectors
 import kotlin.system.measureTimeMillis
 
@@ -348,10 +375,12 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     ideVersion: IdeVersion,
     descriptorPath: String,
-    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+    fallbackPluginId: String? = null,
   ): PluginCreationResult<IdePlugin> {
     val pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, problemResolver)
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
+    fallbackPluginId?.let { pluginCreator.setPluginIdIfNull(it) }
     return pluginCreator.pluginCreationResult
   }
 

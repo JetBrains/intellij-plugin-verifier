@@ -18,7 +18,7 @@ import javax.xml.stream.events.XMLEvent.COMMENT
 import javax.xml.stream.events.XMLEvent.START_DOCUMENT
 
 class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, private val ignoreXmlDeclaration: Boolean = true) {
-  private val allowedElements = listOf("idea-plugin", "id", "depends", "dependencies", "plugin",
+  private val allowedElements = listOf("idea-plugin", "id", "name", "vendor", "depends", "dependencies", "plugin",
     "module", "content", "/idea-plugin/dependencies/module", "/idea-plugin/content/module")
 
   private val passThruElements = setOf("module")

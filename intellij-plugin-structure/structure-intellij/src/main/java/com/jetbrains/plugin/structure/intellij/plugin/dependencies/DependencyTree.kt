@@ -17,7 +17,7 @@ private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
 class DependencyTree(private val pluginProvider: PluginProvider) {
   @Throws(IllegalArgumentException::class)
   fun getTransitiveDependencies(plugin: IdePlugin): Set<Dependency> {
-    val pluginId: PluginId = requireNotNull(plugin.pluginId) { "Plugin must have an ID" }
+    val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
     val graph = getDependencyGraph(plugin)
     return graph.collectDependencies(pluginId)
   }
@@ -60,6 +60,12 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
     return dependency.isModule && plugin.definedModules.contains(dependency.id)
+  }
+
+  private fun missingId(plugin: IdePlugin): String {
+    val name = plugin.pluginName ?: "unknown name"
+    val originalFile = plugin.originalFile ?: "unknown plugin artifact path"
+    return "Plugin must have an ID. Name: $name. Path: $originalFile"
   }
 
   private fun DiGraph<PluginId, Dependency>.collectDependencies(id: PluginId): Set<Dependency> {
