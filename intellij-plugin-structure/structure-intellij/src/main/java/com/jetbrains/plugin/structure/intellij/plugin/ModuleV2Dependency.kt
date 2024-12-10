@@ -4,12 +4,10 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-data class ModuleV2Dependency(private val id: String) : PluginDependency {
-  override fun getId() = id
+data class ModuleV2Dependency(override val id: String, override var isOptional: Boolean = false) : PluginDependency {
+  override val isModule = true
 
-  override fun isOptional() = true
-
-  override fun isModule() = true
+  override fun createNewInstance(callback: PluginDependency.() -> Unit) = this.copy().apply(callback)
 
   override fun toString() = "$id (module, v2)"
 }

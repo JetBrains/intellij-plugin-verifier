@@ -4,13 +4,15 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 public class PluginDependencyImpl implements PluginDependency {
   private final String myId;
-  private final boolean myIsOptional;
+  private boolean myIsOptional;
   private final boolean myIsModule;
 
   public PluginDependencyImpl(@NotNull String id, boolean isOptional, boolean isModule) {
@@ -50,5 +52,17 @@ public class PluginDependencyImpl implements PluginDependency {
   @Override
   public int hashCode() {
     return Objects.hash(myId, myIsOptional, myIsModule);
+  }
+
+  @Override
+  public void setOptional(boolean isOptional) {
+    myIsOptional = isOptional;
+  }
+
+  @Override
+  public @NotNull PluginDependency createNewInstance(@NotNull Function1<? super PluginDependency, Unit> callback) {
+    PluginDependencyImpl newInstance = new PluginDependencyImpl(myId, myIsOptional, myIsModule);
+    callback.invoke(newInstance);
+    return newInstance;
   }
 }

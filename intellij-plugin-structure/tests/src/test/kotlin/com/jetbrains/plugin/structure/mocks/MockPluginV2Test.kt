@@ -207,10 +207,10 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       )
     )
 
-    assertThat(moduleDependencies.map { it.isOptional }, `is`(listOf(true, false)))
+    assertThat(moduleDependencies.map { it.isOptional }, `is`(listOf(false, false)))
 
     assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("intellij.clouds.docker.remoteRun"))
-    assertTrue(plugin.dependencies.filterNot { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))
+    assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))
 
 
     assertEquals(
@@ -233,17 +233,17 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertEquals(5, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
-      ModuleV2Dependency("intellij.module.dependency"),
-      PluginV2Dependency("mandatoryDependencyV2"),
-      PluginV2Dependency("com.intellij.modules.mandatoryDependencyV2"),
-      ModuleV2Dependency("intellij.clouds.docker.remoteRun"),
-      PluginV2Dependency("com.intellij.copyright"),
+      ModuleV2Dependency("intellij.module.dependency", isOptional = false),
+      PluginV2Dependency("mandatoryDependencyV2", isOptional = false),
+      PluginV2Dependency("com.intellij.modules.mandatoryDependencyV2", isOptional = false),
+      ModuleV2Dependency("intellij.clouds.docker.remoteRun", isOptional = true),
+      PluginV2Dependency("com.intellij.copyright", isOptional = true),
     )
     assertThat(plugin.dependencies, `is`(expectedDependencies))
 
     val expectedOptionalDependencies = listOf(
-      ModuleV2Dependency("intellij.module.dependency"),
-      ModuleV2Dependency("intellij.clouds.docker.remoteRun")
+      ModuleV2Dependency("intellij.clouds.docker.remoteRun", isOptional = true),
+      PluginV2Dependency("com.intellij.copyright", isOptional = true),
     )
     assertThat(plugin.dependencies.filter { it.isOptional }, `is`(expectedOptionalDependencies))
   }
