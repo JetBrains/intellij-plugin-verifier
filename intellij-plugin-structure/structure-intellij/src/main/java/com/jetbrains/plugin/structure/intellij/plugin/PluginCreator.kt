@@ -920,7 +920,7 @@ internal class PluginCreator private constructor(
   private fun IdePluginImpl.addDependencies(module: IdePlugin) {
     module.dependencies
       .filter { dependency -> dependencies.none { it.id == dependency.id } }
-      .forEach { dependencies += it }
+      .forEach { dependencies += ModuleV2Dependency(it.id) }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
