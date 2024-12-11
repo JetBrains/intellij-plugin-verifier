@@ -1,11 +1,9 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.plugin;
 
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -55,14 +53,7 @@ public class PluginDependencyImpl implements PluginDependency {
   }
 
   @Override
-  public void setOptional(boolean isOptional) {
-    myIsOptional = isOptional;
-  }
-
-  @Override
-  public @NotNull PluginDependency createNewInstance(@NotNull Function1<? super PluginDependency, Unit> callback) {
-    PluginDependencyImpl newInstance = new PluginDependencyImpl(myId, myIsOptional, myIsModule);
-    callback.invoke(newInstance);
-    return newInstance;
+  public @NotNull PluginDependency asOptional() {
+    return new PluginDependencyImpl(myId, /* isOptional */ true, myIsModule);
   }
 }
