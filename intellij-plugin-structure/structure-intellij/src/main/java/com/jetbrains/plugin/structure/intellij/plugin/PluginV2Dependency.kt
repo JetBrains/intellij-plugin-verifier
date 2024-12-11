@@ -4,12 +4,10 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-data class PluginV2Dependency(private val id: String) : PluginDependency {
-  override fun getId() = id
+data class PluginV2Dependency(override val id: String, override var isOptional: Boolean = false) : PluginDependency {
+  override val isModule = id.startsWith(INTELLIJ_MODULE_PREFIX)
 
-  override fun isOptional() = false
-
-  override fun isModule() = id.startsWith(INTELLIJ_MODULE_PREFIX)
+  override fun asOptional(): PluginV2Dependency = copy(isOptional = true)
 
   override fun toString(): String {
     val moduleFlag = if (isModule) "+module" else ""

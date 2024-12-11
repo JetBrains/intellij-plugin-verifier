@@ -302,6 +302,29 @@ class PluginXmlValidationTest {
     )
   }
 
+  @Test
+  fun `modules and plugin from plugin v2 'dependencies' tag are required`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <dependencies>
+                <module name="intellij.dev.psiViewer" />
+                <plugin id="org.intellij.plugins.markdown" />
+              </dependencies>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(pluginCreationSuccess.plugin.dependencies) {
+      assertEquals(2, size)
+      assertTrue(all { !it.isOptional })
+    }
+  }
+
   private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {
