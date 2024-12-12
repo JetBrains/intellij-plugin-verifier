@@ -3,10 +3,10 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
 
-class DispatchingIdeManager : IdeManager() {
+class DispatchingIdeManager(configuration: IdeManagerConfiguration = IdeManagerConfiguration()) : IdeManager() {
   private val standardIdeManager = IdeManagerImpl()
 
-  private val productInfoBasedIdeManager = ProductInfoBasedIdeManager()
+  private val productInfoBasedIdeManager = ProductInfoBasedIdeManager(configuration.missingLayoutFileMode)
 
   override fun createIde(idePath: Path): Ide = createIde(idePath, version = null)
 

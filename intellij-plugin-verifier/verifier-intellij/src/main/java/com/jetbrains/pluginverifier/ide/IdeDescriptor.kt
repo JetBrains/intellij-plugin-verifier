@@ -9,9 +9,9 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.plugin.structure.ide.createIde
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptor
@@ -76,7 +76,10 @@ data class IdeDescriptor(
       missingLayoutClasspathFileMode: MissingLayoutFileMode
     ): IdeDescriptor {
       val ideResolverConfiguration = IdeResolverConfiguration(ReadMode.FULL, missingLayoutClasspathFileMode)
-      val ide = IdeManager.createManager().createIde(idePath)
+      val ide = createIde {
+        path = idePath
+        missingLayoutFileMode = missingLayoutClasspathFileMode
+      }
       val ideResolver = IdeResolverCreator.createIdeResolver(ide, ideResolverConfiguration)
       ideResolver.closeOnException {
         when (val result = jdkDescriptorProvider.getJdkDescriptor(ide, defaultJdkPath)) {
