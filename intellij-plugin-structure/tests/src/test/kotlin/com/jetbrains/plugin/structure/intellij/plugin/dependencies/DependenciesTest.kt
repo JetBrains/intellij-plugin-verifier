@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -633,7 +634,7 @@ class DependenciesTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
     with(ide.bundledPlugins) {
       assertEquals(280, size)
@@ -690,7 +691,7 @@ class DependenciesTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
     with(ide.bundledPlugins) {
       assertEquals(504, size)
@@ -814,7 +815,7 @@ class DependenciesTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents = false)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
 
     val coveragePlugin = ide.findPluginById("Coverage")

@@ -7,8 +7,8 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_CLASSPATH
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
@@ -43,11 +43,11 @@ private val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
 
-class ProductInfoBasedIdeManager(excludeMissingProductInfoLayoutComponents: Boolean = true) : IdeManager() {
+class ProductInfoBasedIdeManager(missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN) : IdeManager() {
   private val productInfoParser = ProductInfoParser()
 
   private val layoutComponentProvider =
-    LayoutComponentsProvider(missingLayoutFileMode = if (excludeMissingProductInfoLayoutComponents) SKIP_AND_WARN else SKIP_CLASSPATH)
+    LayoutComponentsProvider(missingLayoutFileMode = missingLayoutFileMode)
 
   /**
    * Problem level remapping used for bundled plugins.
