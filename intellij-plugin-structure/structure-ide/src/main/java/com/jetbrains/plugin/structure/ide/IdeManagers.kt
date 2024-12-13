@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide
@@ -16,9 +16,10 @@ fun createIdeManager(init: IdeManagerConfiguration.() -> Unit): IdeManager {
 fun createIde(init: IdeConfiguration.() -> Unit): Ide {
   val spec = IdeConfiguration()
   spec.init()
-  require(spec.path != null) { "IDE Path must be set" }
-  val ideManagerCfg = IdeManagerConfiguration(spec.missingLayoutFileMode)
-  return DispatchingIdeManager(ideManagerCfg).createIde(spec.path!!)
+  val idePath = spec.path
+  require(idePath != null) { "IDE Path must be set" }
+  val ideManagerConfig = IdeManagerConfiguration(spec.missingLayoutFileMode)
+  return DispatchingIdeManager(ideManagerConfig).createIde(idePath)
 }
 
 class IdeManagerConfiguration(var missingLayoutFileMode: MissingLayoutFileMode = MissingLayoutFileMode.SKIP_AND_WARN)
