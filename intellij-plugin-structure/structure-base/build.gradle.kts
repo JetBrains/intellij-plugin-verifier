@@ -9,4 +9,6 @@ dependencies {
 
   //Provides English class capable of pluralizing english words.
   implementation(libs.evo.inflector)
+
+  testImplementation(sharedLibs.junit)
 }
