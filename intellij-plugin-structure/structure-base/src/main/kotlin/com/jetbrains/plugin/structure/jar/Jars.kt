@@ -15,7 +15,7 @@ const val JAR_SCHEME = "jar"
 fun Path.toJarFileUri(): URI {
   return if (toUri().scheme == FILE_SCHEMA) {
     val absoluteJarPath = if (isAbsolute) this else toAbsolutePath()
-    URI("$JAR_FILE_SCHEMA:${absoluteJarPath.toUri()}")
+    URI("$JAR_FILE_SCHEMA:${absoluteJarPath.toRealPath().toUri()}")
   } else {
     toUri()
   }
