@@ -5,18 +5,31 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import com.jetbrains.plugin.structure.base.telemetry.UNKNOWN_SIZE
+import org.apache.commons.io.FileUtils.ONE_GB
 import org.slf4j.LoggerFactory
-import java.io.*
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.math.BigDecimal
 import java.nio.charset.Charset
-import java.nio.file.*
+import java.nio.file.FileSystems
+import java.nio.file.FileVisitOption
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
 import java.util.stream.Collectors
 import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
 typealias Bytes = Long
+
+internal val ONE_GB_BD = BigDecimal(ONE_GB)
+internal val ONE_POINT_FIVE_GB = BigDecimal("1.5").multiply(ONE_GB_BD).toLong()
 
 fun Path.isZip(): Boolean = this.hasExtension("zip")
 
