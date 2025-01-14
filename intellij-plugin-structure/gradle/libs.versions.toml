@@ -1,5 +1,5 @@
 [versions]
-platform = "213.7172.53"
+platform = "251.15859"
 
 asm = "9.7.1"
 commons-compress = "1.27.1"
