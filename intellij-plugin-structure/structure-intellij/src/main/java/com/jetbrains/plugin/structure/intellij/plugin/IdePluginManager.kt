@@ -449,19 +449,6 @@ class IdePluginManager private constructor(
     }.pluginCreationResult
   }
 
-  fun createInlineModule(
-    descriptorResource: DescriptorResource,
-    pluginFile: Path,
-    ideVersion: IdeVersion,
-    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
-  ): PluginCreationResult<IdePlugin> {
-    //FIXME parent plugin is null
-    return loadModuleFromDescriptorResource(descriptorResource, parentPlugin = null, myResourceResolver).apply {
-      setPluginVersion(ideVersion.asStringWithoutProductCode())
-      setOriginalFile(pluginFile)
-    }.pluginCreationResult
-  }
-
   @Throws(PluginFileNotFoundException::class)
   private fun getPluginCreatorWithResult(
     pluginFile: Path,
