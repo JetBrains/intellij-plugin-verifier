@@ -27,6 +27,8 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
 import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
 import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
+import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
+import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
@@ -86,6 +88,8 @@ internal class PluginCreator private constructor(
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
+    private val pluginModuleResolver = PluginModuleResolver()
+
     private val pluginIdVerifier = PluginIdVerifier()
     private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
     private val pluginProductReleaseVersionVerifier = ProductReleaseVersionVerifier()
@@ -132,6 +136,21 @@ internal class PluginCreator private constructor(
       val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver)
       pluginCreator.resolveDocumentAndValidateBean(
         document, documentPath, descriptorPath, pathResolver, validateDescriptor
+      )
+      return pluginCreator
+    }
+
+    @JvmStatic
+    fun createPlugin(
+      descriptorResource: DescriptorResource,
+      parentPlugin: PluginCreator?,
+      document: Document,
+      pathResolver: ResourceResolver,
+      problemResolver: PluginCreationResultResolver
+    ): PluginCreator {
+      val pluginCreator = PluginCreator(descriptorResource.artifactFileName, descriptorResource.fileName, parentPlugin, problemResolver)
+      pluginCreator.resolveDocumentAndValidateBean(
+        document, descriptorResource.filePath, descriptorResource.fileName, pathResolver, validateDescriptor = true
       )
       return pluginCreator
     }
@@ -188,6 +207,23 @@ internal class PluginCreator private constructor(
       }
     } else {
       registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
+    }
+  }
+
+  internal fun addModuleDescriptor(moduleReference: InlineModule, moduleCreator: PluginCreator) {
+    val pluginCreationResult = moduleCreator.pluginCreationResult
+    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
+      val moduleConfigurationFile = descriptorPath + "#modules/" + moduleReference.name
+      val moduleName = moduleReference.name
+      val module = pluginCreationResult.plugin
+
+      plugin.addDependencies(module)
+      plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, moduleConfigurationFile))
+      plugin.definedModules.add(moduleName)
+
+      mergeContent(module)
+    } else {
+      registerProblem(ModuleDescriptorProblem(moduleReference, pluginCreationResult.errors))
     }
   }
 
@@ -293,16 +329,8 @@ internal class PluginCreator private constructor(
     dependencies += bean.dependentModules.map { ModuleV2Dependency(it.moduleName) }
     dependencies += bean.dependentPlugins.map { PluginV2Dependency(it.dependencyId) }
 
-    if (bean.pluginContent != null) {
-      val modules = bean.pluginContent.flatMap { it.modules }
-
-      for (pluginModule in modules) {
-        val name = pluginModule.moduleName
-        if (name != null) {
-          val configFile = "../${name.replace("/", ".")}.xml"
-          contentModules += Module(name, configFile)
-        }
-      }
+    if (pluginModuleResolver.supports(bean)) {
+      contentModules += pluginModuleResolver.resolvePluginModules(bean)
     }
 
     bean.incompatibleModules?.filter { it?.startsWith(modulePrefix) ?: false }?.let {

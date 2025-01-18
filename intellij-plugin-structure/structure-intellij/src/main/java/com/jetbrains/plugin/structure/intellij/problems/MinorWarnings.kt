@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorResolutionError
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
+import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 class NoModuleDependencies(descriptorPath: String) : InvalidDescriptorProblem(
@@ -95,6 +97,20 @@ class ModuleDescriptorResolutionProblem(
       } else {
         prefix + " is invalid: ${errors.joinToString { it.message }}"
       }
+    }
+}
+
+class ModuleDescriptorProblem(
+  private val module: Module,
+  private val errors: List<PluginProblem>
+) : PluginProblem() {
+  override val level
+    get() = Level.WARNING
+
+  override val message: String
+    get() {
+      val errorStr = "problem".pluralize(errors.size)
+      return "Module '${module.name}' has ${errors.size} $errorStr: ${errors.joinToString { it.message }}"
     }
 }
 

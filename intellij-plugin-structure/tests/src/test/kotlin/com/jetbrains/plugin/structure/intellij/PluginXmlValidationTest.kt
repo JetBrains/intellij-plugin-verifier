@@ -10,6 +10,9 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
@@ -22,6 +25,8 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.BufferedReader
+import java.io.IOException
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -302,6 +307,148 @@ class PluginXmlValidationTest {
     )
   }
 
+
+  @Test
+  fun `plugin declares a single content module in CDATA`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml", classpath("/descriptors/ml-llm/plugin-single-module-in-cdata.xml"))
+      }
+    }
+    pluginCreationSuccess.warnings.filterIsInstance<ModuleDescriptorResolutionProblem>().let {
+      assertEquals(0, it.size)
+    }
+    with(pluginCreationSuccess.plugin.modulesDescriptors) {
+      assertEquals(1, size)
+      val intellijMlLlmPrivacy = first()
+      assertEquals("intellij.ml.llm.privacy", intellijMlLlmPrivacy.name)
+      val privacyDeps = intellijMlLlmPrivacy.dependencies
+      assertEquals(1, privacyDeps.size)
+      val platformVcsImpl = privacyDeps.first()
+      assertTrue(platformVcsImpl is ModuleV2Dependency)
+      platformVcsImpl as ModuleV2Dependency
+      assertEquals("intellij.platform.vcs.impl", platformVcsImpl.id)
+    }
+
+  }
+
+  @Test
+  fun `plugin declares multiple modules in CDATA`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml", classpath("/descriptors/ml-llm/plugin-modules-in-cdata.xml"))
+      }
+    }
+    val modules = pluginCreationSuccess.plugin.modulesDescriptors
+    assertEquals(86, modules.size)
+    val moduleNames = modules.map { it.name }.sorted()
+    val expectedModuleNames = listOf(
+      "intellij.ml.llm.android",
+      "intellij.ml.llm.chatInputLanguage",
+      "intellij.ml.llm.chatInputLanguage.grazie",
+      "intellij.ml.llm.completion",
+      "intellij.ml.llm.core",
+      "intellij.ml.llm.cpp",
+      "intellij.ml.llm.cpp.common",
+      "intellij.ml.llm.cpp.completion",
+      "intellij.ml.llm.css.completion",
+      "intellij.ml.llm.css.less.completion",
+      "intellij.ml.llm.css.postcss.completion",
+      "intellij.ml.llm.css.sass.completion",
+      "intellij.ml.llm.devkit",
+      "intellij.ml.llm.domains",
+      "intellij.ml.llm.domains.ide",
+      "intellij.ml.llm.embeddings",
+      "intellij.ml.llm.embeddings.core",
+      "intellij.ml.llm.embeddings.java",
+      "intellij.ml.llm.embeddings.kotlin",
+      "intellij.ml.llm.embeddings.python",
+      "intellij.ml.llm.embeddings.searchEverywhere",
+      "intellij.ml.llm.embeddings.smartChat",
+      "intellij.ml.llm.embeddings.testCommands",
+      "intellij.ml.llm.experiments",
+      "intellij.ml.llm.experiments.platformAb",
+      "intellij.ml.llm.github",
+      "intellij.ml.llm.gitlab",
+      "intellij.ml.llm.go",
+      "intellij.ml.llm.go.completion",
+      "intellij.ml.llm.go.inlinePromptDetector",
+      "intellij.ml.llm.groovy.inlinePromptDetector",
+      "intellij.ml.llm.html.completion",
+      "intellij.ml.llm.httpClient",
+      "intellij.ml.llm.impl",
+      "intellij.ml.llm.inlinePromptDetector",
+      "intellij.ml.llm.java",
+      "intellij.ml.llm.java.completion",
+      "intellij.ml.llm.java.inlinePromptDetector",
+      "intellij.ml.llm.javaee",
+      "intellij.ml.llm.javascript",
+      "intellij.ml.llm.javascript.astro.completion",
+      "intellij.ml.llm.javascript.completion",
+      "intellij.ml.llm.javascript.inlinePromptDetector",
+      "intellij.ml.llm.javascript.svelte.completion",
+      "intellij.ml.llm.javascript.vue",
+      "intellij.ml.llm.javascript.vue.completion",
+      "intellij.ml.llm.jupyter.common",
+      "intellij.ml.llm.jupyter.kotlin",
+      "intellij.ml.llm.jupyter.python",
+      "intellij.ml.llm.jupyter.python.completion",
+      "intellij.ml.llm.kotlin",
+      "intellij.ml.llm.kotlin.completion",
+      "intellij.ml.llm.kotlin.inlinePromptDetector",
+      "intellij.ml.llm.latest",
+      "intellij.ml.llm.markdown",
+      "intellij.ml.llm.microservices",
+      "intellij.ml.llm.performanceTesting",
+      "intellij.ml.llm.php",
+      "intellij.ml.llm.php.completion",
+      "intellij.ml.llm.php.inlinePromptDetector",
+      "intellij.ml.llm.privacy",
+      "intellij.ml.llm.provider.ollama",
+      "intellij.ml.llm.python",
+      "intellij.ml.llm.python.completion",
+      "intellij.ml.llm.python.inlinePromptDetector",
+      "intellij.ml.llm.python.ultimate",
+      "intellij.ml.llm.rider",
+      "intellij.ml.llm.rider.cpp",
+      "intellij.ml.llm.rider.cpp.completion",
+      "intellij.ml.llm.rider.csharp",
+      "intellij.ml.llm.rider.csharp.completion",
+      "intellij.ml.llm.rider.csharp.razor",
+      "intellij.ml.llm.ruby",
+      "intellij.ml.llm.ruby.completion",
+      "intellij.ml.llm.ruby.inlinePromptDetector",
+      "intellij.ml.llm.sh",
+      "intellij.ml.llm.sql",
+      "intellij.ml.llm.sql.completion",
+      "intellij.ml.llm.sql/embeddings",
+      "intellij.ml.llm.structuralSearch",
+      "intellij.ml.llm.terminal",
+      "intellij.ml.llm.terraform.completion",
+      "intellij.ml.llm.textmate",
+      "intellij.ml.llm.uiTestGeneration",
+      "intellij.ml.llm.vcs",
+      "intellij.ml.llm.yaml.inlinePromptDetector"
+    )
+    assertEquals(expectedModuleNames, moduleNames)
+  }
+
+  @Test
+  fun `content dependencies in plugin that declares multiple modules are resolved`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml", classpath("/descriptors/ml-llm/plugin-modules-in-cdata.xml"))
+      }
+    }
+    val modules = pluginCreationSuccess.plugin.modulesDescriptors
+    val llmCoreDeps = modules.first { it.name == "intellij.ml.llm.core" }.dependencies
+    assertEquals(4, llmCoreDeps.size)
+    assertTrue(llmCoreDeps.contains(ModuleV2Dependency("intellij.ml.llm.privacy")))
+    assertTrue(llmCoreDeps.contains(ModuleV2Dependency("intellij.libraries.ktor.client")))
+    assertTrue(llmCoreDeps.contains(PluginV2Dependency("com.intellij.platform.ide.provisioner")))
+    assertTrue(llmCoreDeps.contains(PluginV2Dependency("com.intellij.llmInstaller")))
+  }
+
   @Test
   fun `modules and plugin from plugin v2 'dependencies' tag are required`() {
     val pluginCreationSuccess = buildCorrectPlugin {
@@ -388,5 +535,12 @@ class PluginXmlValidationTest {
       )
       return
     }
+  }
+
+  @Throws(IOException::class)
+  private fun classpath(classPathResource: String): String {
+    PluginXmlValidationTest::class.java.getResourceAsStream(classPathResource)?.use {
+      return it.bufferedReader(Charsets.UTF_8).use(BufferedReader::readText)
+    } ?: throw IOException("Cannot resolve [$classPathResource] in classpath")
   }
 }
