@@ -156,9 +156,11 @@ class IdePluginManager private constructor(
   }
 
   private fun loadModuleFromDescriptorResource(
+    moduleId: String,
     descriptorResource: DescriptorResource,
     parentPlugin: PluginCreator? = null,
-    resourceResolver: ResourceResolver): PluginCreator {
+    resourceResolver: ResourceResolver
+  ): PluginCreator {
     return descriptorResource.inputStream.use {
       try {
         val problemResolver = AnyProblemToWarningPluginCreationResultResolver
@@ -170,8 +172,7 @@ class IdePluginManager private constructor(
           resourceResolver,
           problemResolver
         ).also {
-          //FIXME problem resolver might have collected lots of module issues. log them
-          it
+          logPluginCreationWarnings(moduleId, it)
         }
       } catch (e: IOException) {
         with(descriptorResource) {
@@ -373,11 +374,10 @@ class IdePluginManager private constructor(
           }
 
           is InlineModule -> {
+            val moduleDescriptorResource = getDescriptorResource(module, pluginFile, currentPlugin.descriptorPath)
             val moduleCreator =
-              loadModuleFromDescriptorResource(module.toDescriptorResource(), currentPlugin, resourceResolver)
-            //FIXME plugin path
-            val moduleConfigurationFile = currentPlugin.descriptorPath + "#modules/" + module.name
-            currentPlugin.addModuleDescriptor(module, moduleCreator)
+              loadModuleFromDescriptorResource(module.name, moduleDescriptorResource, currentPlugin, resourceResolver)
+            currentPlugin.addModuleDescriptor(module, moduleDescriptorResource, moduleCreator)
           }
         }
       }
@@ -502,11 +502,25 @@ class IdePluginManager private constructor(
     }
   }
 
-  private fun InlineModule.toDescriptorResource(): DescriptorResource {
-    //FIXME fix uri
-    return DescriptorResource(this.textContent.byteInputStream(), URI(""))
+  private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
+    // FIXME descriptor path is not relative to the pluginFile JAR
+    val uri = if (pluginFile.isJar()) {
+      URI("jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName())
+    } else {
+      URI(pluginFile.toUri().toString() + "/" + descriptorPath.toSystemIndependentName())
+    }
+    return DescriptorResource(module.textContent.byteInputStream(), uri)
   }
 
+  private fun logPluginCreationWarnings(pluginId: String, pluginCreator: PluginCreator) {
+    val pluginCreationResult = pluginCreator.pluginCreationResult
+    if (LOG.isDebugEnabled && pluginCreationResult is PluginCreationSuccess) {
+      val warningMessage = pluginCreationResult.warnings.joinToString("\n") {
+        it.message
+      }
+      LOG.debug("Plugin or module '$pluginId' has plugin problems: $warningMessage")
+    }
+  }
 
   companion object {
     private val LOG = LoggerFactory.getLogger(IdePluginManager::class.java)

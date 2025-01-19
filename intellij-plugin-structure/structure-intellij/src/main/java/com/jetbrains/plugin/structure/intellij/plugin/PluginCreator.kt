@@ -210,10 +210,10 @@ internal class PluginCreator private constructor(
     }
   }
 
-  internal fun addModuleDescriptor(moduleReference: InlineModule, moduleCreator: PluginCreator) {
+  internal fun addModuleDescriptor(moduleReference: InlineModule, descriptorResource: DescriptorResource, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val moduleConfigurationFile = descriptorPath + "#modules/" + moduleReference.name
+      val moduleConfigurationFile = descriptorResource.uri.toString() + "#modules/" + moduleReference.name
       val moduleName = moduleReference.name
       val module = pluginCreationResult.plugin
 
