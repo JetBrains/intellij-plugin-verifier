@@ -4,13 +4,14 @@
 
 package com.jetbrains.plugin.structure.base.plugin
 
+import com.jetbrains.plugin.structure.base.utils.ONE_POINT_FIVE_GB
 import org.apache.commons.io.FileUtils
 import java.nio.file.Path
 import java.nio.file.Paths
 
 enum class Settings(private val key: String, private val defaultValue: () -> String) {
   EXTRACT_DIRECTORY("intellij.structure.temp.dir", { Paths.get(FileUtils.getTempDirectory().absolutePath).resolve("extracted-plugins").toString() }),
-  INTELLIJ_PLUGIN_SIZE_LIMIT("intellij.structure.intellij.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
+  INTELLIJ_PLUGIN_SIZE_LIMIT("intellij.structure.intellij.plugin.size.limit", { ONE_POINT_FIVE_GB.toString() }),
   FLEET_PLUGIN_SIZE_LIMIT("intellij.structure.fleet.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   TOOLBOX_PLUGIN_SIZE_LIMIT("intellij.structure.toolbox.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   TEAM_CITY_PLUGIN_SIZE_LIMIT("intellij.structure.team.city.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
