@@ -504,12 +504,13 @@ class IdePluginManager private constructor(
 
   private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
     // FIXME descriptor path is not relative to the pluginFile JAR
-    val uri = if (pluginFile.isJar()) {
-      URI("jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName())
+    val parentUriStr = if (pluginFile.isJar()) {
+      "jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName()
     } else {
-      URI(pluginFile.toUri().toString() + "/" + descriptorPath.toSystemIndependentName())
+      pluginFile.toUri().toString() + "/" + descriptorPath.toSystemIndependentName()
     }
-    return DescriptorResource(module.textContent.byteInputStream(), uri)
+    val uriStr = parentUriStr + "#modules/" + module.name
+    return DescriptorResource(module.textContent.byteInputStream(), URI(uriStr), URI(parentUriStr))
   }
 
   private fun logPluginCreationWarnings(pluginId: String, pluginCreator: PluginCreator) {
