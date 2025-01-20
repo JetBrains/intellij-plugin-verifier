@@ -18,7 +18,8 @@ enum class VerificationResultTypeDto {
   PROBLEMS,
   INVALID_PLUGIN,
   NON_DOWNLOADABLE,
-  UNCHANGED;
+  UNCHANGED,
+  CRITICAL;
 }
 
 data class FullVerificationResultDto(
@@ -32,6 +33,7 @@ data class FullVerificationResultDto(
   val pluginStructureErrors: List<PluginStructureErrorDto> = emptyList(),
   val compatibilityWarnings: List<CompatibilityWarningDto> = emptyList(),
   val compatibilityProblems: List<CompatibilityProblemDto> = emptyList(),
+  val criticalCompatibilityProblems: List<CompatibilityProblemDto> = emptyList(),
   val deprecatedApiUsages: List<DeprecatedApiUsageDto> = emptyList(),
   val experimentalApiUsages: List<ExperimentalApiUsageDto> = emptyList(),
   val internalApiUsages: List<InternalApiUsageDto> = emptyList(),

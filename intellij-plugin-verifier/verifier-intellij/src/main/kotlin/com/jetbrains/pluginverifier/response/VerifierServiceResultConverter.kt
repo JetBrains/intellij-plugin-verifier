@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.results.location.*
 import com.jetbrains.pluginverifier.results.presentation.*
@@ -22,7 +23,6 @@ import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.nonExtendable.NonExtendableApiUsage
 import com.jetbrains.pluginverifier.usages.overrideOnly.OverrideOnlyMethodUsage
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
-import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.warnings.PluginStructureError
 import com.jetbrains.pluginverifier.warnings.PluginStructureWarning
 
@@ -71,7 +71,8 @@ fun PluginVerificationResult.prepareResponse(updateId: Int, ideVersion: String):
         dependenciesGraph.convert(),
         pluginStructureWarnings = pluginStructureWarnings.map { it.convert() },
         compatibilityWarnings = compatibilityWarnings.map { it.convert() },
-        compatibilityProblems = compatibilityProblems.map { it.convert() },
+        compatibilityProblems = compatibilityProblems.filter { !(it.isCritical) }.map { it.convert() },
+        criticalCompatibilityProblems = compatibilityProblems.filter { it.isCritical }.map { it.convert() },
         deprecatedApiUsages = deprecatedUsages.map { it.convert() },
         experimentalApiUsages = experimentalApiUsages.map { it.convert() },
         internalApiUsages = internalApiUsages.map { it.convert() },
@@ -91,6 +92,7 @@ fun DynamicPluginStatus.convert(): DynamicPluginStatusDto {
 
 fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTypeDto =
   when {
+    compatibilityProblems.any { it.isCritical } -> VerificationResultTypeDto.CRITICAL
     compatibilityProblems.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
     directMissingMandatoryDependencies.isNotEmpty() -> VerificationResultTypeDto.PROBLEMS
     internalApiUsages.isNotEmpty()
