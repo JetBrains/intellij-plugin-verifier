@@ -4,17 +4,15 @@
 
 package com.jetbrains.plugin.structure.dotnet
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.MAX_CHANGE_NOTES_LENGTH
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.dotnet.beans.ReSharperPluginBean
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidDependencyVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidIdError
 import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.NullIdDependencyError
 import com.jetbrains.plugin.structure.dotnet.version.VersionMatching
+
+private val ID_REGEX = "^([A-Za-z\\d\\-._-]+)\$".toRegex()
 
 internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
@@ -24,6 +22,10 @@ internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginPro
 
   if (id.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("id"))
+  } else {
+    if (!ID_REGEX.matches(id)) {
+      problems.add(InvalidPluginIDProblem(id))
+    }
   }
 
   if (bean.getAllDependencies().any { it.id == "Wave" }) {

@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.hub.mock
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+
 data class HubPluginJsonBuilder(
     var key: String? = "key",
     var name: String? = "name",
@@ -12,15 +14,7 @@ data class HubPluginJsonBuilder(
     var products: Map<String, String>? = mapOf("a" to "1.0"),
     var view: Map<String, String>? = emptyMap()
 ) {
-
-  private fun Map<*, *>.asJson(indent: String = ""): String =
-    entries.joinToString(prefix = "$indent{\n", postfix = "\n$indent}", separator = ",\n") { (key, value) ->
-      "$indent  " + when (value) {
-        is String -> """"$key": "$value""""
-        is Map<*, *> -> """"$key": ${value.asJson("$indent  ")}"""
-        else -> ""
-      }
-    }
+  private val objectMapper = jacksonObjectMapper()
 
   fun asString(): String {
     val nonEmptyKeyValues = mapOf(
@@ -35,7 +29,7 @@ data class HubPluginJsonBuilder(
       "products" to products,
       "view" to view
     ).filterValues { value -> value != null }
-    return nonEmptyKeyValues.asJson()
+    return objectMapper.writeValueAsString(nonEmptyKeyValues)
   }
 }
 

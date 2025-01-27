@@ -14,6 +14,7 @@ import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -62,6 +63,28 @@ class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<R
       perfectDotNetBuilder.modify { id = "" },
       listOf(PropertyNotSpecified("id"))
     )
+  }
+
+  @Test
+  fun `invalid plugin id`() {
+    val invalidIds = listOf(
+      "hello!world",
+      "123@abc",
+      "A#B%",
+      "first second",
+      "newline\nhere",
+      "tab\there",
+      "slash/backslash",
+      "colon:semicolon;",
+      "quote\"apostrophe'",
+      "test~test"
+    )
+    invalidIds.forEach {
+      `test invalid plugin xml`(
+        perfectDotNetBuilder.modify { id = "<id>vendor.$it</id>" },
+        listOf(InvalidPluginIDProblem("vendor.$it"))
+      )
+    }
   }
 
   @Test
@@ -189,6 +212,18 @@ class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<R
   }
 
   @Test
+  fun `valid plugin id`() {
+    val invalidIds = listOf(
+      "abc1324_.-",
+      "abc.123",
+      "ABC.123"
+    )
+    invalidIds.forEach {
+      testValidPluginXML(perfectDotNetBuilder.modify { id = "<id>$it</id>" }) {}
+    }
+  }
+
+  @Test
   fun `one component id without wave dependency`() {
     testValidPluginXML(perfectDotNetBuilder.modify {
       id = "<id>PluginId</id>"
@@ -210,7 +245,7 @@ class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<R
   }
 
   private fun getTempPluginArchive(pluginXmlContent: String): Path {
-    val pluginFile = temporaryFolder.newFile("archive.nupkg")
+    val pluginFile = temporaryFolder.newFile("${UUID.randomUUID()}.nupkg")
     ZipOutputStream(Files.newOutputStream(pluginFile)).use {
       it.putNextEntry(ZipEntry("Vendor.PluginName.nuspec"))
       it.write(pluginXmlContent.toByteArray())

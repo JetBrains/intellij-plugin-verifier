@@ -28,11 +28,18 @@ import kotlin.streams.asSequence
  */
 private val AUTHOR_REGEX = "^([^<(]+)\\s*(<[^>]+>)?\\s*(\\([^)]+\\))?\\s*$".toRegex()
 
+private val ID_REGEX = "^([A-Za-z\\d\\-._-]+)\$".toRegex()
+
 internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
 
-  if (manifest.pluginId.isNullOrBlank()) {
+  val id = manifest.pluginId
+  if (id.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("key"))
+  } else {
+    if (!ID_REGEX.matches(id)) {
+      problems.add(InvalidPluginIDProblem(id))
+    }
   }
 
   if (manifest.pluginName.isNullOrBlank()) {

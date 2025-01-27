@@ -100,10 +100,11 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `invalid widget key`() {
-    val widgets = listOf(widget.copy(key = "AAA"), widget.copy(key = "???"), widget.copy("a.b_c-d~1"))
+    val widgets = listOf(widget.copy(key = "AAA"), widget.copy(key = "???"), widget.copy("a.b_c-d~1"), widget.copy("a.b_c-d123"))
     checkInvalidPlugin(
       UnsupportedSymbolsWidgetKeyProblem("AAA"),
-      UnsupportedSymbolsWidgetKeyProblem("???")
+      UnsupportedSymbolsWidgetKeyProblem("???"),
+      UnsupportedSymbolsWidgetKeyProblem("a.b_c-d~1")
     ) { it.copy(widgets = widgets) }
   }
 

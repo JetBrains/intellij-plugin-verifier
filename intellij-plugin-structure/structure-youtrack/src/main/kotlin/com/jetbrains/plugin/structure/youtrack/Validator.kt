@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.youtrack.problems.*
 import com.vdurmont.semver4j.Semver
 
 
-private val ID_REGEX = "^([a-z\\d\\-._~]+)\$".toRegex()
+private val ID_REGEX = "^([a-z\\d\\-._]+)\$".toRegex()
 
 fun validateYouTrackManifest(manifest: YouTrackAppManifest): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
