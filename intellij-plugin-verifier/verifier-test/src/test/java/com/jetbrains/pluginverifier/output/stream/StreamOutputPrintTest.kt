@@ -1,11 +1,11 @@
 package com.jetbrains.pluginverifier.output.stream
 
-import com.jetbrains.pluginverifier.output.BaseOutputTest
+import com.jetbrains.pluginverifier.output.BaseOutputPrintTest
 import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
 
-class StreamOutputTest : BaseOutputTest<WriterResultPrinter>() {
+class StreamOutputPrintTest : BaseOutputPrintTest<WriterResultPrinter>() {
   @Before
   override fun setUp() {
     super.setUp()

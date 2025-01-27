@@ -1,12 +1,12 @@
 package com.jetbrains.pluginverifier.output.markdown
 
-import com.jetbrains.pluginverifier.output.BaseOutputTest
+import com.jetbrains.pluginverifier.output.BaseOutputPrintTest
 import com.jetbrains.pluginverifier.output.PLUGIN_VERSION
 import org.junit.Before
 import org.junit.Test
 import java.io.PrintWriter
 
-class MarkdownOutputTest : BaseOutputTest<MarkdownResultPrinter>() {
+class MarkdownOutputPrintTest : BaseOutputPrintTest<MarkdownResultPrinter>() {
     @Before
     override fun setUp() {
       super.setUp()

@@ -18,7 +18,6 @@ enum class VerificationResultTypeDto {
   PROBLEMS,
   INVALID_PLUGIN,
   NON_DOWNLOADABLE,
-  UNCHANGED,
   CRITICAL;
 }
 
