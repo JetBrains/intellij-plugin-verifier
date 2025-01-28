@@ -12,7 +12,7 @@ import com.jetbrains.plugin.structure.dotnet.problems.InvalidVersionError
 import com.jetbrains.plugin.structure.dotnet.problems.NullIdDependencyError
 import com.jetbrains.plugin.structure.dotnet.version.VersionMatching
 
-private val ID_REGEX = "^([A-Za-z\\d\\-._-]+)\$".toRegex()
+private val ID_REGEX = "^([\\w\\-.]+)\$".toRegex()
 
 internal fun validateDotNetPluginBean(bean: ReSharperPluginBean): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()

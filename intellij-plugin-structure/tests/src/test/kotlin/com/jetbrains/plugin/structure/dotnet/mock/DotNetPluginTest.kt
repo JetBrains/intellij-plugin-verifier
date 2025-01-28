@@ -216,7 +216,8 @@ class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<R
     val invalidIds = listOf(
       "abc1324_.-",
       "abc.123",
-      "ABC.123"
+      "ABC.123",
+      "test-test.test-test"
     )
     invalidIds.forEach {
       testValidPluginXML(perfectDotNetBuilder.modify { id = "<id>$it</id>" }) {}
