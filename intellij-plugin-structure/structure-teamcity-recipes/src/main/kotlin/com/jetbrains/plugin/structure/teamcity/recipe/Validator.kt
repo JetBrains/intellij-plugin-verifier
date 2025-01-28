@@ -1,8 +1,9 @@
 package com.jetbrains.plugin.structure.teamcity.recipe
 
-import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeCompositeName
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainerImage
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainerRunParameters
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeDescription
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputDefault
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputDescription
@@ -11,36 +12,31 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeI
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputOptions
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputRequired
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputType
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementName
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementValue
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepCommandLineScript
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepKotlinScript
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepScript
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepWith
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepWith.RECIPE_PREFIX
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepWith.RUNNER_PREFIX
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
-import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.SemverException
 
-internal fun validateTeamCityRecipe(recipe: TeamCityRecipeDescriptor) = sequence {
-  validateName(recipe.name)
+internal fun validateTeamCityRecipe(descriptor: TeamCityRecipeDescriptor) = sequence {
+  validateName(descriptor.name)
 
-  validateExistsAndNotEmpty(recipe.version, RecipeVersion.NAME, RecipeVersion.DESCRIPTION)
-  validateSemver(recipe.version, RecipeVersion.NAME)
+  validateExistsAndNotEmpty(descriptor.version, RecipeVersion.NAME, RecipeVersion.DESCRIPTION)
+  validateVersion(descriptor.version)
 
-  validateExistsAndNotEmpty(recipe.description, RecipeDescription.NAME, RecipeDescription.DESCRIPTION)
+  validateExistsAndNotEmpty(descriptor.description, RecipeDescription.NAME, RecipeDescription.DESCRIPTION)
   validateMaxLength(
-    recipe.description,
+    descriptor.description,
     RecipeDescription.NAME,
     RecipeDescription.DESCRIPTION,
     RecipeDescription.MAX_LENGTH,
   )
 
-  validateNotEmptyIfExists(recipe.steps, RecipeSteps.NAME, RecipeSteps.DESCRIPTION)
-  for (input in recipe.inputs) validateRecipeInput(input)
-  for (requirement in recipe.requirements) validateRecipeRequirement(requirement)
-  for (step in recipe.steps) validateRecipeStep(step)
+  validateContainer(descriptor.container)
+  validateNotEmptyIfExists(descriptor.steps, RecipeSteps.NAME, RecipeSteps.DESCRIPTION)
+  for (input in descriptor.inputs) validateRecipeInput(input)
+  for (step in descriptor.steps) validateRecipeStep(step)
 }.toList()
 
 private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
@@ -79,21 +75,21 @@ private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
   if (nameInNamespace != null) {
     validateMinLength(
       nameInNamespace,
-      RecipeCompositeName.Name.NAME,
-      RecipeCompositeName.Name.DESCRIPTION,
-      RecipeCompositeName.Name.MIN_LENGTH,
+      RecipeCompositeName.NameInNamespace.NAME,
+      RecipeCompositeName.NameInNamespace.DESCRIPTION,
+      RecipeCompositeName.NameInNamespace.MIN_LENGTH,
     )
     validateMaxLength(
       nameInNamespace,
-      RecipeCompositeName.Name.NAME,
-      RecipeCompositeName.Name.DESCRIPTION,
-      RecipeCompositeName.Name.MAX_LENGTH,
+      RecipeCompositeName.NameInNamespace.NAME,
+      RecipeCompositeName.NameInNamespace.DESCRIPTION,
+      RecipeCompositeName.NameInNamespace.MAX_LENGTH,
     )
     validateMatchesRegexIfExistsAndNotEmpty(
       nameInNamespace,
       RecipeCompositeName.meaningfulPartRegex,
-      RecipeCompositeName.Name.NAME,
-      RecipeCompositeName.Name.DESCRIPTION,
+      RecipeCompositeName.NameInNamespace.NAME,
+      RecipeCompositeName.NameInNamespace.DESCRIPTION,
       "should only contain latin letters, numbers, dashes and underscores. " +
           "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.",
     )
@@ -135,15 +131,9 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeInput(input: Map<
     RecipeInputDescription.MAX_LENGTH,
   )
 
-  validateNotEmptyIfExists(value.defaultValue, RecipeInputDefault.NAME, RecipeInputDefault.DESCRIPTION)
+  validateNotEmptyIfExists(value.defaultValue, RecipeInputDefault.NAME, RecipeInputDefault.DESCRIPTION, allowWhitespaceValues = true)
   when (value.type) {
     RecipeInputTypeDescriptor.boolean.name -> validateBooleanIfExists(
-      value.defaultValue,
-      RecipeInputDefault.NAME,
-      RecipeInputDefault.DESCRIPTION,
-    )
-
-    RecipeInputTypeDescriptor.number.name -> validateNumberIfExists(
       value.defaultValue,
       RecipeInputDefault.NAME,
       RecipeInputDefault.DESCRIPTION,
@@ -157,121 +147,108 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeInput(input: Map<
   }
 }
 
-private suspend fun SequenceScope<PluginProblem>.validateRecipeRequirement(requirement: Map<String, RecipeRequirementDescriptor>) {
-  if (requirement.size != 1) {
-    yield(InvalidPropertyValueProblem("Wrong recipe requirement format. The requirement should consist of a name and a body."))
-    return
-  }
-
-  val requirementName = requirement.keys.first()
-  validateMaxLength(
-    requirementName,
-    RecipeRequirementName.NAME,
-    RecipeRequirementName.DESCRIPTION,
-    RecipeRequirementName.MAX_LENGTH,
-  )
-
-  val value = requirement.values.first()
-
-  validateExistsAndNotEmpty(
-    value.type,
-    TeamCityRecipeSpec.RecipeRequirementType.NAME,
-    TeamCityRecipeSpec.RecipeRequirementType.DESCRIPTION,
-  )
-  if (value.type == null) {
-    return
-  }
-  val type: RecipeRequirementType
-  try {
-    type = RecipeRequirementType.from(value.type)
-  } catch (e: IllegalArgumentException) {
-    yield(
-      InvalidPropertyValueProblem(
-        "Wrong recipe requirement type '${value.type}'. " +
-            "Supported values are: ${RecipeRequirementType.values().joinToString { it.type }}"
-      )
-    )
-    return
-  }
-  val description = "the value for ${value.type} requirement"
-  if (type.isValueRequired && value.value == null) {
-    yield(MissingValueProblem(RecipeRequirementValue.NAME, description))
-  } else if (!type.valueCanBeEmpty && value.value.isNullOrEmpty()) {
-    yield(EmptyValueProblem(RecipeRequirementValue.NAME, description))
-  }
-}
-
 private suspend fun SequenceScope<PluginProblem>.validateRecipeStep(step: RecipeStepDescriptor) {
   validateExistsAndNotEmpty(step.name, RecipeStepName.NAME, RecipeStepName.DESCRIPTION)
   validateMaxLength(step.name, RecipeStepName.NAME, RecipeStepName.DESCRIPTION, RecipeStepName.MAX_LENGTH)
+  validateContainer(step.container)
 
-  if (step.with != null && step.script != null) {
+  val stepContentProperties = listOfNotNull(step.uses, step.commandLineScript, step.kotlinScript)
+  if (stepContentProperties.size > 1) {
     yield(
       PropertiesCombinationProblem(
         "The properties " +
-            "<${RecipeStepWith.NAME}> (${RecipeStepWith.DESCRIPTION}) and " +
-            "<${RecipeStepScript.NAME}> (${RecipeStepScript.DESCRIPTION}) " +
-            "cannot be specified together for recipe step."
+                "<${RecipeStepCommandLineScript.NAME}> (${RecipeStepCommandLineScript.DESCRIPTION}), " +
+                "<${RecipeStepKotlinScript.NAME}> (${RecipeStepKotlinScript.DESCRIPTION}) and " +
+                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) cannot be specified together for a recipe step."
       )
     )
-  } else if (step.with == null && step.script == null) {
+  } else if (step.uses == null && step.commandLineScript == null && step.kotlinScript == null) {
     yield(
       PropertiesCombinationProblem(
-        "One of the properties " +
-            "<${RecipeStepWith.NAME}> (${RecipeStepWith.DESCRIPTION}) or " +
-            "<${RecipeStepScript.NAME}> (${RecipeStepScript.DESCRIPTION}) should be specified for recipe step."
+        "Either <${RecipeStepCommandLineScript.NAME}> (${RecipeStepCommandLineScript.DESCRIPTION}), " +
+                "<${RecipeStepKotlinScript.NAME}> (${RecipeStepKotlinScript.DESCRIPTION}) or " +
+                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) should be specified for a recipe step."
       )
     )
-  } else if (step.with != null) {
-    validateStepReference(step)
-  } else {
-    validateNotEmptyIfExists(step.script, RecipeStepScript.NAME, RecipeStepScript.DESCRIPTION)
+  }
+
+  if (step.uses != null) {
+    validateStepReference(step.uses)
+  } else if (step.commandLineScript != null) {
+    validateNotEmptyIfExists(step.commandLineScript, RecipeStepCommandLineScript.NAME, RecipeStepCommandLineScript.DESCRIPTION)
     validateMaxLength(
-      step.script,
-      RecipeStepScript.NAME,
-      RecipeStepScript.DESCRIPTION,
-      RecipeStepScript.MAX_LENGTH,
+      step.commandLineScript,
+      RecipeStepCommandLineScript.NAME,
+      RecipeStepCommandLineScript.DESCRIPTION,
+      RecipeStepCommandLineScript.MAX_LENGTH,
+    )
+  } else if (step.kotlinScript != null) {
+    validateNotEmptyIfExists(step.kotlinScript, RecipeStepKotlinScript.NAME, RecipeStepKotlinScript.DESCRIPTION)
+    validateMaxLength(
+      step.kotlinScript,
+      RecipeStepKotlinScript.NAME,
+      RecipeStepKotlinScript.DESCRIPTION,
+      RecipeStepKotlinScript.MAX_LENGTH,
     )
   }
 }
 
-private suspend fun SequenceScope<PluginProblem>.validateStepReference(step: RecipeStepDescriptor) {
-  validateMaxLength(step.with, RecipeStepWith.NAME, RecipeStepWith.DESCRIPTION, RecipeStepWith.MAX_LENGTH)
-  when {
-    step.with!!.startsWith(RUNNER_PREFIX) -> {
-      val runnerName = step.with.substringAfter(RUNNER_PREFIX)
-      val allowedParams = allowedRunnerToAllowedParams[runnerName]
-      if (allowedParams == null) {
-        yield(UnsupportedRunnerProblem(runnerName, allowedRunnerToAllowedParams.keys))
-      } else {
-        val unsupportedParams = step.parameters.filter { !allowedParams.contains(it.key) }.keys
-        if (unsupportedParams.isNotEmpty()) {
-          yield(UnsupportedRunnerParamsProblem(runnerName, unsupportedParams, allowedParams))
-        }
-      }
-    }
+private suspend fun SequenceScope<PluginProblem>.validateStepReference(reference: String) {
+  validateMaxLength(reference, RecipeStepReference.NAME, RecipeStepReference.DESCRIPTION, RecipeStepReference.MAX_LENGTH)
 
-    step.with.startsWith(RECIPE_PREFIX) -> {
-      val recipeId = step.with.substringAfter(RECIPE_PREFIX)
-      val recipeIdParts = recipeId.split("@")
-      if (recipeIdParts.size != 2) {
-        yield(
-          InvalidPropertyValueProblem(
-            "The property <${RecipeStepWith.NAME}> (${RecipeStepWith.DESCRIPTION}) has an invalid recipe reference: $recipeId. " +
-                "The reference must follow '${RECIPE_PREFIX}name@version' format"
-          )
-        )
-      }
-    }
-
-    else -> {
+  // TODO
+  val recipeIdParts = reference.split("@")
+  if (recipeIdParts.size != 2) {
+    yield(
+      InvalidPropertyValueProblem(
+          "The property <${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) has an invalid recipe reference: $reference. " +
+                  "The reference must follow the '<namespace>/<name>@<version>' format."
+      )
+    )
+  } else {
+    val compositeName = recipeIdParts[0]
+    if (!RecipeCompositeName.compositeNameRegex.matches(compositeName)) {
       yield(
         InvalidPropertyValueProblem(
-          "The property <${RecipeStepWith.NAME}> (${RecipeStepWith.DESCRIPTION}) should be either a runner or an recipe reference. " +
-              "The value should start with '$RUNNER_PREFIX' or '$RECIPE_PREFIX' prefix"
+          "The property <${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) has an invalid recipe reference: $reference. " +
+                  "The reference must have a valid composite name in the '<namespace>/<name>' format."
         )
       )
     }
+
+    val version = recipeIdParts[1]
+    if (!isValidRecipeVersion(version)) {
+      yield(
+        InvalidPropertyValueProblem(
+          "The property <${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) has an invalid recipe reference: $reference. " +
+                  "The reference must have a valid recipe version in the '<major>.<minor>.<patch>' format."
+        )
+      )
+    }
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateContainer(container: RecipeContainerDescriptor?) {
+  if (container == null) return
+
+  validateExistsAndNotEmpty(
+    container.image,
+    RecipeContainerImage.NAME,
+    RecipeContainerImage.DESCRIPTION
+  )
+
+  validateNotEmptyIfExists(
+    container.runParameters,
+    RecipeContainerRunParameters.NAME,
+    RecipeContainerRunParameters.DESCRIPTION
+  )
+
+  if (container.imagePlatform != null && !enumContains<RecipeContainerImagePlatformDescriptor>(container.imagePlatform, ignoreCase = true)) {
+    yield(
+      InvalidPropertyValueProblem(
+        "Wrong recipe container image platform: ${container.imagePlatform}. Supported values are: ${RecipeContainerImagePlatformDescriptor.values().joinToString()}."
+      )
+    )
   }
 }
 
@@ -289,8 +266,10 @@ private suspend fun SequenceScope<PluginProblem>.validateNotEmptyIfExists(
   propertyValue: String?,
   propertyName: String,
   propertyDescription: String,
+  allowWhitespaceValues: Boolean = false,
 ) {
-  if (propertyValue != null && propertyValue.isEmpty()) {
+  if (propertyValue == null) return
+  if ((!allowWhitespaceValues && propertyValue.isBlank()) || (allowWhitespaceValues && propertyValue.isEmpty())) {
     yield(EmptyValueProblem(propertyName, propertyDescription))
   }
 }
@@ -338,23 +317,17 @@ private suspend fun SequenceScope<PluginProblem>.validateMaxLength(
   }
 }
 
-private suspend fun SequenceScope<PluginProblem>.validateSemver(
-  version: String?,
-  propertyName: String,
-): Semver? {
-  if (version != null) {
-    try {
-      return TeamCityRecipeSpecVersionUtils.getSemverFromString(version)
-    } catch (e: SemverException) {
-      yield(
-        InvalidSemverFormat(
-          versionName = propertyName,
-          version = version,
-        )
+private suspend fun SequenceScope<PluginProblem>.validateVersion(version: String?) {
+  if (version == null) return
+
+  if (!isValidRecipeVersion(version)) {
+    yield(
+      InvalidPropertyValueProblem(
+        "The property <${RecipeVersion.NAME}> (${RecipeVersion.DESCRIPTION}) has an invalid value. " +
+                "The version must be in the '<major>.<minor>.<patch>' format."
       )
-    }
+    )
   }
-  return null
 }
 
 private suspend fun SequenceScope<PluginProblem>.validateBooleanIfExists(
@@ -364,16 +337,6 @@ private suspend fun SequenceScope<PluginProblem>.validateBooleanIfExists(
 ) {
   if (propertyValue != null && propertyValue != "true" && propertyValue != "false") {
     yield(InvalidBooleanProblem(propertyName, propertyDescription))
-  }
-}
-
-private suspend fun SequenceScope<PluginProblem>.validateNumberIfExists(
-  propertyValue: String?,
-  propertyName: String,
-  propertyDescription: String,
-) {
-  if (propertyValue != null && propertyValue.toLongOrNull() == null) {
-    yield(InvalidNumberProblem(propertyName, propertyDescription))
   }
 }
 
@@ -389,6 +352,18 @@ private suspend fun SequenceScope<PluginProblem>.validateMatchesRegexIfExistsAnd
   }
 }
 
-private inline fun <reified T : Enum<T>> enumContains(name: String): Boolean {
-  return T::class.java.enumConstants.any { it.name == name }
+private fun isValidRecipeVersion(version: String) : Boolean {
+  val versionParts = version.split(".")
+  if (versionParts.size != 3) return false
+
+  versionParts.forEach {
+    val intValue = it.toIntOrNull()
+    if (intValue == null || intValue < 0) return false
+  }
+
+  return true
+}
+
+private inline fun <reified T : Enum<T>> enumContains(name: String, ignoreCase: Boolean = false): Boolean {
+  return T::class.java.enumConstants.any { it.name.equals(name, ignoreCase) }
 }

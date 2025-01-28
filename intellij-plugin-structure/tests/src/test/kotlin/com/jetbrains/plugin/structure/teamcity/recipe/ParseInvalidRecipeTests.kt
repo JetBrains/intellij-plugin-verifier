@@ -1,18 +1,15 @@
 package com.jetbrains.plugin.structure.teamcity.recipe
 
-import com.jetbrains.plugin.structure.base.problems.InvalidSemverFormat
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.recipe.Inputs.someBooleanTextInput
-import com.jetbrains.plugin.structure.teamcity.recipe.Inputs.someNumberInput
 import com.jetbrains.plugin.structure.teamcity.recipe.Inputs.someRecipeTextInput
 import com.jetbrains.plugin.structure.teamcity.recipe.Inputs.someSelectTextInput
 import com.jetbrains.plugin.structure.teamcity.recipe.Recipes.someRecipe
-import com.jetbrains.plugin.structure.teamcity.recipe.Requirements.someExistsRequirement
-import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someScriptStep
-import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someWithStep
-import org.junit.Assert
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someCommandLineScriptStep
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someKotlinScriptStep
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someUsesStep
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
@@ -39,9 +36,51 @@ class ParseInvalidRecipeTests(
         unknown_property: this property should fail deserialization
         version: 1.2.3
         description: abc
+        inputs:
+          - some input:
+              type: text
+              required: true
         steps:
           - name: step_1
             script: echo "kek"
+        """.trimIndent()
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(recipeYaml),
+      listOf(UnknownPropertyProblem("unknown_property")),
+    )
+  }
+
+  @Test
+  fun `input with unknown property in YAML`() {
+    val recipeYaml = """
+        name: namespace/recipe_name
+        version: 1.2.3
+        description: abc
+        inputs:
+          - some input:
+              type: text
+              required: true
+              unknown_property: this property should fail deserialization
+        steps:
+          - name: step_1
+            script: echo "kek"
+        """.trimIndent()
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(recipeYaml),
+      listOf(UnknownPropertyProblem("unknown_property")),
+    )
+  }
+
+  @Test
+  fun `step with unknown property in YAML`() {
+    val recipeYaml = """
+        name: namespace/recipe_name
+        version: 1.2.3
+        description: abc
+        steps:
+          - name: step_1
+            script: echo "kek"
+            unknown_property: this property should fail deserialization
         """.trimIndent()
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(recipeYaml),
@@ -116,7 +155,7 @@ class ParseInvalidRecipeTests(
         temporaryFolder.prepareRecipeYaml(someRecipe.copy(name = recipeName)),
         listOf(
           InvalidPropertyValueProblem(
-            "The property <namespace> (the first part of the composite `name` field) should only contain latin letters, "
+            "The property <namespace> (the first part of the composite `name` property) should only contain latin letters, "
                 + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
                 + "cannot contain several consecutive dashes and underscores."
           )
@@ -143,7 +182,7 @@ class ParseInvalidRecipeTests(
         temporaryFolder.prepareRecipeYaml(someRecipe.copy(name = recipeName)),
         listOf(
           InvalidPropertyValueProblem(
-            "The property <name> (the second part of the composite `name` field) should only contain latin letters, "
+            "The property <name> (the second part of the composite `name` property) should only contain latin letters, "
                 + "numbers, dashes and underscores. The property cannot start or end with a dash or underscore, and "
                 + "cannot contain several consecutive dashes and underscores."
           )
@@ -159,7 +198,7 @@ class ParseInvalidRecipeTests(
       listOf(
         TooShortValueProblem(
           propertyName = "namespace",
-          propertyDescription = "the first part of the composite `name` field",
+          propertyDescription = "the first part of the composite `name` property",
           currentLength = 4,
           minAllowedLength = 5
         )
@@ -174,7 +213,7 @@ class ParseInvalidRecipeTests(
       listOf(
         TooLongValueProblem(
           propertyName = "namespace",
-          propertyDescription = "the first part of the composite `name` field",
+          propertyDescription = "the first part of the composite `name` property",
           currentLength = 31,
           maxAllowedLength = 30
         )
@@ -189,7 +228,7 @@ class ParseInvalidRecipeTests(
       listOf(
         TooShortValueProblem(
           propertyName = "name",
-          propertyDescription = "the second part of the composite `name` field",
+          propertyDescription = "the second part of the composite `name` property",
           currentLength = 4,
           minAllowedLength = 5
         )
@@ -204,7 +243,7 @@ class ParseInvalidRecipeTests(
       listOf(
         TooLongValueProblem(
           propertyName = "name",
-          propertyDescription = "the second part of the composite `name` field",
+          propertyDescription = "the second part of the composite `name` property",
           currentLength = 31,
           maxAllowedLength = 30
         )
@@ -225,10 +264,8 @@ class ParseInvalidRecipeTests(
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(version = "invalid_version")),
       listOf(
-        InvalidSemverFormat(
-          "version",
-          "invalid_version",
-        )
+        InvalidPropertyValueProblem("The property <version> (recipe version) has an invalid value. " +
+                "The version must be in the '<major>.<minor>.<patch>' format.")
       )
     )
   }
@@ -279,7 +316,7 @@ class ParseInvalidRecipeTests(
     val input = someRecipeTextInput.copy(type = "wrongType")
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(inputs = listOf(mapOf("input_name" to input)))),
-      listOf(InvalidPropertyValueProblem("Wrong recipe input type: wrongType. Supported values are: text, boolean, number, select, password"))
+      listOf(InvalidPropertyValueProblem("Wrong recipe input type: wrongType. Supported values are: text, boolean, select, password"))
     )
   }
 
@@ -289,15 +326,6 @@ class ParseInvalidRecipeTests(
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(inputs = listOf(mapOf("input_name" to input)))),
       listOf(InvalidBooleanProblem("required", "indicates whether the input is required"))
-    )
-  }
-
-  @Test
-  fun `recipe with incorrect number input`() {
-    val input = someNumberInput.copy(defaultValue = "notANumber")
-    assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(inputs = listOf(mapOf("input_name" to input)))),
-      listOf(InvalidNumberProblem("default", "recipe input default value"))
     )
   }
 
@@ -365,36 +393,9 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
-  fun `recipe with too long requirement name`() {
-    val name = randomAlphanumeric(51)
-    assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(requirements = listOf(mapOf(name to someExistsRequirement.copy())))),
-      listOf(
-        TooLongValueProblem("name", "recipe requirement name", 51, 50)
-      )
-    )
-  }
-
-  @Test
-  fun `recipe with incorrect requirement type`() {
-    val requirement = someExistsRequirement.copy(type = "wrong_requirement_type")
-    assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(requirements = listOf(mapOf("req_name" to requirement)))),
-      listOf(
-        InvalidPropertyValueProblem(
-          "Wrong recipe requirement type 'wrong_requirement_type'. " +
-              "Supported values are: exists, not-exists, equals, not-equals, more-than, not-more-than, less-than, " +
-              "not-less-than, starts-with, contains, does-not-contain, ends-with, matches, does-not-match, " +
-              "version-more-than, version-not-more-than, version-less-than, version-not-less-than, any"
-        )
-      )
-    )
-  }
-
-  @Test
   fun `recipe without step name`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(stepName = null)))),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someUsesStep.copy(stepName = null)))),
       listOf(
         MissingValueProblem("name", "recipe step name")
       )
@@ -404,7 +405,7 @@ class ParseInvalidRecipeTests(
   @Test
   fun `recipe with non-null but empty step name`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(stepName = "")))),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someUsesStep.copy(stepName = "")))),
       listOf(
         EmptyValueProblem("name", "recipe step name")
       )
@@ -412,12 +413,12 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
-  fun `recipe with too long step name`() {
+  fun `recipe with a too long step name`() {
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(
         someRecipe.copy(
           steps = listOf(
-            someWithStep.copy(
+            someUsesStep.copy(
               stepName = randomAlphanumeric(
                 51
               )
@@ -432,36 +433,81 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
-  fun `recipe with both 'with' and 'script' properties for recipe step`() {
+  fun `recipe with both 'script' and 'uses' properties for recipe step`() {
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(
         someRecipe.copy(
           steps = listOf(
-            someWithStep.copy(script = "echo \"hello world\"")
+            someUsesStep.copy(script = "echo \"hello world\"")
           )
         )
       ),
       listOf(
         PropertiesCombinationProblem(
           "The properties " +
-              "<with> (runner or recipe reference) and " +
-              "<script> (executable script content) " +
-              "cannot be specified together for recipe step."
+              "<script> (executable script content), " +
+              "<kotlin-script> (kotlin script content) " +
+              "and <uses> (recipe reference) " +
+              "cannot be specified together for a recipe step."
         )
       )
     )
   }
 
   @Test
-  fun `recipe without 'with' and 'script' properties for recipe step`() {
+  fun `recipe with both 'script' and 'kotlin-script' properties for recipe step`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(with = null)))),
+      temporaryFolder.prepareRecipeYaml(
+        someRecipe.copy(
+          steps = listOf(
+            someKotlinScriptStep.copy(script = "echo \"hello world\"")
+          )
+        )
+      ),
       listOf(
         PropertiesCombinationProblem(
-          "One of the properties " +
-              "<with> (runner or recipe reference) or " +
-              "<script> (executable script content) " +
-              "should be specified for recipe step."
+          "The properties " +
+                  "<script> (executable script content), " +
+                  "<kotlin-script> (kotlin script content) " +
+                  "and <uses> (recipe reference) " +
+                  "cannot be specified together for a recipe step."
+        )
+      )
+    )
+  }
+
+  @Test
+  fun `recipe with both 'kotlin-script' and 'uses' properties for recipe step`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(
+        someRecipe.copy(
+          steps = listOf(
+            someUsesStep.copy(kotlinScript = "print(\"hi\")")
+          )
+        )
+      ),
+      listOf(
+        PropertiesCombinationProblem(
+          "The properties " +
+                  "<script> (executable script content), " +
+                  "<kotlin-script> (kotlin script content) " +
+                  "and <uses> (recipe reference) " +
+                  "cannot be specified together for a recipe step."
+        )
+      )
+    )
+  }
+
+  @Test
+  fun `recipe without 'script', 'kotlin-script' and 'uses' properties for recipe step`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someUsesStep.copy(uses = null)))),
+      listOf(
+        PropertiesCombinationProblem(
+          "Either <script> (executable script content), " +
+          "<kotlin-script> (kotlin script content) or " +
+          "<uses> (recipe reference) " +
+          "should be specified for a recipe step."
         )
       )
     )
@@ -473,7 +519,7 @@ class ParseInvalidRecipeTests(
       temporaryFolder.prepareRecipeYaml(
         someRecipe.copy(
           steps = listOf(
-            someScriptStep.copy(
+            someCommandLineScriptStep.copy(
               script = randomAlphanumeric(
                 50_001
               )
@@ -488,81 +534,68 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
+  fun `recipe with too long 'kotlin-script' property for recipe step`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(
+        someRecipe.copy(
+          steps = listOf(
+            someKotlinScriptStep.copy(
+              kotlinScript = randomAlphanumeric(
+                50_001
+              )
+            )
+          )
+        )
+      ),
+      listOf(
+        TooLongValueProblem("kotlin-script", "kotlin script content", 50_001, 50_000)
+      )
+    )
+  }
+
+  @Test
   fun `recipe with incorrect 'with' property for recipe step`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(with = "wrong_value")))),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someUsesStep.copy(uses = "wrong_value")))),
       listOf(
         InvalidPropertyValueProblem(
-          "The property <with> (runner or recipe reference) should be either a runner or an recipe reference. " +
-              "The value should start with 'runner/' or 'recipe/' prefix"
+          "The property <uses> (recipe reference) has an invalid recipe reference: wrong_value. " +
+              "The reference must follow the '<namespace>/<name>@<version>' format."
         )
       )
     )
   }
 
   @Test
-  fun `recipe with incorrect recipe reference in 'with' property`() {
+  fun `recipe with incorrect recipe reference in 'uses' property`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(with = "recipe/recipeName")))),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someUsesStep.copy(uses = "recipe/recipeName")))),
       listOf(
         InvalidPropertyValueProblem(
-          "The property <with> (runner or recipe reference) has an invalid recipe reference: recipeName. " +
-              "The reference must follow 'recipe/name@version' format"
+          "The property <uses> (recipe reference) has an invalid recipe reference: recipe/recipeName. " +
+              "The reference must follow the '<namespace>/<name>@<version>' format."
         )
       )
-    )
-  }
-
-  @Test
-  fun `recipe with unknown runner`() {
-    assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someWithStep.copy(with = "runner/unknown-runner")))),
-      listOf(UnsupportedRunnerProblem("unknown-runner", allowedRunnerToAllowedParams.keys))
-    )
-  }
-
-  @Test
-  fun `recipe with one unknown runner parameter`() {
-    val runner = "maven"
-    val allowedParams = allowedRunnerToAllowedParams[runner]!!
-    val step = someWithStep.copy(with = "runner/$runner", params = mapOf("unknownParam" to "val", "path" to "somePath"))
-    val result = assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))),
-      listOf(UnsupportedRunnerParamsProblem(runner, listOf("unknownParam"), allowedParams))
-    )
-    Assert.assertEquals(
-      "Parameter \"unknownParam\" is not supported by $runner runner. " +
-          "Supported parameters: ${allowedParams.joinUsingDoubleQuotes()}",
-      result.errorsAndWarnings.first().message,
-    )
-  }
-
-  @Test
-  fun `recipe with multiple unknown runner parameters`() {
-    val runner = "gradle"
-    val allowedParams = allowedRunnerToAllowedParams[runner]!!
-    val step = someWithStep.copy(with = "runner/$runner", params = mapOf("unknown1" to "val", "unknown2" to "val"))
-    val result = assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))),
-      listOf(UnsupportedRunnerParamsProblem(runner, listOf("unknown1", "unknown2"), allowedParams))
-    )
-    Assert.assertEquals(
-      """Parameters "unknown1", "unknown2" are not supported by $runner runner. """ +
-          "Supported parameters: ${allowedParams.joinUsingDoubleQuotes()}",
-      result.errorsAndWarnings.first().message,
     )
   }
 
   @Test
   fun `recipe with empty 'script' property for recipe step`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someScriptStep.copy(script = "")))),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someCommandLineScriptStep.copy(script = "")))),
       listOf(
         EmptyValueProblem("script", "executable script content")
       )
     )
   }
 
-  private fun Collection<String>.joinUsingDoubleQuotes() =
-    joinToString(prefix = "\"", separator = "\", \"", postfix = "\"")
+  @Test
+  fun `recipe with empty 'kotlin-script' property for recipe step`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someKotlinScriptStep.copy(kotlinScript = "")))),
+      listOf(
+        EmptyValueProblem("kotlin-script", "kotlin script content")
+      )
+    )
+  }
 }

@@ -15,13 +15,11 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeI
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputRequired
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputType
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputs
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementType
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementValue
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirements
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepCommandLineScript
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepKotlinScript
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepParams
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepScript
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepWith
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
 import java.nio.file.Path
@@ -36,7 +34,7 @@ object Recipes {
     steps = listOf(
       RecipeStepBuilder(
         stepName = "step name",
-        with = "runner/command-line",
+        uses = "some_namespace/some_recipe@1.0.0",
       )
     ),
   )
@@ -55,27 +53,22 @@ object Inputs {
     type = "select",
     selectOptions = listOf("option 1", "option 2"),
   )
-
-  val someNumberInput = RecipeInputBuilder(
-    type = "number",
-  )
-}
-
-object Requirements {
-  val someExistsRequirement = RecipeRequirementBuilder(
-    type = "exists",
-  )
 }
 
 object Steps {
-  val someWithStep = RecipeStepBuilder(
-    stepName = "some step",
-    with = "runner/command-line"
-  )
-
-  val someScriptStep = RecipeStepBuilder(
+  val someCommandLineScriptStep = RecipeStepBuilder(
     stepName = "some step",
     script = "echo \"hello world\""
+  )
+
+  val someKotlinScriptStep = RecipeStepBuilder(
+    stepName = "some step",
+    kotlinScript = "print(\"hi\")"
+  )
+
+  val someUsesStep = RecipeStepBuilder(
+    stepName = "some step",
+    uses = "some_namespace/some_recipe@1.0.0"
   )
 }
 
@@ -88,8 +81,6 @@ data class TeamCityRecipeBuilder(
   var description: String? = null,
   @JsonProperty(RecipeInputs.NAME)
   var inputs: List<Map<String, RecipeInputBuilder>> = emptyList(),
-  @JsonProperty(RecipeRequirements.NAME)
-  var requirements: List<Map<String, RecipeRequirementBuilder>> = emptyList(),
   @JsonProperty(RecipeSteps.NAME)
   var steps: List<RecipeStepBuilder> = emptyList(),
 )
@@ -109,20 +100,15 @@ data class RecipeInputBuilder(
   var selectOptions: List<String> = emptyList(),
 )
 
-data class RecipeRequirementBuilder(
-  @JsonProperty(RecipeRequirementType.NAME)
-  var type: String? = null,
-  @JsonProperty(RecipeRequirementValue.NAME)
-  var value: String? = null,
-)
-
 data class RecipeStepBuilder(
   @JsonProperty(RecipeStepName.NAME)
   var stepName: String? = null,
-  @JsonProperty(RecipeStepWith.NAME)
-  var with: String? = null,
-  @JsonProperty(RecipeStepScript.NAME)
+  @JsonProperty(RecipeStepReference.NAME)
+  var uses: String? = null,
+  @JsonProperty(RecipeStepCommandLineScript.NAME)
   var script: String? = null,
+  @JsonProperty(RecipeStepKotlinScript.NAME)
+  var kotlinScript: String? = null,
   @JsonProperty(RecipeStepParams.NAME)
   var params: Map<String, String> = emptyMap(),
 )

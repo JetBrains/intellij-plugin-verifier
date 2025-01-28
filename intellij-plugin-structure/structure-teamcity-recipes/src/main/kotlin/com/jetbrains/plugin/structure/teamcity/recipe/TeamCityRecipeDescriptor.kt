@@ -1,8 +1,12 @@
 package com.jetbrains.plugin.structure.teamcity.recipe
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeCompositeName
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainer
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainerImage
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainerImagePlatform
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeContainerRunParameters
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeDescription
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputDefault
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputDescription
@@ -11,13 +15,11 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeI
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputRequired
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputType
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputs
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementType
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirementValue
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeRequirements
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepCommandLineScript
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepKotlinScript
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepParams
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepScript
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepWith
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
 
@@ -28,15 +30,15 @@ data class TeamCityRecipeDescriptor(
   val version: String? = null,
   @JsonProperty(RecipeDescription.NAME)
   val description: String? = null,
+  @JsonProperty(RecipeContainer.NAME)
+  @JsonDeserialize(using = RecipeContainerDeserializer::class)
+  val container: RecipeContainerDescriptor? = null,
   @JsonProperty(RecipeInputs.NAME)
   val inputs: List<Map<String, RecipeInputDescriptor>> = emptyList(),
-  @JsonProperty(RecipeRequirements.NAME)
-  val requirements: List<Map<String, RecipeRequirementDescriptor>> = emptyList(),
   @JsonProperty(RecipeSteps.NAME)
   val steps: List<RecipeStepDescriptor> = emptyList(),
 )
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class RecipeInputDescriptor(
   @JsonProperty(RecipeInputType.NAME)
   val type: String? = null,
@@ -56,27 +58,36 @@ data class RecipeInputDescriptor(
 enum class RecipeInputTypeDescriptor {
   text,
   boolean,
-  number,
   select,
   password,
 }
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class RecipeRequirementDescriptor(
-  @JsonProperty(RecipeRequirementType.NAME)
-  val type: String? = null,
-  @JsonProperty(RecipeRequirementValue.NAME)
-  val value: String? = null,
-)
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class RecipeStepDescriptor(
   @JsonProperty(RecipeStepName.NAME)
   val name: String? = null,
-  @JsonProperty(RecipeStepWith.NAME)
-  val with: String? = null,
-  @JsonProperty(RecipeStepScript.NAME)
-  val script: String? = null,
+  @JsonProperty(RecipeContainer.NAME)
+  @JsonDeserialize(using = RecipeContainerDeserializer::class)
+  val container: RecipeContainerDescriptor? = null,
+  @JsonProperty(RecipeStepReference.NAME)
+  val uses: String? = null,
+  @JsonProperty(RecipeStepCommandLineScript.NAME)
+  val commandLineScript: String? = null,
+  @JsonProperty(RecipeStepKotlinScript.NAME)
+  val kotlinScript: String? = null,
   @JsonProperty(RecipeStepParams.NAME)
   val parameters: Map<String, String> = emptyMap(),
 )
+
+data class RecipeContainerDescriptor(
+  @JsonProperty(RecipeContainerImage.NAME)
+  val image: String? = null,
+  @JsonProperty(RecipeContainerImagePlatform.NAME)
+  val imagePlatform: String? = null,
+  @JsonProperty(RecipeContainerRunParameters.NAME)
+  val runParameters: String? = null
+)
+
+enum class RecipeContainerImagePlatformDescriptor {
+  Linux,
+  Windows,
+}

@@ -7,8 +7,9 @@ import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.recipe.Recipes.someRecipe
-import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someScriptStep
-import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someWithStep
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someCommandLineScriptStep
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someKotlinScriptStep
+import com.jetbrains.plugin.structure.teamcity.recipe.Steps.someUsesStep
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Files
@@ -50,23 +51,20 @@ class ParseValidRecipeTests(
   }
 
   @Test
-  fun `parse recipe with runner-based step`() {
-    val runners = listOf("gradle", "maven", "node-js", "command-line")
-    runners.forEach { runnerName ->
-      val step = someWithStep.copy(with = "runner/$runnerName")
-      createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
-    }
-  }
-
-  @Test
-  fun `parse recipe with recipe-based step`() {
-    val step = someWithStep.copy(with = "recipe/recipeName@1.2.3")
+  fun `parse recipe with command line script step`() {
+    val step = someCommandLineScriptStep.copy()
     createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
   }
 
   @Test
-  fun `parse recipe with script step`() {
-    val step = someScriptStep.copy()
+  fun `parse recipe with kotlin script step`() {
+    val step = someKotlinScriptStep.copy()
+    createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
+  }
+
+  @Test
+  fun `parse recipe with recipe-based step`() {
+    val step = someUsesStep.copy(uses = "recipe/recipeName@1.2.3")
     createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
   }
 
