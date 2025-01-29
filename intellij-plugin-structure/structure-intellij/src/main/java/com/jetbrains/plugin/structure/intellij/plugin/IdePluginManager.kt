@@ -1,6 +1,7 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
+
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.IconTheme
@@ -32,8 +33,12 @@ import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.base.utils.withPathSeparatorOf
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extractPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
+import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
@@ -52,6 +57,7 @@ import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
@@ -146,6 +152,35 @@ class IdePluginManager private constructor(
     } catch (e: JarArchiveCannotBeOpenException) {
       LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
       createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
+    }
+  }
+
+  private fun loadModuleFromDescriptorResource(
+    moduleId: String,
+    descriptorResource: DescriptorResource,
+    parentPlugin: PluginCreator? = null,
+    resourceResolver: ResourceResolver
+  ): PluginCreator {
+    return descriptorResource.inputStream.use {
+      try {
+        val problemResolver = AnyProblemToWarningPluginCreationResultResolver
+        val descriptorXml = JDOMUtil.loadDocument(it)
+        createPlugin(
+          descriptorResource,
+          parentPlugin,
+          descriptorXml,
+          resourceResolver,
+          problemResolver
+        ).also {
+          logPluginCreationWarnings(moduleId, it)
+        }
+      } catch (e: IOException) {
+        with(descriptorResource) {
+          LOG.warn("Unable to read descriptor stream (source: '$uri')", e)
+          val problem = UnableToReadDescriptor(fileName, e.localizedMessage)
+          createInvalidPlugin(artifactFileName, fileName, problem)
+        }
+      }
     }
   }
 
@@ -324,9 +359,27 @@ class IdePluginManager private constructor(
     if (currentPlugin.isSuccess) {
       val contentModules = currentPlugin.contentModules
       for (module in contentModules) {
-        val configFile = module.configFile
-        val moduleCreator = loadPluginInfoFromJarOrDirectory(pluginFile, configFile, false, resourceResolver, currentPlugin, problemResolver)
-        currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
+        when (module) {
+          is FileBasedModule -> {
+            val configFile = module.configFile
+            val moduleCreator = loadPluginInfoFromJarOrDirectory(
+              pluginFile,
+              configFile,
+              false,
+              resourceResolver,
+              currentPlugin,
+              problemResolver
+            )
+            currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
+          }
+
+          is InlineModule -> {
+            val moduleDescriptorResource = getDescriptorResource(module, pluginFile, currentPlugin.descriptorPath)
+            val moduleCreator =
+              loadModuleFromDescriptorResource(module.name, moduleDescriptorResource, currentPlugin, resourceResolver)
+            currentPlugin.addModuleDescriptor(module, moduleDescriptorResource, moduleCreator)
+          }
+        }
       }
     }
   }
@@ -446,6 +499,27 @@ class IdePluginManager private constructor(
     with(telemetry) {
       parsingDuration = Duration.ofMillis(pluginCreationDurationInMillis)
       archiveFileSize = pluginFile.pluginSize
+    }
+  }
+
+  private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
+    // TODO descriptor path is not relative to the pluginFile JAR. See MP-7224
+    val parentUriStr = if (pluginFile.isJar()) {
+      "jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName()
+    } else {
+      pluginFile.toUri().toString() + "/" + descriptorPath.toSystemIndependentName()
+    }
+    val uriStr = parentUriStr + "#modules/" + module.name
+    return DescriptorResource(module.textContent.byteInputStream(), URI(uriStr), URI(parentUriStr))
+  }
+
+  private fun logPluginCreationWarnings(pluginId: String, pluginCreator: PluginCreator) {
+    val pluginCreationResult = pluginCreator.pluginCreationResult
+    if (LOG.isDebugEnabled && pluginCreationResult is PluginCreationSuccess) {
+      val warningMessage = pluginCreationResult.warnings.joinToString("\n") {
+        it.message
+      }
+      LOG.debug("Plugin or module '$pluginId' has plugin problems: $warningMessage")
     }
   }
 

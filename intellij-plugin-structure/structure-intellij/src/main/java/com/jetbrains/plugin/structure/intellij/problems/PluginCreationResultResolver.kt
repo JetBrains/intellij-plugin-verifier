@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
+import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.UNACCEPTABLE_WARNING
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
 /**
@@ -105,4 +106,23 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     PluginDescriptorIsNotFound::class,
     MultiplePluginDescriptors::class,
   )
+}
+
+/**
+ * Remaps any kind of plugin problem to `WARNING` level.
+ *
+ * The plugin creation result will always be _successful_.
+ */
+object AnyProblemToWarningPluginCreationResultResolver : PluginCreationResultResolver {
+  override fun resolve(plugin: IdePlugin, problems: List<PluginProblem>): PluginCreationResult<IdePlugin> {
+    return PluginCreationSuccess(plugin, problems.map { remapToWarning(it) })
+  }
+
+  override fun classify(plugin: IdePlugin, problems: List<PluginProblem>): List<PluginProblem> =
+    problems.map(::remapToWarning)
+
+  private fun remapToWarning(problem: PluginProblem) = when (problem.level) {
+    ERROR, UNACCEPTABLE_WARNING -> ReclassifiedPluginProblem(PluginProblem.Level.WARNING, problem)
+    else -> problem
+  }
 }

@@ -1,0 +1,673 @@
+<idea-plugin allow-bundled-update="true">
+    <id>com.intellij.ml.llm</id>
+    <version>251.SNAPSHOT</version>
+    <idea-version since-build="251.SNAPSHOT" until-build="251.SNAPSHOT" />
+    <name>JetBrains AI Assistant</name>
+    <vendor>JetBrains</vendor>
+    <description>JetBrains AI Assistant provides AI-powered features for software development based on the JetBrains AI Service.</description>
+    <content>
+        <module name="intellij.ml.llm.privacy"><![CDATA[<idea-plugin package="com.intellij.ml.llm.privacy">
+  <dependencies>
+    <module name="intellij.platform.vcs.impl" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.core"><![CDATA[<idea-plugin package="com.intellij.ml.llm" separate-jar="true">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <plugin id="com.intellij.platform.ide.provisioner" />
+    <plugin id="com.intellij.llmInstaller" />
+    <module name="intellij.libraries.ktor.client" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.impl"><![CDATA[<idea-plugin package="com.intellij.ml.llm.impl">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.devkit"><![CDATA[<idea-plugin package="com.intellij.ml.llm.devkit">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.devkit.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.go"><![CDATA[<idea-plugin package="com.intellij.ml.llm.go">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <plugin id="org.jetbrains.plugins.go" />
+    <module name="intellij.ml.llm.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.java"><![CDATA[<idea-plugin package="com.intellij.ml.llm.java">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.java" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javaee"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javaee">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.java" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.kotlin"><![CDATA[<idea-plugin package="com.intellij.ml.llm.kotlin">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.kotlin" />
+    <module name="intellij.ml.llm.java" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.python"><![CDATA[<idea-plugin package="com.intellij.ml.llm.python">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.python" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.python.ultimate"><![CDATA[<idea-plugin package="com.intellij.ml.llm.python.ultimate">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="PythonCore" />
+    <plugin id="Pythonid" />
+    <module name="intellij.ml.llm.python" />
+    <module name="intellij.python" />
+    <module name="intellij.django.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.jupyter.common"><![CDATA[<idea-plugin package="com.intellij.ml.llm.jupyter.common">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.jupyter.psi" />
+    <module name="intellij.jupyter.core" />
+    <module name="intellij.notebooks.jupyter.core" />
+    <module name="intellij.notebooks.ui" />
+    <module name="intellij.notebooks.visualization" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.scientific.tables" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.jupyter.kotlin"><![CDATA[<idea-plugin package="com.intellij.ml.llm.jupyter.kotlin">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.scientific.tables" />
+    <plugin id="org.jetbrains.plugins.kotlin.jupyter" />
+    <module name="intellij.ml.llm.jupyter.common" />
+    <module name="intellij.jupyter.core" />
+    <module name="intellij.notebooks.visualization" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.jupyter.python"><![CDATA[<idea-plugin package="com.intellij.ml.llm.jupyter.python">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.python" />
+    <module name="intellij.ml.llm.jupyter.common" />
+    <module name="intellij.ml.llm.chatInputLanguage" />
+    <plugin id="com.intellij.modules.python" />
+    <module name="intellij.jupyter.psi" />
+    <module name="intellij.jupyter.core" />
+    <module name="intellij.jupyter.py" />
+    <module name="intellij.jupyter.py.psi" />
+    <module name="intellij.scientific.tables" />
+    <module name="intellij.jupyter.tables" />
+    <module name="intellij.scientific.py.tables" />
+    <module name="intellij.notebooks.visualization" />
+    <module name="intellij.notebooks.jupyter.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.cpp"><![CDATA[<idea-plugin package="com.intellij.ml.llm.cpp">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.clion" />
+    <plugin id="com.intellij.cidr.lang" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.cpp.common"><![CDATA[<idea-plugin package="com.intellij.ml.llm.cpp.common">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.clion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="JavaScript" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.vue"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.vue">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.vue" />
+    <module name="intellij.ml.llm.javascript" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.android"><![CDATA[<idea-plugin package="com.intellij.ml.llm.android">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.android" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.sql"><![CDATA[<idea-plugin package="com.intellij.ml.llm.sql">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.chatInputLanguage" />
+    <plugin id="com.intellij.database" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.sql/embeddings"><![CDATA[<idea-plugin package="com.intellij.ml.llm.sql.embeddings">
+  <dependencies>
+    <module name="intellij.ml.llm.sql" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings"><![CDATA[<idea-plugin>
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.core"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.core" separate-jar="true">
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.searchEverywhere"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.searchEverywhere">
+  <resource-bundle>messages.searchEverywhereMlSemanticsBundle</resource-bundle>
+  <dependencies>
+    <module name="intellij.ml.llm.embeddings.core" />
+    <plugin id="com.intellij.searcheverywhere.ml" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.smartChat"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.smartChat">
+  <resource-bundle>messages.EmbeddingsLLMBundle</resource-bundle>
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.java"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.java">
+  <dependencies>
+    <plugin id="com.intellij.java" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.kotlin"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.kotlin">
+  <dependencies>
+    <plugin id="org.jetbrains.kotlin" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.python"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.python">
+  <dependencies>
+    <plugin id="com.intellij.modules.python" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.embeddings.testCommands"><![CDATA[<idea-plugin package="com.intellij.ml.llm.embeddings.testCommands">
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin" />
+    <module name="intellij.ml.llm.embeddings.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.ruby"><![CDATA[<idea-plugin package="com.intellij.ml.llm.ruby">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.ruby" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.php"><![CDATA[<idea-plugin package="com.intellij.ml.llm.php">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.jetbrains.php" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.performanceTesting"><![CDATA[<idea-plugin package="com.intellij.ml.llm.performanceTesting">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.jetbrains.performancePlugin" />
+    <plugin id="org.jetbrains.completion.full.line" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.markdown"><![CDATA[<idea-plugin package="com.intellij.ml.llm.markdown">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.intellij.plugins.markdown" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.uiTestGeneration"><![CDATA[<idea-plugin package="com.intellij.ml.llm.uiTestGeneration">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.aqua.wi" />
+    <module name="intellij.aqua.frameworks.core" />
+    <module name="intellij.aqua.selenium.shared" />
+    <module name="intellij.aqua.runners.cypress" />
+    <module name="intellij.aqua.runners.playwright.js" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.httpClient"><![CDATA[<idea-plugin package="com.intellij.ml.llm.httpClient">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.jetbrains.restClient" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.microservices"><![CDATA[<idea-plugin package="com.intellij.ml.llm.microservices">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.microservices.ui" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.textmate"><![CDATA[<idea-plugin package="com.intellij.ml.llm.textmate">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.textmate" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.chatInputLanguage"><![CDATA[<idea-plugin package="com.intellij.ml.llm.chatInputLanguage">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.intellij.plugins.markdown" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.chatInputLanguage.grazie"><![CDATA[<idea-plugin package="com.intellij.ml.llm.chatInputLanguage.grazie">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="tanvd.grazi" />
+    <module name="intellij.ml.llm.chatInputLanguage" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.sh"><![CDATA[<idea-plugin package="com.intellij.ml.llm.sh">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.jetbrains.sh" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.structuralSearch"><![CDATA[<idea-plugin package="com.intellij.ml.llm.structuralSearch">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.structuralsearch" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.completion.cloud">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.ml.inline.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.java.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.java.completion.cloud" separate-jar="true">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.java" />
+    <module name="intellij.ml.inline.completion.java" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.kotlin.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.kotlin.completion.cloud" separate-jar="true">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.kotlin" />
+    <module name="intellij.ml.inline.completion.kotlin" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.latest"><![CDATA[<idea-plugin package="com.intellij.ml.llm.latest">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+  </dependencies>
+  <actions />
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.python.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.python.completion.cloud" separate-jar="true">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.python" />
+    <module name="intellij.ml.inline.completion.python" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.go.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.go.completion.cloud">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.go" />
+    <module name="intellij.ml.inline.completion.go" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.ruby.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.ruby.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.ruby" />
+    <module name="intellij.ml.inline.completion.ruby" />
+    <module name="intellij.ml.llm.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.php.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.php.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.inline.completion.php" />
+    <module name="intellij.ml.llm.completion" />
+    <plugin id="com.jetbrains.php" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.completion.cloud">
+  <dependencies>
+    <plugin id="JavaScript" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.inline.completion.js" />
+    <module name="intellij.ml.inline.completion.web" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.vue.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.vue.completion.cloud">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.vue" />
+    <module name="intellij.ml.llm.javascript.completion" />
+    <module name="intellij.ml.inline.completion.js.vue" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.astro.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.astro.completion.cloud">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.astro" />
+    <module name="intellij.ml.llm.javascript.completion" />
+    <module name="intellij.ml.inline.completion.js.astro" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.svelte.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.svelte.completion.cloud">
+  <dependencies>
+    <plugin id="dev.blachut.svelte.lang" />
+    <module name="intellij.ml.llm.javascript.completion" />
+    <module name="intellij.ml.inline.completion.js.svelte" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.css.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.css.completion.cloud">
+  <dependencies>
+    <plugin id="com.intellij.css" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.inline.completion.css" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.css.less.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.css.less.completion.cloud">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.less" />
+    <module name="intellij.ml.llm.css.completion" />
+    <module name="intellij.ml.inline.completion.css.less" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.css.sass.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.css.sass.completion.cloud">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.sass" />
+    <module name="intellij.ml.llm.css.completion" />
+    <module name="intellij.ml.inline.completion.css.sass" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.css.postcss.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.css.postcss.completion.cloud">
+  <dependencies>
+    <plugin id="org.intellij.plugins.postcss" />
+    <module name="intellij.ml.llm.css.completion" />
+    <module name="intellij.ml.inline.completion.css.postcss" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.html.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.html.completion.cloud">
+  <dependencies>
+    <plugin id="HtmlTools" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.inline.completion.html" />
+    <module name="intellij.ml.inline.completion.web" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.jupyter.python.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.jupyter.python.completion.cloud">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.llm.python.completion" />
+    <module name="intellij.ml.inline.completion.python" />
+    <module name="intellij.ml.inline.completion.python.jupyter" />
+    <plugin id="com.intellij.modules.python" />
+    <module name="intellij.jupyter.psi" />
+    <module name="intellij.jupyter.core" />
+    <module name="intellij.jupyter.py" />
+    <module name="intellij.notebooks.core" />
+    <module name="intellij.notebooks.visualization" />
+    <module name="intellij.notebooks.jupyter.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.terraform.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.terraform.completion.cloud">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <plugin id="org.intellij.plugins.hcl" />
+    <module name="intellij.ml.inline.completion.terraform" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.cpp.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.cpp.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.inline.completion.cpp" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.sql.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.sql.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <plugin id="com.intellij.database" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.terminal"><![CDATA[<idea-plugin package="com.intellij.ml.llm.terminal">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.terminal" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.gitlab"><![CDATA[<idea-plugin package="com.intellij.ml.llm.gitlab">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.gitlab" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.github"><![CDATA[<idea-plugin package="com.intellij.ml.llm.github">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <plugin id="org.jetbrains.plugins.github" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <plugin id="com.intellij.modules.rider.cpp.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider.cpp"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider.cpp">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.rider" />
+    <plugin id="org.jetbrains.plugins.clion.radler" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider.cpp.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider.cpp.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.llm.rider" />
+    <module name="intellij.ml.inline.completion.rider.cpp" />
+    <plugin id="org.jetbrains.plugins.clion.radler" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider.csharp"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider.csharp">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.rider" />
+    <plugin id="com.jetbrains.rider.razor" />
+    <module name="intellij.ml.llm.javascript" />
+    <module name="intellij.rider.plugins.appender/lang" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider.csharp.completion"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider.csharp.completion">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.completion" />
+    <module name="intellij.ml.llm.rider" />
+    <module name="intellij.ml.inline.completion.rider.csharp" />
+    <plugin id="rider.intellij.plugin.appender" />
+    <plugin id="com.jetbrains.rider.razor" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.rider.csharp.razor"><![CDATA[<idea-plugin package="com.intellij.ml.llm.rider.csharp.razor">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.rider" />
+    <module name="intellij.ml.llm.rider.csharp" />
+    <plugin id="com.jetbrains.rider.razor" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.experiments"><![CDATA[<idea-plugin package="com.intellij.ml.llm.experiments">
+  <dependencies>
+    <module name="intellij.ml.llm.completion" />
+    <plugin id="com.intellij.ml.inline.completion" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.experiments.platformAb"><![CDATA[<idea-plugin package="com.intellij.ml.llm.experiments.platformAb">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.platform.experiment" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.platform.collaborationTools" />
+    <plugin id="com.intellij.modules.json" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.java.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.java.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="com.intellij.java" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.kotlin.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.kotlin.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="org.jetbrains.kotlin" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.python.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.python.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="com.intellij.modules.python" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.groovy.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.groovy.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="org.intellij.groovy" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.javascript.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.javascript.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="JavaScript" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.yaml.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.yaml.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="org.jetbrains.plugins.yaml" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.go.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.go.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="org.jetbrains.plugins.go" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.php.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.php.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="com.jetbrains.php" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.ruby.inlinePromptDetector"><![CDATA[<idea-plugin package="com.intellij.ml.llm.ruby.inlinePromptDetector">
+  <dependencies>
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.inlinePromptDetector" />
+    <plugin id="org.jetbrains.plugins.ruby" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.domains" loading="required"><![CDATA[<idea-plugin package="com.intellij.ml.llm.domains">
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.domains.ide"><![CDATA[<idea-plugin package="com.intellij.ml.llm.domains.ide">
+  <dependencies>
+    <plugin id="com.intellij.java" />
+    <plugin id="com.intellij.modules.ultimate" />
+    <plugin id="com.intellij.modules.idea.ultimate" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.privacy" />
+  </dependencies>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.vcs"><![CDATA[<idea-plugin package="com.intellij.ml.llm.vcs">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+    <module name="intellij.ml.llm.chatInputLanguage" />
+    <plugin id="Git4Idea" />
+  </dependencies>
+  <resource-bundle>messages.LLMVcsBundle</resource-bundle>
+</idea-plugin>]]></module>
+        <module name="intellij.ml.llm.provider.ollama"><![CDATA[<idea-plugin package="com.intellij.ml.llm.provider.ollama">
+  <dependencies>
+    <module name="intellij.ml.llm.privacy" />
+    <module name="intellij.ml.llm.core" />
+  </dependencies>
+</idea-plugin>]]></module>
+    </content>
+    <dependencies>
+        <plugin id="com.intellij.modules.platform" />
+    </dependencies>
+</idea-plugin>
