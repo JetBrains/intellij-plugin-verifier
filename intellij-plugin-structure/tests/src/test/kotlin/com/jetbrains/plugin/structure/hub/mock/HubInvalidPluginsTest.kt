@@ -63,6 +63,26 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   }
 
   @Test
+  fun `invalid id`() {
+    val invalidIds = listOf(
+      "hello!world",
+      "123@abc",
+      "A#B%",
+      "first second",
+      "newline\nhere",
+      "tab\there",
+      "slash/backslash",
+      "colon:semicolon;",
+      "quote\"apostrophe'",
+      "test~test"
+    )
+
+    invalidIds.forEach {
+      checkInvalidPlugin(InvalidPluginIDProblem(it)) { key = it }
+    }
+  }
+
+  @Test
   fun `name is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = null }
     checkInvalidPlugin(PropertyNotSpecified("name")) { name = "" }

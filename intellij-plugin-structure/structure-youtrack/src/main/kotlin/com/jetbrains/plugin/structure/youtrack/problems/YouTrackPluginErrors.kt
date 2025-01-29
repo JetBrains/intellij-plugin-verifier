@@ -47,7 +47,7 @@ open class InvalidWidgetKeyProblem(message: String) : InvalidDescriptorProblem(
 
 class UnsupportedSymbolsWidgetKeyProblem(key: String) : InvalidWidgetKeyProblem(
   "The app widget key '$key' contains unsupported symbols. " +
-    "Please use lowercase characters, numbers, and '.'/'-'/'_'/'~' symbols only."
+    "Please use lowercase characters, numbers, and '.'/'-'/'_' symbols only."
 )
 
 open class WidgetKeyNotSpecified : InvalidDescriptorProblem(

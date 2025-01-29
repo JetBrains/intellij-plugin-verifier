@@ -20,7 +20,7 @@ data class FleetPluginDescriptor(
   val meta: FleetMeta? = null,
 ) {
   companion object {
-    private val NON_ID_SYMBOL_REGEX = "^[A-Za-z\\d_.]+$".toRegex()
+    private val ID_REGEX = "^[\\w.]+$".toRegex()
 
     fun parse(serializedDescriptor: String): FleetPluginDescriptor {
       return jacksonObjectMapper().readValue(serializedDescriptor, FleetPluginDescriptor::class.java)
@@ -34,7 +34,7 @@ data class FleetPluginDescriptor(
         problems.add(PropertyNotSpecified("id"))
       }
 
-      !NON_ID_SYMBOL_REGEX.matches(id) -> {
+      !ID_REGEX.matches(id) -> {
         problems.add(InvalidPluginIDProblem(id))
       }
     }
