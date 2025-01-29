@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.exists
 import java.net.URI
 import java.nio.file.Path
 
@@ -15,7 +16,11 @@ const val JAR_SCHEME = "jar"
 fun Path.toJarFileUri(): URI {
   return if (toUri().scheme == FILE_SCHEMA) {
     val absoluteJarPath = if (isAbsolute) this else toAbsolutePath()
-    URI("$JAR_FILE_SCHEMA:${absoluteJarPath.toUri()}")
+    if(absoluteJarPath.exists()) {
+      URI("$JAR_FILE_SCHEMA:${absoluteJarPath.toRealPath().toUri()}")
+    } else {
+      URI("$JAR_FILE_SCHEMA:${absoluteJarPath.normalize().toUri()}")
+    }
   } else {
     toUri()
   }
