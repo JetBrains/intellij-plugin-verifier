@@ -503,7 +503,7 @@ class IdePluginManager private constructor(
   }
 
   private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
-    // FIXME descriptor path is not relative to the pluginFile JAR
+    // TODO descriptor path is not relative to the pluginFile JAR. See MP-7224
     val parentUriStr = if (pluginFile.isJar()) {
       "jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName()
     } else {
