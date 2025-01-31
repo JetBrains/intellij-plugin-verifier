@@ -122,7 +122,7 @@ object TeamCityRecipeSpec {
 
   object RecipeStepKotlinScript {
     const val NAME = "kotlin-script"
-    const val DESCRIPTION = "kotlin script content"
+    const val DESCRIPTION = "Kotlin script content"
     const val MAX_LENGTH = 50_000
   }
 

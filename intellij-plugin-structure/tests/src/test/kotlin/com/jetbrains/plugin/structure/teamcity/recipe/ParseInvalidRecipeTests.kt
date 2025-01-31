@@ -446,9 +446,9 @@ class ParseInvalidRecipeTests(
         PropertiesCombinationProblem(
           "The properties " +
               "<script> (executable script content), " +
-              "<kotlin-script> (kotlin script content) " +
+              "<kotlin-script> (Kotlin script content) " +
               "and <uses> (recipe reference) " +
-              "cannot be specified together for a recipe step."
+              "cannot be specified together in a recipe step."
         )
       )
     )
@@ -468,9 +468,9 @@ class ParseInvalidRecipeTests(
         PropertiesCombinationProblem(
           "The properties " +
                   "<script> (executable script content), " +
-                  "<kotlin-script> (kotlin script content) " +
+                  "<kotlin-script> (Kotlin script content) " +
                   "and <uses> (recipe reference) " +
-                  "cannot be specified together for a recipe step."
+                  "cannot be specified together in a recipe step."
         )
       )
     )
@@ -490,9 +490,9 @@ class ParseInvalidRecipeTests(
         PropertiesCombinationProblem(
           "The properties " +
                   "<script> (executable script content), " +
-                  "<kotlin-script> (kotlin script content) " +
+                  "<kotlin-script> (Kotlin script content) " +
                   "and <uses> (recipe reference) " +
-                  "cannot be specified together for a recipe step."
+                  "cannot be specified together in a recipe step."
         )
       )
     )
@@ -505,9 +505,9 @@ class ParseInvalidRecipeTests(
       listOf(
         PropertiesCombinationProblem(
           "Either <script> (executable script content), " +
-          "<kotlin-script> (kotlin script content) or " +
+          "<kotlin-script> (Kotlin script content) or " +
           "<uses> (recipe reference) " +
-          "should be specified for a recipe step."
+          "should be specified in a recipe step."
         )
       )
     )
@@ -548,7 +548,7 @@ class ParseInvalidRecipeTests(
         )
       ),
       listOf(
-        TooLongValueProblem("kotlin-script", "kotlin script content", 50_001, 50_000)
+        TooLongValueProblem("kotlin-script", "Kotlin script content", 50_001, 50_000)
       )
     )
   }
@@ -594,7 +594,7 @@ class ParseInvalidRecipeTests(
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(someKotlinScriptStep.copy(kotlinScript = "")))),
       listOf(
-        EmptyValueProblem("kotlin-script", "kotlin script content")
+        EmptyValueProblem("kotlin-script", "Kotlin script content")
       )
     )
   }

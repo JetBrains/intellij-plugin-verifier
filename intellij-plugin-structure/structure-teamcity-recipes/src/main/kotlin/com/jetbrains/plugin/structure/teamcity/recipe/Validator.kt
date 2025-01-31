@@ -159,7 +159,7 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeStep(step: Recipe
         "The properties " +
                 "<${RecipeStepCommandLineScript.NAME}> (${RecipeStepCommandLineScript.DESCRIPTION}), " +
                 "<${RecipeStepKotlinScript.NAME}> (${RecipeStepKotlinScript.DESCRIPTION}) and " +
-                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) cannot be specified together for a recipe step."
+                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) cannot be specified together in a recipe step."
       )
     )
   } else if (step.uses == null && step.commandLineScript == null && step.kotlinScript == null) {
@@ -167,7 +167,7 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeStep(step: Recipe
       PropertiesCombinationProblem(
         "Either <${RecipeStepCommandLineScript.NAME}> (${RecipeStepCommandLineScript.DESCRIPTION}), " +
                 "<${RecipeStepKotlinScript.NAME}> (${RecipeStepKotlinScript.DESCRIPTION}) or " +
-                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) should be specified for a recipe step."
+                "<${RecipeStepReference.NAME}> (${RecipeStepReference.DESCRIPTION}) should be specified in a recipe step."
       )
     )
   }
