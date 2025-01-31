@@ -33,6 +33,5 @@ class ClassNotFoundProblem(
 
   override fun hashCode() = Objects.hash(unresolved, usage)
 
-  override val isCritical: Boolean
-    get() = true
+  override val isCritical = true
 }

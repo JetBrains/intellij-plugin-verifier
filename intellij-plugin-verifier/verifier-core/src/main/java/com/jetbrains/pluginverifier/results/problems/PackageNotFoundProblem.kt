@@ -32,6 +32,5 @@ class PackageNotFoundProblem(
 
   override fun hashCode() = Objects.hash(packageName, classNotFoundProblems)
 
-  override val isCritical: Boolean
-    get() = true
+  override val isCritical = true
 }

@@ -69,6 +69,5 @@ class MethodNotFoundProblem(
 
   override fun hashCode() = Objects.hash(unresolvedMethod, caller, instruction)
 
-  override val isCritical: Boolean
-    get() = true
+  override val isCritical = true
 }
