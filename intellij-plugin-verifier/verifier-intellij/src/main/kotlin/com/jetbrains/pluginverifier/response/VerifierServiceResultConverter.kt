@@ -71,8 +71,7 @@ fun PluginVerificationResult.prepareResponse(updateId: Int, ideVersion: String):
         dependenciesGraph.convert(),
         pluginStructureWarnings = pluginStructureWarnings.map { it.convert() },
         compatibilityWarnings = compatibilityWarnings.map { it.convert() },
-        compatibilityProblems = compatibilityProblems.filter { !(it.isCritical) }.map { it.convert() },
-        criticalCompatibilityProblems = compatibilityProblems.filter { it.isCritical }.map { it.convert() },
+        compatibilityProblems = compatibilityProblems.map { it.convert() },
         deprecatedApiUsages = deprecatedUsages.map { it.convert() },
         experimentalApiUsages = experimentalApiUsages.map { it.convert() },
         internalApiUsages = internalApiUsages.map { it.convert() },
@@ -147,7 +146,8 @@ private fun CompatibilityProblem.convert() =
   CompatibilityProblemDto(
     shortDescription,
     fullDescription,
-    problemType
+    problemType,
+    isCritical
   )
 
 private fun CompatibilityWarning.convert() =

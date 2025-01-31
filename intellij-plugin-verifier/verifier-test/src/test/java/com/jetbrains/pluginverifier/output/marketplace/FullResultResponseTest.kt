@@ -30,17 +30,20 @@ class FullResultResponseTest: BaseOutputTest() {
 
     @Test
     fun `prepare response for critical problem result`() {
+        val criticalProblem = methodNotFoundProblem()
         val result = PluginVerificationResult.Verified(
             plugin = pluginInfo,
             verificationTarget = verificationTarget,
             dependenciesGraph = dependenciesGraph,
-            compatibilityProblems = setOf(methodNotFoundProblem(), superInterfaceBecameClassProblem()),
+            compatibilityProblems = setOf(criticalProblem, superInterfaceBecameClassProblem()),
             dynamicPluginStatus = DynamicPluginStatus.MaybeDynamic,
         )
         val response = result.prepareResponse(Random.nextInt(1, 10000), ideVersion.toString())
         assertEquals(VerificationResultTypeDto.CRITICAL, response.resultType)
-        assertEquals(1, response.criticalCompatibilityProblems.size)
-        assertEquals(1, response.compatibilityProblems.size)
+        assertEquals(2, response.compatibilityProblems.size)
+        val criticalProblems = response.compatibilityProblems.filter { it.critical }
+        assertEquals(1, criticalProblems.size)
+        assertEquals(criticalProblems.first().problemType, criticalProblem.problemType)
     }
 
     @Test

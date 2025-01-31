@@ -32,7 +32,6 @@ data class FullVerificationResultDto(
   val pluginStructureErrors: List<PluginStructureErrorDto> = emptyList(),
   val compatibilityWarnings: List<CompatibilityWarningDto> = emptyList(),
   val compatibilityProblems: List<CompatibilityProblemDto> = emptyList(),
-  val criticalCompatibilityProblems: List<CompatibilityProblemDto> = emptyList(),
   val deprecatedApiUsages: List<DeprecatedApiUsageDto> = emptyList(),
   val experimentalApiUsages: List<ExperimentalApiUsageDto> = emptyList(),
   val internalApiUsages: List<InternalApiUsageDto> = emptyList(),
@@ -50,7 +49,8 @@ data class AvailableIdeDto(
 data class CompatibilityProblemDto(
   val shortDescription: String,
   val fullDescription: String,
-  val problemType: String
+  val problemType: String,
+  val critical: Boolean
 )
 
 enum class ApiElementTypeDto {
