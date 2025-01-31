@@ -21,14 +21,14 @@ object TeamCityRecipeSpec {
 
     object Namespace {
       const val NAME = "namespace"
-      const val DESCRIPTION = "the first part of the composite `${RecipeCompositeName.NAME}` field"
+      const val DESCRIPTION = "the first part of the composite `${RecipeCompositeName.NAME}` property"
       const val MIN_LENGTH = 5
       const val MAX_LENGTH = 30
     }
 
-    object Name {
+    object NameInNamespace {
       const val NAME = "name"
-      const val DESCRIPTION = "the second part of the composite `${RecipeCompositeName.NAME}` field"
+      const val DESCRIPTION = "the second part of the composite `${RecipeCompositeName.NAME}` property"
       const val MIN_LENGTH = 5
       const val MAX_LENGTH = 30
     }
@@ -97,25 +97,6 @@ object TeamCityRecipeSpec {
     const val DESCRIPTION = "recipe input options"
   }
 
-  object RecipeRequirements {
-    const val NAME = "requirements"
-  }
-
-  object RecipeRequirementName {
-    const val NAME = "name"
-    const val DESCRIPTION = "recipe requirement name"
-    const val MAX_LENGTH = 50
-  }
-
-  object RecipeRequirementType {
-    const val NAME = "type"
-    const val DESCRIPTION = "recipe requirement type"
-  }
-
-  object RecipeRequirementValue {
-    const val NAME = "value"
-  }
-
   object RecipeSteps {
     const val NAME = "steps"
     const val DESCRIPTION = "recipe steps"
@@ -127,21 +108,43 @@ object TeamCityRecipeSpec {
     const val MAX_LENGTH = 50
   }
 
-  object RecipeStepWith {
-    const val NAME = "with"
-    const val DESCRIPTION = "runner or recipe reference"
+  object RecipeStepReference {
+    const val NAME = "uses"
+    const val DESCRIPTION = "recipe reference"
     const val MAX_LENGTH = 100
-    const val RUNNER_PREFIX = "runner/"
-    const val RECIPE_PREFIX = "recipe/"
   }
 
-  object RecipeStepScript {
+  object RecipeStepCommandLineScript {
     const val NAME = "script"
     const val DESCRIPTION = "executable script content"
     const val MAX_LENGTH = 50_000
   }
 
+  object RecipeStepKotlinScript {
+    const val NAME = "kotlin-script"
+    const val DESCRIPTION = "Kotlin script content"
+    const val MAX_LENGTH = 50_000
+  }
+
   object RecipeStepParams {
     const val NAME = "params"
+  }
+
+  object RecipeContainer {
+    const val NAME = "container"
+  }
+
+  object RecipeContainerImage {
+    const val NAME = "image"
+    const val DESCRIPTION = "container image name"
+  }
+
+  object RecipeContainerImagePlatform {
+    const val NAME = "platform"
+  }
+
+  object RecipeContainerRunParameters {
+    const val NAME = "parameters"
+    const val DESCRIPTION = "container run options"
   }
 }

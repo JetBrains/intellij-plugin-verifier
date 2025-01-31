@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 
 object NotYamlFileProblem : PluginProblem() {
   override val level: Level = Level.ERROR
-  override val message = "The file with recipe specification should be in YAML format"
+  override val message = "The file with recipe specification should be in the YAML format"
 }
 
 abstract class InvalidPropertyProblem : PluginProblem() {
@@ -34,11 +34,7 @@ class EmptyCollectionProblem(propertyName: String, propertyDescription: String) 
 }
 
 class InvalidBooleanProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {
-  override val message = "The property <$propertyName> ($propertyDescription) should be either 'true' or 'false'."
-}
-
-class InvalidNumberProblem(propertyName: String, propertyDescription: String) : InvalidPropertyProblem() {
-  override val message = "The property <$propertyName> ($propertyDescription) should be a valid number."
+  override val message = "The value of the <$propertyName> ($propertyDescription) property should be either 'true' or 'false'."
 }
 
 class TooLongValueProblem(
@@ -61,33 +57,6 @@ class TooShortValueProblem(
   override val message =
     "The property <$propertyName> ($propertyDescription) should not be shorter than $minAllowedLength characters. " +
         "The current number of characters is $currentLength."
-}
-
-data class UnsupportedRunnerProblem(
-  val runnerName: String,
-  val supportedRunners: Collection<String>,
-) : InvalidPropertyProblem() {
-  override val message = "Unsupported runner $runnerName. Supported runners: ${supportedRunners.joinToString(", ")}"
-}
-
-data class UnsupportedRunnerParamsProblem(
-  val runnerName: String,
-  val unsupportedParams: Collection<String>,
-  val supportedParams: Collection<String>,
-) : InvalidPropertyProblem() {
-  override val message: String
-    get() {
-      check(supportedParams.isNotEmpty())
-      val paramsPrefix = when (unsupportedParams.size) {
-        1 -> """Parameter "${unsupportedParams.first()}" is"""
-        else -> "Parameters ${unsupportedParams.joinUsingDoubleQuotes()} are"
-      }
-      return "$paramsPrefix not supported by $runnerName runner. " +
-          "Supported parameters: ${supportedParams.joinUsingDoubleQuotes()}"
-    }
-
-  private fun Collection<String>.joinUsingDoubleQuotes() =
-    joinToString(prefix = "\"", separator = "\", \"", postfix = "\"")
 }
 
 class PropertiesCombinationProblem(override val message: String) : InvalidPropertyProblem()
