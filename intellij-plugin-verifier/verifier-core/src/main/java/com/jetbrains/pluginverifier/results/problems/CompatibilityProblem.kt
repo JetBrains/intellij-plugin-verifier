@@ -30,4 +30,6 @@ abstract class CompatibilityProblem {
 
   final override fun toString() = fullDescription
 
+  open val isCritical: Boolean = false
+
 }

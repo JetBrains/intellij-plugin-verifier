@@ -49,7 +49,8 @@ private fun PluginVerificationResult.toInvocationStatus(): List<InvocationStatus
     is PluginVerificationResult.Verified -> 0
   }
   val executionSuccessful = if (this is PluginVerificationResult.Verified) {
-    this.convertResultType() != VerificationResultTypeDto.PROBLEMS
+    val resultType = this.convertResultType()
+    resultType != VerificationResultTypeDto.PROBLEMS && resultType != VerificationResultTypeDto.CRITICAL
   } else false
   return listOf(
     InvocationStatus(

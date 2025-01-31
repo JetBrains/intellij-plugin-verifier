@@ -18,7 +18,7 @@ enum class VerificationResultTypeDto {
   PROBLEMS,
   INVALID_PLUGIN,
   NON_DOWNLOADABLE,
-  UNCHANGED;
+  CRITICAL;
 }
 
 data class FullVerificationResultDto(
@@ -49,7 +49,8 @@ data class AvailableIdeDto(
 data class CompatibilityProblemDto(
   val shortDescription: String,
   val fullDescription: String,
-  val problemType: String
+  val problemType: String,
+  val critical: Boolean
 )
 
 enum class ApiElementTypeDto {
