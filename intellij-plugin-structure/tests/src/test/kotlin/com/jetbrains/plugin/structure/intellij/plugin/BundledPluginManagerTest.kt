@@ -5,13 +5,12 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.ide.plugin.PluginIdExtractor
+import com.jetbrains.plugin.structure.ide.plugin.DefaultPluginIdProvider
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.InputStream
 import java.nio.file.Path
 
 class BundledPluginManagerTest {
@@ -53,12 +52,7 @@ class BundledPluginManagerTest {
 
   @Test
   fun `plugin identifiers are retrieved`() {
-    val pluginIdExtractor = PluginIdExtractor()
-    val pluginIdProvider = object : PluginIdProvider {
-      override fun getPluginId(pluginDescriptorStream: InputStream): String {
-        return pluginIdExtractor.extractId(pluginDescriptorStream)
-      }
-    }
+    val pluginIdProvider = DefaultPluginIdProvider()
     val pluginManager = BundledPluginManager(pluginIdProvider)
     val pluginIdentifiers = pluginManager.getBundledPluginIds(idePath).map { it.pluginId }
     assertTrue(pluginIdentifiers.contains("com.intellij.java"))

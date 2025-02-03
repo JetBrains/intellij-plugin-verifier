@@ -3,7 +3,9 @@ package com.jetbrains.plugin.structure.ide.plugin
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class PluginIdExtractorTests {
+class PluginIdProviderTest {
+  private val pluginIdProvider = DefaultPluginIdProvider()
+
   @Test
   fun `plugin XML ID is extracted`() {
     val pluginXml = """
@@ -13,9 +15,7 @@ class PluginIdExtractorTests {
         </idea-plugin>
     """.trimIndent()
 
-    val pluginIdExtractor = PluginIdExtractor()
-    val pluginId = pluginIdExtractor.extractId(pluginXml.byteInputStream())
-
+    val pluginId = pluginIdProvider.getPluginId(pluginXml.byteInputStream())
     assertEquals("com.intellij.java", pluginId)
   }
 
@@ -35,9 +35,7 @@ class PluginIdExtractorTests {
         </idea-plugin>
     """.trimIndent()
 
-    val pluginIdExtractor = PluginIdExtractor()
-    val pluginId = pluginIdExtractor.extractId(pluginXml.byteInputStream())
-
+    val pluginId = pluginIdProvider.getPluginId(pluginXml.byteInputStream())
     assertEquals("com.intellij.java", pluginId)
   }
 }

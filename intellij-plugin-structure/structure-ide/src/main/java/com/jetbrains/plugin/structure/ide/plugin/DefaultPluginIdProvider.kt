@@ -1,5 +1,10 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.ide.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginIdProvider
 import com.jetbrains.plugin.structure.xml.ElementTextContentFilter
 import com.jetbrains.plugin.structure.xml.EventTypeExcludingEventFilter
 import com.jetbrains.plugin.structure.xml.LogicalAndXmlEventFilter
@@ -13,11 +18,11 @@ import javax.xml.stream.XMLStreamConstants.START_DOCUMENT
 
 private const val pluginIdXPath = "/idea-plugin/id"
 
-class PluginIdExtractor {
+class DefaultPluginIdProvider : PluginIdProvider {
   private val xmlStreamEventFilter = XmlStreamEventFilter()
 
   @Throws(IOException::class)
-  fun extractId(pluginXmlInputStream: InputStream): String {
+  override fun getPluginId(pluginDescriptorStream: InputStream): String {
     val elementTextContentFilter = ElementTextContentFilter(pluginIdXPath)
     val eventFilter = mutableListOf<EventFilter>().apply {
       add(elementTextContentFilter)
@@ -26,7 +31,7 @@ class PluginIdExtractor {
     }
       .let { LogicalAndXmlEventFilter(it) }
 
-    xmlStreamEventFilter.filter(eventFilter, pluginXmlInputStream, NullOutputStream)
+    xmlStreamEventFilter.filter(eventFilter, pluginDescriptorStream, NullOutputStream)
 
     return elementTextContentFilter.value
   }
