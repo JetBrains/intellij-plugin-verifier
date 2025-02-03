@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
@@ -17,13 +21,13 @@ private val LOG = LoggerFactory.getLogger(BundledPluginManager::class.java)
 class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
   private val descriptorProvider = PluginDescriptorProvider()
 
-  fun getBundledPluginIds(idePath: Path): Set<String> {
+  fun getBundledPluginIds(idePath: Path): Set<PluginArtifactPath> {
     return readBundledPluginsIds(idePath)
   }
 
   private fun readBundledPluginsIds(
     idePath: Path
-  ): Set<String> {
+  ): Set<PluginArtifactPath> {
     return idePath
       .resolve("plugins")
       .listFiles()
@@ -32,25 +36,20 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
       .toSet()
   }
 
-  private fun resolveBundledPluginId(idePath: Path, pluginDirectory: Path): String? {
+  private fun resolveBundledPluginId(idePath: Path, pluginDirectory: Path): PluginArtifactPath? {
     return try {
-      loadPluginIdFromDirectory(pluginDirectory)
+      loadPluginIdFromDirectory(pluginDirectory)?.let {
+        PluginArtifactPath(it, pluginDirectory)
+      }
     } catch (e: BundledPluginException) {
       LOG.debug("Plugin [{}] has invalid descriptor: {}", pluginDirectory, e.message)
-       null
+      null
     }
   }
 
   @Throws(BundledPluginException::class)
   private fun loadPluginIdFromDirectory(pluginPath: Path): String? {
-    val libDir: Path = pluginPath.resolve("lib")
-    if (!libDir.isDirectory) {
-      throw BundledPluginException(PluginDescriptorIsNotFound(PLUGIN_XML))
-    }
-    val jars = libDir.listJars()
-    if (jars.isEmpty()) {
-      throw BundledPluginException(PluginLibDirectoryIsEmpty())
-    }
+    val jars = getPluginJars(pluginPath)
     for (jarPath in jars) {
       val pluginId = loadPluginIdFromJar(jarPath)
       if (pluginId != null) {
@@ -71,6 +70,19 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
       // JAR does not contain the plugin.xml, skip it.
       null
     }
+  }
+
+  @Throws(BundledPluginException::class)
+  private fun getPluginJars(pluginPath: Path): List<Path> {
+    val libDir: Path = pluginPath.resolve("lib")
+    if (!libDir.isDirectory) {
+      throw BundledPluginException(PluginDescriptorIsNotFound(PLUGIN_XML))
+    }
+    val jars = libDir.listJars()
+    if (jars.isEmpty()) {
+      throw BundledPluginException(PluginLibDirectoryIsEmpty())
+    }
+    return jars
   }
 
   private class BundledPluginException(val problem: PluginProblem) : RuntimeException()
