@@ -18,7 +18,7 @@ jobs:
 
       # Check out current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v4.2.2
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
@@ -40,7 +40,7 @@ jobs:
 
       # Check out current repository
       - name: Fetch Sources
-        uses: actions/checkout@v4.2.0
+        uses: actions/checkout@v4.2.2
 
       # Cache Gradle dependencies
       - name: Setup Gradle Dependencies Cache
