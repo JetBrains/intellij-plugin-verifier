@@ -94,7 +94,7 @@ class IdeManagerImpl : IdeManager() {
    * But rarely `nearby.xml` may reside in another platform's jar file. Apparently, IDE handles such a case accidentally:
    * an ugly fallback hack is used `com.intellij.util.io.URLUtil.openResourceStream(URL)`.
    */
-  class PlatformResourceResolver(val platformJarFiles: List<Path>, platformModuleJarFiles: List<Path>) : ResourceResolver {
+  internal class PlatformResourceResolver(val platformJarFiles: List<Path>, platformModuleJarFiles: List<Path>) : ResourceResolver {
     private val jarFilesResourceResolver = JarFilesResourceResolver(platformJarFiles + platformModuleJarFiles)
 
     override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
