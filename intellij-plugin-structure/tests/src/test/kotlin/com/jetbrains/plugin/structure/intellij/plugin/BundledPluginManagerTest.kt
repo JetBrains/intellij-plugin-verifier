@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -56,7 +60,7 @@ class BundledPluginManagerTest {
       }
     }
     val pluginManager = BundledPluginManager(pluginIdProvider)
-    val pluginIdentifiers = pluginManager.getBundledPluginIds(idePath)
+    val pluginIdentifiers = pluginManager.getBundledPluginIds(idePath).map { it.pluginId }
     assertTrue(pluginIdentifiers.contains("com.intellij.java"))
     assertTrue(pluginIdentifiers.contains("Coverage"))
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide
@@ -47,7 +47,10 @@ private val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedIdeManager::class.java)
 
-class ProductInfoBasedIdeManager(missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN) : IdeManager() {
+class ProductInfoBasedIdeManager(
+  missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
+  private val additionalPluginReader: PluginReader = NoopPluginReader
+) : IdeManager() {
   private val productInfoParser = ProductInfoParser()
 
   private val layoutComponentProvider =
@@ -79,7 +82,8 @@ class ProductInfoBasedIdeManager(missingLayoutFileMode: MissingLayoutFileMode = 
     }
     val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
-    return ProductInfoBasedIde(idePath, ideVersion, corePlugin + plugins, productInfo)
+    val additionalPlugins = readAdditionalPlugins(idePath, productInfo, ideVersion)
+    return ProductInfoBasedIde(idePath, ideVersion, corePlugin + plugins + additionalPlugins, productInfo)
   }
 
   private fun readPlugins(
@@ -121,6 +125,14 @@ class ProductInfoBasedIdeManager(missingLayoutFileMode: MissingLayoutFileMode = 
     val corePluginManager =
       CorePluginManager(::createPlugin)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
+  }
+
+  private fun readAdditionalPlugins(
+    idePath: Path,
+    productInfo: ProductInfo,
+    ideVersion: IdeVersion
+  ): List<IdePlugin> {
+    return additionalPluginReader.readPlugins(idePath, productInfo, ideVersion)
   }
 
   private fun createModule(
@@ -185,5 +197,14 @@ class ProductInfoBasedIdeManager(missingLayoutFileMode: MissingLayoutFileMode = 
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
     is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
     is PluginCreationFail -> Failure(pluginArtifactPath, errorsAndWarnings)
+  }
+
+  fun interface PluginReader {
+    fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin>
+  }
+
+  private object NoopPluginReader : PluginReader {
+    override fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin> =
+      emptyList()
   }
 }
