@@ -6,7 +6,6 @@ import ch.qos.logback.core.spi.AppenderAttachable
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.PlatformResourceResolver
 import com.jetbrains.plugin.structure.ide.plugin.PluginIdExtractor
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
@@ -177,10 +176,7 @@ class ProductInfoBasedIdeManagerTest {
     }
 
     fun getIdePluginManager(idePath: Path): ResourceResolver {
-      val platformJarFiles = idePath.resolve("lib").listJars()
-      val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
-      val platformResourceResolver = PlatformResourceResolver(platformJarFiles + platformModuleJarFiles)
-      return platformResourceResolver
+      return PlatformResourceResolver.of(idePath)
     }
 
     val additionalPluginReader = object : ProductInfoBasedIdeManager.PluginReader {
