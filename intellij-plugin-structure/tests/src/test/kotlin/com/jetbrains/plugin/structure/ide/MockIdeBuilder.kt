@@ -202,37 +202,17 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
         "bundledPlugins": [],
         "modules": [],
         "fileExtensions": [],
-        "layout": [
-          {
-            "name": "intellij.notebooks.ui",
-            "kind": "productModuleV2",
-            "classPath": [
-              "lib/modules/intellij.notebooks.ui.jar"
-            ]
-          },
-          {
-            "name": "intellij.notebooks.visualization",
-            "kind": "productModuleV2",
-            "classPath": [
-              "lib/modules/intellij.notebooks.visualization.jar"
-            ]
-          },
-          {
-            "name": "intellij.java.featuresTrainer",
-            "kind": "moduleV2",
-            "classPath": [
-              "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
-            ]
-          },
-          {
-            "name": "com.jetbrains.codeWithMe",
-            "kind": "plugin",
-            "classPath": [
-              "plugins/cwm-plugin/lib/cwm-plugin.jar"
-            ]
-          }      
-          $layoutJson                  
-        ]
+        ${
+          if (replaceLayout) {
+            """
+              "layout": [
+                 $layout
+              ]
+            """.trimIndent()
+          } else {
+            getDefaultLayout(layout)
+          }            
+        }
       } 
     """.trimIndent()
   }
@@ -244,14 +224,42 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
       """.trimIndent()
     } ?: ""
 
-  private val ProductInfo.layoutJson: String
-    get() {
-      return if (layout.isEmpty()) {
-        layout
-      } else {
-        ", $layout"
-      }
-    }
+  private fun getDefaultLayout(additionalLayoutEntries: String = ""): String {
+    val moreEntries = if (additionalLayoutEntries.isEmpty()) "" else ", $additionalLayoutEntries"
+    return """
+      "layout": [
+        {
+          "name": "intellij.notebooks.ui",
+          "kind": "productModuleV2",
+          "classPath": [
+            "lib/modules/intellij.notebooks.ui.jar"
+          ]
+        },
+        {
+          "name": "intellij.notebooks.visualization",
+          "kind": "productModuleV2",
+          "classPath": [
+            "lib/modules/intellij.notebooks.visualization.jar"
+          ]
+        },
+        {
+          "name": "intellij.java.featuresTrainer",
+          "kind": "moduleV2",
+          "classPath": [
+            "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
+          ]
+        },
+        {
+          "name": "com.jetbrains.codeWithMe",
+          "kind": "plugin",
+          "classPath": [
+            "plugins/cwm-plugin/lib/cwm-plugin.jar"
+          ]
+        }
+        $moreEntries
+      ]
+    """.trimIndent()
+  }
 
   private val platformLangPluginXml: String
     get() = """
@@ -270,6 +278,8 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     var versionSuffix: String? = "EAP"
 
     var layout: String = ""
+
+    var replaceLayout: Boolean = false
 
     fun omitVersionSuffix() {
       versionSuffix = null
