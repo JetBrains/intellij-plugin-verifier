@@ -12,7 +12,6 @@ import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.intellij.plugin.jar.PluginDescriptorProvider
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
-import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
@@ -61,14 +60,8 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
 
   @Throws(BundledPluginException::class)
   private fun loadPluginIdFromJar(jarPath: Path): String? {
-    val descriptorResult = descriptorProvider.getDescriptorFromJar(jarPath)
-    return if (descriptorResult is PluginDescriptorResult.Found) {
-      descriptorResult.inputStream.use {
-        pluginIdProvider.getPluginId(it)
-      }
-    } else {
-      // JAR does not contain the plugin.xml, skip it.
-      null
+    return descriptorProvider.resolveFromJar(jarPath) { (_, inputStream) ->
+      pluginIdProvider.getPluginId(inputStream)
     }
   }
 

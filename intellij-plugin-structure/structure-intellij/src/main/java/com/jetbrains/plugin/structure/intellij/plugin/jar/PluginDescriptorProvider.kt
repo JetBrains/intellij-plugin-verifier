@@ -9,38 +9,32 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
-import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
-import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Failed
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
 import com.jetbrains.plugin.structure.jar.PluginJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import kotlin.io.inputStream
-import kotlin.use
 
 private val LOG = LoggerFactory.getLogger(PluginDescriptorProvider::class.java)
 
+private const val DEFAULT_DESCRIPTOR_PATH = "$META_INF/$PLUGIN_XML"
+
 class PluginDescriptorProvider(private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider) {
-  fun getDescriptorFromJar(
-    jarFile: Path,
-    descriptorPath: String = "$META_INF/$PLUGIN_XML",
-  ): PluginDescriptorResult = try {
-    PluginJar(jarFile, fileSystemProvider).use { jar ->
-      when (val descriptor = jar.getPluginDescriptor(descriptorPath)) {
-        is Found -> descriptor.clone()
-        else -> descriptor.also {
-          LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarFile, descriptor)
+  fun <T> resolveFromJar(jarFile: Path, onSuccess: (Found) -> T): T? {
+    return try {
+      PluginJar(jarFile, fileSystemProvider).use { jar ->
+        when (val descriptor = jar.getPluginDescriptor(DEFAULT_DESCRIPTOR_PATH)) {
+          is Found -> onSuccess(descriptor)
+          else -> null.also {
+            LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", DEFAULT_DESCRIPTOR_PATH, jarFile, descriptor)
+          }
         }
       }
+    } catch (e: JarArchiveCannotBeOpenException) {
+      null.also {
+        LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, DEFAULT_DESCRIPTOR_PATH, e.getShortExceptionMessage())
+      }
     }
-  } catch (e: JarArchiveCannotBeOpenException) {
-    LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
-    Failed(jarFile, e)
-  }
-
-  private fun Found.clone(): Found = inputStream.use {
-    Found(this.path, it.readAllBytes().inputStream())
   }
 }
 
