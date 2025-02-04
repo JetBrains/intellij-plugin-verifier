@@ -31,11 +31,11 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
       .resolve("plugins")
       .listFiles()
       .filter { it.isDirectory }
-      .mapNotNull { resolveBundledPluginId(idePath, it) }
+      .mapNotNull { resolveBundledPluginId(it) }
       .toSet()
   }
 
-  private fun resolveBundledPluginId(idePath: Path, pluginDirectory: Path): PluginArtifactPath? {
+  private fun resolveBundledPluginId(pluginDirectory: Path): PluginArtifactPath? {
     return try {
       loadPluginIdFromDirectory(pluginDirectory)?.let {
         PluginArtifactPath(it, pluginDirectory)
@@ -78,5 +78,8 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
     return jars
   }
 
-  private class BundledPluginException(val problem: PluginProblem) : RuntimeException()
+  private class BundledPluginException(val problem: PluginProblem) : RuntimeException() {
+    override val message: String
+      get() = problem.message
+  }
 }
