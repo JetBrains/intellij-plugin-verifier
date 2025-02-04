@@ -10,36 +10,39 @@ class ElementTextContentFilter(private val elementXPath: String) : Deduplicating
 
   private var isAccepting = true
 
+  private var captureCompleted = false
+
   private val capturedContent = StringBuilder()
 
-  override fun doAccept(event: XMLEvent): Boolean = when (event) {
-    is StartElement -> {
-      eventStack.push(event)
-      isAccepting = supports()
-      isAccepting
-    }
-
-    is EndElement -> {
-      isAccepting = supports()
-      eventStack.popIf(currentEvent = event)
-      isAccepting
-    }
-
-    is Characters -> {
-      if (isAccepting) {
-        capturedContent.append(event.data)
+  override fun doAccept(event: XMLEvent): Boolean = if (captureCompleted) false else {
+    when (event) {
+      is StartElement -> {
+        eventStack.push(event)
+        isAccepting = matchesXPath()
+        isAccepting
       }
-      isAccepting
-    }
 
-    else -> {
-      isAccepting
+      is EndElement -> {
+        eventStack.popIf(currentEvent = event)
+        if (matchesXPath()) captureCompleted = true
+        isAccepting = false
+        isAccepting
+      }
+
+      is Characters -> {
+        if (isAccepting) {
+          capturedContent.append(event.data)
+        }
+        isAccepting
+      }
+
+      else -> {
+        isAccepting
+      }
     }
   }
 
-  private fun supports(): Boolean {
-    return elementXPath == eventStack.toPath()
-  }
+  private fun matchesXPath(): Boolean = elementXPath == eventStack.toPath()
 
   val value: String get() = capturedContent.toString().trim()
 }
