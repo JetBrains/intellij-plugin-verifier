@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.ide
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import ch.qos.logback.core.spi.AppenderAttachable
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.junit.Assert.*
 import org.junit.Before
@@ -140,6 +141,33 @@ class ProductInfoBasedIdeManagerTest {
     }
     val ide = ideManager.createIde(ideRoot)
     assertIdeAndPluginsIsCreated(ide)
+  }
+
+  @Test
+  fun `create IDE manager with plugins in 'plugins' dir, but not declared in the product info jSON`() {
+    val ideRoot = MockIdeBuilder(temporaryFolder, "-missing-layout-entry-for-plugin").buildIdeaDirectory {
+      replaceLayout = true
+      //language=JSON
+      layout = ""
+    }
+
+    val ideManager = ProductInfoBasedIdeManager(additionalPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("IU", "IC")))
+
+    val ide = ideManager.createIde(ideRoot)
+    assertEquals(3, ide.bundledPlugins.size)
+    val javaPlugin = ide.findPluginById("com.intellij.java")
+    assertNotNull(javaPlugin)
+    assertTrue(javaPlugin is IdePluginImpl)
+    with(javaPlugin as IdePluginImpl) {
+      assertEquals("Java", pluginName)
+    }
+
+    val cwmPlugin = ide.findPluginById("com.jetbrains.codeWithMe")
+    assertNotNull(cwmPlugin)
+    assertTrue(cwmPlugin is IdePluginImpl)
+    with(cwmPlugin as IdePluginImpl) {
+      assertEquals("Code With Me", pluginName)
+    }
   }
 
   @Test

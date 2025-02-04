@@ -66,11 +66,9 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
-    val platformJarFiles = idePath.resolve("lib").listJars()
-    val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
-    val platformResourceResolver = PlatformResourceResolver(platformJarFiles + platformModuleJarFiles)
+    val platformResourceResolver = PlatformResourceResolver.of(idePath)
     val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
-    val platformPlugins = readPlatformPlugins(idePath, product, platformJarFiles, platformResourceResolver, ideVersion)
+    val platformPlugins = readPlatformPlugins(idePath, product, platformResourceResolver.platformJarFiles, platformResourceResolver, ideVersion)
     return bundledPlugins + platformPlugins
   }
 
@@ -96,8 +94,8 @@ class IdeManagerImpl : IdeManager() {
    * But rarely `nearby.xml` may reside in another platform's jar file. Apparently, IDE handles such a case accidentally:
    * an ugly fallback hack is used `com.intellij.util.io.URLUtil.openResourceStream(URL)`.
    */
-  private class PlatformResourceResolver(platformJarFiles: List<Path>) : ResourceResolver {
-    private val jarFilesResourceResolver = JarFilesResourceResolver(platformJarFiles)
+  internal class PlatformResourceResolver(val platformJarFiles: List<Path>, platformModuleJarFiles: List<Path>) : ResourceResolver {
+    private val jarFilesResourceResolver = JarFilesResourceResolver(platformJarFiles + platformModuleJarFiles)
 
     override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
       val resolveResult = jarFilesResourceResolver.resolveResource(relativePath, basePath)
@@ -116,6 +114,14 @@ class IdeManagerImpl : IdeManager() {
         return jarFilesResourceResolver.resolveResource("/META-INF/$relativePath", basePath)
       }
       return ResourceResolver.Result.NotFound
+    }
+
+    companion object {
+      fun of(idePath: Path): PlatformResourceResolver {
+        val platformJarFiles = idePath.resolve("lib").listJars()
+        val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
+        return PlatformResourceResolver(platformJarFiles, platformModuleJarFiles)
+      }
     }
   }
 

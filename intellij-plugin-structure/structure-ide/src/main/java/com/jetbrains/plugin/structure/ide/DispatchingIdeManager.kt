@@ -6,7 +6,10 @@ import java.nio.file.Path
 class DispatchingIdeManager(configuration: IdeManagerConfiguration = IdeManagerConfiguration()) : IdeManager() {
   private val standardIdeManager = IdeManagerImpl()
 
-  private val productInfoBasedIdeManager = ProductInfoBasedIdeManager(configuration.missingLayoutFileMode)
+  private val productInfoBasedIdeManager = ProductInfoBasedIdeManager(
+    missingLayoutFileMode = configuration.missingLayoutFileMode,
+    additionalPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("AI")),
+  )
 
   override fun createIde(idePath: Path): Ide = createIde(idePath, version = null)
 

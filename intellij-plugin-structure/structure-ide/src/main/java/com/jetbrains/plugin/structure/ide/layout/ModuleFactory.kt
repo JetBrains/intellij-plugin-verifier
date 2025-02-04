@@ -29,12 +29,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
       LOG.debug("No module descriptor found for {}", moduleName)
       return null
     }
-    val loadingContext = getLoadingContext(moduleDescriptor, idePath)
-    if (loadingContext == null) {
-      LOG.debug("No module plugin descriptor found for {} in resource roots [{}]", moduleName,
-          moduleDescriptor.resources.joinToString { it.path.toString() })
-      return null
-    }
+    val loadingContext = getLoadingContext(moduleName, moduleDescriptor, idePath) ?: return null
 
     val moduleLoadingResult = moduleLoader.load(loadingContext.artifactPath, loadingContext.descriptorName, resourceResolver, ideVersion, layoutComponent.name)
     return when (moduleLoadingResult) {
@@ -53,7 +48,25 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     }
   }
 
-  private fun getLoadingContext(moduleDescriptor: ModuleBean, idePath: Path): ModuleLoadingContext? {
+  private fun getLoadingContext(moduleName: String, moduleDescriptor: ModuleBean, idePath: Path): ModuleLoadingContext? {
+    val loadingContext = createLoadingContext(moduleDescriptor, idePath)
+    if (loadingContext == null) {
+      LOG.debug("No module plugin descriptor found for {} in resource roots [{}]", moduleName,
+        moduleDescriptor.resources.joinToString { it.path.toString() })
+      return null
+    }
+    if (!loadingContext.exists()) {
+      LOG.warn(
+        "Module descriptor '{}' refers to the non-existent resource root [{}]. Skipping module",
+        loadingContext.descriptorName,
+        loadingContext.artifactPath
+      )
+      return null
+    }
+    return loadingContext
+  }
+
+  private fun createLoadingContext(moduleDescriptor: ModuleBean, idePath: Path): ModuleLoadingContext? {
     val resourceRoot = moduleDescriptor.resources.firstOrNull() ?: return null
     val resourceRootPath = idePath.resolveFromModulesDir(resourceRoot.path)
 
@@ -61,7 +74,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
   }
 
   private fun Path.resolveFromModulesDir(p: Path): Path {
-    return resolve("modules").resolve(p)
+    return resolve("modules").resolve(p).normalize()
   }
 
   private fun IdeModule.asResult(resolvedIdeModule: Success): Success {
