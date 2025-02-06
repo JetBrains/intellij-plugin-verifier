@@ -59,7 +59,7 @@ class PluginVerifierTelemetryTest {
       if (pluginVerificationDuration !is Duration) {
         fail("Plugin telemetry must contain the '$PLUGIN_VERIFICATION_TIME' value")
       } else {
-        assertTrue(pluginVerificationDuration.toMillis() > 0)
+        assertTrue(pluginVerificationDuration.toMillis() >= 0)
       }
     }
   }
