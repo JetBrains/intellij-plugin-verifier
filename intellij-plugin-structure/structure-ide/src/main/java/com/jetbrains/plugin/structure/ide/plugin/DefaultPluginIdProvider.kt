@@ -39,7 +39,7 @@ class DefaultPluginIdProvider : PluginIdProvider {
 
   private fun getPluginId(elementTextContentFilter: ElementTextContentFilter): String {
     return elementTextContentFilter.captureGroups.values.firstOrNull()
-      ?: throw MissingPluginIdException("Neither plugin ID nor plugin is set in the plugin descriptor")
+      ?: throw MissingPluginIdException("Neither plugin ID nor plugin name is set in the plugin descriptor")
   }
 
   private object NullOutputStream : OutputStream() {
