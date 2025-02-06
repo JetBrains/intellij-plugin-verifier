@@ -9,8 +9,6 @@ import javax.xml.stream.events.XMLEvent
 class ElementTextContentFilter(private val elementXPaths: List<String>) : DeduplicatingEventFilter() {
   private val eventStack = ElementStack()
 
-  private var isAccepting = true
-
   private val captureCompleted
     get() = captureGroups.size == elementXPaths.size
 
@@ -25,8 +23,6 @@ class ElementTextContentFilter(private val elementXPaths: List<String>) : Dedupl
     when (event) {
       is StartElement -> {
         eventStack.push(event)
-        isAccepting = matchesXPath()
-        isAccepting
       }
 
       is EndElement -> {
@@ -36,21 +32,15 @@ class ElementTextContentFilter(private val elementXPaths: List<String>) : Dedupl
           capturedContent.clear()
         }
         eventStack.popIf(currentEvent = event)
-        isAccepting = false
-        isAccepting
       }
 
       is Characters -> {
-        if (isAccepting) {
+        if (matchesXPath()) {
           capturedContent.append(event.data)
         }
-        isAccepting
-      }
-
-      else -> {
-        isAccepting
       }
     }
+    true
   }
 
   private fun matchesXPath(): Boolean {
