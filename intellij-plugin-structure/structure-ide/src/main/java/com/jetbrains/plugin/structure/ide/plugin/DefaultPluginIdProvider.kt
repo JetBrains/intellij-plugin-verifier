@@ -22,7 +22,7 @@ private const val pluginNameXPath = "/idea-plugin/name"
 class DefaultPluginIdProvider : PluginIdProvider {
   private val xmlStreamEventFilter = XmlStreamEventFilter()
 
-  @Throws(IOException::class)
+  @Throws(IOException::class, MissingPluginIdException::class)
   override fun getPluginId(pluginDescriptorStream: InputStream): String {
     val elementTextContentFilter = ElementTextContentFilter(listOf(pluginIdXPath, pluginNameXPath))
     val eventFilter = mutableListOf<EventFilter>().apply {
@@ -34,7 +34,12 @@ class DefaultPluginIdProvider : PluginIdProvider {
 
     xmlStreamEventFilter.filter(eventFilter, pluginDescriptorStream, NullOutputStream)
 
-    return elementTextContentFilter.value
+    return getPluginId(elementTextContentFilter)
+  }
+
+  private fun getPluginId(elementTextContentFilter: ElementTextContentFilter): String {
+    return elementTextContentFilter.captureGroups.values.firstOrNull()
+      ?: throw MissingPluginIdException("Neither plugin ID nor plugin is set in the plugin descriptor")
   }
 
   private object NullOutputStream : OutputStream() {

@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.ide.plugin
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class PluginIdProviderTest {
@@ -49,5 +50,17 @@ class PluginIdProviderTest {
 
     val pluginId = pluginIdProvider.getPluginId(pluginXml.byteInputStream())
     assertEquals("Java", pluginId)
+  }
+
+  @Test
+  fun `plugin XML ID is not extracted, since neither 'name' nor 'id' is available`() {
+    val pluginXml = """
+        <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        </idea-plugin>
+    """.trimIndent()
+
+    assertThrows(MissingPluginIdException::class.java) {
+      pluginIdProvider.getPluginId(pluginXml.byteInputStream())
+    }
   }
 }

@@ -19,7 +19,7 @@ class ElementTextContentFilter(private val elementXPaths: List<String>) : Dedupl
   private val capturedContent = StringBuilder()
 
   // The ordering of keys in this map matches the ordering of values in the `elementXPaths`.
-  private val captureGroups = TreeMap<String, String> { key, otherKey ->
+  val captureGroups: SortedMap<String, String> = TreeMap<String, String> { key, otherKey ->
     elementXPaths.indexOf(key).compareTo(elementXPaths.indexOf(otherKey))
   }
 
@@ -51,6 +51,4 @@ class ElementTextContentFilter(private val elementXPaths: List<String>) : Dedupl
     val xPath = eventStack.toPath()
     return elementXPaths.any { it == xPath }
   }
-
-  val value: String get() = captureGroups.values.first()
 }
