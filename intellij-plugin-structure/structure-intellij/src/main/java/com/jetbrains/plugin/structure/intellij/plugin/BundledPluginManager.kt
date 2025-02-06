@@ -17,6 +17,9 @@ import java.nio.file.Path
 
 private val LOG = LoggerFactory.getLogger(BundledPluginManager::class.java)
 
+private const val PLUGINS_DIRECTORY = "plugins"
+private const val LIB_DIRECTORY = "lib"
+
 class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
   private val descriptorProvider = PluginDescriptorProvider()
 
@@ -28,7 +31,7 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
     idePath: Path
   ): Set<PluginArtifactPath> {
     return idePath
-      .resolve("plugins")
+      .resolve(PLUGINS_DIRECTORY)
       .listFiles()
       .filter { it.isDirectory }
       .mapNotNull { resolveBundledPluginId(it) }
@@ -67,7 +70,7 @@ class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
 
   @Throws(BundledPluginException::class)
   private fun getPluginJars(pluginPath: Path): List<Path> {
-    val libDir: Path = pluginPath.resolve("lib")
+    val libDir: Path = pluginPath.resolve(LIB_DIRECTORY)
     if (!libDir.isDirectory) {
       throw BundledPluginException(PluginDescriptorIsNotFound(PLUGIN_XML))
     }
