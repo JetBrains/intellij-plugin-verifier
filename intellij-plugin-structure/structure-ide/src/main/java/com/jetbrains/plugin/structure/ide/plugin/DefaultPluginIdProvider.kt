@@ -17,13 +17,14 @@ import javax.xml.stream.XMLStreamConstants.COMMENT
 import javax.xml.stream.XMLStreamConstants.START_DOCUMENT
 
 private const val pluginIdXPath = "/idea-plugin/id"
+private const val pluginNameXPath = "/idea-plugin/name"
 
 class DefaultPluginIdProvider : PluginIdProvider {
   private val xmlStreamEventFilter = XmlStreamEventFilter()
 
   @Throws(IOException::class)
   override fun getPluginId(pluginDescriptorStream: InputStream): String {
-    val elementTextContentFilter = ElementTextContentFilter(pluginIdXPath)
+    val elementTextContentFilter = ElementTextContentFilter(listOf(pluginIdXPath, pluginNameXPath))
     val eventFilter = mutableListOf<EventFilter>().apply {
       add(elementTextContentFilter)
       add(EventTypeExcludingEventFilter(START_DOCUMENT))

@@ -38,4 +38,16 @@ class PluginIdProviderTest {
     val pluginId = pluginIdProvider.getPluginId(pluginXml.byteInputStream())
     assertEquals("com.intellij.java", pluginId)
   }
+
+  @Test
+  fun `plugin XML ID is extracted from 'name' when 'id' is missing`() {
+    val pluginXml = """
+        <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <name>Java</name>
+        </idea-plugin>
+    """.trimIndent()
+
+    val pluginId = pluginIdProvider.getPluginId(pluginXml.byteInputStream())
+    assertEquals("Java", pluginId)
+  }
 }
