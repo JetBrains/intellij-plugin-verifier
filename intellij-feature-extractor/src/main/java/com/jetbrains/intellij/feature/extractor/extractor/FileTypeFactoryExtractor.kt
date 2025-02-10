@@ -8,13 +8,23 @@ import com.jetbrains.intellij.feature.extractor.ExtensionPoint
 import com.jetbrains.intellij.feature.extractor.ExtensionPointFeatures
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.verifiers.*
+import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
+import com.jetbrains.pluginverifier.verifiers.analyzeMethodFrames
+import com.jetbrains.pluginverifier.verifiers.extractClassNameFromDescriptor
+import com.jetbrains.pluginverifier.verifiers.getOnStack
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.Opcodes.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 import org.objectweb.asm.tree.analysis.Frame
 import org.objectweb.asm.tree.analysis.SourceValue
 import org.objectweb.asm.tree.analysis.Value
@@ -31,7 +41,8 @@ class FileTypeFactoryExtractor : Extractor {
     private const val EXPLICIT_EXTENSION = "(Lcom/intellij/openapi/fileTypes/FileType;Ljava/lang/String;)V"
     private const val FILE_TYPE_ONLY = "(Lcom/intellij/openapi/fileTypes/FileType;)V"
 
-    private const val FILENAME_MATCHERS = "(Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V"
+    private const val FILENAME_MATCHERS =
+      "(Lcom/intellij/openapi/fileTypes/FileType;[Lcom/intellij/openapi/fileTypes/FileNameMatcher;)V"
 
     private const val EXACT_NAME_MATCHER = "com/intellij/openapi/fileTypes/ExactFileNameMatcher"
 
@@ -100,18 +111,8 @@ class FileTypeFactoryExtractor : Extractor {
     frames: List<Frame<SourceValue>>,
     method: Method
   ): List<String>? {
-    val arrayProducer = frames[arrayUserInstructionIndex].getOnStack(0) ?: return null
-    if (arrayProducer.insns.size != 1) {
-      return null
-    }
-
-    val anewArrayInstruction = arrayProducer.insns.first()
-    if (anewArrayInstruction is TypeInsnNode && anewArrayInstruction.opcode == Opcodes.ANEWARRAY) {
-      val newArrayInstructionIndex = methodInstructions.indexOf(anewArrayInstruction)
-      if (newArrayInstructionIndex == -1) {
-        return null
-      }
-      return aggregateFileNameMatcherAsArrayElements(
+    return method.searchMostRecentNewArrayInstructionIndex()?.let { newArrayInstructionIndex ->
+      aggregateFileNameMatcherAsArrayElements(
         newArrayInstructionIndex,
         arrayUserInstructionIndex,
         methodInstructions,
@@ -119,8 +120,11 @@ class FileTypeFactoryExtractor : Extractor {
         method
       )
     }
-    return null
   }
+
+  private fun Method.searchMostRecentNewArrayInstructionIndex(): Int? = instructions
+    .indexOfLast { it is TypeInsnNode && it.opcode == ANEWARRAY }
+    .takeIf { it != 1 }
 
   /**
    * Try to parse the following sequence of instructions:
@@ -180,7 +184,7 @@ class FileTypeFactoryExtractor : Extractor {
       val oldPos = pos
       val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
-        if (instructions[pos++].opcode == Opcodes.DUP) {
+        if (instructions[pos++].opcode == DUP) {
           val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
             val frame = frames[pos]
@@ -190,7 +194,8 @@ class FileTypeFactoryExtractor : Extractor {
             if (initInvoke is MethodInsnNode
               && initInvoke.name == "<init>"
               && initInvoke.owner == EXACT_NAME_MATCHER
-              && initInvoke.desc == "(Ljava/lang/String;)V") {
+              && initInvoke.desc == "(Ljava/lang/String;)V"
+            ) {
               val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(0))
               if (string != null) {
                 return string
@@ -214,7 +219,7 @@ class FileTypeFactoryExtractor : Extractor {
       val oldPos = pos
       val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXACT_NAME_MATCHER) {
-        if (instructions[pos++].opcode == Opcodes.DUP) {
+        if (instructions[pos++].opcode == DUP) {
           val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
             if (instructions[pos].opcode == Opcodes.ICONST_0 || instructions[pos].opcode == Opcodes.ICONST_1) {
@@ -227,7 +232,8 @@ class FileTypeFactoryExtractor : Extractor {
               if (initInvoke is MethodInsnNode
                 && initInvoke.name == "<init>"
                 && initInvoke.owner == EXACT_NAME_MATCHER
-                && initInvoke.desc == "(Ljava/lang/String;Z)V") {
+                && initInvoke.desc == "(Ljava/lang/String;Z)V"
+              ) {
 
                 val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(1))
                 if (string != null) {
@@ -253,7 +259,7 @@ class FileTypeFactoryExtractor : Extractor {
       val oldPos = pos
       val new = instructions[pos++]
       if (new is TypeInsnNode && new.desc == EXTENSIONS_MATCHER) {
-        if (instructions[pos++].opcode == Opcodes.DUP) {
+        if (instructions[pos++].opcode == DUP) {
           val argumentInsn = instructions[pos++]
           if (argumentInsn.opcode == Opcodes.LDC || argumentInsn.opcode == Opcodes.GETSTATIC) {
             val initInvoke = instructions[pos]
@@ -263,7 +269,8 @@ class FileTypeFactoryExtractor : Extractor {
             if (initInvoke is MethodInsnNode
               && initInvoke.name == "<init>"
               && initInvoke.owner == EXTENSIONS_MATCHER
-              && initInvoke.desc == "(Ljava/lang/String;)V") {
+              && initInvoke.desc == "(Ljava/lang/String;)V"
+            ) {
 
               val string = CodeAnalysis().evaluateConstantString(method, frames, frame.getOnStack(0))
               if (string != null) {
@@ -293,7 +300,7 @@ class FileTypeFactoryExtractor : Extractor {
     * AASTORE
     */
     fun parseSetElement(i: Int): String? {
-      if (instructions[pos++].opcode == Opcodes.DUP) {
+      if (instructions[pos++].opcode == DUP) {
         if (i == takeNumberFromIntInstruction(instructions[pos++])) {
           val block = parseBlock() ?: return null
           if (instructions[pos++].opcode == Opcodes.AASTORE) {
@@ -334,22 +341,213 @@ class FileTypeFactoryExtractor : Extractor {
     return null
   }
 
-
   /**
    * Extract value returned by com.intellij.openapi.fileTypes.FileType.getDefaultExtension
    */
   private fun evaluateExtensionsOfFileType(value: Value?, resolver: Resolver): String? {
-    if (value !is SourceValue || value.insns == null || value.insns.size != 1) {
-      return null
-    }
-    val first = value.insns.first() as? TypeInsnNode ?: return null
-    val className = first.desc.extractClassNameFromDescriptor() ?: return null
-    val classFile = resolver.resolveClassOrNull(className) ?: return null
-
-    val method = classFile.methods.find { it.name == "getDefaultExtension" && it.methodParameters.isEmpty() }
-      ?: return null
-    return CodeAnalysis().evaluateConstantFunctionValue(method)
+    return value
+      .takeIf { it.hasSingleInstruction() }
+      ?.let { extractClassName(it as SourceValue) }
+      ?.let { resolver.resolveClassOrNull(it) }
+      ?.let { it.methods.find { it.name == "getDefaultExtension" && it.methodParameters.isEmpty() } }?.let {
+        CodeAnalysis().evaluateConstantFunctionValue(it)
+      }
   }
 
+  private fun Value?.hasSingleInstruction(): Boolean = this is SourceValue && insns != null && insns.size == 1
+
+  private fun resolveNew(value: SourceValue): AbstractInsnNode? {
+    val instructions = value.insns
+    if (instructions.size != 1) {
+      return null
+    }
+    return resolveNew(instructions.first())
+  }
+
+  private fun resolveNew(instruction: AbstractInsnNode): AbstractInsnNode? {
+    return when {
+      instruction.isDup() -> resolveNew(instruction.previous)
+      instruction.isNew() -> instruction
+      else -> null
+    }
+  }
+
+  private fun extractClassName(value: SourceValue): String? {
+    return extractClassName(value.insns.first())
+  }
+
+  private fun extractClassName(instruction: AbstractInsnNode): String? = when {
+    instruction.isDup() -> extractClassName(instruction.previous)
+    instruction is TypeInsnNode -> instruction.desc.extractClassNameFromDescriptor()
+    else -> null
+  }
+
+  private fun AbstractInsnNode.isDup() = this is InsnNode && opcode == DUP
+
+  private fun AbstractInsnNode.isNew() = this is TypeInsnNode && opcode == NEW
 
 }
+
+/**
+ * Provides a debug string representation of a type instruction.
+ *
+ * It is used mainly in IDE debugging to better describe ASM nodes.
+ */
+@Suppress("unused")
+fun TypeInsnNode.toDebugString(): String {
+  return try {
+    when (opcode) {
+      NEW -> "NEW $desc"
+      ANEWARRAY -> "ANEWARRAY $desc"
+      CHECKCAST -> "CHECKLIST $desc"
+      INSTANCEOF -> "INSTANCEOF $desc"
+      DUP -> "DUP"
+      else -> toString()
+    }
+  } catch (e: Exception) {
+    return e.message.toString()
+  }
+}
+
+/**
+ * Provides a debug string representation of a zero-operand instruction.
+ *
+ * It is used mainly in IDE debugging to better describe ASM nodes.
+ */
+@Suppress("unused")
+fun InsnNode.toDebugString(): String = insnOpCodes[opcode] ?: toString()
+
+fun VarInsnNode.toDebugString(): String = insnOpCodes[opcode] ?: toString()
+
+fun SourceValue.toDebugString(): String {
+  return insns.joinToString {
+    insnOpCodes[it.opcode] ?: it.toString()
+  }
+}
+
+private val insnOpCodes = mapOf(
+  NOP to "NOP",
+  ACONST_NULL to "ACONST_NULL",
+  ICONST_M1 to "ICONST_M1",
+  ICONST_0 to "ICONST_0",
+  ICONST_1 to "ICONST_1",
+  ICONST_2 to "ICONST_2",
+  ICONST_3 to "ICONST_3",
+  ICONST_4 to "ICONST_4",
+  ICONST_5 to "ICONST_5",
+  LCONST_0 to "LCONST_0",
+  LCONST_1 to "LCONST_1",
+  FCONST_0 to "FCONST_0",
+  FCONST_1 to "FCONST_1",
+  FCONST_2 to "FCONST_2",
+  DCONST_0 to "DCONST_0",
+  DCONST_1 to "DCONST_1",
+  ILOAD to "ILOAD",
+  LLOAD to "LLOAD",
+  FLOAD to "FLOAD",
+  DLOAD to "DLOAD",
+  ALOAD to "ALOAD",
+
+  IALOAD to "IALOAD",
+  LALOAD to "LALOAD",
+  FALOAD to "FALOAD",
+  DALOAD to "DALOAD",
+  AALOAD to "AALOAD",
+  BALOAD to "BALOAD",
+  CALOAD to "CALOAD",
+  SALOAD to "SALOAD",
+
+  ISTORE to "ISTORE",
+  LSTORE to "LSTORE",
+  FSTORE to "FSTORE",
+  DSTORE to "DSTORE",
+  ASTORE to "ASTORE",
+
+  IASTORE to "IASTORE",
+  LASTORE to "LASTORE",
+  FASTORE to "FASTORE",
+  DASTORE to "DASTORE",
+  AASTORE to "AASTORE",
+  BASTORE to "BASTORE",
+  CASTORE to "CASTORE",
+  SASTORE to "SASTORE",
+  POP to "POP",
+  POP2 to "POP2",
+  DUP to "DUP",
+  DUP_X1 to "DUP_X1",
+  DUP_X2 to "DUP_X2",
+  DUP2 to "DUP2",
+  DUP2_X1 to "DUP2_X1",
+  DUP2_X2 to "DUP2_X2",
+  SWAP to "SWAP",
+  IADD to "IADD",
+  LADD to "LADD",
+  FADD to "FADD",
+  DADD to "DADD",
+  ISUB to "ISUB",
+  LSUB to "LSUB",
+  FSUB to "FSUB",
+  DSUB to "DSUB",
+  IMUL to "IMUL",
+  LMUL to "LMUL",
+  FMUL to "FMUL",
+  DMUL to "DMUL",
+  IDIV to "IDIV",
+  LDIV to "LDIV",
+  FDIV to "FDIV",
+  DDIV to "DDIV",
+  IREM to "IREM",
+  LREM to "LREM",
+  FREM to "FREM",
+  DREM to "DREM",
+  INEG to "INEG",
+  LNEG to "LNEG",
+  FNEG to "FNEG",
+  DNEG to "DNEG",
+  ISHL to "ISHL",
+  LSHL to "LSHL",
+  ISHR to "ISHR",
+  LSHR to "LSHR",
+  IUSHR to "IUSHR",
+  LUSHR to "LUSHR",
+  IAND to "IAND",
+  LAND to "LAND",
+  IOR to "IOR",
+  LOR to "LOR",
+  IXOR to "IXOR",
+  LXOR to "LXOR",
+  I2L to "I2L",
+  I2F to "I2F",
+  I2D to "I2D",
+  L2I to "L2I",
+  L2F to "L2F",
+  L2D to "L2D",
+  F2I to "F2I",
+  F2L to "F2L",
+  F2D to "F2D",
+  D2I to "D2I",
+  D2L to "D2L",
+  D2F to "D2F",
+  I2B to "I2B",
+  I2C to "I2C",
+  I2S to "I2S",
+  LCMP to "LCMP",
+  FCMPL to "FCMPL",
+  FCMPG to "FCMPG",
+  DCMPL to "DCMPL",
+  DCMPG to "DCMPG",
+
+  RET to "RET",
+
+  IRETURN to "IRETURN",
+  LRETURN to "LRETURN",
+  FRETURN to "FRETURN",
+  DRETURN to "DRETURN",
+  ARETURN to "ARETURN",
+  RETURN to "RETURN",
+  ANEWARRAY to "ANEWARRAY",
+  ARRAYLENGTH to "ARRAYLENGTH",
+  ATHROW to "ATHROW",
+  MONITORENTER to "MONITORENTER",
+  MONITOREXIT to "MONITOREXIT"
+)
