@@ -57,17 +57,17 @@ object KotlinMethods {
    */
   fun Method.isKotlinDefaultMethod(): Boolean {
     val method: Method = this
-    return cache.asMap().computeIfAbsent(method.location) { isKotlinMethodInvokingDefaultImpls(method) }
+    return cache.get(method.location) { method.isKotlinMethodInvokingDefaultImpls() }
   }
 
-  private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
-    // filter non-Kotlin classes
-    if (!method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }) {
+  private fun Method.isKotlinMethodInvokingDefaultImpls(): Boolean {
+    // If this method doesn't have any bytecode, it will be skipped
+    if (instructions.isEmpty()) {
       return false
     }
 
-    // If this method doesn't have any bytecode, it will be skipped
-    if (instructions.isEmpty()) {
+    // filter non-Kotlin classes
+    if (containingClassFile.annotations.none { it.desc == "Lkotlin/Metadata;" }) {
       return false
     }
 
@@ -91,13 +91,13 @@ object KotlinMethods {
     }
 
     val expectedOpcodes = (
-      3 // aload this + invokestatic + (return or areturn)
-        + method.methodParameters.size // aload for each parameter
+      3 // ALOAD this + INVOKESTATIC + (RETURN or ARETURN)
+        + methodParameters.size // ALOAD for each parameter
       )
 
     if (candidateOpcodes.size != expectedOpcodes
-      || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this
-      || candidateOpcodes.slice(1..method.methodParameters.size).any() { it.opcode != Opcodes.ALOAD } // parameters
+      || candidateOpcodes[0].opcode != Opcodes.ALOAD // ALOAD `this`
+      || candidateOpcodes.slice(1..methodParameters.size).any { it.opcode != Opcodes.ALOAD } // parameters
       || candidateOpcodes[candidateOpcodes.lastIndex - 1].opcode != Opcodes.INVOKESTATIC
       || candidateOpcodes.last().opcode !in intArrayOf(
         Opcodes.RETURN,
@@ -112,7 +112,7 @@ object KotlinMethods {
     }
 
     val methodInsnNode = candidateOpcodes[candidateOpcodes.lastIndex - 1] as MethodInsnNode
-    if (methodInsnNode.name != method.name || !methodInsnNode.owner.endsWith("\$DefaultImpls")) {
+    if (methodInsnNode.name != name || !methodInsnNode.owner.endsWith("\$DefaultImpls")) {
       return false
     }
 
@@ -130,7 +130,7 @@ object KotlinMethods {
     // class C : B
     // ```
     // `C.foo` will have a call to `B$DefaultImpls.foo`.
-    val isAParent = method.containingClassFile.interfaces.any {
+    val isAParent = containingClassFile.interfaces.any {
       it == actualKotlinOwner
     }
     if (!isAParent) {
