@@ -61,38 +61,34 @@ object KotlinMethods {
   }
 
   private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
-    // filter non kotlin classes
+    // filter non-Kotlin classes
     if (!method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }) {
       return false
     }
 
-    // Sanity check : if the method does not have bytecode
-    // this heuristic cannot run
+    // If this method doesn't have any bytecode, it will be skipped
     if (instructions.isEmpty()) {
       return false
     }
 
-    // skip non opcodes, and kotlin intrinsics on arguments
+    // Skip non-opcodes, and Kotlin intrinsics on arguments
     val candidateOpcodes = mutableListOf<AbstractInsnNode>()
+    val instructionCount = instructions.size
+
     var i = 0
-    do {
-      val currentInsnNode = instructions[i]
-      if (currentInsnNode.opcode == -1) {
+    while (i < instructionCount) {
+      val instruction = instructions[i]
+      if (instruction.opcode == -1) {
+        i++
         continue
       }
-
-      // Drop kotlin Intrinsics
-      if (currentInsnNode.opcode == Opcodes.ALOAD
-        && currentInsnNode.next?.opcode == Opcodes.LDC
-        && (currentInsnNode.next?.next?.opcode == Opcodes.INVOKESTATIC
-          && (currentInsnNode.next?.next as MethodInsnNode).owner == "kotlin/jvm/internal/Intrinsics")) {
-        i += 2
+      if (instruction.isKotlinIntrinsic()) {
+        i += 3 // Skip ALOAD, LDC, and INVOKESTATIC
         continue
       }
-
-      candidateOpcodes.add(currentInsnNode)
-    } while (++i < instructions.size)
-
+      candidateOpcodes += instruction
+      i++
+    }
 
     val expectedOpcodes = (
       3 // aload this + invokestatic + (return or areturn)
@@ -143,5 +139,12 @@ object KotlinMethods {
 
     // The method is a kotlin default method
     return true
+  }
+
+  private fun AbstractInsnNode.isKotlinIntrinsic(): Boolean {
+    return opcode == Opcodes.ALOAD
+      && next?.opcode == Opcodes.LDC
+      && next?.next?.opcode == Opcodes.INVOKESTATIC
+      && (next?.next as MethodInsnNode).owner == "kotlin/jvm/internal/Intrinsics"
   }
 }
