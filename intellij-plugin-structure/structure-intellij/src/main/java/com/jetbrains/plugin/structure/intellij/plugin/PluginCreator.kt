@@ -192,7 +192,7 @@ internal class PluginCreator private constructor(
   internal val resolvedProblems: List<PluginProblem>
     get() = problemResolver.classify(plugin, problems)
 
-  fun addModuleDescriptor(moduleName: String, configurationFile: String, moduleCreator: PluginCreator) {
+  fun addModuleDescriptor(moduleName: String, loadingRule: ModuleLoadingRule, configurationFile: String, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       // Content module should be in v2 model
@@ -200,7 +200,7 @@ internal class PluginCreator private constructor(
         val module = pluginCreationResult.plugin
 
         plugin.addDependencies(module)
-        plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, module.dependencies, module, configurationFile))
+        plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, loadingRule, module.dependencies, module, configurationFile))
         plugin.definedModules.add(moduleName)
 
         mergeContent(module)
@@ -210,14 +210,14 @@ internal class PluginCreator private constructor(
     }
   }
 
-  internal fun addModuleDescriptor(moduleReference: InlineModule, moduleDescriptorResource: DescriptorResource, moduleCreator: PluginCreator) {
+  internal fun addModuleDescriptor(moduleReference: InlineModule, loadingRule: ModuleLoadingRule, moduleDescriptorResource: DescriptorResource, moduleCreator: PluginCreator) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val moduleName = moduleReference.name
       val module = pluginCreationResult.plugin
 
       plugin.addDependencies(module)
-      plugin.modulesDescriptors.add(ModuleDescriptor.of(moduleName, module, moduleDescriptorResource))
+      plugin.modulesDescriptors.add(ModuleDescriptor.of(moduleName, loadingRule, module, moduleDescriptorResource))
       plugin.definedModules.add(moduleName)
 
       mergeContent(module)

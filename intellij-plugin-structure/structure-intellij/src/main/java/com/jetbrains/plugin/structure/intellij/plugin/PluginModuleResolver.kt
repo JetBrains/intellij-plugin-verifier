@@ -15,12 +15,13 @@ internal class PluginModuleResolver {
     return modules.filter { it.moduleName != null }
       .map {
         val name = it.moduleName!!
+        val loadingRule = ModuleLoadingRule.create(it.loadingRule)
         if (it.value.isNullOrBlank()) {
           val configFile = "../${name.replace("/", ".")}.xml"
-          Module.FileBasedModule(name, configFile)
+          Module.FileBasedModule(name, loadingRule, configFile)
         } else {
           val cDataContent = it.value!!
-          Module.InlineModule(name, cDataContent)
+          Module.InlineModule(name, loadingRule, cDataContent)
         }
       }
       .toList()

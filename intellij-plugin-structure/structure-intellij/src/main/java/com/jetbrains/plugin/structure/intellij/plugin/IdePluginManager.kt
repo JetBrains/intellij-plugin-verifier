@@ -370,14 +370,14 @@ class IdePluginManager private constructor(
               currentPlugin,
               problemResolver
             )
-            currentPlugin.addModuleDescriptor(module.name, configFile, moduleCreator)
+            currentPlugin.addModuleDescriptor(module.name, module.loadingRule, configFile, moduleCreator)
           }
 
           is InlineModule -> {
             val moduleDescriptorResource = getDescriptorResource(module, pluginFile, currentPlugin.descriptorPath)
             val moduleCreator =
               loadModuleFromDescriptorResource(module.name, moduleDescriptorResource, currentPlugin, resourceResolver)
-            currentPlugin.addModuleDescriptor(module, moduleDescriptorResource, moduleCreator)
+            currentPlugin.addModuleDescriptor(module, module.loadingRule, moduleDescriptorResource, moduleCreator)
           }
         }
       }

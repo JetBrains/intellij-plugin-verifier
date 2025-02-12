@@ -9,5 +9,6 @@ import javax.xml.bind.annotation.XmlValue;
 
 public class PluginModuleBean {
   @XmlAttribute(name = "name") public String moduleName;
+  @XmlAttribute(name = "loading") public String loadingRule;
   @XmlValue public String value;
 }

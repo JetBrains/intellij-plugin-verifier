@@ -4,11 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-sealed class Module(open val name: String) {
-  data class InlineModule(override val name: String, val textContent: String) : Module(name) {
+sealed class Module(open val name: String, open val loadingRule: ModuleLoadingRule) {
+  data class InlineModule(override val name: String, override val loadingRule: ModuleLoadingRule, val textContent: String) : Module(name, loadingRule) {
     override fun toString(): String = "$name (CDATA module, ${textContent.length} characters)"
   }
-  data class FileBasedModule(override val name: String, val configFile: String) : Module(name) {
+  data class FileBasedModule(override val name: String, override val loadingRule: ModuleLoadingRule, val configFile: String) : Module(name, loadingRule) {
     override fun toString(): String = "$name (file module, $configFile)"
   }
 }
