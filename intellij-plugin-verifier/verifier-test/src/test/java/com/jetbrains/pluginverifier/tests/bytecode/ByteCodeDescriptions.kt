@@ -10,12 +10,19 @@ import org.objectweb.asm.tree.TypeInsnNode
  * It is used mainly in IDE debugging to better describe ASM nodes.
  */
 @Suppress("unused")
-fun TypeInsnNode.toDebugString(): String = when (opcode) {
-  NEW -> "NEW $desc"
-  ANEWARRAY -> "ANEWARRAY $desc"
-  CHECKCAST -> "CHECKLIST $desc"
-  INSTANCEOF -> "INSTANCEOF $desc"
-  else -> toString()
+fun TypeInsnNode.toDebugString(): String {
+  return try {
+    when (opcode) {
+      NEW -> "NEW $desc"
+      ANEWARRAY -> "ANEWARRAY $desc"
+      CHECKCAST -> "CHECKLIST $desc"
+      INSTANCEOF -> "INSTANCEOF $desc"
+      DUP -> "DUP"
+      else -> toString()
+    }
+  } catch (e: Exception) {
+    return e.message.toString()
+  }
 }
 
 /**

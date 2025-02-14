@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
   alias(sharedLibs.plugins.kotlin.jvm)
   `maven-publish`
@@ -25,6 +27,15 @@ allprojects {
   java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
+  }
+
+
+  tasks.withType<KotlinCompile> {
+    kotlinOptions {
+      jvmTarget = "11"
+      apiVersion = "1.4"
+      languageVersion = "1.4"
+    }
   }
 }
 
