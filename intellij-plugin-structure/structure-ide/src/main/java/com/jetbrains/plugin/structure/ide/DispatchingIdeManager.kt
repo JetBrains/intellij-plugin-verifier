@@ -8,7 +8,7 @@ class DispatchingIdeManager(configuration: IdeManagerConfiguration = IdeManagerC
 
   private val productInfoBasedIdeManager = ProductInfoBasedIdeManager(
     missingLayoutFileMode = configuration.missingLayoutFileMode,
-    additionalPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("AI")),
+    additionalPluginReader = UndeclaredInLayoutPluginReader(  supportedProductCodes = setOf("AI", "CL")),
   )
 
   override fun createIde(idePath: Path): Ide = createIde(idePath, version = null)
