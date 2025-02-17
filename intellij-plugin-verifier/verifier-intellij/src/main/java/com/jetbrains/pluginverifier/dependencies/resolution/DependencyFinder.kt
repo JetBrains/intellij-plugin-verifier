@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder.Result.DetailsProvided
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import java.io.Closeable
 
@@ -25,6 +24,12 @@ interface DependencyFinder {
    * The possible results are represented as instances of the [Result].
    */
   fun findPluginDependency(dependencyId: String, isModule: Boolean): Result
+
+  /**
+   * Finds a plugin or a module that corresponds to the [dependency].
+   * The possible results are represented as instances of the [Result].
+   */
+  fun findPluginDependency(dependency: PluginDependency): Result
 
   /**
    * Represents possible results of the [findPluginDependency].

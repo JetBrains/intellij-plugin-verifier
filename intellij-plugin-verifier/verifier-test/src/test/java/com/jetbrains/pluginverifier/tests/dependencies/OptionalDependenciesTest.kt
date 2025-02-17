@@ -1,9 +1,14 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.*
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
@@ -118,6 +123,10 @@ class OptionalDependenciesTest {
           "missingOptionalPluginId" -> DependencyFinder.Result.NotFound("missingOptionalPluginId optional plugin is not found")
           else -> throw IllegalArgumentException("Unknown test dependency $dependencyId")
         }
+      }
+
+      override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+        return findPluginDependency(dependency.id, dependency.isModule)
       }
     }
 

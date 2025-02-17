@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.dependencies.resolution
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -36,6 +37,9 @@ class RepositoryDependencyFinder(
         convertResult(pluginVersionSelector.selectPluginVersion(dependencyId, pluginRepository))
       }
     }
+
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
+    findPluginDependency(dependency.id, dependency.isModule)
 
   private fun convertResult(selectResult: PluginVersionSelector.Result): DependencyFinder.Result =
     when (selectResult) {

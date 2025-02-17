@@ -114,7 +114,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       return registerMissingDependency(sameReason)
     }
 
-    return when (val result = dependencyFinder.findPluginDependency(depId.id, depId.isModule)) {
+    return when (val result = dependencyFinder.findPluginDependency(pluginDependency)) {
       is DependencyFinder.Result.FoundPlugin -> DepVertex(result.plugin, result)
       is DependencyFinder.Result.DetailsProvided -> {
         when (val cacheResult = result.pluginDetailsCacheResult) {
