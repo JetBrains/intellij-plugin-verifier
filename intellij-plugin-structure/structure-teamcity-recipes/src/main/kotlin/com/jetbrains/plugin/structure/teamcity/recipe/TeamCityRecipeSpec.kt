@@ -126,8 +126,8 @@ object TeamCityRecipeSpec {
     const val MAX_LENGTH = 50_000
   }
 
-  object RecipeStepParams {
-    const val NAME = "params"
+  object RecipeStepInputs {
+    const val NAME = "inputs"
   }
 
   object RecipeContainer {
