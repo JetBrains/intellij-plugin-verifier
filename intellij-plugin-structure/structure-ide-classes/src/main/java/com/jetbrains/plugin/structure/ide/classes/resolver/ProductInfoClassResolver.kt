@@ -46,7 +46,7 @@ class ProductInfoClassResolver(
     }
   }
 
-  private fun List<ClasspathableResolver>.resolveCorePlugin(): Map<String, NamedResolver> {
+  private fun List<KindedResolver>.resolveCorePlugin(): Map<String, NamedResolver> {
     val corePluginResolver = find { it.name == CORE_IDE_PLUGIN_ID } ?: return emptyMap()
     val resolvers = mutableMapOf<String, NamedResolver>()
 
@@ -67,7 +67,7 @@ class ProductInfoClassResolver(
     return resolvers
   }
 
-  private fun List<ClasspathableResolver>.resolveNonCoreAndNonProductModules(): Map<String, NamedResolver> {
+  private fun List<KindedResolver>.resolveNonCoreAndNonProductModules(): Map<String, NamedResolver> {
     return filter { it.kind != "productModuleV2" && it.name != CORE_IDE_PLUGIN_ID }
       .associateBy({ it.name }, { it.resolver })
   }
@@ -79,12 +79,12 @@ class ProductInfoClassResolver(
     addAll(resolvers.values)
   }.asResolver()
 
-  private fun resolveLayout(): List<ClasspathableResolver> =
+  private fun resolveLayout(): List<KindedResolver> =
     layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
       .map { it.layoutComponent }
       .map { layoutComponent ->
         if (layoutComponent is LayoutComponent.Classpathable) {
-          getClasspathableResolver(layoutComponent)
+          layoutComponent.toResolver()
         } else {
           LOG.debug("No classpath declared for '{}'. Skipping", layoutComponent)
           layoutComponent.toEmptyResolver()
@@ -100,8 +100,8 @@ class ProductInfoClassResolver(
 
   fun getLayoutComponentResolver(name: String): NamedResolver? = resolvers[name]
 
-  private fun LayoutComponent.toEmptyResolver(): ClasspathableResolver {
-    return ClasspathableResolver(kind, NamedResolver(name, EmptyNamedResolver(name)))
+  private fun LayoutComponent.toEmptyResolver(): KindedResolver {
+    return KindedResolver(kind, NamedResolver(name, EmptyNamedResolver(name)))
   }
 
   override val readMode: ReadMode get() = resolverConfiguration.readMode
@@ -134,18 +134,19 @@ class ProductInfoClassResolver(
       return NamedResolver("bootClassPathJarNames", bootResolver)
     }
 
-  private fun <C> getClasspathableResolver(layoutComponent: C): ClasspathableResolver
+  private fun <C> C.toResolver(): KindedResolver
     where C : LayoutComponent.Classpathable, C : LayoutComponent {
-    val itemJarResolvers = layoutComponent.getClasspath().map { jarPath: Path ->
-      val fullyQualifiedJarFile = ide.idePath.resolve(jarPath)
+    val itemJarResolvers = getClasspath().map { jarPath: Path ->
+      val fullyQualifiedJarFile = this@ProductInfoClassResolver.ide.idePath.resolve(jarPath)
       NamedResolver(
-        layoutComponent.name + "#" + jarPath,
-        JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide))
+        "$name#$jarPath",
+        JarFileResolver(fullyQualifiedJarFile,
+          this@ProductInfoClassResolver.readMode, IdeLibDirectory(this@ProductInfoClassResolver.ide))
       )
     }
-    return ClasspathableResolver(
-      layoutComponent.kind,
-      NamedResolver(layoutComponent.name, CompositeResolver.create(itemJarResolvers, layoutComponent.name))
+    return KindedResolver(
+      kind,
+      NamedResolver(name, CompositeResolver.create(itemJarResolvers, name))
     )
   }
 
@@ -200,7 +201,7 @@ class ProductInfoClassResolver(
       }
   }
 
-  private data class ClasspathableResolver(val kind: String, val resolver: NamedResolver) {
+  private data class KindedResolver(val kind: String, val resolver: NamedResolver) {
     val name: String get() = resolver.name
 
     override fun toString(): String {
