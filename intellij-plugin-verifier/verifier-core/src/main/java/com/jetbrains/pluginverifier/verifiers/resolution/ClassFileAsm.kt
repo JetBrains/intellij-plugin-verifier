@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.InnerClassNode
 
 class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
   override val location
@@ -64,6 +65,11 @@ class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOri
         return outerClass
       }
       return asmNode.innerClasses.find { it.name == name }?.outerName
+    }
+
+  override val innerClasses: List<InnerClassNode>
+    get() {
+      return asmNode.innerClasses
     }
 
   override val annotations

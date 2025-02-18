@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -7,6 +10,8 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 
 object KotlinMethods {
   private const val CAPACITY = 100L
@@ -61,14 +66,15 @@ object KotlinMethods {
   }
 
   private fun Method.isKotlinMethodInvokingDefaultImpls(method: Method): Boolean {
-    // filter non kotlin classes
-    if (!method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }) {
-      return false
-    }
-
-    // Sanity check : if the method does not have bytecode
-    // this heuristic cannot run
-    if (instructions.isEmpty()) {
+    if (
+      // filter non kotlin classes
+      !method.containingClassFile.annotations.any { it.desc == "Lkotlin/Metadata;" }
+      // Sanity check: if the method does not have bytecode, or it's a constructor or class initializer,
+      // this heuristic cannot run
+      || instructions.isEmpty()
+      || method.isConstructor
+      || method.isClassInitializer
+      ) {
       return false
     }
 
@@ -93,24 +99,28 @@ object KotlinMethods {
       candidateOpcodes.add(currentInsnNode)
     } while (++i < instructions.size)
 
+    val isDefaultCallingDefaultOfParentInterface = isDefaultCallingDefaultOfParentInterface(method, candidateOpcodes) // checkcast this
 
     val expectedOpcodes = (
-      3 // aload this + invokestatic + (return or areturn)
-        + method.methodParameters.size // aload for each parameter
+      if (isDefaultCallingDefaultOfParentInterface)
+        4 // aload this + checkcast + invokestatic + (return or areturn)
+          + method.methodParameters.size // aload for each parameter
+          - 1 // Skip the first parameter, it's `this` or the interface (this)
+      else
+        3 // aload this + invokestatic + (return or areturn)
+          + method.methodParameters.size // aload for each parameter
       )
 
+    val startParameterIndexExcludingExcludingSelf = if (isDefaultCallingDefaultOfParentInterface)
+      2 // before: aload this + checkcast
+    else
+      1 // before: aload this
+
     if (candidateOpcodes.size != expectedOpcodes
-      || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this
-      || candidateOpcodes.slice(1..method.methodParameters.size).any() { it.opcode != Opcodes.ALOAD } // parameters
+      || candidateOpcodes[0].opcode != Opcodes.ALOAD // aload this, always a reference
+      || candidateOpcodes.slice(startParameterIndexExcludingExcludingSelf..method.methodParameters.size).any() { it.opcode !in loadOpCodes } // parameters
       || candidateOpcodes[candidateOpcodes.lastIndex - 1].opcode != Opcodes.INVOKESTATIC
-      || candidateOpcodes.last().opcode !in intArrayOf(
-        Opcodes.RETURN,
-        Opcodes.ARETURN,
-        Opcodes.DRETURN,
-        Opcodes.FRETURN,
-        Opcodes.IRETURN,
-        Opcodes.LRETURN
-      )
+      || candidateOpcodes.last().opcode !in returnOpCodes
     ) {
       return false
     }
@@ -137,11 +147,66 @@ object KotlinMethods {
     val isAParent = method.containingClassFile.interfaces.any {
       it == actualKotlinOwner
     }
-    if (!isAParent) {
+    @Suppress("RedundantIf") // for reading clarity
+    if (!isAParent && !isDefaultCallingDefaultOfParentInterface) {
       return false
     }
 
     // The method is a kotlin default method
     return true
   }
+
+  /**
+   * Checks whether this method is forwarding to the DefaultImpls of the parent interface.
+   *
+   * In this case, Kotlin generates a default implementation `MyInterface$DefaultImpls`
+   * that forward the call to a `ParentInterface$DefaultImpls` of the parent interface.
+   * This forwarded is **static** and checks the type of the first parameter if
+   * it matches the parent interface.
+   *
+   * ```
+   * // access flags 0x9
+   * public static topInternal(Lmock/plugin/internal/defaultMethod/NoInternalTypeUsageInterface;)Linternal/defaultMethod/AnInternalType;
+   * @Lorg/jetbrains/annotations/Nullable;() // invisible
+   *   // annotable parameter count: 1 (invisible)
+   *   @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+   *  L0
+   *   LINENUMBER 5 L0
+   *   ALOAD 0
+   *   CHECKCAST internal/defaultMethod/InterfaceWithDefaultMethodUsingInternalAPI
+   *   INVOKESTATIC internal/defaultMethod/InterfaceWithDefaultMethodUsingInternalAPI$DefaultImpls.topInternal (Linternal/defaultMethod/InterfaceWithDefaultMethodUsingInternalAPI;)Linternal/defaultMethod/AnInternalType;
+   *  L1
+   *   LINENUMBER 11 L1
+   *   ARETURN
+   *  L2
+   *   LOCALVARIABLE $this Lmock/plugin/internal/defaultMethod/NoInternalTypeUsageInterface; L0 L2 0
+   *   MAXSTACK = 1
+   *   MAXLOCALS = 1
+   * ```
+   */
+  private fun isDefaultCallingDefaultOfParentInterface(method: Method, candidateOpcodes: MutableList<AbstractInsnNode>) =
+    method.isStatic
+      && candidateOpcodes[0].opcode == Opcodes.ALOAD
+      && (candidateOpcodes[0] as VarInsnNode).`var` == 0 // aload 0
+      && candidateOpcodes[1].opcode == Opcodes.CHECKCAST
+       && method.containingClassFile.innerClasses.any {
+         (candidateOpcodes[1] as TypeInsnNode).desc == it.outerName
+       }
+
+  private val returnOpCodes = intArrayOf(
+    Opcodes.RETURN,
+    Opcodes.ARETURN,
+    Opcodes.DRETURN,
+    Opcodes.FRETURN,
+    Opcodes.IRETURN,
+    Opcodes.LRETURN
+  )
+
+  private val loadOpCodes = intArrayOf(
+    Opcodes.ALOAD,
+    Opcodes.ILOAD,
+    Opcodes.DLOAD,
+    Opcodes.FLOAD,
+    Opcodes.ILOAD,
+  )
 }
