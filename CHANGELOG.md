@@ -8,6 +8,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Improve cache performance to prevent OOM in large runs ([#1217](https://github.com/JetBrains/intellij-plugin-verifier/pull/1217))
+
 ### Fixed
 
 ## 1.381 - 2024-11-27
