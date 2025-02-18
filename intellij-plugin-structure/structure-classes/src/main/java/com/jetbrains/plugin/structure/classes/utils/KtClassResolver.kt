@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.Metadata
 import org.objectweb.asm.tree.AnnotationNode
@@ -14,16 +15,14 @@ private typealias Signature = String
 private val LOG: Logger = LoggerFactory.getLogger(KtClassResolver::class.java)
 
 class KtClassResolver {
-  private val cache = HashMap<Signature, KtClassNode>()
+  private val cache = Caffeine.newBuilder()
+    .maximumSize(16_384)
+    .build<Signature, KtClassNode>()
 
   operator fun get(classNode: ClassNode): KtClassNode? {
     val signature: Signature = classNode.signature ?: return classNode.ktClassNode
-    return if (signature in cache) {
-      cache[signature]
-    } else {
-      classNode.ktClassNode?.also {
-        cache[signature] = it
-      }
+    return cache.get(signature) {
+      classNode.ktClassNode
     }
   }
 
