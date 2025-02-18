@@ -83,8 +83,7 @@ class DefaultClassResolverProvider(
 
   private fun createBundledPluginResolver(pluginDependency: PluginDetails): Resolver? {
     return if (ideDescriptor.ide is ProductInfoBasedIde && ideDescriptor.ideResolver is ProductInfoClassResolver) {
-      ideDescriptor.ideResolver.layoutComponentResolvers
-        .firstOrNull { resolver -> resolver.name == pluginDependency.pluginInfo.pluginId }
+      ideDescriptor.ideResolver.getLayoutComponentResolver(pluginDependency.pluginInfo.pluginId)
     } else null
   }
 

@@ -27,7 +27,9 @@ class PluginDependencyFilteredResolver(
     return dependenciesProvider
       .getDependencies(plugin)
       .map { dependency ->
-        productInfoClassResolver.layoutComponentResolvers.firstOrNull { component -> dependency.matches(component.name) }
+        productInfoClassResolver.layoutComponentNames.firstOrNull { dependency.matches(it) }
+          ?.let { productInfoClassResolver.getLayoutComponentResolver(it) }
+          ?.takeIf { productInfoClassResolver.hasNonEmptyResolver(it.name) }
           ?: productInfoClassResolver.bootClasspathResolver
       }
   }

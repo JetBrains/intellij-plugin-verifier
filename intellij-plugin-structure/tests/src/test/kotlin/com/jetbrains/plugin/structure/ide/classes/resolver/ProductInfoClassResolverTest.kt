@@ -3,16 +3,24 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
+import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes.ACC_PUBLIC
+import org.objectweb.asm.Opcodes.V1_8
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
 import java.util.zip.ZipOutputStream
 
 private const val IDEA_ULTIMATE_2024_2 = "IU-242.18071.24"
@@ -34,29 +42,57 @@ class ProductInfoClassResolverTest {
       ideRoot.resolve("build.txt").writeText(IDEA_ULTIMATE_2024_2)
 
       createEmptyIdeFiles()
+      createEmptyJarClassFiles()
     }
   }
 
   @Test
   fun `resolver is created from an IDE instance`() {
-    val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot)
+    val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot, bundledPlugins = listOf(corePlugin()))
     val resolver = ProductInfoClassResolver.of(ide)
-    with(resolver.layoutComponentResolvers.map { it.name }) {
+
+    assertTrue(resolver.allPackages.isNotEmpty())
+
+    with(resolver.allPackages) {
       assertEquals(5, size)
+      assertTrue(contains("com"))
+      assertTrue(contains("com/intellij/execution/process"))
+      assertTrue(contains("com/intellij/execution/process/elevation"))
+      assertTrue(contains("com/intellij"))
+      assertTrue(contains("com/intellij/execution"))
+    }
+
+    with(resolver.layoutComponentNames) {
+      assertEquals(7, size)
       assertEquals(
-        listOf(
+        setOf(
           "Git4Idea",
           "com.intellij",
+          "com.intellij.modules.all",
+          "com.intellij.platform.ide.provisioner",
           "intellij.copyright.vcs",
           "intellij.execution.process.elevation",
           "intellij.java.featuresTrainer"
-        ), this
+        ), this.toSet()
       )
     }
     with(resolver.bootClasspathResolver) {
       assertNotNull(this)
       assertTrue(delegateResolver is CompositeResolver)
     }
+
+    val elevationLogger = resolver.resolveClass("com/intellij/execution/process/elevation/ElevationLogger")
+    assertTrue(elevationLogger is ResolutionResult.Found)
+
+    val elevationResolver = resolver.getLayoutComponentResolver("intellij.execution.process.elevation")
+    assertNotNull(elevationResolver)
+    elevationResolver!!
+
+    val ideProvisioner = resolver.getLayoutComponentResolver("com.intellij.platform.ide.provisioner")
+    assertNotNull(ideProvisioner)
+    ideProvisioner!!
+
+
   }
 
   @Test
@@ -82,10 +118,43 @@ class ProductInfoClassResolverTest {
       }
   }
 
+  private fun createEmptyJarClassFiles() {
+    ideClasses.forEach { (jarFile, classFileNames) ->
+      val jarPath: Path = ideRoot.resolve(jarFile)
+      JarOutputStream(Files.newOutputStream(jarPath)).use { jarOut ->
+        classFileNames.forEach { classFileName ->
+          val jarEntry = JarEntry(classFileName)
+
+          jarOut.putNextEntry(jarEntry)
+          jarOut.write(createEmptyClass(classFileName.removeSuffix(".class")))
+          jarOut.closeEntry()
+        }
+      }
+    }
+  }
+
+  private fun createEmptyClass(fullyQualifiedBinaryName: String): ByteArray {
+    return ClassWriter(0).apply {
+      visit(
+        V1_8,
+        ACC_PUBLIC, // Class access modifier
+        fullyQualifiedBinaryName, // Full binary name (package/class)
+        null, // Signature (optional, used for generics - null for now)
+        "java/lang/Object", // Superclass (default is java.lang.Object)
+        null // Interfaces (null as there are none)
+      )
+      visitEnd()
+    }.toByteArray()
+  }
+
   private fun Path.createEmptyZip() {
     ZipOutputStream(Files.newOutputStream(this)).use {}
   }
 
+  private fun corePlugin(): IdePlugin = MockIdePlugin(
+    pluginId = "com.intellij",
+    definedModules = setOf("com.intellij.platform.ide.provisioner")
+  )
 
   private val ideFiles = mapOf<PluginId, List<String>>(
     // boot classpath, generally mapped to "bootClassPathJarNames" from product-info.json
@@ -159,6 +228,13 @@ class ProductInfoClassResolverTest {
       "plugins/java/lib/modules/intellij.java.featuresTrainer.jar"
     )
   )
+
+  private val ideClasses = mapOf(
+    "lib/modules/intellij.execution.process.elevation.jar" to listOf(
+      "com/intellij/execution/process/elevation/ElevationLogger.class",
+    )
+  )
+
 }
 
 private typealias PluginId = String
