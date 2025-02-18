@@ -92,6 +92,10 @@
       "kind": "pluginAlias"
     },
     {
+      "name": "com.intellij.platform.ide.provisioner",
+      "kind": "pluginAlias"
+    },
+    {
       "name": "intellij.copyright.vcs",
       "kind": "moduleV2"
     },
