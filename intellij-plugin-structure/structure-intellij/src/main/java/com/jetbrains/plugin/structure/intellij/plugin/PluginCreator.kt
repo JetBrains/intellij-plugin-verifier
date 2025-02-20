@@ -653,6 +653,7 @@ internal class PluginCreator private constructor(
     val pluginBeanValidator = PluginBeanValidator()
 
     val validationContext = ValidationContext(descriptorPath, problemResolver)
+
     val parsingResult = pluginDescriptorParser.parse(
       descriptorPath,
       pluginFileName,
@@ -669,9 +670,10 @@ internal class PluginCreator private constructor(
     val (document, bean) = parsingResult
 
     pluginBeanValidator.validate(bean, validationContext, validateDescriptor)
-    val validationResult = validationContext.getReclassifiedProblems {
+    val validationResult = validationContext.getResult {
       newInvalidPlugin(bean, document)
     }
+
     if (validationResult is ValidationResult.Invalid) {
       invalidPlugin = validationResult.invalidPlugin
       validationResult.problems.forEach { registerProblem(it) }

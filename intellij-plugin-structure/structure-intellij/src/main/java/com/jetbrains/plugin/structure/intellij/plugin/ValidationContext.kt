@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
-import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult.Valid
+import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult.*
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import org.slf4j.LoggerFactory
@@ -23,23 +23,17 @@ class ValidationContext(val descriptorPath: String, val problemResolver: PluginC
     registerProblem(problem)
   }
 
-  fun getReclassifiedProblems(invalidPluginProvider: () -> InvalidPlugin): ValidationResult {
+  fun getResult(invalidPluginProvider: () -> InvalidPlugin): ValidationResult {
     if (problems.isEmpty()) {
       return Valid
     }
     val invalidPlugin = invalidPluginProvider()
-    val reclassifiedProblems = problemResolver
-      .classify(invalidPlugin, problems)
-
-    if (reclassifiedProblems.isEmpty()) {
-      return Valid
+    val remappedProblems = problemResolver.classify(invalidPlugin, problems)
+    return when {
+      remappedProblems.isEmpty() -> Valid
+      remappedProblems.hasErrors() -> Invalid(invalidPlugin, remappedProblems)
+      else -> ValidWithWarnings(remappedProblems)
     }
-
-    if (reclassifiedProblems.hasErrors()) {
-      return ValidationResult.Invalid(invalidPlugin, reclassifiedProblems)
-    }
-
-    return ValidationResult.ValidWithWarnings(reclassifiedProblems)
   }
 
   private fun List<PluginProblem>.hasErrors(): Boolean = any { it.level == ERROR }
