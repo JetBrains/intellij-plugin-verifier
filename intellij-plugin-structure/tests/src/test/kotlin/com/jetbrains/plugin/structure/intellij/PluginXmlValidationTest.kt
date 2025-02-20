@@ -12,6 +12,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
@@ -20,6 +22,8 @@ import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginV
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.junit.Assert.*
 import org.junit.Rule
@@ -470,6 +474,39 @@ class PluginXmlValidationTest {
       assertEquals(2, size)
       assertTrue(all { !it.isOptional })
     }
+  }
+
+  @Test
+  fun name() {
+    val intellijProblemResolver = IntelliJPluginCreationResultResolver()
+
+    val mgr = JsonUrlProblemLevelRemappingManager.fromClassPathJson()
+    val levelRemapping = mgr.getLevelRemapping(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
+    val resolver = JetBrainsPluginCreationResultResolver(intellijProblemResolver, levelRemapping)
+
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar").toPath()) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin package="com.intellij.grazie.pro" require-restart="true">
+              <idea-version since-build="242.20224" />
+              <product-descriptor code="GZL" release-date="20240626" release-version="03" optional="true" />
+              <version>0.3.359</version>
+              <id>com.intellij.grazie.pro</id>
+              <name>Grazie Pro</name>
+              <vendor>JetBrains</vendor>
+              <dependencies>
+                <module name="intellij.dev.psiViewer" />
+                <plugin id="org.intellij.plugins.markdown" />
+              </dependencies>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val plugin = IdePluginManager.createManager().createPlugin(pluginFile, validateDescriptor = true, problemResolver = resolver)
+
+    println(plugin)
   }
 
   private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {

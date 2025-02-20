@@ -2,7 +2,10 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
+import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -13,7 +16,7 @@ import java.nio.file.Path
  * Such placeholder class can be used in the verification engines to filter out specific verification rules
  * despite the incomplete or erroneous metadata from plugin descriptor.
  */
-class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin {
+class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, StructurallyValidated, ProblemRegistrar {
   override var pluginId: String? = null
   override var pluginName: String? = null
   override var pluginVersion: String? = null
@@ -46,4 +49,27 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin {
   override val kotlinPluginMode: KotlinPluginMode = Implicit
   override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean = false
   override val hasDotNetPart: Boolean = false
+  override val problems: MutableList<PluginProblem> = mutableListOf()
+
+  override fun registerProblem(problem: PluginProblem) {
+    problems += problem
+  }
+}
+
+/**
+ * Create an instance of an invalid plugin with the most basic information.
+ *
+ * This allows creating a bare-bones plugin with invalid data.
+ * Plugin problems associated with this invalid data might be reclassified by the [problem resolver](#problemResolver).
+ */
+internal fun newInvalidPlugin(bean: PluginBean, document: Document): InvalidPlugin {
+  return InvalidPlugin(document).apply {
+    pluginId = bean.id?.trim()
+    pluginName = bean.name?.trim()
+    bean.vendor?.let {
+      vendor = if (it.name != null) it.name.trim() else null
+      vendorUrl = it.url
+      vendorEmail = it.email
+    }
+  }
 }
