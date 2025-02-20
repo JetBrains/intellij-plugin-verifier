@@ -56,7 +56,7 @@ class ParseValidFullRecipeTest(
         kotlin-script: print("hi")
       - name: step 3
         uses: recipe/name@1.2.3
-        params:
+        inputs:
           text-input: passed text parameter value
           boolean-input: true
           select-input: first select option
