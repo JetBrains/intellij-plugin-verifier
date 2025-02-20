@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
@@ -27,7 +31,9 @@ class PluginDependencyFilteredResolver(
     return dependenciesProvider
       .getDependencies(plugin)
       .map { dependency ->
-        productInfoClassResolver.layoutComponentResolvers.firstOrNull { component -> dependency.matches(component.name) }
+        productInfoClassResolver.layoutComponentNames.firstOrNull { dependency.matches(it) }
+          ?.let { productInfoClassResolver.getLayoutComponentResolver(it) }
+          ?.takeIf { productInfoClassResolver.hasNonEmptyResolver(it.name) }
           ?: productInfoClassResolver.bootClasspathResolver
       }
   }

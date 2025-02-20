@@ -33,6 +33,9 @@ abstract class BasePluginTest {
   protected val ideaPath: Path
     get() = temporaryFolder.newFolder("idea").toPath()
 
+  protected fun newJar(name: String): Path =
+    temporaryFolder.newFile("$name.jar").toPath()
+
   protected fun buildPluginWithResult(problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
                                       pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationResult<IdePlugin> {
     val pluginFile = buildZipFile(pluginJarPath, pluginContentBuilder)
@@ -147,7 +150,8 @@ abstract class BasePluginTest {
                   <id>com.intellij</id>
                   <name>IDEA CORE</name>
                   <version>1.0</version>
-                  <module value="com.intellij.modules.all"/>                
+                  <module value="com.intellij.modules.all"/>   
+                  <module value="com.intellij.platform.ide.provisioner"/>
                 </idea-plugin>
                 """.trimIndent()
             }

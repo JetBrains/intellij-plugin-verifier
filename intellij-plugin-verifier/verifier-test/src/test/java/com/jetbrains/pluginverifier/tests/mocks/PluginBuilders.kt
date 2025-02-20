@@ -29,8 +29,9 @@ internal fun Path.buildIdePlugin(pluginContentBuilder: (ContentBuilder).() -> Un
  * that represents a shared functionality.
  *
  * @receiver a path where the IDE will reside, usually with a `idea` name.
+ * @param additionalPluginXmlContent additional raw XML content that will appear in the Core plugin descriptor.
  */
-internal fun Path.buildCoreIde(): Ide {
+internal fun Path.buildCoreIde(additionalPluginXmlContent: String = ""): Ide {
   val ideaDirectory = buildDirectory(directory = this) {
     file("build.txt", "IU-192.1")
     dir("lib") {
@@ -42,7 +43,8 @@ internal fun Path.buildCoreIde(): Ide {
                   <id>com.intellij</id>
                   <name>IDEA CORE</name>
                   <version>1.0</version>
-                  <module value="com.intellij.modules.platform"/>                
+                  <module value="com.intellij.modules.platform"/>    
+                  $additionalPluginXmlContent                              
                 </idea-plugin>
                 """.trimIndent()
           }

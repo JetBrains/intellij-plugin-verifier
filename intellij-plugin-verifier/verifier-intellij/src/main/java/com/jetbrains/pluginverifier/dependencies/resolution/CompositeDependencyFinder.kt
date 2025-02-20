@@ -1,8 +1,10 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.dependencies.resolution
+
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 
 /**
  * [DependencyFinder] that subsequently delegates the search
@@ -26,6 +28,13 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
     }
     return lastNotFound
       ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
+  }
+
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result {
+    return dependencyFinders.asSequence()
+      .map { it.findPluginDependency(dependency) }
+      .firstOrNull { it !is DependencyFinder.Result.NotFound }
+      ?: DependencyFinder.Result.NotFound("Dependency '$dependency' is not resolved. It was searched in the following locations: $presentableName")
   }
 
 }

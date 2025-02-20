@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.resolution
@@ -83,8 +83,7 @@ class DefaultClassResolverProvider(
 
   private fun createBundledPluginResolver(pluginDependency: PluginDetails): Resolver? {
     return if (ideDescriptor.ide is ProductInfoBasedIde && ideDescriptor.ideResolver is ProductInfoClassResolver) {
-      ideDescriptor.ideResolver.layoutComponentResolvers
-        .firstOrNull { resolver -> resolver.name == pluginDependency.pluginInfo.pluginId }
+      ideDescriptor.ideResolver.getLayoutComponentResolver(pluginDependency.pluginInfo.pluginId)
     } else null
   }
 

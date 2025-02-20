@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tests.mocks
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder.Result.NotFound
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -18,6 +19,9 @@ class RuleBasedDependencyFinder(private val ide: Ide, private val rules: List<Ru
       ?.toDependencyResolution()
       ?: NotFound("Dependency $dependencyId is not found by $presentableName")
   }
+
+  override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
+    findPluginDependency(dependency.id, dependency.isModule)
 
   private fun findRule(dependencyId: String): Rule? =
     rules.find { it.dependencyId == dependencyId }
