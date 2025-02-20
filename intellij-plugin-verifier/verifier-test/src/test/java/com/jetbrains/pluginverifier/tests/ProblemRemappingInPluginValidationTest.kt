@@ -6,8 +6,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
-import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
-import com.jetbrains.plugin.structure.intellij.problems.remapping.RemappingSet
 import junit.framework.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -17,10 +15,7 @@ class ProblemRemappingInPluginValidationTest : BasePluginTest() {
 
   @Before
   fun setUp() {
-    val levelRemapping = JsonUrlProblemLevelRemappingManager
-      .fromClassPathJson()
-      .getLevelRemapping(RemappingSet.JETBRAINS_PLUGIN_REMAPPING_SET)
-    problemRemapper = JetBrainsPluginCreationResultResolver(IntelliJPluginCreationResultResolver(), levelRemapping)
+    problemRemapper = JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
   }
 
   @Test
