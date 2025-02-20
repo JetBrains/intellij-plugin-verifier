@@ -297,24 +297,6 @@ internal class PluginCreator private constructor(
     }
   }
 
-  /**
-   * Create an instance of an invalid plugin with the most basic information.
-   *
-   * This allows creating a bare-bones plugin with invalid data.
-   * Plugin problems associated with this invalid data might be reclassified by the [problem resolver](#problemResolver).
-   */
-  private fun newInvalidPlugin(bean: PluginBean, document: Document): InvalidPlugin {
-    return InvalidPlugin(document).apply {
-      pluginId = bean.id?.trim()
-      pluginName = bean.name?.trim()
-      bean.vendor?.let {
-        vendor = if (it.name != null) it.name.trim() else null
-        vendorUrl = it.url
-        vendorEmail = it.email
-      }
-    }
-  }
-
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean, document: Document) {
     pluginName = bean.name?.trim()
     pluginId = bean.id?.trim() ?: pluginName
