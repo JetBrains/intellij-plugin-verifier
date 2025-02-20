@@ -10,47 +10,43 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.NotBoolean
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
-import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
-import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
-import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
-import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
-import com.jetbrains.plugin.structure.intellij.extractor.PluginBeanExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.ParseResult.Parsed
+import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
-import com.jetbrains.plugin.structure.intellij.problems.*
+import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
+import com.jetbrains.plugin.structure.intellij.problems.ElementAvailableOnlySinceNewerVersion
+import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
+import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
+import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
+import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
+import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
+import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUntilBuild
+import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
+import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
+import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
-import com.jetbrains.plugin.structure.intellij.xinclude.XIncluder
-import com.jetbrains.plugin.structure.intellij.xinclude.XIncluderException
 import org.jdom2.Document
 import org.jdom2.Element
-import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 internal class PluginCreator private constructor(
   val pluginFileName: String,
@@ -62,37 +58,15 @@ internal class PluginCreator private constructor(
   companion object {
     private val LOG = LoggerFactory.getLogger(PluginCreator::class.java)
 
-    private const val MAX_PRODUCT_CODE_LENGTH = 15
-    private const val MAX_VERSION_LENGTH = 64
-    private const val MAX_PROPERTY_LENGTH = 255
-    private const val MAX_LONG_PROPERTY_LENGTH = 65535
-
     private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 
-    private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
-    private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
-      "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm",
-      "WebStorm", "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
-    )
-    private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
-      "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
-    )
-
     val v2ModulePrefix = Regex("^intellij\\..*")
-
-    // \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-    @Suppress("RegExpSimplifiable")
-    private val latinSymbolsRegex = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
 
     private val json = jacksonObjectMapper()
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
     private val pluginModuleResolver = PluginModuleResolver()
-
-    private val pluginIdVerifier = PluginIdVerifier()
-    private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
-    private val pluginProductReleaseVersionVerifier = ProductReleaseVersionVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -116,11 +90,13 @@ internal class PluginCreator private constructor(
       document: Document,
       documentPath: Path,
       pathResolver: ResourceResolver
-    ): PluginCreator = createPlugin(pluginFileName, descriptorPath,
-                                    parentPlugin, validateDescriptor,
-                                    document, documentPath,
-                                    pathResolver,
-                                    IntelliJPluginCreationResultResolver())
+    ): PluginCreator = createPlugin(
+      pluginFileName, descriptorPath,
+      parentPlugin, validateDescriptor,
+      document, documentPath,
+      pathResolver,
+      IntelliJPluginCreationResultResolver()
+    )
 
     @JvmStatic
     fun createPlugin(
@@ -148,7 +124,8 @@ internal class PluginCreator private constructor(
       pathResolver: ResourceResolver,
       problemResolver: PluginCreationResultResolver
     ): PluginCreator {
-      val pluginCreator = PluginCreator(descriptorResource.artifactFileName, descriptorResource.fileName, parentPlugin, problemResolver)
+      val pluginCreator =
+        PluginCreator(descriptorResource.artifactFileName, descriptorResource.fileName, parentPlugin, problemResolver)
       pluginCreator.resolveDocumentAndValidateBean(
         document, descriptorResource.filePath, descriptorResource.fileName, pathResolver, validateDescriptor = true
       )
@@ -160,7 +137,11 @@ internal class PluginCreator private constructor(
       createInvalidPlugin(pluginFile.simpleName, descriptorPath, singleProblem)
 
     @JvmStatic
-    fun createInvalidPlugin(pluginFileName: String, descriptorPath: String, singleProblem: PluginProblem): PluginCreator {
+    fun createInvalidPlugin(
+      pluginFileName: String,
+      descriptorPath: String,
+      singleProblem: PluginProblem
+    ): PluginCreator {
       require(singleProblem.level == ERROR) { "Only ERROR problems are allowed here" }
       val pluginCreator = PluginCreator(pluginFileName, descriptorPath, null)
       pluginCreator.registerProblem(singleProblem)
@@ -173,8 +154,10 @@ internal class PluginCreator private constructor(
 
   internal val plugin = IdePluginImpl()
 
+  private var invalidPlugin: InvalidPlugin? = null
+
   private val problems: MutableList<PluginProblem>
-    get() = plugin.problems
+    get() = invalidPlugin?.problems ?: plugin.problems
 
   val pluginId: String?
     get() = plugin.pluginId ?: parentPlugin?.pluginId
@@ -183,16 +166,43 @@ internal class PluginCreator private constructor(
     get() = !hasErrors()
 
   val pluginCreationResult: PluginCreationResult<IdePlugin>
-    get() = problemResolver.resolve(plugin, problems)
+    get() {
+      val invalidPlugin = invalidPlugin
+      if (invalidPlugin != null) {
+        return PluginCreationFail(invalidPlugin.problems)
+      }
+
+      return problemResolver.resolve(resolvePlugin(), problems)
         .reassignStructureProblems()
         .add(telemetry)
+    }
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
   internal val resolvedProblems: List<PluginProblem>
-    get() = problemResolver.classify(plugin, problems)
+    get() = problemResolver.classify(resolvePlugin(), problems)
 
-  fun addModuleDescriptor(moduleName: String, loadingRule: ModuleLoadingRule, configurationFile: String, moduleCreator: PluginCreator) {
+  private fun hasErrors(): Boolean {
+    val invalidPlugin = invalidPlugin
+    if (invalidPlugin != null) {
+      return invalidPlugin.problems.isNotEmpty()
+    }
+
+    return problemResolver.classify(resolvePlugin(), problems).any {
+      it.level == ERROR
+    }
+  }
+
+  private fun resolvePlugin(): IdePlugin {
+    return invalidPlugin ?: plugin
+  }
+
+  fun addModuleDescriptor(
+    moduleName: String,
+    loadingRule: ModuleLoadingRule,
+    configurationFile: String,
+    moduleCreator: PluginCreator
+  ) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       // Content module should be in v2 model
@@ -200,7 +210,15 @@ internal class PluginCreator private constructor(
         val module = pluginCreationResult.plugin
 
         plugin.addDependencies(module)
-        plugin.modulesDescriptors.add(ModuleDescriptor(moduleName, loadingRule, module.dependencies, module, configurationFile))
+        plugin.modulesDescriptors.add(
+          ModuleDescriptor(
+            moduleName,
+            loadingRule,
+            module.dependencies,
+            module,
+            configurationFile
+          )
+        )
         plugin.definedModules.add(moduleName)
 
         mergeContent(module)
@@ -210,7 +228,12 @@ internal class PluginCreator private constructor(
     }
   }
 
-  internal fun addModuleDescriptor(moduleReference: InlineModule, loadingRule: ModuleLoadingRule, moduleDescriptorResource: DescriptorResource, moduleCreator: PluginCreator) {
+  internal fun addModuleDescriptor(
+    moduleReference: InlineModule,
+    loadingRule: ModuleLoadingRule,
+    moduleDescriptorResource: DescriptorResource,
+    moduleCreator: PluginCreator
+  ) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val moduleName = moduleReference.name
@@ -252,7 +275,7 @@ internal class PluginCreator private constructor(
     plugin.icons = icons
   }
 
-  fun setThirdPartyDependencies(thirdPartyDependencies: List<ThirdPartyDependency>){
+  fun setThirdPartyDependencies(thirdPartyDependencies: List<ThirdPartyDependency>) {
     plugin.thirdPartyDependencies = thirdPartyDependencies
   }
 
@@ -274,24 +297,6 @@ internal class PluginCreator private constructor(
     }
   }
 
-  /**
-   * Create an instance of an invalid plugin with the most basic information.
-   *
-   * This allows creating a bare-bones plugin with invalid data.
-   * Plugin problems associated with this invalid data might be reclassified by the [problem resolver](#problemResolver).
-   */
-  private fun newInvalidPlugin(bean: PluginBean, document: Document): InvalidPlugin {
-    return InvalidPlugin(document).apply {
-      pluginId = bean.id?.trim()
-      pluginName = bean.name?.trim()
-      bean.vendor?.let {
-        vendor = if (it.name != null) it.name.trim() else null
-        vendorUrl = it.url
-        vendorEmail = it.email
-      }
-    }
-  }
-
   private fun IdePluginImpl.setInfoFromBean(bean: PluginBean, document: Document) {
     pluginName = bean.name?.trim()
     pluginId = bean.id?.trim() ?: pluginName
@@ -303,7 +308,8 @@ internal class PluginCreator private constructor(
 
     val ideaVersionBean = bean.ideaVersion
     if (ideaVersionBean != null) {
-      sinceBuild = if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
+      sinceBuild =
+        if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
       var untilBuild: String? = ideaVersionBean.untilBuild
       if (untilBuild != null && untilBuild.isNotEmpty()) {
         if (untilBuild.endsWith(".*")) {
@@ -379,13 +385,26 @@ internal class PluginCreator private constructor(
     for (extensionsRoot in rootElement.getChildren("extensions")) {
       for (extensionElement in extensionsRoot.children) {
         when (val epName = extractEPName(extensionElement)) {
-          "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
-          "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
-          "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(extensionElement, epName)
+          "com.intellij.applicationService" -> idePlugin.appContainerDescriptor.services += readServiceDescriptor(
+            extensionElement,
+            epName
+          )
+
+          "com.intellij.projectService" -> idePlugin.projectContainerDescriptor.services += readServiceDescriptor(
+            extensionElement,
+            epName
+          )
+
+          "com.intellij.moduleService" -> idePlugin.moduleContainerDescriptor.services += readServiceDescriptor(
+            extensionElement,
+            epName
+          )
+
           "org.jetbrains.kotlin.supportsKotlinPluginMode" -> {
             idePlugin.addExtension(epName, extensionElement)
             idePlugin.kotlinPluginMode = readKotlinPluginMode(extensionElement)
           }
+
           else -> idePlugin.addExtension(epName, extensionElement)
         }
       }
@@ -431,7 +450,15 @@ internal class PluginCreator private constructor(
       "notHeadless" -> IdePluginContentDescriptor.PreloadMode.NOT_HEADLESS
       "notLightEdit" -> IdePluginContentDescriptor.PreloadMode.NOT_LIGHT_EDIT
       null -> IdePluginContentDescriptor.PreloadMode.FALSE
-      else -> IdePluginContentDescriptor.PreloadMode.FALSE.also { LOG.error("Unknown preload mode value '${getAttributeValue("preload")}'") }
+      else -> IdePluginContentDescriptor.PreloadMode.FALSE.also {
+        LOG.error(
+          "Unknown preload mode value '${
+            getAttributeValue(
+              "preload"
+            )
+          }'"
+        )
+      }
     }
 
   private fun Element.readServiceClient() =
@@ -449,10 +476,15 @@ internal class PluginCreator private constructor(
       }
     }
 
-  private fun readServiceDescriptor(extensionElement: Element, epName: String): IdePluginContentDescriptor.ServiceDescriptor {
+  private fun readServiceDescriptor(
+    extensionElement: Element,
+    epName: String
+  ): IdePluginContentDescriptor.ServiceDescriptor {
     val serviceInterface = extensionElement.getAttributeValue("serviceInterface")
     val serviceImplementation = extensionElement.getAttributeValue("serviceImplementation")
-    val serviceType = IdePluginContentDescriptor.ServiceType.valueOf(epName.replace("(Service)|(com.intellij.)".toRegex(), "").toUpperCase())
+    val serviceType = IdePluginContentDescriptor.ServiceType.valueOf(
+      epName.replace("(Service)|(com.intellij.)".toRegex(), "").toUpperCase()
+    )
     val testServiceImplementation = extensionElement.getAttributeValue("testServiceImplementation")
     val headlessImplementation = extensionElement.getAttributeValue("headlessImplementation")
     val configurationSchemaKey = extensionElement.getAttributeValue("configurationSchemaKey")
@@ -499,7 +531,11 @@ internal class PluginCreator private constructor(
     else -> null.also { LOG.error("Unknown OS: ${getAttributeValue("os")}") }
   }
 
-  private fun readListeners(rootElement: Element, listenersName: String, containerDescriptor: MutableIdePluginContentDescriptor) {
+  private fun readListeners(
+    rootElement: Element,
+    listenersName: String,
+    containerDescriptor: MutableIdePluginContentDescriptor
+  ) {
     for (listenersRoot in rootElement.getChildren(listenersName)) {
       for (listener in listenersRoot.children) {
         val className = listener.getAttributeValue("class")
@@ -514,20 +550,35 @@ internal class PluginCreator private constructor(
           registerProblem(ElementMissingAttribute("listener", "topic"))
         }
         if (className != null && topicName != null) {
-          val listenerType = IdePluginContentDescriptor.ListenerType.valueOf(listenersName.replace("Listeners", "").toUpperCase())
-          containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(topicName, className, listenerType, isActiveInTestMode, isActiveInHeadlessMode, os)
+          val listenerType =
+            IdePluginContentDescriptor.ListenerType.valueOf(listenersName.replace("Listeners", "").toUpperCase())
+          containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(
+            topicName,
+            className,
+            listenerType,
+            isActiveInTestMode,
+            isActiveInHeadlessMode,
+            os
+          )
         }
       }
     }
   }
 
-  private fun readComponents(rootElement: Element, componentsArea: String, containerDescriptor: MutableIdePluginContentDescriptor) {
+  private fun readComponents(
+    rootElement: Element,
+    componentsArea: String,
+    containerDescriptor: MutableIdePluginContentDescriptor
+  ) {
     for (componentsRoot in rootElement.getChildren(componentsArea)) {
       for (component in componentsRoot.getChildren("component")) {
         val interfaceClass = component.getChild("interface-class")?.text
         val implementationClass = component.getChild("implementation-class")?.text
         if (implementationClass != null) {
-          containerDescriptor.components += IdePluginContentDescriptor.ComponentConfig(interfaceClass, implementationClass)
+          containerDescriptor.components += IdePluginContentDescriptor.ComponentConfig(
+            interfaceClass,
+            implementationClass
+          )
         }
       }
     }
@@ -537,121 +588,6 @@ internal class PluginCreator private constructor(
     val supportsK1 = extensionElement.getAttributeBooleanValue("supportsK1", true)
     val supportsK2 = extensionElement.getAttributeBooleanValue("supportsK2", false)
     return KotlinPluginMode.parse(supportsK1, supportsK2)
-  }
-
-  private fun validatePluginBean(bean: PluginBean, validateDescriptor: Boolean) {
-    if (validateDescriptor || bean.url != null) {
-      validateBeanUrl(bean.url)
-    }
-    if (validateDescriptor || bean.id != null) {
-      validateId(bean)
-    }
-    if (validateDescriptor || bean.name != null) {
-      validateName(bean.name)
-    }
-    if (validateDescriptor || bean.pluginVersion != null) {
-      validateVersion(bean.pluginVersion, validateDescriptor)
-    }
-    if (validateDescriptor || bean.description != null) {
-      validateDescription(bean.description, validateDescriptor)
-    }
-    if (validateDescriptor || bean.changeNotes != null) {
-      validateChangeNotes(bean.changeNotes)
-    }
-    if (validateDescriptor || bean.vendor != null) {
-      validateVendor(bean.vendor)
-    }
-    if (validateDescriptor || bean.ideaVersion != null) {
-      validateIdeaVersion(bean.ideaVersion)
-      pluginUntilBuildVerifier.verify(bean, descriptorPath, ::registerProblem)
-    }
-    if (validateDescriptor || bean.productDescriptor != null) {
-      validateProductDescriptor(bean, bean.productDescriptor)
-    }
-    if (bean.dependencies != null) {
-      validateDependencies(bean.dependencies)
-    }
-
-    if (bean.modules?.any { it.isEmpty() } == true) {
-      registerProblem(InvalidModuleBean(descriptorPath))
-    }
-  }
-
-  private fun validateDependencies(dependencies: List<PluginDependencyBean>) {
-    for (dependencyBean in dependencies) {
-      if (dependencyBean.dependencyId.isNullOrBlank() || dependencyBean.dependencyId.contains("\n")) {
-        registerProblem(InvalidDependencyId(descriptorPath, dependencyBean.dependencyId))
-      } else if (dependencyBean.optional == true) {
-        if (dependencyBean.configFile == null) {
-          registerProblem(OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId))
-        } else if (dependencyBean.configFile.isBlank()) {
-          registerProblem(OptionalDependencyConfigFileIsEmpty(dependencyBean.dependencyId, descriptorPath))
-        }
-      } else if (dependencyBean.optional == false) {
-        registerProblem(SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId))
-      }
-    }
-    ReusedDescriptorVerifier(descriptorPath).verify(dependencies, ::registerProblem)
-  }
-
-  private fun validateProductDescriptor(plugin: PluginBean, productDescriptor: ProductDescriptorBean?) {
-    if (productDescriptor != null) {
-      validateProductCode(productDescriptor.code)
-      validateReleaseDate(productDescriptor.releaseDate)
-      pluginProductReleaseVersionVerifier.verify(plugin, descriptorPath, ::registerProblem)
-      productDescriptor.eap?.let { validateEapFlag(it) }
-      productDescriptor.optional?.let { validateOptionalFlag(it) }
-    }
-  }
-
-  private fun validateProductCode(productCode: String?) {
-    if (productCode.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("code", descriptorPath))
-    } else {
-      validatePropertyLength("Product code", productCode, MAX_PRODUCT_CODE_LENGTH)
-    }
-  }
-
-  private fun validateReleaseDate(releaseDate: String?) {
-    if (releaseDate.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("release-date", descriptorPath))
-    } else {
-      try {
-        val date = LocalDate.parse(releaseDate, releaseDateFormatter)
-        if (date > LocalDate.now().plusDays(5)) {
-          registerProblem(ReleaseDateInFuture(descriptorPath))
-        }
-      } catch (e: DateTimeParseException) {
-        registerProblem(ReleaseDateWrongFormat(descriptorPath))
-      }
-    }
-  }
-
-  private fun validateEapFlag(eapFlag: String) = validateBooleanFlag(eapFlag, "eap")
-
-  private fun validateOptionalFlag(optionalFlag: String) = validateBooleanFlag(optionalFlag, "optional")
-
-  private fun validateBooleanFlag(flag: String, name: String) {
-    if (flag != "true" && flag != "false") {
-      registerProblem(NotBoolean(name, descriptorPath))
-    }
-  }
-
-  private fun validateBeanUrl(beanUrl: String?) {
-    if (beanUrl != null) {
-      validatePropertyLength("plugin url", beanUrl, MAX_PROPERTY_LENGTH)
-    }
-  }
-
-  private fun validateVersion(pluginVersion: String?, validateDescriptor: Boolean) {
-    if (!validateDescriptor && pluginVersion == null) {
-      return
-    }
-    if (pluginVersion.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("version", descriptorPath))
-    } else {
-      validatePropertyLength("version", pluginVersion, MAX_VERSION_LENGTH)
-    }
   }
 
   private fun validatePlugin(plugin: IdePluginImpl) {
@@ -680,10 +616,24 @@ internal class PluginCreator private constructor(
     val listenersAvailableSinceBuild = IdeVersion.createIdeVersion("193")
     if (sinceBuild != null && sinceBuild < listenersAvailableSinceBuild) {
       if (plugin.appContainerDescriptor.listeners.isNotEmpty()) {
-        registerProblem(ElementAvailableOnlySinceNewerVersion("applicationListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
+        registerProblem(
+          ElementAvailableOnlySinceNewerVersion(
+            "applicationListeners",
+            listenersAvailableSinceBuild,
+            sinceBuild,
+            untilBuild
+          )
+        )
       }
       if (plugin.projectContainerDescriptor.listeners.isNotEmpty()) {
-        registerProblem(ElementAvailableOnlySinceNewerVersion("projectListeners", listenersAvailableSinceBuild, sinceBuild, untilBuild))
+        registerProblem(
+          ElementAvailableOnlySinceNewerVersion(
+            "projectListeners",
+            listenersAvailableSinceBuild,
+            sinceBuild,
+            untilBuild
+          )
+        )
       }
     }
 
@@ -699,11 +649,38 @@ internal class PluginCreator private constructor(
     pathResolver: ResourceResolver,
     validateDescriptor: Boolean
   ) {
-    val document = resolveXIncludesOfDocument(originalDocument, documentName, pathResolver, documentPath) ?: return
-    val bean = readDocumentIntoXmlBean(document) ?: return
-    validatePluginBean(bean, validateDescriptor)
-    if (hasPluginBeanErrors(bean, document)) {
+    val pluginDescriptorParser = PluginDescriptorParser()
+    val pluginBeanValidator = PluginBeanValidator()
+
+    val validationContext = ValidationContext(descriptorPath, problemResolver)
+
+    val parsingResult = pluginDescriptorParser.parse(
+      descriptorPath,
+      pluginFileName,
+      originalDocument,
+      documentPath,
+      documentName,
+      pathResolver,
+      validationContext
+    )
+    if (parsingResult !is Parsed) {
+      validationContext.problems.forEach { registerProblem(it) }
       return
+    }
+    val (document, bean) = parsingResult
+
+    pluginBeanValidator.validate(bean, validationContext, validateDescriptor)
+    val validationResult = validationContext.getResult {
+      newInvalidPlugin(bean, document)
+    }
+
+    if (validationResult is ValidationResult.Invalid) {
+      invalidPlugin = validationResult.invalidPlugin
+      validationResult.problems.forEach { registerProblem(it) }
+      return
+    }
+    if (validationResult is ValidationResult.ValidWithWarnings) {
+      validationResult.warnings.forEach { registerProblem(it) }
     }
 
     plugin.underlyingDocument = document
@@ -735,9 +712,11 @@ internal class PluginCreator private constructor(
           }
           themes.add(theme)
         }
+
         is ResourceResolver.Result.NotFound -> {
           registerProblem(UnableToFindTheme(descriptorPath, themePath))
         }
+
         is ResourceResolver.Result.Failed -> {
           registerProblem(UnableToReadTheme(descriptorPath, themePath))
         }
@@ -746,202 +725,8 @@ internal class PluginCreator private constructor(
     return themes
   }
 
-  private fun resolveXIncludesOfDocument(
-    document: Document,
-    presentablePath: String,
-    pathResolver: ResourceResolver,
-    documentPath: Path
-  ): Document? = try {
-    XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
-  } catch (e: XIncluderException) {
-    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
-    registerProblem(XIncludeResolutionErrors(descriptorPath, e.message))
-    null
-  }
-
-  private fun readDocumentIntoXmlBean(document: Document): PluginBean? {
-    return try {
-      PluginBeanExtractor.extractPluginBean(document)
-    } catch (e: Exception) {
-      registerProblem(UnableToReadDescriptor(descriptorPath, e.localizedMessage))
-      LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName", e)
-      null
-    }
-
-  }
-
   internal fun registerProblem(problem: PluginProblem) {
     problems += problem
-  }
-
-  private fun hasErrors(): Boolean {
-    return problemResolver.classify(plugin, problems).any {
-      it.level == ERROR
-    }
-  }
-
-  /**
-   * Checks if the _bean_ has any core plugin bean errors in the plugin descriptor.
-   *
-   * Such core errors are field validation errors (missing fields, empty values).
-   * If any such core error is found, an instance of invalid plugin with the most
-   * basic information is created and filtered by [problem resolver](problemResolver).
-   *
-   * This enables problem resolver to intentionally ignore core plugin bean errors
-   * and reclassify these errors into warnings or even ignore them.
-   *
-   * The usual example is an internal JetBrains plugin that might violate rules for
-   * allowed field values in the plugin descriptor.
-   *
-   * @see validatePluginBean
-   */
-  private fun hasPluginBeanErrors(bean: PluginBean, document: Document): Boolean {
-    if (problems.isEmpty()) {
-      return false
-    }
-    val invalidPlugin = newInvalidPlugin(bean, document)
-    return problemResolver
-      .classify(invalidPlugin, problems)
-      .filter {
-        it.level == ERROR
-      }.notEmpty(context = bean)
-  }
-
-  private fun validateId(plugin: PluginBean) {
-    pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
-  }
-
-  private fun validateName(name: String?) {
-    when {
-      name.isNullOrBlank() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
-      DEFAULT_TEMPLATE_NAMES.any { it.equals(name, true) } -> {
-        registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME, name))
-      }
-      else -> {
-        val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
-        if (templateWord != null) {
-          registerProblem(TemplateWordInPluginName(descriptorPath, name, templateWord))
-        }
-        validatePropertyLength("name", name, MAX_NAME_LENGTH)
-        verifyNewlines("name", name, descriptorPath, ::registerProblem)
-      }
-    }
-  }
-
-  private fun validateDescription(htmlDescription: String?, validateDescriptor: Boolean) {
-    if (!validateDescriptor && htmlDescription == null) {
-      return
-    }
-    if (htmlDescription.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("description", descriptorPath))
-      return
-    }
-    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH)
-
-    val html = Jsoup.parseBodyFragment(htmlDescription)
-    val textDescription = html.text()
-
-    if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
-      return
-    }
-
-    val latinDescriptionPart = latinSymbolsRegex.find(textDescription)?.value
-    if (latinDescriptionPart == null) {
-      registerProblem(ShortOrNonLatinDescription())
-    }
-    val links = html.select("[href],img[src]")
-    links.forEach { link ->
-      val href = link.attr("abs:href")
-      val src = link.attr("abs:src")
-      if (href.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(href))
-      }
-      if (src.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(src))
-      }
-    }
-  }
-
-  private fun validateChangeNotes(changeNotes: String?) {
-    if (changeNotes.isNullOrBlank()) {
-      //Too many plugins don't specify the change-notes, so it's too strict to require them.
-      //But if specified, let's check that the change-notes are long enough.
-      return
-    }
-
-    if (changeNotes.contains("Add change notes here") || changeNotes.contains("most HTML tags may be used")) {
-      registerProblem(DefaultChangeNotes(descriptorPath))
-    }
-
-    validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH)
-  }
-
-  private fun validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int) {
-    if (propertyValue.length > maxLength) {
-      registerProblem(TooLongPropertyValue(descriptorPath, propertyName, propertyValue.length, maxLength))
-    }
-  }
-
-  private fun validateVendor(vendorBean: PluginVendorBean?) {
-    if (vendorBean == null) {
-      registerProblem(PropertyNotSpecified("vendor", descriptorPath))
-      return
-    }
-
-    if (vendorBean.name.isNullOrBlank()) {
-      registerProblem(VendorCannotBeEmpty(descriptorPath))
-      return
-    }
-
-    if ("YourCompany" == vendorBean.name) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR, vendorBean.name))
-    }
-    validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH)
-
-    if ("https://www.yourcompany.com" == vendorBean.url) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, vendorBean.url))
-    }
-    validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH)
-
-    if ("support@yourcompany.com" == vendorBean.email) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, vendorBean.email))
-    }
-    validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH)
-  }
-
-  private fun validateSinceBuild(sinceBuild: String?) {
-    if (sinceBuild == null) {
-      registerProblem(SinceBuildNotSpecified(descriptorPath))
-    } else {
-      val sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild)
-      if (sinceBuildParsed == null) {
-        registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-      } else {
-        if (sinceBuild.endsWith(".*")) {
-          registerProblem(SinceBuildCannotContainWildcard(descriptorPath, sinceBuildParsed))
-        }
-        if (sinceBuildParsed.baselineVersion < 130) {
-          registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-        }
-        if (sinceBuildParsed.baselineVersion > 999) {
-          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
-        }
-        if (sinceBuildParsed.productCode.isNotEmpty()) {
-          registerProblem(ProductCodePrefixInBuild(descriptorPath))
-        }
-      }
-    }
-  }
-
-  private fun validateIdeaVersion(versionBean: IdeaVersionBean?) {
-    if (versionBean == null) {
-      registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
-      return
-    }
-
-    val sinceBuild = versionBean.sinceBuild
-    validateSinceBuild(sinceBuild)
   }
 
   private fun IdePluginImpl.addDependencies(module: IdePlugin) {
@@ -964,18 +749,6 @@ internal class PluginCreator private constructor(
 
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
     get() = warnings + unacceptableWarnings
-
-  private fun List<PluginProblem>.notEmpty(context: PluginBean): Boolean {
-    return if (isEmpty()) {
-      false
-    } else {
-      if (LOG.isDebugEnabled) {
-        val errorMsg = joinToString()
-        LOG.debug("Plugin '${context.id}' has $size error(s): $errorMsg")
-      }
-      true
-    }
-  }
 
   private fun registerIfOptionalDependency(pluginDependency: PluginDependency, dependencyBean: PluginDependencyBean) {
     if (pluginDependency.isOptional && dependencyBean.configFile != null) {

@@ -9,6 +9,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Improve cache performance to prevent OOM in large runs ([#1217](https://github.com/JetBrains/intellij-plugin-verifier/pull/1217))
+- Severity level of the plugin problem `ReleaseVersionWrongFormat` has been changed to a _Warning_ for JetBrains plugins.
 
 ### Fixed
 

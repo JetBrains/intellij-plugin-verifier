@@ -38,6 +38,16 @@ class ExistingPluginValidationTest : BasePluginTest() {
         }
         return PluginCreationSuccess(plugin, emptyList())
       }
+
+      override fun classify(
+        plugin: IdePlugin,
+        problems: List<PluginProblem>
+      ): List<PluginProblem> {
+        problems.forEach {
+          logger.info("Plugin problem will be ignored by the problem resolver: $it")
+        }
+        return emptyList()
+      }
     }
 
     val result = buildPluginWithResult(problemResolver) {

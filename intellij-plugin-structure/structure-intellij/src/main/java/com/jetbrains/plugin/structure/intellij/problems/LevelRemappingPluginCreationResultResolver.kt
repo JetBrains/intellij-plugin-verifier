@@ -74,7 +74,7 @@ class LevelRemappingPluginCreationResultResolver(private val delegatedResolver: 
       pluginProblem
     }
     return when (val remappedLevel = remappedLevel[problem::class]) {
-      is StandardLevel -> ReclassifiedPluginProblem(remappedLevel.originalLevel, pluginProblem)
+      is StandardLevel -> ReclassifiedPluginProblem(remappedLevel.originalLevel, problem)
       is IgnoredLevel -> null
       null -> pluginProblem
     }

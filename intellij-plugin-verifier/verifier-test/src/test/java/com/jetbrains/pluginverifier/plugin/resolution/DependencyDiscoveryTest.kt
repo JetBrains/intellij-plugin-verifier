@@ -13,8 +13,7 @@ import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -76,9 +75,9 @@ class DependencyDiscoveryTest {
     val cacheResult = detailsProvided.pluginDetailsCacheResult as PluginDetailsCache.Result.Provided
     with(cacheResult.pluginDetails) {
       with(pluginWarnings) {
-        assertEquals(2, size)
+        assertEquals(1, size)
         assertTrue(hasUnwrappedProblem<NoModuleDependencies>())
-        assertTrue(hasUnwrappedProblem<ReleaseDateInFuture>())
+        assertFalse(hasUnwrappedProblem<ReleaseDateInFuture>())
       }
       with(idePlugin.dependencies) {
         assertEquals(1, size)
