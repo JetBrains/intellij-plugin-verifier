@@ -29,8 +29,9 @@ import java.util.*
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoClassResolver::class.java)
 
 private const val PRODUCT_INFO_JSON = "product-info.json"
-
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
+private const val PRODUCT_MODULE_V2 = "productModuleV2"
+private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
 
 class ProductInfoClassResolver(
   private val productInfo: ProductInfo, val ide: Ide,
@@ -50,7 +51,7 @@ class ProductInfoClassResolver(
     val corePluginResolver = find { it.name == CORE_IDE_PLUGIN_ID } ?: return emptyMap()
     val resolvers = mutableMapOf<String, NamedResolver>()
 
-    val productModules = filter { it.kind == "productModuleV2" }
+    val productModules = filter { it.kind == PRODUCT_MODULE_V2 }
       .map { it.resolver }
       .also { productModules ->
         productModules.forEach { resolvers.put(it.name, it) }
@@ -68,7 +69,7 @@ class ProductInfoClassResolver(
   }
 
   private fun List<KindedResolver>.resolveNonCoreAndNonProductModules(): Map<String, NamedResolver> {
-    return filter { it.kind != "productModuleV2" && it.name != CORE_IDE_PLUGIN_ID }
+    return filter { it.kind != PRODUCT_MODULE_V2 && it.name != CORE_IDE_PLUGIN_ID }
       .associateBy({ it.name }, { it.resolver })
   }
 
@@ -131,7 +132,7 @@ class ProductInfoClassResolver(
       val bootJars = productInfo.launches.firstOrNull()?.bootClassPathJarNames
       val bootResolver = bootJars?.map { getBootJarResolver(it) }?.asResolver()
         ?: EmptyResolver
-      return NamedResolver("bootClassPathJarNames", bootResolver)
+      return NamedResolver(BOOTCLASSPATH_JAR_NAMES, bootResolver)
     }
 
   private fun <C> C.toResolver(): KindedResolver
@@ -178,7 +179,7 @@ class ProductInfoClassResolver(
     @Throws(InvalidIdeException::class)
     private fun assertProductInfoPresent(idePath: Path) {
       if (!idePath.containsProductInfoJson()) {
-        throw InvalidIdeException(idePath, "The '${PRODUCT_INFO_JSON}' file is not available.")
+        throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
       }
     }
 
