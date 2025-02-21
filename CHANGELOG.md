@@ -6,12 +6,32 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Validate values for `-suppress-internal-api-usages` ([#1191](https://github.com/JetBrains/intellij-plugin-verifier/pull/1191))
+- Allow to override an internal method of a class that belongs to the same plugin ([MP-7136](https://youtrack.jetbrains.com/issue/MP-7136), [#1193](https://github.com/JetBrains/intellij-plugin-verifier/pull/1193))
+- Allow to configure `IdeManager` when layout components are missing ([#1196](https://github.com/JetBrains/intellij-plugin-verifier/pull/1196), [#1197](https://github.com/JetBrains/intellij-plugin-verifier/pull/1197))
+- Introduce critical compatibility problems for JetBrains Marketplace verification result ([MP-7151](https://youtrack.jetbrains.com/issue/MP-7151), [#1207](https://github.com/JetBrains/intellij-plugin-verifier/pull/1207))
+- Provide internal IDE dumps to improve testing in real-life scenarios
+- Validate plugin identifiers for Hub, YouTrack and .NET plugins ([#1209](https://github.com/JetBrains/intellij-plugin-verifier/pull/1209))
+- Support inline `<module>` declarations with CDATA in plugin descriptor ([MP-7092](https://youtrack.jetbrains.com/issue/MP-7092), [#1206](https://github.com/JetBrains/intellij-plugin-verifier/pull/1206))
+- Reuse filesystem accessed by different URIs to the same file (thanks [fp7](https://github.com/fp7)), ([#1201](https://github.com/JetBrains/intellij-plugin-verifier/pull/1201))
+- Support `loading` attribute for Plugin Model V2 content modules ([MP-6904](https://youtrack.jetbrains.com/issue/MP-6904), [95ab4ca](https://github.com/JetBrains/intellij-plugin-verifier/commit/95ab4cad428dc3dd0b4919e71a18379d7bb45129))
+- Discover bundled plugins in 'plugins' directory in CLion ([MP-7275](https://youtrack.jetbrains.com/issue/MP-7275), [#1219](https://github.com/JetBrains/intellij-plugin-verifier/pull/1218))
+- Support module aliases in class resolvers when used as dependencies ([#1221](https://github.com/JetBrains/intellij-plugin-verifier/pull/1221))
+
 ### Changed
 
-- Improve cache performance to prevent OOM in large runs ([#1217](https://github.com/JetBrains/intellij-plugin-verifier/pull/1217))
 - Severity level of the plugin problem `ReleaseVersionWrongFormat` has been changed to a _Warning_ for JetBrains plugins.
+- Mark Plugin Model V2 Content module dependencies as optional. Mark plugins and modules in V2 `<dependencies>` as required. ([#1159](https://github.com/JetBrains/intellij-plugin-verifier/pull/1195))
+- Improve cache performance to prevent OOM in large runs ([#1217](https://github.com/JetBrains/intellij-plugin-verifier/pull/1217))
+- Improve transitive dependency resolution tests ([#1192](https://github.com/JetBrains/intellij-plugin-verifier/pull/1192))
+- Increase plugin artifact size limit to 1.5GB ([#1202](https://github.com/JetBrains/intellij-plugin-verifier/pull/1202), [MP-7177](https://youtrack.jetbrains.com/issue/MP-7177/Increase-plugin-artifact-size-limit-to-1.5GB))
+- Update the TeamCity Recipes implementation ([#1211](https://github.com/JetBrains/intellij-plugin-verifier/pull/1211), [TW-91829](https://youtrack.jetbrains.com/issue/TW-91829))
+- Extract away plugin descriptor parsing and validation ([#1223](https://github.com/JetBrains/intellij-plugin-verifier/pull/1223))
+- Rename the YAML field for the inputs of a referenced recipe in TeamCity Recipes ([#1219](https://github.com/JetBrains/intellij-plugin-verifier/pull/1219), [TW-92158](https://youtrack.jetbrains.com/issue/TW-92158))
 
 ### Fixed
+
+- Plugin Verifier cannot find `org.jetbrains.android` plugin ([MP-7024](https://youtrack.jetbrains.com/issue/MP-7024), [#1214](https://github.com/JetBrains/intellij-plugin-verifier/pull/1214))
 
 ## 1.381 - 2024-11-27
 
