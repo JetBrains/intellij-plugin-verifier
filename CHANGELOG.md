@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.382 - 2025-02-21
+
+### Added
+
 - Validate values for `-suppress-internal-api-usages` ([#1191](https://github.com/JetBrains/intellij-plugin-verifier/pull/1191))
 - Allow to override an internal method of a class that belongs to the same plugin ([MP-7136](https://youtrack.jetbrains.com/issue/MP-7136), [#1193](https://github.com/JetBrains/intellij-plugin-verifier/pull/1193))
 - Allow to configure `IdeManager` when layout components are missing ([#1196](https://github.com/JetBrains/intellij-plugin-verifier/pull/1196), [#1197](https://github.com/JetBrains/intellij-plugin-verifier/pull/1197))
