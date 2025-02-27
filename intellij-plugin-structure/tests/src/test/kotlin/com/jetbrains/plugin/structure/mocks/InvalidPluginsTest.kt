@@ -457,6 +457,26 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   }
 
   @Test
+  fun `non latin and latin description 40 characters long together`() {
+    `test plugin xml unacceptable warnings`(
+      perfectXmlBuilder.modify {
+        description = "<description>Описание с коротким английским, Latin description</description>"
+      },
+      listOf(ShortOrNonLatinDescription())
+    )
+  }
+
+  @Test
+  fun `don't start with latin symbols`() {
+    `test plugin xml warnings`(
+      perfectXmlBuilder.modify {
+        description = "<description>Описание начинается не с латиницы, Latin description, 1234 &amp; ;,.!-–— () long enough</description>"
+      },
+      listOf(NotStartWithLatinDescription(PLUGIN_XML))
+    )
+  }
+
+  @Test
   fun `http links in description`() {
     val testLinks = listOf(
       Pair("a", "http://test_a.com"),
