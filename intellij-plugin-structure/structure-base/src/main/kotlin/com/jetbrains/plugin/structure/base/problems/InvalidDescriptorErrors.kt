@@ -174,3 +174,11 @@ class SemverComponentLimitExceeded(
   override val level: Level
     get() = Level.ERROR
 }
+
+class InvalidUrl(url: String, descriptorPath: String? = null) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The url <$url> is invalid."
+) {
+  override val level
+    get() = Level.ERROR
+}

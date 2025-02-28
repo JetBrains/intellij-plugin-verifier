@@ -60,6 +60,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     InvalidDependencyId::class,
     InvalidModuleBean::class,
     InvalidKotlinPluginMode::class,
+    InvalidUrl::class,
     SinceBuildNotSpecified::class,
     InvalidSinceBuild::class,
     InvalidUntilBuild::class,

@@ -98,11 +98,12 @@ class ToolboxPluginManager private constructor(private val extractDirectory: Pat
       if (problems.any { it.level == PluginProblem.Level.ERROR } || fileChecker.problems.isNotEmpty()) {
         return PluginCreationFail(problems + fileChecker.problems)
       }
-
+      val apiVersion = requireNotNull(descriptor.apiVersion)
       val plugin = ToolboxPlugin(
         pluginId = requireNotNull(descriptor.id),
         pluginVersion = requireNotNull(descriptor.version),
-        compatibleVersionRange = requireNotNull(descriptor.compatibleVersionRange),
+        // it looks like a hack, but I have little time before release + I want to minimize changes on the marketplace side
+        compatibleVersionRange = ToolboxVersionRange(apiVersion, apiVersion),
         pluginName = descriptor.meta?.name,
         description = descriptor.meta?.description,
         vendor = descriptor.meta?.vendor,
