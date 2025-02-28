@@ -26,13 +26,13 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `name is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.name")) { it.copy(meta = it.meta?.copy(name = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.name")) { it.copy(meta = it.meta?.copy(name = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.name")) { it.copy(meta = it.meta?.copy(name = "\n")) }
     checkInvalidPlugin(
       TooLongPropertyValue(
         ToolboxPluginManager.DESCRIPTOR_NAME,
-        "name",
+        "meta.name",
         65,
         64
       )
@@ -58,121 +58,77 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `vendor is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
   }
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkValidPlugin { it.copy(meta = it.meta?.copy(description = "herring herring herring")) }
   }
 
   @Test
-  fun `compatibility range is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("compatibleVersionRange.from")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("compatibleVersionRange.from")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("compatibleVersionRange.from")) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "\n")) }
+  fun `url is not specified`() {
+    checkValidPlugin { it.copy(meta = it.meta?.copy(url = null)) }
+    checkInvalidPlugin(InvalidUrl("","meta.url")) { it.copy(meta = it.meta?.copy(url = "")) }
+    checkInvalidPlugin(InvalidUrl("\n","meta.url")) { it.copy(meta = it.meta?.copy(url = "\n")) }
+    checkInvalidPlugin(InvalidUrl("herring herring herring","meta.url")) { it.copy(meta = it.meta?.copy(url = "herring herring herring")) }
   }
 
   @Test
-  fun `compatibility range is valid`() {
+  fun `apiVersion is not specified`() {
+    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = null) }
+    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = "") }
+    checkInvalidPlugin(PropertyNotSpecified("apiVersion")) { it.copy(apiVersion = "\n") }
+  }
+
+  @Test
+  fun `apiVersion is valid`() {
     checkInvalidPlugin(InvalidSemverFormat(
       descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-      versionName = "compatibleVersionRange.from",
+      versionName = "apiVersion",
       version = "123"
     )) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "123"))
-    }
-    checkInvalidPlugin(InvalidSemverFormat(
-      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-      versionName = "compatibleVersionRange.to",
-      version = "123"
-    )) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "123"))
+      it.copy(apiVersion = "123")
     }
 
     checkInvalidPlugin(listOf(
       SemverComponentLimitExceeded(
         descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
         componentName = "major",
-        versionName = "compatibleVersionRange.from",
+        versionName = "apiVersion",
         version = "7450.1.2",
         limit = ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE
       ),
-      SemverComponentLimitExceeded(
-        descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-        componentName = "major",
-        versionName = "compatibleVersionRange.to",
-        version = "7450.1.2",
-        limit = ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE
-      )
-    )) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
-    checkInvalidPlugin(
-      SemverComponentLimitExceeded(
-        descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-        componentName = "major",
-        versionName = "compatibleVersionRange.to",
-        version = "7450.1.2",
-        limit = ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE
-      )
-    ) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "7450.1.2"))
-    }
+    )) { it.copy(apiVersion = "7450.1.2") }
     checkInvalidPlugin(
       SemverComponentLimitExceeded(
         descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
         componentName = "minor",
-        versionName = "compatibleVersionRange.from",
+        versionName = "apiVersion",
         version = "0.8192.2",
         limit = ToolboxVersionRange.VERSION_MINOR_PART_MAX_VALUE
       )
     ) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "0.8192.2"))
-    }
-    checkInvalidPlugin(
-      SemverComponentLimitExceeded(
-        descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-        componentName = "minor",
-        versionName = "compatibleVersionRange.to",
-        version = "1.8192.2",
-        limit = ToolboxVersionRange.VERSION_MINOR_PART_MAX_VALUE
-      )
-    ) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.8192.2"))
+      it.copy(apiVersion = "0.8192.2")
     }
     checkInvalidPlugin(
       SemverComponentLimitExceeded(
         descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
         componentName = "patch",
-        versionName = "compatibleVersionRange.from",
+        versionName = "apiVersion",
         version = "1.2.1048577",
         limit = ToolboxVersionRange.VERSION_PATCH_PART_MAX_VALUE
       )
     ) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.2.1048577"))
-    }
-    checkInvalidPlugin(
-      SemverComponentLimitExceeded(
-        descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-        componentName = "patch",
-        versionName = "compatibleVersionRange.to",
-        version = "1.1000.1048577",
-        limit = ToolboxVersionRange.VERSION_PATCH_PART_MAX_VALUE
-      )
-    ) {
-      it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(to = "1.1000.1048577"))
+      it.copy(apiVersion = "1.2.1048577")
     }
 
-    checkInvalidPlugin(InvalidVersionRange(
-      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-      since = "1.1000.1",
-      until = "1.1000.0"
-    )) { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
-
-    checkValidPlugin { it.copy(compatibleVersionRange = it.compatibleVersionRange!!.copy(from = "7449.8191.1048575", to = "7449.8191.1048575")) }
+    checkValidPlugin { it.copy(apiVersion = "7449.8191.1048575") }
   }
 
 

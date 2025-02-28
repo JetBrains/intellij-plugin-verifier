@@ -7,6 +7,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
+import java.net.MalformedURLException
+import java.net.URL
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ToolboxPluginDescriptor(
@@ -14,8 +16,8 @@ data class ToolboxPluginDescriptor(
   val id: String? = null,
   @JsonProperty("version")
   val version: String? = null,
-  @JsonProperty("compatibleVersionRange")
-  val compatibleVersionRange: ToolboxVersionRange? = null,
+  @JsonProperty("apiVersion")
+  val apiVersion: String? = null,
   @JsonProperty("meta")
   val meta: ToolboxMeta? = null,
 ) {
@@ -44,60 +46,46 @@ data class ToolboxPluginDescriptor(
     }
 
     if (meta?.description.isNullOrBlank()) {
-      problems.add(PropertyNotSpecified("description"))
+      problems.add(PropertyNotSpecified("meta.description"))
     }
 
     if (meta?.vendor.isNullOrBlank()) {
-      problems.add(PropertyNotSpecified("vendor"))
+      problems.add(PropertyNotSpecified("meta.vendor"))
     }
 
-    if (compatibleVersionRange != null) {
-      val fromSemver = if (compatibleVersionRange.from.isNullOrBlank()) {
-        problems.add(PropertyNotSpecified("compatibleVersionRange.from"))
-        null
+    if (apiVersion.isNullOrBlank()) {
+      problems.add(PropertyNotSpecified("apiVersion"))
+    } else {
+      val apiVersionParsed = parseVersionOrNull(apiVersion)
+      if (apiVersionParsed == null) {
+        problems.add(
+          InvalidSemverFormat(
+            descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+            versionName = "apiVersion",
+            version = apiVersion
+          )
+        )
       } else {
-        val fromParsed = parseVersionOrNull(compatibleVersionRange.from)
-        if (fromParsed == null) {
-          problems.add(InvalidSemverFormat(
-            descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-            versionName = "compatibleVersionRange.from",
-            version = compatibleVersionRange.from
-          ))
-        } else {
-          problems.addAll(validateVersion("from", fromParsed))
-        }
-        fromParsed
-      }
-
-      if (!compatibleVersionRange.to.isNullOrBlank()) {
-        val toParsed = parseVersionOrNull(compatibleVersionRange.to)
-        if (toParsed == null) {
-          problems.add(InvalidSemverFormat(
-            descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-            versionName = "compatibleVersionRange.to",
-            version = compatibleVersionRange.to
-          ))
-        } else {
-          problems.addAll(validateVersion("to", toParsed))
-          if (fromSemver != null && compatibleVersionRange.from != null && fromSemver.isGreaterThan(toParsed)) {
-            problems.add(InvalidVersionRange(
-              descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
-              since = compatibleVersionRange.from,
-              until = compatibleVersionRange.to
-            ))
-          }
-        }
+        problems.addAll(validateVersion("apiVersion", apiVersionParsed))
       }
     }
 
     val readableName = meta?.name
     when {
       readableName.isNullOrBlank() -> {
-        problems.add(PropertyNotSpecified("name"))
+        problems.add(PropertyNotSpecified("meta.name"))
       }
 
       else -> {
-        validatePropertyLength(ToolboxPluginManager.DESCRIPTOR_NAME, "name", readableName, MAX_NAME_LENGTH, problems)
+        validatePropertyLength(ToolboxPluginManager.DESCRIPTOR_NAME, "meta.name", readableName, MAX_NAME_LENGTH, problems)
+      }
+    }
+    val metaUrl = meta?.url
+    if (metaUrl != null) {
+      try {
+        URL(metaUrl)
+      } catch (_: MalformedURLException) {
+        problems.add(InvalidUrl(metaUrl, "meta.url"))
       }
     }
     return problems
@@ -106,11 +94,12 @@ data class ToolboxPluginDescriptor(
   private fun parseVersionOrNull(version: String): Semver? {
     return try {
       Semver(version)
-    } catch (e: SemverException) {
+    } catch (_: SemverException) {
       null
     }
   }
 
+  @Suppress("SameParameterValue")
   private fun validateVersion(versionName: String, semver: Semver): Collection<PluginProblem> {
     val problems = mutableListOf<PluginProblem>()
     when {
@@ -118,7 +107,7 @@ data class ToolboxPluginDescriptor(
         SemverComponentLimitExceeded(
           descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
           componentName = "major",
-          versionName = "compatibleVersionRange.$versionName",
+          versionName = versionName,
           version = semver.originalValue,
           limit = ToolboxVersionRange.VERSION_MAJOR_PART_MAX_VALUE
         )
@@ -127,7 +116,7 @@ data class ToolboxPluginDescriptor(
         SemverComponentLimitExceeded(
           descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
           componentName = "minor",
-          versionName = "compatibleVersionRange.$versionName",
+          versionName = versionName,
           version = semver.originalValue,
           limit = ToolboxVersionRange.VERSION_MINOR_PART_MAX_VALUE
         )
@@ -136,7 +125,7 @@ data class ToolboxPluginDescriptor(
         SemverComponentLimitExceeded(
           descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
           componentName = "patch",
-          versionName = "compatibleVersionRange.$versionName",
+          versionName = versionName,
           version = semver.originalValue,
           limit = ToolboxVersionRange.VERSION_PATCH_PART_MAX_VALUE
         )

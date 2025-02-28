@@ -6,9 +6,5 @@
     "description": "Chunga Changa language support",
     "vendor": "JetBrains"
   },
-  "apiVersion": "1.0.0",
-  "compatibleVersionRange": {
-    "from": "1.1.1",
-    "to": "1.21.10"
-  }
+  "apiVersion": "1.1.1"
 }
