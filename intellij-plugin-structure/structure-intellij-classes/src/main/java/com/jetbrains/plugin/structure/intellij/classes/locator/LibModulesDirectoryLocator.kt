@@ -20,7 +20,7 @@ class LibModulesDirectoryLocator(
   override val locationKey = LibModulesDirectoryKey
 
   override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
-    val modulesDir = pluginFile.resolve("lib").resolve("modules")
+    val modulesDir = pluginFile.resolve(LIB_DIR).resolve(MODULES_DIR)
     if (!modulesDir.isDirectory) {
       return emptyList()
     }
@@ -33,7 +33,7 @@ class LibModulesDirectoryLocator(
 }
 
 object LibModulesDirectoryKey : LocationKey {
-  override val name: String = "lib/modules directory"
+  override val name: String = "$LIB_DIR/$MODULES_DIR directory"
 
   override fun getLocator(readMode: Resolver.ReadMode) = LibModulesDirectoryLocator(readMode)
 }

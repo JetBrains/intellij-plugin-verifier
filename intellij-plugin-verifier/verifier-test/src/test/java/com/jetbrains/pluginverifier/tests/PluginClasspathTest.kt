@@ -7,13 +7,14 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryLocator
+import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.createPluginResolver
+import com.jetbrains.pluginverifier.resolution.BundledPluginClassResolverProvider
 import com.jetbrains.pluginverifier.tests.mocks.classBytes
 import com.jetbrains.pluginverifier.tests.mocks.descriptor
-import com.jetbrains.pluginverifier.tests.mocks.ideaPlugin
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -91,5 +92,64 @@ class PluginClasspathTest : BasePluginTest() {
       .flatMap { it.allClasses }
     assertEquals(1, classes.size)
     assertEquals("Module", classes.first())
+  }
+
+  @Test
+  fun `classes in lib, lib_modules are discovered`() {
+    val pluginId = "pluginverifier"
+    val descriptor = ideaPlugin(pluginId, "Mock Classpath")
+    val result = buildPluginInDirectory {
+      dir("lib") {
+        zip("plugin.jar") {
+          descriptor(descriptor)
+          classBytes("PluginCore", byteBuddy)
+        }
+        dir("modules") {
+          zip("plugin-module.jar") {
+            classBytes("Module", byteBuddy)
+          }
+        }
+      }
+    }
+    assertSuccess(result) {
+      IdePluginClassesFinder.findPluginClasses(plugin).use { classLocations ->
+        classLocations.createPluginResolver().use {
+          val pluginClasses = it.allClasses
+          assertEquals(2, pluginClasses.size)
+          assertTrue(pluginClasses.containsAll(setOf("PluginCore", "Module")))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `classes in lib, lib_modules are discovered in a bundled plugin`() {
+    val pluginId = "pluginverifier"
+    val descriptor = ideaPlugin(pluginId, "Mock Classpath")
+    val result = buildPluginInDirectory {
+      dir("lib") {
+        zip("plugin.jar") {
+          descriptor(descriptor)
+          classBytes("PluginCore", byteBuddy)
+        }
+        dir("modules") {
+          zip("plugin-module.jar") {
+            classBytes("Module", byteBuddy)
+          }
+        }
+      }
+    }
+
+    val classResolverProvider = BundledPluginClassResolverProvider()
+
+    assertSuccess(result) {
+      BundledPluginClassesFinder.findPluginClasses(plugin).use { classLocations ->
+        classResolverProvider.getResolver(classLocations, resolverName = pluginId).use {
+          val pluginClasses = it.allClasses
+          assertEquals(2, pluginClasses.size)
+          assertTrue(pluginClasses.containsAll(setOf("PluginCore", "Module")))
+        }
+      }
+    }
   }
 }
