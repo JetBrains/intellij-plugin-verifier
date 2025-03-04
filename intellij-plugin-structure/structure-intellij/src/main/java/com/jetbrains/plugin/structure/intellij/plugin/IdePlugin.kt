@@ -37,6 +37,9 @@ interface IdePlugin : Plugin {
 
   val incompatibleModules: List<String>
 
+  /**
+   * Plugin aliases.
+   */
   val definedModules: Set<String>
 
   val optionalDescriptors: List<OptionalPluginDescriptor>

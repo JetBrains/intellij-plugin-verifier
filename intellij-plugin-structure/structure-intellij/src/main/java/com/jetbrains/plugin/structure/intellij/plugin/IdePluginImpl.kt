@@ -54,6 +54,9 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
 
+  /**
+   * Plugin aliases mapped from the `idea-plugin/module` element.
+   */
   override val definedModules: MutableSet<String> = hashSetOf()
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
