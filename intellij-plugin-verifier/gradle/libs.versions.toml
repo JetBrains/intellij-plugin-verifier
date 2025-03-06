@@ -1,6 +1,6 @@
 [versions]
 bcpkix-jdk15on = "1.70"
-byteBuddy = "1.17.1"
+byteBuddy = "1.17.2"
 commons-compress = "1.27.1"
 jgrapht-core = "1.5.2"
 jetbrains-pluginRepositoryRestClient = "2.0.45"
