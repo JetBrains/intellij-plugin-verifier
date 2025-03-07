@@ -6,13 +6,19 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.383 - 2025-03-07
+
+### Added
+
 - Add support for Toolbox `apiVersion` in descriptor ([#1226](https://github.com/JetBrains/intellij-plugin-verifier/pull/1226))
 
 ### Changed
 
 - Update ByteBuddy dependency ([#1227](https://github.com/JetBrains/intellij-plugin-verifier/pull/1227))
-
-### Fixed
 
 ## 1.382 - 2025-02-21
 
