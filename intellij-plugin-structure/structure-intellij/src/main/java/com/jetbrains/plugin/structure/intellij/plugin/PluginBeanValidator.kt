@@ -36,8 +36,9 @@ private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
   "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
 )
 // \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-@Suppress("RegExpSimplifiable")
-private val LATIN_SYMBOLS_REGEX = Regex("[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
+private const val VALID_LATIN_CHARACTERS = "[\\w\\s\\p{Punct}\\u2013\\u2014]"
+private val LATIN_SYMBOLS_REGEX = Regex("$VALID_LATIN_CHARACTERS{$MIN_DESCRIPTION_LENGTH,}")
+private val STARTS_WITH_LATIN_SYMBOLS_REGEX = Regex("^$VALID_LATIN_CHARACTERS{${MIN_DESCRIPTION_LENGTH},}")
 
 private val RELEASE_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
@@ -131,6 +132,9 @@ class PluginBeanValidator {
     val latinDescriptionPart = LATIN_SYMBOLS_REGEX.find(textDescription)?.value
     if (latinDescriptionPart == null) {
       registerProblem(ShortOrNonLatinDescription())
+    }
+    if (STARTS_WITH_LATIN_SYMBOLS_REGEX.find(textDescription)?.value == null) {
+      registerProblem(NotStartWithLatinDescription(descriptorPath))
     }
     val links = html.select("[href],img[src]")
     links.forEach { link ->

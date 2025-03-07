@@ -58,6 +58,14 @@ class TemplateWordInPluginId(
     get() = Level.WARNING
 }
 
+class NotStartWithLatinDescription(descriptorPath: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The plugin description must start with Latin characters and have at least $MIN_DESCRIPTION_LENGTH characters."
+) {
+  override val level
+    get() = Level.WARNING
+}
+
 class OptionalDependencyDescriptorResolutionProblem(
   private val dependencyId: String,
   private val configurationFile: String,
