@@ -207,7 +207,7 @@ internal class PluginCreator private constructor(
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val module = pluginCreationResult.plugin
 
-      plugin.addDependencies(module)
+      plugin.addDependencies(module, loadingRule)
       plugin.modulesDescriptors.add(
         ModuleDescriptor(
           moduleName,
@@ -236,7 +236,7 @@ internal class PluginCreator private constructor(
       val moduleName = moduleReference.name
       val module = pluginCreationResult.plugin
 
-      plugin.addDependencies(module)
+      plugin.addDependencies(module, loadingRule)
       plugin.modulesDescriptors.add(ModuleDescriptor.of(moduleName, loadingRule, module, moduleDescriptorResource))
       plugin.definedModules.add(moduleName)
 
@@ -726,10 +726,13 @@ internal class PluginCreator private constructor(
     problems += problem
   }
 
-  private fun IdePluginImpl.addDependencies(module: IdePlugin) {
+  private fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
     module.dependencies
       .filter { dependency -> dependencies.none { it.id == dependency.id } }
-      .forEach { dependencies += it.asOptional() }
+      .forEach { 
+        val dependency = if (loadingRule.required) it else it.asOptional()
+        dependencies += dependency 
+      }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>

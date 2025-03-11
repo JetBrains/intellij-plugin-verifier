@@ -29,6 +29,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   private val mockPluginRoot = Paths.get(this::class.java.getResource("/mock-plugin-v2").toURI())
   private val metaInfDir = mockPluginRoot.resolve("META-INF")
   private val v2ModuleFile = mockPluginRoot.resolve("intellij.v2.module.xml")
+  private val v2RequiredModuleFile = mockPluginRoot.resolve("intellij.v2.required.module.xml")
   private val v2ModuleFileUltimate = mockPluginRoot.resolve("intellij.v2.module-ultimate.xml")
   private val xiIncludeDir = mockPluginRoot.resolve("xiIncludeDir")
 
@@ -48,6 +49,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildZipFile(temporaryFolder.newFile("plugin.jar")) {
         file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.required.module.xml", v2RequiredModuleFile)
         file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
         dir("META-INF", metaInfDir)
         dir("xiIncludeDir", xiIncludeDir)
@@ -67,6 +69,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     val plugin = buildPluginSuccess(expectedWarnings) {
       buildDirectory(temporaryFolder.newFolder("plugin")) {
         file("intellij.v2.module.xml", v2ModuleFile)
+        file("intellij.v2.required.module.xml", v2RequiredModuleFile)
         file("intellij.v2.module-ultimate.xml", v2ModuleFileUltimate)
         dir("META-INF", metaInfDir)
         dir("xiIncludeDir", xiIncludeDir)
@@ -190,7 +193,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertThat(
       moduleConfigs, `is`(
         listOf(
-          "../intellij.v2.module-ultimate.xml", "../intellij.v2.module.xml"
+          "../intellij.v2.module-ultimate.xml", "../intellij.v2.module.xml", "../intellij.v2.required.module.xml"
         )
       )
     )
@@ -230,7 +233,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   private fun checkDependenciesAndModules(plugin: IdePlugin) {
-    assertEquals(5, plugin.dependencies.size.toLong())
+    assertEquals(7, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
       ModuleV2Dependency("intellij.module.dependency", isOptional = false),
@@ -238,6 +241,8 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       PluginV2Dependency("com.intellij.modules.mandatoryDependencyV2", isOptional = false),
       ModuleV2Dependency("intellij.clouds.docker.remoteRun", isOptional = true),
       PluginV2Dependency("com.intellij.copyright", isOptional = true),
+      ModuleV2Dependency("intellij.platform.backend", isOptional = false),
+      PluginV2Dependency("com.intellij.java", isOptional = false),
     )
     assertThat(plugin.dependencies, `is`(expectedDependencies))
 

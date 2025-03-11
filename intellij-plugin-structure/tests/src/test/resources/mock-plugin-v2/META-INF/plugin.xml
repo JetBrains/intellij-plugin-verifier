@@ -14,6 +14,7 @@
 
     <content>
         <module name="intellij.v2.module"/>
+        <module name="intellij.v2.required.module" loading="required"/>
         <module name="intellij.v2.missing"/>
     </content>
     
