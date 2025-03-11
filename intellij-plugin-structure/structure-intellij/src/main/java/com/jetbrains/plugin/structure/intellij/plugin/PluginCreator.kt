@@ -205,24 +205,21 @@ internal class PluginCreator private constructor(
   ) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      // Content module should be in v2 model
-      if (pluginCreationResult.plugin.isV2) {
-        val module = pluginCreationResult.plugin
+      val module = pluginCreationResult.plugin
 
-        plugin.addDependencies(module)
-        plugin.modulesDescriptors.add(
-          ModuleDescriptor(
-            moduleName,
-            loadingRule,
-            module.dependencies,
-            module,
-            configurationFile
-          )
+      plugin.addDependencies(module)
+      plugin.modulesDescriptors.add(
+        ModuleDescriptor(
+          moduleName,
+          loadingRule,
+          module.dependencies,
+          module,
+          configurationFile
         )
-        plugin.definedModules.add(moduleName)
+      )
+      plugin.definedModules.add(moduleName)
 
-        mergeContent(module)
-      }
+      mergeContent(module)
     } else {
       registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
     }
