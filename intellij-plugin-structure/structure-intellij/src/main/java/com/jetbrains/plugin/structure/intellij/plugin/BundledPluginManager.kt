@@ -18,7 +18,7 @@ import java.nio.file.Path
 private val LOG = LoggerFactory.getLogger(BundledPluginManager::class.java)
 
 private const val PLUGINS_DIRECTORY = "plugins"
-private const val LIB_DIRECTORY = "lib"
+internal const val LIB_DIRECTORY = "lib"
 
 class BundledPluginManager(private val pluginIdProvider: PluginIdProvider) {
   private val descriptorProvider = PluginDescriptorProvider()
