@@ -42,6 +42,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override var useIdeClassLoader: Boolean = false
 
+  override var classpath: Classpath = Classpath.EMPTY
+
   override var isImplementationDetail: Boolean = false
 
   override var isV2: Boolean = false
@@ -116,6 +118,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         changeNotes = old.changeNotes
         url = old.url
         useIdeClassLoader = old.useIdeClassLoader
+        classpath = old.classpath
         isImplementationDetail = old.isImplementationDetail
         isV2 = old.isV2
         kotlinPluginMode = old.kotlinPluginMode

@@ -63,6 +63,8 @@ interface IdePlugin : Plugin {
 
   val useIdeClassLoader: Boolean
 
+  val classpath: Classpath
+
   val isImplementationDetail: Boolean
 
   val isV2: Boolean

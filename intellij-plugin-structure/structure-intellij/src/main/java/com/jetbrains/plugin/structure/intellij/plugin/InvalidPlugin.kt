@@ -44,6 +44,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val productDescriptor: ProductDescriptor? = null
   override val declaredThemes: List<IdeTheme> = emptyList()
   override val useIdeClassLoader: Boolean = false
+  override val classpath: Classpath = Classpath.EMPTY
   override val isImplementationDetail: Boolean = false
   override val isV2: Boolean = false
   override val kotlinPluginMode: KotlinPluginMode = Implicit

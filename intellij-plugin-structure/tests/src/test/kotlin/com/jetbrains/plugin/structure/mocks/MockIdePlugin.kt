@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
@@ -47,6 +48,7 @@ data class MockIdePlugin(
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
+  override val classpath: Classpath = Classpath.EMPTY
   override val isImplementationDetail = false
   override val hasDotNetPart: Boolean = false
 
