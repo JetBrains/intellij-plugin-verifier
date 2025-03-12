@@ -16,6 +16,10 @@ class Classpath private constructor(val entries: List<ClasspathEntry> = emptyLis
 
   val size: Int = entries.size
 
+  val paths: List<Path> = entries.map { it.path }
+
+  val uniquePaths: Set<Path> = paths.distinct().toSet()
+
   override fun toString(): String = entries.joinToString(separator = ":", prefix = "[", postfix = "]")
 }
 
