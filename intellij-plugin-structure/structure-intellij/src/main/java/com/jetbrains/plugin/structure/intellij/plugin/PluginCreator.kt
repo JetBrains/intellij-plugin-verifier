@@ -288,6 +288,10 @@ internal class PluginCreator private constructor(
     plugin.hasDotNetPart = hasDotNetPart
   }
 
+  fun setClasspath(classpath: Classpath) {
+    plugin.classpath = classpath
+  }
+
   fun setPluginIdIfNull(id: String) {
     if (plugin.pluginId == null) {
       plugin.pluginId = id

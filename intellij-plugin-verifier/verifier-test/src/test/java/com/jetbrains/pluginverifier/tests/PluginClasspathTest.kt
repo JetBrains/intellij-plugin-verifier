@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryLocator
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.createPluginResolver
@@ -151,5 +152,33 @@ class PluginClasspathTest : BasePluginTest() {
         }
       }
     }
+  }
+
+  @Test
+  fun name() {
+    val result = buildPluginInDirectory {
+      dir("lib") {
+        dir("modules") {
+          zip("intellij.json.split.jar") {
+            file("intellij.json.split.xml", "<idea-plugin />")
+          }
+        }
+        zip("json.jar") {
+          descriptor(ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON"))
+          file("intellij.json.xml", "<idea-plugin />")
+        }
+      }
+    }
+    assertSuccess(result) {
+      with(plugin.classpath) {
+        assertEquals(3, size)
+        assertTrue(containsFileName("json.jar"))
+        assertTrue(containsFileName("intellij.json.split.jar"))
+      }
+    }
+  }
+
+  fun Classpath.containsFileName(fileName: String): Boolean {
+    return entries.any { it.path.fileName.toString() == fileName }
   }
 }
