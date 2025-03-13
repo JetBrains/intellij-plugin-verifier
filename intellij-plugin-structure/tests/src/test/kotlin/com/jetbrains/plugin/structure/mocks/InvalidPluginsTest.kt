@@ -25,11 +25,13 @@ import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlin.random.Random
 
 class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
   private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
@@ -40,6 +42,8 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
     "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
   )
+
+  private val LONG_LATIN_DESCRIPTION = "Latin description, 1234 &amp; ;,.!-–— () long enough"
 
   override fun createManager(extractDirectory: Path): IdePluginManager =
     IdePluginManager.createManager(extractDirectory)
@@ -421,7 +425,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
 
   @Test
   fun `latin description`() {
-    val desc = "Latin description, 1234 & ;,.!-–— () long enough"
+    val desc = LONG_LATIN_DESCRIPTION
     val plugin = `test valid plugin xml`(
       perfectXmlBuilder.modify {
         description = "<description>${desc.replace("&", "&amp;")}</description>"
@@ -442,18 +446,69 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       perfectXmlBuilder.modify {
         description = "<description>Too short latin description bla-bla-bla</description>"
       },
-      listOf(ShortOrNonLatinDescription())
+      listOf(DescriptionNotStartingWithLatinCharacters())
     )
   }
 
   @Test
   fun `non latin description`() {
+    val desc = getRandomNonLatinSentence(5, minWordLength = 8)
+    assertTrue(desc.length > 40)
     `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
-        description = "<description>Описание без английского, но достаточно длинное</description>"
+        description = "<description>$desc</description>"
       },
-      listOf(ShortOrNonLatinDescription())
+      listOf(DescriptionNotStartingWithLatinCharacters())
     )
+  }
+
+  @Test
+  fun `non latin and latin description 40 characters long together`() {
+    val nonLatinDesc = getRandomNonLatinSentence(5, minWordLength = 8)
+    val desc = "$nonLatinDesc, Latin description"
+    assertTrue(desc.length > 40)
+    `test plugin xml unacceptable warnings`(
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      },
+      listOf(DescriptionNotStartingWithLatinCharacters())
+    )
+  }
+
+  @Test
+  fun `don't start with latin symbols`() {
+    val nonLatinDesc = getRandomNonLatinSentence(5)
+    val desc = "$nonLatinDesc $LONG_LATIN_DESCRIPTION"
+    assertTrue(desc.length > 40)
+    `test plugin xml unacceptable warnings`(
+      perfectXmlBuilder.modify {
+        description = "<description>$desc</description>"
+      },
+      listOf(DescriptionNotStartingWithLatinCharacters())
+    )
+  }
+
+  fun getRandomNonLatinSentence(wordCount: Int, minWordLength: Int = 1, maxWordLength: Int = 10): String {
+    return (1..wordCount).joinToString(" ") {
+      val wordLength = Random.nextInt(minWordLength, maxWordLength + 1)
+      getRandomNonLatinSymbols(wordLength)
+    }
+  }
+
+  fun getRandomNonLatinSymbols(count: Int): String {
+    val ranges = listOf(
+      0x0400..0x04FF, // Cyrillic
+      0x0370..0x03FF, // Greek
+      0x0600..0x06FF, // Arabic
+      0x0900..0x097F, // Devanagari
+      0x4E00..0x9FFF  // Chinese
+    )
+
+    val selectedRange = ranges.random()
+    return (1..count).map {
+      val randomCodePoint = Random.nextInt(selectedRange.first, selectedRange.last + 1)
+      randomCodePoint.toChar()
+    }.joinToString("")
   }
 
   @Test
@@ -519,7 +574,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>
           ]]></description>"""
       },
-      listOf(ShortOrNonLatinDescription())
+      listOf(DescriptionNotStartingWithLatinCharacters())
     )
   }
 

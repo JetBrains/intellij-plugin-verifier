@@ -7,9 +7,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 
 const val MIN_DESCRIPTION_LENGTH = 40
 
-class ShortOrNonLatinDescription : InvalidDescriptorProblem(
+class DescriptionNotStartingWithLatinCharacters : InvalidDescriptorProblem(
   descriptorPath = "description",
-  detailedMessage = "The plugin description is shorter than 40 characters and/or the plugin description contains non-Latin characters."
+  detailedMessage = "The plugin description must start with Latin characters and have at least $MIN_DESCRIPTION_LENGTH characters."
 ) {
   override val level
     get() = Level.UNACCEPTABLE_WARNING
