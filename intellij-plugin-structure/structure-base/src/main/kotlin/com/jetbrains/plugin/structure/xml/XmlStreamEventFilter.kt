@@ -1,7 +1,3 @@
-/*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
 package com.jetbrains.plugin.structure.xml
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
@@ -58,10 +54,5 @@ class XmlStreamEventFilter {
       LOG.error("Cannot retrieve next event", e)
       false
     }
-  }
-
-  private fun newXmlInputFactory() = XMLInputFactory.newInstance().apply {
-    setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
-    setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
   }
 }

@@ -2,11 +2,12 @@ package com.jetbrains.plugin.structure.intellij.plugin.descriptors
 
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.inputStream
+import com.jetbrains.plugin.structure.xml.CloseableXmlEventReader
+import com.jetbrains.plugin.structure.xml.newXmlInputFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.nio.file.Path
-import javax.xml.stream.XMLEventReader
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.events.StartElement
@@ -51,33 +52,5 @@ class IdeaPluginXmlDetector {
 
   private fun XMLInputFactory.newEventReader(descriptorPath: Path): CloseableXmlEventReader {
     return CloseableXmlEventReader(createXMLEventReader(descriptorPath.inputStream()))
-  }
-
-
-  // FIXME duplicate with XmlStreamEventFilter
-  private fun newXmlInputFactory() = XMLInputFactory.newInstance().apply {
-    setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
-    setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
-  }
-
-  // FIXME duplicate with XmlStreamings
-  class CloseableXmlEventReader(private val delegate: XMLEventReader) : XMLEventReader by delegate, Closeable {
-    @Throws(XMLStreamException::class)
-    override fun close() {
-      delegate.close()
-    }
-  }
-
-  // FIXME duplicate with XmlStreamEventFilter
-  private fun CloseableXmlEventReader.hasNextEvent(): Boolean {
-    return try {
-      hasNext()
-    } catch (e: XMLStreamException) {
-      LOG.error("Cannot retrieve next event", e)
-      false
-    } catch (e: RuntimeException) {
-      LOG.error("Cannot retrieve next event", e)
-      false
-    }
   }
 }
