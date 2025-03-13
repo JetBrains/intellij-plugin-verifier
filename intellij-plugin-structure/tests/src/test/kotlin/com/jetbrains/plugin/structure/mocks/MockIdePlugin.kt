@@ -44,11 +44,11 @@ data class MockIdePlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val isV2: Boolean = false,
-  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
+  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
+  override val classpath: Classpath = Classpath.EMPTY
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
-  override val classpath: Classpath = Classpath.EMPTY
   override val isImplementationDetail = false
   override val hasDotNetPart: Boolean = false
 

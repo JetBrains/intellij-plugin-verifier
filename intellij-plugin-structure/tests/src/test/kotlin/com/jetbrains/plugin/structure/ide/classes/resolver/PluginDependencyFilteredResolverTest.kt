@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAlias
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -35,6 +36,8 @@ class PluginDependencyFilteredResolverTest {
   val temporaryFolder = TemporaryFolder()
 
   private lateinit var ideRoot: Path
+
+  private lateinit var ideaCorePluginFile: Path
 
   private lateinit var ideaCorePlugin: IdePlugin
   private lateinit var javaPlugin: IdePlugin
@@ -74,15 +77,17 @@ class PluginDependencyFilteredResolverTest {
 
     ideRoot = temporaryFolder.newFolder("idea").toPath()
 
+    ideaCorePluginFile = temporaryFolder.newTemporaryFile("idea/lib/product.jar")
     ideaCorePlugin = MockIdePlugin(
       pluginId = "com.intellij",
       pluginName = "IDEA CORE",
-      originalFile = temporaryFolder.newTemporaryFile("idea/lib/product.jar"),
+      originalFile = ideaCorePluginFile,
       definedModules = setOf(
         "com.intellij.modules.platform",
         "com.intellij.modules.lang",
         "com.intellij.modules.java",
-      )
+      ),
+      classpath = Classpath.of(listOf(ideaCorePluginFile))
     ).also {
       it.writeEmptyClass("com.intellij.openapi.editor.Caret")
     }
