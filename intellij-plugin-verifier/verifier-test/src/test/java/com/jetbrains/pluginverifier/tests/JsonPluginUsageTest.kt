@@ -95,7 +95,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
       hasModuleDescriptors = true
     )
     assertEquals(2, targetIde.bundledPlugins.size)
-    targetIde.assertHasBundledPluginWithPath(Paths.get("plugins/json/lib/json.jar"))
+    targetIde.assertHasBundledPluginWithPath(targetIde.resolvePath("plugins/json/lib/json.jar"))
 
     assertVerified {
       ide = targetIde
@@ -118,7 +118,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
       hasModuleDescriptors = true
     )
     assertEquals(2, targetIde.bundledPlugins.size)
-    targetIde.assertHasBundledPluginWithPath(Paths.get("plugins/json/lib/json.jar"))
+    targetIde.assertHasBundledPluginWithPath(targetIde.resolvePath("plugins/json/lib/json.jar"))
 
 
     val pluginSpec = IdeaPluginSpec("com.intellij.plugin", "JetBrains s.r.o.", dependencies = listOf(JSON_PLUGIN_ID))
@@ -133,10 +133,21 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
   }
 
   private fun Ide.assertHasBundledPluginWithPath(path: Path) {
-    val hasPlugin = bundledPlugins.any {
-      it.originalFile?.endsWith(path) ?: false
+    var hasPlugin = bundledPlugins.any {
+      it.originalFile?.endsWith(path) == true
     }
+    if (!hasPlugin) {
+      val paths = bundledPlugins.flatMap { it.classpath.uniquePaths }
+      hasPlugin = paths.any { it == path }
+    }
+
     if (!hasPlugin) throw AssertionError("IDE does not contain plugin that has a path ending with '$path'")
+  }
+
+  private fun Ide.resolvePath(path: String): Path {
+    val components = path.split("/")
+    val path = Paths.get("", *components.toTypedArray())
+    return idePath.resolve(path)
   }
 
   fun findAfterIdeaBuildClassPath(): Path {
