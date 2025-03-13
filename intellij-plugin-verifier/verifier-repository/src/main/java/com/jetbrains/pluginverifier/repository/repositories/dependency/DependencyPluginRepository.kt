@@ -30,6 +30,7 @@ class DependencyPluginRepository(private val delegateRepository: PluginRepositor
 
   private fun PluginInfo?.asDependency(): PluginInfo? = this?.let { DependencyPluginInfo(it) }
 
+  override fun toString(): String = delegateRepository.toString()
 }
 
 
