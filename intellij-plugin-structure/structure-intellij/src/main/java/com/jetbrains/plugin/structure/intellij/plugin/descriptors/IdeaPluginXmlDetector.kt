@@ -32,13 +32,8 @@ class IdeaPluginXmlDetector {
       }
       return false
     } catch (e: XMLStreamException) {
-      if (e.message?.contains("is reserved by the xml specification") == true) {
-        LOG.debug("Unable to read plugin descriptor '{}': {}", descriptorPath, e.message)
-        return false;
-      } else {
-        LOG.warn("Unable to read plugin descriptor '$descriptorPath'", e)
-        return false
-      }
+      LOG.debug("Unable to read plugin descriptor '{}': {}", descriptorPath, e.message)
+      return false
     } catch (e: Exception) {
       LOG.warn("Unable to read plugin descriptor '$descriptorPath'", e)
       return false
