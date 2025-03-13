@@ -211,8 +211,7 @@ class ProductInfoBasedIdeManager(
   }
 
   private fun resolvePluginArtifact(path: Path): Path {
-    //FIXME remove hardwired string in favour of constant
-    return if (path.isJar() && path.parent.fileName.toString() == "lib") {
+    return if (path.isJar() && path.parent.fileName.toString() == LIB_DIRECTORY) {
       path.parent.parent
     } else {
       path
