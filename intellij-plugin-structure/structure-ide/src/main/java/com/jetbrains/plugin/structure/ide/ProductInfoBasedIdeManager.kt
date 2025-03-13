@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
@@ -156,8 +157,23 @@ class ProductInfoBasedIdeManager(
     layoutComponentName: String
   ) = IdePluginManager
     .createManager(resourceResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, bundledPluginCreationResultResolver, fallbackPluginId = layoutComponentName)
+    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, layoutComponentName)
     .withPath(pluginArtifactPath)
+
+  private fun IdePluginManager.createBundledPlugin(
+    pluginArtifact: Path,
+    ideVersion: IdeVersion,
+    descriptorPath: String,
+    layoutComponentName: String
+  ): PluginCreationResult<IdePlugin> {
+    return createBundledPlugin(
+      resolvePluginArtifact(pluginArtifact),
+      ideVersion,
+      descriptorPath,
+      bundledPluginCreationResultResolver,
+      fallbackPluginId = layoutComponentName
+    )
+  }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
     val versionString = buildString {
@@ -191,6 +207,15 @@ class ProductInfoBasedIdeManager(
       is IdeVersionResolution.Found -> version.ideVersion > IdeVersion.createIdeVersion(expectedVersion)
       is IdeVersionResolution.Failed,
       is IdeVersionResolution.NotFound -> false
+    }
+  }
+
+  private fun resolvePluginArtifact(path: Path): Path {
+    //FIXME remove hardwired string in favour of constant
+    return if (path.isJar() && path.parent.fileName.toString() == "lib") {
+      path.parent.parent
+    } else {
+      path
     }
   }
 
