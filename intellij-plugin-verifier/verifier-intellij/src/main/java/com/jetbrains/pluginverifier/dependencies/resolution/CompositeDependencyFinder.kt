@@ -18,15 +18,9 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
     get() = dependencyFinders.joinToString { it.presentableName }
 
   override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
-    var lastNotFound: DependencyFinder.Result.NotFound? = null
-    for (dependencyFinder in dependencyFinders) {
-      val findResult = dependencyFinder.findPluginDependency(dependencyId, isModule)
-      if (findResult !is DependencyFinder.Result.NotFound) {
-        return findResult
-      }
-      lastNotFound = findResult
-    }
-    return lastNotFound
+    return dependencyFinders.asSequence()
+      .map { it.findPluginDependency(dependencyId, isModule) }
+      .firstOrNull { it !is DependencyFinder.Result.NotFound }
       ?: DependencyFinder.Result.NotFound("Dependency '$dependencyId'${if (isModule) " (module)" else ""} is not resolved. It was searched in the following locations: $presentableName")
   }
 
@@ -36,5 +30,4 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
       .firstOrNull { it !is DependencyFinder.Result.NotFound }
       ?: DependencyFinder.Result.NotFound("Dependency '$dependency' is not resolved. It was searched in the following locations: $presentableName")
   }
-
 }
