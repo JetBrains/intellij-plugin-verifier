@@ -39,7 +39,7 @@ class ClasspathTest {
 
     val cp = Classpath.of(listOf(pluginPath, duplicatePluginPath, modulePath))
 
-    with(cp.uniquePaths) {
+    with(cp.paths) {
       assertEquals(2, size)
       assertTrue("Classpath paths must contain the plugin artifact",any { it == pluginPath })
       assertTrue("Classpath paths must contain the module artifact", any { it == modulePath })
