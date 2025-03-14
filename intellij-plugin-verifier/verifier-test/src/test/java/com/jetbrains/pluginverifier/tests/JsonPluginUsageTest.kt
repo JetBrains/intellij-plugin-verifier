@@ -137,8 +137,7 @@ class JsonPluginUsageTest : BaseBytecodeTest() {
       it.originalFile?.endsWith(path) == true
     }
     if (!hasPlugin) {
-      val paths = bundledPlugins.flatMap { it.classpath.uniquePaths }
-      hasPlugin = paths.any { it == path }
+      hasPlugin = bundledPlugins.flatMap { it.classpath.paths }.any { it == path }
     }
 
     if (!hasPlugin) throw AssertionError("IDE does not contain plugin that has a path ending with '$path'")
