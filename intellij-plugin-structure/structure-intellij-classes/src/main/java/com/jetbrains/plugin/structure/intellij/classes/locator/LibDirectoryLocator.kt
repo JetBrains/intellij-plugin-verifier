@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.classes.locator
@@ -17,7 +17,8 @@ import java.nio.file.Path
 
 class LibDirectoryLocator(
   private val readMode: Resolver.ReadMode,
-  private val fileOriginProvider: FileOriginProvider = LibDirectoryOriginProvider
+  private val fileOriginProvider: FileOriginProvider = LibDirectoryOriginProvider,
+  private val libDirectoryFilter: LibDirectoryFilter = AnyLibDirectoryFilter
 ) : ClassesLocator {
   override val locationKey = LibDirectoryKey
 
@@ -26,14 +27,25 @@ class LibDirectoryLocator(
     val resolvers = arrayListOf<Resolver>()
     if (pluginLib.isDirectory) {
       val libDirectoryOrigin = fileOriginProvider.getFileOrigin(idePlugin, pluginFile)
-      val jarsOrZips = pluginLib.listFiles().filter { file -> file.isJar() || file.isZip() }
-      val directories = pluginLib.listFiles().filter { file -> file.isDirectory }
+      val pluginLibChildren = pluginLib.listFiles()
+      val jarsOrZips = pluginLibChildren.filter { file -> file.isJar() || file.isZip() }
+      val directories = pluginLibChildren
+        .filter { file -> file.isDirectory }
+        .filter(libDirectoryFilter::accept)
       resolvers.closeOnException {
         resolvers += buildJarOrZipFileResolvers(jarsOrZips, readMode, libDirectoryOrigin)
         resolvers += buildDirectoriesResolvers(directories, readMode, libDirectoryOrigin)
       }
     }
     return resolvers
+  }
+
+  fun interface LibDirectoryFilter {
+    fun accept(file: Path): Boolean
+  }
+
+  object AnyLibDirectoryFilter : LibDirectoryFilter {
+    override fun accept(file: Path) = true
   }
 }
 

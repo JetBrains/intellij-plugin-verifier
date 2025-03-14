@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath.Companion.EMPTY
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
@@ -14,13 +16,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
-import java.nio.file.Path
 
 typealias Dependency = ModuleBean.ModuleDependency
 typealias Resource = ModuleBean.ResourceRoot
 
-class IdeModule(override val pluginId: String) : IdePlugin {
-  val classpath = mutableListOf<Path>()
+class IdeModule(override val pluginId: String, override val classpath: Classpath = EMPTY) : IdePlugin {
   val moduleDependencies = mutableListOf<Dependency>()
   val resources = mutableListOf<Resource>()
   override var underlyingDocument = Document()
@@ -61,8 +61,8 @@ class IdeModule(override val pluginId: String) : IdePlugin {
 
   companion object {
     @Throws(IllegalArgumentException::class)
-    fun clone(plugin: IdePlugin, pluginId: String): IdeModule {
-      return IdeModule(pluginId).apply {
+    fun clone(plugin: IdePlugin, pluginId: String, classpath: Classpath): IdeModule {
+      return IdeModule(pluginId,classpath).apply {
         underlyingDocument = plugin.underlyingDocument.clone()
 
         extensions.putAll(plugin.extensions)

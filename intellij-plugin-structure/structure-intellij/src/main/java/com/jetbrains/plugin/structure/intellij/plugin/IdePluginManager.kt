@@ -38,6 +38,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -61,7 +62,6 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
-import java.util.stream.Collectors
 import kotlin.system.measureTimeMillis
 
 /**
@@ -78,6 +78,8 @@ class IdePluginManager private constructor(
   private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
   private val optionalDependencyResolver = OptionalDependencyResolver(this::loadPluginInfoFromJarOrDirectory)
+
+  private val contentModuleScanner = ContentModuleScanner()
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
@@ -267,7 +269,8 @@ class IdePluginManager private constructor(
     val jarFiles = files.filter { it.isJar() }
     val libResourceResolver: ResourceResolver = JarFilesResourceResolver(jarFiles)
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
-    val results: MutableList<PluginCreator> = ArrayList()
+
+    val results: MutableList<CreationResult> = ArrayList()
     for (file in files) {
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
@@ -294,17 +297,16 @@ class IdePluginManager private constructor(
       } else {
         continue
       }
-      results.add(innerCreator)
+      results.add(CreationResult(root, innerCreator))
     }
-    val possibleResults = results.stream()
-      .filter { r: PluginCreator -> r.isSuccess || hasOnlyInvalidDescriptorErrors(r) }
-      .collect(Collectors.toList())
+    val possibleResults = results
+      .filter { (_, r: PluginCreator)  -> r.isSuccess || hasOnlyInvalidDescriptorErrors(r) }
     return when(possibleResults.size) {
       0 -> createInvalidPlugin(root, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
-      1 -> possibleResults[0]
+      1 -> possibleResults[0].withResolvedClasspath().creator
       else -> {
-        val first = possibleResults[0]
-        val second = possibleResults[1]
+        val first = possibleResults[0].creator
+        val second = possibleResults[1].creator
         val multipleDescriptorsProblem: PluginProblem = MultiplePluginDescriptors(
                 first.descriptorPath,
                 first.pluginFileName,
@@ -522,6 +524,14 @@ class IdePluginManager private constructor(
       LOG.debug("Plugin or module '$pluginId' has plugin problems: $warningMessage")
     }
   }
+
+  private fun CreationResult.withResolvedClasspath(): CreationResult = apply {
+    val contentModules = contentModuleScanner.getContentModules(artifact)
+    val classpath = contentModules.asClasspath()
+    creator.setClasspath(classpath)
+  }
+
+  private data class CreationResult(val artifact: Path, val creator: PluginCreator)
 
   companion object {
     private val LOG = LoggerFactory.getLogger(IdePluginManager::class.java)

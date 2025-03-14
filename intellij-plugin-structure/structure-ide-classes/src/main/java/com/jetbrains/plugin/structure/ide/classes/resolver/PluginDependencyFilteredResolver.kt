@@ -5,13 +5,21 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultDependenciesProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependenciesProvider
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
+
+private const val UNNAMED_RESOLVER = "Unnamed Resolver"
+
+private val EMPTY_UNNAMED_RESOLVER = NamedResolver(UNNAMED_RESOLVER, EmptyResolver)
 
 /**
  * A classpath resolver that matches plugin dependencies against bundled plugins of an `product-info.json`-based IDE.
@@ -25,17 +33,12 @@ class PluginDependencyFilteredResolver(
   productInfoClassResolver: ProductInfoClassResolver,
   private val dependenciesProvider: DependenciesProvider = DefaultDependenciesProvider(productInfoClassResolver.ide)
 ) : Resolver() {
-  val filteredResolvers: List<NamedResolver> = getResolvers(plugin, productInfoClassResolver)
+  val filteredResolvers: List<NamedResolver> = getResolvers(plugin)
 
-  private fun getResolvers(plugin: IdePlugin, productInfoClassResolver: ProductInfoClassResolver): List<NamedResolver> {
-    return dependenciesProvider
-      .getDependencies(plugin)
-      .map { dependency ->
-        productInfoClassResolver.layoutComponentNames.firstOrNull { dependency.matches(it) }
-          ?.let { productInfoClassResolver.getLayoutComponentResolver(it) }
-          ?.takeIf { productInfoClassResolver.hasNonEmptyResolver(it.name) }
-          ?: productInfoClassResolver.bootClasspathResolver
-      }
+  private fun getResolvers(plugin: IdePlugin): List<NamedResolver> {
+    return dependenciesProvider.getDependencies(plugin).map {
+      it.plugin?.asResolver() ?: EMPTY_UNNAMED_RESOLVER
+    }
   }
 
   private val delegateResolver = filteredResolvers.asResolver()
@@ -65,4 +68,31 @@ class PluginDependencyFilteredResolver(
   private fun List<Resolver>.asResolver(): Resolver {
     return CompositeResolver.create(this)
   }
+
+  private fun List<Resolver>.asNamedResolver(resolverName: String): NamedResolver {
+    return NamedResolver(resolverName, CompositeResolver.create(this, resolverName))
+  }
+
+  private val IdePlugin.id: String?
+    get() = pluginId ?: pluginName
+
+  private fun IdePlugin?.asResolver(): NamedResolver {
+    if (this == null) return EMPTY_UNNAMED_RESOLVER
+
+    return classpath.entries.map {
+      val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
+      //FIXME check readmode
+      JarFileResolver(it.path, readMode = ReadMode.FULL, origin)
+    }.asNamedResolver(newResolverName())
+  }
+
+  private val Dependency.plugin: IdePlugin?
+    get() = when (this) {
+      is Dependency.Module -> plugin
+      is Dependency.Plugin -> plugin
+      else -> null
+    }
+
+  private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
 }
+

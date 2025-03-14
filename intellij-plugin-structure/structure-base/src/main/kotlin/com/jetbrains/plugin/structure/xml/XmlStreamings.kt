@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.xml
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
@@ -13,6 +15,13 @@ import javax.xml.stream.XMLEventWriter
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
+
+private val XML_EVENT_READER_LOG: Logger = LoggerFactory.getLogger(CloseableXmlEventReader::class.java)
+
+fun newXmlInputFactory(): XMLInputFactory = XMLInputFactory.newInstance().apply {
+  setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
+  setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
+}
 
 fun XMLInputFactory.newEventReader(inputStream: InputStream): CloseableXmlEventReader =
   CloseableXmlEventReader(createXMLEventReader(inputStream))
@@ -27,6 +36,18 @@ class CloseableXmlEventReader(private val delegate: XMLEventReader) : XMLEventRe
   @Throws(XMLStreamException::class)
   override fun close() {
     delegate.close()
+  }
+
+  fun hasNextEvent(): Boolean {
+    return try {
+      hasNext()
+    } catch (e: XMLStreamException) {
+      XML_EVENT_READER_LOG.error("Cannot retrieve next event", e)
+      false
+    } catch (e: RuntimeException) {
+      XML_EVENT_READER_LOG.error("Cannot retrieve next event", e)
+      false
+    }
   }
 }
 
