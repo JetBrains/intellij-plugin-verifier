@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.384 - 2025-03-19
+
+### Added
+
 - Track classpath for IDE plugins. ([#1230](https://github.com/JetBrains/intellij-plugin-verifier/pull/1230), [MP-7299](https://youtrack.jetbrains.com/issue/MP-7299))
 
 ## 1.383 - 2025-03-07
