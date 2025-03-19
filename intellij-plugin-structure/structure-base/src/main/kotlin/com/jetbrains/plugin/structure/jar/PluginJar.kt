@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
 import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.readBytes
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
@@ -48,7 +48,7 @@ class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: Ja
 
     val xmlInRoots: List<Path> = jarFileSystem.rootDirectories.flatMap { root ->
       Files.list(root)
-        .filter { it.extension == XML_EXTENSION }
+        .filter { it.hasExtension(XML_EXTENSION) }
         .filter(descriptorFilter::accept)
         .use {
           it.toList()
