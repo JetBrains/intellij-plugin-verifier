@@ -15,6 +15,8 @@ private const val MODULES_DIR = "modules"
 
 private const val XML_EXTENSION = "xml"
 
+private val META_INF_PLUGIN_XML_PATH_COMPONENTS = listOf(META_INF, PLUGIN_XML)
+
 class ContentModuleScanner {
   private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
 
@@ -27,7 +29,7 @@ class ContentModuleScanner {
     val moduleJarPaths = libDir.resolve(MODULES_DIR).listJars()
     val contentModules = (jarPaths + moduleJarPaths).flatMap { jarPath ->
       PluginJar(jarPath).use { jar ->
-        val descriptorPaths = jar.resolveDescriptors { it.matches() }
+        val descriptorPaths = jar.resolveDescriptors { it.isDescriptor() }
         descriptorPaths.map {
           val moduleName = if (it.isMetaInfPluginXml()) {
             "ROOT"
@@ -42,7 +44,12 @@ class ContentModuleScanner {
     return ContentModules(pluginArtifact, contentModules)
   }
 
-  private fun Path.matches(): Boolean {
+  /**
+   * Indicates if a path corresponds to a plugin descriptor.
+   * 1. It is either `META-INF/plugin.xml`.
+   * 2. Alternatively, it is a Plugin Model V2 module descriptor that occurs in the root of a plugin JAR.
+   */
+  private fun Path.isDescriptor(): Boolean {
     return when (nameCount) {
       1 -> getName(0).isPluginDescriptorInJarRoot()
       2 -> isMetaInfPluginXml()
@@ -50,14 +57,7 @@ class ContentModuleScanner {
     }
   }
 
-  private fun Path.matches(vararg pathComponents: String): Boolean {
-    val thisComponents = map {
-      it.toString()
-    }
-    return thisComponents == pathComponents.toList()
-  }
-
-  private fun Path.isMetaInfPluginXml(): Boolean = matches(META_INF, PLUGIN_XML)
+  private fun Path.isMetaInfPluginXml() = META_INF_PLUGIN_XML_PATH_COMPONENTS == map { it.toString() }
 
   private fun Path.isPluginDescriptorInJarRoot(): Boolean {
     val isXml = hasExtension(XML_EXTENSION)
