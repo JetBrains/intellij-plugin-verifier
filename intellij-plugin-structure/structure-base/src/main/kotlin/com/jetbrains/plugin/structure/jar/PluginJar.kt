@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.readBytes
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
@@ -15,9 +16,11 @@ import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.streams.toList
 
 const val META_INF = "META-INF"
 const val PLUGIN_XML = "plugin.xml"
+private const val XML_EXTENSION = "xml"
 val PLUGIN_XML_RESOURCE_PATH = META_INF + File.separator + PLUGIN_XML
 
 private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
@@ -37,6 +40,22 @@ class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: Ja
     } else {
       null
     }
+  }
+
+  fun resolveDescriptors(descriptorFilter: PluginDescriptorFilter = AcceptAnyXmlFileAsDescriptor): List<Path> {
+    val metaInfPluginXmlPaths = listOfNotNull(resolveDescriptorPath(PLUGIN_XML_RESOURCE_PATH))
+      .filter(descriptorFilter::accept)
+
+    val xmlInRoots: List<Path> = jarFileSystem.rootDirectories.flatMap { root ->
+      Files.list(root)
+        .filter { it.hasExtension(XML_EXTENSION) }
+        .filter(descriptorFilter::accept)
+        .use {
+          it.toList()
+        }
+    }
+
+    return metaInfPluginXmlPaths + xmlInRoots
   }
 
   fun getPluginDescriptor(descriptorPathValue: String = PLUGIN_XML_RESOURCE_PATH): PluginDescriptorResult {
@@ -90,5 +109,13 @@ class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: Ja
 
   override fun close() {
     jarFileSystemProvider.close(jarPath)
+  }
+
+  fun interface PluginDescriptorFilter {
+    fun accept(descriptorPath: Path): Boolean
+  }
+
+  object AcceptAnyXmlFileAsDescriptor : PluginDescriptorFilter {
+    override fun accept(descriptorPath: Path) = true
   }
 }

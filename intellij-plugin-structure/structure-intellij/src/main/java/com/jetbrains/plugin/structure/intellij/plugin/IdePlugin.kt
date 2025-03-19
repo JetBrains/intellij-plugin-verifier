@@ -37,6 +37,9 @@ interface IdePlugin : Plugin {
 
   val incompatibleModules: List<String>
 
+  /**
+   * Plugin aliases.
+   */
   val definedModules: Set<String>
 
   val optionalDescriptors: List<OptionalPluginDescriptor>
@@ -59,6 +62,8 @@ interface IdePlugin : Plugin {
   val declaredThemes: List<IdeTheme>
 
   val useIdeClassLoader: Boolean
+
+  val classpath: Classpath
 
   val isImplementationDetail: Boolean
 

@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Su
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -35,10 +36,9 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     return when (moduleLoadingResult) {
       is Success -> {
         IdeModule
-          .clone(moduleLoadingResult.plugin, moduleName)
+          .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath))
           .apply {
             definedModules += moduleName
-            classpath += classpathProvider.getClasspath(moduleName).map { idePath.resolve(it) }
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources
           }
@@ -81,4 +81,9 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     return Success(resolvedIdeModule.pluginArtifactPath, this)
   }
 
+  private fun getClasspath(moduleName: String, idePath: Path): Classpath {
+    val paths = classpathProvider.getClasspath(moduleName)
+      .map { idePath.resolve(it) }
+    return Classpath.of(paths)
+  }
 }

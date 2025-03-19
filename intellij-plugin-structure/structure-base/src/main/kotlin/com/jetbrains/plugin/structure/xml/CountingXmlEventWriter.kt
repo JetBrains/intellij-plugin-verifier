@@ -1,10 +1,5 @@
-/*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
 package com.jetbrains.plugin.structure.xml
 
-import com.jetbrains.plugin.structure.ide.dependencies.PluginXmlDependencyFilter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -12,7 +7,7 @@ import javax.xml.stream.XMLEventWriter
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.events.XMLEvent
 
-private val LOG: Logger = LoggerFactory.getLogger(PluginXmlDependencyFilter::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(CountingXmlEventWriter::class.java)
 
 /**
  * STaX Event Writer that counts occurrences of STaX events.

@@ -870,7 +870,123 @@ class DependenciesTest {
       assertContains("intellij.platform.coverage.agent")
     }
   }
+
+  @Test
+  fun `coverage plugin has correct transitive classpath`() {
+    val ideResourceLocation = "/ide-dumps/243.12818.47-1"
+    val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
+    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
+    ideUrl!!
+    val ideRoot = Paths.get(ideUrl.toURI())
+
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
+      .createIde(ideRoot)
+
+    val coveragePlugin = ide.findPluginById("Coverage")
+    assertNotNull("No 'Coverage' plugin found in the IDE", coveragePlugin)
+    coveragePlugin!!
+
+    val dependencyTree = DependencyTree(ide)
+    val dependencies = dependencyTree.getTransitiveDependencies(coveragePlugin)
+    val transitiveClasspath = dependencies.flatMap {
+      when (it) {
+        is Dependency.Module -> it.plugin.classpath.paths
+        is Dependency.Plugin -> it.plugin.classpath.paths
+        else -> emptyList()
+      }
+    }
+    val classpath = coveragePlugin.classpath.paths + transitiveClasspath
+
+    val relativeClasspaths = classpath
+      .map { ideRoot.relativize(it) }
+      .map { it.toString() }
+      .toSet()
+
+    val expectedClassPath = """
+      plugins/java-coverage/lib/java-coverage.jar
+      plugins/testng/lib/testng-plugin.jar
+      plugins/java/lib/java-impl.jar
+      plugins/java/lib/java-frontback.jar
+      plugins/java/lib/modules/intellij.java.unscramble.jar
+      plugins/java/lib/modules/intellij.java.featuresTrainer.jar
+      plugins/java/lib/modules/intellij.java.vcs.jar
+      plugins/java/lib/modules/intellij.java.structuralSearch.jar
+      plugins/copyright/lib/copyright.jar
+      lib/product.jar
+      lib/testFramework.jar
+      lib/idea_rt.jar
+      lib/app-client.jar
+      lib/modules/intellij.platform.lvcs.impl.jar
+      lib/modules/intellij.profiler.common.jar
+      lib/modules/intellij.platform.dap.jar
+      lib/modules/intellij.platform.ide.newUsersOnboarding.jar
+      lib/modules/intellij.platform.images.copyright.jar
+      lib/modules/intellij.ide.startup.importSettings.jar
+      lib/modules/intellij.execution.process.elevation.jar
+      lib/modules/intellij.platform.clouds.jar
+      lib/modules/intellij.platform.settings.local.jar
+      lib/modules/intellij.kotlin.onboarding-promoter.jar
+      lib/modules/intellij.platform.navbar.monolith.jar
+      lib/modules/intellij.platform.execution.dashboard.jar
+      lib/modules/intellij.profiler.ultimate.jar
+      lib/modules/intellij.platform.coverage.jar
+      lib/modules/intellij.platform.coverage.agent.jar
+      lib/modules/intellij.xml.xmlbeans.jar
+      lib/modules/intellij.platform.navbar.jar
+      lib/modules/intellij.profiler.ultimate.ideaAsyncProfiler.jar
+      lib/modules/intellij.platform.vcs.dvcs.impl.jar
+      lib/modules/intellij.platform.ml.embeddings.jar
+      lib/modules/intellij.execution.process.mediator.daemon.jar
+      lib/modules/intellij.platform.images.backend.svg.jar
+      lib/modules/intellij.platform.navbar.backend.jar
+      lib/modules/intellij.profiler.asyncOne.jar
+      lib/modules/intellij.platform.execution.serviceView.jar
+      lib/modules/intellij.libraries.ktor.client.cio.jar
+      lib/modules/intellij.platform.compose.jar
+      lib/modules/intellij.platform.collaborationTools.jar
+      lib/modules/intellij.smart.update.jar
+      lib/modules/intellij.libraries.skiko.jar
+      lib/modules/intellij.libraries.grpc.jar
+      lib/modules/intellij.libraries.compose.desktop.jar
+      lib/modules/intellij.libraries.grpc.netty.shaded.jar
+      lib/modules/intellij.platform.rpc.backend.jar
+      lib/modules/intellij.libraries.ktor.client.jar
+      lib/modules/intellij.execution.process.mediator.client.jar
+      lib/modules/intellij.platform.vcs.log.impl.jar
+      lib/modules/intellij.platform.smRunner.vcs.jar
+      lib/modules/intellij.platform.experiment.jar
+      lib/modules/intellij.platform.navbar.frontend.jar
+      lib/modules/intellij.platform.vcs.impl.jar
+      lib/modules/intellij.idea.customization.base.jar
+      lib/modules/intellij.platform.kernel.backend.jar
+      lib/modules/intellij.platform.ide.newUiOnboarding.jar
+      lib/modules/intellij.libraries.microba.jar
+      lib/modules/intellij.execution.process.mediator.common.jar
+      plugins/platform-images/lib/platform-images.jar
+      plugins/featuresTrainer/lib/featuresTrainer.jar
+      plugins/vcs-git/lib/vcs-git.jar
+      plugins/performanceTesting/lib/performanceTesting.jar
+      plugins/terminal/lib/terminal.jar
+      plugins/sh/lib/sh.jar
+      plugins/markdown/lib/markdown.jar
+      plugins/markdown/lib/modules/intellij.markdown.compose.preview.jar
+      plugins/platform-langInjection/lib/platform-langInjection.jar
+      plugins/xpath/lib/xpath.jar
+      plugins/Kotlin/lib/kotlin-plugin-shared.jar
+      plugins/Kotlin/lib/kotlin-plugin.jar
+      plugins/json/lib/json.jar
+      plugins/yaml/lib/yaml-editing.jar
+      plugins/yaml/lib/yaml.jar
+      plugins/toml/lib/toml.jar
+      plugins/grazie/lib/grazie.jar
+      plugins/properties/lib/properties.jar
+      plugins/junit/lib/junit.jar
+    """.trimIndent().split("\\s".toRegex()).toSet()
+
+    assertEquals(expectedClassPath, relativeClasspaths.map { it.toString() }.toSet())
+  }
 }
+
 
 private fun Set<Dependency>.assertContains(id: String): Boolean =
   filterIsInstance<PluginAware>()

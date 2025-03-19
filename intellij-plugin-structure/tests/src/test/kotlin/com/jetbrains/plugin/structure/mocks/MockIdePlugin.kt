@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
@@ -43,7 +44,8 @@ data class MockIdePlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val isV2: Boolean = false,
-  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
+  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
+  override val classpath: Classpath = Classpath.EMPTY
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
