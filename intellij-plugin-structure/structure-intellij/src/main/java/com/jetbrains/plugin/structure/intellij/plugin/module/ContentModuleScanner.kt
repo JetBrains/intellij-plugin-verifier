@@ -1,14 +1,19 @@
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.intellij.plugin.LIB_DIRECTORY
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.IdeaPluginXmlDetector
+import com.jetbrains.plugin.structure.jar.META_INF
+import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.jar.PluginJar
 import java.nio.file.Path
 
 
 private const val MODULES_DIR = "modules"
+
+private const val XML_EXTENSION = "xml"
 
 class ContentModuleScanner {
   private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
@@ -38,7 +43,7 @@ class ContentModuleScanner {
   }
 
   private fun Path.matches(): Boolean {
-    return when (this.nameCount) {
+    return when (nameCount) {
       1 -> getName(0).isPluginDescriptorInJarRoot()
       2 -> isMetaInfPluginXml()
       else -> false
@@ -52,17 +57,14 @@ class ContentModuleScanner {
     return thisComponents == pathComponents.toList()
   }
 
-  // TODO constant
-  private fun Path.isMetaInfPluginXml(): Boolean = matches("META-INF", "plugin.xml")
+  private fun Path.isMetaInfPluginXml(): Boolean = matches(META_INF, PLUGIN_XML)
 
   private fun Path.isPluginDescriptorInJarRoot(): Boolean {
-    // TODO constant
-    val isXml = toString().endsWith(".xml", true)
+    val isXml = hasExtension(XML_EXTENSION)
     return isXml && ideaPluginXmlDetector.isPluginDescriptor(this)
   }
 
   private fun Path.getModuleName(): String {
-    // TODO constant
-    return this.fileName.toString().removeSuffix(".xml")
+    return this.fileName.toString().removeSuffix(".$XML_EXTENSION")
   }
 }
