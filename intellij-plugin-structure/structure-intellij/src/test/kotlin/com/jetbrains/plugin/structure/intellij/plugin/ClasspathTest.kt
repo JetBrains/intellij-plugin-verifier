@@ -18,11 +18,12 @@ class ClasspathTest {
   }
 
   @Test
-  fun `classpath paths are retrieved`() {
+  fun `classpath paths are retrieved without duplicates`() {
     val pluginPath = Path.of("lib", "plugin.jar")
     val modulePath = Path.of("lib", "modules", "module.jar")
+    val v2ModulePathAsADuplicate = Path.of("lib", "modules", "module.jar")
 
-    val cp = Classpath.of(listOf(pluginPath, modulePath))
+    val cp = Classpath.of(listOf(pluginPath, modulePath, v2ModulePathAsADuplicate))
 
     with(cp.paths) {
       assertEquals(2, size)
