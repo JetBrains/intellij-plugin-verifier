@@ -21,7 +21,7 @@ import java.util.*
 class PluginDependencyFilteredResolver(
   plugin: IdePlugin,
   productInfoClassResolver: ProductInfoClassResolver,
-  private val dependencyResolverProvider: CachingPluginDependencyResolverProvider = CachingPluginDependencyResolverProvider(
+  private val dependencyResolverProvider : PluginResolverProvider = CachingPluginDependencyResolverProvider(
     productInfoClassResolver.ide
   )
 ) : Resolver() {

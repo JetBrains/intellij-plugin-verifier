@@ -21,7 +21,7 @@ private const val UNNAMED_RESOLVER = "Unnamed Resolver"
 
 private val EMPTY_UNNAMED_RESOLVER = NamedResolver(UNNAMED_RESOLVER, EmptyResolver)
 
-class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) {
+class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : PluginResolverProvider {
 
   private val dependencyTree = DependencyTree(pluginProvider)
 
@@ -31,7 +31,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) {
   private val nameCache = Caffeine.newBuilder()
     .maximumSize(512).build<String, Boolean>()
 
-  fun getResolver(plugin: IdePlugin): Resolver {
+  override fun getResolver(plugin: IdePlugin): Resolver {
     return cache.get(plugin.id) {
       dependencyTree.getTransitiveDependencies(plugin).map { dependency ->
         dependency.resolver.also {
@@ -41,7 +41,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) {
     }
   }
 
-  fun contains(pluginId: PluginId) = nameCache.asMap().containsKey(pluginId)
+  override fun contains(pluginId: PluginId) = nameCache.asMap().containsKey(pluginId)
 
   private val IdePlugin.id: String?
     get() = pluginId ?: pluginName
