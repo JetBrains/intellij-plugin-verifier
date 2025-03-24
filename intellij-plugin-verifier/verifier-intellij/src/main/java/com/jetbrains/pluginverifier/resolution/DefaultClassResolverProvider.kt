@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
 import com.jetbrains.plugin.structure.ide.classes.resolver.PluginDependencyFilteredResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -31,6 +32,8 @@ class DefaultClassResolverProvider(
   private val additionalClassResolvers: List<Resolver> = emptyList(),
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
 ) : ClassResolverProvider {
+
+  private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide)
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
@@ -67,7 +70,7 @@ class DefaultClassResolverProvider(
       && ideDescriptor.ideResolver is ProductInfoClassResolver
       && !legacyPluginAnalysis.isLegacyPlugin(plugin)
     ) {
-      PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver)
+      PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver, pluginResolverProvider)
     } else {
       ideDescriptor.ideResolver
     }
