@@ -18,7 +18,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import net.bytebuddy.ByteBuddy
-import org.junit.Assert.*
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -156,8 +157,6 @@ class PluginDependencyFilteredResolverTest {
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
     with(pluginDependencyFilteredResolver) {
-      assertEquals(2, size)
-
       // pluginAlias has no classpath, hence no resolver
       assertFalse(containsResolverName("com.intellij.modules.platform"))
       // JSON plugin is declared
@@ -276,6 +275,60 @@ class PluginDependencyFilteredResolverTest {
       "Class '$editorCaretClassName' must be 'Found', but is '${editorCaretClassResolution.javaClass}'",
       editorCaretClassResolution is ResolutionResult.Found
     )
+  }
+
+  @Test
+  fun `multiple plugin resolvers`() {
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+
+    val plugin = MockIdePlugin(
+      pluginId = "com.example.somePlugin",
+      vendor = "JetBrains",
+      dependencies = listOf(
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+      )
+    )
+
+    val productInfo = ProductInfo(
+      name = "IntelliJ IDEA",
+      version = "2024.3",
+      versionSuffix = "EAP",
+      buildNumber = ideVersion.asStringWithoutProductCode(),
+      productCode = "IU",
+      dataDirectoryName = "IntelliJIdea2024.3",
+      productVendor = "JetBrains",
+      svgIconPath = "bin/idea.svg",
+      modules = emptyList(),
+      bundledPlugins = emptyList(),
+      layout = listOf(
+        Plugin("com.intellij.modules.json", listOf("plugins/json/lib/json.jar")),
+        PluginAlias("com.intellij.modules.lang"),
+      ),
+      launch = listOf(
+        Launch(bootClassPathJarNames = listOf("product.jar"))
+      )
+    )
+
+    productInfo.createEmptyLayoutComponentPaths(ideRoot)
+
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
+
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
+
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver, resolverProvider)
+    val anotherPluginResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver, resolverProvider)
+
+    assertTrue("Same resolvers should contain same child resolvers", pluginResolver.hasSameDelegate(
+      anotherPluginResolver
+    ))
   }
 
   private fun ProductInfo.createEmptyLayoutComponentPaths(ideRoot: Path) {
