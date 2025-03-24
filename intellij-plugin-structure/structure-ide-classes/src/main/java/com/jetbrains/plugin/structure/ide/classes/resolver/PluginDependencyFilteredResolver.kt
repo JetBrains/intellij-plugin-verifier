@@ -33,7 +33,7 @@ class PluginDependencyFilteredResolver(
   productInfoClassResolver: ProductInfoClassResolver,
   private val dependenciesProvider: DependenciesProvider = DefaultDependenciesProvider(productInfoClassResolver.ide)
 ) : Resolver() {
-  val filteredResolvers: List<NamedResolver> = getResolvers(plugin)
+  private val filteredResolvers: List<NamedResolver> = getResolvers(plugin)
 
   private fun getResolvers(plugin: IdePlugin): List<NamedResolver> {
     return dependenciesProvider.getDependencies(plugin).map {
@@ -64,6 +64,10 @@ class PluginDependencyFilteredResolver(
     delegateResolver.processAllClasses(processor)
 
   override fun close() = delegateResolver.close()
+
+  fun containsResolverName(resolverName: String): Boolean = filteredResolvers.any { it.name == resolverName }
+
+  val size: Int = filteredResolvers.size
 
   private fun List<Resolver>.asResolver(): Resolver {
     return CompositeResolver.create(this)

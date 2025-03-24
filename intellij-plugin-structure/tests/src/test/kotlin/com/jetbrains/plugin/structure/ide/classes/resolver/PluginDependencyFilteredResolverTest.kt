@@ -155,15 +155,15 @@ class PluginDependencyFilteredResolverTest {
     val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
     val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
 
-    with(pluginDependencyFilteredResolver.filteredResolvers) {
+    with(pluginDependencyFilteredResolver) {
       assertEquals(2, size)
 
       // pluginAlias has no classpath, hence no resolver
-      assertFalse(containsName("com.intellij.modules.platform"))
+      assertFalse(containsResolverName("com.intellij.modules.platform"))
       // JSON plugin is declared
-      assertTrue(containsName("com.intellij.modules.json"))
+      assertTrue(containsResolverName("com.intellij.modules.json"))
       // Git4Idea is not a plugin dependency
-      assertFalse(containsName("Git4Idea"))
+      assertFalse(containsResolverName("Git4Idea"))
     }
   }
 
@@ -277,8 +277,6 @@ class PluginDependencyFilteredResolverTest {
       editorCaretClassResolution is ResolutionResult.Found
     )
   }
-
-  private fun List<NamedResolver>.containsName(name: String) = any { it.name == name }
 
   private fun ProductInfo.createEmptyLayoutComponentPaths(ideRoot: Path) {
     layout
