@@ -26,8 +26,10 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
   private val dependencyTree = DependencyTree(pluginProvider)
 
   private val cache = Caffeine.newBuilder()
+    //FIXME use constant for cache size. Sync with `nameCache`
     .maximumSize(512).build<PluginId, NamedResolver>()
 
+  //FIXME use constant for cache size. Sync with `cache`
   private val nameCache = Caffeine.newBuilder()
     .maximumSize(512).build<String, Boolean>()
 
