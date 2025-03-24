@@ -21,12 +21,12 @@ import java.util.*
 class PluginDependencyFilteredResolver(
   plugin: IdePlugin,
   productInfoClassResolver: ProductInfoClassResolver,
-  private val dependencyResolverProvider : PluginResolverProvider = CachingPluginDependencyResolverProvider(
+  private val pluginResolverProvider : PluginResolverProvider = CachingPluginDependencyResolverProvider(
     productInfoClassResolver.ide
   )
 ) : Resolver() {
 
-  private val delegateResolver = dependencyResolverProvider.getResolver(plugin)
+  private val delegateResolver = pluginResolverProvider.getResolver(plugin)
 
   override val readMode get() = delegateResolver.readMode
 
@@ -50,7 +50,7 @@ class PluginDependencyFilteredResolver(
 
   override fun close() = delegateResolver.close()
 
-  fun containsResolverName(resolverName: String): Boolean = dependencyResolverProvider.contains(resolverName)
+  fun containsResolverName(resolverName: String): Boolean = pluginResolverProvider.contains(resolverName)
 
   fun hasSameDelegate(resolver: PluginDependencyFilteredResolver): Boolean {
     return resolver.delegateResolver === delegateResolver
