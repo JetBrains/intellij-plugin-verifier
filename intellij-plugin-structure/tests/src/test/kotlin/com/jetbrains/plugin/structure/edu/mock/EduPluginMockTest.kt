@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.edu.EduPlugin
 import com.jetbrains.plugin.structure.edu.EduPluginManager
 import com.jetbrains.plugin.structure.edu.ItemType
 import com.jetbrains.plugin.structure.edu.TaskType
+import com.jetbrains.plugin.structure.edu.bean.EduTask
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
@@ -57,6 +58,19 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(3, eduStat.countInteractiveChallenges())
     assertEquals(5, eduStat.countQuizzes())
     assertEquals(1, eduStat.countTheoryTasks())
+
+    assertEquals(
+      listOf(EduTask("task1", taskType = "edu"), EduTask("task2", taskType = "choice"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[0]]
+    )
+    assertEquals(
+      listOf(EduTask("task1", taskType = "edu"), EduTask("task2", taskType = "choice"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[1]]
+    )
+    assertEquals(
+      listOf(EduTask("task1", taskType = "theory"), EduTask("task2", taskType = "ide"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[2]]
+    )
   }
 
   @Test
@@ -79,6 +93,19 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("About", eduStat.lessons[0])
     assertEquals("Theory", eduStat.lessons[1])
     assertEquals("Practice", eduStat.lessons[2])
+
+    assertEquals(
+      listOf(EduTask("task1", taskType = "edu"), EduTask("task2", taskType = "choice"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[0]]
+    )
+    assertEquals(
+      listOf(EduTask("task1", taskType = "edu"), EduTask("task2", taskType = "choice"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[1]]
+    )
+    assertEquals(
+      listOf(EduTask("task1", taskType = "theory"), EduTask("task2", taskType = "ide"), EduTask("task3", taskType = "choice")),
+      eduStat.tasksByLessons[eduStat.lessons[2]]
+    )
   }
 
   @Test
@@ -116,6 +143,28 @@ class EduPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals(4, eduStat.countInteractiveChallenges())
     assertEquals(1, eduStat.countQuizzes())
     assertEquals(1, eduStat.countTheoryTasks())
+
+    assertEquals(
+      listOf(
+        EduTask("task1 in lesson1 in section1", taskType = "edu"),
+        EduTask("task2 in lesson1 in section1", taskType = "theory"),
+        EduTask("task3 in lesson1 in section1", taskType = "ide"),
+        EduTask("task4 in lesson1 in section1", taskType = "choice")
+      ),
+      eduStat.tasksByLessons[eduStat.lessons[0]]
+    )
+    assertEquals(
+      listOf(
+        EduTask("task1 in lesson1 in section2", taskType = "edu")
+      ),
+      eduStat.tasksByLessons[eduStat.lessons[1]]
+      )
+    assertEquals(
+      listOf(
+        EduTask("task1 in lesson2 in section2", taskType = "edu")
+      ),
+      eduStat.tasksByLessons[eduStat.lessons[2]]
+      )
   }
 
   @Test

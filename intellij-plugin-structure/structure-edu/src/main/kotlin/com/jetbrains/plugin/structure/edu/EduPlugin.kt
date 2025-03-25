@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
+import com.jetbrains.plugin.structure.edu.bean.EduTask
 
 
 data class EduPlugin(
@@ -37,8 +38,10 @@ data class EduPlugin(
 data class EduStat(
   val sections: List<Section>,
   val lessons: List<String>,
-  val tasks: Map<String, Int>
+  val tasksByLessons: Map<String, List<EduTask>>
 ) {
+
+  val tasks = tasksByLessons.values.flatten().groupingBy { it.taskType }.eachCount()
 
   fun countInteractiveChallenges(): Int {
     val ideTasks = tasks[TaskType.IDE.id] ?: 0
@@ -54,7 +57,7 @@ data class EduStat(
   fun countTheoryTasks(): Int {
     return tasks[TaskType.THEORY.id] ?: 0
   }
-  
+
   companion object {
     fun fromDescriptor(descriptor: EduPluginDescriptor): EduStat {
       val allItems = descriptor.items.flatMap { it.items } + descriptor.items
@@ -64,7 +67,9 @@ data class EduStat(
       val lessons = allItems.filter {
         it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank()
       }.map { it.presentableName }
-      val tasks = allItems.flatMap { it.taskList }.groupingBy { it.taskType }.eachCount()
+      val tasks = allItems.filter { 
+        it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank()
+      }.associate { it.presentableName to it.taskList }
 
       return EduStat(sections, lessons, tasks)
     }
