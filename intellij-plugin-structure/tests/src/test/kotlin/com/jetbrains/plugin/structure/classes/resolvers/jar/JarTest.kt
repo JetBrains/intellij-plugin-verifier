@@ -8,6 +8,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.Path
 
 class JarTest {
   @Rule
@@ -21,10 +22,7 @@ class JarTest {
     byteBuddy = ByteBuddy()
   }
 
-  @Test
-  fun `JAR is scanned`() {
-    val jarPath = temporaryFolder.newFile("plugin.jar").toPath()
-
+  private fun createJar(jarPath: Path): Jar {
     buildZipFile(jarPath) {
       dir("META-INF") {
         file("plugin.properties") {
@@ -66,6 +64,13 @@ class JarTest {
 
     val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider)
     jar.init()
+    return jar
+  }
+
+  @Test
+  fun `JAR is scanned`() {
+    val jar = createJar(temporaryFolder.newFile("plugin.jar").toPath())
+
     with(jar.classes) {
       assertEquals(2, size)
       assertTrue(contains("com/example/MyClass"))
@@ -107,6 +112,21 @@ class JarTest {
       assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.jre.NativeTransportProvider"))
       assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.tcp.TCPTransportProvider"))
     }
+  }
+
+  @Test
+  fun `all classes are processed`() {
+    val jar = createJar(temporaryFolder.newFile("plugin-class-processing.jar").toPath())
+    val classes = mutableListOf<String>()
+    jar.processAllClasses {
+      classes += it.name
+      true
+    }
+    val expectedClasses = setOf(
+      "com/example/MyClass",
+      "com/example/impl/MyImpl",
+    )
+    assertEquals(expectedClasses, classes.toSet())
   }
 
   // FIXME duplicate code
