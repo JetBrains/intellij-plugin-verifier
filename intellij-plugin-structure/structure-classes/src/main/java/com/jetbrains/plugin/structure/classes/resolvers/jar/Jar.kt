@@ -20,8 +20,8 @@ class Jar(
   private val fileSystemProvider: JarFileSystemProvider
 ) {
 
-  private val _classes = mutableSetOf<String>()
-  val classes: Set<String> get() = _classes
+  private val _classes = mutableSetOf<ClassInJar>()
+  val classes: Set<String> get() = _classes.mapTo(mutableSetOf()) { it.name }
 
   private val packageSet = PackageSet()
 
@@ -50,15 +50,15 @@ class Jar(
   private fun scan(path: Path) {
     val pathInJar = getPathInJar(path)
     when {
-      pathInJar.endsWith(CLASS_SUFFIX) -> handleClass(pathInJar)
+      pathInJar.endsWith(CLASS_SUFFIX) -> handleClass(pathInJar, path)
       pathInJar.endsWith(PROPERTIES_SUFFIX) -> handleProperties(pathInJar)
       pathInJar.hasServiceProviders() -> handleServiceProvider(pathInJar, path)
     }
   }
 
-  private fun handleClass(classInJar: String) {
+  private fun handleClass(classInJar: String, path: Path) {
     val className = classInJar.substringBeforeLast(CLASS_SUFFIX)
-    _classes += className
+    _classes += ClassInJar(className, path)
     packageSet.addPackagesOfClass(className)
   }
 
@@ -90,6 +90,6 @@ class Jar(
   private fun getPathInJar(entry: Path): String =
     entry.toString().trimStart('/').toSystemIndependentName()
 
-
+  private data class ClassInJar(val name: String, val path: Path)
 }
 
