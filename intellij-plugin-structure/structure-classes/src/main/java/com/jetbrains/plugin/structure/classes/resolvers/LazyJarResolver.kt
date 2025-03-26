@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFoun
 import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.objectweb.asm.tree.ClassNode
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -16,7 +17,7 @@ class LazyJarResolver(
   private val jarPath: Path,
   override val readMode: ReadMode,
   private val fileOrigin: FileOrigin,
-  private val fileSystemProvider: JarFileSystemProvider
+  private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : Resolver(), AutoCloseable  {
 
   private val jar: Jar by lazy {
