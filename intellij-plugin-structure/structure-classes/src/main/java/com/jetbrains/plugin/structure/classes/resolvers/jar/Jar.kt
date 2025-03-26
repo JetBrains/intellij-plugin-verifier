@@ -1,13 +1,18 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
+import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.asSequence
+
+private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 
 private const val CLASS_SUFFIX = ".class"
 
@@ -83,6 +88,9 @@ class Jar(
   }
 
   private fun readServiceImplementationNames(metaInfServiceProviderPath: Path): Set<String> {
+    if (!metaInfServiceProviderPath.isParsableServiceImplementation()) {
+      return emptySet()
+    }
     return Files.lines(metaInfServiceProviderPath).use { lines ->
       lines.asSequence()
         .mapNotNull { parseServiceImplementationLine(it) }
@@ -96,6 +104,18 @@ class Jar(
   }
 
   private fun String.hasServiceProviders() = startsWith(SERVICE_PROVIDERS_PREFIX) && count { it == '/' } == 2
+
+  private fun Path.isParsableServiceImplementation(): Boolean {
+    if (!Files.exists(this)) {
+      LOG.debug("Service provider file {} does not exist", this)
+      return false
+    }
+    if (!isFile) {
+      LOG.debug("Service provider file {} is not a regular file", this)
+      return false
+    }
+    return true
+  }
 
   private fun getPathInJar(entry: Path): String =
     entry.toString().trimStart('/').toSystemIndependentName()
