@@ -21,6 +21,7 @@ class Jar(
 ) {
 
   private val classesInJar = mutableSetOf<ClassInJar>()
+
   val classes: Set<String> get() = classesInJar.mapTo(mutableSetOf()) { it.name }
 
   private val packageSet = PackageSet()
@@ -50,6 +51,8 @@ class Jar(
   fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
 
   fun containsClass(className: String) = className in classes
+
+  fun getClassInJar(className: String): ClassInJar? = classesInJar.find { it.name == className }
 
   private fun scan(path: Path) {
     val pathInJar = getPathInJar(path)
