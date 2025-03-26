@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.classes.locator
 
 import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
@@ -25,7 +25,7 @@ class JarPluginLocator(
    */
   override fun findClasses(idePlugin: IdePlugin, pluginFile: Path): List<Resolver> {
     if (pluginFile.isJar()) {
-      return listOf(JarFileResolver(pluginFile, readMode, fileOriginProvider.getFileOrigin(idePlugin, pluginFile)))
+      return listOf(LazyJarResolver(pluginFile, readMode, fileOriginProvider.getFileOrigin(idePlugin, pluginFile)))
     }
     return emptyList()
   }

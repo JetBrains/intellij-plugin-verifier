@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyNamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
@@ -145,7 +145,7 @@ class ProductInfoClassResolver(
       val fullyQualifiedJarFile = this@ProductInfoClassResolver.ide.idePath.resolve(jarPath)
       NamedResolver(
         "$name#$jarPath",
-        JarFileResolver(fullyQualifiedJarFile,
+        LazyJarResolver(fullyQualifiedJarFile,
           this@ProductInfoClassResolver.readMode, IdeLibDirectory(this@ProductInfoClassResolver.ide))
       )
     }
@@ -157,7 +157,7 @@ class ProductInfoClassResolver(
 
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
-    return NamedResolver(relativeJarPath, JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
+    return NamedResolver(relativeJarPath, LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
   }
 
   private fun List<NamedResolver>.asResolver() = CompositeResolver.create(this)
