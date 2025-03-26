@@ -7,9 +7,10 @@ import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.META_INF
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
@@ -31,7 +32,7 @@ private const val CORE_IDE_PLUGIN_ID = "com.intellij"
  *
  * See also [`PluginManagerCore.CORE_PLUGIN_ID`](https://github.com/JetBrains/intellij-community/blob/1fd62dc88af158383087e7fd3860d18b5de798b2/platform/core-impl/src/com/intellij/ide/plugins/PluginManagerCore.kt#L67).
  */
-internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader) {
+internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader, private val jarFileSystemProvider: JarFileSystemProvider) {
   /**
    * Loads Core plugins from the IDE 'lib' directory.
    *
@@ -41,7 +42,7 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
    */
   fun loadCorePlugins(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val corePluginJarPaths = idePath.resolve(LIB_DIRECTORY).listJars()
-    val corePluginJarsResolver = JarFilesResourceResolver(corePluginJarPaths)
+    val corePluginJarsResolver = JarsResourceResolver(corePluginJarPaths, jarFileSystemProvider)
 
     val loadPlugin = { jarPath: Path -> loadPlugin(jarPath, ideVersion, corePluginJarsResolver) }
     val loadedPlugins = corePluginJarPaths.mapNotNull(loadPlugin)
@@ -69,7 +70,7 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
   }
 
   private fun findDescriptor(jarPath: Path, ideVersion: IdeVersion): String? =
-    PluginJar(jarPath).use { pluginJar ->
+    PluginJar(jarPath, jarFileSystemProvider).use { pluginJar ->
       when (val pluginDescriptorResult = pluginJar.getPluginDescriptor(*ideVersion.descriptorPaths)) {
         is PluginDescriptorResult.Found -> pluginDescriptorResult.path.simpleName
         else -> null

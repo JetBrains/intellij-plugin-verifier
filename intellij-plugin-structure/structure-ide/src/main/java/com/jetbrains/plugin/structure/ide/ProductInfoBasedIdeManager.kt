@@ -36,6 +36,8 @@ import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationR
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -56,6 +58,8 @@ class ProductInfoBasedIdeManager(
 
   private val layoutComponentProvider =
     LayoutComponentsProvider(missingLayoutFileMode = missingLayoutFileMode)
+
+  private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()
 
   /**
    * Problem level remapping used for bundled plugins.
@@ -94,7 +98,7 @@ class ProductInfoBasedIdeManager(
   ): List<IdePlugin> {
     val layoutComponents = layoutComponentProvider.resolveLayoutComponents(productInfo, idePath)
 
-    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, layoutComponentProvider)
+    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, layoutComponentProvider, jarFileSystemProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
@@ -124,7 +128,7 @@ class ProductInfoBasedIdeManager(
 
   private fun readCorePlugin(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
     val corePluginManager =
-      CorePluginManager(::createPlugin)
+      CorePluginManager(::createPlugin, jarFileSystemProvider)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
