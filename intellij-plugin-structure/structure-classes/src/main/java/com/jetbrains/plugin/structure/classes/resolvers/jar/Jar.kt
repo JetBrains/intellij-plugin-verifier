@@ -36,11 +36,10 @@ class Jar(
   val serviceProviders: Map<String, Set<String>> get() = _serviceProviders
 
   fun init(): Jar = apply {
-    fileSystemProvider.getFileSystem(jarPath).use { jarFs ->
-      val jarRoot = jarFs.rootDirectories.single()
-      Files.walk(jarRoot).use { paths ->
-        paths.forEach { scan(it) }
-      }
+    val jarFs = fileSystemProvider.getFileSystem(jarPath)
+    val jarRoot = jarFs.rootDirectories.single()
+    Files.walk(jarRoot).use { paths ->
+      paths.forEach { scan(it) }
     }
   }
 

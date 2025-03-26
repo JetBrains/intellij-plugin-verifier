@@ -56,6 +56,13 @@ class JarTest {
             type=other
           """.trimIndent()
         }
+        file("MyClass_en_US.properties") {
+          """
+            mode=i14n
+            type=localized
+            lang=en_US
+          """.trimIndent()
+        }
         dir("impl") {
           file("MyImpl.class", emptyClass("com.example.impl.MyImpl"))
         }
