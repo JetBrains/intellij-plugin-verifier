@@ -18,7 +18,7 @@ private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
 class Jar(
   val jarPath: Path,
   private val fileSystemProvider: JarFileSystemProvider
-) {
+) : AutoCloseable {
 
   private val classesInJar = mutableSetOf<ClassInJar>()
 
@@ -53,6 +53,10 @@ class Jar(
   fun containsClass(className: String) = className in classes
 
   fun getClassInJar(className: String): ClassInJar? = classesInJar.find { it.name == className }
+
+  override fun close() {
+    fileSystemProvider.close(jarPath)
+  }
 
   private fun scan(path: Path) {
     val pathInJar = getPathInJar(path)
