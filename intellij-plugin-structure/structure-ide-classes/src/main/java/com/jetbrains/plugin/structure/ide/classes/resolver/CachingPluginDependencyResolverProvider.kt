@@ -5,9 +5,9 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
@@ -54,12 +54,12 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     return classpath.entries.map {
       val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
       //FIXME check readmode
-      JarFileResolver(it.path, readMode = ReadMode.FULL, origin)
+      LazyJarResolver(it.path, readMode = ReadMode.FULL, origin)
     }.asNamedResolver(newResolverName())
   }
 
   private fun List<Resolver>.asNamedResolver(resolverName: String): NamedResolver {
-    return NamedResolver(resolverName, CompositeResolver.create(this, resolverName))
+    return NamedResolver(resolverName, LazyCompositeResolver.create(this, resolverName))
   }
 
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER

@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.resolution
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
@@ -58,7 +59,7 @@ class DefaultClassResolverProvider(
         dependenciesClassResolver
       ) + additionalClassResolvers
 
-      val resolver = CompositeResolver.create(resolvers).caching()
+      val resolver = LazyCompositeResolver.create(resolvers, checkedPluginDetails.pluginInfo.pluginId).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }
   }
