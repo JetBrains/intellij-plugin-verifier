@@ -1,24 +1,30 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
+import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
+import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.Element.Other
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.META_INF
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.asSequence
 
 private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 
-private const val CLASS_SUFFIX = ".class"
+private const val CLASS_EXTENSION = "class"
+private const val CLASS_SUFFIX = ".$CLASS_EXTENSION"
 
-private const val PROPERTIES_SUFFIX = ".properties"
+private const val RESOURCE_BUNDLE_EXTENSION = "properties"
+private const val RESOURCE_BUNDLE_SUFFIX = ".$RESOURCE_BUNDLE_EXTENSION"
 
-private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
+private const val JAR_PATH_SEPARATOR_CHAR = '/'
+
+private const val RESOURCE_BUNDLE_SEPARATOR = '.'
 
 class Jar(
   val jarPath: Path,
@@ -29,10 +35,8 @@ class Jar(
 
   val classes: Set<String> get() = classesInJar.mapTo(mutableSetOf()) { it.name }
 
-  private val packageSet = PackageSet()
-
   val packages: Set<String>
-    get() = packageSet.getAllPackages()
+    get() = getAllPackages()
 
   private val _bundleNames = mutableMapOf<String, MutableSet<String>>()
   val bundleNames: Map<String, Set<String>> get() = _bundleNames
@@ -52,7 +56,7 @@ class Jar(
     return classesInJar.all { processor(it) }
   }
 
-  fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  fun containsPackage(packageName: String) = packages.contains(packageName)
 
   fun containsClass(className: String) = className in classes
 
@@ -63,28 +67,38 @@ class Jar(
   }
 
   private fun scan(path: Path) {
-    val pathInJar = getPathInJar(path)
-    when {
-      pathInJar.endsWith(CLASS_SUFFIX) -> handleClass(pathInJar, path)
-      pathInJar.endsWith(PROPERTIES_SUFFIX) -> handleProperties(pathInJar)
-      pathInJar.hasServiceProviders() -> handleServiceProvider(pathInJar, path)
+    when (val element = resolve(path)) {
+      is Element.Class -> handle(element)
+      is Element.ResourceBundle -> handle(element)
+      is Element.ServiceProvider -> handle(element)
+      Other -> Unit
     }
   }
 
-  private fun handleClass(classInJar: String, path: Path) {
-    val className = classInJar.substringBeforeLast(CLASS_SUFFIX)
-    classesInJar += ClassInJar(className, path)
-    packageSet.addPackagesOfClass(className)
+  private fun resolve(path: Path): Element {
+    val ext = path.extension
+    return if (ext == CLASS_EXTENSION) {
+      Element.Class(resolveClass(path), path)
+    } else if (ext == RESOURCE_BUNDLE_EXTENSION) {
+      Element.ResourceBundle(resolveBundleName(path))
+    } else if (path.hasServiceProviders()) {
+      Element.ServiceProvider(path.getServiceProvider(), path)
+    } else {
+      Other
+    }
   }
 
-  private fun handleProperties(propertiesInJar: String) {
-    val fullBundleName = getBundleNameByBundlePath(propertiesInJar)
+  private fun handle(classElement: Element.Class) {
+    classesInJar += ClassInJar(classElement.name, classElement.path)
+  }
+
+  private fun handle(resourceBundle: Element.ResourceBundle) {
+    val fullBundleName = resourceBundle.name
     _bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { mutableSetOf() } += fullBundleName
   }
 
-  private fun handleServiceProvider(serviceProvidersInJar: String, metaInfServiceProviderPath: Path) {
-    val serviceProvider = serviceProvidersInJar.substringAfter(SERVICE_PROVIDERS_PREFIX)
-    _serviceProviders[serviceProvider] = readServiceImplementationNames(metaInfServiceProviderPath)
+  private fun handle(serviceProvider: Element.ServiceProvider) {
+    _serviceProviders[serviceProvider.name] = readServiceImplementationNames(serviceProvider.path)
   }
 
   private fun readServiceImplementationNames(metaInfServiceProviderPath: Path): Set<String> {
@@ -103,7 +117,32 @@ class Jar(
     return serviceImplementation.takeIf { it.isNotEmpty() }
   }
 
-  private fun String.hasServiceProviders() = startsWith(SERVICE_PROVIDERS_PREFIX) && count { it == '/' } == 2
+  private fun resolve(path: Path, separator: Char, suffix: String): String {
+    return path.toString().replace(File.separatorChar, separator)
+      .removePrefix(separator.toString())
+      .removeSuffix(suffix)
+
+  }
+
+  private fun resolveClass(path: Path): String {
+    return resolve(path, JAR_PATH_SEPARATOR_CHAR, CLASS_SUFFIX)
+  }
+
+  private fun resolveBundleName(path: Path): String {
+    return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
+  }
+
+  private fun Path.hasServiceProviders(): Boolean {
+    if (nameCount != 3) {
+      // 0: META-INF, 1: services, 2: provider name
+      return false
+    }
+    return getName(0).toString() == META_INF && getName(1).toString() == "services"
+  }
+
+  private fun Path.getServiceProvider(): String {
+    return fileName.toString()
+  }
 
   private fun Path.isParsableServiceImplementation(): Boolean {
     if (!Files.exists(this)) {
@@ -117,9 +156,19 @@ class Jar(
     return true
   }
 
-  private fun getPathInJar(entry: Path): String =
-    entry.toString().trimStart('/').toSystemIndependentName()
+  private fun getAllPackages(): Set<String> {
+    return PackageSet().apply {
+      classesInJar.forEach { addPackagesOfClass(it.name) }
+    }.getAllPackages()
+  }
 
   data class ClassInJar(val name: String, val path: Path)
+
+  sealed class Element {
+    data class Class(val name: String, val path: Path) : Element()
+    data class ResourceBundle(val name: String) : Element()
+    data class ServiceProvider(val name: String, val path: Path) : Element()
+    object Other : Element()
+  }
 }
 
