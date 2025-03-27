@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.Found
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import junit.framework.TestCase.assertTrue
 import net.bytebuddy.ByteBuddy
 import org.junit.After
@@ -95,6 +96,23 @@ class LazyJarResolverTest {
     resolution as Found
     val bundle = resolution.value
     assertEquals(3, bundle.keys.toList().size)
+  }
+
+
+  @Test
+  fun `concurrent access is allowed`() {
+    val jarPath = initializeSampleJarContent(temporaryFolder.newFile("plugin-concurrent-access.jar").toPath(), byteBuddy)
+    val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider).init()
+    val anotherJar = Jar(jarPath, SingletonCachingJarFileSystemProvider).init()
+
+    assertEquals(jar.classes, anotherJar.classes)
+    assertEquals(2, jar.classes.size)
+    LazyJarResolver(jarPath, Resolver.ReadMode.FULL, fileOrigin, SingletonCachingJarFileSystemProvider).use { resolver ->
+      assertEquals(jar.classes, resolver.allClasses)
+      val resourceBundleResolution = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
+      assertTrue(resourceBundleResolution is Found)
+      resourceBundleResolution as Found
+    }
   }
 
   private fun randomJarPath(): Path {

@@ -69,8 +69,14 @@ class LazyJarResolver(
   }
 
   private fun <T> useFileSystem(useFileSystem: (FileSystem) -> T): T {
-    return fileSystemProvider.getFileSystem(jarPath).use {
-      useFileSystem(it)
+    val fs: FileSystem?
+    return try {
+      fs = fileSystemProvider.getFileSystem(jarPath)
+      useFileSystem(fs)
+    } catch (e: Throwable) {
+      throw e
+    } finally {
+      fileSystemProvider.close(jarPath)
     }
   }
 }
