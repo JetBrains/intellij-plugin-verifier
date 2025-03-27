@@ -45,6 +45,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -267,7 +268,7 @@ class IdePluginManager private constructor(
       return createInvalidPlugin(root, descriptorPath, PluginLibDirectoryIsEmpty())
     }
     val jarFiles = files.filter { it.isJar() }
-    val libResourceResolver: ResourceResolver = JarFilesResourceResolver(jarFiles)
+    val libResourceResolver: ResourceResolver = JarsResourceResolver(jarFiles, fileSystemProvider)
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
 
     val results: MutableList<CreationResult> = ArrayList()
