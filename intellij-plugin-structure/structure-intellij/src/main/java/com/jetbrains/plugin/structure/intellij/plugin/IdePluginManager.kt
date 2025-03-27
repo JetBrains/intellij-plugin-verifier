@@ -80,7 +80,7 @@ class IdePluginManager private constructor(
 
   private val optionalDependencyResolver = OptionalDependencyResolver(this::loadPluginInfoFromJarOrDirectory)
 
-  private val contentModuleScanner = ContentModuleScanner()
+  private val contentModuleScanner = ContentModuleScanner(fileSystemProvider)
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,

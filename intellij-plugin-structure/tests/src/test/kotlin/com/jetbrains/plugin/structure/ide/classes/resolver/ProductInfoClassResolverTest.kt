@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.writeText
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -78,7 +78,7 @@ class ProductInfoClassResolverTest {
     }
     with(resolver.bootClasspathResolver) {
       assertNotNull(this)
-      assertTrue(delegateResolver is CompositeResolver)
+      assertTrue(delegateResolver is LazyCompositeResolver)
     }
 
     val elevationLogger = resolver.resolveClass("com/intellij/execution/process/elevation/ElevationLogger")

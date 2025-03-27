@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.extractor.ModuleUnmarshaller
-import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -18,7 +17,7 @@ private val LOG: Logger = LoggerFactory.getLogger(BundledModulesResolver::class.
 private const val MODULES_DIR = "modules"
 private const val MODULE_DESCRIPTORS_JAR= "module-descriptors.jar"
 
-class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()) : AutoCloseable, ModulesResolver {
+class BundledModulesResolver(val idePath: Path, private val jarFileSystemProvider: JarFileSystemProvider) : AutoCloseable, ModulesResolver {
 
   private val moduleDescriptorsJarPath: Path = idePath.resolve(MODULES_DIR).resolve(MODULE_DESCRIPTORS_JAR)
 

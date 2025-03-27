@@ -5,9 +5,9 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyNamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -36,6 +36,7 @@ private const val PRODUCT_INFO_JSON = "product-info.json"
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 private const val PRODUCT_MODULE_V2 = "productModuleV2"
 private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
+private const val UNNAMED_RESOLVER = "Unnamed Resolver"
 
 class ProductInfoClassResolver(
   private val productInfo: ProductInfo, val ide: Ide,
@@ -64,7 +65,7 @@ class ProductInfoClassResolver(
     val coreResolver =
       NamedResolver(
         CORE_IDE_PLUGIN_ID,
-        CompositeResolver.create(listOf(corePluginResolver.resolver) + productModules, CORE_IDE_PLUGIN_ID)
+        LazyCompositeResolver.create(listOf(corePluginResolver.resolver) + productModules, CORE_IDE_PLUGIN_ID)
       )
 
     resolvers.put(CORE_IDE_PLUGIN_ID, coreResolver)
@@ -151,7 +152,7 @@ class ProductInfoClassResolver(
     }
     return KindedResolver(
       kind,
-      NamedResolver(name, CompositeResolver.create(itemJarResolvers, name))
+      NamedResolver(name, LazyCompositeResolver.create(itemJarResolvers, name))
     )
   }
 
@@ -160,7 +161,7 @@ class ProductInfoClassResolver(
     return NamedResolver(relativeJarPath, LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
   }
 
-  private fun List<NamedResolver>.asResolver() = CompositeResolver.create(this)
+  private fun List<NamedResolver>.asResolver() = LazyCompositeResolver.create(this, UNNAMED_RESOLVER)
 
   companion object {
     @Throws(InvalidIdeException::class)

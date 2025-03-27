@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.intellij.plugin.LIB_DIRECTORY
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.IdeaPluginXmlDetector
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.META_INF
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.jar.PluginJar
@@ -17,7 +18,7 @@ private const val XML_EXTENSION = "xml"
 
 private val META_INF_PLUGIN_XML_PATH_COMPONENTS = listOf(META_INF, PLUGIN_XML)
 
-class ContentModuleScanner {
+class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider) {
   private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
 
   fun getContentModules(pluginArtifact: Path) : ContentModules {
@@ -28,7 +29,7 @@ class ContentModuleScanner {
     val jarPaths = libDir.listJars()
     val moduleJarPaths = libDir.resolve(MODULES_DIR).listJars()
     val contentModules = (jarPaths + moduleJarPaths).flatMap { jarPath ->
-      PluginJar(jarPath).use { jar ->
+      PluginJar(jarPath, fileSystemProvider).use { jar ->
         val descriptorPaths = jar.resolveDescriptors { it.isDescriptor() }
         descriptorPaths.map {
           val moduleName = if (it.isMetaInfPluginXml()) {

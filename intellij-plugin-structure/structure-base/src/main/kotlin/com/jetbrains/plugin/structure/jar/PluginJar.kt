@@ -27,7 +27,7 @@ private val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
 
-class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()): AutoCloseable {
+class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider): AutoCloseable {
 
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath).also {
     LOG.debug("Provider '{}' created file system for [{}]", jarFileSystemProvider.javaClass.name, jarPath)

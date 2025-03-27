@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -11,6 +12,8 @@ class ContentModuleScannerTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
+
+  private val jarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   @Test
   fun `root module and 2 additional modules are resolved`() {
@@ -32,7 +35,7 @@ class ContentModuleScannerTest {
       }
     }
 
-    val contentModuleScanner = ContentModuleScanner()
+    val contentModuleScanner = ContentModuleScanner(jarFileSystemProvider)
     val contentModules = contentModuleScanner.getContentModules(pluginPath)
 
     with(contentModules.modules) {

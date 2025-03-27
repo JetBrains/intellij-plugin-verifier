@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.platform
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -21,6 +23,7 @@ class BundledModulesResolverTest {
 
   private lateinit var mockIde: Path
   private lateinit var moduleDescriptorsJar: Path
+  private lateinit var fileSystemProvider: JarFileSystemProvider
 
   @Before
   fun setUp() {
@@ -29,6 +32,7 @@ class BundledModulesResolverTest {
     mockIde = mockIdeDir.toPath()
 
     moduleDescriptorsJar = tempFolder.newFile("$MOCK_IDE/$MODULES/$MODULE_DESCRIPTORS_JAR").toPath()
+    fileSystemProvider = SingletonCachingJarFileSystemProvider
   }
 
   @Test
@@ -60,7 +64,7 @@ class BundledModulesResolverTest {
       }
     }
 
-    val bundledModulesResolver = BundledModulesResolver(mockIde)
+    val bundledModulesResolver = BundledModulesResolver(mockIde, fileSystemProvider)
     val modules = bundledModulesResolver.resolveModules()
     assertEquals(2, modules.size)
   }
@@ -87,7 +91,7 @@ class BundledModulesResolverTest {
       }
     }
 
-    val bundledModulesResolver = BundledModulesResolver(mockIde)
+    val bundledModulesResolver = BundledModulesResolver(mockIde, fileSystemProvider)
     val modules = bundledModulesResolver.resolveModules()
     assertEquals(1, modules.size)
   }

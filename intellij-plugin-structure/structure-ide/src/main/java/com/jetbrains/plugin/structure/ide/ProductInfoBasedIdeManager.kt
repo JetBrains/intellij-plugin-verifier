@@ -99,7 +99,7 @@ class ProductInfoBasedIdeManager(
     val layoutComponents = layoutComponentProvider.resolveLayoutComponents(productInfo, idePath)
 
     val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, layoutComponentProvider, jarFileSystemProvider)
-    val moduleManager = BundledModulesManager(BundledModulesResolver(idePath))
+    val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
     val pluginFactory = PluginFactory(::createPlugin)
