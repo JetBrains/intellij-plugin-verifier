@@ -38,16 +38,14 @@ class LazyJarResolver(
     get() = jar.serviceProviders
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
-    return jar.getClassInJar(className)
-      ?.takeIf { it.path.exists() }
-      ?.let { readClass(className, it.path) }
-      ?: NotFound
+    return jar.withClass(className) { className, classFilePath ->
+      readClass(className, classFilePath)
+    } ?: NotFound
   }
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
-    return jar.processAllClasses { (className, classFile) ->
-      processor(readClass(className, classFile))
-    }
+    return jar.processAllClasses { className, classFilePath ->
+      processor(readClass(className, classFilePath)) }
   }
 
   override fun containsClass(className: String): Boolean = jar.containsClass(className)

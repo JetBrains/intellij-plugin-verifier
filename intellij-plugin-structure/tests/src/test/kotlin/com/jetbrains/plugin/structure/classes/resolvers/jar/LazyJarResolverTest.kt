@@ -74,8 +74,8 @@ class LazyJarResolverTest {
 
   @Test
   fun `all classes are processesd`() {
-    val classes = mutableListOf<String>()
-    val failures = mutableListOf<String>()
+    val classes = mutableSetOf<String>()
+    val failures = mutableSetOf<String>()
     resolver.processAllClasses {
       when (it) {
         is Found<ClassNode> -> classes += it.value.name
@@ -86,7 +86,7 @@ class LazyJarResolverTest {
       true
     }
     assertTrue(failures.isEmpty())
-    assertEquals(listOf("com/example/MyClass", "com/example/impl/MyImpl"), classes)
+    assertEquals(setOf("com/example/MyClass", "com/example/impl/MyImpl"), classes)
   }
 
   @Test

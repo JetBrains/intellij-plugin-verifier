@@ -131,8 +131,8 @@ class JarTest {
   fun `all classes are processed`() {
     createJar(temporaryFolder.newFile("plugin-class-processing.jar").toPath()).use { jar ->
       val classes = mutableListOf<String>()
-      jar.processAllClasses {
-        classes += it.name
+      jar.processAllClasses { name, _ ->
+        classes += name
         true
       }
       val expectedClasses = setOf(
