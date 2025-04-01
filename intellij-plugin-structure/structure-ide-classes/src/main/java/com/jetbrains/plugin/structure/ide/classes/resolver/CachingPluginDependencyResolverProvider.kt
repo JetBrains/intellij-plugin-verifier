@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
@@ -26,40 +27,56 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
   private val dependencyTree = DependencyTree(pluginProvider)
 
   private val cache = Caffeine.newBuilder()
-    //FIXME use constant for cache size. Sync with `nameCache`
-    .maximumSize(512).build<PluginId, NamedResolver>()
-
-  //FIXME use constant for cache size. Sync with `cache`
-  private val nameCache = Caffeine.newBuilder()
-    .maximumSize(512).build<String, Boolean>()
+    .maximumSize(512)
+    .recordStats()
+    .build<PluginId, Resolver>()
 
   override fun getResolver(plugin: IdePlugin): Resolver {
-    return cache.get(plugin.id) {
-      dependencyTree.getTransitiveDependencies(plugin).map { dependency ->
-        dependency.resolver.also {
-          cache(dependency)
-        }
-      }.asNamedResolver(plugin.id ?: UNNAMED_RESOLVER)
+    val id = plugin.id ?: return EMPTY_UNNAMED_RESOLVER
+    // Invocation of `getIfPresent` is intentional!
+    // Using `get` would lead to a recursive update triggered by `doGetResolver`.
+    val resolver = cache.getIfPresent(id)
+    return resolver ?: doGetResolver(plugin).also {
+      cache.put(id, it)
     }
   }
 
-  override fun contains(pluginId: PluginId) = nameCache.asMap().containsKey(pluginId)
+  override fun contains(pluginId: PluginId) = cache.getIfPresent(pluginId) != null
+
+  private fun doGetResolver(plugin: IdePlugin): Resolver {
+    val transitiveDependencies = dependencyTree
+      .getTransitiveDependencies(plugin)
+      .filterNot { dep -> dep.pluginId == plugin.id }
+    val resolvers = transitiveDependencies.mapNotNull { dep ->
+      dep.pluginId?.let { id ->
+        cache.get(id) {
+          dep.resolver
+        }
+      }
+    }
+    // TODO is plugin classpath included in the resolver?
+    return resolvers.asResolver(plugin.id ?: UNNAMED_RESOLVER)
+  }
+
+  fun getStats(): CacheStats? {
+    return cache.stats()
+  }
 
   private val IdePlugin.id: String?
     get() = pluginId ?: pluginName
 
-  private fun IdePlugin?.asResolver(): NamedResolver {
+  private fun IdePlugin?.asResolver(): Resolver {
     if (this == null) return EMPTY_UNNAMED_RESOLVER
 
     return classpath.entries.map {
       val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
       //FIXME check readmode
       LazyJarResolver(it.path, readMode = ReadMode.FULL, origin)
-    }.asNamedResolver(newResolverName())
+    }.asResolver(newResolverName())
   }
 
-  private fun List<Resolver>.asNamedResolver(resolverName: String): NamedResolver {
-    return NamedResolver(resolverName, LazyCompositeResolver.create(this, resolverName))
+  private fun List<Resolver>.asResolver(resolverName: String): Resolver {
+    return LazyCompositeResolver.create(this, resolverName)
   }
 
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
@@ -71,11 +88,15 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
       else -> null
     }
 
-  private val Dependency.resolver: NamedResolver
+  private val Dependency.pluginId: String?
+    get() = when (this) {
+      is Dependency.Module -> plugin.id
+      is Dependency.Plugin -> plugin.id
+      else -> null
+    }
+
+  private val Dependency.resolver: Resolver
     get() = plugin?.asResolver() ?: EMPTY_UNNAMED_RESOLVER
 
-  private fun cache(dependency: Dependency) {
-    dependency.plugin?.id?.let { pluginId -> nameCache.put(pluginId, true) }
-  }
 }
 
