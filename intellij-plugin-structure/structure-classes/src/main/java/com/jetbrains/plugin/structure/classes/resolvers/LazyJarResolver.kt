@@ -6,8 +6,8 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFoun
 import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.invoke
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.FileSystem
 import java.nio.file.Path
 import java.util.*
 
@@ -56,25 +56,13 @@ class LazyJarResolver(
 
   //FIXME optimize with JAR implementation
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    return useFileSystem { fs ->
+    return fileSystemProvider(jarPath) { fs ->
       val path = fs.getPath(bundleResourceName)
       if (path.exists()) {
         path.inputStream().use { PropertyResourceBundle(it) }
       } else {
         null
       }
-    }
-  }
-
-  private fun <T> useFileSystem(useFileSystem: (FileSystem) -> T): T {
-    val fs: FileSystem?
-    return try {
-      fs = fileSystemProvider.getFileSystem(jarPath)
-      useFileSystem(fs)
-    } catch (e: Throwable) {
-      throw e
-    } finally {
-      fileSystemProvider.close(jarPath)
     }
   }
 }

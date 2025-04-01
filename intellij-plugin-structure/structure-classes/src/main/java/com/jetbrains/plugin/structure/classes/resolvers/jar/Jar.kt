@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
 import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.Element.Other
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.invoke
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -16,7 +17,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import kotlin.streams.asSequence
-
 
 private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 
@@ -75,13 +75,17 @@ class Jar(
   }
 
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
-    return useFileSystem { fs ->
+    return useFileSystem{ fs ->
       classesInJar.all { (className, classFilePath) ->
         fs.getPath(classFilePath)
           .takeIf { it.isFile }
           ?.let { processor(className, it) } == true
       }
     }
+  }
+
+  private fun <T> useFileSystem(action: (FileSystem) -> T): T {
+    return fileSystemProvider(jarPath, action)
   }
 
   fun containsPackage(packageName: String) = packages.contains(packageName)
@@ -230,18 +234,6 @@ class Jar(
     return PackageSet().apply {
       classesInJar.forEach { addPackagesOfClass(it.name) }
     }.getAllPackages()
-  }
-
-  //FIXMe duplicate with LazyJarResolver
-  private fun <T> useFileSystem(useFileSystem: (FileSystem) -> T): T {
-    return try {
-      val fs = fileSystemProvider.getFileSystem(jarPath)
-      useFileSystem(fs)
-    } catch (e: Throwable) {
-      throw e
-    } finally {
-      fileSystemProvider.close(jarPath)
-    }
   }
 
   data class ClassInJar(val name: String, val path: PathInJar)

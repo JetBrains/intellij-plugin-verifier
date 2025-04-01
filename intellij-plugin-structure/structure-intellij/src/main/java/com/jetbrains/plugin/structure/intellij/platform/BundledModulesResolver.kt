@@ -5,9 +5,9 @@ import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.extractor.ModuleUnmarshaller
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.invoke
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.bind.JAXBException
@@ -29,7 +29,7 @@ class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: 
   }
 
   override fun resolveModules(): List<ModuleBean> {
-    return moduleDescriptorsJarPath.useFileSystem { jarFs ->
+    return fileSystemProvider(moduleDescriptorsJarPath)  { jarFs ->
       val root: Path = jarFs.rootDirectories.first()
       Files.list(root).use { files ->
         files.asSequence()
@@ -46,18 +46,6 @@ class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: 
     } catch (e: JAXBException) {
       LOG.debug("Cannot unmarshall [{}/{}]: {}", moduleDescriptorsJarPath, xmlPath, e.message)
       return null
-    }
-  }
-
-  //FIXMe duplicate with LazyJarResolver
-  private fun <T> Path.useFileSystem(useFileSystem: (FileSystem) -> T): T {
-    return try {
-      val fs = fileSystemProvider.getFileSystem(jarPath = this)
-      useFileSystem(fs)
-    } catch (e: Throwable) {
-      throw e
-    } finally {
-      fileSystemProvider.close(jarPath = this)
     }
   }
 }
