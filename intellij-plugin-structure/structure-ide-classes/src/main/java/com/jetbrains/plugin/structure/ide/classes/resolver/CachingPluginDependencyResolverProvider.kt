@@ -9,14 +9,18 @@ import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
+import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
+import org.objectweb.asm.tree.ClassNode
+import java.util.*
 
 private const val UNNAMED_RESOLVER = "Unnamed Resolver"
 
@@ -31,31 +35,38 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     .recordStats()
     .build<PluginId, Resolver>()
 
+  /**
+   * Provide a unified resolver for all transitive dependencies of this plugin.
+   * The actual plugin classpath is *not* included in this resolver.
+   *
+   * This mechanism functions as a classpath filter.
+   * It takes classes and resource bundles from the IDE
+   * and includes only those that are declared as dependencies in the plugin.
+   */
   override fun getResolver(plugin: IdePlugin): Resolver {
     val id = plugin.id ?: return EMPTY_UNNAMED_RESOLVER
     // Invocation of `getIfPresent` is intentional!
     // Using `get` would lead to a recursive update triggered by `doGetResolver`.
     val resolver = cache.getIfPresent(id)
-    return resolver ?: doGetResolver(plugin).also {
+    return resolver ?: createResolver(plugin).also {
       cache.put(id, it)
     }
   }
 
   override fun contains(pluginId: PluginId) = cache.getIfPresent(pluginId) != null
 
-  private fun doGetResolver(plugin: IdePlugin): Resolver {
+  private fun createResolver(plugin: IdePlugin): Resolver {
     val transitiveDependencies = dependencyTree
       .getTransitiveDependencies(plugin)
       .filterNot { dep -> dep.pluginId == plugin.id }
     val resolvers = transitiveDependencies.mapNotNull { dep ->
       dep.pluginId?.let { id ->
-        cache.get(id) {
+        id to cache.get(id) {
           dep.resolver
         }
       }
     }
-    // TODO is plugin classpath included in the resolver?
-    return resolvers.asResolver(plugin.id ?: UNNAMED_RESOLVER)
+    return ComponentNameAwareCompositeResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers)
   }
 
   fun getStats(): CacheStats? {
@@ -98,5 +109,40 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
   private val Dependency.resolver: Resolver
     get() = plugin?.asResolver() ?: EMPTY_UNNAMED_RESOLVER
 
+  class ComponentNameAwareCompositeResolver(
+    name: String,
+    resolvers: List<Pair<String, Resolver>>
+  ) : Resolver() {
+    private val resolverNames = resolvers.map { it.first }.toSet()
+
+    private val delegateResolver = LazyCompositeResolver.create(resolvers.map { it.second }, name)
+
+    override val readMode: ReadMode
+      get() = delegateResolver.readMode
+    override val allClasses: Set<String>
+      get() = delegateResolver.allClasses
+    override val allPackages: Set<String>
+      get() = delegateResolver.allPackages
+    override val allBundleNameSet: ResourceBundleNameSet
+      get() = delegateResolver.allBundleNameSet
+
+    override fun resolveClass(className: String) = delegateResolver.resolveClass(className)
+
+    override fun resolveExactPropertyResourceBundle(
+      baseName: String,
+      locale: Locale
+    ) = delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
+
+    override fun containsClass(className: String) = delegateResolver.containsClass(className)
+
+    override fun containsPackage(packageName: String) = delegateResolver.containsPackage(packageName)
+
+    override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
+      delegateResolver.processAllClasses(processor)
+
+    override fun close() = delegateResolver.close()
+
+    fun containsResolverName(resolverName: String): Boolean = resolverName in resolverNames
+  }
 }
 

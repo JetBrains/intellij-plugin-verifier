@@ -11,7 +11,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
-import com.jetbrains.plugin.structure.ide.classes.resolver.PluginDependencyFilteredResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.analysis.LegacyPluginAnalysis
@@ -71,7 +70,7 @@ class DefaultClassResolverProvider(
       && ideDescriptor.ideResolver is ProductInfoClassResolver
       && !legacyPluginAnalysis.isLegacyPlugin(plugin)
     ) {
-      PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver, pluginResolverProvider)
+      pluginResolverProvider.getResolver(plugin)
     } else {
       ideDescriptor.ideResolver
     }

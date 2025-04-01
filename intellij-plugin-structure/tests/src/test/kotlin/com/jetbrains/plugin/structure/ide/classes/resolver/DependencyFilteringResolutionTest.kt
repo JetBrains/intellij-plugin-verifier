@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.intellij.platform.Launch
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -18,8 +19,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import net.bytebuddy.ByteBuddy
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +31,7 @@ import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class PluginDependencyFilteredResolverTest {
+class DependencyFilteringResolutionTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
@@ -55,6 +55,7 @@ class PluginDependencyFilteredResolverTest {
     }
   }
 
+  // FIXME replicates com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProviderTest.createEmptyClass
   private fun emptyClass(fullyQualifiedName: String): ByteArray {
     return byteBuddy
       .subclass(Object::class.java)
@@ -153,8 +154,11 @@ class PluginDependencyFilteredResolverTest {
 
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
+
+    assertTrue(pluginDependencyFilteredResolver is ComponentNameAwareCompositeResolver)
+    pluginDependencyFilteredResolver as ComponentNameAwareCompositeResolver
 
     with(pluginDependencyFilteredResolver) {
       // pluginAlias has no classpath, hence no resolver
@@ -210,8 +214,8 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"
     val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
@@ -266,8 +270,8 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin, javaPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"
     val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
@@ -323,12 +327,10 @@ class PluginDependencyFilteredResolverTest {
     val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
-    val pluginResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver, resolverProvider)
-    val anotherPluginResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver, resolverProvider)
+    val pluginResolver = resolverProvider.getResolver(plugin)
+    val anotherPluginResolver = resolverProvider.getResolver(plugin)
 
-    assertTrue("Same resolvers should contain same child resolvers", pluginResolver.hasSameDelegate(
-      anotherPluginResolver
-    ))
+    assertSame(pluginResolver, anotherPluginResolver)
   }
 
   private fun ProductInfo.createEmptyLayoutComponentPaths(ideRoot: Path) {
