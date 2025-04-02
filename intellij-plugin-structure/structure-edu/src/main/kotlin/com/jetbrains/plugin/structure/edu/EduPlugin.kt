@@ -4,11 +4,11 @@
 
 package com.jetbrains.plugin.structure.edu
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.edu.bean.EduPluginDescriptor
-import com.jetbrains.plugin.structure.edu.bean.EduTask
 
 
 data class EduPlugin(
@@ -67,14 +67,24 @@ data class EduStat(
       val lessons = allItems.filter {
         it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank()
       }.map { it.presentableName }
+
       val tasks = allItems.filter { 
         it.type == ItemType.LESSON.id || it.type == ItemType.FRAMEWORK.id || it.type.isBlank()
-      }.associate { it.presentableName to it.taskList }
+      }.associate { it.presentableName to it.taskList.map { task ->
+        EduTask(name = task.name, customName = task.customName, taskType = task.taskType)
+      }}
 
       return EduStat(sections, lessons, tasks)
     }
   }
 }
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+data class EduTask(
+  val name: String = "",
+  val customName: String = "",
+  var taskType: String = ""
+)
 
 data class Section(val title: String, val items: List<String>)
 

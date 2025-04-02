@@ -9,17 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.jetbrains.plugin.structure.edu.*
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class EduTask(
+data class EduTaskField(
   @JsonProperty(NAME)
   val name: String = "",
   @JsonProperty(CUSTOM_NAME)
   val customName: String = "",
   @JsonProperty(TASK_TYPE)
   var taskType: String = ""
-) {
-  val presentableName: String
-    get() = customName.takeIf { it.isNotBlank() } ?: name
-}
+)
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class EduItem(
@@ -32,7 +29,7 @@ data class EduItem(
   @JsonProperty(ITEMS)
   val items: List<EduItem> = mutableListOf(),
   @JsonProperty(TASK_LIST)
-  var taskList: List<EduTask> = mutableListOf()
+  var taskList: List<EduTaskField> = mutableListOf()
 ) {
   val presentableName: String
     get() = customName.takeIf { it.isNotBlank() } ?: title
