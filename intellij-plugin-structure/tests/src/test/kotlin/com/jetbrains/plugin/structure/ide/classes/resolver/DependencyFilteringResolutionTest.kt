@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
@@ -24,7 +25,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -347,16 +347,5 @@ class DependencyFilteringResolutionTest {
 
   private fun Path.createEmptyZip() {
     ZipOutputStream(Files.newOutputStream(this)).use {}
-  }
-
-  private fun TemporaryFolder.newTemporaryFile(filePath: String): Path {
-    val pathComponents = filePath.split("/")
-    val dirComponents = pathComponents.dropLast(1).toTypedArray()
-    if (dirComponents.isEmpty()) {
-      throw IllegalArgumentException("Cannot create temporary file '$filePath'")
-    }
-    val fileComponent = pathComponents.last()
-    val folder: File = newFolder(*dirComponents)
-    return File(folder, fileComponent).toPath()
   }
 }

@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
@@ -18,7 +19,6 @@ import org.junit.rules.TemporaryFolder
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.V1_8
-import java.io.File
 import java.nio.file.Path
 
 class CachingPluginDependencyResolverProviderTest {
@@ -214,20 +214,6 @@ class CachingPluginDependencyResolverProviderTest {
       assertEquals(expectedIdeaCorePluginPackages + expectedJavaPluginPackages, allPackages)
       assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClasses)
     }
-  }
-
-  // FIXME duplicate code with PluginDependencyFilteredResolverTest
-  private fun TemporaryFolder.newTemporaryFile(filePath: String, handleFile: (File) -> Unit = {}): Path {
-    val pathComponents = filePath.split("/")
-    val dirComponents = pathComponents.dropLast(1).toTypedArray()
-    if (dirComponents.isEmpty()) {
-      throw IllegalArgumentException("Cannot create temporary file '$filePath'")
-    }
-    val fileComponent = pathComponents.last()
-    val folder: File = newFolder(*dirComponents)
-    return File(folder, fileComponent)
-      .also { handleFile(it) }
-      .toPath()
   }
 
   @Test
