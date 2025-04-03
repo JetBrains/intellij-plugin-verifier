@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.base.utils
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.IdeaPluginXmlDetector
 import com.jetbrains.plugin.structure.jar.PluginJar
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -19,6 +20,8 @@ class PluginJarDescriptorTest {
   private lateinit var pluginJarPath: Path
 
   private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
+
+  private val jarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   @Before
   fun setUp() {
@@ -48,7 +51,7 @@ class PluginJarDescriptorTest {
 
   @Test
   fun `descriptors in META-INF and in roots are resolved`() {
-    val descriptors = PluginJar(pluginJarPath).resolveDescriptors()
+    val descriptors = PluginJar(pluginJarPath, jarFileSystemProvider).resolveDescriptors()
     assertEquals(2, descriptors.size)
     assertTrue(descriptors.any { it.hasFileName("plugin.xml") })
     assertTrue(descriptors.any { it.hasFileName("intellij.json.xml") })
@@ -56,7 +59,7 @@ class PluginJarDescriptorTest {
 
   @Test
   fun `descriptors in META-INF and in roots are resolved with 'idea-plugin' detectiom`() {
-    val descriptors = PluginJar(pluginJarPath).resolveDescriptors(ideaPluginXmlDetector::isPluginDescriptor)
+    val descriptors = PluginJar(pluginJarPath, jarFileSystemProvider).resolveDescriptors(ideaPluginXmlDetector::isPluginDescriptor)
     assertEquals(2, descriptors.size)
     assertTrue(descriptors.any { it.hasFileName("plugin.xml") })
     assertTrue(descriptors.any { it.hasFileName("intellij.json.xml") })

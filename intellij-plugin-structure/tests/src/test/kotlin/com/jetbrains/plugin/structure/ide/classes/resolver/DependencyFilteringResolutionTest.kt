@@ -1,9 +1,12 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.emptyClass
+import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.intellij.platform.Launch
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -23,14 +26,13 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class PluginDependencyFilteredResolverTest {
+class DependencyFilteringResolutionTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
@@ -49,17 +51,9 @@ class PluginDependencyFilteredResolverTest {
     ZipOutputStream(FileOutputStream(zipPath.toFile())).use {
       val zipEntryName = fullyQualifiedName.replace('.', '/') + ".class"
       it.putNextEntry(ZipEntry(zipEntryName))
-      it.write(emptyClass(fullyQualifiedName))
+      it.write(byteBuddy.emptyClass(fullyQualifiedName))
       it.closeEntry()
     }
-  }
-
-  private fun emptyClass(fullyQualifiedName: String): ByteArray {
-    return byteBuddy
-      .subclass(Object::class.java)
-      .name(fullyQualifiedName)
-      .make()
-      .bytes
   }
 
   private fun IdePlugin.writeEmptyClass(fullyQualifiedName: String): IdePlugin {
@@ -152,18 +146,19 @@ class PluginDependencyFilteredResolverTest {
 
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
-    with(pluginDependencyFilteredResolver.filteredResolvers) {
-      assertEquals(2, size)
+    assertTrue(pluginDependencyFilteredResolver is ComponentNameAwareCompositeResolver)
+    pluginDependencyFilteredResolver as ComponentNameAwareCompositeResolver
 
+    with(pluginDependencyFilteredResolver) {
       // pluginAlias has no classpath, hence no resolver
-      assertFalse(containsName("com.intellij.modules.platform"))
+      assertFalse(containsResolverName("com.intellij.modules.platform"))
       // JSON plugin is declared
-      assertTrue(containsName("com.intellij.modules.json"))
+      assertTrue(containsResolverName("com.intellij.modules.json"))
       // Git4Idea is not a plugin dependency
-      assertFalse(containsName("Git4Idea"))
+      assertFalse(containsResolverName("Git4Idea"))
     }
   }
 
@@ -211,8 +206,8 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"
     val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
@@ -267,8 +262,8 @@ class PluginDependencyFilteredResolverTest {
     val bundledPlugins = listOf(ideaCorePlugin, jsonPlugin, javaPlugin)
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins)
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-    val pluginDependencyFilteredResolver = PluginDependencyFilteredResolver(plugin, productInfoClassResolver)
+    val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
     val editorCaretClassName = "com/intellij/openapi/editor/Caret"
     val editorCaretClassResolution = pluginDependencyFilteredResolver.resolveClass(editorCaretClassName)
@@ -278,7 +273,57 @@ class PluginDependencyFilteredResolverTest {
     )
   }
 
-  private fun List<NamedResolver>.containsName(name: String) = any { it.name == name }
+  @Test
+  fun `multiple plugin resolvers`() {
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+
+    val plugin = MockIdePlugin(
+      pluginId = "com.example.somePlugin",
+      vendor = "JetBrains",
+      dependencies = listOf(
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false,
+          /* isModule = */ true
+        ),
+      )
+    )
+
+    val productInfo = ProductInfo(
+      name = "IntelliJ IDEA",
+      version = "2024.3",
+      versionSuffix = "EAP",
+      buildNumber = ideVersion.asStringWithoutProductCode(),
+      productCode = "IU",
+      dataDirectoryName = "IntelliJIdea2024.3",
+      productVendor = "JetBrains",
+      svgIconPath = "bin/idea.svg",
+      modules = emptyList(),
+      bundledPlugins = emptyList(),
+      layout = listOf(
+        Plugin("com.intellij.modules.json", listOf("plugins/json/lib/json.jar")),
+        PluginAlias("com.intellij.modules.lang"),
+      ),
+      launch = listOf(
+        Launch(bootClassPathJarNames = listOf("product.jar"))
+      )
+    )
+
+    productInfo.createEmptyLayoutComponentPaths(ideRoot)
+
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
+
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
+
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+    val pluginResolver = resolverProvider.getResolver(plugin)
+    val anotherPluginResolver = resolverProvider.getResolver(plugin)
+
+    assertSame(pluginResolver, anotherPluginResolver)
+  }
 
   private fun ProductInfo.createEmptyLayoutComponentPaths(ideRoot: Path) {
     layout
@@ -294,16 +339,5 @@ class PluginDependencyFilteredResolverTest {
 
   private fun Path.createEmptyZip() {
     ZipOutputStream(Files.newOutputStream(this)).use {}
-  }
-
-  private fun TemporaryFolder.newTemporaryFile(filePath: String): Path {
-    val pathComponents = filePath.split("/")
-    val dirComponents = pathComponents.dropLast(1).toTypedArray()
-    if (dirComponents.isEmpty()) {
-      throw IllegalArgumentException("Cannot create temporary file '$filePath'")
-    }
-    val fileComponent = pathComponents.last()
-    val folder: File = newFolder(*dirComponents)
-    return File(folder, fileComponent).toPath()
   }
 }

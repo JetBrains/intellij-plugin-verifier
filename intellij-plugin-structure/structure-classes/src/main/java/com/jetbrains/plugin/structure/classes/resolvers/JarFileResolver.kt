@@ -4,21 +4,31 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.base.utils.*
-import com.jetbrains.plugin.structure.classes.utils.AsmUtil
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.base.utils.inputStream
+import com.jetbrains.plugin.structure.base.utils.readLines
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.*
+import java.nio.file.FileSystem
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Deprecated("Replaced with LazyJarResolver", replaceWith = ReplaceWith("LazyJarResolver", "com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver"))
 class JarFileResolver(
-  private val jarPath: Path,
+  override val jarPath: Path,
   override val readMode: ReadMode,
-  private val fileOrigin: FileOrigin
-) : Resolver() {
+  override val fileOrigin: FileOrigin
+) : AbstractJarResolver(jarPath, readMode, fileOrigin) {
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
@@ -32,7 +42,7 @@ class JarFileResolver(
 
   private val packageSet = PackageSet()
 
-  private val bundleNames = hashMapOf<String, MutableSet<String>>()
+  override val bundleNames = hashMapOf<String, MutableSet<String>>()
 
   private val serviceProviders: MutableMap<String, Set<String>> = hashMapOf()
 
@@ -90,7 +100,7 @@ class JarFileResolver(
     return entryPath.readLines().map { it.substringBefore("#").trim() }.filterNotTo(hashSetOf()) { it.isEmpty() }
   }
 
-  val implementedServiceProviders: Map<String, Set<String>>
+  override val implementedServiceProviders: Map<String, Set<String>>
     get() = serviceProviders
 
   override val allPackages
@@ -162,7 +172,7 @@ class JarFileResolver(
     return ResolutionResult.NotFound
   }
 
-  private fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
+  override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
     checkIsOpen()
     return JarFileSystemsPool.perform(jarPath) { jarFs ->
       val path = jarFs.getPath(bundleResourceName)
@@ -171,20 +181,6 @@ class JarFileResolver(
       } else {
         null
       }
-    }
-  }
-
-  private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> {
-    return try {
-      val classNode = classPath.inputStream().use {
-        AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
-      }
-      ResolutionResult.Found(classNode, fileOrigin)
-    } catch (e: InvalidClassFileException) {
-      ResolutionResult.Invalid(e.message)
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
     }
   }
 
@@ -211,7 +207,7 @@ fun buildJarOrZipFileResolvers(
   resolvers.closeOnException {
     jarsOrZips.mapTo(resolvers) { file ->
       val fileOrigin = JarOrZipFileOrigin(file.simpleName, parentOrigin)
-      JarFileResolver(file, readMode, fileOrigin)
+      LazyJarResolver(file, readMode, fileOrigin)
     }
   }
   return resolvers

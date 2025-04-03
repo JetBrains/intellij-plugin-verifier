@@ -4,10 +4,10 @@ import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
 import com.jetbrains.plugin.structure.classes.resolvers.JarOrZipFileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
@@ -855,7 +855,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     if (resolvers.isEmpty()) {
       return
     }
-    val singleResolver = resolvers.single() as JarFileResolver
+    val singleResolver = resolvers.single() as AbstractJarResolver
 
     val libDirectoryClasses = singleResolver.allClasses
 

@@ -4,7 +4,8 @@
 
 package com.jetbrains.pluginverifier.tests
 
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
@@ -80,10 +81,10 @@ class VerificationRunner {
     }
   }
 
-  private fun getAdditionalClassResolvers(ide: Ide, includeKotlinStdLib: Boolean): List<JarFileResolver> {
+  private fun getAdditionalClassResolvers(ide: Ide, includeKotlinStdLib: Boolean): List<Resolver> {
     return if (includeKotlinStdLib) {
       val kotlinStdLibJar = ide.findKotlinStdLib()
-      listOf(JarFileResolver(kotlinStdLibJar, ReadMode.SIGNATURES, IdeLibDirectory(ide)))
+      listOf(LazyJarResolver(kotlinStdLibJar, ReadMode.SIGNATURES, IdeLibDirectory(ide)))
     } else {
       emptyList()
     }

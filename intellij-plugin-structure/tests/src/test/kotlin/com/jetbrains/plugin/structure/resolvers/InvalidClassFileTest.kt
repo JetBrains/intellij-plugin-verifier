@@ -2,7 +2,12 @@ package com.jetbrains.plugin.structure.resolvers
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
@@ -42,7 +47,7 @@ class InvalidClassFileTest {
       file("invalid.class", "bad")
     }
 
-    JarFileResolver(jarFile, Resolver.ReadMode.FULL, InvalidFileOrigin).use { jarResolver ->
+    LazyJarResolver(jarFile, Resolver.ReadMode.FULL, InvalidFileOrigin).use { jarResolver ->
       val invalidResult = jarResolver.resolveClass("invalid") as ResolutionResult.Invalid
       assertTrue(invalidResult.message.startsWith("Unable to read class 'invalid' using the ASM Java Bytecode engineering library. The internal ASM error: java.lang.ArrayIndexOutOfBoundsException"))
     }

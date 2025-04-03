@@ -121,14 +121,14 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
   @Test
   fun `find default and dark icon`() {
     val pluginJarPath = getPluginJarPath("simple-with-default-icon-and-dark-icon.jar")
-    val icons = PluginJar(pluginJarPath).getIcons()
+    val icons = PluginJar(pluginJarPath, fileSystemProvider).getIcons()
     assertEquals(2, icons.size)
   }
 
   @Test
   fun `ignore other icons when default icon is not found`() {
     val pluginJarPath = getPluginJarPath("simple-jar.jar")
-    val icons = PluginJar(pluginJarPath).getIcons()
+    val icons = PluginJar(pluginJarPath, fileSystemProvider).getIcons()
     assertEquals(0, icons.size)
   }
 
@@ -136,7 +136,7 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
   fun `dark icon found but not the default one`() {
     val pluginJarPath = getPluginJarPath("simple-with-dark-icon-and-no-default-icon.jar")
 
-    val icons = PluginJar(pluginJarPath).getIcons()
+    val icons = PluginJar(pluginJarPath, fileSystemProvider).getIcons()
     assertEquals(0, icons.size)
   }
 

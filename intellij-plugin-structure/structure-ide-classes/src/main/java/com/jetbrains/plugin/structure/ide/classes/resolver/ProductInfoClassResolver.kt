@@ -5,10 +5,10 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyNamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
@@ -36,6 +36,7 @@ private const val PRODUCT_INFO_JSON = "product-info.json"
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 private const val PRODUCT_MODULE_V2 = "productModuleV2"
 private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
+private const val UNNAMED_RESOLVER = "Unnamed Resolver"
 
 class ProductInfoClassResolver(
   private val productInfo: ProductInfo, val ide: Ide,
@@ -64,7 +65,7 @@ class ProductInfoClassResolver(
     val coreResolver =
       NamedResolver(
         CORE_IDE_PLUGIN_ID,
-        CompositeResolver.create(listOf(corePluginResolver.resolver) + productModules, CORE_IDE_PLUGIN_ID)
+        LazyCompositeResolver.create(listOf(corePluginResolver.resolver) + productModules, CORE_IDE_PLUGIN_ID)
       )
 
     resolvers.put(CORE_IDE_PLUGIN_ID, coreResolver)
@@ -145,22 +146,22 @@ class ProductInfoClassResolver(
       val fullyQualifiedJarFile = this@ProductInfoClassResolver.ide.idePath.resolve(jarPath)
       NamedResolver(
         "$name#$jarPath",
-        JarFileResolver(fullyQualifiedJarFile,
+        LazyJarResolver(fullyQualifiedJarFile,
           this@ProductInfoClassResolver.readMode, IdeLibDirectory(this@ProductInfoClassResolver.ide))
       )
     }
     return KindedResolver(
       kind,
-      NamedResolver(name, CompositeResolver.create(itemJarResolvers, name))
+      NamedResolver(name, LazyCompositeResolver.create(itemJarResolvers, name))
     )
   }
 
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
-    return NamedResolver(relativeJarPath, JarFileResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
+    return NamedResolver(relativeJarPath, LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide)))
   }
 
-  private fun List<NamedResolver>.asResolver() = CompositeResolver.create(this)
+  private fun List<NamedResolver>.asResolver() = LazyCompositeResolver.create(this, UNNAMED_RESOLVER)
 
   companion object {
     @Throws(InvalidIdeException::class)

@@ -7,9 +7,10 @@ package com.jetbrains.pluginverifier.resolution
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
-import com.jetbrains.plugin.structure.ide.classes.resolver.PluginDependencyFilteredResolver
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.pluginverifier.analysis.LegacyPluginAnalysis
@@ -31,6 +32,8 @@ class DefaultClassResolverProvider(
   private val additionalClassResolvers: List<Resolver> = emptyList(),
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
 ) : ClassResolverProvider {
+
+  private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide)
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
@@ -55,7 +58,7 @@ class DefaultClassResolverProvider(
         dependenciesClassResolver
       ) + additionalClassResolvers
 
-      val resolver = CompositeResolver.create(resolvers).caching()
+      val resolver = LazyCompositeResolver.create(resolvers, checkedPluginDetails.pluginInfo.pluginId).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }
   }
@@ -67,7 +70,7 @@ class DefaultClassResolverProvider(
       && ideDescriptor.ideResolver is ProductInfoClassResolver
       && !legacyPluginAnalysis.isLegacyPlugin(plugin)
     ) {
-      PluginDependencyFilteredResolver(plugin, ideDescriptor.ideResolver)
+      pluginResolverProvider.getResolver(plugin)
     } else {
       ideDescriptor.ideResolver
     }

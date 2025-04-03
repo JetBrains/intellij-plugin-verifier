@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.filtering
 
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -19,7 +19,7 @@ class ExternalBuildClassesSelector : ClassesSelector {
 
   override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
     val compileServerResolvers = classesLocations.getResolvers(CompileServerExtensionKey)
-    val jarFileResolvers = compileServerResolvers.filterIsInstance<JarFileResolver>()
+    val jarFileResolvers = compileServerResolvers.filterIsInstance<AbstractJarResolver>()
 
     val allServiceImplementations = hashSetOf<String>()
     for (jarFileResolver in jarFileResolvers) {
