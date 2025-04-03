@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.emptyClass
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
@@ -49,7 +50,7 @@ class JarTest {
         }
       }
       dirs("com/example") {
-        file("MyClass.class", emptyClass("com.example.MyClass"))
+        file("MyClass.class", byteBuddy.emptyClass("com.example.MyClass"))
         file("MyClass.properties") {
           """
             mode=simple
@@ -64,7 +65,7 @@ class JarTest {
           """.trimIndent()
         }
         dir("impl") {
-          file("MyImpl.class", emptyClass("com.example.impl.MyImpl"))
+          file("MyImpl.class", byteBuddy.emptyClass("com.example.impl.MyImpl"))
         }
       }
     }
@@ -141,14 +142,5 @@ class JarTest {
       )
       assertEquals(expectedClasses, classes.toSet())
     }
-  }
-
-  // FIXME duplicate code
-  private fun emptyClass(fullyQualifiedName: String): ByteArray {
-    return byteBuddy
-      .subclass(Object::class.java)
-      .name(fullyQualifiedName)
-      .make()
-      .bytes
   }
 }

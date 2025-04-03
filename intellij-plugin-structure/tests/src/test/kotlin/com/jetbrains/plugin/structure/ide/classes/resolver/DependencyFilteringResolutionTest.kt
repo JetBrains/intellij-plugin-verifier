@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
+import com.jetbrains.plugin.structure.base.utils.emptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
@@ -50,18 +51,9 @@ class DependencyFilteringResolutionTest {
     ZipOutputStream(FileOutputStream(zipPath.toFile())).use {
       val zipEntryName = fullyQualifiedName.replace('.', '/') + ".class"
       it.putNextEntry(ZipEntry(zipEntryName))
-      it.write(emptyClass(fullyQualifiedName))
+      it.write(byteBuddy.emptyClass(fullyQualifiedName))
       it.closeEntry()
     }
-  }
-
-  // FIXME replicates com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProviderTest.createEmptyClass
-  private fun emptyClass(fullyQualifiedName: String): ByteArray {
-    return byteBuddy
-      .subclass(Object::class.java)
-      .name(fullyQualifiedName)
-      .make()
-      .bytes
   }
 
   private fun IdePlugin.writeEmptyClass(fullyQualifiedName: String): IdePlugin {

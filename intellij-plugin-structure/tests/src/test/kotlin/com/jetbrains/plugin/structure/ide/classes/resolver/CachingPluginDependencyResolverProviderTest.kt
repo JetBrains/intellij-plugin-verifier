@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.createEmptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -16,9 +17,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes.ACC_PUBLIC
-import org.objectweb.asm.Opcodes.V1_8
 import java.nio.file.Path
 
 class CachingPluginDependencyResolverProviderTest {
@@ -329,20 +327,4 @@ class CachingPluginDependencyResolverProviderTest {
       )
     }
   }
-
-  // FIXME duplicate with ProductInfoClassResolverTest
-  private fun createEmptyClass(fullyQualifiedBinaryName: String): ByteArray {
-    return ClassWriter(0).apply {
-      visit(
-        V1_8,
-        ACC_PUBLIC, // Class access modifier
-        fullyQualifiedBinaryName, // Full binary name (package/class)
-        null, // Signature (optional, used for generics - null for now)
-        "java/lang/Object", // Superclass (default is java.lang.Object)
-        null // Interfaces (null as there are none)
-      )
-      visitEnd()
-    }.toByteArray()
-  }
-
 }
