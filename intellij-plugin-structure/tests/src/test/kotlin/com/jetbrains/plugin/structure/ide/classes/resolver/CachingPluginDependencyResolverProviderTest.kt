@@ -277,55 +277,6 @@ class CachingPluginDependencyResolverProviderTest {
     }
   }
 
-
-  @Test
-  fun `cyclic dependencies in IDE plugins that are retrieved from cache are handled 2`() {
-    val alphaFiles = buildZipFile(temporaryFolder.newTemporaryFile("alpha/alpha.jar")) {
-      dirs("com/example/alpha") {
-        file("AlphaAction.class", createEmptyClass("com/example/alpha/AlphaAction"))
-      }
-    }
-    val alphaPlugin = MockIdePlugin(
-      pluginId = "com.example.Alpha",
-      dependencies = dependency("com.example.Beta"),
-      classpath = Classpath.of(listOf(alphaFiles))
-    )
-
-    val betaFiles = buildZipFile(temporaryFolder.newTemporaryFile("beta/beta.jar")) {
-      dirs("com/example/beta") {
-        file("BetaAction.class", createEmptyClass("com/example/beta/BetaAction"))
-      }
-    }
-    val betaPlugin = MockIdePlugin(
-      pluginId = "com.example.Beta",
-      dependencies = dependency("com.example.Gamma", "com.example.SomePlugin"),
-      classpath = Classpath.of(listOf(betaFiles))
-    )
-
-    val gammaFiles = buildZipFile(temporaryFolder.newTemporaryFile("gamma/gamma.jar")) {
-      dirs("com/example/gamma") {
-        file("GammaAction.class", createEmptyClass("com/example/beta/GammaAction"))
-      }
-    }
-    val gammaPlugin = MockIdePlugin(
-      pluginId = "com.example.Gamma",
-      dependencies = dependency("com.example.Alpha"),
-      classpath = Classpath.of(listOf(gammaFiles))
-    )
-
-    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
-    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(alphaPlugin, betaPlugin, gammaPlugin))
-
-    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
-
-    val somePlugin = MockIdePlugin(
-      pluginId = "com.example.SomePlugin",
-      dependencies = dependency("com.example.Alpha"),
-    )
-
-    val x = resolverProvider.getResolver(somePlugin)
-  }
-
   @Test
   fun `plugin depends on itself`() {
     val alphaFiles = buildZipFile(temporaryFolder.newTemporaryFile("alpha/alpha.jar")) {
@@ -354,7 +305,13 @@ class CachingPluginDependencyResolverProviderTest {
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(alphaPlugin, betaPlugin))
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
-    val x = resolverProvider.getResolver(alphaPlugin)
+    val resolver = resolverProvider.getResolver(alphaPlugin)
+    assertTrue(resolver is CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver)
+    resolver as CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
+    with(resolver) {
+      assertTrue(resolver.containsResolverName("com.example.Beta"))
+      assertFalse(resolver.containsResolverName("com.example.Alpha"))
+    }
   }
 
   private fun dependency(id: String): List<PluginDependency> {
