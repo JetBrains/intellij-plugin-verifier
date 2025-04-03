@@ -6,7 +6,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.Found
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import junit.framework.TestCase.assertTrue
 import net.bytebuddy.ByteBuddy
@@ -37,12 +36,10 @@ class LazyJarResolverTest {
   @Before
   fun setUp() {
     byteBuddy = ByteBuddy()
-    // FIXME FS-closing issues with Singleton
-    val fsProvider = DefaultJarFileSystemProvider()
     val jarPath = initializeSampleJarContent(randomJarPath(), byteBuddy)
     resolver = LazyJarResolver(
       jarPath, Resolver.ReadMode.FULL, fileOrigin,
-      fsProvider
+      SingletonCachingJarFileSystemProvider
     )
   }
 
