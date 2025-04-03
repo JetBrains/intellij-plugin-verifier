@@ -1,6 +1,10 @@
 package com.jetbrains.pluginverifier.verifiers.resolution
 
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
 import org.hamcrest.CoreMatchers.`is`
@@ -160,7 +164,7 @@ class MethodsTest {
   }
 
   private fun createTestResolver(): Resolver =
-    JarFileResolver(
+    LazyJarResolver(
       findMockPluginJarPath(),
       Resolver.ReadMode.FULL,
       object : FileOrigin {

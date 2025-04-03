@@ -1,7 +1,7 @@
 package com.jetbrains.pluginverifier.tests.bytecode
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.JarFileResolver
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
 import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
@@ -29,7 +29,7 @@ class CodeAnalysisTest {
   }
 
   private fun createTestResolver(): Resolver =
-    JarFileResolver(
+    LazyJarResolver(
       findMockPluginJarPath(),
       Resolver.ReadMode.FULL,
       object : FileOrigin {
