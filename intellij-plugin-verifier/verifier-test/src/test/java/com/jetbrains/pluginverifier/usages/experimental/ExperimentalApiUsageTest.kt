@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.usages.experimental
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.usages.util.MemberAnnotation
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
@@ -20,7 +20,7 @@ class ExperimentalApiUsageTest {
     assertNotNull(experimentalApiMethod)
     experimentalApiMethod!!
 
-    assertTrue(experimentalApiMethod.isExperimentalApi(EmptyResolver))
+    assertTrue(experimentalApiMethod.isExperimentalApi(EMPTY_RESOLVER))
   }
 
   @Test
@@ -30,7 +30,7 @@ class ExperimentalApiUsageTest {
     assertNotNull(experimentalApiMethod)
     experimentalApiMethod!!
 
-    val annotation = experimentalApiMethod.resolveExperimentalApiAnnotation(EmptyResolver)
+    val annotation = experimentalApiMethod.resolveExperimentalApiAnnotation(EMPTY_RESOLVER)
     assertNotNull(annotation)
     annotation!!
     val expectedAnnotation =

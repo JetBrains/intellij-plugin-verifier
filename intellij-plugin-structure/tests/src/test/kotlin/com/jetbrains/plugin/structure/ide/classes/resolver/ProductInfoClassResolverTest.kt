@@ -76,7 +76,7 @@ class ProductInfoClassResolverTest {
     }
     with(resolver.bootClasspathResolver) {
       assertNotNull(this)
-      assertTrue(delegateResolver is LazyCompositeResolver)
+      assertTrue(this is LazyCompositeResolver)
     }
 
     val elevationLogger = resolver.resolveClass("com/intellij/execution/process/elevation/ElevationLogger")
