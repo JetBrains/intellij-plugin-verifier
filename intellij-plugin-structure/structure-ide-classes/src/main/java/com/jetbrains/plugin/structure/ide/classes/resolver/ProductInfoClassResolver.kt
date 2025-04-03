@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.NamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
+import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.BuildTxtIdeVersionProvider
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeVersionResolution
@@ -150,12 +151,6 @@ class ProductInfoClassResolver(
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
     return LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide), name = relativeJarPath)
-  }
-
-  private fun List<NamedResolver>?.asResolver(name: String): NamedResolver {
-    return this?.let {
-      LazyCompositeResolver.create(this, name)
-    } ?: EmptyResolver(name)
   }
 
   companion object {

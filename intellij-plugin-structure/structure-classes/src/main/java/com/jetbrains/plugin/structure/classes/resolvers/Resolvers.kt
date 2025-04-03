@@ -6,3 +6,11 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 const val UNNAMED_RESOLVER = "Unnamed Resolver"
 val EMPTY_RESOLVER = EmptyResolver(UNNAMED_RESOLVER)
+
+fun List<NamedResolver>?.asResolver(name: String): NamedResolver {
+  return if (this == null || isEmpty()) {
+    EmptyResolver(name)
+  } else {
+    LazyCompositeResolver.create(this, name)
+  }
+}

@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
+import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
@@ -85,10 +86,6 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
       val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
       LazyJarResolver(it.path, readMode = ReadMode.FULL, origin)
     }.asResolver(newResolverName())
-  }
-
-  private fun List<Resolver>.asResolver(resolverName: String): Resolver {
-    return LazyCompositeResolver.create(this, resolverName)
   }
 
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
