@@ -23,15 +23,19 @@ import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
 private const val UNNAMED_RESOLVER = "Unnamed Resolver"
-
 private val EMPTY_UNNAMED_RESOLVER = NamedResolver(UNNAMED_RESOLVER, EmptyResolver)
+
+/**
+ * See also cache size in [com.jetbrains.plugin.structure.classes.resolvers.CacheResolver].
+ */
+private const val DEFAULT_CACHE_SIZE = 1024L
 
 class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : PluginResolverProvider {
 
   private val dependencyTree = DependencyTree(pluginProvider)
 
   private val cache = Caffeine.newBuilder()
-    .maximumSize(512)
+    .maximumSize(DEFAULT_CACHE_SIZE)
     .recordStats()
     .build<PluginId, Resolver>()
 
@@ -81,7 +85,6 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
 
     return classpath.entries.map {
       val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
-      //FIXME check readmode
       LazyJarResolver(it.path, readMode = ReadMode.FULL, origin)
     }.asResolver(newResolverName())
   }
