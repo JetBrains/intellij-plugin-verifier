@@ -23,6 +23,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Deprecated("Replaced with LazyJarResolver", replaceWith = ReplaceWith("LazyJarResolver", "com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver"))
 class JarFileResolver(
   override val jarPath: Path,
   override val readMode: ReadMode,
