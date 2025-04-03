@@ -6,7 +6,15 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Check that plugin description starts with Latin Symbols ([MP-7339](https://youtrack.jetbrains.com/issue/MP-7339))
+
 ### Changed
+
+- Address memory management issues causing `OutOfMemoryError`s ([#1239](https://github.com/JetBrains/intellij-plugin-verifier/pull/1239), [MP-7366](https://youtrack.jetbrains.com/issue/MP-7366))
+- Improve API integration with JetBrains Marketplace on Edu plugins ([#1234](https://github.com/JetBrains/intellij-plugin-verifier/pull/1234), [#1240](https://github.com/JetBrains/intellij-plugin-verifier/pull/1240))
+- Update ASM to 9.8
+- Update ByteBuddy to 1.17.5
+- Update JetBrains Plugin Repository REST Client to 2.0.46
 
 ### Fixed
 
