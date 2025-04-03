@@ -54,7 +54,6 @@ class LazyJarResolver(
 
   override fun close() = fileSystemProvider.close(jarPath)
 
-  //FIXME optimize with JAR implementation
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
     return fileSystemProvider(jarPath) { fs ->
       val path = fs.getPath(bundleResourceName)

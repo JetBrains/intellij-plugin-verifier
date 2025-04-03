@@ -85,7 +85,6 @@ class JarResourceResolverTest {
     }
   }
 
-  //FIXME duplicate code in LazyJarResolverTest
   private fun randomJarPath(): Path {
     val jarSuffix = UUID.randomUUID().toString()
     return temporaryFolder.newFile("classes-$jarSuffix.jar").toPath()
