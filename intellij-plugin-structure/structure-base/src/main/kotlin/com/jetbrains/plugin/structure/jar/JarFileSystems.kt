@@ -8,7 +8,12 @@ fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, useFileSys
     val fs = fileSystemProvider.getFileSystem(this)
     useFileSystem(fs)
   } catch (e: Throwable) {
-    throw e
+    throw JarFileSystemProviderException(
+      "Path '$this' cannot be used:" + e.message + ". Provider '${fileSystemProvider.javaClass.name}')",
+      path = this,
+      fileSystemProvider,
+      e
+    )
   } finally {
     fileSystemProvider.close(jarPath = this)
   }
