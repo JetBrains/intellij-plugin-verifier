@@ -30,7 +30,7 @@ private val LOG: Logger = LoggerFactory.getLogger(PluginJar::class.java)
 class PluginJar(private val jarPath: Path, private val jarFileSystemProvider: JarFileSystemProvider): AutoCloseable {
 
   private val jarFileSystem: FileSystem = jarFileSystemProvider.getFileSystem(jarPath).also {
-    LOG.debug("Provider '{}' created file system for [{}]", jarFileSystemProvider.javaClass.name, jarPath)
+    LOG.debug("File system for [{}] was provided by '{}'", jarPath, jarFileSystemProvider.javaClass.name)
   }
 
   fun resolveDescriptorPath(descriptorPath: String = PLUGIN_XML_RESOURCE_PATH): Path? {
