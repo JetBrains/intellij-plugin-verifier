@@ -6,7 +6,6 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
@@ -61,9 +60,6 @@ class ProductInfoBasedPluginCollectionProvider(
       return emptySet()
     }
     val (idePath, ideVersion, productInfo) = source
-    if (!idePath.isDirectory) {
-      throw IOException("Specified path does not exist or is not a directory: $idePath")
-    }
     val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, productInfo, ideVersion)
     val additionalPlugins = readAdditionalPlugins(idePath, productInfo, ideVersion)
