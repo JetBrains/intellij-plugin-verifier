@@ -26,6 +26,10 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
 
   private const val UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE = 64
 
+  private val retentionTimeInSeconds =
+    System.getenv("com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime")
+      ?.toLongOrNull() ?: 10L
+
   private val fsCache = ConcurrentHashMap<URI, FSHandle>()
 
   private val clock = Clock.systemUTC()
@@ -58,7 +62,7 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
     if (fsCache.size <= MAX_OPEN_JAR_FILE_SYSTEMS) return
 
     val handlesToExpire = fsCache.values
-      .filter { it.users == 0 }
+      .filter { it.shouldExpire }
       .sortedBy { it.lastAccessTime }
       .take(UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE)
       .also { LOG.debug("Will expire {} cached FS entries", it.size) }
@@ -80,11 +84,21 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
     val fsHandle = fsCache[jarUri] ?: return
     with(fsHandle) {
       users--
-      if (users == 0) {
+      if (shouldExpire) {
         expire(this)
       }
     }
   }
+
+  private val FSHandle.shouldExpire: Boolean
+    get() = users == 0 && hasTimedOut
+
+
+  private val FSHandle.hasTimedOut: Boolean
+    get() {
+      val now = clock.instant()
+      return lastAccessTime.plusSeconds(retentionTimeInSeconds).isBefore(now)
+    }
 
   private data class FSHandle(
     val fs: FileSystem,
