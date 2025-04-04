@@ -65,7 +65,7 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
       .filter { it.shouldExpire }
       .sortedBy { it.lastAccessTime }
       .take(UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE)
-      .also { LOG.debug("Will expire {} cached FS entries", it.size) }
+      .also(::logHandles)
 
     handlesToExpire.forEach {
       expire(it)
@@ -93,7 +93,6 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
   private val FSHandle.shouldExpire: Boolean
     get() = users == 0 && hasTimedOut
 
-
   private val FSHandle.hasTimedOut: Boolean
     get() {
       val now = clock.instant()
@@ -116,5 +115,10 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
     fsCache.values.forEach { fsHandle ->
       expire(fsHandle)
     }
+  }
+
+  private fun logHandles(handles: Collection<FSHandle>) {
+    if(handles.isEmpty()) return
+    LOG.debug("Will expire {} cached FS entries", handles.size)
   }
 }
