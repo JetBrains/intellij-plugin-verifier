@@ -16,17 +16,20 @@ import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.base.utils.readText
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.CompiledModulesResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
 class IdeManagerImpl : IdeManager() {
+  private val jarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   override fun createIde(idePath: Path): Ide = createIde(idePath, null)
 
@@ -66,7 +69,7 @@ class IdeManagerImpl : IdeManager() {
   }
 
   private fun readDistributionBundledPlugins(idePath: Path, product: IntelliJPlatformProduct, ideVersion: IdeVersion): List<IdePlugin> {
-    val platformResourceResolver = PlatformResourceResolver.of(idePath)
+    val platformResourceResolver = PlatformResourceResolver.of(idePath, jarFileSystemProvider)
     val bundledPlugins = readBundledPlugins(idePath, platformResourceResolver, ideVersion)
     val platformPlugins = readPlatformPlugins(idePath, product, platformResourceResolver.platformJarFiles, platformResourceResolver, ideVersion)
     return bundledPlugins + platformPlugins
@@ -94,8 +97,12 @@ class IdeManagerImpl : IdeManager() {
    * But rarely `nearby.xml` may reside in another platform's jar file. Apparently, IDE handles such a case accidentally:
    * an ugly fallback hack is used `com.intellij.util.io.URLUtil.openResourceStream(URL)`.
    */
-  internal class PlatformResourceResolver(val platformJarFiles: List<Path>, platformModuleJarFiles: List<Path>) : ResourceResolver {
-    private val jarFilesResourceResolver = JarFilesResourceResolver(platformJarFiles + platformModuleJarFiles)
+  internal class PlatformResourceResolver(
+    val platformJarFiles: List<Path>,
+    platformModuleJarFiles: List<Path>,
+    jarFileSystemProvider: JarFileSystemProvider
+  ) : ResourceResolver {
+    private val jarFilesResourceResolver = JarsResourceResolver(platformJarFiles + platformModuleJarFiles, jarFileSystemProvider)
 
     override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
       val resolveResult = jarFilesResourceResolver.resolveResource(relativePath, basePath)
@@ -117,10 +124,10 @@ class IdeManagerImpl : IdeManager() {
     }
 
     companion object {
-      fun of(idePath: Path): PlatformResourceResolver {
+      fun of(idePath: Path, jarFileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider): PlatformResourceResolver {
         val platformJarFiles = idePath.resolve("lib").listJars()
         val platformModuleJarFiles = idePath.resolve("lib").resolve("modules").listJars()
-        return PlatformResourceResolver(platformJarFiles, platformModuleJarFiles)
+        return PlatformResourceResolver(platformJarFiles, platformModuleJarFiles, jarFileSystemProvider)
       }
     }
   }
@@ -177,7 +184,7 @@ class IdeManagerImpl : IdeManager() {
     val pathResolver = CompositeResourceResolver(
       listOf(
         CompiledModulesResourceResolver(moduleRoots),
-        JarFilesResourceResolver(librariesJars)
+        JarsResourceResolver(librariesJars, jarFileSystemProvider)
       )
     )
     return readCompiledBundledPlugins(idePath, moduleRoots, pathResolver, ideVersion)
