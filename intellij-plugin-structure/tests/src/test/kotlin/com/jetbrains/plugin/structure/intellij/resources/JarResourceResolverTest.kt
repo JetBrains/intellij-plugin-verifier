@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.intellij.resources
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.withZipFsSeparator
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.jar.initializeSampleJarContent
 import com.jetbrains.plugin.structure.intellij.plugin.JarFilesResourceResolver
 import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
@@ -22,10 +21,6 @@ class JarResourceResolverTest {
   val temporaryFolder = TemporaryFolder()
 
   private lateinit var byteBuddy: ByteBuddy
-
-  private val fileOrigin = object : FileOrigin {
-    override val parent: FileOrigin? = null
-  }
 
   private val fileSystemProvider = DefaultJarFileSystemProvider()
 

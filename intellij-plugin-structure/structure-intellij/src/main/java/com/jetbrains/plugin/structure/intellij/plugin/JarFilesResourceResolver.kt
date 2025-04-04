@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
+@Deprecated("Use 'JarsResourceLoader' instead.", replaceWith = ReplaceWith("JarsResourceResolver", "com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver"))
 class JarFilesResourceResolver(private val jarFiles: List<Path>) : ResourceResolver {
 
   override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {

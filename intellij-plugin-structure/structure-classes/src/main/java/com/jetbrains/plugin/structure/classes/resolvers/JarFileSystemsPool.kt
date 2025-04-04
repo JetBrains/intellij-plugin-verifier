@@ -15,6 +15,7 @@ import java.time.Instant
  *
  * No more than [MAX_OPEN_JAR_FILE_SYSTEMS] will be open in the running application simultaneously.
  */
+@Deprecated("Use 'JarFileSystemProvider' implementations")
 internal object JarFileSystemsPool {
   private const val MAX_OPEN_JAR_FILE_SYSTEMS = 256
 
