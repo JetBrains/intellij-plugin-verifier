@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.writeText
+import com.jetbrains.plugin.structure.xinclude.withSystemProperty
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -16,7 +17,7 @@ class SingletonCachingJarFileSystemProviderTest {
   val tempFolder = TemporaryFolder()
 
   @Test
-  fun `Jar Uris are normalized`() {
+  fun `Jar Uris are normalized`() = withSystemProperty("com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime",0) {
     val jarPath = tempFolder.root.toPath().resolve("test.jar")
     FileSystems.newFileSystem(URI.create("jar:${jarPath.toUri()}"), mapOf<String, Any>("create" to true)).use {
       it.getPath("hello.txt").writeText("Hello World")

@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.withSuperScheme
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,7 +26,7 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
   private const val UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE = 64
 
   private val retentionTimeInSeconds =
-    System.getenv("com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime")
+    System.getProperty("com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime")
       ?.toLongOrNull() ?: 10L
 
   private val fsCache = ConcurrentHashMap<URI, FSHandle>()
