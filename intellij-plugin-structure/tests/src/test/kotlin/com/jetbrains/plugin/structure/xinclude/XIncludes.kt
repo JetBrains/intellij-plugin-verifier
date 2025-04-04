@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.xinclude
 
 import com.jetbrains.plugin.structure.intellij.xinclude.IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY
 
-internal fun withSystemProperty(property: String, value: Boolean, block: () -> Unit) {
+internal fun withSystemProperty(property: String, value: Any, block: () -> Unit) {
   try {
     System.setProperty(property, value.toString())
     block()
