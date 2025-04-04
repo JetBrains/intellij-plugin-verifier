@@ -106,7 +106,18 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
     var users: Int = 0
   ): Closeable {
     override fun close() {
-      fs.closeLogged()
+      try {
+        fs.close()
+      } catch (_: InterruptedException) {
+        Thread.currentThread().interrupt()
+        LOG.info("Cannot close due to an interruption for [{}]", fs)
+      } catch (_: NoSuchFileException) {
+        LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
+      } catch (_: java.nio.file.NoSuchFileException) {
+        LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
+      } catch (e: Exception) {
+        LOG.error("Unable to close [{}]", fs, e)
+      }
     }
   }
 
