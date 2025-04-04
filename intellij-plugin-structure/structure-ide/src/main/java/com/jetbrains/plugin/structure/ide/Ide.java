@@ -36,6 +36,15 @@ public abstract class Ide implements PluginProvider {
   public abstract List<IdePlugin> getBundledPlugins();
 
   /**
+   * Indicates if this IDE contains a specified plugin.
+   *
+   * @return {@code true} if such plugin is available in the IDE as a bundled plugin.
+   */
+  public boolean hasBundledPlugin(@NotNull String pluginId) {
+    return findPluginById(pluginId) != null;
+  }
+
+  /**
    * Finds bundled plugin with specified plugin id.
    *
    * @param pluginId plugin id
