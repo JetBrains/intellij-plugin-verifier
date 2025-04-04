@@ -51,10 +51,7 @@ class ProductInfoBasedIdeManager(
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
-    val allPlugins =
-      pluginCollectionProvider.getPlugins(ProductInfoPluginCollectionSource(idePath, ideVersion, productInfo))
-        .toList()
-    return ProductInfoBasedIde(idePath, ideVersion, allPlugins, productInfo)
+    return ProductInfoBasedIde(idePath, ideVersion, productInfo, pluginCollectionProvider)
   }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
