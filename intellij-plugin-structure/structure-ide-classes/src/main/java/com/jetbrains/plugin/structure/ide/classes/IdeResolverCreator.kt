@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryResolver
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
@@ -50,7 +50,7 @@ object IdeResolverCreator {
     parentOrigin: FileOrigin
   ): Resolver {
     if (!libDirectory.isDirectory) {
-      return EmptyResolver
+      return EMPTY_RESOLVER
     }
 
     val jars = libDirectory.listJars()

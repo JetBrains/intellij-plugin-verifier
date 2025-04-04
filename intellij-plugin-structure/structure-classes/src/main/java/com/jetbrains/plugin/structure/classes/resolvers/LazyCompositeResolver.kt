@@ -6,8 +6,8 @@ import java.util.*
 class LazyCompositeResolver private constructor(
   resolvers: List<Resolver>,
   override val readMode: ReadMode,
-  val name: String
-) : Resolver() {
+  name: String
+) : NamedResolver(name) {
 
   private val delegateResolver by lazy {
     CompositeResolver.create(resolvers, name)
@@ -43,7 +43,24 @@ class LazyCompositeResolver private constructor(
     fun create(resolvers: Iterable<Resolver>, resolverName: String): Resolver {
       val list = resolvers.toList()
       return when(list.size) {
-        0 -> EmptyNamedResolver(resolverName)
+        0 -> EmptyResolver(resolverName)
+        1 -> list.first()
+        else -> {
+          val readMode = if (list.all { it.readMode == ReadMode.FULL }) {
+            ReadMode.FULL
+          } else {
+            ReadMode.SIGNATURES
+          }
+          LazyCompositeResolver(list, readMode, resolverName)
+        }
+      }
+    }
+
+    @JvmStatic
+    fun create(resolvers: Iterable<NamedResolver>, resolverName: String): NamedResolver {
+      val list = resolvers.toList()
+      return when(list.size) {
+        0 -> EmptyResolver(resolverName)
         1 -> list.first()
         else -> {
           val readMode = if (list.all { it.readMode == ReadMode.FULL }) {

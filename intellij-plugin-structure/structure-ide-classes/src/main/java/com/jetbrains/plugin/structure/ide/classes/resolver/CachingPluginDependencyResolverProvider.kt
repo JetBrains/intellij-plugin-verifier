@@ -6,13 +6,15 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
+import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
+import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
@@ -21,9 +23,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
-
-private const val UNNAMED_RESOLVER = "Unnamed Resolver"
-private val EMPTY_UNNAMED_RESOLVER = NamedResolver(UNNAMED_RESOLVER, EmptyResolver)
 
 /**
  * See also cache size in [com.jetbrains.plugin.structure.classes.resolvers.CacheResolver].
@@ -48,7 +47,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
    * and includes only those that are declared as dependencies in the plugin.
    */
   override fun getResolver(plugin: IdePlugin): Resolver {
-    val id = plugin.id ?: return EMPTY_UNNAMED_RESOLVER
+    val id = plugin.id ?: return EMPTY_RESOLVER
     // Invocation of `getIfPresent` is intentional!
     // Using `get` would lead to a recursive update triggered by `doGetResolver`.
     val resolver = cache.getIfPresent(id)
@@ -81,16 +80,12 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     get() = pluginId ?: pluginName
 
   private fun IdePlugin?.asResolver(): Resolver {
-    if (this == null) return EMPTY_UNNAMED_RESOLVER
+    if (this == null) return EMPTY_RESOLVER
 
     return classpath.entries.map {
       val origin = IdeFileOrigin.BundledPlugin(it.path, idePlugin = this)
       LazyJarResolver(it.path, readMode = ReadMode.FULL, origin)
     }.asResolver(newResolverName())
-  }
-
-  private fun List<Resolver>.asResolver(resolverName: String): Resolver {
-    return LazyCompositeResolver.create(this, resolverName)
   }
 
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
@@ -110,7 +105,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     }
 
   private val Dependency.resolver: Resolver
-    get() = plugin?.asResolver() ?: EMPTY_UNNAMED_RESOLVER
+    get() = plugin?.asResolver() ?: EMPTY_RESOLVER
 
   class ComponentNameAwareCompositeResolver(
     name: String,

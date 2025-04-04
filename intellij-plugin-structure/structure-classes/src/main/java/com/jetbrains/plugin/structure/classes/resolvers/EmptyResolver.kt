@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.classes.resolvers
@@ -7,9 +7,9 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
-object EmptyResolver : Resolver() {
-  override val readMode
-    get() = ReadMode.FULL
+class EmptyResolver(override val name: String) : NamedResolver(name) {
+
+  override val readMode = ReadMode.FULL
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) = true
 
@@ -21,14 +21,13 @@ object EmptyResolver : Resolver() {
 
   override fun containsPackage(packageName: String) = false
 
-  override val allClasses get() = emptySet<String>()
+  override val allClasses = emptySet<String>()
 
-  override val allPackages get() = emptySet<String>()
+  override val allPackages = emptySet<String>()
 
-  override val allBundleNameSet: ResourceBundleNameSet get() = ResourceBundleNameSet(emptyMap())
+  override val allBundleNameSet = ResourceBundleNameSet(emptyMap())
 
-  override fun toString() = "EmptyResolver"
+  override fun toString() = name
 
   override fun close() = Unit
-
 }
