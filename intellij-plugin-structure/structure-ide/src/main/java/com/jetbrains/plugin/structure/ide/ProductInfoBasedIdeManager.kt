@@ -36,9 +36,9 @@ import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationR
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
+import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -59,7 +59,7 @@ class ProductInfoBasedIdeManager(
   private val layoutComponentProvider =
     LayoutComponentsProvider(missingLayoutFileMode = missingLayoutFileMode)
 
-  private val jarFileSystemProvider: JarFileSystemProvider = DefaultJarFileSystemProvider()
+  private val jarFileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
   /**
    * Problem level remapping used for bundled plugins.
