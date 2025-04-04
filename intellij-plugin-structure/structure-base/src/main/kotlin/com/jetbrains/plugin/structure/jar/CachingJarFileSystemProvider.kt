@@ -83,10 +83,7 @@ class CachingJarFileSystemProvider(
     with(fsHandle) {
       users--
       if (shouldExpire) {
-        System.err.println("No useres and expired. Closing FS for $jarUri. Users: $users")
         expire(this)
-      } else {
-        System.err.println("Users: $users. Retention: $retentionTimeInSeconds.")
       }
     }
   }
