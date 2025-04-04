@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
+import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -66,7 +66,7 @@ class DefaultClassResolverProvider(
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
 
   private fun getIdeResolver(plugin: IdePlugin, ideDescriptor: IdeDescriptor): Resolver {
-    return if (ideDescriptor.ide is ProductInfoBasedIde
+    return if (ideDescriptor.ide is ProductInfoAware
       && ideDescriptor.ideResolver is ProductInfoClassResolver
       && !legacyPluginAnalysis.isLegacyPlugin(plugin)
     ) {
@@ -85,7 +85,7 @@ class DefaultClassResolverProvider(
     }
 
   private fun createBundledPluginResolver(pluginDependency: PluginDetails): Resolver? {
-    return if (ideDescriptor.ide is ProductInfoBasedIde && ideDescriptor.ideResolver is ProductInfoClassResolver) {
+    return if (ideDescriptor.ide is ProductInfoAware && ideDescriptor.ideResolver is ProductInfoClassResolver) {
       ideDescriptor.ideResolver.getLayoutComponentResolver(pluginDependency.pluginInfo.pluginId)
     } else null
   }

@@ -13,8 +13,8 @@ class ProductInfoBasedIde(
   private val idePath: Path,
   private val version: IdeVersion,
   private val bundledPlugins: List<IdePlugin>,
-  val productInfo: ProductInfo
-) : Ide() {
+  override val productInfo: ProductInfo
+) : Ide(), ProductInfoAware {
   override fun getIdePath() = idePath
 
   override fun getVersion() = version
