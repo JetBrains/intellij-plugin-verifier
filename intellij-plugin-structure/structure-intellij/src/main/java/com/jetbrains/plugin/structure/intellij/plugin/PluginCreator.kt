@@ -593,7 +593,7 @@ internal class PluginCreator private constructor(
 
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
-    if (!plugin.isV2) {
+    if (!plugin.isV2 && contentModules.isEmpty()) {
       if (dependencies.isEmpty()) {
         registerProblem(NoDependencies(descriptorPath))
       }
