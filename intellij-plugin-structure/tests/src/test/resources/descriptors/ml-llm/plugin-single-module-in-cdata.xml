@@ -12,7 +12,4 @@
   </dependencies>
 </idea-plugin>]]></module>
     </content>
-    <dependencies>
-        <plugin id="com.intellij.modules.platform" />
-    </dependencies>
 </idea-plugin>

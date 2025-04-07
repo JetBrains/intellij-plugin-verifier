@@ -315,6 +315,9 @@ class PluginXmlValidationTest {
         file("plugin.xml", classpath("/descriptors/ml-llm/plugin-single-module-in-cdata.xml"))
       }
     }
+
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
+    
     pluginCreationSuccess.warnings.filterIsInstance<ModuleDescriptorResolutionProblem>().let {
       assertEquals(0, it.size)
     }
