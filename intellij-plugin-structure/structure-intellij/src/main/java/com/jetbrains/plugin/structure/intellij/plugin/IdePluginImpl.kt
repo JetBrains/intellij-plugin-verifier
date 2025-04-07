@@ -46,8 +46,12 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override var isImplementationDetail: Boolean = false
 
-  override var isV2: Boolean = false
+  @Deprecated("See IdePlugin::isV2")
+  override val isV2: Boolean
+    get() = hasPackagePrefix
 
+  override var hasPackagePrefix: Boolean = false
+    
   override var kotlinPluginMode: KotlinPluginMode = Implicit
 
   override var hasDotNetPart: Boolean = false
@@ -120,7 +124,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         useIdeClassLoader = old.useIdeClassLoader
         classpath = old.classpath
         isImplementationDetail = old.isImplementationDetail
-        isV2 = old.isV2
+        hasPackagePrefix = old.hasPackagePrefix
         kotlinPluginMode = old.kotlinPluginMode
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument

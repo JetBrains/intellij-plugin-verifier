@@ -20,7 +20,8 @@ import org.jdom2.Element
 typealias Dependency = ModuleBean.ModuleDependency
 typealias Resource = ModuleBean.ResourceRoot
 
-class IdeModule(override val pluginId: String, override val classpath: Classpath = EMPTY) : IdePlugin {
+class IdeModule(override val pluginId: String, override val classpath: Classpath = EMPTY,
+                override val hasPackagePrefix: Boolean) : IdePlugin {
   val moduleDependencies = mutableListOf<Dependency>()
   val resources = mutableListOf<Resource>()
   override var underlyingDocument = Document()
@@ -39,6 +40,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val originalFile = null
   override val productDescriptor = null
   override val useIdeClassLoader = false
+  @Deprecated("See IdePlugin::isV2")
   override val isV2 = true
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
   override val url = null
@@ -62,7 +64,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   companion object {
     @Throws(IllegalArgumentException::class)
     fun clone(plugin: IdePlugin, pluginId: String, classpath: Classpath): IdeModule {
-      return IdeModule(pluginId,classpath).apply {
+      return IdeModule(pluginId,classpath, hasPackagePrefix = plugin.hasPackagePrefix).apply {
         underlyingDocument = plugin.underlyingDocument.clone()
 
         extensions.putAll(plugin.extensions)
