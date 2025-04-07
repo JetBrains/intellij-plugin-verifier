@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
+import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
@@ -152,6 +153,27 @@ class PluginXmlValidationTest {
     val unacceptableWarning = unacceptableWarnings.filterIsInstance<NoDependencies>()
       .singleOrNull()
     assertNotNull("Plugin descriptor plugin.xml does not include any module dependency tags. The plugin is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. See https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html", unacceptableWarning)
+  }
+  
+  @Test
+  fun `plugin with v2 dependency on plugin`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <dependencies>
+                <plugin id="org.jetbrains.kotlin"/>
+              </dependencies>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings.filterIsInstance<NoModuleDependencies>())
   }
 
   @Test

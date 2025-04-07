@@ -597,7 +597,7 @@ internal class PluginCreator private constructor(
       if (dependencies.isEmpty()) {
         registerProblem(NoDependencies(descriptorPath))
       }
-      if (dependencies.count { it.isModule } == 0) {
+      if (dependencies.none { it.isModule || it is PluginV2Dependency }) {
         registerProblem(NoModuleDependencies(descriptorPath))
       }
     }
