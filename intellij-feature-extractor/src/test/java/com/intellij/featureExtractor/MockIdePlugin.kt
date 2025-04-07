@@ -46,7 +46,9 @@ data class MockIdePlugin(
   override val useIdeClassLoader = false
   override val classpath: Classpath = Classpath.EMPTY
   override val isImplementationDetail = false
+  @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false
+  override val hasPackagePrefix: Boolean = false
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
   override val hasDotNetPart: Boolean = false
   override val declaredThemes = emptyList<IdeTheme>()

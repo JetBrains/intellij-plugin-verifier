@@ -321,7 +321,7 @@ internal class PluginCreator private constructor(
       }
     }
 
-    isV2 = bean.packageName != null
+    hasPackagePrefix = bean.packageName != null
 
     val modulePrefix = "com.intellij.modules."
 
@@ -593,7 +593,7 @@ internal class PluginCreator private constructor(
 
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
-    if (!plugin.isV2 && contentModules.isEmpty()) {
+    if (!plugin.hasPackagePrefix && contentModules.isEmpty()) {
       if (dependencies.isEmpty()) {
         registerProblem(NoDependencies(descriptorPath))
       }

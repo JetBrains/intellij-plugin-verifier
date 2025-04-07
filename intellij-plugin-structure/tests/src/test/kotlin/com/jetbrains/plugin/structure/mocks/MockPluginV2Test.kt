@@ -109,7 +109,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertNull(plugin.changeNotes)
     assertFalse(plugin.useIdeClassLoader)
     assertFalse(plugin.isImplementationDetail)
-    assertTrue(plugin.isV2)
+    assertTrue(plugin.hasPackagePrefix)
   }
 
   private fun checkIdeCompatibility(plugin: IdePlugin) {

@@ -42,7 +42,7 @@ class IdeDependencyFinderTest {
   @Before
   fun setUp() {
     lock = IdleFileLock(tempFolder.newFile().toPath())
-    ideModule = IdeModule(MOCK_IDE_MODULE_ID).apply {
+    ideModule = IdeModule(MOCK_IDE_MODULE_ID, hasPackagePrefix = false).apply {
       definedModules += MOCK_IDE_MODULE_ID
     }
   }

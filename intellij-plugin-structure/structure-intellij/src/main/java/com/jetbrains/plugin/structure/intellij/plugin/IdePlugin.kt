@@ -67,7 +67,25 @@ interface IdePlugin : Plugin {
 
   val isImplementationDetail: Boolean
 
+  /**
+   * There are different features from the v2 plugin model that can be used or not in a plugin:
+   *  * content modules ([modulesDescriptors]),
+   *  * dependencies on specific modules ([ModuleV2Dependency], [PluginV2Dependency]),
+   *  * package attribute ([hasPackagePrefix]).
+   * 
+   * So a single flag cannot have a proper meaning here. 
+   * Use other properties instead of this one.
+   * 
+   * The current implementation returns `true` for [com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule]
+   * instances or if [hasPackagePrefix] is true.
+   */
+  @Deprecated("Use other properties")
   val isV2: Boolean
+  
+  /** 
+   * Specifies whether a `package` attribute is set in the root tag of `plugin.xml` file.
+   */
+  val hasPackagePrefix: Boolean
 
   val kotlinPluginMode: KotlinPluginMode
 

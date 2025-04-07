@@ -43,7 +43,9 @@ data class MockIdePlugin(
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
+  @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
+  override val hasPackagePrefix: Boolean = false,
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
 ) : IdePlugin {
 

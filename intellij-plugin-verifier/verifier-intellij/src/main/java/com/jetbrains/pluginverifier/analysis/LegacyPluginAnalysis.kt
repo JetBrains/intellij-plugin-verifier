@@ -5,11 +5,12 @@
 package com.jetbrains.pluginverifier.analysis
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 
 class LegacyPluginAnalysis {
   // https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies
   fun isLegacyPlugin(plugin: IdePlugin): Boolean = with(plugin) {
-    !isV2 && (hasNoDependencies() || hasNoModuleDependencies())
+    plugin !is IdeModule && !hasPackagePrefix && (hasNoDependencies() || hasNoModuleDependencies())
   }
 
   private fun IdePlugin.hasNoDependencies() = dependencies.isEmpty()
