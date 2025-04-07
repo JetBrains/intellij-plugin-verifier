@@ -27,14 +27,14 @@ class LazyJarResolver(
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
   override val allClasses: Set<String>
-    get() = jar.classes
+    get() = jar.classes.mapTo(HashSet()) { it.toString() }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
-    get() = jar.packages
+    get() = jar.packages.all
 
   override val packages: Set<String>
-    get() = jar.packageSet
+    get() = jar.packages.entries
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(jar.bundleNames)
