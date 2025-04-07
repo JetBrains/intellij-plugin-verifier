@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tests.filter
 
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.filtering.documented.DocClassRemoved
 import com.jetbrains.pluginverifier.filtering.documented.DocMethodParameterTypeChanged
@@ -119,7 +119,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
       fieldWithOwnerFromRemovedPackage to docPackageRemoved
     )
 
-    assertProblemsDocumented(problemToDocumentation, createSimpleVerificationContext(EmptyResolver))
+    assertProblemsDocumented(problemToDocumentation, createSimpleVerificationContext(EMPTY_RESOLVER))
   }
 
   /**
@@ -152,7 +152,7 @@ class DocumentedProblemsReportingTest : BaseDocumentedProblemsReportingTest() {
         methodNotImplementedProblem to DocMethodReturnTypeChanged(libInterfaceName, methodName),
         methodNotImplementedProblem to DocMethodParameterTypeChanged(libInterfaceName, methodName)
       ),
-      createSimpleVerificationContext(EmptyResolver)
+      createSimpleVerificationContext(EMPTY_RESOLVER)
     )
   }
 }

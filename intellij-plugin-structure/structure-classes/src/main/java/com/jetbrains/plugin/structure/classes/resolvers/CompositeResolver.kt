@@ -112,7 +112,7 @@ class CompositeResolver private constructor(
     fun create(resolvers: Iterable<Resolver>, resolverName: String): Resolver {
       val list = resolvers.toList()
       return when(list.size) {
-        0 -> EmptyNamedResolver(resolverName)
+        0 -> EmptyResolver(resolverName)
         1 -> list.first()
         else -> {
           val readMode = if (list.all { it.readMode == ReadMode.FULL }) {

@@ -1,6 +1,12 @@
 package com.jetbrains.plugin.structure.resolvers
 
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.CacheResolver
+import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import org.junit.Assert.*
 import org.junit.Test
 import org.objectweb.asm.tree.ClassNode
@@ -9,7 +15,7 @@ import java.util.*
 class ResolverTest {
   @Test
   fun `empty cache doesnt contain classes`() {
-    val cacheResolver = CacheResolver(EmptyResolver)
+    val cacheResolver = CacheResolver(EMPTY_RESOLVER)
     assertEquals(ResolutionResult.NotFound, cacheResolver.resolveClass("a"))
     assertTrue(cacheResolver.allClasses.isEmpty())
     assertEquals(emptySet<String>(), cacheResolver.allPackages)

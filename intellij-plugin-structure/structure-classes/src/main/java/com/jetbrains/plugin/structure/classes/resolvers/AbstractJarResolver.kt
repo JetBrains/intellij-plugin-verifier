@@ -10,8 +10,9 @@ import java.util.*
 abstract class AbstractJarResolver(
   protected open val jarPath: Path,
   override val readMode: ReadMode,
-  protected open val fileOrigin: FileOrigin
-) : Resolver() {
+  protected open val fileOrigin: FileOrigin,
+  name: String = jarPath.fileName.toString()
+) : NamedResolver(name) {
 
   protected abstract val bundleNames: MutableMap<String, MutableSet<String>>
 
