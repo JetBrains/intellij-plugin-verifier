@@ -5,15 +5,24 @@
 package com.jetbrains.pluginverifier.analysis
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 
 class LegacyPluginAnalysis {
   // https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies
   fun isLegacyPlugin(plugin: IdePlugin): Boolean = with(plugin) {
-    plugin !is IdeModule && !hasPackagePrefix && (hasNoDependencies() || hasNoModuleDependencies())
+    plugin !is IdeModule 
+      && !hasPackagePrefix
+      && modulesDescriptors.isEmpty()
+      && dependencies.all { it.canBeLegacy }
   }
 
-  private fun IdePlugin.hasNoDependencies() = dependencies.isEmpty()
-
-  private fun IdePlugin.hasNoModuleDependencies() = dependencies.none { it.isModule }
+  private val PluginDependency.canBeLegacy: Boolean
+    get() = when (this) {
+      is PluginV2Dependency -> false
+      is ModuleV2Dependency -> false
+      else -> !isModule && id != "com.intellij.java"
+    }
 }
