@@ -4,7 +4,11 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
@@ -91,8 +95,12 @@ class DirectoryResolver(
     return ResolutionResult.NotFound
   }
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
     get() = packageSet.getAllPackages()
+
+  override val packages: Set<String>
+    get() = TODO("Not yet implemented")
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)

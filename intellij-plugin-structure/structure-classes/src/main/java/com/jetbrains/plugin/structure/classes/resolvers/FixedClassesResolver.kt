@@ -66,8 +66,12 @@ class FixedClassesResolver private constructor(
         .mapValues { it.value.toSet() }
     )
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
     get() = packageSet.getAllPackages()
+
+  override val packages: Set<String>
+    get() = TODO("Not yet implemented")
 
   override fun containsClass(className: String) = className in classes
 

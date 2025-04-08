@@ -263,7 +263,7 @@ class CachingPluginDependencyResolverProviderTest {
       )
       assertEquals(expectedPackages, allPackages)
       // 'Alpha' plugin package should not be in the Alpha's transitive dependencies
-      assertFalse(allPackages.contains("com/example/alpha"))
+      assertFalse(packages.contains("com/example/alpha"))
 
       val expectedClasses = setOf(
         "com/example/beta/BetaAction",

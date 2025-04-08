@@ -29,8 +29,12 @@ class LazyJarResolver(
   override val allClasses: Set<String>
     get() = jar.classes
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
     get() = jar.packages
+
+  override val packages: Set<String>
+    get() = jar.packageSet
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(jar.bundleNames)

@@ -33,8 +33,12 @@ class CacheResolver(
   override val allBundleNameSet
     get() = delegate.allBundleNameSet
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
     get() = delegate.allPackages
+
+  override val packages: Set<String>
+    get() = delegate.packages
 
   override val readMode
     get() = delegate.readMode

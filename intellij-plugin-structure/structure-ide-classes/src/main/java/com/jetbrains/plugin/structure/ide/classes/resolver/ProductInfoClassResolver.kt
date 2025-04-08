@@ -106,7 +106,10 @@ class ProductInfoClassResolver(
 
   override val allClasses get() = delegateResolver.allClasses
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages get() = delegateResolver.allPackages
+
+  override val packages: Set<String> get() = delegateResolver.packages
 
   override val allBundleNameSet get() = delegateResolver.allBundleNameSet
 

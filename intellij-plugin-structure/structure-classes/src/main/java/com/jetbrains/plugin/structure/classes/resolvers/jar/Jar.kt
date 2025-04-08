@@ -44,6 +44,12 @@ class Jar(
   val packages: Set<String>
     get() = getAllPackages()
 
+  val packageSet: Set<String> by lazy {
+    classesInJar.mapTo(mutableSetOf()) { it.name.substringBeforeLast('/', "")
+      it.name.substringBeforeLast('/', "")
+    }
+  }
+
   private val _bundleNames = mutableMapOf<String, MutableSet<String>>()
   val bundleNames: Map<String, Set<String>> get() = _bundleNames
 

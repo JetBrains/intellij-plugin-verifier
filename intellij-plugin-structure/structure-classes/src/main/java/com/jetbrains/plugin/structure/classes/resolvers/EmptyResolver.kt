@@ -23,7 +23,10 @@ class EmptyResolver(override val name: String) : NamedResolver(name) {
 
   override val allClasses = emptySet<String>()
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages = emptySet<String>()
+
+  override val packages = emptySet<String>()
 
   override val allBundleNameSet = ResourceBundleNameSet(emptyMap())
 

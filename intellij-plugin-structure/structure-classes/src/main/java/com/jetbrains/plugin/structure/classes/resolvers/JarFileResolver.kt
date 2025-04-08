@@ -103,8 +103,12 @@ class JarFileResolver(
   override val implementedServiceProviders: Map<String, Set<String>>
     get() = serviceProviders
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
     get() = packageSet.getAllPackages()
+
+  override val packages: Set<String>
+    get() = TODO("Not yet implemented")
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
