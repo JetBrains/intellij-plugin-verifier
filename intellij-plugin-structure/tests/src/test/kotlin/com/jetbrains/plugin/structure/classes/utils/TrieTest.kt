@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.collect
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -76,8 +77,9 @@ class TrieTest {
       "com.jetbrains.cli",
       "com.jetbrains.cli.impl",
     )
-    val words = packages.findAllWords(true)
-    assertEquals(expected, words)
+    val visitor = TrieTraversals.WithValue<Boolean>(true)
+    packages.visit('.', visitor)
+    assertEquals(expected, visitor.result)
   }
 
   @Test
@@ -95,11 +97,8 @@ class TrieTest {
       "com.jetbrains", "com.jetbrains.foo",
       "com.jetbrains.cli", "com.jetbrains.cli.impl"
     )
-    val visitedWords = mutableSetOf<String>()
-    packages.visitWords('.') { word,_,  _ ->
-      visitedWords += word
-    }
-    assertEquals(expected, visitedWords)
+    val actualWords = packages.collect('.', TrieTraversals.All<Boolean>())
+    assertEquals(expected, actualWords)
   }
 
   @Test

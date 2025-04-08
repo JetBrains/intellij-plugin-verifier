@@ -31,20 +31,6 @@ class Trie<V>(val defaultValue: V? = null) {
     return isInserted
   }
 
-  fun findAllWords(value: V?, wordSeparator: Char = '.'): Set<String> {
-    return mutableSetOf<String>().apply {
-      visit(root, "", wordSeparator) { word, visitedValue, leaf ->
-        if (leaf || value == visitedValue) {
-          add(word)
-        }
-      }
-    }
-  }
-
-  fun visitWords(wordSeparator: Char, visitor: Visitor<V>) {
-    visit(root, "", wordSeparator, visitor)
-  }
-
   fun visit(wordSeparator: Char, visitor: Visitor<V>) {
     visit(root, "", wordSeparator, visitor)
   }
@@ -64,11 +50,9 @@ class Trie<V>(val defaultValue: V? = null) {
 
   val length: Int
     get() {
-      var size = 0
-      visitWords('.') { _, _, leaf ->
-        if (leaf) size++
-      }
-      return size
+      val leafCount = TrieTraversals.LeafCount<V>()
+      visit('.', leafCount)
+      return leafCount.count
     }
 
   fun interface Visitor<V> {
