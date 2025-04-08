@@ -19,6 +19,30 @@ class PackagesTest {
   }
 
   @Test
+  fun `all packages are listed`() {
+    val packages = Packages()
+    packages.addClass("com/example/foo/FooService")
+    packages.addClass("com/example/bar/BarService")
+    packages.addClass("com/example/bar/zap/ZapService")
+    packages.addClass("com/jetbrains/foo/JBFooService")
+    packages.addClass("com/jetbrains/cli/JBCliService")
+    packages.addClass("com/jetbrains/cli/impl/JBCliServiceImpl")
+
+    with(packages.entries) {
+      assertEquals(6, size)
+      assertEquals(
+        setOf("com/example/foo",
+          "com/example/bar",
+          "com/example/bar/zap",
+          "com/jetbrains/foo",
+          "com/jetbrains/cli",
+          "com/jetbrains/cli/impl"), this)
+    }
+  }
+
+
+
+  @Test
   fun `all packages, include recursive, are listed`() {
     val packages = Packages()
     packages.addClass("com/example/foo/FooService")
