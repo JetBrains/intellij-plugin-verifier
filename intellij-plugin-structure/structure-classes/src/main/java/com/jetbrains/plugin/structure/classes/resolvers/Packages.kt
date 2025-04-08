@@ -1,10 +1,13 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.classes.utils.Trie
+import com.jetbrains.plugin.structure.classes.utils.TrieTraversals
 
 typealias BinaryPackageName = String
 
 private const val TRACK_MIDDLE_PACKAGES = true
+
+private const val ROOT_PACKAGE_NAME = ""
 
 class Packages {
   private val trie = Trie<Boolean>(false)
@@ -21,14 +24,16 @@ class Packages {
   operator fun contains(packageName: BinaryPackageName): Boolean = trie.find(packageName)
 
   val entries: Set<BinaryPackageName>
-    get() = trie.findAllWords(value = TRACK_MIDDLE_PACKAGES, wordSeparator = '/')
+    get() {
+      val visitor = TrieTraversals.WithValue(TRACK_MIDDLE_PACKAGES)
+      trie.visit(wordSeparator = '/', visitor)
+      return visitor.result
+    }
 
   val all: Set<BinaryPackageName>
-    get() = mutableSetOf<BinaryPackageName>().also { allPackageNames ->
-      if(!trie.isEmpty) {
-        trie.visitWords('/') { packageName: BinaryPackageName, _, _ ->
-          allPackageNames += packageName
-        }
-      }
+    get() {
+      val visitor = TrieTraversals.All<Boolean>()
+      trie.visit(wordSeparator = '/', visitor)
+      return visitor.result - ROOT_PACKAGE_NAME
     }
 }

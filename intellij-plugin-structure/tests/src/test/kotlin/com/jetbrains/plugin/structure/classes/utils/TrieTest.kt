@@ -10,7 +10,7 @@ class TrieTest {
   }
 
   @Test
-  fun `all words are retrieved`() {
+  fun `all words are retrieved, nonrecursively (without middle prefixes)`() {
     val packages = newTrie()
     packages.insert("com.example.foo")
     packages.insert("com.example.bar")
@@ -25,9 +25,37 @@ class TrieTest {
       "com.jetbrains.cli.impl",
       "com.jetbrains.foo"
     )
-    val words = packages.getAllWords()
-    assertEquals(expected, words)
+    val visitor = TrieTraversals.Leaves<Boolean>()
+    packages.visit('.', visitor)
+    assertEquals(expected, visitor.result)
   }
+
+  @Test
+  fun `all words are retrieved, recursively`() {
+    val packages = newTrie()
+    packages.insert("com.example.foo")
+    packages.insert("com.example.bar")
+    packages.insert("com.example.bar.zap")
+    packages.insert("com.jetbrains.foo")
+    packages.insert("com.jetbrains.cli")
+    packages.insert("com.jetbrains.cli.impl")
+
+    val expected = setOf(
+      "com",
+      "com.example",
+      "com.example.foo",
+      "com.example.bar",
+      "com.example.bar.zap",
+      "com.jetbrains",
+      "com.jetbrains.foo",
+      "com.jetbrains.cli",
+      "com.jetbrains.cli.impl",
+    )
+    val visitor = TrieTraversals.All<Boolean>()
+    packages.visit('.', visitor)
+    assertEquals(expected, visitor.result)
+  }
+
 
   @Test
   fun `all words are retrieved with explicit values`() {

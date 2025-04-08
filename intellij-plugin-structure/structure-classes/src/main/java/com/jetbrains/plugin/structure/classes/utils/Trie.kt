@@ -31,10 +31,6 @@ class Trie<V>(val defaultValue: V? = null) {
     return isInserted
   }
 
-  fun getAllWords(): Set<String> {
-    return findAllWords(value = null)
-  }
-
   fun findAllWords(value: V?, wordSeparator: Char = '.'): Set<String> {
     return mutableSetOf<String>().apply {
       visit(root, "", wordSeparator) { word, visitedValue, leaf ->
@@ -46,6 +42,10 @@ class Trie<V>(val defaultValue: V? = null) {
   }
 
   fun visitWords(wordSeparator: Char, visitor: Visitor<V>) {
+    visit(root, "", wordSeparator, visitor)
+  }
+
+  fun visit(wordSeparator: Char, visitor: Visitor<V>) {
     visit(root, "", wordSeparator, visitor)
   }
 
