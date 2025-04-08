@@ -49,7 +49,7 @@ class ProductInfoClassResolverTest {
     val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot, bundledPlugins = listOf(corePlugin()))
     val resolver = ProductInfoClassResolver.of(ide)
 
-    assertTrue(resolver.allPackages.isNotEmpty())
+    assertTrue(resolver.packages.isNotEmpty())
 
     with(resolver.allPackages) {
       assertEquals(5, size)
@@ -58,6 +58,10 @@ class ProductInfoClassResolverTest {
       assertTrue(contains("com/intellij/execution/process/elevation"))
       assertTrue(contains("com/intellij"))
       assertTrue(contains("com/intellij/execution"))
+    }
+
+    with(resolver.packages) {
+      assertEquals(setOf("com/intellij/execution/process/elevation"), this)
     }
 
     with(resolver.layoutComponentNames) {

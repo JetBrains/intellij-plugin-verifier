@@ -152,7 +152,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
       resolver.allClasses
     )
-    assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.allPackages)
+    assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.packages)
     assertTrue(resolver.containsPackage("somePackage"))
     assertTrue(resolver.containsPackage("somePackage/subPackage"))
 

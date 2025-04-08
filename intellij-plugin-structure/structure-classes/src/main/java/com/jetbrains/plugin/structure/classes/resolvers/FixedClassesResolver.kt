@@ -30,11 +30,11 @@ class FixedClassesResolver private constructor(
     )
   }
 
-  private val packageSet = PackageSet()
+  private val packageSet = Packages()
 
   init {
     for (className in classes.keys) {
-      packageSet.addPackagesOfClass(className)
+      packageSet.addClass(className)
     }
   }
 
@@ -68,14 +68,14 @@ class FixedClassesResolver private constructor(
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
-    get() = packageSet.getAllPackages()
+    get() = packageSet.all
 
   override val packages: Set<String>
-    get() = TODO("Not yet implemented")
+    get() = packageSet.entries
 
   override fun containsClass(className: String) = className in classes
 
-  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  override fun containsPackage(packageName: String) = packageName in packageSet
 
   override fun close() = Unit
 
