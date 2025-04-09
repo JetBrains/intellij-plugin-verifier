@@ -3,7 +3,10 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 
 class LegacyPluginAnalysis {
-  // https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies
+  /**
+   * Returns `true` if [plugin] is a legacy plugin which is compatible with IntelliJ IDEA only, see
+   * https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies
+   */
   fun isLegacyPlugin(plugin: IdePlugin): Boolean = with(plugin) {
     plugin !is IdeModule 
       && !hasPackagePrefix
