@@ -13,7 +13,7 @@ import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.pluginverifier.analysis.LegacyPluginAnalysis
+import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
