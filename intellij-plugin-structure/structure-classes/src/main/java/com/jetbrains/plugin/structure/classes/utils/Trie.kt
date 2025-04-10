@@ -11,7 +11,8 @@ class Trie<V>(val defaultValue: V? = null) {
 
   private val root = empty(defaultValue)
 
-  val isEmpty: Boolean get() = root.children.isEmpty() && root.value == defaultValue
+  val isEmpty: Boolean get() = root.isChildless && root.value == defaultValue
+  private val Node<V>.isChildless: Boolean get() = children.isEmpty()
 
   fun find(word: CharSequence): Boolean {
     var n = root
@@ -46,7 +47,7 @@ class Trie<V>(val defaultValue: V? = null) {
   }
 
   private fun visit(node: Node<V>, prefix: String, wordSeparator: Char, visitor: Visitor<V>) {
-    if (node.children.isEmpty()) {
+    if (node.isChildless) {
       visitor.visit(prefix, node.value, true)
     } else {
       for ((char, child) in node.children) {
@@ -60,7 +61,6 @@ class Trie<V>(val defaultValue: V? = null) {
 
   val length: Int
     get() {
-      if (root.children.isEmpty() && root.value == defaultValue) return 0
       val leafCount = TrieTraversals.LeafCount<V>()
       visit('.', leafCount)
       return leafCount.count
