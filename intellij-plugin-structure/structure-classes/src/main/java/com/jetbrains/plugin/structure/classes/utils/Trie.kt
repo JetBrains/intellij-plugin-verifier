@@ -41,6 +41,7 @@ class Trie<V>(val defaultValue: V? = null) {
   }
 
   fun visit(wordSeparator: Char, visitor: Visitor<V>) {
+    if (root.children.isEmpty()) return
     visit(root, "", wordSeparator, visitor)
   }
 

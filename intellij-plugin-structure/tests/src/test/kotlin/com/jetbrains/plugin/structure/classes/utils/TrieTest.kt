@@ -130,6 +130,16 @@ class TrieTest {
   }
 
   @Test
+  fun `empty trie is not traversed at all`() {
+    val emptyTrie = newTrie()
+    var wasVisited = false
+    emptyTrie.visit('.') { _, _, _ ->
+      wasVisited = true
+    }
+    assertFalse(wasVisited)
+  }
+
+  @Test
   fun `duplicate insertions are tracked`() {
     val packages = newTrie()
     assertTrue(packages.insert("com.example.foo"))
