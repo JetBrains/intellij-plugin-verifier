@@ -82,4 +82,16 @@ class PackagesTest {
     assertEquals(setOf("com", "com/example", "com/example/foo", "com/example/bar"), packages.all)
   }
 
+  @Test
+  fun `class with empty package is inserted`() {
+    val packages = Packages()
+    packages.addClass("FooService")
+
+    assertTrue(packages.contains(""))
+
+    assertEquals(setOf(""), packages.entries)
+    assertEquals(setOf(""), packages.all)
+  }
+
+
 }

@@ -38,6 +38,11 @@ class Packages {
     get() {
       val visitor = TrieTraversals.All<Boolean>()
       trie.visit(wordSeparator = '/', visitor)
-      return visitor.result - ROOT_PACKAGE_NAME
+      val packages = visitor.result
+      return if (trie.length == 1 && packages.size == 1 && packages.first() == ROOT_PACKAGE_NAME) {
+        packages
+      } else {
+        packages - ROOT_PACKAGE_NAME
+      }
     }
 }
