@@ -4,20 +4,26 @@
 
 package com.jetbrains.plugin.structure.ide.util
 
+import com.jetbrains.plugin.structure.classes.resolvers.BinaryPackageName
+
 /**
  * Utility class that contains list of known IntelliJ IDE packages.
  */
 object KnownIdePackages {
 
-  private val idePackages: Set<String> by lazy(::readKnownIdePackages)
+  private val idePackages: Set<BinaryPackageName> by lazy(::readKnownIdePackages)
 
-  fun isKnownPackage(packageName: String): Boolean =
+  fun isKnownPackage(packageName: BinaryPackageName): Boolean =
     idePackages.any { packageName == it || packageName.startsWith("$it.") }
 
-  private fun readKnownIdePackages() =
+  private fun readKnownIdePackages() = mutableSetOf<BinaryPackageName>().apply {
     KnownIdePackages::class.java.classLoader
       .getResourceAsStream("com.jetbrains.plugin.structure.ide/knownIdePackages.txt")!!
-      .bufferedReader()
-      .readLines()
-      .toSet()
+      .reader()
+      .useLines { lines ->
+        lines.forEach { line ->
+          add(line.replace('.', '/'))
+        }
+      }
+  }
 }

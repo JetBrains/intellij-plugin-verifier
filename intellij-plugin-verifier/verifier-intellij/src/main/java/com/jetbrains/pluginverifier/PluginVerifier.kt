@@ -341,7 +341,7 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.findMistakenlyBundledIdeClasses(pluginResolver: Resolver) {
-    val idePackages = getAllPackages(pluginResolver).filter { KnownIdePackages.isKnownPackage(it.replace('/', '.')) }
+    val idePackages = getAllPackages(pluginResolver).filter { KnownIdePackages.isKnownPackage(it) }
     if (idePackages.isNotEmpty()) {
       registerCompatibilityWarning(MistakenlyBundledIdePackagesWarning(idePackages.map { it.replace('/', '.') }))
     }
