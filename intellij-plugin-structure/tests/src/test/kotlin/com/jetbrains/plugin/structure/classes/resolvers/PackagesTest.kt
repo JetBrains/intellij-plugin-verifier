@@ -62,4 +62,24 @@ class PackagesTest {
       assertTrue(isEmpty())
     }
   }
+
+  @Test
+  fun `packages are inserted and retrieved`() {
+    val packages = Packages()
+    packages.addPackage("com/example/foo")
+    // duplicate insertion
+    packages.addPackage("com/example/foo")
+    packages.addPackage("com/example/bar")
+
+    assertTrue(packages.contains("com/example"))
+    assertTrue(packages.contains("com/example/bar"))
+
+    assertTrue(packages.contains("com"))
+
+    assertFalse(packages.contains("org/example"))
+
+    assertEquals(setOf("com/example/foo", "com/example/bar"), packages.entries)
+    assertEquals(setOf("com", "com/example", "com/example/foo", "com/example/bar"), packages.all)
+  }
+
 }

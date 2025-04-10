@@ -18,7 +18,11 @@ class Packages {
       ?.let { binaryClassName.subSequence(0, it)  }
       ?: ""
 
-    trie.insert(pkg, TRACK_MIDDLE_PACKAGES)
+    addPackage(pkg)
+  }
+
+  fun addPackage(binaryPackageName: CharSequence) {
+    trie.insert(binaryPackageName, TRACK_MIDDLE_PACKAGES)
   }
 
   operator fun contains(packageName: BinaryPackageName): Boolean = trie.find(packageName)
