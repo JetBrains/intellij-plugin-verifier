@@ -130,6 +130,21 @@ class TrieTest {
   }
 
   @Test
+  fun `trie with an empty string inserted`() {
+    val emptyTrie = newTrie()
+    emptyTrie.insert("")
+    assertTrue(emptyTrie.isEmpty)
+  }
+
+  @Test
+  fun `trie with an empty string inserted with an explicit value`() {
+    val emptyTrie = newTrie()
+    emptyTrie.insert("", true)
+    assertFalse(emptyTrie.isEmpty)
+  }
+
+
+  @Test
   fun `empty trie is not traversed at all`() {
     val emptyTrie = newTrie()
     var wasVisited = false

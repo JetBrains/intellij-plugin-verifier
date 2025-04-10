@@ -11,7 +11,7 @@ class Trie<V>(val defaultValue: V? = null) {
 
   private val root = empty(defaultValue)
 
-  val isEmpty: Boolean get() = root.children.isEmpty()
+  val isEmpty: Boolean get() = root.children.isEmpty() && root.value == defaultValue
 
   fun find(word: CharSequence): Boolean {
     var n = root
