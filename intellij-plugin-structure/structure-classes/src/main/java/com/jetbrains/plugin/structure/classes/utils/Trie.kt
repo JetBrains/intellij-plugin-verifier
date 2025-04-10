@@ -41,7 +41,7 @@ class Trie<V>(val defaultValue: V? = null) {
   }
 
   fun visit(wordSeparator: Char, visitor: Visitor<V>) {
-    if (root.children.isEmpty()) return
+    if (isEmpty) return
     visit(root, "", wordSeparator, visitor)
   }
 
@@ -60,7 +60,7 @@ class Trie<V>(val defaultValue: V? = null) {
 
   val length: Int
     get() {
-      if (root.children.isEmpty()) return 0
+      if (root.children.isEmpty() && root.value == defaultValue) return 0
       val leafCount = TrieTraversals.LeafCount<V>()
       visit('.', leafCount)
       return leafCount.count
