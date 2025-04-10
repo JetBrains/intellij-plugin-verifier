@@ -124,6 +124,12 @@ class TrieTest {
   }
 
   @Test
+  fun `empty trie has zero length`() {
+    val emptyTrie = newTrie()
+    assertEquals(0, emptyTrie.length)
+  }
+
+  @Test
   fun `duplicate insertions are tracked`() {
     val packages = newTrie()
     assertTrue(packages.insert("com.example.foo"))
@@ -150,4 +156,19 @@ class TrieTest {
     packages.insert("com.jetbrains.cli.impl")
     assertEquals(4, packages.length)
   }
+
+  @Test
+  fun `word with specific value is found`() {
+    val packages = Trie<String>(defaultValue = "")
+    packages.insert("com.example.foo", "FOO")
+    packages.insert("com.example.bar", "BAR")
+    packages.insert("com.example.bar.zap", "ZAP")
+
+    assertEquals("FOO", packages.findValue("com.example.foo"))
+    assertEquals("BAR", packages.findValue("com.example.bar"))
+    assertEquals("ZAP", packages.findValue("com.example.bar.zap"))
+
+    assertEquals(null, packages.findValue("com.unavailable"))
+  }
+
 }

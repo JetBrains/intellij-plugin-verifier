@@ -21,6 +21,15 @@ class Trie<V>(val defaultValue: V? = null) {
     return true
   }
 
+  fun findValue(word: CharSequence): V? {
+    var n = root
+    for (c in word) {
+      n = n.children[c] ?: return null
+    }
+    return n.value
+  }
+
+
   fun insert(key: CharSequence, value: V? = defaultValue): Boolean {
     var isInserted = false
     var currentNode = root
@@ -50,6 +59,7 @@ class Trie<V>(val defaultValue: V? = null) {
 
   val length: Int
     get() {
+      if (root.children.isEmpty()) return 0
       val leafCount = TrieTraversals.LeafCount<V>()
       visit('.', leafCount)
       return leafCount.count
