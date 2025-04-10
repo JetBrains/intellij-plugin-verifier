@@ -7,7 +7,9 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
+import com.jetbrains.plugin.structure.classes.resolvers.BinaryPackageName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -339,7 +341,7 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.findMistakenlyBundledIdeClasses(pluginResolver: Resolver) {
-    val idePackages = pluginResolver.allPackages.filter { KnownIdePackages.isKnownPackage(it.replace('/', '.')) }
+    val idePackages = getAllPackages(pluginResolver).filter { KnownIdePackages.isKnownPackage(it.replace('/', '.')) }
     if (idePackages.isNotEmpty()) {
       registerCompatibilityWarning(MistakenlyBundledIdePackagesWarning(idePackages.map { it.replace('/', '.') }))
     }
@@ -353,6 +355,12 @@ class PluginVerifier(
       classesForCheck += classesSelector.getClassesForCheck(pluginDetails.pluginClassesLocations)
     }
     return classesForCheck
+  }
+
+  private fun getAllPackages(resolver: Resolver): Set<BinaryPackageName> {
+    val allPackages = Packages()
+    resolver.packages.forEach { allPackages.addPackage(it) }
+    return allPackages.all
   }
 
   private fun Set<String>.reportTelemetry(pluginDetails: PluginDetails, context: PluginVerificationContext) {
