@@ -38,7 +38,16 @@ abstract class Resolver : Closeable {
    * For example, if this Resolver contains classes of a package `com/example/utils`
    * then [allPackages] contains `com`, `com/example` and `com/example/utils`.
    */
+  @Deprecated(message = "Use 'packages' property instead. This property may be slow on some file systems.")
   abstract val allPackages: Set<String>
+
+  /**
+   * Returns binary names of all contained packages. Their superpackages are *not* available in this collection.
+   *
+   * For example, if this Resolver contains classes of a package `com/example/utils` and `org.example.impl`.
+   * then [packages] contains these two elements.
+   */
+  abstract val packages: Set<String>
 
   /**
    * Returns data structure used to obtain bundle names contained in this resolver.

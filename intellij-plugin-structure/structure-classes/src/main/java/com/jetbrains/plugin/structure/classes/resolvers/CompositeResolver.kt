@@ -53,8 +53,12 @@ class CompositeResolver private constructor(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(fullBundleNames)
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
     get() = packageToResolvers.keys
+
+  override val packages: Set<String>
+    get() = resolvers.flatMapTo(hashSetOf()) { it.packages }
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
     resolvers.all { it.processAllClasses(processor) }

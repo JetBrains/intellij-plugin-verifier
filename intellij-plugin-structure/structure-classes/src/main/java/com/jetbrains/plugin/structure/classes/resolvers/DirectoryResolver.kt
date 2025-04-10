@@ -4,7 +4,11 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
-import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.base.utils.closeOnException
+import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
@@ -25,7 +29,7 @@ class DirectoryResolver(
 
   private val bundleNames = hashMapOf<String, MutableSet<String>>()
 
-  private val packageSet = PackageSet()
+  private val packageSet = Packages()
 
   init {
     Files.walk(root).use { fileStream ->
@@ -35,7 +39,7 @@ class DirectoryResolver(
           val classRoot = getClassRoot(file, className)
           if (classRoot != null) {
             classNameToFile[className] = file
-            packageSet.addPackagesOfClass(className)
+            packageSet.addClass(className)
           }
         }
         if (file.extension == "properties") {
@@ -91,8 +95,12 @@ class DirectoryResolver(
     return ResolutionResult.NotFound
   }
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
-    get() = packageSet.getAllPackages()
+    get() = packageSet.all
+
+  override val packages: Set<String>
+    get() = packageSet.entries
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
@@ -102,7 +110,7 @@ class DirectoryResolver(
 
   override fun containsClass(className: String) = className in classNameToFile
 
-  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  override fun containsPackage(packageName: String) = packageName in packageSet
 
   override fun close() = Unit
 

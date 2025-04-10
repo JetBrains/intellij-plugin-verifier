@@ -23,7 +23,7 @@ class IdeResolverCreatorTest {
   fun `layout component with missing file in the filesystem is skipped`() {
     val ideResolver = IdeResolverCreator.createIdeResolver(createIdeWithNonExistentFileOfLayoutComponent())
     assertEquals("IDE Resolver class count", 0, ideResolver.allClasses.size)
-    assertEquals("IDE Resolver package count", 0, ideResolver.allPackages.size)
+    assertEquals("IDE Resolver package count", 0, ideResolver.packages.size)
   }
 
   @Test

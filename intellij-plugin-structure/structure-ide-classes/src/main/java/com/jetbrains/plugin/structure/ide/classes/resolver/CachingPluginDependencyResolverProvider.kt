@@ -119,8 +119,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
       get() = delegateResolver.readMode
     override val allClasses: Set<String>
       get() = delegateResolver.allClasses
+    @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
     override val allPackages: Set<String>
       get() = delegateResolver.allPackages
+    override val packages: Set<String>
+      get() = delegateResolver.packages
     override val allBundleNameSet: ResourceBundleNameSet
       get() = delegateResolver.allBundleNameSet
 

@@ -43,6 +43,10 @@ class CachingPluginDependencyResolverProviderTest {
     "com/intellij/openapi/graph/builder/actions"
   )
 
+  val expectedIdeaCorePluginExplicitPackages = setOf(
+    "com/intellij/openapi/graph/builder/actions"
+  )
+
   val expectedJavaPluginPackages = setOf(
     "com",
     "com/intellij",
@@ -50,9 +54,17 @@ class CachingPluginDependencyResolverProviderTest {
     "com/intellij/openapi/actionSystem",
   )
 
+  val expectedJavaPluginExplicitPackages = setOf(
+    "com/intellij/openapi/actionSystem",
+  )
+
   private val expectedJsonPluginPackages = setOf(
     "com",
     "com/intellij",
+    "com/intellij/json",
+  )
+
+  private val expectedJsonPluginExplicitPackages = setOf(
     "com/intellij/json",
   )
 
@@ -166,7 +178,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
 
     with(resolver) {
-      assertEquals(expectedIdeaCorePluginPackages + expectedJsonPluginPackages, allPackages)
+      assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJsonPluginExplicitPackages, packages)
       assertEquals(expectedIdeaCoreClasses + expectedJsonPluginClasses, allClasses)
     }
 
@@ -187,7 +199,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
 
     with(pluginDependingOnJavaResolver) {
-      assertEquals(expectedIdeaCorePluginPackages + expectedJavaPluginPackages, allPackages)
+      assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJavaPluginExplicitPackages, packages)
       assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClasses)
     }
   }
@@ -240,7 +252,7 @@ class CachingPluginDependencyResolverProviderTest {
 
     val gammaFiles = buildZipFile(temporaryFolder.newTemporaryFile("gamma/gamma.jar")) {
       dirs("com/example/gamma") {
-        file("GammaAction.class", createEmptyClass("com/example/beta/GammaAction"))
+        file("GammaAction.class", createEmptyClass("com/example/gamma/GammaAction"))
       }
     }
     val gammaPlugin = MockIdePlugin(
@@ -255,15 +267,21 @@ class CachingPluginDependencyResolverProviderTest {
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
 
     with(resolverProvider.getResolver(alphaPlugin)) {
-      val expectedPackages = setOf(
+      val expectedAllPackages = setOf(
         "com",
         "com/example",
         "com/example/beta",
         "com/example/gamma",
       )
-      assertEquals(expectedPackages, allPackages)
+      assertEquals(expectedAllPackages, allPackages)
+
+      val expectedPackages = setOf(
+        "com/example/beta",
+        "com/example/gamma",
+      )
+      assertEquals(expectedPackages, packages)
       // 'Alpha' plugin package should not be in the Alpha's transitive dependencies
-      assertFalse(allPackages.contains("com/example/alpha"))
+      assertFalse(packages.contains("com/example/alpha"))
 
       val expectedClasses = setOf(
         "com/example/beta/BetaAction",
@@ -271,7 +289,7 @@ class CachingPluginDependencyResolverProviderTest {
       )
       assertEquals(expectedClasses, allClasses)
       // 'Alpha' plugin classes should not be resolved in the dependencies
-      assertFalse(allPackages.contains("com/example/alpha/AlphaAction"))
+      assertFalse(packages.contains("com/example/alpha/AlphaAction"))
     }
   }
 

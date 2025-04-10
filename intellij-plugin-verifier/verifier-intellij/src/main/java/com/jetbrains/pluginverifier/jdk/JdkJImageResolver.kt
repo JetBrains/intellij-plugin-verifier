@@ -5,11 +5,21 @@
 package com.jetbrains.pluginverifier.jdk
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
+import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
+import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import org.objectweb.asm.tree.ClassNode
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileSystem
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.stream.Collectors
 
@@ -78,8 +88,12 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
   override val allClasses
     get() = classNameToModuleName.keys
 
+  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
     get() = packageSet.getAllPackages()
+
+  override val packages: Set<String>
+    get() = TODO("Not yet implemented")
 
   override val allBundleNameSet
     get() = ResourceBundleNameSet(emptyMap())
