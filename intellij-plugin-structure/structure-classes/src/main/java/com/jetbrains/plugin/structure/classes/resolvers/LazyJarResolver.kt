@@ -26,21 +26,22 @@ class LazyJarResolver(
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
-  override val allClasses: Set<String>
-    get() = jar.classes.mapTo(HashSet()) { it.toString() }
+  override val allClasses: Set<String> by lazy  {
+    jar.classes.mapTo(hashSetOf()) { it.toString() }
+  }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
-  override val allPackages: Set<String>
-    get() = jar.packages.all
+  override val allPackages: Set<String> by lazy { jar.packages.all }
 
-  override val packages: Set<String>
-    get() = jar.packages.entries
+  override val packages: Set<String> by lazy { jar.packages.entries }
 
-  override val allBundleNameSet: ResourceBundleNameSet
-    get() = ResourceBundleNameSet(jar.bundleNames)
+  override val allBundleNameSet: ResourceBundleNameSet by lazy {
+    ResourceBundleNameSet(jar.bundleNames)
+  }
 
-  override val implementedServiceProviders: Map<String, Set<String>>
-    get() = jar.serviceProviders
+  override val implementedServiceProviders: Map<String, Set<String>> by lazy {
+    jar.serviceProviders
+  }
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     return jar.withClass(className) { className, classFilePath ->
