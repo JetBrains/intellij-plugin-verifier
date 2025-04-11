@@ -124,7 +124,7 @@ class CompositeResolver private constructor(
           } else {
             ReadMode.SIGNATURES
           }
-          CompositeResolver(list, readMode, resolverName)
+          SimpleCompositeResolver(list, readMode, resolverName)
         }
       }
     }
