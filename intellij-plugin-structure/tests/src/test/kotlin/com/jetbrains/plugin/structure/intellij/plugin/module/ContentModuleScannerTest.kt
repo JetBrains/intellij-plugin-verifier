@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.zipBombs.getZipWithoutEocd
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -54,5 +55,20 @@ class ContentModuleScannerTest {
     val resolvedClassPath = contentModules.resolvedClassPath.map { root.relativize(it).toString() }.sorted()
 
     assertEquals(expectedClassPath, resolvedClassPath)
+  }
+
+  @Test
+  fun `no content modules are found in a corrupted artifact`() {
+    val pluginPath = buildDirectory(temporaryFolder.newFolder("corrupted").toPath()) {
+      dir("lib") {
+        getZipWithoutEocd()?.let {
+          file("corrupted.jar", it)
+        }
+      }
+    }
+
+    val contentModuleScanner = ContentModuleScanner(jarFileSystemProvider)
+    val contentModules = contentModuleScanner.getContentModules(pluginPath)
+    assertTrue(contentModules.modules.isEmpty())
   }
 }
