@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.classes.resolvers.Packages
+import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.DescriptorType.*
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.invoke
@@ -40,7 +41,6 @@ typealias PathInJar = CharSequence
 class Jar(
   val jarPath: Path,
   private val fileSystemProvider: JarFileSystemProvider,
-  private val descriptorProvider: DescriptorProvider = SimpleXmlDescriptorProvider
 ) : AutoCloseable {
 
   private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
@@ -78,9 +78,9 @@ class Jar(
 
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
-      init(jarPath.toFile())
+      init(ZipResource.ZipFile(jarPath))
     } else {
-      init(jarPath)
+      init(ZipResource.ZipPath(jarPath))
     }
   }
 
@@ -122,23 +122,23 @@ class Jar(
 
   private fun Path.supportsFile() = fileSystem == FileSystems.getDefault()
 
-  private fun init(jarPath: File) {
-    ZipFile(jarPath).use { zip ->
+  private fun init(zipFile: ZipResource.ZipFile) {
+    ZipFile(zipFile.file).use { zip ->
       zip.entries().asIterator().forEach {
         if (!it.isDirectory) {
-          scan(it)
+          scan(it, zipFile)
         }
       }
     }
   }
 
-  private fun init(jarPath: Path) {
-    Files.newInputStream(jarPath).use { it ->
+  private fun init(zipPath: ZipResource.ZipPath) {
+    Files.newInputStream(zipPath.path).use { it ->
       ZipInputStream(it).use { jar ->
         var zipEntry = jar.nextEntry
         while (zipEntry != null) {
           if (!zipEntry.isDirectory) {
-            scan(zipEntry)
+            scan(zipEntry, ZipResource.ZipStream(zipPath.path, jar))
           }
           jar.closeEntry()
           zipEntry = jar.nextEntry
@@ -147,7 +147,7 @@ class Jar(
     }
   }
 
-  private fun scan(zipEntry: ZipEntry) {
+  private fun scan(zipEntry: ZipEntry, zipPath: ZipResource) {
     val path = PathWithinJar.of(zipEntry)
     if (path.isClass()) {
       handleClass(resolveClass(path), path.path)
@@ -155,8 +155,11 @@ class Jar(
       handleResourceBundle(resolveBundleName(path))
     } else if (path.hasServiceProviders()) {
       handleServiceProvider(path.path)
-    } else if (path.isDescriptor()) {
-      handleDescriptorCandidate(zipEntry, path)
+    } else {
+      val descriptorType = path.matchesDescriptor()
+      if (descriptorType != NO_MATCH) {
+        handleDescriptorCandidate(zipEntry, path, descriptorType)
+      }
     }
   }
 
@@ -216,9 +219,11 @@ class Jar(
     return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
   }
 
-  private fun handleDescriptorCandidate(zipEntry: ZipEntry, path: PathWithinJar) {
-    descriptorProvider.resolveFromJar(jarPath, path.path) {
-      descriptorCandidates += DescriptorReference(jarPath, path.path)
+  private fun handleDescriptorCandidate(zipEntry: ZipEntry, path: PathWithinJar, descriptorType: DescriptorType) {
+    when (descriptorType) {
+      PLUGIN -> descriptorCandidates += PluginDescriptorReference(jarPath, path.path)
+      MODULE -> descriptorCandidates += ModuleDescriptorReference(jarPath, path.path)
+      else -> Unit
     }
   }
 
@@ -227,12 +232,12 @@ class Jar(
     return spPath.startsWith("META-INF/services/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
   }
 
-  private fun PathWithinJar.isDescriptor(): Boolean {
-    if (!isXml()) return false
-
-    val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
-    return spPath.startsWith("META-INF/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1
-      || spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0
+  private fun PathWithinJar.matchesDescriptor(): DescriptorType {
+    if (!isXml()) return NO_MATCH
+    val descriptorPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
+    if (descriptorPath.startsWith("META-INF/") && descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1) return PLUGIN
+    if (descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0) return MODULE
+    return NO_MATCH
   }
 
   private fun CharSequence.occurrences(c: Char): Int {
@@ -314,6 +319,20 @@ class Jar(
       }
       return len1 - len2
     }
+  }
+
+  sealed class ZipResource {
+    data class ZipFile(val path: Path) : ZipResource() {
+      val file: File = path.toFile()
+    }
+
+    data class ZipPath(val path: Path) : ZipResource()
+
+    data class ZipStream(val path: Path, val inputStream: ZipInputStream) : ZipResource()
+  }
+
+  enum class DescriptorType {
+    NO_MATCH, PLUGIN, MODULE
   }
 }
 
