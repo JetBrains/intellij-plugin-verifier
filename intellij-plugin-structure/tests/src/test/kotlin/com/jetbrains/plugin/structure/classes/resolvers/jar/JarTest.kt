@@ -25,6 +25,7 @@ class JarTest {
 
   private fun createJar(jarPath: Path): Jar {
     buildZipFile(jarPath) {
+      file("intellij.example.xml", "<idea-plugin />")
       dir("META-INF") {
         file("plugin.properties") {
           """
@@ -48,6 +49,7 @@ class JarTest {
             """.trimIndent()
           }
         }
+        file("plugin.xml", "<idea-plugin />")
       }
       dirs("com/example") {
         file("MyClass.class", byteBuddy.emptyClass("com.example.MyClass"))
@@ -124,6 +126,14 @@ class JarTest {
         assertEquals(2, itTransportProvider.size)
         assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.jre.NativeTransportProvider"))
         assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.tcp.TCPTransportProvider"))
+      }
+
+      with(jar.descriptorCandidates) {
+        assertEquals(2, size)
+        val descriptorCandidatePaths =
+          filterIsInstance<DescriptorReference>()
+            .mapTo(mutableSetOf()) { it.path.toString() }
+        assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
       }
     }
   }

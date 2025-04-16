@@ -29,6 +29,8 @@ private val CLASS_SUFFIX: CharBuffer = CharBuffer.wrap(".class")
 private val RESOURCE_BUNDLE_EXTENSION: CharBuffer = CharBuffer.wrap("properties")
 private val RESOURCE_BUNDLE_SUFFIX: CharBuffer = CharBuffer.wrap(".properties")
 
+private val XML_DESCRIPTOR_SUFFIX: CharBuffer = CharBuffer.wrap(".xml")
+
 private const val JAR_PATH_SEPARATOR_CHAR = '/'
 
 private const val RESOURCE_BUNDLE_SEPARATOR = '.'
@@ -37,7 +39,8 @@ typealias PathInJar = CharSequence
 
 class Jar(
   val jarPath: Path,
-  private val fileSystemProvider: JarFileSystemProvider
+  private val fileSystemProvider: JarFileSystemProvider,
+  private val descriptorProvider: DescriptorProvider = SimpleXmlDescriptorProvider
 ) : AutoCloseable {
 
   private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
@@ -70,6 +73,8 @@ class Jar(
   }
 
   private val serviceProviderPaths = mutableSetOf<CharSequence>()
+
+  val descriptorCandidates = mutableSetOf<Descriptor>()
 
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
@@ -150,6 +155,8 @@ class Jar(
       handleResourceBundle(resolveBundleName(path))
     } else if (path.hasServiceProviders()) {
       handleServiceProvider(path.path)
+    } else if (path.isDescriptor()) {
+      handleDescriptorCandidate(zipEntry, path)
     }
   }
 
@@ -209,9 +216,23 @@ class Jar(
     return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
   }
 
+  private fun handleDescriptorCandidate(zipEntry: ZipEntry, path: PathWithinJar) {
+    descriptorProvider.resolveFromJar(jarPath, path.path) {
+      descriptorCandidates += DescriptorReference(jarPath, path.path)
+    }
+  }
+
   private fun PathWithinJar.hasServiceProviders(): Boolean {
     val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
     return spPath.startsWith("META-INF/services/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
+  }
+
+  private fun PathWithinJar.isDescriptor(): Boolean {
+    if (!isXml()) return false
+
+    val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
+    return spPath.startsWith("META-INF/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1
+      || spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0
   }
 
   private fun CharSequence.occurrences(c: Char): Int {
@@ -243,6 +264,7 @@ class Jar(
 
     fun isClass(): Boolean = path.endsWith(CLASS_SUFFIX)
     fun isResourceBundle(): Boolean = path.endsWith(RESOURCE_BUNDLE_EXTENSION)
+    fun isXml(): Boolean = path.endsWith(XML_DESCRIPTOR_SUFFIX)
 
     fun removePrefix(prefix: String): CharSequence {
       if (!path.startsWith(prefix)) return path
