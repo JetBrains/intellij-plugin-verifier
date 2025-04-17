@@ -224,6 +224,10 @@ class Jar(
   }
 
   private fun resolveClass(path: PathWithinJar): CharSequence {
+    if (File.separatorChar == JAR_PATH_SEPARATOR_CHAR) {
+      return path.removeSuffix(CLASS_SUFFIX)
+    }
+
     return resolve(path, JAR_PATH_SEPARATOR_CHAR, CLASS_SUFFIX)
   }
 
@@ -286,6 +290,11 @@ class Jar(
     fun removePrefix(prefix: String): CharSequence {
       if (!path.startsWith(prefix)) return path
       return path.subSequence(0, prefix.length)
+    }
+
+    fun removeSuffix(suffix: CharSequence): CharSequence {
+      if (!path.endsWith(suffix)) return path
+      return CharBufferCharSequence(path, 0, path.length - suffix.length)
     }
 
     override fun toString(): String = path.toString()
