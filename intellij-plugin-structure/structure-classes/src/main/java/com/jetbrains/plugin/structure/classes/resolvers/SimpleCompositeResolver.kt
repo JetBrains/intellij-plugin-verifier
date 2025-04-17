@@ -86,6 +86,10 @@ class SimpleCompositeResolver internal constructor(
     resolvers.closeAll()
   }
 
+  override fun toString(): String {
+    return "$name is a composite of ${resolvers.size} resolver" + (if (resolvers.size != 1) "s" else "")
+  }
+
   private fun ResourceBundleNameSet.merge(resourceBundleNameSet: ResourceBundleNameSet): ResourceBundleNameSet {
     val mergedBundles = HashMap<String, Set<String>>(bundleNames)
     resourceBundleNameSet.bundleNames.forEach { (baseName, localeSpecificNames) ->

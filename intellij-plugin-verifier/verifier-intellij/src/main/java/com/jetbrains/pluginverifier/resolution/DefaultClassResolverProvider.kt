@@ -42,7 +42,7 @@ class DefaultClassResolverProvider(
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
     closeableResources.closeOnException {
-      val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
+      val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver(checkedPluginDetails.pluginInfo.pluginId)
 
       val (dependenciesGraph, dependenciesResults) =
         DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)

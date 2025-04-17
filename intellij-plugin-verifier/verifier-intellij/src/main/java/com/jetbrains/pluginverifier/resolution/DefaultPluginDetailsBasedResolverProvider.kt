@@ -9,5 +9,5 @@ import com.jetbrains.pluginverifier.plugin.PluginDetails
 
 class DefaultPluginDetailsBasedResolverProvider : PluginDetailsBasedResolverProvider {
   override fun getPluginResolver(pluginDependency: PluginDetails) =
-    pluginDependency.pluginClassesLocations.createPluginResolver()
+    pluginDependency.pluginClassesLocations.createPluginResolver(pluginDependency.pluginInfo.pluginId)
 }
