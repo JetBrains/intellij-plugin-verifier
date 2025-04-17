@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
-import com.jetbrains.plugin.structure.classes.utils.componentAt
-import com.jetbrains.plugin.structure.classes.utils.occurrences
+import com.jetbrains.plugin.structure.base.utils.componentAt
+import com.jetbrains.plugin.structure.base.utils.occurrences
 import java.nio.CharBuffer
 import java.util.zip.ZipEntry
 

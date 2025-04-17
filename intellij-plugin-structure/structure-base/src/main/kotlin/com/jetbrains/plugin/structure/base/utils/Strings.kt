@@ -1,8 +1,12 @@
-package com.jetbrains.plugin.structure.classes.utils
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
+package com.jetbrains.plugin.structure.base.utils
 
 import java.nio.CharBuffer
 
-internal class CharReplacingCharSequence(private val characters: CharSequence, private val oldChar: Char, private val replacement: Char) :
+class CharReplacingCharSequence(private val characters: CharSequence, private val oldChar: Char, private val replacement: Char) :
   CharSequence {
   override val length: Int
     get() = characters.length
@@ -25,7 +29,7 @@ internal class CharReplacingCharSequence(private val characters: CharSequence, p
   }
 }
 
-internal fun CharSequence.occurrences(c: Char): Int {
+fun CharSequence.occurrences(c: Char): Int {
   var count = 0
   for (i in 0..length - 1) {
     if (this[i] == c) {
@@ -35,7 +39,7 @@ internal fun CharSequence.occurrences(c: Char): Int {
   return count
 }
 
-internal fun CharSequence.componentAt(index: Int, separator: Char): String? {
+fun CharSequence.componentAt(index: Int, separator: Char): String? {
   if (index < 0) return null
 
   var start = 0

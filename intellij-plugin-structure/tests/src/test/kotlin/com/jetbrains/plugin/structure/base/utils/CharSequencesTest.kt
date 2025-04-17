@@ -1,4 +1,5 @@
-import com.jetbrains.plugin.structure.classes.utils.componentAt
+package com.jetbrains.plugin.structure.base.utils
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
