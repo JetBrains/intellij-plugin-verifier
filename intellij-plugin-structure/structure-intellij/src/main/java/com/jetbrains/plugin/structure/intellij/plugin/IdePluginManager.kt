@@ -529,7 +529,7 @@ class IdePluginManager private constructor(
   private fun CreationResult.withResolvedClasspath(): CreationResult = apply {
     val contentModules = contentModuleScanner.getContentModules(artifact)
     val classpath = contentModules.asClasspath()
-    creator.setClasspath(classpath)
+    creator.setClasspath(classpath.getUnique())
   }
 
   private data class CreationResult(val artifact: Path, val creator: PluginCreator)

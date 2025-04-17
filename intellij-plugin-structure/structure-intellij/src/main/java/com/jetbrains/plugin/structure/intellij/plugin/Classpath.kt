@@ -18,6 +18,14 @@ class Classpath private constructor(val entries: List<ClasspathEntry> = emptyLis
 
   val paths: Set<Path> = entries.map { it.path }.toSet()
 
+  fun getUnique(): Classpath {
+    return if (size == 1) {
+      this
+    } else {
+      Classpath(entries.distinctBy { it.path.toString() })
+    }
+  }
+
   override fun toString(): String = entries.joinToString(separator = ":", prefix = "[", postfix = "]")
 }
 
