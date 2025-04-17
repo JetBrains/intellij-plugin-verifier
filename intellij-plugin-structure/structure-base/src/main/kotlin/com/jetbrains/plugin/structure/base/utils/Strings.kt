@@ -13,14 +13,21 @@ class CharReplacingCharSequence(private val characters: CharSequence, private va
 
   override fun get(index: Int): Char {
     val c = characters[index]
+    if (oldChar == replacement) return c
     return if (c == oldChar) replacement else c
   }
 
   override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-    return CharReplacingCharSequence(characters.subSequence(startIndex, endIndex), oldChar, replacement)
+    val subSequence = characters.subSequence(startIndex, endIndex)
+    if (oldChar == replacement) {
+      return subSequence
+    }
+    return CharReplacingCharSequence(subSequence, oldChar, replacement)
   }
 
   override fun toString(): String {
+    if (oldChar == replacement) return characters.toString()
+
     val newBuf = CharBuffer.allocate(characters.length)
     for (i in 0..characters.length - 1) {
       newBuf.put(i, get(i))
