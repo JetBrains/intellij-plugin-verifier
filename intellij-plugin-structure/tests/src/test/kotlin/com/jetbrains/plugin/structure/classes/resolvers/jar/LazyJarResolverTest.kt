@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.Found
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import junit.framework.TestCase.assertTrue
 import net.bytebuddy.ByteBuddy

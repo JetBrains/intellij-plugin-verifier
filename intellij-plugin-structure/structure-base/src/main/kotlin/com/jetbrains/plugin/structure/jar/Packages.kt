@@ -1,12 +1,10 @@
-package com.jetbrains.plugin.structure.classes.resolvers
+package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.trie.Trie
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getInsertions
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withDelimiter
 
 typealias BinaryPackageName = String
-
-private const val ROOT_PACKAGE_NAME = ""
 
 class Packages {
   private val trie = Trie<Boolean>()

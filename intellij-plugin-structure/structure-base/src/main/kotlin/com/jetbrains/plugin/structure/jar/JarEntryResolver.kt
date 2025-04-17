@@ -1,7 +1,6 @@
-package com.jetbrains.plugin.structure.classes.resolvers.jar
+package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
-import java.io.File
 import java.util.zip.ZipEntry
 
 interface JarEntryResolver<T> {
@@ -12,20 +11,20 @@ interface JarEntryResolver<T> {
   data class Key<T>(val name: String, val type: Class<T>)
 }
 
-internal fun resolve(path: PathInJar, separator: Char, suffixToRemove: CharSequence): CharSequence {
-  val noPrefix = if (path.get(0) == separator) {
-    path.subSequence(1, path.length)
+fun CharSequence.replaceCharacter(character: Char, replacement: Char, suffixToRemove: CharSequence): CharSequence {
+  val noPrefix = if (get(0) == replacement) {
+    subSequence(1, length)
   } else {
-    path
+    this
   }
   val neitherPrefixNoSuffix = if (suffixToRemove.isNotEmpty() && noPrefix.endsWith(suffixToRemove)) {
     noPrefix.subSequence(0, noPrefix.length - suffixToRemove.length)
   } else {
     noPrefix
   }
-  return if (separator == File.separatorChar) {
+  return if (character == replacement) {
     neitherPrefixNoSuffix
   } else {
-    CharReplacingCharSequence(neitherPrefixNoSuffix, File.separatorChar, separator)
+    CharReplacingCharSequence(neitherPrefixNoSuffix, character, replacement)
   }
 }

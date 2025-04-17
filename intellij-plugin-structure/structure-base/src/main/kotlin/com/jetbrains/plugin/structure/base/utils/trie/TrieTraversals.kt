@@ -1,14 +1,11 @@
-package com.jetbrains.plugin.structure.classes.utils
-
-import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor
-import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor.NodeVisit
+package com.jetbrains.plugin.structure.base.utils.trie
 
 object TrieTraversals {
 
-  class Leaves<V>: NodeVisitor<V, Unit> {
+  class Leaves<V>: Trie.NodeVisitor<V, Unit> {
     val result = mutableSetOf<CharSequence>()
 
-    override fun visit(n: NodeVisit<V>) {
+    override fun visit(n: Trie.NodeVisitor.NodeVisit<V>) {
       if (n.isLeaf) result += n.word.toString()
     }
   }

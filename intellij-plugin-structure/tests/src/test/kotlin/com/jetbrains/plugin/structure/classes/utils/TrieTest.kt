@@ -1,13 +1,15 @@
 package com.jetbrains.plugin.structure.classes.utils
 
-import com.jetbrains.plugin.structure.classes.resolvers.jar.PathInJar
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.getInsertions
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.leafCount
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.nodeCount
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.valueCount
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.withDelimiter
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.withNonNullValues
-import com.jetbrains.plugin.structure.classes.utils.TrieTraversals.withValue
+import com.jetbrains.plugin.structure.base.utils.trie.Trie
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getInsertions
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.leafCount
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.nodeCount
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.valueCount
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withDelimiter
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withNonNullValues
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withValue
+import com.jetbrains.plugin.structure.jar.PathInJar
 import org.junit.Assert.*
 import org.junit.Test
 
