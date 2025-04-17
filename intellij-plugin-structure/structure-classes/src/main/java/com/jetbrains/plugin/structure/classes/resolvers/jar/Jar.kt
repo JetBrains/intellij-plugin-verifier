@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.DescriptorType.*
+import com.jetbrains.plugin.structure.classes.resolvers.jar.JarEntryResolver.Key
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.invoke
@@ -41,6 +42,7 @@ typealias PathInJar = CharSequence
 class Jar(
   val jarPath: Path,
   private val fileSystemProvider: JarFileSystemProvider,
+  private val entryResolvers: List<JarEntryResolver<*>> = emptyList()
 ) : AutoCloseable {
 
   private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
@@ -75,6 +77,8 @@ class Jar(
   private val serviceProviderPaths = mutableSetOf<CharSequence>()
 
   val descriptorCandidates = mutableSetOf<Descriptor>()
+
+  val entryResolverResults: MutableMap<Key<*>, MutableList<Any?>> = mutableMapOf()
 
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
@@ -159,6 +163,12 @@ class Jar(
       val descriptorType = path.matchesDescriptor()
       if (descriptorType != NO_MATCH) {
         handleDescriptorCandidate(zipEntry, path, descriptorType)
+      } else {
+        entryResolvers.forEach { resolver ->
+          resolver.resolve(path.path, zipEntry)?.let {
+            entryResolverResults.getOrPut(resolver.key) { mutableListOf() } += it
+          }
+        }
       }
     }
   }

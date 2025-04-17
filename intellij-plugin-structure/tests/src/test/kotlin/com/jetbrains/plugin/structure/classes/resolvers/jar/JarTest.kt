@@ -33,6 +33,7 @@ class JarTest {
             enabled=1
           """.trimIndent()
         }
+        file("pluginIcon.svg", "<svg width='1' height='1' xmlns='http://www.w3.org/2000/svg' />")
         dir("services") {
           file("kotlinx.coroutines.internal.MainDispatcherFactory") {
             "com.intellij.openapi.application.impl.EdtCoroutineDispatcherFactory"
@@ -135,6 +136,19 @@ class JarTest {
             .mapTo(mutableSetOf()) { it.path.toString() }
         assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
       }
+    }
+  }
+
+  @Test
+  fun `extra entry resolver is applied`() {
+    val jarPath = temporaryFolder.newFile("plugin-extra-entry-resolver.jar").toPath()
+    createJar(jarPath).use { jar ->
+      val pluginIconResolver = PluginIconJarEntryResolver()
+      val entryResolvers: List<JarEntryResolver<*>> = listOf(pluginIconResolver)
+      val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider, entryResolvers)
+      jar.init()
+
+      assertEquals(listOf("pluginIcon.svg"), jar.entryResolverResults[pluginIconResolver.key])
     }
   }
 
