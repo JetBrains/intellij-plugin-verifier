@@ -27,7 +27,8 @@ class PluginApiClassResolverProvider(
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
     closeableResources.closeOnException {
-      val checkedPluginClassResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver()
+      val checkedPluginClassResolver =
+        checkedPluginDetails.pluginClassesLocations.createPluginResolver(checkedPluginDetails.pluginInfo.pluginId)
       val basePluginResolver = basePluginDetails.pluginClassesLocations.createPluginResolver()
 
       /**

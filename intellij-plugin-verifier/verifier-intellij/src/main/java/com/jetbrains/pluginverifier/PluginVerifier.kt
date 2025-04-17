@@ -378,3 +378,6 @@ private val classesSelectors = listOf(MainClassesSelector.forPlugin(), ExternalB
 
 fun IdePluginClassesLocations.createPluginResolver() =
   CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) })
+
+fun IdePluginClassesLocations.createPluginResolver(pluginId: String) =
+  CompositeResolver.create(classesSelectors.flatMap { it.getClassLoader(this) }, pluginId)

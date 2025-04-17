@@ -107,7 +107,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     get() = plugin?.asResolver() ?: EMPTY_RESOLVER
 
   class ComponentNameAwareCompositeResolver(
-    name: String,
+    private val name: String,
     resolvers: Map<String, Resolver>
   ) : Resolver() {
     private val resolverNames = resolvers.keys
@@ -143,6 +143,10 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     override fun close() = delegateResolver.close()
 
     fun containsResolverName(resolverName: String): Boolean = resolverName in resolverNames
+
+    override fun toString(): String {
+      return "$name with ${resolverNames.size} resolvers: " + resolverNames.joinToString(",")
+    }
   }
 }
 
