@@ -18,7 +18,7 @@ abstract class AbstractJarResolver(
 
   abstract val implementedServiceProviders: Map<String, Set<String>>
 
-  protected open fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> {
+  protected open fun readClass(className: CharSequence, classPath: Path): ResolutionResult<ClassNode> {
     return try {
       val classNode = classPath.inputStream().use {
         AsmUtil.readClassNode(className, it, readMode == ReadMode.FULL)
