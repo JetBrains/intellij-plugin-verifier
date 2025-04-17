@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.jar.descriptors.PluginDescriptorReference
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.IOException
 import java.nio.CharBuffer
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
@@ -81,6 +82,7 @@ class Jar(
 
   val entryResolverResults: MutableMap<Key<*>, MutableList<Any?>> = mutableMapOf()
 
+  @Throws(JarArchiveException::class)
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
       init(ZipResource.ZipFile(jarPath))
@@ -127,7 +129,8 @@ class Jar(
 
   private fun Path.supportsFile() = fileSystem == FileSystems.getDefault()
 
-  private fun init(zipFile: ZipResource.ZipFile) {
+  @Throws(JarArchiveException::class)
+  private fun init(zipFile: ZipResource.ZipFile) = try {
     ZipFile(zipFile.file).use { zip ->
       zip.entries().asIterator().forEach {
         if (!it.isDirectory) {
@@ -135,6 +138,8 @@ class Jar(
         }
       }
     }
+  } catch (e: IOException) {
+    throw JarArchiveException("JAR archive could not be opened at [$jarPath]: ${e.message} ", e)
   }
 
   private fun init(zipPath: ZipResource.ZipPath) {
