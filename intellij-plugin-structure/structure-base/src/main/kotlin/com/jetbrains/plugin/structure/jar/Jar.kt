@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
@@ -216,14 +217,14 @@ class Jar(
       pathBuf
     }
     val neitherPrefixNoSuffix = if (suffix.isNotEmpty() && noPrefix.endsWith(suffix)) {
-      noPrefix.subSequence(0, noPrefix.length - suffix.length)
+      CharBufferCharSequence(noPrefix, 0, noPrefix.length - suffix.length)
     } else {
       noPrefix
     }
     return if (separator == File.separatorChar) {
       neitherPrefixNoSuffix
     } else {
-      CharReplacer(neitherPrefixNoSuffix, File.separatorChar, separator)
+      CharReplacingCharSequence(neitherPrefixNoSuffix, File.separatorChar, separator)
     }
   }
 
@@ -295,33 +296,6 @@ class Jar(
     override fun toString(): String = path.toString()
   }
 
-  class CharReplacer(private val buf: CharBuffer, private val oldChar: Char, private val replacement: Char) :
-    CharSequence {
-    override val length: Int
-      get() = buf.length
-
-    override fun get(index: Int): Char {
-      val c = buf[index]
-      if (oldChar == replacement) return c
-      return if (c == oldChar) replacement else c
-    }
-
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      if (oldChar == replacement) return buf.subSequence(startIndex, endIndex)
-      return CharReplacer(buf.subSequence(startIndex, endIndex), oldChar, replacement)
-    }
-
-    override fun toString(): String {
-      if (oldChar == replacement) return buf.toString()
-
-      val newBuf = CharBuffer.allocate(buf.length)
-      for (i in 0..buf.length - 1) {
-        newBuf.put(i, get(i))
-      }
-      return newBuf.toString()
-    }
-  }
-
   private object CharSequenceComparator : Comparator<CharSequence> {
     override fun compare(cs1: CharSequence, cs2: CharSequence): Int {
       if (cs1 === cs2) return 0
@@ -342,6 +316,36 @@ class Jar(
         }
       }
       return len1 - len2
+    }
+  }
+
+  class CharBufferCharSequence(private val buffer: CharBuffer, private val startIndex: Int, private val endIndex: Int) : CharSequence {
+
+    init {
+      if (startIndex < 0 || endIndex > buffer.length || startIndex > endIndex) {
+        throw IndexOutOfBoundsException("Invalid start or end index")
+      }
+    }
+
+    override val length: Int
+      get() = endIndex - startIndex
+
+    override fun get(index: Int): Char {
+      if (index < 0 || index >= length) {
+        throw IndexOutOfBoundsException("Index out of bounds: " + index)
+      }
+      return buffer.get(startIndex + index)
+    }
+
+    override fun subSequence(subStart: Int, subEnd: Int): CharSequence {
+      if (subStart < 0 || subEnd > length || subStart > subEnd) {
+        throw IndexOutOfBoundsException("Invalid subSequence range")
+      }
+      return CharBufferCharSequence(buffer, startIndex + subStart, startIndex + subEnd)
+    }
+
+    override fun toString(): String {
+      return buffer.subSequence(startIndex, endIndex).toString()
     }
   }
 
