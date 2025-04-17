@@ -321,6 +321,10 @@ class Jar(
     override fun compare(cs1: CharSequence, cs2: CharSequence): Int {
       if (cs1 === cs2) return 0
 
+      if (cs1 is CharBuffer && cs2 is CharBuffer) {
+        return cs1.compareTo(cs2)
+      }
+
       val len1 = cs1.length
       val len2 = cs2.length
       val shorterLen = min(len1, len2)
