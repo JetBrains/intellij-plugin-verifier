@@ -9,13 +9,13 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
-import com.jetbrains.plugin.structure.classes.resolvers.BinaryPackageName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.util.KnownIdePackages
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.jar.BinaryPackageName
+import com.jetbrains.plugin.structure.jar.Packages
 import com.jetbrains.pluginverifier.analysis.ExtractedJsonPluginAnalyzer
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph

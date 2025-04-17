@@ -2,6 +2,10 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.componentAt
 import com.jetbrains.plugin.structure.base.utils.occurrences
+import com.jetbrains.plugin.structure.jar.JarEntryResolver
+import com.jetbrains.plugin.structure.jar.PathInJar
+import com.jetbrains.plugin.structure.jar.replaceCharacter
+import java.io.File
 import java.nio.CharBuffer
 import java.util.zip.ZipEntry
 
@@ -15,7 +19,7 @@ class PluginIconJarEntryResolver : JarEntryResolver<CharSequence> {
   override val key: JarEntryResolver.Key<CharSequence> = JarEntryResolver.Key("PluginIcon", CharSequence::class.java)
 
   override fun resolve(path: PathInJar, zipEntry: ZipEntry): CharSequence? {
-    val descriptorPath = resolve(path, PATH_SEPARATOR, NO_SUFFIX)
+    val descriptorPath = path.replaceCharacter(File.separatorChar, PATH_SEPARATOR, NO_SUFFIX)
     if (descriptorPath.startsWith("META-INF/") && descriptorPath.occurrences(PATH_SEPARATOR) == 1
       && descriptorPath.endsWith(".svg", ignoreCase = true)
       ) {

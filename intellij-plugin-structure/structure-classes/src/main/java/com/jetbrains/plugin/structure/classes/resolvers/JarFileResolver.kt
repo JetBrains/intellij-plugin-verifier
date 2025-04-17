@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.classes.utils.getBundleNameByBundlePath
+import com.jetbrains.plugin.structure.jar.Packages
 import org.objectweb.asm.tree.ClassNode
 import java.nio.file.FileSystem
 import java.nio.file.FileVisitResult

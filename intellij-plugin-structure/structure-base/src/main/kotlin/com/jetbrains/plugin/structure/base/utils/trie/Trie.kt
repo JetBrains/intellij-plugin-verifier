@@ -1,6 +1,4 @@
-package com.jetbrains.plugin.structure.classes.utils
-
-import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor.NodeVisit
+package com.jetbrains.plugin.structure.base.utils.trie
 
 
 class Trie<V>() {
@@ -49,9 +47,9 @@ class Trie<V>() {
 
   private fun <R> visit(node: Node<V>, prefix: StringBuilder, result: MutableList<R>, visitor: NodeVisitor<V, R>) {
     if (node.isChildless) {
-      result += visitor.visit(NodeVisit(prefix, node.value, isLeaf = true, node.isTerminal))
+      result += visitor.visit(NodeVisitor.NodeVisit(prefix, node.value, isLeaf = true, node.isTerminal))
     } else {
-      result += visitor.visit(NodeVisit(prefix, node.value, isLeaf = false, node.isTerminal))
+      result += visitor.visit(NodeVisitor.NodeVisit(prefix, node.value, isLeaf = false, node.isTerminal))
       for ((char, child) in node.children) {
         with(prefix) {
           append(char)

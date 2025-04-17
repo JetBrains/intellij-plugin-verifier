@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.util
 
-import com.jetbrains.plugin.structure.classes.resolvers.BinaryPackageName
+import com.jetbrains.plugin.structure.jar.BinaryPackageName
 
 /**
  * Utility class that contains list of known IntelliJ IDE packages.

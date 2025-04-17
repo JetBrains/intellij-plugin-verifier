@@ -1,12 +1,12 @@
-package com.jetbrains.plugin.structure.classes.resolvers.jar
+package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.classes.resolvers.Packages
-import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.DescriptorType.*
-import com.jetbrains.plugin.structure.classes.resolvers.jar.JarEntryResolver.Key
-import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.invoke
+import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
+import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
+import com.jetbrains.plugin.structure.jar.descriptors.Descriptor
+import com.jetbrains.plugin.structure.jar.descriptors.ModuleDescriptorReference
+import com.jetbrains.plugin.structure.jar.descriptors.PluginDescriptorReference
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -21,6 +21,7 @@ import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
 import kotlin.math.min
 import kotlin.streams.asSequence
+
 
 private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 

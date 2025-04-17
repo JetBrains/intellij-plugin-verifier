@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.jar.Packages
 import org.junit.Assert.*
 import org.junit.Test
 
