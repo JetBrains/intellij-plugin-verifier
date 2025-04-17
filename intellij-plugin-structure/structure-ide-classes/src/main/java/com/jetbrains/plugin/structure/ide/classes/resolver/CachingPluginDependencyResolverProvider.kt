@@ -62,13 +62,12 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     val transitiveDependencies = dependencyTree
       .getTransitiveDependencies(plugin)
       .filterNot { dep -> dep.pluginId == plugin.id }
-    val resolvers = transitiveDependencies.mapNotNull { dep ->
-      dep.pluginId?.let { id ->
-        id to cache.get(id) {
-          dep.resolver
-        }
-      }
-    }
+
+    val resolvers = transitiveDependencies
+      .mapNotNull { dep -> dep.pluginId?.let { it to dep } }
+      .distinctBy { it.first }
+      .associate { (id, dep) -> id to cache.get(id) { dep.resolver } }
+
     return ComponentNameAwareCompositeResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers)
   }
 
@@ -109,11 +108,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
 
   class ComponentNameAwareCompositeResolver(
     name: String,
-    resolvers: List<Pair<String, Resolver>>
+    resolvers: Map<String, Resolver>
   ) : Resolver() {
-    private val resolverNames = resolvers.map { it.first }.toSet()
+    private val resolverNames = resolvers.keys
 
-    private val delegateResolver = LazyCompositeResolver.create(resolvers.map { it.second }, name)
+    private val delegateResolver = LazyCompositeResolver.create(resolvers.values, name)
 
     override val readMode: ReadMode
       get() = delegateResolver.readMode

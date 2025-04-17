@@ -165,12 +165,15 @@ class CachingPluginDependencyResolverProviderTest {
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val resolver = resolverProvider.getResolver(plugin)
+    val corePluginCacheHit = 0L
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
-        "com.intellij.modules.platform" and "com.intellij.modules.lang" belong to the same module
+        "com.intellij.modules.platform" and "com.intellij.modules.lang" belong to the same module.
+        Cache was not even hit, since the resolver for the second invocation is already in the list
+        of modules since the first invocation
        */
-      assertEquals(1, hitCount())
+      assertEquals(corePluginCacheHit, hitCount())
       /*
         "com.example.somePlugin" (plugin itself), "com.intellij" and "com.intellij.modules.json" need to be created without cache
        */
@@ -189,7 +192,7 @@ class CachingPluginDependencyResolverProviderTest {
       /*
         One previous value. On top: 'Java' depends on 'Lang' that is already in cache, making a 2nd cache hit.
        */
-      assertEquals(2, hitCount())
+      assertEquals(corePluginCacheHit + 1, hitCount())
       /*
         Three previous values. On top, two values need to be created without the cache
         1) 'Java'

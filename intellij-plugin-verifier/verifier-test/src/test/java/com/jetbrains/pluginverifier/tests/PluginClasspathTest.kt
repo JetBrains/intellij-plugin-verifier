@@ -155,7 +155,7 @@ class PluginClasspathTest : BasePluginTest() {
   }
 
   @Test
-  fun name() {
+  fun `lib-module and a main JAR are discovered`() {
     val result = buildPluginInDirectory {
       dir("lib") {
         dir("modules") {
@@ -171,7 +171,7 @@ class PluginClasspathTest : BasePluginTest() {
     }
     assertSuccess(result) {
       with(plugin.classpath) {
-        assertEquals(3, size)
+        assertEquals(2, size)
         assertTrue(containsFileName("json.jar"))
         assertTrue(containsFileName("intellij.json.split.jar"))
       }
