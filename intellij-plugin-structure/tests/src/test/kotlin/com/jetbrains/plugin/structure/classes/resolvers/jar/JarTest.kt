@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.emptyClass
 import com.jetbrains.plugin.structure.jar.Jar
+import com.jetbrains.plugin.structure.jar.JarArchiveException
 import com.jetbrains.plugin.structure.jar.JarEntryResolver
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.descriptors.DescriptorReference
@@ -12,6 +13,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.Files
 import java.nio.file.Path
 
 class JarTest {
@@ -139,6 +141,16 @@ class JarTest {
             .mapTo(mutableSetOf()) { it.path.toString() }
         assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
       }
+    }
+  }
+
+  @Test
+  fun `malformed JAR is handled`() {
+    val jarPath = temporaryFolder.newFile("plugin-malformed.jar").toPath()
+    Files.write(jarPath, ByteArray(1))
+
+    assertThrows(JarArchiveException::class.java) {
+      Jar(jarPath, SingletonCachingJarFileSystemProvider).init()
     }
   }
 
