@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
-import com.jetbrains.plugin.structure.classes.utils.CharReplacingCharSequence
+import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
 import java.io.File
 import java.util.zip.ZipEntry
 
