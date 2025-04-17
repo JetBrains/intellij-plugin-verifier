@@ -11,7 +11,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.CompressorException
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.apache.commons.io.input.BoundedInputStream
-import org.apache.commons.io.input.CountingInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Files
@@ -39,13 +38,16 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
           Type.FILE -> {
             val entryStream = nextEntryStream() ?: continue@loop
             try {
-              val boundedStream = BoundedInputStream(entryStream, remainingSize + 1)
-              val countingStream = CountingInputStream(boundedStream)
+              val countingStream = BoundedInputStream.builder()
+                .setInputStream(entryStream)
+                .setMaxCount(remainingSize + 1)
+                .setPropagateClose(false)
+                .get()
+
 
               outputFile.createParentDirs()
-              Files.newOutputStream(outputFile).buffered().use { countingStream.copyTo(it) }
-
-              remainingSize -= countingStream.byteCount
+              Files.copy(countingStream, outputFile)
+              remainingSize -= countingStream.count
               if (remainingSize < 0) {
                 throw DecompressorSizeLimitExceededException(actualSizeLimit)
               }
@@ -93,7 +95,7 @@ internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : De
   private lateinit var stream: ZipInputStream
 
   override fun openStream() {
-    stream = ZipInputStream(zipFile.inputStream().buffered())
+    stream = ZipInputStream(zipFile.inputStream())
   }
 
   override fun nextEntry(): Entry? {
@@ -120,7 +122,7 @@ internal class TarDecompressor(private val tarFile: Path, sizeLimit: Long?) : De
 
   override fun openStream() {
     stream = try {
-      val compressorStream = CompressorStreamFactory().createCompressorInputStream(tarFile.inputStream().buffered())
+      val compressorStream = CompressorStreamFactory().createCompressorInputStream(tarFile.inputStream())
       TarArchiveInputStream(compressorStream)
     } catch (e: CompressorException) {
       val cause = e.cause
