@@ -302,14 +302,18 @@ class Jar(
 
     override fun get(index: Int): Char {
       val c = buf[index]
+      if (oldChar == replacement) return c
       return if (c == oldChar) replacement else c
     }
 
     override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+      if (oldChar == replacement) return buf.subSequence(startIndex, endIndex)
       return CharReplacer(buf.subSequence(startIndex, endIndex), oldChar, replacement)
     }
 
     override fun toString(): String {
+      if (oldChar == replacement) return buf.toString()
+
       val newBuf = CharBuffer.allocate(buf.length)
       for (i in 0..buf.length - 1) {
         newBuf.put(i, get(i))
