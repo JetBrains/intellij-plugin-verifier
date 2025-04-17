@@ -12,4 +12,6 @@ dependencies {
   implementation(project(":structure-base"))
 
   api(sharedLibs.caffeine)
+
+  testImplementation(sharedLibs.junit)
 }
