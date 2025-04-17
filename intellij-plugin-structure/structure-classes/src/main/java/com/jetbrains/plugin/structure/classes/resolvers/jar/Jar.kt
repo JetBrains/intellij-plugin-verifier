@@ -94,7 +94,7 @@ class Jar(
     }
   }
 
-  private fun <T> useFileSystem(action: (FileSystem) -> T): T {
+  private inline fun <T> useFileSystem(action: (FileSystem) -> T): T {
     return fileSystemProvider(jarPath, action)
   }
 
