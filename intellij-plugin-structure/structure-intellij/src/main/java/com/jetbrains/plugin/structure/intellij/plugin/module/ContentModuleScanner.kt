@@ -54,7 +54,7 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
     return ContentModule(moduleName, jarPath, descriptorPath)
   }
 
-  private fun <T> withPluginJar(jarPath: Path, action: (PluginJar) -> T): T? {
+  private inline fun <T> withPluginJar(jarPath: Path, action: (PluginJar) -> T): T? {
     return try {
       PluginJar(jarPath, fileSystemProvider).use { jar ->
         action(jar)
