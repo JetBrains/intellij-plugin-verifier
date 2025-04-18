@@ -1,43 +1,48 @@
 package com.jetbrains.plugin.structure.classes.utils
 
-import com.jetbrains.plugin.structure.classes.utils.Trie.Visitor
+import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor
+import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor.NodeVisit
 
 object TrieTraversals {
-  fun <V> Trie<V>.collect(wordSeparator: Char, wordCollector: SetCollector<V>): Set<String> {
-    visit(wordSeparator, wordCollector)
-    return wordCollector.result
-  }
 
-  abstract class SetCollector<V> : Visitor<V> {
-    protected val _result = mutableSetOf<String>()
-    val result: Set<String> get() = _result
-  }
+  class Leaves<V>: NodeVisitor<V, Unit> {
+    val result = mutableSetOf<CharSequence>()
 
-  class LeafCount<V> : Visitor<V> {
-    private var _count = 0
-    val count get() = _count
-
-    override fun visit(word: String, value: V?, isLeaf: Boolean) {
-      if (isLeaf) _count++
+    override fun visit(n: NodeVisit<V>) {
+      if (n.isLeaf) result += n.word.toString()
     }
   }
 
-  class All<V>: SetCollector<V>() {
-    override fun visit(word: String, value: V?, isLeaf: Boolean) {
-      _result += word
+  fun <V> Trie<V>.leafCount(): Int = visit { if (it.isLeaf) 1 else 0 }.sum()
+
+  fun <V> Trie<V>.nodeCount(): Int = visit { 1 }.sum()
+
+  fun <V> Trie<V>.valueCount(expectedValue: V): Int = visit { (_, value, _) ->
+    if (expectedValue == value) 1 else 0
+  }.sum()
+
+  fun <V> Trie<V>.withNonNullValues(): Set<String> = visit { (prefix, value, _) ->
+    prefix.takeIf { value != null }?.toString()
+  }.filterNotNullTo(mutableSetOf<String>())
+
+  fun <V> Trie<V>.withValue(expectedValue: V?): Set<String> = visit { (prefix, value, _) ->
+    prefix.takeIf { value == expectedValue }?.toString()
+  }.filterNotNullTo(mutableSetOf<String>())
+
+  fun <V> Trie<V>.getInsertions(): Set<String> = mutableSetOf<String>().apply {
+    visit { (prefix, _, _, isTerminal) ->
+      if (isTerminal) add(prefix.toString())
     }
   }
 
-  class Leaves<V>: SetCollector<V>() {
-    override fun visit(word: String, value: V?, isLeaf: Boolean) {
-      if (isLeaf) _result += word
+  fun <V> Trie<V>.withDelimiter(delimiter: Char): Set<String> = mutableSetOf<String>().apply {
+    visit { (prefix, value, _, isTerminal) ->
+      if (isTerminal) {
+        add(prefix.toString())
+      } else if (prefix.isNotEmpty() && prefix.last() == delimiter) {
+        add(prefix.subSequence(0, prefix.lastIndex).toString())
+      }
+      value
     }
   }
-
-  class WithValue<V>(private val expectedValue: V) : SetCollector<V>() {
-    override fun visit(word: String, value: V?, isLeaf: Boolean) {
-      if (expectedValue == value) _result += word
-    }
-  }
-
 }

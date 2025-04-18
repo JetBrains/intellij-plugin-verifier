@@ -40,7 +40,7 @@ class JarFileResolver(
 
   private val classes: MutableSet<String> = hashSetOf()
 
-  private val packageSet = PackageSet()
+  private val packageSet = Packages()
 
   override val bundleNames = hashMapOf<String, MutableSet<String>>()
 
@@ -72,7 +72,7 @@ class JarFileResolver(
           entryName.endsWith(CLASS_SUFFIX) -> {
             val className = entryName.substringBeforeLast(CLASS_SUFFIX)
             classes.add(className)
-            packageSet.addPackagesOfClass(className)
+            packageSet.addClass(className)
           }
           entryName.endsWith(PROPERTIES_SUFFIX) -> {
             val fullBundleName = getBundleNameByBundlePath(entryName)
@@ -105,10 +105,10 @@ class JarFileResolver(
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
-    get() = packageSet.getAllPackages()
+    get() = packageSet.all
 
   override val packages: Set<String>
-    get() = TODO("Not yet implemented")
+    get() = packageSet.entries
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
@@ -134,7 +134,7 @@ class JarFileResolver(
 
   override fun containsClass(className: String) = className in classes
 
-  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  override fun containsPackage(packageName: String) = packageName in packageSet
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     checkIsOpen()

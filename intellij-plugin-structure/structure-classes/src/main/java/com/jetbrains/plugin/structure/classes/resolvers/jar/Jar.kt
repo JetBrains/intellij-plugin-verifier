@@ -1,76 +1,75 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
-import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar.Element.Other
+import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.invoke
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.nio.CharBuffer
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
+import kotlin.math.min
 import kotlin.streams.asSequence
 
 private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 
-private const val CLASS_EXTENSION = "class"
-private const val CLASS_SUFFIX = ".$CLASS_EXTENSION"
+private val NO_SUFFIX: CharBuffer = CharBuffer.allocate(0)
 
-private const val RESOURCE_BUNDLE_EXTENSION = "properties"
-private const val RESOURCE_BUNDLE_SUFFIX = ".$RESOURCE_BUNDLE_EXTENSION"
+private val CLASS_SUFFIX: CharBuffer = CharBuffer.wrap(".class")
+
+private val RESOURCE_BUNDLE_EXTENSION: CharBuffer = CharBuffer.wrap("properties")
+private val RESOURCE_BUNDLE_SUFFIX: CharBuffer = CharBuffer.wrap(".properties")
 
 private const val JAR_PATH_SEPARATOR_CHAR = '/'
 
 private const val RESOURCE_BUNDLE_SEPARATOR = '.'
 
-typealias PathInJar = String
+typealias PathInJar = CharSequence
 
 class Jar(
   val jarPath: Path,
   private val fileSystemProvider: JarFileSystemProvider
 ) : AutoCloseable {
 
-  private val classesInJar = hashSetOf<ClassInJar>()
+  private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
 
-  val classes: Set<String> get() = classesInJar.mapTo(mutableSetOf()) { it.name }
+  val classes: Set<CharSequence> = classesInJar.keys
 
-  val packages: Set<String>
-    get() = getAllPackages()
-
-  val packageSet: Set<String> by lazy {
-    classesInJar.mapTo(mutableSetOf()) { it.name.substringBeforeLast('/', "")
-      it.name.substringBeforeLast('/', "")
+  val packages: Packages by lazy {
+    Packages().apply {
+      classes.forEach {
+        addClass(it)
+      }
     }
   }
 
-  private val _bundleNames = mutableMapOf<String, MutableSet<String>>()
-  val bundleNames: Map<String, Set<String>> get() = _bundleNames
+  private val _bundleNames = mutableMapOf<CharSequence, MutableSet<String>>()
+  val bundleNames: Map<String, Set<String>> get() = _bundleNames.mapKeys { (k, _) -> k.toString() }
 
   val serviceProviders: Map<String, Set<String>> by lazy {
     val serviceProviders = mutableMapOf<String, MutableSet<String>>()
-    try {
-      val fs = fileSystemProvider.getFileSystem(jarPath)
+    useFileSystem { fs ->
       serviceProviderPaths.forEach { spPath ->
-        val serviceProviderFile = fs.getPath(spPath)
+        val serviceProviderFile = fs.getPath(spPath.toString())
         if (serviceProviderFile.isFile) {
           val serviceProviderNames = readServiceImplementationNames(serviceProviderFile)
           serviceProviders.getOrPut(serviceProviderFile.fileName.toString()) { mutableSetOf() } += serviceProviderNames
         }
       }
-    } finally {
-      fileSystemProvider.close(jarPath)
     }
     serviceProviders
   }
 
-  private val serviceProviderPaths = mutableSetOf<String>()
+  private val serviceProviderPaths = mutableSetOf<CharSequence>()
 
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
@@ -81,11 +80,11 @@ class Jar(
   }
 
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
-    return useFileSystem{ fs ->
+    return useFileSystem { fs ->
       classesInJar.all { (className, classFilePath) ->
-        fs.getPath(classFilePath)
+        fs.getPath(classFilePath.toString())
           .takeIf { it.isFile }
-          ?.let { processor(className, it) } == true
+          ?.let { processor(className.toString(), it) } == true
       }
     }
   }
@@ -98,12 +97,12 @@ class Jar(
 
   fun containsClass(className: String) = className in classes
 
-  fun getClassInJar(className: String): ClassInJar? = classesInJar.find { it.name == className }
+  private fun getPath(className: String): PathInJar? = classesInJar[className]
 
   fun <T> withClass(className: String, handler: (String, Path) -> T): T? {
-    return getClassInJar(className)?.let {  (_, pathInJar) ->
+    return getPath(className)?.let { pathInJar ->
       useFileSystem {
-        it.getPath(pathInJar)
+        it.getPath(pathInJar.toString())
           .takeIf { it.isFile }
           ?.let {
             handler(className, it)
@@ -143,40 +142,28 @@ class Jar(
     }
   }
 
-  private fun resolve(zipEntry: ZipEntry): Element {
-    val path = zipEntry.name.normalizePath()
-    val ext = path.substringAfterLast('.', "")
-    return if (ext == CLASS_EXTENSION) {
-      Element.Class(resolveClass(path), path)
-    } else if (ext == RESOURCE_BUNDLE_EXTENSION) {
-      Element.ResourceBundle(resolveBundleName(path))
-    } else if (path.hasServiceProviders()) {
-      Element.ServiceProvider(getServiceProvider(path), path)
-    } else {
-      Other
-    }
-  }
-
   private fun scan(zipEntry: ZipEntry) {
-    when (val element = resolve(zipEntry)) {
-      is Element.Class -> handle(element)
-      is Element.ResourceBundle -> handle(element)
-      is Element.ServiceProvider -> handle(element)
-      Other -> Unit
+    val path = PathWithinJar.of(zipEntry)
+    if (path.isClass()) {
+      handleClass(resolveClass(path), path.path)
+    } else if (path.isResourceBundle()) {
+      handleResourceBundle(resolveBundleName(path))
+    } else if (path.hasServiceProviders()) {
+      handleServiceProvider(path.path)
     }
   }
 
-  private fun handle(classElement: Element.Class) {
-    classesInJar += ClassInJar(classElement.name, classElement.path)
+  private fun handleClass(className: CharSequence, classPath: PathInJar) {
+    classesInJar[className] = classPath
   }
 
-  private fun handle(resourceBundle: Element.ResourceBundle) {
-    val fullBundleName = resourceBundle.name
+  private fun handleResourceBundle(resourceBundleName: CharSequence) {
+    val fullBundleName = resourceBundleName.toString()
     _bundleNames.getOrPut(getBundleBaseName(fullBundleName)) { mutableSetOf() } += fullBundleName
   }
 
-  private fun handle(serviceProvider: Element.ServiceProvider) {
-    serviceProviderPaths += serviceProvider.path
+  private fun handleServiceProvider(serviceProviderPath: PathInJar) {
+    serviceProviderPaths += serviceProviderPath
   }
 
   private fun readServiceImplementationNames(metaInfServiceProviderPath: Path): Set<String> {
@@ -195,33 +182,46 @@ class Jar(
     return serviceImplementation.takeIf { it.isNotEmpty() }
   }
 
-  private fun resolve(path: String, separator: Char, suffix: String): String {
-    return path.replace(File.separatorChar, separator)
-      .removePrefix(separator.toString())
-      .removeSuffix(suffix)
+  private fun resolve(path: PathWithinJar, separator: Char, suffix: CharSequence): CharSequence {
+    val pathBuf = path.path
+    val noPrefix = if (pathBuf.get(0) == separator) {
+      pathBuf.subSequence(1, pathBuf.length)
+    } else {
+      pathBuf
+    }
+    val neitherPrefixNoSuffix = if (suffix.isNotEmpty() && noPrefix.endsWith(suffix)) {
+      noPrefix.subSequence(0, noPrefix.length - suffix.length)
+    } else {
+      noPrefix
+    }
+    return if (separator == File.separatorChar) {
+      neitherPrefixNoSuffix
+    } else {
+      CharReplacer(neitherPrefixNoSuffix, File.separatorChar, separator)
+    }
   }
 
-  private fun resolveClass(path: PathInJar): String {
+  private fun resolveClass(path: PathWithinJar): CharSequence {
     return resolve(path, JAR_PATH_SEPARATOR_CHAR, CLASS_SUFFIX)
   }
 
-  private fun resolveBundleName(path: PathInJar): String {
+  private fun resolveBundleName(path: PathWithinJar): CharSequence {
     return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
   }
 
-  private fun String.normalizePath(): PathInJar {
-    return replace(File.separatorChar, JAR_PATH_SEPARATOR_CHAR)
+  private fun PathWithinJar.hasServiceProviders(): Boolean {
+    val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
+    return spPath.startsWith("META-INF/services/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
   }
 
-  private fun PathInJar.hasServiceProviders(): Boolean {
-    val path = replace(File.separatorChar, JAR_PATH_SEPARATOR_CHAR)
-      .removePrefix(JAR_PATH_SEPARATOR_CHAR.toString())
-
-    return path.startsWith("META-INF/services/") && count { it == JAR_PATH_SEPARATOR_CHAR } == 2
-  }
-
-  private fun getServiceProvider(path: PathInJar): String {
-    return path.removePrefix("META-INF/services/")
+  private fun CharSequence.occurrences(c: Char): Int {
+    var count = 0
+    for (i in 0..length - 1) {
+      if (this[i] == c) {
+        count++
+      }
+    }
+    return count
   }
 
   private fun Path.isParsableServiceImplementation(): Boolean {
@@ -236,19 +236,62 @@ class Jar(
     return true
   }
 
-  private fun getAllPackages(): Set<String> {
-    return PackageSet().apply {
-      classesInJar.forEach { addPackagesOfClass(it.name) }
-    }.getAllPackages()
+  private data class PathWithinJar(val path: CharBuffer) {
+    companion object {
+      fun of(zipEntry: ZipEntry) = PathWithinJar(CharBuffer.wrap(zipEntry.name))
+    }
+
+    fun isClass(): Boolean = path.endsWith(CLASS_SUFFIX)
+    fun isResourceBundle(): Boolean = path.endsWith(RESOURCE_BUNDLE_EXTENSION)
+
+    fun removePrefix(prefix: String): CharSequence {
+      if (!path.startsWith(prefix)) return path
+      return path.subSequence(0, prefix.length)
+    }
+
+    override fun toString(): String = path.toString()
   }
 
-  data class ClassInJar(val name: String, val path: PathInJar)
+  class CharReplacer(private val buf: CharBuffer, private val oldChar: Char, private val replacement: Char) :
+    CharSequence {
+    override val length: Int
+      get() = buf.length
 
-  sealed class Element {
-    data class Class(val name: String, val path: PathInJar) : Element()
-    data class ResourceBundle(val name: String) : Element()
-    data class ServiceProvider(val name: String, val path: PathInJar) : Element()
-    object Other : Element()
+    override fun get(index: Int): Char {
+      val c = buf[index]
+      return if (c == oldChar) replacement else c
+    }
+
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+      return CharReplacer(buf.subSequence(startIndex, endIndex), oldChar, replacement)
+    }
+
+    override fun toString(): String {
+      val newBuf = CharBuffer.allocate(buf.length)
+      for (i in 0..buf.length - 1) {
+        newBuf.put(i, get(i))
+      }
+      return newBuf.toString()
+    }
+  }
+
+  private object CharSequenceComparator : Comparator<CharSequence> {
+    override fun compare(cs1: CharSequence, cs2: CharSequence): Int {
+      if (cs1 === cs2) return 0
+
+      val len1 = cs1.length
+      val len2 = cs2.length
+      val shorterLen = min(len1, len2)
+
+      for (i in 0..shorterLen - 1) {
+        val c1 = cs1[i]
+        val c2 = cs2[i]
+        if (c1 != c2) {
+          return c1.compareTo(c2)
+        }
+      }
+      return len1 - len2
+    }
   }
 }
 

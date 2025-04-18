@@ -88,7 +88,7 @@ class JarTest {
         assertTrue(contains("com.example.MyClass"))
         assertTrue(contains("META-INF.plugin"))
       }
-      with(jar.packages) {
+      with(jar.packages.all) {
         assertEquals(3, size)
         assertTrue(contains("com"))
         assertTrue(contains("com/example"))

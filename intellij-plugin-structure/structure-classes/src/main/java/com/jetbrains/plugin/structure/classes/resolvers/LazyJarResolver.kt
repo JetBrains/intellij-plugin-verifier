@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.invoke
 import org.objectweb.asm.tree.ClassNode
+import java.nio.file.FileSystem
 import java.nio.file.Path
 import java.util.*
 
@@ -19,28 +20,31 @@ class LazyJarResolver(
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable  {
 
+  private val jarFileSystem = fileSystemProvider.getFileSystem(jarPath)
+
   private val jar: Jar by lazy {
-    Jar(jarPath, fileSystemProvider).init()
+    Jar(jarPath, ConstantFsProvider(jarFileSystem)).init()
   }
 
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
-  override val allClasses: Set<String>
-    get() = jar.classes
+  override val allClasses: Set<String> by lazy  {
+    jar.classes.mapTo(hashSetOf()) { it.toString() }
+  }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
-  override val allPackages: Set<String>
-    get() = jar.packages
+  override val allPackages: Set<String> by lazy { jar.packages.all }
 
-  override val packages: Set<String>
-    get() = jar.packageSet
+  override val packages: Set<String> by lazy { jar.packages.entries }
 
-  override val allBundleNameSet: ResourceBundleNameSet
-    get() = ResourceBundleNameSet(jar.bundleNames)
+  override val allBundleNameSet: ResourceBundleNameSet by lazy {
+    ResourceBundleNameSet(jar.bundleNames)
+  }
 
-  override val implementedServiceProviders: Map<String, Set<String>>
-    get() = jar.serviceProviders
+  override val implementedServiceProviders: Map<String, Set<String>> by lazy {
+    jar.serviceProviders
+  }
 
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     return jar.withClass(className) { className, classFilePath ->
@@ -68,5 +72,11 @@ class LazyJarResolver(
         null
       }
     }
+  }
+
+  private class ConstantFsProvider(private val fs: FileSystem) : JarFileSystemProvider {
+    override fun getFileSystem(jarPath: Path) = fs
+
+    override fun close(jarPath: Path) = Unit
   }
 }

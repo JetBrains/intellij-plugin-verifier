@@ -11,7 +11,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
  * messages.LocalizedBundle -> [messages.LocalizedBundle, messages.LocalizedBundle_en, messages.LocalizedBundle_fr]
  * ```
  */
-data class ResourceBundleNameSet(private val bundleNames: Map<String, Set<String>>) {
+data class ResourceBundleNameSet(internal val bundleNames: Map<String, Set<String>>) {
 
   val baseBundleNames: Set<String> get() = bundleNames.keys
 

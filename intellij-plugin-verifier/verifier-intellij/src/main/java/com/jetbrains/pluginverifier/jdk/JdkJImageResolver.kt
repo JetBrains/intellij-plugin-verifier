@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.PackageSet
+import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
@@ -36,7 +36,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   private val classNameToModuleName: Map<String, String>
 
-  private val packageSet = PackageSet()
+  private val packageSet = Packages()
 
   private val nameSeparator: String
 
@@ -67,7 +67,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     }
 
     for (className in classNameToModuleName.keys) {
-      packageSet.addPackagesOfClass(className)
+      packageSet.addClass(className)
     }
   }
 
@@ -90,10 +90,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
-    get() = packageSet.getAllPackages()
+    get() = packageSet.all
 
   override val packages: Set<String>
-    get() = TODO("Not yet implemented")
+    get() = packageSet.entries
 
   override val allBundleNameSet
     get() = ResourceBundleNameSet(emptyMap())
@@ -132,7 +132,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   override fun containsClass(className: String) = className in classNameToModuleName
 
-  override fun containsPackage(packageName: String) = packageSet.containsPackage(packageName)
+  override fun containsPackage(packageName: String) = packageName in packageSet
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     Files.walk(modulesPath).use { stream ->
