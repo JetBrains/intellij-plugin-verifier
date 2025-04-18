@@ -49,12 +49,14 @@ class DefaultClassResolverProvider(
 
       closeableResources += dependenciesResults
 
+      // this fills the `pluginResolverProviderCache`
+      val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
       val dependenciesClassResolver = createDependenciesClassResolver(checkedPluginDetails, dependenciesResults)
 
       val resolvers = listOf(
         pluginResolver,
         ideDescriptor.jdkDescriptor.jdkResolver,
-        getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor),
+        ideResolver,
         dependenciesClassResolver
       ) + additionalClassResolvers
 
@@ -76,13 +78,19 @@ class DefaultClassResolverProvider(
     }
   }
 
-  private fun createPluginResolver(pluginDependency: PluginDetails): Resolver =
-    when (pluginDependency.pluginInfo) {
+  private fun createPluginResolver(pluginDependency: PluginDetails): Resolver = with(pluginDependency.pluginInfo) {
+    // reuse cached resolvers from IDE
+    if (pluginResolverProvider.contains(pluginId)) {
+      return pluginResolverProvider.getResolver(pluginDependency.idePlugin)
+    }
+
+    return when (this) {
       is BundledPluginInfo -> createBundledPluginResolver(pluginDependency)
         ?: bundledPluginClassResolverProvider.getResolver(pluginDependency)
 
       else -> pluginDetailsBasedResolverProvider.getPluginResolver(pluginDependency)
     }
+  }
 
   private fun createBundledPluginResolver(pluginDependency: PluginDetails): Resolver? {
     return if (ideDescriptor.ide is ProductInfoAware && ideDescriptor.ideResolver is ProductInfoClassResolver) {
