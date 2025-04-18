@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.intellij.plugin.LIB_DIRECTORY
-import com.jetbrains.plugin.structure.intellij.plugin.descriptors.IdeaPluginXmlDetector
+import com.jetbrains.plugin.structure.intellij.plugin.descriptors.createIdeaPluginXmlDetector
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.META_INF
@@ -24,7 +24,7 @@ private val META_INF_PLUGIN_XML_PATH_COMPONENTS = listOf(META_INF, PLUGIN_XML)
 private val LOG: Logger = LoggerFactory.getLogger(ContentModuleScanner::class.java)
 
 class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider) {
-  private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
+  private val ideaPluginXmlDetector = createIdeaPluginXmlDetector()
 
   fun getContentModules(pluginArtifact: Path) : ContentModules {
     val libDir = pluginArtifact.resolve(LIB_DIRECTORY)

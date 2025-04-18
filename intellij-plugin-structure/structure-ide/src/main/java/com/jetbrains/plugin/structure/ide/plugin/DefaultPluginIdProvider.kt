@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.xml.ElementTextContentFilter
 import com.jetbrains.plugin.structure.xml.EventTypeExcludingEventFilter
 import com.jetbrains.plugin.structure.xml.LogicalAndXmlEventFilter
 import com.jetbrains.plugin.structure.xml.XmlStreamEventFilter
+import com.jetbrains.plugin.structure.xml.XmlTransformationContext
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -19,8 +20,10 @@ import javax.xml.stream.XMLStreamConstants.START_DOCUMENT
 private const val pluginIdXPath = "/idea-plugin/id"
 private const val pluginNameXPath = "/idea-plugin/name"
 
-class DefaultPluginIdProvider : PluginIdProvider {
+class DefaultPluginIdProvider() : PluginIdProvider {
   private val xmlStreamEventFilter = XmlStreamEventFilter()
+
+  private val xmlTransformationContext = XmlTransformationContext.create()
 
   @Throws(IOException::class, MissingPluginIdException::class)
   override fun getPluginId(pluginDescriptorStream: InputStream): String {
@@ -32,7 +35,7 @@ class DefaultPluginIdProvider : PluginIdProvider {
     }
       .let { LogicalAndXmlEventFilter(it) }
 
-    xmlStreamEventFilter.filter(eventFilter, pluginDescriptorStream, NullOutputStream)
+    xmlStreamEventFilter.filter(eventFilter, pluginDescriptorStream, NullOutputStream, xmlTransformationContext)
 
     return getPluginId(elementTextContentFilter)
   }

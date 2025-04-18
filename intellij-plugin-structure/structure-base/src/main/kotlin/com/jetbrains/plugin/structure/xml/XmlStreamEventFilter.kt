@@ -8,7 +8,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import javax.xml.stream.EventFilter
-import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.events.XMLEvent
@@ -17,16 +16,13 @@ private val LOG: Logger = LoggerFactory.getLogger(XmlStreamEventFilter::class.ja
 
 class XmlStreamEventFilter {
   @Throws(IOException::class)
-  fun filter(eventFilter: EventFilter, pluginXmlInputStream: InputStream, pluginXmlOutputStream: OutputStream) {
+  fun filter(eventFilter: EventFilter, pluginXmlInputStream: InputStream, pluginXmlOutputStream: OutputStream, xmlTransformationContext: XmlTransformationContext) {
     val closeables = mutableListOf<Closeable>()
     try {
-      val inputFactory: XMLInputFactory = newXmlInputFactory()
-      val outputFactory: XMLOutputFactory = XMLOutputFactory.newInstance()
-
-      val eventReader = inputFactory
+      val eventReader = xmlTransformationContext.xmlInputFactory
         .newFilteredEventReader(pluginXmlInputStream, eventFilter)
         .also { closeables += it }
-      val eventWriter = newEventWriter(outputFactory, pluginXmlOutputStream).also { closeables += it }
+      val eventWriter = newEventWriter(xmlTransformationContext.xmlOutputFactory, pluginXmlOutputStream).also { closeables += it }
 
       while (eventReader.hasNextEvent()) {
         val event: XMLEvent = eventReader.nextEvent()

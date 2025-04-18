@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.xml.ElementNamesFilter
 import com.jetbrains.plugin.structure.xml.EventTypeExcludingEventFilter
 import com.jetbrains.plugin.structure.xml.LogicalAndXmlEventFilter
 import com.jetbrains.plugin.structure.xml.XmlStreamEventFilter
+import com.jetbrains.plugin.structure.xml.XmlTransformationContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
@@ -25,6 +26,8 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
 
   private val xmlStreamEventFilter = XmlStreamEventFilter()
 
+  private val xmlTransformationContext = XmlTransformationContext.create()
+
   @Throws(IOException::class)
   fun filter(pluginXmlInputStream: InputStream, pluginXmlOutputStream: OutputStream) {
     val eventFilter = mutableListOf<EventFilter>().apply {
@@ -35,7 +38,7 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
       .let { LogicalAndXmlEventFilter(it) }
       .let { DocumentTypeFilter(passThruElements, it) }
 
-    return xmlStreamEventFilter.filter(eventFilter, pluginXmlInputStream, pluginXmlOutputStream)
+    return xmlStreamEventFilter.filter(eventFilter, pluginXmlInputStream, pluginXmlOutputStream, xmlTransformationContext)
   }
 
   companion object {
