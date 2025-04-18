@@ -4,12 +4,14 @@
 
 package com.jetbrains.plugin.structure.xml
 
+import com.jetbrains.plugin.structure.xml.XmlInputFactoryResult.ConfigurationError
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
 import javax.xml.stream.EventFilter
+import javax.xml.stream.FactoryConfigurationError
 import javax.xml.stream.XMLEventReader
 import javax.xml.stream.XMLEventWriter
 import javax.xml.stream.XMLInputFactory
@@ -17,6 +19,22 @@ import javax.xml.stream.XMLOutputFactory
 import javax.xml.stream.XMLStreamException
 
 private val XML_EVENT_READER_LOG: Logger = LoggerFactory.getLogger(CloseableXmlEventReader::class.java)
+
+sealed class XmlInputFactoryResult {
+  data class Created(val xmlInputFactory: XMLInputFactory) : XmlInputFactoryResult()
+  data class ConfigurationError(val t: Throwable) : XmlInputFactoryResult()
+}
+
+fun createXmlInputFactory(): XmlInputFactoryResult {
+  try {
+    val inputFactory = newXmlInputFactory()
+    return XmlInputFactoryResult.Created(inputFactory)
+  } catch (e: FactoryConfigurationError) {
+    return ConfigurationError(e)
+  } catch (e: IllegalArgumentException) {
+    return ConfigurationError(e)
+  }
+}
 
 fun newXmlInputFactory(): XMLInputFactory = XMLInputFactory.newInstance().apply {
   setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
