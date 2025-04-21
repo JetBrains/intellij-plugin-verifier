@@ -38,8 +38,6 @@ class BundledPluginsRepository(
     return listOfNotNull(pluginInfo?.takeIf { ideVersion == null || pluginInfo.isCompatibleWith(ideVersion) })
   }
 
-  fun findPluginById(pluginId: String) = getAllVersionsOfPlugin(pluginId).firstOrNull()
-
   fun findPluginByModule(moduleId: String): BundledPluginInfo? = getAllPlugins().find { moduleId in it.idePlugin.definedModules }
 
   override val presentableName
