@@ -5,7 +5,6 @@ import com.jetbrains.plugin.structure.base.utils.hasExtension
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import com.jetbrains.plugin.structure.intellij.extractor.ModuleUnmarshaller
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.invoke
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
@@ -29,7 +28,7 @@ class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: 
   }
 
   override fun resolveModules(): List<ModuleBean> {
-    return fileSystemProvider(moduleDescriptorsJarPath)  { jarFs ->
+    return fileSystemProvider.getFileSystem(moduleDescriptorsJarPath).use { jarFs ->
       val root: Path = jarFs.rootDirectories.first()
       Files.list(root).use { files ->
         files.asSequence()

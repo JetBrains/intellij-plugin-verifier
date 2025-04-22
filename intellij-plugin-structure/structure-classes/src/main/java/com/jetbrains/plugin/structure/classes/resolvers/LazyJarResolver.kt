@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFoun
 import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.invoke
 import org.objectweb.asm.tree.ClassNode
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -21,10 +20,8 @@ class LazyJarResolver(
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable  {
 
-  private val jarFileSystem = fileSystemProvider.getFileSystem(jarPath)
-
   private val jar: Jar by lazy {
-    Jar(jarPath, ConstantFsProvider(jarFileSystem)).init()
+    Jar(jarPath, fileSystemProvider).init()
   }
 
   override val bundleNames: MutableMap<String, MutableSet<String>>
@@ -75,10 +72,10 @@ class LazyJarResolver(
 
   override fun containsPackage(packageName: String): Boolean = jar.containsPackage(packageName)
 
-  override fun close() = fileSystemProvider.close(jarPath)
+  override fun close() = Unit
 
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    return fileSystemProvider(jarPath) { fs ->
+    return fileSystemProvider.getFileSystem(jarPath).use { fs ->
       val path = fs.getPath(bundleResourceName)
       if (path.exists()) {
         path.inputStream().use { PropertyResourceBundle(it) }
@@ -90,7 +87,5 @@ class LazyJarResolver(
 
   private class ConstantFsProvider(private val fs: FileSystem) : JarFileSystemProvider {
     override fun getFileSystem(jarPath: Path) = fs
-
-    override fun close(jarPath: Path) = Unit
   }
 }

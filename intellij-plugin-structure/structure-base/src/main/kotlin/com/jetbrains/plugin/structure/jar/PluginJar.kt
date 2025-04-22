@@ -111,7 +111,7 @@ class PluginJar @Throws(JarArchiveCannotBeOpenException::class) constructor(
   private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
 
   override fun close() {
-    jarFileSystemProvider.close(jarPath)
+    jarFileSystem.close()
   }
 
   fun interface PluginDescriptorFilter {

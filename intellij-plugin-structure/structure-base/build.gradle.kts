@@ -4,6 +4,8 @@ dependencies {
 
   api(sharedLibs.commons.io)
 
+  api(sharedLibs.caffeine)
+
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
 

@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver.Result.Found
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import java.io.Closeable
+import java.nio.file.FileSystem
 import java.nio.file.Path
 
 class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFileSystemProvider: JarFileSystemProvider) : ResourceResolver {
@@ -25,23 +25,17 @@ class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFile
 
   @Throws(Exception::class)
   private fun resolveResource(jarPath: Path, pathWithinJar: String): ResourceResolver.Result? {
+    var jarFs: FileSystem? = null
     try {
-      val jarFs = jarFileSystemProvider.getFileSystem(jarPath)
+      jarFs = jarFileSystemProvider.getFileSystem(jarPath)
       val path = jarFs.getPath(pathWithinJar)
       if (!path.exists()) {
         return null
       }
-      val resourceToClose = CloseablePath(path, jarFileSystemProvider)
-      return Found(path, path.inputStream(), resourceToClose)
+      return Found(path, path.inputStream(), jarFs)
     } catch (e: Throwable) {
-      jarFileSystemProvider.close(jarPath)
+      jarFs?.close()
       throw e
-    }
-  }
-
-  private data class CloseablePath(private val path: Path, private val fileSystemProvider: JarFileSystemProvider) : Closeable {
-    override fun close() {
-      fileSystemProvider.close(path)
     }
   }
 }
