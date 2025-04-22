@@ -7,7 +7,6 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
 import com.jetbrains.plugin.structure.base.BinaryClassName
-import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
@@ -21,7 +20,6 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
-import com.jetbrains.plugin.structure.intellij.plugin.ClasspathEntry
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
@@ -29,13 +27,14 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.Path
 import java.util.*
 
 /**
  * See also cache size in [com.jetbrains.plugin.structure.classes.resolvers.CacheResolver].
  */
 private const val DEFAULT_CACHE_SIZE = 1024L
+
+private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 
 class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, private val secondaryPluginResolverProvider: PluginResolverProvider? = null) : PluginResolverProvider {
 
@@ -103,12 +102,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
 
   private val Dependency.id: String
     get() {
-      //FIXME remove constants
       return when (this) {
-        is Dependency.Module -> this.pluginId ?: "Unknown ID"
-        is Dependency.Plugin -> this.pluginId ?: "Unknown ID"
-        Dependency.None -> "Unknown ID"
-      }
+        is Dependency.Module -> pluginId
+        is Dependency.Plugin -> pluginId
+        Dependency.None -> null
+      } ?: UNKNOWN_DEPENDENCY_ID
     }
 
   fun getStats(): CacheStats? {
@@ -119,13 +117,19 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
     get() = pluginId ?: pluginName
 
   private fun IdePlugin.createResolverTree(): Pair<NamedResolver, List<NamedResolver>> {
-    getFromSecondaryCache(this)?.let {
-      return it to emptyList()
-    }
+    getFromSecondaryCache(this)?.let { pluginResolver ->
+      val definedModuleResolvers = definedModules.map { moduleId ->
+        getFromSecondaryCache(moduleId) ?: pluginResolver //FIXME document fallback pluginResolver when wrong product-info.json
+      }
 
-    val keys = mutableListOf<PluginId>()
-    pluginId?.let { keys += it }
-    keys += definedModules
+      val resultResolver = if (definedModuleResolvers.isNotEmpty()) {
+        composeUniqueResolvers(newResolverName(), pluginResolver, definedModuleResolvers)
+      } else {
+        pluginResolver
+      }
+
+      return resultResolver to definedModuleResolvers
+    }
 
     val resolverPrefix = pluginId?.let { "$it/" } ?: ""
 
@@ -137,15 +141,10 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
       if (cpEntryResolver != null) {
         cpEntryResolver as? NamedResolver ?: CompositeResolver.create(listOf(cpEntryResolver), cpEntryResolverName)
       } else {
-        // FIXME add descriptor/origin of the JAR
-        val maybeInSecondaryCache = getFromSecondaryCache(cpEntryResolverName)
-        if (maybeInSecondaryCache != null) {
-          maybeInSecondaryCache
-        } else {
-          LazyJarResolver(cpEntry.path, readMode = ReadMode.FULL, origin, cpEntryResolverName).also {
+        getFromSecondaryCache(cpEntryResolverName)
+          ?: LazyJarResolver(cpEntry.path, readMode = ReadMode.SIGNATURES, origin, cpEntryResolverName).also {
             resolversToCache += it
           }
-        }
       }
     }
     definedModules.forEach { moduleName ->
@@ -173,16 +172,6 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
     return this as? NamedResolver ?: CompositeResolver.create(listOf(this), fallbackName)
   }
 
-  private fun deduceResolverName(classPathEntry: ClasspathEntry): String {
-    //fixme constant
-    val fileName: Path? = classPathEntry.path.fileName
-    return if (fileName != null && fileName.extension == "jar") {
-      fileName.toString().removeSuffix(".jar")
-    } else {
-      classPathEntry.path.toString()
-    }
-  }
-
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
 
   private val Dependency.plugin: IdePlugin?
@@ -198,6 +187,13 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
       is Dependency.Plugin -> plugin.id
       else -> null
     }
+
+  private fun composeUniqueResolvers(resolverName: String, resolver: NamedResolver, moreResolvers: Collection<NamedResolver>): NamedResolver {
+    val result = IdentityHashMap<NamedResolver, Unit>()
+    result[resolver] = Unit
+    moreResolvers.forEach { result[it] = Unit }
+    return CompositeResolver.create(result.keys, resolverName)
+  }
 
   class ComponentNameAwareCompositeResolver(
     private val name: String,
