@@ -9,8 +9,8 @@ import java.util.*
 class SimpleCompositeResolver internal constructor(
   private val resolvers: List<Resolver>,
   override val readMode: ReadMode,
-  val name: String
-) : Resolver() {
+  override val name: String
+) : NamedResolver(name) {
 
   @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String>

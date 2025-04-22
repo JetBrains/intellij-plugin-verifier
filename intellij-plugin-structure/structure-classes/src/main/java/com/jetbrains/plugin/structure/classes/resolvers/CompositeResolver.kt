@@ -18,8 +18,8 @@ private const val DEFAULT_COMPOSITE_RESOLVER_NAME = "Unnamed Composite Resolver"
 class CompositeResolver private constructor(
   private val resolvers: List<Resolver>,
   override val readMode: ReadMode,
-  val name: String
-) : Resolver() {
+  override val name: String
+) : NamedResolver(name) {
 
   private val packageToResolvers: MutableMap<String, MutableList<Resolver>> = hashMapOf()
 
@@ -127,11 +127,11 @@ class CompositeResolver private constructor(
     }
 
     @JvmStatic
-    fun create(resolvers: Iterable<Resolver>, resolverName: String): Resolver {
+    fun create(resolvers: Iterable<Resolver>, resolverName: String): NamedResolver {
       val list = resolvers.toList()
       return when(list.size) {
         0 -> EmptyResolver(resolverName)
-        1 -> list.first()
+        1 -> SimpleCompositeResolver(list, list.first().readMode, resolverName)
         else -> {
           val readMode = if (list.all { it.readMode == ReadMode.FULL }) {
             ReadMode.FULL
