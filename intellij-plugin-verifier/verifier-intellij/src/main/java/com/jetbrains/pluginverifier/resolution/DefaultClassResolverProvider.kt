@@ -33,7 +33,9 @@ class DefaultClassResolverProvider(
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
 ) : ClassResolverProvider {
 
-  private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide)
+  private val secondaryResolver = if (ideDescriptor.ideResolver is ProductInfoClassResolver) ideDescriptor.ideResolver else null
+
+  private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide, secondaryResolver)
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
@@ -52,6 +54,8 @@ class DefaultClassResolverProvider(
       // this fills the `pluginResolverProviderCache`
       val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
       val dependenciesClassResolver = createDependenciesClassResolver(checkedPluginDetails, dependenciesResults)
+
+      //println(ideResolver.flatten())
 
       val resolvers = listOf(
         pluginResolver,

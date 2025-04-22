@@ -178,10 +178,29 @@ class CachingPluginDependencyResolverProviderTest {
        */
       assertEquals(corePluginCacheHit, hitCount())
       /*
-        "com.example.somePlugin" (plugin itself), "com.intellij" and "com.intellij.modules.json" need to be created without cache
+        1) "com.example.somePlugin" (plugin itself),
+        2) "com.intellij"
+        3) "com.intellij" sole 'classpath' entry
+        4) "com.intellij.modules.json"
+        5) "com.intellij.modules.json" sole 'classpath' entry
+        The modules of "com.intellij" are not considered to be cache misses as they are conflated with the
+        "com.intellij" plugin.
+        - "com.intellij.modules.platform" as module of "com.intellij"
+        - "com.intellij.modules.lang" as a module of "com.intellij"
        */
-      assertEquals(3, missCount())
+      assertEquals(5,  missCount())
     }
+    listOf(
+      "com.example.somePlugin",
+      "com.intellij",
+      "com.intellij/product.jar",
+      "com.intellij.modules.json",
+      "com.intellij.modules.json/json.jar",
+      "com.intellij.modules.platform",
+      "com.intellij.modules.lang")
+      .forEach {
+        assertTrue("Resolver must cache $it", resolverProvider.contains(it))
+      }
 
     with(resolver) {
       assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJsonPluginExplicitPackages, packages)
@@ -193,15 +212,13 @@ class CachingPluginDependencyResolverProviderTest {
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
-        One previous value. On top: 'Java' depends on 'Lang' that is already in cache, making a 2nd cache hit.
+        All seven (7) modules and plugins are in the cache. Add one for Java itself.
        */
-      assertEquals(corePluginCacheHit + 1, hitCount())
+      assertEquals(8, hitCount())
       /*
-        Three previous values. On top, two values need to be created without the cache
-        1) 'Java'
-        2) 'com.example.BetterJava' (plugin itself)
+        All seven (7) modules and plugins are in the cache. Add one for Java itself.
        */
-      assertEquals(5, missCount())
+      assertEquals(8, missCount())
     }
 
     with(pluginDependingOnJavaResolver) {

@@ -57,6 +57,8 @@ class ProductInfoClassResolver(
     }
   }
 
+  internal val namedResolvers: Collection<NamedResolver> = resolvers.values
+
   override fun getResolver(plugin: IdePlugin): Resolver {
     val id = plugin.pluginId?: plugin.pluginName
     return id?.let { resolvers[id] } ?: EMPTY_RESOLVER
@@ -153,6 +155,7 @@ class ProductInfoClassResolver(
   val bootClasspathResolver: NamedResolver
     get() {
       val bootJars = productInfo.launches.firstOrNull()?.bootClassPathJarNames
+      //FIXME reuse resolvers from bootclasspath in layout component resolvers
       val bootResolver = bootJars?.map { getBootJarResolver(it) }.asResolver(BOOTCLASSPATH_JAR_NAMES)
       return bootResolver
     }
