@@ -17,8 +17,4 @@ class DefaultJarFileSystemProvider : JarFileSystemProvider {
       throw JarArchiveCannotBeOpenException(jarPath, e)
     }
   }
-
-  override fun close(jarPath: Path) {
-    // do nothing
-  }
 }

@@ -12,7 +12,5 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoClosea
 
   override fun getFileSystem(jarPath: Path): FileSystem = delegate.getFileSystem(jarPath)
 
-  override fun close(jarPath: Path): Unit = delegate.close(jarPath)
-
   override fun close(): Unit = delegate.close()
 }

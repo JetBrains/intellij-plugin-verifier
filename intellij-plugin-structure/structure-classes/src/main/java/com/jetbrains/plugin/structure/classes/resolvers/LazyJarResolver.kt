@@ -21,10 +21,8 @@ class LazyJarResolver(
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable  {
 
-  private val jarFileSystem = fileSystemProvider.getFileSystem(jarPath)
-
   private val jar: Jar by lazy {
-    Jar(jarPath, ConstantFsProvider(jarFileSystem)).init()
+    Jar(jarPath, fileSystemProvider).init()
   }
 
   override val bundleNames: MutableMap<String, MutableSet<String>>
@@ -75,7 +73,7 @@ class LazyJarResolver(
 
   override fun containsPackage(packageName: String): Boolean = jar.containsPackage(packageName)
 
-  override fun close() = fileSystemProvider.close(jarPath)
+  override fun close() = Unit
 
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
     return fileSystemProvider(jarPath) { fs ->
@@ -90,7 +88,5 @@ class LazyJarResolver(
 
   private class ConstantFsProvider(private val fs: FileSystem) : JarFileSystemProvider {
     override fun getFileSystem(jarPath: Path) = fs
-
-    override fun close(jarPath: Path) = Unit
   }
 }

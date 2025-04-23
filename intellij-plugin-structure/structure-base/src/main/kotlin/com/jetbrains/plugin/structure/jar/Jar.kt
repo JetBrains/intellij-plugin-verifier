@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.CharBuffer
-import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -65,7 +64,7 @@ class Jar(
 
   val serviceProviders: Map<String, Set<String>> by lazy {
     val serviceProviders = mutableMapOf<String, MutableSet<String>>()
-    useFileSystem { fs ->
+    fileSystemProvider.getFileSystem(jarPath).use { fs ->
       serviceProviderPaths.forEach { spPath ->
         val serviceProviderFile = fs.getPath(spPath.toString())
         if (serviceProviderFile.isFile) {
@@ -93,17 +92,13 @@ class Jar(
   }
 
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
-    return useFileSystem { fs ->
+    return fileSystemProvider.getFileSystem(jarPath).use { fs ->
       classesInJar.all { (className, classFilePath) ->
         fs.getPath(classFilePath.toString())
           .takeIf { it.isFile }
           ?.let { processor(className.toString(), it) } == true
       }
     }
-  }
-
-  private inline fun <T> useFileSystem(action: (FileSystem) -> T): T {
-    return fileSystemProvider(jarPath, action)
   }
 
   fun containsPackage(packageName: String) = packages.contains(packageName)
@@ -114,8 +109,8 @@ class Jar(
 
   fun <T> withClass(className: String, handler: (String, Path) -> T): T? {
     return getPath(className)?.let { pathInJar ->
-      useFileSystem {
-        it.getPath(pathInJar.toString())
+      fileSystemProvider.getFileSystem(jarPath).use { fs ->
+        fs.getPath(pathInJar.toString())
           .takeIf { it.isFile }
           ?.let {
             handler(className, it)

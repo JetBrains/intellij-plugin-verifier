@@ -4,131 +4,66 @@
 
 package com.jetbrains.plugin.structure.jar
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.plugin.structure.base.utils.withSuperScheme
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.Path
-import java.time.Clock
-import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
-private const val MAX_OPEN_JAR_FILE_SYSTEMS = 256
-
-private const val UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE = 64
-
-const val RETENTION_TIME_PROPERTY_NAME = "com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime"
 
 private val LOG: Logger = LoggerFactory.getLogger(CachingJarFileSystemProvider::class.java)
+
+private const val MAX_OPEN_JAR_FILE_SYSTEMS: Long = 128
+
+const val RETENTION_TIME_PROPERTY_NAME = "com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime"
 
 class CachingJarFileSystemProvider(
   val retentionTimeInSeconds: Long = System.getProperty(RETENTION_TIME_PROPERTY_NAME)
     ?.toLongOrNull() ?: 10L
 ) : JarFileSystemProvider, AutoCloseable {
 
-  private val fsCache = ConcurrentHashMap<URI, FSHandle>()
-
-  private val clock = Clock.systemUTC()
-
   private val delegateJarFileSystemProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
 
+  private val fsCache = Caffeine.newBuilder()
+    .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
+    .expireAfterAccess(retentionTimeInSeconds, TimeUnit.SECONDS)
+    .build<String, FsHandleFileSystem>()
+
+  private fun createFsHandle(jarPath: Path, jarUri: URI): FsHandleFileSystem {
+    val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
+      LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
+    }
+    return FsHandleFileSystem(jarFs)
+  }
+
+  @Synchronized
   override fun getFileSystem(jarPath: Path): FileSystem {
-    return getOrOpenFsHandler(jarPath).fs
-  }
-
-  @Synchronized
-  private fun getOrOpenFsHandler(jarPath: Path): FSHandle {
     val jarUri = jarPath.toJarFileUri()
+    val key = jarUri.toString()
 
-    val fsHandle = fsCache.getOrPut(jarUri) {
-      val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
-        LOG.debug("Opening a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.size)
+    var fs = fsCache.getIfPresent(key)
+    if (fs != null)  {
+      if (fs.isOpen) {
+        fs.increment()
+        LOG.debug("Reusing filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
+      } else {
+        val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
+          LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
+        }
+        fs = FsHandleFileSystem(jarFs)
+        fsCache.put(key, fs)
       }
-      FSHandle(jarFs, jarUri, clock.instant(), 0)
+    } else {
+      fs = createFsHandle(jarPath, jarUri)
+      fsCache.put(key, fs)
     }
-
-    fsHandle.users++
-    fsHandle.lastAccessTime = clock.instant()
-    cleanup()
-    return fsHandle
+    return fs
   }
 
-  @Synchronized
-  private fun cleanup() {
-    if (fsCache.size <= MAX_OPEN_JAR_FILE_SYSTEMS) return
-
-    val handlesToExpire = fsCache.values
-      .filter { it.shouldExpire }
-      .sortedBy { it.lastAccessTime }
-      .take(UNUSED_JAR_FILE_SYSTEMS_TO_CLOSE)
-      .also(::logHandles)
-
-    handlesToExpire.forEach {
-      expire(it)
-    }
-  }
-
-  private fun expire(fsHandle: FSHandle) {
-    fsHandle.close()
-    fsCache.remove(fsHandle.uri)
-    LOG.debug("Expiring filesystem handler for <{}>", fsHandle.uri)
-  }
-
-  @Synchronized
-  override fun close(jarPath: Path) {
-    val jarUri = jarPath.toJarFileUri()
-    val fsHandle = fsCache[jarUri] ?: return
-    with(fsHandle) {
-      users--
-      if (shouldExpire) {
-        expire(this)
-      }
-    }
-  }
-
-  private val FSHandle.shouldExpire: Boolean
-    get() = users == 0 && hasTimedOut
-
-  private val FSHandle.hasTimedOut: Boolean
-    get() {
-      if (retentionTimeInSeconds == 0L) return true
-      val now = clock.instant()
-      return lastAccessTime.plusSeconds(retentionTimeInSeconds).isBefore(now)
-    }
-
-  private data class FSHandle(
-    val fs: FileSystem,
-    val uri: URI,
-    var lastAccessTime: Instant,
-    var users: Int = 0
-  ): Closeable {
-    override fun close() {
-      try {
-        fs.close()
-      } catch (_: InterruptedException) {
-        Thread.currentThread().interrupt()
-        LOG.info("Cannot close due to an interruption for [{}]", fs)
-      } catch (_: NoSuchFileException) {
-        LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
-      } catch (_: java.nio.file.NoSuchFileException) {
-        LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
-      } catch (e: Exception) {
-        LOG.error("Unable to close [{}]", fs, e)
-      }
-    }
-  }
-
-  @Synchronized
   override fun close() {
-    fsCache.values.forEach { fsHandle ->
-      expire(fsHandle)
-    }
-  }
-
-  private fun logHandles(handles: Collection<FSHandle>) {
-    if(handles.isEmpty()) return
-    LOG.debug("Will expire {} cached FS entries", handles.size)
+    fsCache.invalidateAll()
   }
 }

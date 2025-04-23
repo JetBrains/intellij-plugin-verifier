@@ -4,8 +4,9 @@ import java.nio.file.FileSystem
 import java.nio.file.Path
 
 inline fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, useFileSystem: (FileSystem) -> T): T {
+  var fs: FileSystem? = null
   return try {
-    val fs = fileSystemProvider.getFileSystem(this)
+    fs = fileSystemProvider.getFileSystem(this)
     useFileSystem(fs)
   } catch (e: Throwable) {
     throw JarFileSystemProviderException(
@@ -15,7 +16,7 @@ inline fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, use
       e
     )
   } finally {
-    fileSystemProvider.close(jarPath = this)
+    fs?.close()
   }
 }
 
