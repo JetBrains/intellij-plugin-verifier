@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.tests.BaseBytecodeTest
 import com.jetbrains.pluginverifier.tests.mocks.MockSinglePluginDetailsCache
 import com.jetbrains.pluginverifier.tests.mocks.bundledPlugin
@@ -40,12 +39,8 @@ class BundledPluginDependencyFinderTest : BaseBytecodeTest() {
     val finder = BundledPluginDependencyFinder(ide, cache)
 
     val dependencyResult = finder.findPluginDependency(JSON_PLUGIN_ID, true)
-    assertTrue("Dependency must be 'DetailsProvided', but is '${dependencyResult.javaClass}'", dependencyResult is DependencyFinder.Result.DetailsProvided)
-    dependencyResult as DependencyFinder.Result.DetailsProvided
-    val pluginDetails = dependencyResult.pluginDetailsCacheResult
-    assertTrue("Plugin details must be 'Provided', but is '${pluginDetails.javaClass}'", pluginDetails is PluginDetailsCache.Result.Provided)
-    pluginDetails as PluginDetailsCache.Result.Provided
-    assertEquals(JSON_PLUGIN_ID, pluginDetails.pluginDetails.idePlugin.pluginId)
-    assertEquals(JSON_PLUGIN_ID, pluginDetails.pluginDetails.pluginInfo.pluginId)
+    assertTrue("Dependency must be 'FoundPljugin', but is '${dependencyResult.javaClass}'", dependencyResult is DependencyFinder.Result.FoundPlugin)
+    dependencyResult as DependencyFinder.Result.FoundPlugin
+    assertEquals(JSON_PLUGIN_ID, dependencyResult.plugin.pluginId)
   }
 }

@@ -52,7 +52,7 @@ interface DependencyFinder {
     /**
      * The dependency is resolved to the [plugin].
      */
-    data class FoundPlugin(val plugin: IdePlugin) : Result() {
+    data class FoundPlugin(val plugin: IdePlugin, val origin: DependencyOrigin = DependencyOrigin.Unknown) : Result() {
       override fun close() = Unit
     }
 
@@ -62,6 +62,10 @@ interface DependencyFinder {
     data class NotFound(val reason: String) : Result() {
       override fun close() = Unit
     }
-
   }
+}
+
+sealed class DependencyOrigin {
+  object Bundled : DependencyOrigin()
+  object Unknown : DependencyOrigin()
 }
