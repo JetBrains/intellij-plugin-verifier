@@ -303,7 +303,8 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     } else {
       include
     }
-    LOG.debug("XIncluding '{}' from '{}'. Chain {}", include, resourceResult.description, chain)
+    val includedFrom = if (bases.isNotEmpty()) bases.peek()!!.description else "Unknown XInclude origin of declaration"
+    LOG.debug("XIncluding '{}' from '{}'. Chain {}", include, includedFrom, chain)
   }
 
 
