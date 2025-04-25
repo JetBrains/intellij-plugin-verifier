@@ -17,11 +17,15 @@ fun Path.toJarFileUri(): URI {
   return if (toUri().scheme == FILE_SCHEMA) {
     val absoluteJarPath = if (isAbsolute) this else toAbsolutePath()
     if(absoluteJarPath.exists()) {
-      URI("$JAR_FILE_SCHEMA:${absoluteJarPath.toRealPath().toUri()}")
+      absoluteJarPath.toRealPath().asJarFileUri()
     } else {
-      URI("$JAR_FILE_SCHEMA:${absoluteJarPath.normalize().toUri()}")
+      absoluteJarPath.normalize().asJarFileUri()
     }
   } else {
     toUri()
   }
 }
+
+private fun Path.asJarFileUri(): URI = toUri().replaceSchema(JAR_FILE_SCHEMA)
+
+private fun URI.replaceSchema(newSchema: String) = URI(newSchema, userInfo, host, port, path, query, fragment)
