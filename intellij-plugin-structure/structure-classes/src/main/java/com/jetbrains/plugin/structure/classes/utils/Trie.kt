@@ -1,73 +1,74 @@
 package com.jetbrains.plugin.structure.classes.utils
 
+import com.jetbrains.plugin.structure.classes.utils.Trie.NodeVisitor.NodeVisit
 
-class Trie<V>(val defaultValue: V? = null) {
+
+class Trie<V>() {
   private data class Node<V>(
-    val children: MutableMap<Char, Node<V>> = mutableMapOf(),
-    var value: V? = null
+    val children: MutableMap<Char, Node<V>> = HashMap(),
+    var value: V? = null,
+    var isTerminal: Boolean = false
   )
 
-  private fun empty(value: V?) = Node<V>(mutableMapOf(), value)
+  private fun empty() = Node<V>(HashMap(), value = null)
 
-  private val root = empty(defaultValue)
+  private val root = empty()
 
-  val isEmpty: Boolean get() = root.isChildless && root.value == defaultValue
+  val isEmpty: Boolean get() = root.isChildless && root.value == null && !root.isTerminal
   private val Node<V>.isChildless: Boolean get() = children.isEmpty()
 
-  fun find(word: CharSequence): Boolean {
-    var n = root
-    for (c in word) {
-      n = n.children[c] ?: return false
-    }
-    return true
-  }
+  fun contains(word: CharSequence): Boolean = findNode(word) != null
 
-  fun findValue(word: CharSequence): V? {
+  fun findValue(word: CharSequence): V? = findNode(word)?.value
+
+  private fun findNode(prefix: CharSequence): Node<V>? {
     var n = root
-    for (c in word) {
+    for (c in prefix) {
       n = n.children[c] ?: return null
     }
-    return n.value
+    return n
   }
 
-
-  fun insert(key: CharSequence, value: V? = defaultValue): Boolean {
+  fun insert(key: CharSequence, value: V? = null): Boolean {
     var isInserted = false
     var currentNode = root
     for (char in key) {
-      currentNode = currentNode.children.getOrPut(char) { empty(defaultValue).also { isInserted = true } }
+      currentNode = currentNode.children.getOrPut(char) { empty().also { isInserted = true } }
     }
     currentNode.value = value
+    currentNode.isTerminal = true
     return isInserted
   }
 
-  fun visit(wordSeparator: Char, visitor: Visitor<V>) {
-    if (isEmpty) return
-    visit(root, "", wordSeparator, visitor)
+  fun <R> visit(visitor: NodeVisitor<V, R>): List<R> {
+    if (isEmpty) return emptyList()
+    val result = mutableListOf<R>()
+    visit(root, StringBuilder(), result, visitor)
+    return result
   }
 
-  private fun visit(node: Node<V>, prefix: String, wordSeparator: Char, visitor: Visitor<V>) {
+  private fun <R> visit(node: Node<V>, prefix: StringBuilder, result: MutableList<R>, visitor: NodeVisitor<V, R>) {
     if (node.isChildless) {
-      visitor.visit(prefix, node.value, true)
+      result += visitor.visit(NodeVisit(prefix, node.value, isLeaf = true, node.isTerminal))
     } else {
+      result += visitor.visit(NodeVisit(prefix, node.value, isLeaf = false, node.isTerminal))
       for ((char, child) in node.children) {
-        if (char == wordSeparator) {
-          visitor.visit(prefix, node.value, false)
+        with(prefix) {
+          append(char)
+          visit(child, prefix, result, visitor)
+          deleteCharAt(lastIndex)
         }
-        visit(child, prefix + char, wordSeparator, visitor)
       }
     }
   }
 
-  val length: Int
-    get() {
-      val leafCount = TrieTraversals.LeafCount<V>()
-      visit('.', leafCount)
-      return leafCount.count
-    }
+  fun interface NodeVisitor<V, R> {
+    data class NodeVisit<V>(val word: CharSequence, val value: V?, val isLeaf: Boolean, val isTerminal: Boolean)
 
-  fun interface Visitor<V> {
-    fun visit(word: String, value: V?, isLeaf: Boolean)
+    fun visit(visit: NodeVisit<V>): R
   }
+
 }
+
+
 
