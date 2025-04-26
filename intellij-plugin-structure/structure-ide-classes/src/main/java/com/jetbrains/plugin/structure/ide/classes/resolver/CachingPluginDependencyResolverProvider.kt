@@ -86,7 +86,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
           id to dep.createResolverTree()
         }
       }
-    return ComponentNameAwareCompositeResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers)
+    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTree, transitiveDependencies)
   }
 
   private fun Dependency.createResolverTree(): NamedResolver {
@@ -195,9 +195,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
     return CompositeResolver.create(result.keys, resolverName)
   }
 
-  class ComponentNameAwareCompositeResolver(
+  class DependencyTreeAwareResolver(
     private val name: String,
-    resolvers: Map<String, Resolver>
+    resolvers: Map<String, Resolver>,
+    private val dependencyTree: DependencyTree,
+    private val dependencies: List<Dependency>
   ) : Resolver() {
     private val resolverNames = resolvers.keys
 

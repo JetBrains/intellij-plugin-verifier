@@ -353,8 +353,8 @@ class CachingPluginDependencyResolverProviderTest {
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val resolver = resolverProvider.getResolver(alphaPlugin)
-    assertTrue(resolver is CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver)
-    resolver as CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
+    assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
+    resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
     with(resolver) {
       assertTrue(resolver.containsResolverName("com.example.Beta"))
       assertFalse(resolver.containsResolverName("com.example.Alpha"))
