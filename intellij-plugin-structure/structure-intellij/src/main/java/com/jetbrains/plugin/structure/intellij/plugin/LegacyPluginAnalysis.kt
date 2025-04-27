@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
@@ -18,6 +22,7 @@ class LegacyPluginAnalysis {
     get() = when (this) {
       is PluginV2Dependency -> false
       is ModuleV2Dependency -> false
+      is InlineDeclaredModuleV2Dependency -> false
       else -> !isModule && id != "com.intellij.java"
     }
 }

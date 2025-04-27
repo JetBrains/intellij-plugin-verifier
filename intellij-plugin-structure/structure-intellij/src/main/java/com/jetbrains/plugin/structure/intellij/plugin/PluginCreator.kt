@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.plugin
@@ -226,23 +226,30 @@ internal class PluginCreator private constructor(
   }
 
   internal fun addModuleDescriptor(
-    moduleReference: InlineModule,
+    inlineModuleReference: InlineModule,
     loadingRule: ModuleLoadingRule,
     moduleDescriptorResource: DescriptorResource,
     moduleCreator: PluginCreator
   ) {
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val moduleName = moduleReference.name
-      val module = pluginCreationResult.plugin
+      val moduleName = inlineModuleReference.name
+      val inlineModule = pluginCreationResult.plugin
 
-      plugin.addDependencies(module, loadingRule)
-      plugin.modulesDescriptors.add(ModuleDescriptor.of(moduleName, loadingRule, module, moduleDescriptorResource))
+      plugin.addInlineModuleDependencies(inlineModuleReference, inlineModule, loadingRule)
+      plugin.modulesDescriptors.add(
+        ModuleDescriptor.of(
+          moduleName,
+          loadingRule,
+          inlineModule,
+          moduleDescriptorResource
+        )
+      )
       plugin.definedModules.add(moduleName)
 
-      mergeContent(module)
+      mergeContent(inlineModule)
     } else {
-      registerProblem(ModuleDescriptorProblem(moduleReference, pluginCreationResult.errors))
+      registerProblem(ModuleDescriptorProblem(inlineModuleReference, pluginCreationResult.errors))
     }
   }
 
@@ -730,13 +737,27 @@ internal class PluginCreator private constructor(
     problems += problem
   }
 
+  private fun IdePluginImpl.addInlineModuleDependencies(
+    inlineModuleReference: InlineModule,
+    module: IdePlugin,
+    loadingRule: ModuleLoadingRule
+  ) {
+    module.forEachDependencyNotIn(this) {
+      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, loadingRule, contentModuleOwner = this, inlineModuleReference)
+    }
+  }
+
   private fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
-    module.dependencies
-      .filter { dependency -> dependencies.none { it.id == dependency.id } }
-      .forEach { 
-        val dependency = if (loadingRule.required) it else it.asOptional()
-        dependencies += dependency 
-      }
+    module.forEachDependencyNotIn(this) {
+      val dependency = if (loadingRule.required) it else it.asOptional()
+      dependencies += dependency
+    }
+  }
+
+  private fun IdePlugin.forEachDependencyNotIn(plugin: IdePlugin, dependencyHandler: (PluginDependency) -> Unit) {
+    return dependencies
+      .filter { dependency -> plugin.dependencies.none { it.id == dependency.id } }
+      .forEach { dependencyHandler(it) }
   }
 
   private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
