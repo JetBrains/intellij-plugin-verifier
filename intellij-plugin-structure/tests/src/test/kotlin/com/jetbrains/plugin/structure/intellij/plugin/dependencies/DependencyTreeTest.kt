@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
@@ -123,6 +124,39 @@ class DependencyTreeTest {
 
     val missingOptionalDependency = PluginDependencyImpl(optionalPlugin.id, true, false)
     assertEquals(setOf(missingOptionalDependency), missingDependencies)
+  }
+
+  @Test
+  fun `plugin has no dependencies`() {
+    val noDependenciesPlugin = MockIdePlugin(pluginId = "com.example.NoDependencies")
+
+    val dependencyTree = DependencyTree(ide)
+
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(noDependenciesPlugin)
+    assertEquals(emptySet<Dependency>(), transitiveDependencies)
+  }
+
+  @Test
+  fun `plugin has no dependencies but dependency modifier for legacy plugins adds Java module`() {
+    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf("com.intellij.modules.java"))
+    val bundledPlugins = listOf(
+      MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all")),
+      javaPlugin
+    )
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
+
+    val legacyPlugin = MockIdePlugin(pluginId = "com.example.Legacy")
+    val legacyPluginDependencyContributor = LegacyPluginDependencyContributor()
+    val dependencyTree = DependencyTree(ide)
+
+    val transitiveDependencies =
+      dependencyTree.getTransitiveDependencies(legacyPlugin, dependenciesModifier = legacyPluginDependencyContributor)
+
+    val expectedJavaDependency = Dependency.Plugin(javaPlugin, isTransitive = false)
+    with(transitiveDependencies) {
+      assertEquals(1, size)
+      assertEquals(expectedJavaDependency, transitiveDependencies.first())
+    }
   }
 
   private val MockIdePlugin.id: String
