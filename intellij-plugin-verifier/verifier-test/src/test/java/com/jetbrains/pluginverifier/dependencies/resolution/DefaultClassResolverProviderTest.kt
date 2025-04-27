@@ -99,12 +99,12 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       }
     }
 
-
     val resolverProvider = DefaultClassResolverProvider(
       dependencyFinder,
       ideDescriptor,
       packageFilter,
-      pluginDetailsBasedResolverProvider = pluginDetailsResolverProvider
+      pluginDetailsBasedResolverProvider = pluginDetailsResolverProvider,
+      downloadUnavailableBundledPlugins = true
     )
 
     val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
@@ -133,7 +133,12 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ),
     )
 
-    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter)
+    val resolverProvider = DefaultClassResolverProvider(
+      dependencyFinder,
+      ideDescriptor,
+      packageFilter,
+      downloadUnavailableBundledPlugins = true
+    )
 
     val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
 

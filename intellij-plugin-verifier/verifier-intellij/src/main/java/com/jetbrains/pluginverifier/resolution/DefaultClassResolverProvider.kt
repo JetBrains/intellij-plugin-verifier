@@ -38,7 +38,8 @@ class DefaultClassResolverProvider(
   private val ideDescriptor: IdeDescriptor,
   private val externalClassesPackageFilter: PackageFilter,
   private val additionalClassResolvers: List<Resolver> = emptyList(),
-  private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
+  private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider(),
+  private val downloadUnavailableBundledPlugins: Boolean = false
 ) : ClassResolverProvider {
 
   private val secondaryResolver = if (ideDescriptor.ideResolver is ProductInfoClassResolver) ideDescriptor.ideResolver else null
@@ -61,14 +62,20 @@ class DefaultClassResolverProvider(
 
       // this fills the `pluginResolverProviderCache`
       val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
-      val dependenciesClassResolver = createDependenciesClassResolver(checkedPluginDetails, dependenciesResults)
-
-      val resolvers = listOf(
-        pluginResolver,
-        ideDescriptor.jdkDescriptor.jdkResolver,
-        ideResolver,
-        dependenciesClassResolver
-      ) + additionalClassResolvers
+      val resolvers = mutableListOf<Resolver>().apply {
+        add(pluginResolver)
+        add(ideDescriptor.jdkDescriptor.jdkResolver)
+        add(ideResolver)
+        if (downloadUnavailableBundledPlugins || !ideDescriptor.isProductInfoBased()) {
+          // Resolve dependencies via DependencyFinder mechanism.
+          // For 'product-info.json'-based IDEs, the 'ideResolver' already contains
+          // only overlap between plugin dependencies and IDE bundled plugins.
+          createDependenciesClassResolver(checkedPluginDetails, dependenciesResults).also {
+            add(it)
+          }
+        }
+        addAll(additionalClassResolvers)
+      }
 
       val resolver = LazyCompositeResolver.create(resolvers, checkedPluginDetails.pluginInfo.pluginId).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
@@ -78,14 +85,17 @@ class DefaultClassResolverProvider(
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
 
   private fun getIdeResolver(plugin: IdePlugin, ideDescriptor: IdeDescriptor): Resolver {
-    return if (ideDescriptor.ide is ProductInfoAware
-      && ideDescriptor.ideResolver is ProductInfoClassResolver
+    return if (ideDescriptor.isProductInfoBased()
       && !legacyPluginAnalysis.isLegacyPlugin(plugin)
     ) {
       pluginResolverProvider.getResolver(plugin)
     } else {
       ideDescriptor.ideResolver
     }
+  }
+
+  private fun IdeDescriptor.isProductInfoBased(): Boolean {
+    return ideDescriptor.ide is ProductInfoAware && ideDescriptor.ideResolver is ProductInfoClassResolver
   }
 
   private fun createPluginResolver(pluginDependency: PluginDetails): Resolver = with(pluginDependency.pluginInfo) {
