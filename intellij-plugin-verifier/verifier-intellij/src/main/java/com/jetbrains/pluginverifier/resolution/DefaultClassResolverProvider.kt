@@ -63,8 +63,6 @@ class DefaultClassResolverProvider(
       val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
       val dependenciesClassResolver = createDependenciesClassResolver(checkedPluginDetails, dependenciesResults)
 
-      //println(ideResolver.flatten())
-
       val resolvers = listOf(
         pluginResolver,
         ideDescriptor.jdkDescriptor.jdkResolver,
