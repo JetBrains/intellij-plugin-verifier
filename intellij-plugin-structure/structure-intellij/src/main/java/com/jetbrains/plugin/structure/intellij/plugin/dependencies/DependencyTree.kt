@@ -31,6 +31,15 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   }
 
   @Throws(IllegalArgumentException::class)
+  fun getTransitiveDependencies(
+    plugin: IdePlugin,
+    missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
+    dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  ): Set<Dependency> {
+    return getTransitiveDependencies(plugin, ResolutionContext(missingDependencyListener, dependenciesModifier))
+  }
+
+  @Throws(IllegalArgumentException::class)
   private fun getTransitiveDependencies(
     plugin: IdePlugin,
     dependencyResolutionContext: ResolutionContext
@@ -38,15 +47,6 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
     val graph = getDependencyGraph(plugin, dependencyResolutionContext)
     return graph.collectDependencies(pluginId)
-  }
-
-  @Throws(IllegalArgumentException::class)
-  fun getTransitiveDependencies(
-    plugin: IdePlugin,
-    missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
-    dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
-  ): Set<Dependency> {
-    return getTransitiveDependencies(plugin, ResolutionContext(missingDependencyListener, dependenciesModifier))
   }
 
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
