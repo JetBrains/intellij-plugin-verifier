@@ -25,6 +25,7 @@ typealias MissingDependencyListener = (PluginDependency) -> Unit
 private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _ -> }
 
 class DependencyTree(private val pluginProvider: PluginProvider) {
+    val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
   @Throws(IllegalArgumentException::class)
   fun getTransitiveDependencies(plugin: IdePlugin): Set<Dependency> {
     return getTransitiveDependencies(plugin, ResolutionContext())
@@ -232,7 +233,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
-  private class DiGraph<I, O> {
+  internal class DiGraph<I, O> {
     private val adjacency = hashMapOf<I, MutableList<O>>()
 
     operator fun get(from: I): List<O> = adjacency[from] ?: emptyList()
@@ -242,6 +243,10 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
 
     fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
+
+    internal fun forEachAdjacency(action: (I, List<O>) -> Unit) {
+      adjacency.forEach(action)
+    }
   }
 
   private data class ResolutionContext(
