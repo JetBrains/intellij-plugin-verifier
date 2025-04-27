@@ -26,6 +26,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
@@ -39,6 +40,8 @@ private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, private val secondaryPluginResolverProvider: PluginResolverProvider? = null) : PluginResolverProvider {
 
   private val dependencyTree = DependencyTree(pluginProvider)
+
+  private val dependenciesModifier = LegacyPluginDependencyContributor()
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(DEFAULT_CACHE_SIZE)
@@ -72,7 +75,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
 
   private fun createResolver(plugin: IdePlugin): Resolver {
     val transitiveDependencies = dependencyTree
-      .getTransitiveDependencies(plugin)
+      .getTransitiveDependencies(plugin, dependenciesModifier = dependenciesModifier)
       .filterNot { dep -> dep.pluginId == plugin.id }
 
     val resolvers = transitiveDependencies
@@ -86,7 +89,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
           id to dep.createResolverTree()
         }
       }
-    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTree, transitiveDependencies)
+    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, transitiveDependencies)
   }
 
   private fun Dependency.createResolverTree(): NamedResolver {
@@ -198,7 +201,6 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
   class DependencyTreeAwareResolver(
     private val name: String,
     resolvers: Map<String, Resolver>,
-    private val dependencyTree: DependencyTree,
     private val dependencies: List<Dependency>
   ) : Resolver() {
     private val resolverNames = resolvers.keys
