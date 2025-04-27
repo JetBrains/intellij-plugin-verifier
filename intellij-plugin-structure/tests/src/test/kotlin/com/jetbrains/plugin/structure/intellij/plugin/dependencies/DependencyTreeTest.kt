@@ -204,6 +204,27 @@ class DependencyTreeTest {
     }
   }
 
+  @Test
+  fun `transitive dependencies are resolved from dependency tree resolution`() {
+    val dependencyTree = DependencyTree(ide)
+    val dependencyTreeResolution = dependencyTree.getDependencyTreeResolution(somePlugin)
+
+    val expectedDependencies = setOf(
+      Dependency.Plugin(pluginAlpha)) +
+      // pluginNotInIde is not in the IDE, has been excluded
+      dozenOfPlugins.map { Dependency.Plugin(it, isTransitive = true) } +
+      Dependency.Plugin(ijPlugin, isTransitive = true) +
+      tenIjDependencies.map { Dependency.Plugin(it, isTransitive = true) }
+
+    val expectedDependencyIdentifiers = mutableSetOf<PluginId>().apply {
+      this += expectedDependencies.map { it.plugin.pluginId!! }
+      // dependency tree resolution also includes the plugin itself
+      this += somePlugin.pluginId!!
+    }
+
+    assertEquals(expectedDependencyIdentifiers, dependencyTreeResolution.allDependencies)
+  }
+
   fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
     val missing = expected - actual
     val extra = actual - expected
