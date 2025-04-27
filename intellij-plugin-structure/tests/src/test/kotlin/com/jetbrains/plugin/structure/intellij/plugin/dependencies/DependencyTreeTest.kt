@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -54,10 +56,8 @@ class DependencyTreeTest {
 
     pluginNotInIde = MockIdePlugin(pluginId = "notInIde", dependencies = listOf(dependOn("pluginAlpha")))
 
-    somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOn("alpha"), dependOn("pluginNotInIde")))
+    somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOn("alpha"), dependOn(pluginNotInIde.pluginId!!)))
   }
-
-
 
   @Test
   fun `dependency tree is correct`() {
@@ -73,7 +73,92 @@ class DependencyTreeTest {
     assertEquals(expectedDependencies, actualDependencies)
   }
 
+  @Test
+  fun `missing dependencies are collected`() {
+    val dependencyTree = DependencyTree(ide)
+    val missingDependencies = MissingDependencyCollector()
+    dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies)
+
+    val expectedPluginDependency = PluginDependencyImpl(pluginNotInIde.pluginId!!, false, false)
+    assertEquals(setOf(expectedPluginDependency), missingDependencies)
+  }
+
+  @Test
+  fun `missing optional dependency`() {
+    val optionalPlugin = MockIdePlugin(pluginId = "com.example.Optional")
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(optionallyDependOn(optionalPlugin)))
+    // optionalPlugin is not in the IDE
+    val bundledPlugins = emptyList<IdePlugin>()
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
+
+    val dependencyTree = DependencyTree(ide)
+    val missingDependencies = MissingDependencyCollector()
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies)
+
+    assertEquals(emptySet<Dependency>(), transitiveDependencies)
+
+    val missingOptionalDependency = PluginDependencyImpl(optionalPlugin.id, true, false)
+    assertEquals(setOf(missingOptionalDependency), missingDependencies)
+  }
+
+  @Test
+  fun `missing transitive optional dependency`() {
+    val optionalPlugin = MockIdePlugin(pluginId = "com.example.Optional")
+    val alphaPlugin = MockIdePlugin(pluginId = "alpha", dependencies = listOf(optionallyDependOn(optionalPlugin)))
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOn(alphaPlugin)))
+
+    // optionalPlugin is not in the IDE
+    val bundledPlugins = listOf(alphaPlugin)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
+
+    val dependencyTree = DependencyTree(ide)
+    val missingDependencies = MissingDependencyCollector()
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies)
+
+    val expectedTransitiveDependencies = setOf(
+      Dependency.Plugin(alphaPlugin, isTransitive = false),
+      // optionalPlugin is not in the IDE
+    )
+    assertEquals(expectedTransitiveDependencies, transitiveDependencies)
+
+    val missingOptionalDependency = PluginDependencyImpl(optionalPlugin.id, true, false)
+    assertEquals(setOf(missingOptionalDependency), missingDependencies)
+  }
+
+  private val MockIdePlugin.id: String
+    get() = pluginId ?: pluginName ?: "unknown"
+
+  private fun optionallyDependOn(plugin: MockIdePlugin): PluginDependencyImpl {
+    return optionallyDependOn(plugin.id)
+  }
+
+  private fun optionallyDependOn(id: String): PluginDependencyImpl {
+    return PluginDependencyImpl(id, true, false)
+  }
+
+  private fun dependOn(plugin: MockIdePlugin): PluginDependencyImpl {
+    return dependOn(plugin.id)
+  }
+
   private fun dependOn(id: String): PluginDependencyImpl {
     return PluginDependencyImpl(id, false, false)
   }
+
+  class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {
+    override fun invoke(dependency: PluginDependency) {
+      missingDependencies += dependency
+    }
+
+    override val size: Int
+      get() = missingDependencies.size
+
+    override fun contains(element: PluginDependency) = missingDependencies.contains(element)
+
+    override fun containsAll(elements: Collection<PluginDependency>) = missingDependencies.containsAll(elements)
+
+    override fun isEmpty() = missingDependencies.isEmpty()
+
+    override fun iterator() = missingDependencies.iterator()
+  }
+
 }

@@ -18,17 +18,31 @@ private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
 
 private const val DEPENDENCY_INDEX_MAX_WIDTH = 3
 
+typealias MissingDependencyListener = (PluginDependency) -> Unit
+
+private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _ -> }
+
 class DependencyTree(private val pluginProvider: PluginProvider) {
   @Throws(IllegalArgumentException::class)
   fun getTransitiveDependencies(plugin: IdePlugin): Set<Dependency> {
+    return getTransitiveDependencies(plugin, ResolutionContext())
+  }
+
+  @Throws(IllegalArgumentException::class)
+  private fun getTransitiveDependencies(plugin: IdePlugin, dependencyResolutionContext: ResolutionContext): Set<Dependency> {
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
-    val graph = getDependencyGraph(plugin)
+    val graph = getDependencyGraph(plugin, dependencyResolutionContext)
     return graph.collectDependencies(pluginId)
   }
 
-  private fun getDependencyGraph(plugin: IdePlugin): DiGraph<PluginId, Dependency> {
+  @Throws(IllegalArgumentException::class)
+  fun getTransitiveDependencies(plugin: IdePlugin, missingDependencyListener: MissingDependencyListener): Set<Dependency> {
+    return getTransitiveDependencies(plugin, ResolutionContext(missingDependencyListener))
+  }
+
+  private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
     val graph = DiGraph<PluginId, Dependency>()
-    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1)
+    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1, context)
     return graph
   }
 
@@ -37,7 +51,8 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     graph: DiGraph<PluginId, Dependency>,
     resolutionDepth: Int,
     dependencyIndex: Int,
-    parentDependencyIndex: Int
+    parentDependencyIndex: Int,
+    context: ResolutionContext
   ): Unit =
     with(plugin) {
       val pluginId = pluginId ?: return@with
@@ -66,16 +81,18 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
                   graph.addEdge(pluginId, dependencyPlugin)
-                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex)
+                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, context)
                 }
               }
-
-              is None -> debugLog(
-                nestedIndent,
-                numericIndex = i + 1,
-                "Skipping dependency '{}' as it is not available in the IDE.",
-                dep.id
-              )
+              is None -> {
+                context.notifyMissingDependency(dep)
+                debugLog(
+                  nestedIndent,
+                  numericIndex = i + 1,
+                  "Skipping dependency '{}' as it is not available in the IDE.",
+                  dep.id
+                )
+              }
             }
           }
         }
@@ -98,7 +115,6 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
       "  ".repeat(resolutionDepth - 1) + suffix
     }
   }
-
 
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
     return dependency.isModule && plugin.definedModules.contains(dependency.id)
@@ -178,9 +194,10 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   }
 
   fun toDebugString(pluginId: String): CharSequence {
+    val resolutionContext = ResolutionContext(EMPTY_MISSING_DEPENDENCY_LISTENER)
     return StringBuilder().apply {
       pluginProvider.findPluginById(pluginId)?.let { plugin ->
-        getDependencyGraph(plugin).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
+        getDependencyGraph(plugin, resolutionContext).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
       }
     }
   }
@@ -210,5 +227,11 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
 
     fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
+  }
+
+  private data class ResolutionContext(val missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER) {
+    fun notifyMissingDependency(dependency: PluginDependency) {
+      missingDependencyListener(dependency)
+    }
   }
 }
