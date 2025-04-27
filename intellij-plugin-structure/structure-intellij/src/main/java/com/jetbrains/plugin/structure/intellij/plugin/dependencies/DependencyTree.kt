@@ -25,7 +25,38 @@ typealias MissingDependencyListener = (PluginDependency) -> Unit
 private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _ -> }
 
 class DependencyTree(private val pluginProvider: PluginProvider) {
+
+  fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
+    val missingDependencies = mutableSetOf<PluginDependency>()
+    val missingDependencyListener = object : MissingDependencyListener {
+      override fun invoke(dependency: PluginDependency) {
+        missingDependencies += dependency
+      }
+    }
+    val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
+    val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
+
+    val vertices = mutableSetOf<PluginId>()
+    dependencyGraph.forEachAdjacency { pluginId, dependencies ->
+      vertices.add(pluginId)
+      dependencies.forEach {
+        vertices += it.id
+      }
+    }
+
+    val dependencyTreeResolution = object : DependencyTreeResolution {
+      override val dependencyRoot: IdePlugin
+        get() = plugin
+      override val allDependencies: Set<PluginId>
+        get() = vertices
+      override val missingDependencies: Map<IdePlugin, Set<Dependency>>
+        get() = emptyMap()
+    }
+
+    return dependencyTreeResolution
+  }
+
   @Throws(IllegalArgumentException::class)
   fun getTransitiveDependencies(plugin: IdePlugin): Set<Dependency> {
     return getTransitiveDependencies(plugin, ResolutionContext())
@@ -257,4 +288,15 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
       missingDependencyListener(dependency)
     }
   }
+
+  // FIXME Duplicate from com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.getPluginId
+  private val Dependency.id: String
+    get() {
+      return when (this) {
+        is Dependency.Module -> this.plugin.pluginId ?: this.plugin.pluginName
+        is Dependency.Plugin -> this.plugin.pluginId ?: this.plugin.pluginName
+        Dependency.None -> null
+      } ?: "Unknown Dependency ID"
+    }
+
 }

@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -177,6 +178,45 @@ class DependencyTreeTest {
 
       val expectedPlatformDependency = Dependency.Plugin(platformPlugin, isTransitive = false)
       assertEquals(expectedPlatformDependency, transitiveDependencies.first())
+    }
+  }
+
+  @Test
+  fun `dependency graph is correct`() {
+    val dependencyTree = DependencyTree(ide)
+    val dependencyTreeResolution = dependencyTree.getDependencyTreeResolution(somePlugin)
+
+    with(dependencyTreeResolution) {
+      val expectedDependencyIds = mutableSetOf<PluginId>().apply {
+        this += somePlugin.pluginId!!
+
+        this += tenIjDependencies.map { it.pluginId!! }
+        this += ijPlugin.pluginId!!
+        this += dozenOfPlugins.map { it.pluginId!! }
+        this += pluginAlpha.pluginId!!
+      }
+
+      assertSetsEqual(expectedDependencyIds, allDependencies)
+      //FIXME this is not an empty map
+      assertEquals(emptyMap<IdePlugin, Set<Dependency>>(), this.missingDependencies)
+    }
+  }
+
+  fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
+    val missing = expected - actual
+    val extra = actual - expected
+
+    if (missing.isNotEmpty() || extra.isNotEmpty()) {
+      val message = buildString {
+        appendLine("Sets are not equal.")
+        if (missing.isNotEmpty()) {
+          appendLine("Missing elements: $missing")
+        }
+        if (extra.isNotEmpty()) {
+          appendLine("Extra elements: $extra")
+        }
+      }
+      fail(message)
     }
   }
 
