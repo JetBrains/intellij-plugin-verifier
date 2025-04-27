@@ -20,18 +20,21 @@ private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
 
 private const val DEPENDENCY_INDEX_MAX_WIDTH = 3
 
-typealias MissingDependencyListener = (PluginDependency) -> Unit
+typealias MissingDependencyListener = (IdePlugin, PluginDependency) -> Unit
 
-private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _ -> }
+private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _, _ -> }
 
 class DependencyTree(private val pluginProvider: PluginProvider) {
 
   fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
-    val missingDependencies = mutableSetOf<PluginDependency>()
+    val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
     val missingDependencyListener = object : MissingDependencyListener {
-      override fun invoke(dependency: PluginDependency) {
-        missingDependencies += dependency
+      override fun invoke(idePlugin: IdePlugin, missingDependency: PluginDependency) {
+        missingDependencies.merge(
+          idePlugin,
+          setOf(missingDependency)
+        ) { existingMissingDependencies, newMissingDependencies -> existingMissingDependencies + newMissingDependencies }
       }
     }
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
@@ -50,8 +53,8 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
         get() = plugin
       override val allDependencies: Set<PluginId>
         get() = vertices
-      override val missingDependencies: Map<IdePlugin, Set<Dependency>>
-        get() = emptyMap()
+      override val missingDependencies: Map<IdePlugin, Set<PluginDependency>>
+        get() = missingDependencies
     }
 
     return dependencyTreeResolution
@@ -127,7 +130,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
                 }
               }
               is None -> {
-                context.notifyMissingDependency(dep)
+                context.notifyMissingDependency(plugin, dep)
                 debugLog(
                   nestedIndent,
                   numericIndex = i + 1,
@@ -284,8 +287,8 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     val missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
     val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
   ) {
-    fun notifyMissingDependency(dependency: PluginDependency) {
-      missingDependencyListener(dependency)
+    fun notifyMissingDependency(plugin: IdePlugin, dependency: PluginDependency) {
+      missingDependencyListener(plugin, dependency)
     }
   }
 

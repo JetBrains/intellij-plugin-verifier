@@ -5,9 +5,10 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 
 interface DependencyTreeResolution {
   val dependencyRoot: IdePlugin
   val allDependencies: Set<PluginId>
-  val missingDependencies: Map<IdePlugin, Set<Dependency>>
+  val missingDependencies: Map<IdePlugin, Set<PluginDependency>>
 }

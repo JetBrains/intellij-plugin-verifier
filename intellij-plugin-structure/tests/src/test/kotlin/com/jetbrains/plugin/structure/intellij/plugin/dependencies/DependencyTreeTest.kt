@@ -182,7 +182,7 @@ class DependencyTreeTest {
   }
 
   @Test
-  fun `dependency graph is correct`() {
+  fun `dependency tree resolution is correctly resolved`() {
     val dependencyTree = DependencyTree(ide)
     val dependencyTreeResolution = dependencyTree.getDependencyTreeResolution(somePlugin)
 
@@ -197,8 +197,10 @@ class DependencyTreeTest {
       }
 
       assertSetsEqual(expectedDependencyIds, allDependencies)
-      //FIXME this is not an empty map
-      assertEquals(emptyMap<IdePlugin, Set<Dependency>>(), this.missingDependencies)
+
+      val expectedMissingDependencies = mapOf(
+        somePlugin to setOf(PluginDependencyImpl(pluginNotInIde.pluginId!!, false, false)))
+      assertEquals(expectedMissingDependencies, this.missingDependencies)
     }
   }
 
@@ -245,7 +247,7 @@ class DependencyTreeTest {
 
 
   class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {
-    override fun invoke(dependency: PluginDependency) {
+    override fun invoke(plugin: IdePlugin, dependency: PluginDependency) {
       missingDependencies += dependency
     }
 
