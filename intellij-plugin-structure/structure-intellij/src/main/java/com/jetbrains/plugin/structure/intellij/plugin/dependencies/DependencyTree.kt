@@ -5,7 +5,9 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
@@ -29,15 +31,22 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   }
 
   @Throws(IllegalArgumentException::class)
-  private fun getTransitiveDependencies(plugin: IdePlugin, dependencyResolutionContext: ResolutionContext): Set<Dependency> {
+  private fun getTransitiveDependencies(
+    plugin: IdePlugin,
+    dependencyResolutionContext: ResolutionContext
+  ): Set<Dependency> {
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
     val graph = getDependencyGraph(plugin, dependencyResolutionContext)
     return graph.collectDependencies(pluginId)
   }
 
   @Throws(IllegalArgumentException::class)
-  fun getTransitiveDependencies(plugin: IdePlugin, missingDependencyListener: MissingDependencyListener): Set<Dependency> {
-    return getTransitiveDependencies(plugin, ResolutionContext(missingDependencyListener))
+  fun getTransitiveDependencies(
+    plugin: IdePlugin,
+    missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
+    dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  ): Set<Dependency> {
+    return getTransitiveDependencies(plugin, ResolutionContext(missingDependencyListener, dependenciesModifier))
   }
 
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
@@ -55,6 +64,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     context: ResolutionContext
   ): Unit =
     with(plugin) {
+      val dependencies = context.dependenciesModifier.apply(this, pluginProvider)
       val pluginId = pluginId ?: return@with
       val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
@@ -197,7 +207,12 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     val resolutionContext = ResolutionContext(EMPTY_MISSING_DEPENDENCY_LISTENER)
     return StringBuilder().apply {
       pluginProvider.findPluginById(pluginId)?.let { plugin ->
-        getDependencyGraph(plugin, resolutionContext).toDebugString(pluginId, indentSize = 0, mutableSetOf(), printer = this)
+        getDependencyGraph(plugin, resolutionContext).toDebugString(
+          pluginId,
+          indentSize = 0,
+          mutableSetOf(),
+          printer = this
+        )
       }
     }
   }
@@ -229,7 +244,10 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
   }
 
-  private data class ResolutionContext(val missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER) {
+  private data class ResolutionContext(
+    val missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
+    val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  ) {
     fun notifyMissingDependency(dependency: PluginDependency) {
       missingDependencyListener(dependency)
     }
