@@ -10,6 +10,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 
+private const val CORE_IDE_PLUGIN_ID = "com.intellij"
+
 private const val ALL_MODULES_ID = "com.intellij.modules.all"
 private const val JAVA_MODULE_ID = "com.intellij.modules.java"
 private const val UNKNOWN_PLUGIN_ID = "Unknown Plugin"
@@ -22,6 +24,9 @@ private const val UNKNOWN_PLUGIN_ID = "Unknown Plugin"
  */
 class LegacyPluginDependencyContributor: DependenciesModifier {
   override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
+    if (plugin.pluginId == CORE_IDE_PLUGIN_ID) {
+      return plugin.dependencies
+    }
     if (pluginProvider.findPluginByModule(ALL_MODULES_ID) == null) {
       return plugin.dependencies
     }

@@ -159,6 +159,27 @@ class DependencyTreeTest {
     }
   }
 
+  @Test
+  fun `standard plugin has no Java plugin contributed from to legacy rule`() {
+    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf("com.intellij.modules.java"))
+    val platformPlugin = MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all", "com.intellij.modules.platform"))
+    val bundledPlugins = listOf(platformPlugin, javaPlugin)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
+
+    val dependencyTree = DependencyTree(ide)
+
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOnModule(platformPlugin)))
+
+    val transitiveDependencies =
+      dependencyTree.getTransitiveDependencies(somePlugin, dependenciesModifier = LegacyPluginDependencyContributor())
+    with(transitiveDependencies) {
+      assertEquals(1, size)
+
+      val expectedPlatformDependency = Dependency.Plugin(platformPlugin, isTransitive = false)
+      assertEquals(expectedPlatformDependency, transitiveDependencies.first())
+    }
+  }
+
   private val MockIdePlugin.id: String
     get() = pluginId ?: pluginName ?: "unknown"
 
@@ -177,6 +198,11 @@ class DependencyTreeTest {
   private fun dependOn(id: String): PluginDependencyImpl {
     return PluginDependencyImpl(id, false, false)
   }
+
+  private fun dependOnModule(module: MockIdePlugin): PluginDependencyImpl {
+    return PluginDependencyImpl(module.id, false, true)
+  }
+
 
   class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {
     override fun invoke(dependency: PluginDependency) {
