@@ -5,18 +5,23 @@ import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.MockProductInfoAwareIde
+import org.intellij.lang.annotations.Language
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.ByteArrayInputStream
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipOutputStream
@@ -100,6 +105,22 @@ class ProductInfoClassResolverTest {
   @Test
   fun `resolver supports 242+ IDE`() {
     assertTrue(ProductInfoClassResolver.supports(ideRoot))
+  }
+
+  @Test
+  fun `resolver does not parse ProductInfo-aware IDE`() {
+    val ideRoot = temporaryFolder.newFolder("idea-${UUID.randomUUID()}").toPath()
+
+    val productInfoParser = ProductInfoParser()
+    val productInfo = productInfoParser.parse(ByteArrayInputStream(productInfoJsonIU251WithTwoLayoutComponentsAndEmptyBootClasspath.toByteArray()), "Unit Test")
+
+    val bundledPlugins = listOf(
+      MockIdePlugin("com.intellij", pluginName = "IDEA Core")
+    )
+
+    val ide = MockProductInfoAwareIde(ideRoot, productInfo, bundledPlugins)
+    val resolver = ProductInfoClassResolver.of(ide)
+    assertEquals(listOf("com.intellij", "com.jetbrains.sh"), resolver.layoutComponentNames)
   }
 
   private fun copyResource(resource: String, targetFile: Path) {
@@ -223,6 +244,43 @@ class ProductInfoClassResolverTest {
     )
   )
 
+  @Language("JSON")
+  private val productInfoJsonIU251WithTwoLayoutComponentsAndEmptyBootClasspath = """
+    {
+      "name": "IntelliJ IDEA",
+      "version": "2025.1",
+      "buildNumber": "251.23774.435",
+      "productCode": "IU",
+      "envVarBaseName": "IDEA",
+      "dataDirectoryName": "IntelliJIdea2025.1",
+      "svgIconPath": "../bin/idea.svg",
+      "productVendor": "JetBrains",
+      "launch": [
+        {
+          "os": "macOS",
+          "arch": "aarch64",
+          "launcherPath": "../MacOS/idea",
+          "javaExecutablePath": "../jbr/Contents/Home/bin/java",
+          "vmOptionsFilePath": "../bin/idea.vmoptions",
+          "bootClassPathJarNames": []      
+        }
+      ],        
+      "bundledPlugins": [],
+      "modules": [],
+      "layout": [
+        {
+          "name": "com.intellij",
+          "kind": "plugin",
+          "classPath": []
+        },         
+        {
+          "name": "com.jetbrains.sh",
+          "kind": "plugin",
+          "classPath": []
+        }
+      ]        
+    } 
+  """.trimIndent()
 }
 
 private typealias PluginId = String
