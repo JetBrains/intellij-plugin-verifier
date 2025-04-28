@@ -20,14 +20,10 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClass
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
-import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -57,6 +53,8 @@ class DefaultClassResolverProvider(
 
   private val legacyPluginAnalysis = LegacyPluginAnalysis()
 
+  private val dependenciesGraphProvider = DependenciesGraphProvider()
+
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
     closeableResources.closeOnException {
@@ -83,44 +81,9 @@ class DefaultClassResolverProvider(
         }
         dependenciesGraph = depGraph
       } else {
-        val UNKNOWN_VERSION = "unknown version"
         val dependencyTreeResolution = (ideResolver as DependencyTreeAwareResolver).dependencyTreeResolution
-        val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION)
-        val transitiveDependencyVertices = dependencyTreeResolution.transitiveDependencies.flatMapTo(mutableListOf()) {
-          when (it) {
-            is Dependency.Module -> {
-              val definedModuleNodes = it.plugin.definedModules.map { alias -> DependencyNode(alias, version = UNKNOWN_VERSION)
-                DependencyNode(it.id, version = UNKNOWN_VERSION)
-              }
-              val moduleNode = DependencyNode(it.id, version = UNKNOWN_VERSION)
-              val pluginNode = DependencyNode(it.plugin.id, version = UNKNOWN_VERSION)
-              definedModuleNodes + listOf(moduleNode, pluginNode)
-            }
-            is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION))
-            Dependency.None -> emptySet()
-          }
-
-        }
-        val vertices = transitiveDependencyVertices + verifiedPlugin
-
-        val edges = mutableListOf<DependencyEdge>()
-        dependencyTreeResolution.forEach { id, dependency ->
-          edges += DependencyEdge(DependencyNode(id,
-            "unknown version"), DependencyNode(dependency.id, UNKNOWN_VERSION), dependency)
-        }
-
-        val missingDependencies = dependencyTreeResolution.missingDependencies.map { (plugin, dependencies) ->
-          val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION)
-          //FIXME "missing"
-          val dependencyNodes = dependencies.mapTo(mutableSetOf()) {
-            MissingDependency(it, "Missing")
-          }
-
-          pluginNode to dependencyNodes
-        }.toMap()
-        dependenciesGraph = DependenciesGraph(verifiedPlugin, vertices, edges, missingDependencies)
+        dependenciesGraph = dependenciesGraphProvider.getDependenciesGraph(dependencyTreeResolution)
       }
-
 
       allResolvers += additionalClassResolvers
 
