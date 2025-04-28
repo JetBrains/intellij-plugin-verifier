@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.ide.BuildTxtIdeVersionProvider
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeVersionResolution
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
+import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
@@ -159,17 +160,13 @@ class ProductInfoClassResolver(
   companion object {
     @Throws(InvalidIdeException::class)
     fun of(ide: Ide, resolverConfiguration: IdeResolverConfiguration): ProductInfoClassResolver {
-      val idePath = ide.idePath
-      assertProductInfoPresent(idePath)
-      val productInfoParser = ProductInfoParser()
-      try {
-        val productInfo = productInfoParser.parse(idePath.productInfoJson)
-        return ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
-      } catch (e: ProductInfoParseException) {
-        throw InvalidIdeException(idePath, e)
+      val productInfo = if (ide is ProductInfoAware) {
+        ide.productInfo
+      } else {
+        parseProductInfo(ide)
       }
+      return ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
     }
-
 
     @Throws(InvalidIdeException::class)
     fun of(ide: Ide, readMode: ReadMode = FULL): ProductInfoClassResolver = of(ide, IdeResolverConfiguration(readMode))
@@ -189,6 +186,18 @@ class ProductInfoClassResolver(
         is IdeVersionResolution.Found -> version.ideVersion > IdeVersion.createIdeVersion(expectedVersion)
         is IdeVersionResolution.Failed,
         is IdeVersionResolution.NotFound -> false
+      }
+    }
+
+    @Throws(InvalidIdeException::class)
+    private fun parseProductInfo(ide: Ide): ProductInfo {
+      val idePath = ide.idePath
+      assertProductInfoPresent(idePath)
+      val productInfoParser = ProductInfoParser()
+      try {
+        return productInfoParser.parse(idePath.productInfoJson)
+      } catch (e: ProductInfoParseException) {
+        throw InvalidIdeException(idePath, e)
       }
     }
 
