@@ -68,7 +68,11 @@ class DefaultClassResolverProvider(
       allResolvers += ideResolver
 
       val dependenciesGraph: DependenciesGraph
-      if (downloadUnavailableBundledPlugins || !ideDescriptor.isProductInfoBased() || legacyPluginAnalysis.isLegacyPlugin(checkedPluginDetails.idePlugin)) {
+      if (downloadUnavailableBundledPlugins
+        || !ideDescriptor.isProductInfoBased()
+        || legacyPluginAnalysis.isLegacyPlugin(checkedPluginDetails.idePlugin)
+        || ideResolver !is DependencyTreeAwareResolver
+        ) {
         val (depGraph, dependenciesResults) =
           DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
         closeableResources += dependenciesResults

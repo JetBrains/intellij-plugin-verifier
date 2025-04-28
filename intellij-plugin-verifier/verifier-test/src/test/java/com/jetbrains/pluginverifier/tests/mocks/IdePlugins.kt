@@ -20,8 +20,12 @@ internal fun IdePlugin.emptyLock(lockPath: Path): FileLock = IdleFileLock(lockPa
 
 internal fun IdePlugin.emptyLock(): FileLock = emptyLock(Files.createTempFile("ide-plugin", ".lock"))
 
-internal val IdePlugin.pluginInfo
-  get() = createMockPluginInfo(pluginId!!, pluginVersion!!)
+internal val IdePlugin.pluginInfo: PluginInfo
+  get() {
+    require(pluginId != null) { "Plugin ID must be set" }
+    require(pluginVersion != null) { "Plugin version must be set" }
+    return createMockPluginInfo(pluginId!!, pluginVersion!!)
+  }
 
 internal fun IdePlugin.bundledPluginInfo(ideVersion: IdeVersion): PluginInfo = BundledPluginInfo(ideVersion, this)
 

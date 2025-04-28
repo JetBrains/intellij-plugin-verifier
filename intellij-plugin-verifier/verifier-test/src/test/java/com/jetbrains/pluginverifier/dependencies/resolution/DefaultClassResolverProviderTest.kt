@@ -4,10 +4,16 @@
 
 package com.jetbrains.pluginverifier.dependencies.resolution
 
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
+import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
+import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.resolution.DefaultPluginDetailsBasedResolverProvider
@@ -16,13 +22,19 @@ import com.jetbrains.pluginverifier.tests.BaseBytecodeTest
 import com.jetbrains.pluginverifier.tests.mocks.MockDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPackageFilter
+import com.jetbrains.pluginverifier.tests.mocks.MockProductInfoAwareIde
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder.Rule
 import com.jetbrains.pluginverifier.tests.mocks.asm.publicClass
 import com.jetbrains.pluginverifier.tests.mocks.getDetails
 import org.intellij.lang.annotations.Language
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.*
+import java.util.zip.ZipOutputStream
 
 class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   private val dependencyFinder = MockDependencyFinder()
@@ -169,6 +181,69 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
     assertTrue(classResolver.allResolver.containsClass("com/intellij/tasks/Task"))
+  }
+
+  @Test
+  fun `plugin is already present in the platform`() {
+    val ideVersionString = "251.23774.435"
+
+    val ideRoot = buildDirectory(temporaryFolder.newFolder("idea-${UUID.randomUUID()}").toPath()) {
+      dir("lib") {
+        file("app.jar", createEmptyZipByteArray())
+        file("idea_rt.jar", createEmptyZipByteArray())
+      }
+      file("build.txt", "IU-$ideVersionString")
+      file("product-info.json", productInfoJsonIU243)
+    }
+
+    val productInfoParser = ProductInfoParser()
+    val jdkDescriptorProvider = DefaultJdkDescriptorProvider()
+
+    val productInfo = productInfoParser.parse(ByteArrayInputStream(productInfoJsonIU243.toByteArray()), "Unit Test")
+    val bundledPlugins = listOf(
+      MockIdePlugin("com.intellij", pluginName = "IDEA Core", pluginVersion = ideVersionString)
+    )
+    val ide = MockProductInfoAwareIde(ideRoot, productInfo, bundledPlugins)
+    val ideResolver = IdeResolverCreator.createIdeResolver(ide)
+    val jdkResult = jdkDescriptorProvider.getJdkDescriptor(ide, defaultJdkPath = null)
+    assertTrue(jdkResult is JdkDescriptorProvider.Result.Found)
+    jdkResult as JdkDescriptorProvider.Result.Found
+
+    val ideDescriptor = IdeDescriptor(ide, ideResolver, jdkResult.jdkDescriptor, ideFileLock = null)
+
+    val mockPluginWithIdFromThePlatform = MockIdePlugin(
+      "com.intellij", pluginVersion = ideVersionString,
+      dependencies = listOf(ModuleV2Dependency("com.example.SomeModuleV2Dependency", isOptional = true))
+    )
+
+    val emptyDependencyFinder = RuleBasedDependencyFinder.create(ide)
+    val resolverProvider = DefaultClassResolverProvider(emptyDependencyFinder, ideDescriptor, packageFilter)
+
+    val classResolver = resolverProvider.provide(mockPluginWithIdFromThePlatform.getDetails())
+    with(classResolver.dependenciesGraph) {
+      assertEquals(1, vertices.size)
+      val vertex = vertices.first()
+      assertEquals("com.intellij", vertex.pluginId)
+      assertEquals("251.23774.435", vertex.version)
+
+      with(missingDependencies) {
+        assertEquals(1, size)
+        val missingDependencyDeclarer = missingDependencies.keys.first()
+        assertEquals("com.intellij", missingDependencyDeclarer.pluginId)
+        assertEquals("251.23774.435", missingDependencyDeclarer.version)
+
+        val missingComIntellijDependencies = missingDependencies[missingDependencyDeclarer] ?: emptySet()
+        assertEquals(1, missingComIntellijDependencies.size)
+        val missingComIntelliJDependency = missingComIntellijDependencies.first()
+        assertEquals("com.example.SomeModuleV2Dependency", missingComIntelliJDependency.dependency.id)
+      }
+    }
+  }
+
+  private fun createEmptyZipByteArray(): ByteArray {
+    val buffer = ByteArrayOutputStream()
+    ZipOutputStream(buffer).use {}
+    return buffer.toByteArray()
   }
 
   private val mockPythonPlugin = MockIdePlugin(
