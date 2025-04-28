@@ -105,7 +105,7 @@ class DefaultClassResolverProvider(
   }
 
   private fun IdeDescriptor.isProductInfoBased(): Boolean {
-    return ideDescriptor.ide is ProductInfoAware && ideDescriptor.ideResolver is ProductInfoClassResolver
+    return ide is ProductInfoAware && ideResolver is ProductInfoClassResolver
   }
 
   private fun createPluginResolver(pluginDependency: PluginDetails): Resolver = with(pluginDependency.pluginInfo) {
