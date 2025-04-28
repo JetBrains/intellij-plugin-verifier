@@ -188,15 +188,13 @@ class DependencyTreeTest {
 
     with(dependencyTreeResolution) {
       val expectedDependencyIds = mutableSetOf<PluginId>().apply {
-        this += somePlugin.pluginId!!
-
         this += tenIjDependencies.map { it.pluginId!! }
         this += ijPlugin.pluginId!!
         this += dozenOfPlugins.map { it.pluginId!! }
         this += pluginAlpha.pluginId!!
       }
 
-      assertSetsEqual(expectedDependencyIds, allDependencies)
+      assertSetsEqual(expectedDependencyIds, transitiveDependencies.map { it.id }.toSet())
 
       val expectedMissingDependencies = mapOf(
         somePlugin to setOf(PluginDependencyImpl(pluginNotInIde.pluginId!!, false, false)))
@@ -218,8 +216,6 @@ class DependencyTreeTest {
 
     val expectedDependencyIdentifiers = mutableSetOf<PluginId>().apply {
       this += expectedDependencies.map { it.plugin.pluginId!! }
-      // dependency tree resolution also includes the plugin itself
-      this += somePlugin.pluginId!!
     }
 
     if (dependencyTreeResolution is DefaultDependencyTreeResolution) {
@@ -228,7 +224,7 @@ class DependencyTreeTest {
       assertSetsEqual(expectedTransitiveDeps, transitiveDepIds.toSet())
     }
 
-    assertEquals(expectedDependencyIdentifiers, dependencyTreeResolution.allDependencies)
+    assertEquals(expectedDependencyIdentifiers, dependencyTreeResolution.transitiveDependencies.map { it.id }.toSet())
   }
 
   fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {

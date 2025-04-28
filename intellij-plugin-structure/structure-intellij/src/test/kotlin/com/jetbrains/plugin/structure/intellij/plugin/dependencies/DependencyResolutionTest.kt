@@ -61,4 +61,28 @@ class DependencyResolutionTest {
 
     assertEquals(expectedEdges, edges)
   }
+
+  @Test
+  fun `dependency on module provided by plugin is resolved`() {
+    // Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl'
+    val somePluginId = "com.example.SomePlugin"
+    val somePlugin = mockk<IdePlugin>()
+    every { somePlugin.pluginId } returns somePluginId
+
+    val vcsModuleId = "com.intellij.modules.vcs"
+    val vcsImplPluginId = "intellij.platform.vcs.impl"
+    val vcsImpl = mockk<IdePlugin>()
+    every { vcsImpl.pluginId } returns vcsImplPluginId
+    every { vcsImpl.definedModules } returns setOf(vcsModuleId)
+
+    val dependencyGraph = DependencyTree.DiGraph<PluginId, Dependency>().apply {
+      addEdge(somePluginId, Dependency.Module(vcsImpl, vcsModuleId, false))
+    }
+
+    dependencyGraph.forEachAdjacency { pluginId, dependencies ->
+      assertEquals(1, dependencies.size)
+      val d = dependencies.single()
+      assertEquals(Dependency.Module(vcsImpl, vcsModuleId, false), d)
+    }
+  }
 }

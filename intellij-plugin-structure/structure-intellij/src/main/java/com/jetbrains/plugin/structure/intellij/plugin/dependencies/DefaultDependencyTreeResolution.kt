@@ -14,7 +14,6 @@ class DefaultDependencyTreeResolution internal constructor(
   private val graph: DependencyTree.DiGraph<PluginId, Dependency>
 ) : DependencyTreeResolution {
 
-  override val allDependencies: Set<PluginId> = setOf(dependencyRoot.id) + transitiveDependencies.map { it.id }
   override fun forEach(action: (PluginId, PluginDependency) -> Unit) {
     graph.forEachAdjacency { pluginId, dependencies ->
       dependencies.forEach { dep ->
