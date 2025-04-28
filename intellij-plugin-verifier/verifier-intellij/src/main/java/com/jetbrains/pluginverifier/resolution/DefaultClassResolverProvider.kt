@@ -13,14 +13,20 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.pluginverifier.createPluginResolver
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
@@ -55,29 +61,55 @@ class DefaultClassResolverProvider(
     closeableResources.closeOnException {
       val pluginResolver = checkedPluginDetails.pluginClassesLocations.createPluginResolver(checkedPluginDetails.pluginInfo.pluginId)
 
-      val (dependenciesGraph, dependenciesResults) =
-        DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
-
-      closeableResources += dependenciesResults
-
       // this fills the `pluginResolverProviderCache`
       val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
-      val resolvers = mutableListOf<Resolver>().apply {
-        add(pluginResolver)
-        add(ideDescriptor.jdkDescriptor.jdkResolver)
-        add(ideResolver)
-        if (downloadUnavailableBundledPlugins || !ideDescriptor.isProductInfoBased()) {
-          // Resolve dependencies via DependencyFinder mechanism.
-          // For 'product-info.json'-based IDEs, the 'ideResolver' already contains
-          // only overlap between plugin dependencies and IDE bundled plugins.
-          createDependenciesClassResolver(checkedPluginDetails, dependenciesResults).also {
-            add(it)
-          }
+      val allResolvers = mutableListOf<Resolver>()
+      allResolvers += pluginResolver
+      allResolvers += ideDescriptor.jdkDescriptor.jdkResolver
+      allResolvers += ideResolver
+
+      val dependenciesGraph: DependenciesGraph
+      if (downloadUnavailableBundledPlugins || !ideDescriptor.isProductInfoBased() || legacyPluginAnalysis.isLegacyPlugin(checkedPluginDetails.idePlugin)) {
+        val (depGraph, dependenciesResults) =
+          DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
+        closeableResources += dependenciesResults
+
+        // Resolve dependencies via DependencyFinder mechanism.
+        // For 'product-info.json'-based IDEs, the 'ideResolver' already contains
+        // only overlap between plugin dependencies and IDE bundled plugins.
+        createDependenciesClassResolver(checkedPluginDetails, dependenciesResults).also {
+          allResolvers += it
         }
-        addAll(additionalClassResolvers)
+        dependenciesGraph = depGraph
+      } else {
+        val UNKNOWN_VERSION = "unknown version"
+        val dependencyTreeResolution = (ideResolver as DependencyTreeAwareResolver).dependencyTreeResolution
+        val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION)
+        val vertices = dependencyTreeResolution.allDependencies.mapTo(mutableListOf()) {
+          DependencyNode(it, version = UNKNOWN_VERSION)
+        }
+        val edges = mutableListOf<DependencyEdge>()
+        dependencyTreeResolution.forEach { id, dependency ->
+          edges += DependencyEdge(DependencyNode(id,
+            "unknown version"), DependencyNode(dependency.id, UNKNOWN_VERSION), dependency)
+        }
+
+        val missingDependencies = dependencyTreeResolution.missingDependencies.map { (plugin, dependencies) ->
+          val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION)
+          //FIXME "missing"
+          val dependencyNodes = dependencies.mapTo(mutableSetOf()) {
+            MissingDependency(it, "Missing")
+          }
+
+          pluginNode to dependencyNodes
+        }.toMap()
+        dependenciesGraph = DependenciesGraph(verifiedPlugin, vertices, edges, missingDependencies)
       }
 
-      val resolver = LazyCompositeResolver.create(resolvers, checkedPluginDetails.pluginInfo.pluginId).caching()
+
+      allResolvers += additionalClassResolvers
+
+      val resolver = LazyCompositeResolver.create(allResolvers, checkedPluginDetails.pluginInfo.pluginId).caching()
       return ClassResolverProvider.Result(pluginResolver, resolver, dependenciesGraph, closeableResources)
     }
   }

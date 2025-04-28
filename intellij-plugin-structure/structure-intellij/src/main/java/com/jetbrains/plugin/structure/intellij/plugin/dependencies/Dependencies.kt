@@ -5,21 +5,32 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 
 typealias PluginId = String
 
 private const val UNKNOWN_DEPENDENCY_ID = "<unknown dependency>"
 
-internal val IdePlugin.id: String
+val IdePlugin.id: String
   get() {
     return this.pluginId ?: this.pluginName ?: UNKNOWN_DEPENDENCY_ID
   }
 
-internal val Dependency.id: String
+val Dependency.id: String
   get() {
     return when (this) {
       is Dependency.Module -> this.plugin.id
       is Dependency.Plugin -> this.plugin.id
       Dependency.None -> null
     } ?: UNKNOWN_DEPENDENCY_ID
+  }
+
+val Dependency.pluginDependency: PluginDependency?
+  get() {
+    return when (this) {
+      is Dependency.Module -> PluginDependencyImpl(id, false, true)
+      is Dependency.Plugin -> PluginDependencyImpl(id, false, false)
+      Dependency.None -> null
+    }
   }

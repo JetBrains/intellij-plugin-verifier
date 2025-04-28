@@ -222,6 +222,12 @@ class DependencyTreeTest {
       this += somePlugin.pluginId!!
     }
 
+    if (dependencyTreeResolution is DefaultDependencyTreeResolution) {
+      val transitiveDepIds = dependencyTreeResolution.transitiveDependencies.map { it.id }
+      val expectedTransitiveDeps = expectedDependencyIdentifiers - somePlugin.pluginId!!
+      assertSetsEqual(expectedTransitiveDeps, transitiveDepIds.toSet())
+    }
+
     assertEquals(expectedDependencyIdentifiers, dependencyTreeResolution.allDependencies)
   }
 

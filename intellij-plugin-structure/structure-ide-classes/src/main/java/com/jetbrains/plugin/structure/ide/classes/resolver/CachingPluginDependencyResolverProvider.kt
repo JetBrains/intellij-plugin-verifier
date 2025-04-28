@@ -25,6 +25,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import org.objectweb.asm.tree.ClassNode
@@ -74,8 +75,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
   override fun contains(pluginId: PluginId) = cache.getIfPresent(pluginId) != null
 
   private fun createResolver(plugin: IdePlugin): Resolver {
-    val transitiveDependencies = dependencyTree
-      .getTransitiveDependencies(plugin, dependenciesModifier = dependenciesModifier)
+    val dependencyTreeResolution = dependencyTree
+      .getDependencyTreeResolution(plugin, dependenciesModifier = dependenciesModifier)
+
+    val transitiveDependencies = dependencyTreeResolution
+      .transitiveDependencies
       .filterNot { dep -> dep.pluginId == plugin.id }
 
     val resolvers = transitiveDependencies
@@ -89,7 +93,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
           id to dep.createResolverTree()
         }
       }
-    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, transitiveDependencies)
+    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTreeResolution)
   }
 
   private fun Dependency.createResolverTree(): NamedResolver {
@@ -201,7 +205,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
   class DependencyTreeAwareResolver(
     private val name: String,
     resolvers: Map<String, Resolver>,
-    private val dependencies: List<Dependency>
+    val dependencyTreeResolution: DependencyTreeResolution
   ) : Resolver() {
     private val resolverNames = resolvers.keys
 

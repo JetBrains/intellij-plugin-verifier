@@ -40,24 +40,12 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
 
-    val vertices = mutableSetOf<PluginId>()
+    val transitiveDependencies = mutableSetOf<Dependency>()
     dependencyGraph.forEachAdjacency { pluginId, dependencies ->
-      vertices.add(pluginId)
-      dependencies.forEach {
-        vertices += it.id
-      }
+      transitiveDependencies += dependencies
     }
 
-    val dependencyTreeResolution = object : DependencyTreeResolution {
-      override val dependencyRoot: IdePlugin
-        get() = plugin
-      override val allDependencies: Set<PluginId>
-        get() = vertices
-      override val missingDependencies: Map<IdePlugin, Set<PluginDependency>>
-        get() = missingDependencies
-    }
-
-    return dependencyTreeResolution
+    return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph)
   }
 
   @Throws(IllegalArgumentException::class)
