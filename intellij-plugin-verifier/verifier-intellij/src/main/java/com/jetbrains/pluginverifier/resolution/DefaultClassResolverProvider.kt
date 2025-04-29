@@ -63,7 +63,7 @@ class DefaultClassResolverProvider(
       // this fills the `pluginResolverProviderCache`
       val ideResolver = getIdeResolver(checkedPluginDetails.idePlugin, ideDescriptor)
       val allResolvers = mutableListOf<Resolver>()
-      allResolvers += pluginResolver
+      allResolvers += pluginResolver.also { closeableResources += it }
       allResolvers += ideDescriptor.jdkDescriptor.jdkResolver
       allResolvers += ideResolver
 
