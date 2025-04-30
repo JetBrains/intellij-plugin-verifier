@@ -106,6 +106,7 @@ class ProductInfoClassResolver(
 
   override val readMode: ReadMode get() = resolverConfiguration.readMode
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses get() = delegateResolver.allClasses
 
   override val allClassNames: Set<BinaryClassName> get() = delegateResolver.allClassNames

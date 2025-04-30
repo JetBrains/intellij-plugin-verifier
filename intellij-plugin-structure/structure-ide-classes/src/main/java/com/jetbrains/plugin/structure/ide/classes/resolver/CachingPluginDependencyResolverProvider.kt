@@ -117,6 +117,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
 
     override val readMode: ReadMode
       get() = delegateResolver.readMode
+    @Deprecated("Use 'allClassNames' property instead which is more efficient")
     override val allClasses: Set<String>
       get() = delegateResolver.allClasses
     override val allClassNames: Set<BinaryClassName>

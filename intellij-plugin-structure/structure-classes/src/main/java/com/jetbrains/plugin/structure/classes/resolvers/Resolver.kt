@@ -31,6 +31,7 @@ abstract class Resolver : Closeable {
   /**
    * Returns the *binary* names of all the contained classes.
    */
+  @Deprecated(message = "Use 'allClassNames' property instead which is more efficient")
   abstract val allClasses: Set<String>
 
   /**

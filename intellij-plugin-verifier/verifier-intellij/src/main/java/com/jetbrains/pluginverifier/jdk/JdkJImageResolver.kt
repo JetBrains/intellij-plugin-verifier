@@ -86,6 +86,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       .substringBeforeLast(".class").replace(nameSeparator, "/")
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classNameToModuleName.keys
 

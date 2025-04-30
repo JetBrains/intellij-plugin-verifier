@@ -57,6 +57,7 @@ class FixedClassesResolver private constructor(
     return ResolutionResult.Found(propertyResourceBundle, fileOrigin)
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classes.keys
 

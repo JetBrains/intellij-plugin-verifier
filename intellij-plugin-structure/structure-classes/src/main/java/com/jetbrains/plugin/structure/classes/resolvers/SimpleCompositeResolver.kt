@@ -12,6 +12,7 @@ class SimpleCompositeResolver internal constructor(
   val name: String
 ) : Resolver() {
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String>
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
 

@@ -28,6 +28,7 @@ class CacheResolver(
       .maximumSize(cacheSize.toLong())
       .build { key -> delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale) }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = delegate.allClasses
 

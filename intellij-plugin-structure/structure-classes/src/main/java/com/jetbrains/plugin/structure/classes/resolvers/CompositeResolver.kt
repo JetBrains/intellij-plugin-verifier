@@ -49,6 +49,7 @@ class CompositeResolver private constructor(
     }
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
 

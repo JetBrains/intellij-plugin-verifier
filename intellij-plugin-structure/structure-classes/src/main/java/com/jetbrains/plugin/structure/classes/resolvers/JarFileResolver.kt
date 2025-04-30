@@ -113,6 +113,7 @@ class JarFileResolver(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classes
 

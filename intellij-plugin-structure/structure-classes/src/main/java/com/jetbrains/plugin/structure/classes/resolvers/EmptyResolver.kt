@@ -22,6 +22,7 @@ class EmptyResolver(override val name: String) : NamedResolver(name) {
 
   override fun containsPackage(packageName: String) = false
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses = emptySet<String>()
 
   override val allClassNames: Set<BinaryClassName> = emptySet()

@@ -30,6 +30,7 @@ class LazyJarResolver(
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String> by lazy  {
     jar.classes.mapTo(hashSetOf()) { it.toString() }
   }

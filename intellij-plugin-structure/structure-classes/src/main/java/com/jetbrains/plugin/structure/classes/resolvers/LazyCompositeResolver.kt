@@ -14,6 +14,7 @@ class LazyCompositeResolver private constructor(
     CompositeResolver.create(resolvers, name)
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String>
     get() = delegateResolver.allClasses
 
