@@ -47,13 +47,12 @@ sealed class XmlOutputFactoryResult {
 
 fun createXmlOutputFactory(): XmlOutputFactoryResult {
   try {
-    val inputFactory = XMLOutputFactory.newInstance()
-    return XmlOutputFactoryResult.Created(inputFactory)
+    val outputFactory = XMLOutputFactory.newInstance()
+    return XmlOutputFactoryResult.Created(outputFactory)
   } catch (e: FactoryConfigurationError) {
     return XmlOutputFactoryResult.ConfigurationError(e)
   }
 }
-
 
 fun XMLInputFactory.newEventReader(inputStream: InputStream): CloseableXmlEventReader =
   CloseableXmlEventReader(createXMLEventReader(inputStream))
