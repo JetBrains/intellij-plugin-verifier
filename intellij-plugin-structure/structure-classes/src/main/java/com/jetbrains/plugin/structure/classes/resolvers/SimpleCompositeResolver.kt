@@ -65,7 +65,12 @@ class SimpleCompositeResolver internal constructor(
     return ResolutionResult.NotFound
   }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean {
+    return resolvers.any { it.containsClass(className) }
+  }
+
+  override fun containsClass(className: BinaryClassName): Boolean {
     return resolvers.any { it.containsClass(className) }
   }
 

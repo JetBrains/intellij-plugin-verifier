@@ -82,7 +82,14 @@ abstract class Resolver : Closeable {
    * Returns true if `this` Resolver contains the given class. It may be faster
    * than checking [.findClass] is not null.
    */
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   abstract fun containsClass(className: String): Boolean
+
+  /**
+   * Returns true if `this` Resolver contains the given class. It may be faster
+   * than checking [.findClass] is not null.
+   */
+  abstract fun containsClass(className: BinaryClassName): Boolean
 
   /**
    * Returns true if `this` Resolver contains the given package,
@@ -90,6 +97,7 @@ abstract class Resolver : Closeable {
    * than fetching [allPackages] and checking for presence in it.
    */
   abstract fun containsPackage(packageName: String): Boolean
+
 
   /**
    * Runs the given [processor] on every class contained in _this_ [Resolver].

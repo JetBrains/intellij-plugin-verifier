@@ -21,7 +21,10 @@ class EmptyResolver(override val name: String) : NamedResolver(name) {
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) = ResolutionResult.NotFound
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = false
+
+  override fun containsClass(className: BinaryClassName) = false
 
   override fun containsPackage(packageName: String) = false
 

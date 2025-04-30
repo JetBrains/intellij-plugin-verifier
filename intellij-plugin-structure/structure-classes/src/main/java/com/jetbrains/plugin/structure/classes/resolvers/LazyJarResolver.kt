@@ -68,7 +68,10 @@ class LazyJarResolver(
       processor(readClass(className, classFilePath)) }
   }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean = jar.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String): Boolean = jar.containsPackage(packageName)
 

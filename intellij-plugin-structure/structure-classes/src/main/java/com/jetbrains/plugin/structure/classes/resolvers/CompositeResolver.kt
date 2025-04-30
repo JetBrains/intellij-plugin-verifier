@@ -71,11 +71,14 @@ class CompositeResolver private constructor(
 
   private fun getPackageName(className: String) = className.substringBeforeLast('/', "")
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName] ?: emptyList()
     return resolvers.any { it.containsClass(className) }
   }
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageToResolvers
 

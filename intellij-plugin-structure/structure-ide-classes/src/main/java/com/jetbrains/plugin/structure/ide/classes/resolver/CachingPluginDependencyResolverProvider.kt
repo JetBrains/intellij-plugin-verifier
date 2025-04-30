@@ -140,7 +140,10 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
       locale: Locale
     ) = delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
 
+    @Deprecated("Use 'containsClass(BinaryClassName)' instead")
     override fun containsClass(className: String) = delegateResolver.containsClass(className)
+
+    override fun containsClass(className: BinaryClassName) = delegateResolver.containsClass(className)
 
     override fun containsPackage(packageName: String) = delegateResolver.containsPackage(packageName)
 

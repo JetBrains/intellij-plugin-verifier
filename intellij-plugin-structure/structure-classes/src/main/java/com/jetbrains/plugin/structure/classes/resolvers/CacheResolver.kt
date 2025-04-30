@@ -67,8 +67,11 @@ class CacheResolver(
 
   override fun toString() = "Caching resolver for $delegate"
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) =
     delegate.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName) = delegate.containsClass(className)
 
   override fun containsPackage(packageName: String) =
     delegate.containsPackage(packageName)

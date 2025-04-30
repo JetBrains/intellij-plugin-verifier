@@ -83,7 +83,10 @@ class FixedClassesResolver private constructor(
   override val packages: Set<String>
     get() = packageSet.entries
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classes
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 

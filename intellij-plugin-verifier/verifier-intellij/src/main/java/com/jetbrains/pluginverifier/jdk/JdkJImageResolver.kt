@@ -140,7 +140,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
     }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classNameToModuleName
+
+  override fun containsClass(className: BinaryClassName) = className.toString() in classNameToModuleName
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 

@@ -118,7 +118,10 @@ class DirectoryResolver(
   override val allClassNames: Set<BinaryClassName>
     get() = allClasses
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classNameToFile
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 

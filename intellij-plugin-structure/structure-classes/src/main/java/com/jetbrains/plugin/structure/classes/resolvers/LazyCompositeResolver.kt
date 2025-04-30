@@ -41,7 +41,10 @@ class LazyCompositeResolver private constructor(
     locale: Locale
   ): ResolutionResult<PropertyResourceBundle> = delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean = delegateResolver.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName): Boolean = delegateResolver.containsClass(className)
 
   override fun containsPackage(packageName: String): Boolean = delegateResolver.containsPackage(packageName)
 
