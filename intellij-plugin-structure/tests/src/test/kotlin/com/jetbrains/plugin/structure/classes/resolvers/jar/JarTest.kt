@@ -2,7 +2,10 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.emptyClass
+import com.jetbrains.plugin.structure.jar.Jar
+import com.jetbrains.plugin.structure.jar.JarEntryResolver
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.descriptors.DescriptorReference
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -25,6 +28,7 @@ class JarTest {
 
   private fun createJar(jarPath: Path): Jar {
     buildZipFile(jarPath) {
+      file("intellij.example.xml", "<idea-plugin />")
       dir("META-INF") {
         file("plugin.properties") {
           """
@@ -32,6 +36,7 @@ class JarTest {
             enabled=1
           """.trimIndent()
         }
+        file("pluginIcon.svg", "<svg width='1' height='1' xmlns='http://www.w3.org/2000/svg' />")
         dir("services") {
           file("kotlinx.coroutines.internal.MainDispatcherFactory") {
             "com.intellij.openapi.application.impl.EdtCoroutineDispatcherFactory"
@@ -48,6 +53,7 @@ class JarTest {
             """.trimIndent()
           }
         }
+        file("plugin.xml", "<idea-plugin />")
       }
       dirs("com/example") {
         file("MyClass.class", byteBuddy.emptyClass("com.example.MyClass"))
@@ -125,6 +131,27 @@ class JarTest {
         assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.jre.NativeTransportProvider"))
         assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.tcp.TCPTransportProvider"))
       }
+
+      with(jar.descriptorCandidates) {
+        assertEquals(2, size)
+        val descriptorCandidatePaths =
+          filterIsInstance<DescriptorReference>()
+            .mapTo(mutableSetOf()) { it.path.toString() }
+        assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
+      }
+    }
+  }
+
+  @Test
+  fun `extra entry resolver is applied`() {
+    val jarPath = temporaryFolder.newFile("plugin-extra-entry-resolver.jar").toPath()
+    createJar(jarPath).use { jar ->
+      val pluginIconResolver = PluginIconJarEntryResolver()
+      val entryResolvers: List<JarEntryResolver<*>> = listOf(pluginIconResolver)
+      val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider, entryResolvers)
+      jar.init()
+
+      assertEquals(listOf("pluginIcon.svg"), jar.entryResolverResults[pluginIconResolver.key])
     }
   }
 

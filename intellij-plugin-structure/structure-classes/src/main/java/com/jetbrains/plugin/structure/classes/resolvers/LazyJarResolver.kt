@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
-import com.jetbrains.plugin.structure.classes.resolvers.jar.Jar
+import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.invoke

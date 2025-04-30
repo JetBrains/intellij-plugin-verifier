@@ -3,7 +3,7 @@ package com.jetbrains.plugin.structure.jar
 import java.nio.file.FileSystem
 import java.nio.file.Path
 
-fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, useFileSystem: (FileSystem) -> T): T {
+inline fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, useFileSystem: (FileSystem) -> T): T {
   return try {
     val fs = fileSystemProvider.getFileSystem(this)
     useFileSystem(fs)
@@ -19,6 +19,6 @@ fun <T> Path.useFileSystem(fileSystemProvider: JarFileSystemProvider, useFileSys
   }
 }
 
-operator fun <T> JarFileSystemProvider.invoke(path: Path, useFileSystem: (FileSystem) -> T): T {
+inline operator fun <T> JarFileSystemProvider.invoke(path: Path, useFileSystem: (FileSystem) -> T): T {
   return path.useFileSystem(this, useFileSystem)
 }

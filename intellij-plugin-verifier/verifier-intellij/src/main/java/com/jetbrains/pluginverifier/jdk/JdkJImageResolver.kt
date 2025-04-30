@@ -9,11 +9,11 @@ import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
 import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.Packages
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
+import com.jetbrains.plugin.structure.jar.Packages
 import org.objectweb.asm.tree.ClassNode
 import java.net.URI
 import java.nio.file.FileSystem

@@ -1,10 +1,13 @@
-package com.jetbrains.plugin.structure.classes.resolvers.jar
+package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
+import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.classes.resolvers.Packages
-import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
-import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.invoke
+import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
+import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
+import com.jetbrains.plugin.structure.jar.descriptors.Descriptor
+import com.jetbrains.plugin.structure.jar.descriptors.ModuleDescriptorReference
+import com.jetbrains.plugin.structure.jar.descriptors.PluginDescriptorReference
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -20,6 +23,7 @@ import java.util.zip.ZipInputStream
 import kotlin.math.min
 import kotlin.streams.asSequence
 
+
 private val LOG: Logger = LoggerFactory.getLogger(Jar::class.java)
 
 private val NO_SUFFIX: CharBuffer = CharBuffer.allocate(0)
@@ -29,6 +33,8 @@ private val CLASS_SUFFIX: CharBuffer = CharBuffer.wrap(".class")
 private val RESOURCE_BUNDLE_EXTENSION: CharBuffer = CharBuffer.wrap("properties")
 private val RESOURCE_BUNDLE_SUFFIX: CharBuffer = CharBuffer.wrap(".properties")
 
+private val XML_DESCRIPTOR_SUFFIX: CharBuffer = CharBuffer.wrap(".xml")
+
 private const val JAR_PATH_SEPARATOR_CHAR = '/'
 
 private const val RESOURCE_BUNDLE_SEPARATOR = '.'
@@ -37,7 +43,8 @@ typealias PathInJar = CharSequence
 
 class Jar(
   val jarPath: Path,
-  private val fileSystemProvider: JarFileSystemProvider
+  private val fileSystemProvider: JarFileSystemProvider,
+  private val entryResolvers: List<JarEntryResolver<*>> = emptyList()
 ) : AutoCloseable {
 
   private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
@@ -71,11 +78,15 @@ class Jar(
 
   private val serviceProviderPaths = mutableSetOf<CharSequence>()
 
+  val descriptorCandidates = mutableSetOf<Descriptor>()
+
+  val entryResolverResults: MutableMap<Key<*>, MutableList<Any?>> = mutableMapOf()
+
   fun init(): Jar = apply {
     if (jarPath.supportsFile()) {
-      init(jarPath.toFile())
+      init(ZipResource.ZipFile(jarPath))
     } else {
-      init(jarPath)
+      init(ZipResource.ZipPath(jarPath))
     }
   }
 
@@ -89,7 +100,7 @@ class Jar(
     }
   }
 
-  private fun <T> useFileSystem(action: (FileSystem) -> T): T {
+  private inline fun <T> useFileSystem(action: (FileSystem) -> T): T {
     return fileSystemProvider(jarPath, action)
   }
 
@@ -117,23 +128,23 @@ class Jar(
 
   private fun Path.supportsFile() = fileSystem == FileSystems.getDefault()
 
-  private fun init(jarPath: File) {
-    ZipFile(jarPath).use { zip ->
+  private fun init(zipFile: ZipResource.ZipFile) {
+    ZipFile(zipFile.file).use { zip ->
       zip.entries().asIterator().forEach {
         if (!it.isDirectory) {
-          scan(it)
+          scan(it, zipFile)
         }
       }
     }
   }
 
-  private fun init(jarPath: Path) {
-    Files.newInputStream(jarPath).use { it ->
+  private fun init(zipPath: ZipResource.ZipPath) {
+    Files.newInputStream(zipPath.path).use { it ->
       ZipInputStream(it).use { jar ->
         var zipEntry = jar.nextEntry
         while (zipEntry != null) {
           if (!zipEntry.isDirectory) {
-            scan(zipEntry)
+            scan(zipEntry, ZipResource.ZipStream(zipPath.path, jar))
           }
           jar.closeEntry()
           zipEntry = jar.nextEntry
@@ -142,7 +153,7 @@ class Jar(
     }
   }
 
-  private fun scan(zipEntry: ZipEntry) {
+  private fun scan(zipEntry: ZipEntry, zipPath: ZipResource) {
     val path = PathWithinJar.of(zipEntry)
     if (path.isClass()) {
       handleClass(resolveClass(path), path.path)
@@ -150,6 +161,17 @@ class Jar(
       handleResourceBundle(resolveBundleName(path))
     } else if (path.hasServiceProviders()) {
       handleServiceProvider(path.path)
+    } else {
+      val descriptorType = path.matchesDescriptor()
+      if (descriptorType != NO_MATCH) {
+        handleDescriptorCandidate(zipEntry, path, descriptorType)
+      } else {
+        entryResolvers.forEach { resolver ->
+          resolver.resolve(path.path, zipEntry)?.let {
+            entryResolverResults.getOrPut(resolver.key) { mutableListOf() } += it
+          }
+        }
+      }
     }
   }
 
@@ -190,18 +212,22 @@ class Jar(
       pathBuf
     }
     val neitherPrefixNoSuffix = if (suffix.isNotEmpty() && noPrefix.endsWith(suffix)) {
-      noPrefix.subSequence(0, noPrefix.length - suffix.length)
+      CharBufferCharSequence(noPrefix, 0, noPrefix.length - suffix.length)
     } else {
       noPrefix
     }
     return if (separator == File.separatorChar) {
       neitherPrefixNoSuffix
     } else {
-      CharReplacer(neitherPrefixNoSuffix, File.separatorChar, separator)
+      CharReplacingCharSequence(neitherPrefixNoSuffix, File.separatorChar, separator)
     }
   }
 
   private fun resolveClass(path: PathWithinJar): CharSequence {
+    if (File.separatorChar == JAR_PATH_SEPARATOR_CHAR) {
+      return path.removeSuffix(CLASS_SUFFIX)
+    }
+
     return resolve(path, JAR_PATH_SEPARATOR_CHAR, CLASS_SUFFIX)
   }
 
@@ -209,9 +235,25 @@ class Jar(
     return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
   }
 
+  private fun handleDescriptorCandidate(zipEntry: ZipEntry, path: PathWithinJar, descriptorType: DescriptorType) {
+    when (descriptorType) {
+      PLUGIN -> descriptorCandidates += PluginDescriptorReference(jarPath, path.path)
+      MODULE -> descriptorCandidates += ModuleDescriptorReference(jarPath, path.path)
+      else -> Unit
+    }
+  }
+
   private fun PathWithinJar.hasServiceProviders(): Boolean {
     val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
     return spPath.startsWith("META-INF/services/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
+  }
+
+  private fun PathWithinJar.matchesDescriptor(): DescriptorType {
+    if (!isXml()) return NO_MATCH
+    val descriptorPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
+    if (descriptorPath.startsWith("META-INF/") && descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1) return PLUGIN
+    if (descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0) return MODULE
+    return NO_MATCH
   }
 
   private fun CharSequence.occurrences(c: Char): Int {
@@ -243,41 +285,28 @@ class Jar(
 
     fun isClass(): Boolean = path.endsWith(CLASS_SUFFIX)
     fun isResourceBundle(): Boolean = path.endsWith(RESOURCE_BUNDLE_EXTENSION)
+    fun isXml(): Boolean = path.endsWith(XML_DESCRIPTOR_SUFFIX)
 
     fun removePrefix(prefix: String): CharSequence {
       if (!path.startsWith(prefix)) return path
       return path.subSequence(0, prefix.length)
     }
 
+    fun removeSuffix(suffix: CharSequence): CharSequence {
+      if (!path.endsWith(suffix)) return path
+      return CharBufferCharSequence(path, 0, path.length - suffix.length)
+    }
+
     override fun toString(): String = path.toString()
-  }
-
-  class CharReplacer(private val buf: CharBuffer, private val oldChar: Char, private val replacement: Char) :
-    CharSequence {
-    override val length: Int
-      get() = buf.length
-
-    override fun get(index: Int): Char {
-      val c = buf[index]
-      return if (c == oldChar) replacement else c
-    }
-
-    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-      return CharReplacer(buf.subSequence(startIndex, endIndex), oldChar, replacement)
-    }
-
-    override fun toString(): String {
-      val newBuf = CharBuffer.allocate(buf.length)
-      for (i in 0..buf.length - 1) {
-        newBuf.put(i, get(i))
-      }
-      return newBuf.toString()
-    }
   }
 
   private object CharSequenceComparator : Comparator<CharSequence> {
     override fun compare(cs1: CharSequence, cs2: CharSequence): Int {
       if (cs1 === cs2) return 0
+
+      if (cs1 is CharBuffer && cs2 is CharBuffer) {
+        return cs1.compareTo(cs2)
+      }
 
       val len1 = cs1.length
       val len2 = cs2.length
@@ -292,6 +321,50 @@ class Jar(
       }
       return len1 - len2
     }
+  }
+
+  class CharBufferCharSequence(private val buffer: CharBuffer, private val startIndex: Int, private val endIndex: Int) : CharSequence {
+
+    init {
+      if (startIndex < 0 || endIndex > buffer.length || startIndex > endIndex) {
+        throw IndexOutOfBoundsException("Invalid start or end index")
+      }
+    }
+
+    override val length: Int
+      get() = endIndex - startIndex
+
+    override fun get(index: Int): Char {
+      if (index < 0 || index >= length) {
+        throw IndexOutOfBoundsException("Index out of bounds: " + index)
+      }
+      return buffer.get(startIndex + index)
+    }
+
+    override fun subSequence(subStart: Int, subEnd: Int): CharSequence {
+      if (subStart < 0 || subEnd > length || subStart > subEnd) {
+        throw IndexOutOfBoundsException("Invalid subSequence range")
+      }
+      return CharBufferCharSequence(buffer, startIndex + subStart, startIndex + subEnd)
+    }
+
+    override fun toString(): String {
+      return buffer.subSequence(startIndex, endIndex).toString()
+    }
+  }
+
+  sealed class ZipResource {
+    data class ZipFile(val path: Path) : ZipResource() {
+      val file: File = path.toFile()
+    }
+
+    data class ZipPath(val path: Path) : ZipResource()
+
+    data class ZipStream(val path: Path, val inputStream: ZipInputStream) : ZipResource()
+  }
+
+  enum class DescriptorType {
+    NO_MATCH, PLUGIN, MODULE
   }
 }
 
