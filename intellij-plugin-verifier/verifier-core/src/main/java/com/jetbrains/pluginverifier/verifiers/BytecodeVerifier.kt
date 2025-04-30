@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.verifiers
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier
 import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
@@ -27,6 +28,7 @@ import com.jetbrains.pluginverifier.verifiers.method.MethodTryCatchVerifier
 import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier
 import com.jetbrains.pluginverifier.verifiers.method.OverrideNonFinalVerifier
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 
 class BytecodeVerifier(
@@ -63,7 +65,8 @@ class BytecodeVerifier(
   ) + additionalInstructionVerifiers
 
   @Throws(InterruptedException::class)
-  @Deprecated("Use verifyClasses(Set<BinaryClassName>, VerificationContext, (Double) -> Unit) instead",
+  @Deprecated(
+    "Use verifyClasses(Set<BinaryClassName>, VerificationContext, (Double) -> Unit) instead",
     replaceWith = ReplaceWith("verifyClasses(classesToCheck, context, progressIndicator)")
   )
   fun verify(
@@ -81,9 +84,10 @@ class BytecodeVerifier(
   }
 
   @Throws(InterruptedException::class)
-  fun verifyClasses(classesToCheck: Set<BinaryClassName>,
-                    context: VerificationContext,
-                    progressIndicator: (Double) -> Unit
+  fun verifyClasses(
+    classesToCheck: Set<BinaryClassName>,
+    context: VerificationContext,
+    progressIndicator: (Double) -> Unit
   ) {
     if (classesToCheck.isEmpty()) return
     for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
@@ -94,9 +98,10 @@ class BytecodeVerifier(
   }
 
   private fun verifyClass(className: BinaryClassName, context: VerificationContext) {
-    val classFile = context.classResolver.resolveClassOrNull(className.toString())
-    if (classFile != null && shouldVerify(classFile)) {
-      verifyClassFile(classFile, context)
+    context.resolveClass(className)?.let {
+      if (shouldVerify(it)) {
+        verifyClassFile(it, context)
+      }
     }
   }
 
@@ -133,4 +138,9 @@ class BytecodeVerifier(
     }
   }
 
+  private fun VerificationContext.resolveClass(className: BinaryClassName): ClassFile? {
+    return (classResolver.resolveClass(className) as? ResolutionResult.Found) ?.let {
+      ClassFileAsm(it.value, it.fileOrigin)
+    }
+  }
 }
