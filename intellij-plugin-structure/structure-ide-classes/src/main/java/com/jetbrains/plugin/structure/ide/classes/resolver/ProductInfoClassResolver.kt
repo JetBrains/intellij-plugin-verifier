@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
@@ -105,7 +106,10 @@ class ProductInfoClassResolver(
 
   override val readMode: ReadMode get() = resolverConfiguration.readMode
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses get() = delegateResolver.allClasses
+
+  override val allClassNames: Set<BinaryClassName> get() = delegateResolver.allClassNames
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages get() = delegateResolver.allPackages
@@ -114,12 +118,20 @@ class ProductInfoClassResolver(
 
   override val allBundleNameSet get() = delegateResolver.allBundleNameSet
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String) = delegateResolver.resolveClass(className)
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return delegateResolver.resolveClass(className)
+  }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) =
     delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = delegateResolver.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName) = delegateResolver.containsClass(className)
 
   override fun containsPackage(packageName: String) = delegateResolver.containsPackage(packageName)
 

@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
@@ -61,9 +62,14 @@ class DirectoryResolver(
     return root
   }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classFile = classNameToFile[className] ?: return ResolutionResult.NotFound
     return readClass(className, classFile)
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   private fun readClass(className: String, classFile: Path): ResolutionResult<ClassNode> =
@@ -105,10 +111,17 @@ class DirectoryResolver(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classNameToFile.keys
 
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClasses
+
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classNameToFile
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 

@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
@@ -694,10 +695,10 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
 
   private fun checkPluginClasses(resolver: Resolver, expectedFileOrigin: FileOrigin) {
     assertEquals(
-      setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
-      resolver.allClasses
+      binaryClassNames("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
+      resolver.allClassNames
     )
-    assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.packages)
+    assertEquals(binaryClassNames("somePackage", "somePackage/subPackage"), resolver.packages)
     assertTrue(resolver.containsPackage("somePackage"))
     assertTrue(resolver.containsPackage("somePackage/subPackage"))
 
@@ -857,10 +858,10 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     }
     val singleResolver = resolvers.single() as AbstractJarResolver
 
-    val libDirectoryClasses = singleResolver.allClasses
+    val libDirectoryClasses = singleResolver.allClassNames
 
     val compileLibraryClass = "com/some/compile/library/CompileLibraryClass"
-    assertEquals(setOf(compileLibraryClass), libDirectoryClasses)
+    assertEquals(binaryClassNames(compileLibraryClass), libDirectoryClasses)
 
     val fileOrigin = (singleResolver.resolveClass(compileLibraryClass) as ResolutionResult.Found).fileOrigin
     assertEquals(JarOrZipFileOrigin("compile-library.jar", PluginFileOrigin.CompileServer(plugin)), fileOrigin)

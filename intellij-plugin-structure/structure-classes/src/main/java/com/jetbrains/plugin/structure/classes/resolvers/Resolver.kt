@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.io.IOException
@@ -30,7 +31,13 @@ abstract class Resolver : Closeable {
   /**
    * Returns the *binary* names of all the contained classes.
    */
+  @Deprecated(message = "Use 'allClassNames' property instead which is more efficient")
   abstract val allClasses: Set<String>
+
+  /**
+   * Returns the *binary* names of all the contained classes.
+   */
+  abstract val allClassNames: Set<BinaryClassName>
 
   /**
    * Returns binary names of all contained packages and their super-packages.
@@ -57,7 +64,13 @@ abstract class Resolver : Closeable {
   /**
    * Resolves class with specified binary name.
    */
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   abstract fun resolveClass(className: String): ResolutionResult<ClassNode>
+
+  /**
+   * Resolves class with specified binary name.
+   */
+  abstract fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode>
 
   /**
    * Resolves property resource bundle with specified **exact** base name and locale.
@@ -69,7 +82,14 @@ abstract class Resolver : Closeable {
    * Returns true if `this` Resolver contains the given class. It may be faster
    * than checking [.findClass] is not null.
    */
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   abstract fun containsClass(className: String): Boolean
+
+  /**
+   * Returns true if `this` Resolver contains the given class. It may be faster
+   * than checking [.findClass] is not null.
+   */
+  abstract fun containsClass(className: BinaryClassName): Boolean
 
   /**
    * Returns true if `this` Resolver contains the given package,
@@ -77,6 +97,7 @@ abstract class Resolver : Closeable {
    * than fetching [allPackages] and checking for presence in it.
    */
   abstract fun containsPackage(packageName: String): Boolean
+
 
   /**
    * Runs the given [processor] on every class contained in _this_ [Resolver].

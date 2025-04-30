@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
@@ -29,8 +30,13 @@ class LazyJarResolver(
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String> by lazy  {
     jar.classes.mapTo(hashSetOf()) { it.toString() }
+  }
+
+  override val allClassNames: Set<BinaryClassName> by lazy {
+    jar.classes
   }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
@@ -46,10 +52,15 @@ class LazyJarResolver(
     jar.serviceProviders
   }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     return jar.withClass(className) { className, classFilePath ->
       readClass(className, classFilePath)
     } ?: NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
@@ -57,7 +68,10 @@ class LazyJarResolver(
       processor(readClass(className, classFilePath)) }
   }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean = jar.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String): Boolean = jar.containsPackage(packageName)
 

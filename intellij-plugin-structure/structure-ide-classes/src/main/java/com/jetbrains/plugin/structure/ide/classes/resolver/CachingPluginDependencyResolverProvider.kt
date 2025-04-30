@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
@@ -116,8 +117,11 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
 
     override val readMode: ReadMode
       get() = delegateResolver.readMode
+    @Deprecated("Use 'allClassNames' property instead which is more efficient")
     override val allClasses: Set<String>
       get() = delegateResolver.allClasses
+    override val allClassNames: Set<BinaryClassName>
+      get() = delegateResolver.allClassNames
     @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
     override val allPackages: Set<String>
       get() = delegateResolver.allPackages
@@ -126,14 +130,20 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
     override val allBundleNameSet: ResourceBundleNameSet
       get() = delegateResolver.allBundleNameSet
 
+    @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
     override fun resolveClass(className: String) = delegateResolver.resolveClass(className)
+
+    override fun resolveClass(className: BinaryClassName) = delegateResolver.resolveClass(className)
 
     override fun resolveExactPropertyResourceBundle(
       baseName: String,
       locale: Locale
     ) = delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
 
+    @Deprecated("Use 'containsClass(BinaryClassName)' instead")
     override fun containsClass(className: String) = delegateResolver.containsClass(className)
+
+    override fun containsClass(className: BinaryClassName) = delegateResolver.containsClass(className)
 
     override fun containsPackage(packageName: String) = delegateResolver.containsPackage(packageName)
 

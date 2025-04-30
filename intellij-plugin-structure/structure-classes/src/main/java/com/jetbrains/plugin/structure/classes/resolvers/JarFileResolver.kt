@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
@@ -113,7 +114,11 @@ class JarFileResolver(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
+    get() = classes
+
+  override val allClassNames
     get() = classes
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
@@ -132,10 +137,14 @@ class JarFileResolver(
     }
   }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classes
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     checkIsOpen()
     if (className !in classes) {
@@ -149,6 +158,10 @@ class JarFileResolver(
         ResolutionResult.NotFound
       }
     }
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {

@@ -4,14 +4,31 @@
 
 package com.jetbrains.pluginverifier.verifiers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
-import com.jetbrains.pluginverifier.verifiers.clazz.*
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.pluginverifier.verifiers.clazz.AbstractMethodVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.ClassVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.InheritFromFinalClassVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.InterfacesVerifier
+import com.jetbrains.pluginverifier.verifiers.clazz.SuperClassVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldTypeVerifier
 import com.jetbrains.pluginverifier.verifiers.field.FieldVerifier
 import com.jetbrains.pluginverifier.verifiers.filter.ClassFilter
-import com.jetbrains.pluginverifier.verifiers.instruction.*
-import com.jetbrains.pluginverifier.verifiers.method.*
+import com.jetbrains.pluginverifier.verifiers.instruction.InstructionVerifier
+import com.jetbrains.pluginverifier.verifiers.instruction.LdcInstructionVerifier
+import com.jetbrains.pluginverifier.verifiers.instruction.MemberAccessVerifier
+import com.jetbrains.pluginverifier.verifiers.instruction.MultiANewArrayInstructionVerifier
+import com.jetbrains.pluginverifier.verifiers.instruction.TypeInstructionVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodArgumentTypesVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodLocalVarsVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodReturnTypeVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodThrowsVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodTryCatchVerifier
+import com.jetbrains.pluginverifier.verifiers.method.MethodVerifier
+import com.jetbrains.pluginverifier.verifiers.method.OverrideNonFinalVerifier
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
+import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
 
 class BytecodeVerifier(
@@ -48,6 +65,10 @@ class BytecodeVerifier(
   ) + additionalInstructionVerifiers
 
   @Throws(InterruptedException::class)
+  @Deprecated(
+    "Use verifyClasses(Set<BinaryClassName>, VerificationContext, (Double) -> Unit) instead",
+    replaceWith = ReplaceWith("verifyClasses(classesToCheck, context, progressIndicator)")
+  )
   fun verify(
     classesToCheck: Set<String>,
     context: VerificationContext,
@@ -58,6 +79,28 @@ class BytecodeVerifier(
         checkIfInterrupted()
         verifyClass(className, context)
         progressIndicator((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
+      }
+    }
+  }
+
+  @Throws(InterruptedException::class)
+  fun verifyClasses(
+    classesToCheck: Set<BinaryClassName>,
+    context: VerificationContext,
+    progressIndicator: (Double) -> Unit
+  ) {
+    if (classesToCheck.isEmpty()) return
+    for ((totalVerifiedClasses, className) in classesToCheck.withIndex()) {
+      checkIfInterrupted()
+      verifyClass(className, context)
+      progressIndicator((totalVerifiedClasses + 1).toDouble() / classesToCheck.size)
+    }
+  }
+
+  private fun verifyClass(className: BinaryClassName, context: VerificationContext) {
+    context.resolveClass(className)?.let {
+      if (shouldVerify(it)) {
+        verifyClassFile(it, context)
       }
     }
   }
@@ -95,4 +138,9 @@ class BytecodeVerifier(
     }
   }
 
+  private fun VerificationContext.resolveClass(className: BinaryClassName): ClassFile? {
+    return (classResolver.resolveClass(className) as? ResolutionResult.Found) ?.let {
+      ClassFileAsm(it.value, it.fileOrigin)
+    }
+  }
 }

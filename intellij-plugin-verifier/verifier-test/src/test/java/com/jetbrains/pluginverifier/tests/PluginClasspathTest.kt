@@ -1,7 +1,10 @@
 package com.jetbrains.pluginverifier.tests
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -60,7 +63,7 @@ class PluginClasspathTest : BasePluginTest() {
 
     IdePluginClassesFinder.findPluginClasses(pluginCreated.plugin).use { classLocations ->
       classLocations.createPluginResolver().use {
-        val pluginClasses = it.allClasses
+        val pluginClasses = it.allClassNames
         assertEquals(2, pluginClasses.size)
         assertTrue(pluginClasses.containsAll(setOf("SomeClass", "Module")))
       }
@@ -90,9 +93,9 @@ class PluginClasspathTest : BasePluginTest() {
 
     val locator = LibModulesDirectoryLocator(Resolver.ReadMode.FULL)
     val classes = locator.findClasses(plugin, plugin.originalFile!!)
-      .flatMap { it.allClasses }
+      .flatMapTo(binaryClassNames()) { it.allClassNames }
     assertEquals(1, classes.size)
-    assertEquals("Module", classes.first())
+    assertEquals(binaryClassNames("Module"), classes)
   }
 
   @Test
@@ -115,7 +118,7 @@ class PluginClasspathTest : BasePluginTest() {
     assertSuccess(result) {
       IdePluginClassesFinder.findPluginClasses(plugin).use { classLocations ->
         classLocations.createPluginResolver().use {
-          val pluginClasses = it.allClasses
+          val pluginClasses = it.allClassNames
           assertEquals(2, pluginClasses.size)
           assertTrue(pluginClasses.containsAll(setOf("PluginCore", "Module")))
         }
@@ -146,7 +149,7 @@ class PluginClasspathTest : BasePluginTest() {
     assertSuccess(result) {
       BundledPluginClassesFinder.findPluginClasses(plugin).use { classLocations ->
         classResolverProvider.getResolver(classLocations, resolverName = pluginId).use {
-          val pluginClasses = it.allClasses
+          val pluginClasses = it.allClassNames
           assertEquals(2, pluginClasses.size)
           assertTrue(pluginClasses.containsAll(setOf("PluginCore", "Module")))
         }
@@ -180,5 +183,18 @@ class PluginClasspathTest : BasePluginTest() {
 
   fun Classpath.containsFileName(fileName: String): Boolean {
     return entries.any { it.path.fileName.toString() == fileName }
+  }
+
+  private fun assertEquals(expected: Set<BinaryClassName>, actual: Set<BinaryClassName>): Boolean {
+    if (expected == actual) return true
+    if (expected.size != actual.size) return false
+    for (expectedClass in expected) {
+      for (actualClass in actual) {
+        if (CharSequenceComparator.compare(expectedClass, actualClass) != 0) {
+          return false
+        }
+      }
+    }
+    return true
   }
 }

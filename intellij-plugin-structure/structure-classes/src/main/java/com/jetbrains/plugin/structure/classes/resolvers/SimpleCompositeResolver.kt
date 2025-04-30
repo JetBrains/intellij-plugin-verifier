@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -10,8 +12,12 @@ class SimpleCompositeResolver internal constructor(
   val name: String
 ) : Resolver() {
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses: Set<String>
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = resolvers.flatMapTo(binaryClassNames()) { it.allClassNames }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
@@ -25,7 +31,18 @@ class SimpleCompositeResolver internal constructor(
       it.allBundleNameSet
     }.reduce { acc, bundleNames -> acc.merge(bundleNames) }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+    for (resolver in resolvers) {
+      val resolutionResult = resolver.resolveClass(className)
+      if (resolutionResult !is ResolutionResult.NotFound) {
+        return resolutionResult
+      }
+    }
+    return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
     for (resolver in resolvers) {
       val resolutionResult = resolver.resolveClass(className)
       if (resolutionResult !is ResolutionResult.NotFound) {
@@ -48,7 +65,12 @@ class SimpleCompositeResolver internal constructor(
     return ResolutionResult.NotFound
   }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean {
+    return resolvers.any { it.containsClass(className) }
+  }
+
+  override fun containsClass(className: BinaryClassName): Boolean {
     return resolvers.any { it.containsClass(className) }
   }
 

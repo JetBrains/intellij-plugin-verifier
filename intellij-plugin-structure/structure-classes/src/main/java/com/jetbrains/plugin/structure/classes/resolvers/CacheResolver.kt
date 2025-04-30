@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -27,8 +28,12 @@ class CacheResolver(
       .maximumSize(cacheSize.toLong())
       .build { key -> delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale) }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = delegate.allClasses
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = delegate.allClassNames
 
   override val allBundleNameSet
     get() = delegate.allBundleNameSet
@@ -43,10 +48,15 @@ class CacheResolver(
   override val readMode
     get() = delegate.readMode
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = try {
     classCache.get(className)
   } catch (e: ExecutionException) {
     throw e.cause ?: e
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> = try {
@@ -57,8 +67,11 @@ class CacheResolver(
 
   override fun toString() = "Caching resolver for $delegate"
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) =
     delegate.containsClass(className)
+
+  override fun containsClass(className: BinaryClassName) = delegate.containsClass(className)
 
   override fun containsPackage(packageName: String) =
     delegate.containsPackage(packageName)

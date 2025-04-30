@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -47,8 +49,12 @@ class CompositeResolver private constructor(
     }
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = resolvers.flatMapTo(binaryClassNames()) { it.allClassNames }
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(fullBundleNames)
@@ -65,14 +71,18 @@ class CompositeResolver private constructor(
 
   private fun getPackageName(className: String) = className.substringBeforeLast('/', "")
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String): Boolean {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName] ?: emptyList()
     return resolvers.any { it.containsClass(className) }
   }
 
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
+
   override fun containsPackage(packageName: String) = packageName in packageToResolvers
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName] ?: emptyList()
@@ -83,6 +93,10 @@ class CompositeResolver private constructor(
       }
     }
     return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {

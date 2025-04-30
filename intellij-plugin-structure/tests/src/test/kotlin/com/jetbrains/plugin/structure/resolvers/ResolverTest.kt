@@ -17,7 +17,7 @@ class ResolverTest {
   fun `empty cache doesnt contain classes`() {
     val cacheResolver = CacheResolver(EMPTY_RESOLVER)
     assertEquals(ResolutionResult.NotFound, cacheResolver.resolveClass("a"))
-    assertTrue(cacheResolver.allClasses.isEmpty())
+    assertTrue(cacheResolver.allClassNames.isEmpty())
     assertEquals(emptySet<String>(), cacheResolver.packages)
 
     assertEquals(ResolutionResult.NotFound, cacheResolver.resolveExactPropertyResourceBundle("a", Locale.ROOT))
@@ -35,7 +35,7 @@ class ResolverTest {
     val cacheResolver = CacheResolver(
       FixedClassesResolver.create(listOf(classNode), fileOrigin, readMode = Resolver.ReadMode.FULL)
     )
-    assertEquals(1, cacheResolver.allClasses.size)
+    assertEquals(1, cacheResolver.allClassNames.size)
     val found = cacheResolver.resolveClass(className) as ResolutionResult.Found
     assertEquals(classNode, found.value)
     assertEquals(fileOrigin, found.fileOrigin)
@@ -70,7 +70,7 @@ class ResolverTest {
     val resolver = CompositeResolver.create(resolver1, resolver2)
 
     assertEquals(setOf("some/package"), resolver.packages)
-    assertEquals(setOf(sameClass, class1, class2), resolver.allClasses)
+    assertEquals(setOf(sameClass, class1, class2), resolver.allClassNames)
 
     assertSame(origin1, (resolver.resolveClass(class1) as ResolutionResult.Found).fileOrigin)
     assertSame(origin2, (resolver.resolveClass(class2) as ResolutionResult.Found).fileOrigin)

@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.jdk
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
@@ -85,8 +86,12 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       .substringBeforeLast(".class").replace(nameSeparator, "/")
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classNameToModuleName.keys
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClassNames
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
@@ -103,6 +108,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
    *
    * The class name must be slash separated, e.g. `java/lang/String`.
    */
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
@@ -110,6 +116,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       return readClass(className, classPath)
     }
     return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> =
@@ -130,7 +140,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
     }
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classNameToModuleName
+
+  override fun containsClass(className: BinaryClassName) = className.toString() in classNameToModuleName
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 

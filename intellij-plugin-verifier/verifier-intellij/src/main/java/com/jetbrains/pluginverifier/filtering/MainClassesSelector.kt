@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.filtering
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
@@ -50,7 +52,7 @@ class MainClassesSelector private constructor(private val locationKeys: List<Loc
    * Instead, our approach is to look at classes referenced in the `plugin.xml`. Given these classes
    * we predict the .jar-files that correspond to the plugin itself (not the secondary bundled libraries).
    */
-  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
+  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<BinaryClassName> {
     val resolvers = locationKeys.flatMap { classesLocations.getResolvers(it) }
 
     val allClassesReferencedFromXml = getAllClassesReferencedFromXml(classesLocations.idePlugin)
@@ -65,7 +67,7 @@ class MainClassesSelector private constructor(private val locationKeys: List<Loc
       referencedResolvers
     }
 
-    return checkResolvers.flatMapTo(hashSetOf()) { it.allClasses }
+    return checkResolvers.flatMapTo(binaryClassNames()) { it.allClassNames }
   }
 
   private fun getAllClassesReferencedFromXml(plugin: IdePlugin): Set<String> {

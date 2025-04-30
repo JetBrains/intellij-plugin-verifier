@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
@@ -149,10 +150,10 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
 
   private fun checkPluginClasses(resolver: Resolver, expectedFileOrigin: FileOrigin) {
     assertEquals(
-      setOf("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
-      resolver.allClasses
+      binaryClassNames("somePackage/ClassOne", "somePackage/subPackage/ClassTwo"),
+      resolver.allClassNames
     )
-    assertEquals(setOf("somePackage", "somePackage/subPackage"), resolver.packages)
+    assertEquals(binaryClassNames("somePackage", "somePackage/subPackage"), resolver.packages)
     assertTrue(resolver.containsPackage("somePackage"))
     assertTrue(resolver.containsPackage("somePackage/subPackage"))
 

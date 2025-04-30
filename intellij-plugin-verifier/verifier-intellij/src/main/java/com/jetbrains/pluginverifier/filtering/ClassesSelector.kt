@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.filtering
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 
@@ -14,5 +15,5 @@ interface ClassesSelector {
 
   fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver>
 
-  fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String>
+  fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<BinaryClassName>
 }

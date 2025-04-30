@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -44,9 +45,14 @@ class FixedClassesResolver private constructor(
       .map { ResolutionResult.Found(it, fileOrigin) }
       .all(processor)
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classNode = classes[className] ?: return ResolutionResult.NotFound
     return ResolutionResult.Found(classNode, fileOrigin)
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
@@ -56,8 +62,12 @@ class FixedClassesResolver private constructor(
     return ResolutionResult.Found(propertyResourceBundle, fileOrigin)
   }
 
+  @Deprecated("Use 'allClassNames' property instead which is more efficient")
   override val allClasses
     get() = classes.keys
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClasses
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(
@@ -73,7 +83,10 @@ class FixedClassesResolver private constructor(
   override val packages: Set<String>
     get() = packageSet.entries
 
+  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
   override fun containsClass(className: String) = className in classes
+
+  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 
