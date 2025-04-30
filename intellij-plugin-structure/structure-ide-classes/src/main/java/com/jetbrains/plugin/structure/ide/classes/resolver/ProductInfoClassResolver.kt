@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
@@ -106,6 +107,8 @@ class ProductInfoClassResolver(
   override val readMode: ReadMode get() = resolverConfiguration.readMode
 
   override val allClasses get() = delegateResolver.allClasses
+
+  override val allClassNames: Set<BinaryClassName> get() = delegateResolver.allClassNames
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages get() = delegateResolver.allPackages

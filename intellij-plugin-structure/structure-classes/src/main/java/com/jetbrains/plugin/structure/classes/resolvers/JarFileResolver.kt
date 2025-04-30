@@ -116,6 +116,9 @@ class JarFileResolver(
   override val allClasses
     get() = classes
 
+  override val allClassNames
+    get() = classes
+
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     checkIsOpen()
     return JarFileSystemsPool.perform(jarPath) { jarFs ->

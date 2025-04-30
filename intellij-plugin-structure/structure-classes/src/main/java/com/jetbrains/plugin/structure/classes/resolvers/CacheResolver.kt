@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -29,6 +30,9 @@ class CacheResolver(
 
   override val allClasses
     get() = delegate.allClasses
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = delegate.allClassNames
 
   override val allBundleNameSet
     get() = delegate.allBundleNameSet

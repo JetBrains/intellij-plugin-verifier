@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -49,6 +51,9 @@ class CompositeResolver private constructor(
 
   override val allClasses
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = resolvers.flatMapTo(binaryClassNames()) { it.allClassNames }
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(fullBundleNames)

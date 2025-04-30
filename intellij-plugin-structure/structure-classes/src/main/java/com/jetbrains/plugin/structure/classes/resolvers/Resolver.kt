@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.io.Closeable
 import java.io.IOException
@@ -31,6 +32,11 @@ abstract class Resolver : Closeable {
    * Returns the *binary* names of all the contained classes.
    */
   abstract val allClasses: Set<String>
+
+  /**
+   * Returns the *binary* names of all the contained classes.
+   */
+  abstract val allClassNames: Set<BinaryClassName>
 
   /**
    * Returns binary names of all contained packages and their super-packages.

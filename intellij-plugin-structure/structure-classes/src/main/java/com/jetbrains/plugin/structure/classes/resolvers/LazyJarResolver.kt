@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
@@ -31,6 +32,10 @@ class LazyJarResolver(
 
   override val allClasses: Set<String> by lazy  {
     jar.classes.mapTo(hashSetOf()) { it.toString() }
+  }
+
+  override val allClassNames: Set<BinaryClassName> by lazy {
+    jar.classes
   }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")

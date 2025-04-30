@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
@@ -118,6 +119,8 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider) : 
       get() = delegateResolver.readMode
     override val allClasses: Set<String>
       get() = delegateResolver.allClasses
+    override val allClassNames: Set<BinaryClassName>
+      get() = delegateResolver.allClassNames
     @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
     override val allPackages: Set<String>
       get() = delegateResolver.allPackages

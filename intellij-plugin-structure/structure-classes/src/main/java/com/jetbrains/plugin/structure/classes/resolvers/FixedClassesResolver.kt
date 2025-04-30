@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -58,6 +59,9 @@ class FixedClassesResolver private constructor(
 
   override val allClasses
     get() = classes.keys
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClasses
 
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(

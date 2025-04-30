@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
@@ -22,6 +23,8 @@ class EmptyResolver(override val name: String) : NamedResolver(name) {
   override fun containsPackage(packageName: String) = false
 
   override val allClasses = emptySet<String>()
+
+  override val allClassNames: Set<BinaryClassName> = emptySet()
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages = emptySet<String>()

@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
@@ -107,6 +108,9 @@ class DirectoryResolver(
 
   override val allClasses
     get() = classNameToFile.keys
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClasses
 
   override fun containsClass(className: String) = className in classNameToFile
 

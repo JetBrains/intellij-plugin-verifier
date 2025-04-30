@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
@@ -15,6 +16,9 @@ class LazyCompositeResolver private constructor(
 
   override val allClasses: Set<String>
     get() = delegateResolver.allClasses
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = delegateResolver.allClassNames
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>

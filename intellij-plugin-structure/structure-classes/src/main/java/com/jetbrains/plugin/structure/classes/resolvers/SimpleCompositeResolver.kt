@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
@@ -12,6 +14,9 @@ class SimpleCompositeResolver internal constructor(
 
   override val allClasses: Set<String>
     get() = resolvers.flatMapTo(hashSetOf()) { it.allClasses }
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = resolvers.flatMapTo(binaryClassNames()) { it.allClassNames }
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String>
