@@ -1,5 +1,8 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.createEmptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
@@ -34,7 +37,7 @@ class CachingPluginDependencyResolverProviderTest {
 
   private lateinit var byteBuddy: ByteBuddy
 
-  val expectedIdeaCorePluginPackages = setOf(
+  val expectedIdeaCorePluginPackages = binaryClassNames(
     "com" ,
     "com/intellij",
     "com/intellij/openapi",
@@ -43,40 +46,40 @@ class CachingPluginDependencyResolverProviderTest {
     "com/intellij/openapi/graph/builder/actions"
   )
 
-  val expectedIdeaCorePluginExplicitPackages = setOf(
+  val expectedIdeaCorePluginExplicitPackages = binaryClassNames(
     "com/intellij/openapi/graph/builder/actions"
   )
 
-  val expectedJavaPluginPackages = setOf(
+  val expectedJavaPluginPackages = binaryClassNames(
     "com",
     "com/intellij",
     "com/intellij/openapi",
     "com/intellij/openapi/actionSystem",
   )
 
-  val expectedJavaPluginExplicitPackages = setOf(
+  val expectedJavaPluginExplicitPackages = binaryClassNames(
     "com/intellij/openapi/actionSystem",
   )
 
-  private val expectedJsonPluginPackages = setOf(
+  private val expectedJsonPluginPackages = binaryClassNames(
     "com",
     "com/intellij",
     "com/intellij/json",
   )
 
-  private val expectedJsonPluginExplicitPackages = setOf(
+  private val expectedJsonPluginExplicitPackages = binaryClassNames(
     "com/intellij/json",
   )
 
-  private val expectedIdeaCoreClasses = setOf(
+  private val expectedIdeaCoreClasses = binaryClassNames(
     "com/intellij/openapi/graph/builder/actions/SelectionNodeModeAction",
   )
 
-  private val expectedJavaPluginClasses = setOf(
+  private val expectedJavaPluginClasses = binaryClassNames(
     "com/intellij/openapi/actionSystem/DataKeys",
   )
 
-  private val expectedJsonPluginClasses = setOf(
+  private val expectedJsonPluginClasses = binaryClassNames(
     "com/intellij/json/JsonNamesValidator"
   )
 
@@ -182,7 +185,7 @@ class CachingPluginDependencyResolverProviderTest {
 
     with(resolver) {
       assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJsonPluginExplicitPackages, packages)
-      assertEquals(expectedIdeaCoreClasses + expectedJsonPluginClasses, allClasses)
+      assertEquals(expectedIdeaCoreClasses + expectedJsonPluginClasses, allClassNames)
     }
 
     val pluginDependingOnJavaResolver = resolverProvider.getResolver(pluginDependingOnJava)
@@ -203,7 +206,7 @@ class CachingPluginDependencyResolverProviderTest {
 
     with(pluginDependingOnJavaResolver) {
       assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJavaPluginExplicitPackages, packages)
-      assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClasses)
+      assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClassNames)
     }
   }
 
@@ -225,7 +228,7 @@ class CachingPluginDependencyResolverProviderTest {
 
     with(resolverProvider.getResolver(pluginDependingOnJava)) {
       assertEquals(expectedIdeaCorePluginPackages + expectedJavaPluginPackages, allPackages)
-      assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClasses)
+      assertEquals(expectedIdeaCoreClasses + expectedJavaPluginClasses, allClassNames)
     }
   }
 
@@ -286,11 +289,11 @@ class CachingPluginDependencyResolverProviderTest {
       // 'Alpha' plugin package should not be in the Alpha's transitive dependencies
       assertFalse(packages.contains("com/example/alpha"))
 
-      val expectedClasses = setOf(
+      val expectedClasses = binaryClassNames(
         "com/example/beta/BetaAction",
         "com/example/gamma/GammaAction",
       )
-      assertEquals(expectedClasses, allClasses)
+      assertEquals(expectedClasses, allClassNames)
       // 'Alpha' plugin classes should not be resolved in the dependencies
       assertFalse(packages.contains("com/example/alpha/AlphaAction"))
     }
@@ -347,5 +350,18 @@ class CachingPluginDependencyResolverProviderTest {
         /* isModule = */ false
       )
     }
+  }
+
+  private fun assertEquals(expected: Set<BinaryClassName>, actual: Set<BinaryClassName>): Boolean {
+    if (expected == actual) return true
+    if (expected.size != actual.size) return false
+    for (expectedClass in expected) {
+      for (actualClass in actual) {
+        if (CharSequenceComparator.compare(expectedClass, actualClass) != 0) {
+          return false
+        }
+      }
+    }
+    return true
   }
 }
