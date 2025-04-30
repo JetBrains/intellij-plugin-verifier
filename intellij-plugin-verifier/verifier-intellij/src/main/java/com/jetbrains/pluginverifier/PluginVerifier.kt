@@ -4,9 +4,11 @@
 
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERIFIED_CLASSES_COUNT
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.classes.resolvers.BinaryPackageName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Packages
@@ -124,7 +126,7 @@ class PluginVerifier(
             )
           )
         )
-      ).verify(classesToCheck, context) {}
+      ).verifyClasses(classesToCheck, context) {}
 
       context.runAnalyzers()
 
@@ -347,10 +349,10 @@ class PluginVerifier(
     }
   }
 
-  private fun selectClassesForCheck(pluginDetails: PluginDetails): Set<String> {
-    val classesForCheck = hashSetOf<String>()
+  private fun selectClassesForCheck(pluginDetails: PluginDetails): Set<BinaryClassName> {
     val selectorsToUse =
       if (excludeExternalBuildClassesSelector) classesSelectors.filterNot { it is ExternalBuildClassesSelector } else classesSelectors
+    val classesForCheck = binaryClassNames()
     for (classesSelector in selectorsToUse) {
       classesForCheck += classesSelector.getClassesForCheck(pluginDetails.pluginClassesLocations)
     }
@@ -363,7 +365,7 @@ class PluginVerifier(
     return allPackages.all
   }
 
-  private fun Set<String>.reportTelemetry(pluginDetails: PluginDetails, context: PluginVerificationContext) {
+  private fun Set<BinaryClassName>.reportTelemetry(pluginDetails: PluginDetails, context: PluginVerificationContext) {
     context.reportTelemetry(pluginDetails.pluginInfo, MutablePluginTelemetry().apply {
       set(PLUGIN_VERIFIED_CLASSES_COUNT, this@reportTelemetry.size)
     })

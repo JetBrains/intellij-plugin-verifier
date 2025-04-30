@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.filtering
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
@@ -17,7 +19,7 @@ class ExternalBuildClassesSelector : ClassesSelector {
   override fun getClassLoader(classesLocations: IdePluginClassesLocations): List<Resolver> =
     classesLocations.getResolvers(CompileServerExtensionKey)
 
-  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<String> {
+  override fun getClassesForCheck(classesLocations: IdePluginClassesLocations): Set<BinaryClassName> {
     val compileServerResolvers = classesLocations.getResolvers(CompileServerExtensionKey)
     val jarFileResolvers = compileServerResolvers.filterIsInstance<AbstractJarResolver>()
 
@@ -32,7 +34,7 @@ class ExternalBuildClassesSelector : ClassesSelector {
       .filter { resolver ->
         allServiceImplementations.any { serviceImplementation -> resolver.containsClass(serviceImplementation.replace('.', '/')) }
       }
-      .flatMapTo(hashSetOf()) { it.allClasses }
+      .flatMapTo(binaryClassNames()) { it.allClassNames }
   }
 
   private fun isJetbrainsServiceProvider(serviceProvider: String): Boolean =

@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.jdk
 
+import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
@@ -87,6 +88,9 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
 
   override val allClasses
     get() = classNameToModuleName.keys
+
+  override val allClassNames: Set<BinaryClassName>
+    get() = allClassNames
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages
