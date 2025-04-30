@@ -108,6 +108,7 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
    *
    * The class name must be slash separated, e.g. `java/lang/String`.
    */
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val moduleName = classNameToModuleName[className]
     if (moduleName != null) {
@@ -115,6 +116,10 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
       return readClass(className, classPath)
     }
     return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   private fun readClass(className: String, classPath: Path): ResolutionResult<ClassNode> =

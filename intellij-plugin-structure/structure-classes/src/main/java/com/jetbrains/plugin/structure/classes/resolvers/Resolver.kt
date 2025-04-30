@@ -64,7 +64,13 @@ abstract class Resolver : Closeable {
   /**
    * Resolves class with specified binary name.
    */
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   abstract fun resolveClass(className: String): ResolutionResult<ClassNode>
+
+  /**
+   * Resolves class with specified binary name.
+   */
+  abstract fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode>
 
   /**
    * Resolves property resource bundle with specified **exact** base name and locale.

@@ -62,9 +62,14 @@ class DirectoryResolver(
     return root
   }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classFile = classNameToFile[className] ?: return ResolutionResult.NotFound
     return readClass(className, classFile)
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   private fun readClass(className: String, classFile: Path): ResolutionResult<ClassNode> =

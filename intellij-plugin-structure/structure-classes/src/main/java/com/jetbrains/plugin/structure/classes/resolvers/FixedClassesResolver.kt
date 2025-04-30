@@ -45,9 +45,14 @@ class FixedClassesResolver private constructor(
       .map { ResolutionResult.Found(it, fileOrigin) }
       .all(processor)
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val classNode = classes[className] ?: return ResolutionResult.NotFound
     return ResolutionResult.Found(classNode, fileOrigin)
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {

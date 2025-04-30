@@ -52,10 +52,15 @@ class LazyJarResolver(
     jar.serviceProviders
   }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     return jar.withClass(className) { className, classFilePath ->
       readClass(className, classFilePath)
     } ?: NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {

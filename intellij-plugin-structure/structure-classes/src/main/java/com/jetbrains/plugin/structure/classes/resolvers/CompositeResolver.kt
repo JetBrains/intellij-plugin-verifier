@@ -79,6 +79,7 @@ class CompositeResolver private constructor(
 
   override fun containsPackage(packageName: String) = packageName in packageToResolvers
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
     val packageName = getPackageName(className)
     val resolvers = packageToResolvers[packageName] ?: emptyList()
@@ -89,6 +90,10 @@ class CompositeResolver private constructor(
       }
     }
     return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {

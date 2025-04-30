@@ -31,7 +31,10 @@ class LazyCompositeResolver private constructor(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = delegateResolver.allBundleNameSet
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = delegateResolver.resolveClass(className)
+
+  override fun resolveClass(className: BinaryClassName) = delegateResolver.resolveClass(className)
 
   override fun resolveExactPropertyResourceBundle(
     baseName: String,

@@ -48,10 +48,15 @@ class CacheResolver(
   override val readMode
     get() = delegate.readMode
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = try {
     classCache.get(className)
   } catch (e: ExecutionException) {
     throw e.cause ?: e
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> = try {

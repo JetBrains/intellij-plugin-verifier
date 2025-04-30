@@ -118,7 +118,12 @@ class ProductInfoClassResolver(
 
   override val allBundleNameSet get() = delegateResolver.allBundleNameSet
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String) = delegateResolver.resolveClass(className)
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
+    return delegateResolver.resolveClass(className)
+  }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) =
     delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)

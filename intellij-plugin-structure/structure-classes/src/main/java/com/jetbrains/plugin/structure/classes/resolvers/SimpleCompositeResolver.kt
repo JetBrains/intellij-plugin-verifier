@@ -31,7 +31,18 @@ class SimpleCompositeResolver internal constructor(
       it.allBundleNameSet
     }.reduce { acc, bundleNames -> acc.merge(bundleNames) }
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+    for (resolver in resolvers) {
+      val resolutionResult = resolver.resolveClass(className)
+      if (resolutionResult !is ResolutionResult.NotFound) {
+        return resolutionResult
+      }
+    }
+    return ResolutionResult.NotFound
+  }
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
     for (resolver in resolvers) {
       val resolutionResult = resolver.resolveClass(className)
       if (resolutionResult !is ResolutionResult.NotFound) {

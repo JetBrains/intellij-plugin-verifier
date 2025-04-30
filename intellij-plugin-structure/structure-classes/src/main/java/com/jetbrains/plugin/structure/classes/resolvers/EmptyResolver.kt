@@ -14,7 +14,10 @@ class EmptyResolver(override val name: String) : NamedResolver(name) {
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) = true
 
+  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String) = ResolutionResult.NotFound
+
+  override fun resolveClass(className: BinaryClassName) = ResolutionResult.NotFound
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale) = ResolutionResult.NotFound
 
