@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.base.utils
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.descriptors.IdeaPluginXmlDetector
+import com.jetbrains.plugin.structure.intellij.plugin.descriptors.createIdeaPluginXmlDetector
 import com.jetbrains.plugin.structure.jar.PluginJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.Assert.assertEquals
@@ -19,7 +19,7 @@ class PluginJarDescriptorTest {
 
   private lateinit var pluginJarPath: Path
 
-  private val ideaPluginXmlDetector = IdeaPluginXmlDetector()
+  private val ideaPluginXmlDetector = createIdeaPluginXmlDetector()
 
   private val jarFileSystemProvider = SingletonCachingJarFileSystemProvider
 
