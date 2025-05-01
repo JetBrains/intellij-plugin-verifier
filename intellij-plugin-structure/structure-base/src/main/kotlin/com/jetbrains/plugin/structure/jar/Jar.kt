@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 import java.nio.CharBuffer
+import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -92,7 +93,7 @@ class Jar(
   }
 
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
-    return fileSystemProvider.getFileSystem(jarPath).use { fs ->
+    return getFileSystem(jarPath, classesInJar.size).use { fs ->
       classesInJar.all { (className, classFilePath) ->
         fs.getPath(classFilePath.toString())
           .takeIf { it.isFile }
@@ -106,6 +107,10 @@ class Jar(
   fun containsClass(className: String) = className in classes
 
   private fun getPath(className: String): PathInJar? = classesInJar[className]
+
+  private fun getFileSystem(jarPath: Path, expectedClients: Int): FileSystem {
+    return fileSystemProvider.getFileSystem(jarPath, JarFileSystemProvider.Configuration(expectedClients))
+  }
 
   fun <T> withClass(className: String, handler: (String, Path) -> T): T? {
     return getPath(className)?.let { pathInJar ->

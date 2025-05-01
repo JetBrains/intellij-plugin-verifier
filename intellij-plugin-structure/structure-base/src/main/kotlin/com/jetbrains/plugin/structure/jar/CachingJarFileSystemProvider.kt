@@ -6,6 +6,8 @@ package com.jetbrains.plugin.structure.jar
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.plugin.structure.base.utils.withSuperScheme
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider.Companion.DEFAULT_EXPECTED_CLIENTS
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider.Configuration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -41,13 +43,23 @@ class CachingJarFileSystemProvider(
 
   @Synchronized
   override fun getFileSystem(jarPath: Path): FileSystem {
+    return getFileSystem(jarPath, expectedClients = DEFAULT_EXPECTED_CLIENTS)
+  }
+
+  @Synchronized
+  override fun getFileSystem(jarPath: Path, configuration: Configuration): FileSystem {
+    return getFileSystem(jarPath, configuration.expectedClients)
+  }
+
+  @Synchronized
+  private fun getFileSystem(jarPath: Path, expectedClients: Int): FileSystem {
     val jarUri = jarPath.toJarFileUri()
     val key = jarUri.toString()
 
     var fs = fsCache.getIfPresent(key)
     if (fs != null)  {
       if (fs.isOpen) {
-        fs.increment()
+        fs.increment(expectedClients)
         LOG.debug("Reusing filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
       } else {
         val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
@@ -62,6 +74,7 @@ class CachingJarFileSystemProvider(
     }
     return fs
   }
+
 
   override fun close() {
     fsCache.invalidateAll()

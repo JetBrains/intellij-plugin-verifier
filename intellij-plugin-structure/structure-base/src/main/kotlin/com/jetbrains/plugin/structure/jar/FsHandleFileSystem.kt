@@ -23,6 +23,10 @@ class FsHandleFileSystem(val delegate: FileSystem) : FileSystem() {
     referenceCount.incrementAndGet()
   }
 
+  fun increment(amount: Int) {
+    referenceCount.addAndGet(amount)
+  }
+
   @Synchronized
   override fun close() {
     if (!isOpen) {
