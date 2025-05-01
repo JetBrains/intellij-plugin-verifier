@@ -9,11 +9,8 @@ import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PathInJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.ZipFileHandler
-import com.jetbrains.plugin.structure.jar.ZipInputStreamHandler
+import com.jetbrains.plugin.structure.jar.newZipHandler
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.*
 
@@ -29,11 +26,7 @@ class LazyJarResolver(
     Jar(jarPath, fileSystemProvider).init()
   }
 
-  private val zipHandler = if (jarPath.supportsFile()) {
-    ZipFileHandler(jarPath.toFile())
-  } else {
-    ZipInputStreamHandler(jarPath)
-  }
+  private val zipHandler = jarPath.newZipHandler()
 
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
@@ -109,11 +102,5 @@ class LazyJarResolver(
         null
       }
     }
-  }
-
-  private fun Path.supportsFile() = fileSystem == FileSystems.getDefault()
-
-  private class ConstantFsProvider(private val fs: FileSystem) : JarFileSystemProvider {
-    override fun getFileSystem(jarPath: Path) = fs
   }
 }
