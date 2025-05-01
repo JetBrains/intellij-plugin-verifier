@@ -2,9 +2,13 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.emptyClass
+import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.FsHandleFileSystem
 import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarArchiveException
 import com.jetbrains.plugin.structure.jar.JarEntryResolver
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.descriptors.DescriptorReference
 import net.bytebuddy.ByteBuddy
@@ -13,8 +17,10 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 
 class JarTest {
   @Rule
@@ -28,7 +34,7 @@ class JarTest {
     byteBuddy = ByteBuddy()
   }
 
-  private fun createJar(jarPath: Path): Jar {
+  private fun createJar(jarPath: Path, jarFileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider): Jar {
     buildZipFile(jarPath) {
       file("intellij.example.xml", "<idea-plugin />")
       dir("META-INF") {
@@ -78,7 +84,7 @@ class JarTest {
       }
     }
 
-    val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider)
+    val jar = Jar(jarPath, jarFileSystemProvider)
     jar.init()
     return jar
   }
@@ -180,6 +186,77 @@ class JarTest {
         "com/example/impl/MyImpl",
       )
       assertEquals(expectedClasses, classes.toSet())
+    }
+  }
+
+  @Test
+  fun `all classes are processed when underlying filesystem is closed`() {
+    var reopenBecauseNull = 0
+    var reopenBecauseClosed = 0
+
+    val fsProvider = object : JarFileSystemProvider {
+      private val defaultFsProvider = DefaultJarFileSystemProvider()
+
+      var filesystem: FileSystem? = null
+
+      override fun getFileSystem(jarPath: Path): FileSystem {
+        return if (filesystem == null) {
+          defaultFsProvider.getFileSystem(jarPath).also {
+            filesystem = it
+            reopenBecauseNull++
+          }
+        } else if (filesystem?.isOpen == true) {
+          filesystem!!
+        } else {
+          defaultFsProvider.getFileSystem(jarPath).also {
+            filesystem = it
+            reopenBecauseClosed++
+          }
+        }
+      }
+    }
+    createJar(temporaryFolder.newFile("plugin-class-processing.jar").toPath(), fsProvider).use { jar ->
+      // Initialize Service Providers via FileSystem
+      jar.serviceProviders
+
+      val fs = fsProvider.filesystem
+
+      var iteration = 0
+      jar.processAllClasses { name, paths ->
+        if (iteration == 1) {
+          fs?.close()
+        }
+        iteration++
+        true
+      }
+    }
+    assertEquals(1, reopenBecauseNull)
+    assertEquals(1, reopenBecauseClosed)
+  }
+
+  @Test
+  fun `all classes are processed when underlying filesystem is closed with caching filesystem provider`() {
+    val fsProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+    val jarPath = temporaryFolder.newFile("plugin-class-processing.jar").toPath()
+    createJar(jarPath, fsProvider).use { jar ->
+      val uniqueFileSystems = IdentityHashMap<FileSystem, Unit>()
+      // Initialize Service Providers via FileSystem
+      jar.serviceProviders
+
+      var iteration = 0
+      jar.processAllClasses { name, paths ->
+        if (iteration == 1) {
+          val fs = fsProvider.getFileSystem(jarPath)
+          assertTrue(fs is FsHandleFileSystem)
+          fs as FsHandleFileSystem
+          uniqueFileSystems[fs] = Unit
+          fs.delegate.close()
+        }
+        iteration++
+        true
+      }
+      // Provider should have closed 1 filesystem (in the 1st iteration)
+      assertEquals(1, uniqueFileSystems.size)
     }
   }
 }
