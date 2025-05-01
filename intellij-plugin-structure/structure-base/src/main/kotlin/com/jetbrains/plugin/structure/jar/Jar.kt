@@ -95,9 +95,11 @@ class Jar(
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
     return getFileSystem(jarPath, classesInJar.size).use { fs ->
       classesInJar.all { (className, classFilePath) ->
-        fs.getPath(classFilePath.toString())
-          .takeIf { it.isFile }
-          ?.let { processor(className.toString(), it) } == true
+        getFileSystem(jarPath, expectedClients = 1).use { classFs ->
+          classFs.getPath(classFilePath.toString())
+            .takeIf { it.isFile }
+            ?.let { processor(className.toString(), it) } == true
+        }
       }
     }
   }
@@ -110,18 +112,6 @@ class Jar(
 
   private fun getFileSystem(jarPath: Path, expectedClients: Int): FileSystem {
     return fileSystemProvider.getFileSystem(jarPath, JarFileSystemProvider.Configuration(expectedClients))
-  }
-
-  fun <T> withClass(className: String, handler: (String, Path) -> T): T? {
-    return getPath(className)?.let { pathInJar ->
-      fileSystemProvider.getFileSystem(jarPath).use { fs ->
-        fs.getPath(pathInJar.toString())
-          .takeIf { it.isFile }
-          ?.let {
-            handler(className, it)
-          }
-      }
-    }
   }
 
   fun <T> processClassPathInJar(className: String, handler: (String, PathInJar) -> T): T? {

@@ -231,12 +231,12 @@ class JarTest {
       }
     }
     assertEquals(1, reopenBecauseNull)
-    assertEquals(1, reopenBecauseClosed)
+    assertEquals(2, reopenBecauseClosed)
   }
 
   @Test
   fun `all classes are processed when underlying filesystem is closed with caching filesystem provider`() {
-    val fsProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+    val fsProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE, enableEventLogging = true)
     val jarPath = temporaryFolder.newFile("plugin-class-processing.jar").toPath()
     createJar(jarPath, fsProvider).use { jar ->
       val uniqueFileSystems = IdentityHashMap<FileSystem, Unit>()
@@ -257,6 +257,15 @@ class JarTest {
       }
       // Provider should have closed 1 filesystem (in the 1st iteration)
       assertEquals(1, uniqueFileSystems.size)
+    }
+    with(fsProvider.eventLog) {
+      assertEquals(5, size)
+      // initially, create a filesystem
+      assertEquals(1, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Created>().size)
+      // after closing, recreate filesystem once
+      assertEquals(1, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Recreated>().size)
+      // reuse filesystem for 3 classes
+      assertEquals(3, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Reused>().size)
     }
   }
 }
