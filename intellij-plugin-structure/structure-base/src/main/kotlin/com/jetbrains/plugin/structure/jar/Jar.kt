@@ -95,9 +95,11 @@ class Jar(
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
     return getFileSystem(jarPath, classesInJar.size).use { fs ->
       classesInJar.all { (className, classFilePath) ->
-        fs.getPath(classFilePath.toString())
-          .takeIf { it.isFile }
-          ?.let { processor(className.toString(), it) } == true
+        getFileSystem(jarPath, expectedClients = 1).use { classFs ->
+          classFs.getPath(classFilePath.toString())
+            .takeIf { it.isFile }
+            ?.let { processor(className.toString(), it) } == true
+        }
       }
     }
   }

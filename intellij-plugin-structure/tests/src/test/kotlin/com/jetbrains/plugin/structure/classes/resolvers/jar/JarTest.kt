@@ -231,7 +231,7 @@ class JarTest {
       }
     }
     assertEquals(1, reopenBecauseNull)
-    assertEquals(1, reopenBecauseClosed)
+    assertEquals(2, reopenBecauseClosed)
   }
 
   @Test
