@@ -112,18 +112,6 @@ class Jar(
     return fileSystemProvider.getFileSystem(jarPath, JarFileSystemProvider.Configuration(expectedClients))
   }
 
-  fun <T> withClass(className: String, handler: (String, Path) -> T): T? {
-    return getPath(className)?.let { pathInJar ->
-      fileSystemProvider.getFileSystem(jarPath).use { fs ->
-        fs.getPath(pathInJar.toString())
-          .takeIf { it.isFile }
-          ?.let {
-            handler(className, it)
-          }
-      }
-    }
-  }
-
   fun <T> processClassPathInJar(className: String, handler: (String, PathInJar) -> T): T? {
     return getPath(className)?.let { pathInJar ->
       handler(className, pathInJar)
