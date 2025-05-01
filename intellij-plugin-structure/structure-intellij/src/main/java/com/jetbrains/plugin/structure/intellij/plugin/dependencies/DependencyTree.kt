@@ -279,15 +279,4 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
       missingDependencyListener(plugin, dependency)
     }
   }
-
-  // FIXME Duplicate from com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.getPluginId
-  private val Dependency.id: String
-    get() {
-      return when (this) {
-        is Dependency.Module -> this.plugin.pluginId ?: this.plugin.pluginName
-        is Dependency.Plugin -> this.plugin.pluginId ?: this.plugin.pluginName
-        Dependency.None -> null
-      } ?: "Unknown Dependency ID"
-    }
-
 }
