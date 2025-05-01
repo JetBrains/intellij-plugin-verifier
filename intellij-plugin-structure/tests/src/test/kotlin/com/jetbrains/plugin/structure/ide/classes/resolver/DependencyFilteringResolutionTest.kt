@@ -6,7 +6,7 @@ import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
-import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
+import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.intellij.platform.Launch
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -149,8 +149,8 @@ class DependencyFilteringResolutionTest {
     val pluginResolverProvider = CachingPluginDependencyResolverProvider(ide)
     val pluginDependencyFilteredResolver = pluginResolverProvider.getResolver(plugin)
 
-    assertTrue(pluginDependencyFilteredResolver is ComponentNameAwareCompositeResolver)
-    pluginDependencyFilteredResolver as ComponentNameAwareCompositeResolver
+    assertTrue(pluginDependencyFilteredResolver is DependencyTreeAwareResolver)
+    pluginDependencyFilteredResolver as DependencyTreeAwareResolver
 
     with(pluginDependencyFilteredResolver) {
       // pluginAlias has no classpath, hence no resolver

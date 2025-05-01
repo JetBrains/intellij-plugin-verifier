@@ -3,9 +3,14 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.createEmptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
@@ -21,6 +26,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
+import java.util.*
+
+private const val UNKNOWN = ""
 
 class CachingPluginDependencyResolverProviderTest {
   @Rule
@@ -178,10 +186,29 @@ class CachingPluginDependencyResolverProviderTest {
        */
       assertEquals(corePluginCacheHit, hitCount())
       /*
-        "com.example.somePlugin" (plugin itself), "com.intellij" and "com.intellij.modules.json" need to be created without cache
+        1) "com.example.somePlugin" (plugin itself),
+        2) "com.intellij"
+        3) "com.intellij" sole 'classpath' entry
+        4) "com.intellij.modules.json"
+        5) "com.intellij.modules.json" sole 'classpath' entry
+        The modules of "com.intellij" are not considered to be cache misses as they are conflated with the
+        "com.intellij" plugin.
+        - "com.intellij.modules.platform" as module of "com.intellij"
+        - "com.intellij.modules.lang" as a module of "com.intellij"
        */
-      assertEquals(3, missCount())
+      assertEquals(5,  missCount())
     }
+    listOf(
+      "com.example.somePlugin",
+      "com.intellij",
+      "com.intellij/product.jar",
+      "com.intellij.modules.json",
+      "com.intellij.modules.json/json.jar",
+      "com.intellij.modules.platform",
+      "com.intellij.modules.lang")
+      .forEach {
+        assertTrue("Resolver must cache $it", resolverProvider.contains(it))
+      }
 
     with(resolver) {
       assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJsonPluginExplicitPackages, packages)
@@ -193,15 +220,13 @@ class CachingPluginDependencyResolverProviderTest {
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
-        One previous value. On top: 'Java' depends on 'Lang' that is already in cache, making a 2nd cache hit.
+        All seven (7) modules and plugins are in the cache. Add one for Java itself.
        */
-      assertEquals(corePluginCacheHit + 1, hitCount())
+      assertEquals(8, hitCount())
       /*
-        Three previous values. On top, two values need to be created without the cache
-        1) 'Java'
-        2) 'com.example.BetterJava' (plugin itself)
+        All seven (7) modules and plugins are in the cache. Add one for Java itself.
        */
-      assertEquals(5, missCount())
+      assertEquals(8, missCount())
     }
 
     with(pluginDependingOnJavaResolver) {
@@ -328,12 +353,84 @@ class CachingPluginDependencyResolverProviderTest {
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val resolver = resolverProvider.getResolver(alphaPlugin)
-    assertTrue(resolver is CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver)
-    resolver as CachingPluginDependencyResolverProvider.ComponentNameAwareCompositeResolver
+    assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
+    resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
     with(resolver) {
       assertTrue(resolver.containsResolverName("com.example.Beta"))
       assertFalse(resolver.containsResolverName("com.example.Alpha"))
     }
+  }
+
+  @Test
+  fun `plugin depends on JSON that is in the secondary cache, but not fully`() {
+    val ideRoot = temporaryFolder.newFolder("idea-" + UUID.randomUUID().toString()).toPath()
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+
+    val jsonPluginDir = buildDirectory(ideRoot) {
+      dir("plugins") {
+        dir("json") {
+          dir("lib") {
+            zip("json.jar") {
+              dirs("com/intellij/json") {
+                file("JsonNamesValidator.class", createEmptyClass("com/intellij/json/JsonNamesValidator"))
+              }
+            }
+            dir("modules") {
+              zip("intellij.json.split.jar") {
+                dir("com") {
+                  dir("intellij") {
+                    dir("json") {
+                      file("JsonBundle.class", createEmptyClass("com/intellij/json/JsonBundle"))
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    val jsonPlugin = MockIdePlugin(
+      pluginId = "com.intellij.modules.json",
+      pluginName = "JSON",
+      originalFile = jsonPluginDir,
+      dependencies = listOf(
+        ModuleV2Dependency("com.intellij.modules.lang")
+      ),
+      definedModules = setOf("intellij.json", "intellij.json.split"),
+      classpath = Classpath.of(listOf(ideRoot.resolve("plugins/json/lib/json.jar"), ideRoot.resolve("plugins/json/lib/modules/intellij.json.split.jar")))
+    )
+
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(jsonPlugin))
+    val productInfo = ProductInfo(
+      layout = listOf(
+        LayoutComponent.Plugin("com.intellij.modules.json", classPaths = listOf("plugins/json/lib/json.jar")),
+        LayoutComponent.ModuleV2("intellij.json", classPaths = listOf("plugins/json/lib/modules/intellij.json.jar")),
+        LayoutComponent.ModuleV2("intellij.json.split", classPaths = listOf("plugins/json/lib/modules/intellij.json.split.jar"))
+      ),
+      name = UNKNOWN,
+      version = UNKNOWN,
+      versionSuffix = UNKNOWN,
+      buildNumber = UNKNOWN,
+      productCode = UNKNOWN,
+      dataDirectoryName = UNKNOWN,
+      svgIconPath = UNKNOWN,
+      productVendor = UNKNOWN,
+      launch = emptyList(),
+      bundledPlugins = emptyList(),
+      modules = emptyList()
+    )
+    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
+
+    val alphaPlugin = MockIdePlugin(
+      pluginId = "com.example.Alpha",
+      dependencies = dependency("com.intellij.modules.json"),
+    )
+
+    val pluginResolver = resolverProvider.getResolver(alphaPlugin)
+    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonBundle"))
   }
 
   private fun dependency(id: String): List<PluginDependency> {

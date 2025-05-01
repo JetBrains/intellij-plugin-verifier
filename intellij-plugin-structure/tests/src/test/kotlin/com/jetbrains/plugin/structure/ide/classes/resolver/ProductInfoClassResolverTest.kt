@@ -98,8 +98,32 @@ class ProductInfoClassResolverTest {
     val ideProvisioner = resolver.getLayoutComponentResolver("com.intellij.platform.ide.provisioner")
     assertNotNull(ideProvisioner)
     ideProvisioner!!
+  }
 
+  @Test
+  fun `resolver is a plugin resolver provider`() {
+    val ide = MockIde(IdeVersion.createIdeVersion(IDEA_ULTIMATE_2024_2), ideRoot, bundledPlugins = listOf(corePlugin()))
+    val resolver = ProductInfoClassResolver.of(ide)
 
+    val expectedPlugins = listOf(
+      "com.intellij",
+      "Git4Idea",
+      "com.intellij",
+      "intellij.execution.process.elevation",
+      "intellij.java.featuresTrainer"
+    )
+    val actual = expectedPlugins.mapNotNull {
+      val result = resolver.contains(it)
+      if (!result) it else null
+    }
+    if (actual.isNotEmpty()) {
+      fail("The following resolvers were not found: $actual")
+    }
+
+    val resolvers = expectedPlugins.mapNotNull {
+      resolver.getResolver(MockIdePlugin(pluginId = it))
+    }
+    assertEquals(expectedPlugins.size, resolvers.size)
   }
 
   @Test

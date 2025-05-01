@@ -10,6 +10,8 @@ class LazyCompositeResolver private constructor(
   name: String
 ) : NamedResolver(name) {
 
+  private val resolverCount = resolvers.size
+
   private val delegateResolver by lazy {
     CompositeResolver.create(resolvers, name)
   }
@@ -52,6 +54,8 @@ class LazyCompositeResolver private constructor(
     delegateResolver.processAllClasses(processor)
 
   override fun close(): Unit = delegateResolver.close()
+
+  override fun toString() = "$name is a lazy composite of $resolverCount resolver" + (if (resolverCount != 1) "s" else "")
 
   companion object {
     @JvmStatic

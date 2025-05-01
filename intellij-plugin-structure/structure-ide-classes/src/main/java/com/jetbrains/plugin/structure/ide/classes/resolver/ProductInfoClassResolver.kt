@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
@@ -26,6 +27,8 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
@@ -43,7 +46,7 @@ private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
 class ProductInfoClassResolver(
   private val productInfo: ProductInfo, val ide: Ide,
   private val resolverConfiguration: IdeResolverConfiguration
-) : NamedResolver("$PRODUCT_INFO_JSON Resolver") {
+) : NamedResolver("$PRODUCT_INFO_JSON Resolver"), PluginResolverProvider {
 
   private val layoutComponentsProvider = LayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
 
@@ -53,6 +56,15 @@ class ProductInfoClassResolver(
       resolvers += resolveNonCoreAndNonProductModules()
     }
   }
+
+  internal val namedResolvers: Collection<NamedResolver> = resolvers.values
+
+  override fun getResolver(plugin: IdePlugin): Resolver {
+    val id = plugin.pluginId?: plugin.pluginName
+    return id?.let { resolvers[id] } ?: EMPTY_RESOLVER
+  }
+
+  override fun contains(pluginId: PluginId) = pluginId in resolvers.keys
 
   private fun List<KindedResolver>.resolveCorePlugin(): Map<String, NamedResolver> {
     val corePluginResolver = find { it.name == CORE_IDE_PLUGIN_ID } ?: return emptyMap()
@@ -143,6 +155,7 @@ class ProductInfoClassResolver(
   val bootClasspathResolver: NamedResolver
     get() {
       val bootJars = productInfo.launches.firstOrNull()?.bootClassPathJarNames
+      //FIXME reuse resolvers from bootclasspath in layout component resolvers
       val bootResolver = bootJars?.map { getBootJarResolver(it) }.asResolver(BOOTCLASSPATH_JAR_NAMES)
       return bootResolver
     }

@@ -119,6 +119,12 @@ class Jar(
     }
   }
 
+  fun <T> processClassPathInJar(className: String, handler: (String, PathInJar) -> T): T? {
+    return getPath(className)?.let { pathInJar ->
+      handler(className, pathInJar)
+    }
+  }
+
   override fun close() {
     // NO-OP
   }

@@ -3,12 +3,14 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult.NotFound
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.PathInJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.newZipHandler
 import org.objectweb.asm.tree.ClassNode
-import java.nio.file.FileSystem
 import java.nio.file.Path
 import java.util.*
 
@@ -23,6 +25,8 @@ class LazyJarResolver(
   private val jar: Jar by lazy {
     Jar(jarPath, fileSystemProvider).init()
   }
+
+  private val zipHandler = jarPath.newZipHandler()
 
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
@@ -51,9 +55,9 @@ class LazyJarResolver(
 
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
-    return jar.withClass(className) { className, classFilePath ->
+    return jar.processClassPathInJar(className) { className, classFilePath ->
       readClass(className, classFilePath)
-    } ?: NotFound
+    } ?: ResolutionResult.NotFound
   }
 
   override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
@@ -74,6 +78,21 @@ class LazyJarResolver(
 
   override fun close() = Unit
 
+  fun readClass(className: CharSequence, classPath: PathInJar): ResolutionResult<ClassNode> {
+    return try {
+      zipHandler.handleEntry(classPath) { entryResource, entry ->
+        val inputStream = entryResource.getInputStream(entry)
+        val classNode = AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
+        ResolutionResult.Found(classNode, fileOrigin)
+      } ?: ResolutionResult.NotFound
+    } catch (e: InvalidClassFileException) {
+      ResolutionResult.Invalid(e.message)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      ResolutionResult.FailedToRead(e.message ?: e.javaClass.name)
+    }
+  }
+
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
     return fileSystemProvider.getFileSystem(jarPath).use { fs ->
       val path = fs.getPath(bundleResourceName)
@@ -83,9 +102,5 @@ class LazyJarResolver(
         null
       }
     }
-  }
-
-  private class ConstantFsProvider(private val fs: FileSystem) : JarFileSystemProvider {
-    override fun getFileSystem(jarPath: Path) = fs
   }
 }

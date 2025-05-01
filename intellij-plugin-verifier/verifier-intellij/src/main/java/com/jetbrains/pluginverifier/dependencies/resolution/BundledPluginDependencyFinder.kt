@@ -9,8 +9,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
 
 /**
  * [DependencyFinder] that searches for plugins among bundled plugins of the [ide].
@@ -42,8 +42,7 @@ class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache
 
   private fun IdePlugin?.toResult(dependencyId: String): DependencyFinder.Result {
     return if (this != null) {
-      val pluginInfo = BundledPluginInfo(ide.version, this)
-      DependencyFinder.Result.DetailsProvided(pluginDetailsCache.getPluginDetailsCacheEntry(pluginInfo))
+      DependencyFinder.Result.FoundPlugin(this, origin = Bundled)
     } else {
       DependencyFinder.Result.NotFound("Dependency $dependencyId is not found among the bundled plugins of $ide")
     }
