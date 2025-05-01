@@ -22,7 +22,7 @@ public class AsmUtil {
   public static final int ASM_API_LEVEL = Opcodes.ASM9;
 
   @NotNull
-  public static ClassNode readClassNode(@NotNull String className,
+  public static ClassNode readClassNode(@NotNull CharSequence className,
                                         @NotNull InputStream inputStream,
                                         boolean fully) throws InvalidClassFileException, IOException {
     try {
