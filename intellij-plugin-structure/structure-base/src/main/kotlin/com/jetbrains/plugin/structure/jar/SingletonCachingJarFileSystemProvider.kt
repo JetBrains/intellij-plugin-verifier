@@ -7,12 +7,8 @@ package com.jetbrains.plugin.structure.jar
 import java.nio.file.FileSystem
 import java.nio.file.Path
 
-object SingletonCachingJarFileSystemProvider : JarFileSystemProvider, AutoCloseable {
+object SingletonCachingJarFileSystemProvider : JarFileSystemProvider {
   private val delegate = CachingJarFileSystemProvider()
 
   override fun getFileSystem(jarPath: Path): FileSystem = delegate.getFileSystem(jarPath)
-
-  override fun close(jarPath: Path): Unit = delegate.close(jarPath)
-
-  override fun close(): Unit = delegate.close()
 }
