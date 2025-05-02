@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.usages.deprecated
@@ -28,13 +28,13 @@ val ClassFileMember.deprecationInfo: DeprecationInfo?
     val scheduledForRemoval = annotations.findAnnotation(JETBRAINS_SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME)
     if (scheduledForRemoval != null) {
       val inVersion = scheduledForRemoval.getAnnotationValue("inVersion") as? String
-      return DeprecationInfo(true, inVersion)
+      return if (inVersion == null) DeprecationInfo.FOR_REMOVAL_TRUE else DeprecationInfo(true, inVersion)
     }
 
     val deprecated = annotations.findAnnotation(JAVA_DEPRECATED_ANNOTATION_NAME)
     if (deprecated != null) {
       val forRemoval = deprecated.getAnnotationValue("forRemoval") as? Boolean ?: false
-      return DeprecationInfo(forRemoval, null)
+      return if (forRemoval) DeprecationInfo.FOR_REMOVAL_TRUE else DeprecationInfo.FOR_REMOVAL_FALSE
     }
 
     val kotlinDeprecated = annotations.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME)
@@ -46,7 +46,7 @@ val ClassFileMember.deprecationInfo: DeprecationInfo?
     }
 
     return if (isDeprecated) {
-      DeprecationInfo(false, null)
+      DeprecationInfo.FOR_REMOVAL_FALSE
     } else {
       null
     }
