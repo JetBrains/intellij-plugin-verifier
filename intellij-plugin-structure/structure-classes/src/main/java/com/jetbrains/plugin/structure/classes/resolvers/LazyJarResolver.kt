@@ -11,9 +11,6 @@ import com.jetbrains.plugin.structure.jar.newZipHandler
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.IOException
-import java.nio.charset.MalformedInputException
-import java.nio.charset.UnmappableCharacterException
 import java.nio.file.Path
 import java.util.*
 
@@ -99,27 +96,9 @@ class LazyJarResolver(
   }
 
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    try {
-      return zipHandler.handleEntry(bundleResourceName) { bundleResourceName, entry ->
-        val inputStream = bundleResourceName.getInputStream(entry)
-        PropertyResourceBundle(inputStream)
-      }
-    } catch (e: IOException) {
-      bundleResourceName.logException(e, "I/O error")
-    } catch (e: NullPointerException) {
-      bundleResourceName.logException(e, "Stream is null")
-    } catch (e: IllegalArgumentException) {
-      bundleResourceName.logException(e, "Stream contains malformed Unicode sequences")
-    } catch (e: MalformedInputException) {
-      bundleResourceName.logException(e, "Stream contains an invalid UTF-8 sequence")
-    } catch (e: UnmappableCharacterException) {
-      bundleResourceName.logException(e, "Stream contains an unmappable UTF-8 sequence")
+    return zipHandler.handleEntry(bundleResourceName) { bundleResourceName, entry ->
+      val inputStream = bundleResourceName.getInputStream(entry)
+      PropertyResourceBundle(inputStream)
     }
-    return null
   }
-
-  private fun String.logException(e: Exception, reason: String) {
-    LOG.debug("Cannot read resource bundle '{}'. {}: {}", this, reason, e.message, e)
-  }
-
 }
