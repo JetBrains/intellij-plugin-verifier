@@ -4,9 +4,11 @@
 
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
+import java.util.function.Function
 
 private const val UNKNOWN_VERSION = "unknown version"
 
@@ -36,11 +38,19 @@ class DependenciesGraphProvider {
   private fun DependencyTreeResolution.getEdges(): List<DependencyEdge> {
     val edges = mutableListOf<DependencyEdge>()
     forEach { id, dependency ->
-      edges += DependencyEdge(DependencyNode(id,
-        "unknown version"), DependencyNode(dependency.id, UNKNOWN_VERSION), dependency)
+      edges += DependencyEdge(
+        DependencyNode(id, UNKNOWN_VERSION).intern(),
+        DependencyNode(dependency.id, UNKNOWN_VERSION).intern(),
+        dependency.intern()
+      )
     }
     return edges
   }
+
+  private val pluginDependencyCache = hashMapOf<PluginDependency, PluginDependency>()
+  private fun PluginDependency.intern(): PluginDependency = pluginDependencyCache.computeIfAbsent(this, Function.identity())
+  private val dependencyNodeCache = hashMapOf<DependencyNode, DependencyNode>()
+  private fun DependencyNode.intern(): DependencyNode = dependencyNodeCache.computeIfAbsent(this, Function.identity())
 
   private fun DependencyTreeResolution.getMissingDependencies(): Map<DependencyNode, Set<MissingDependency>> {
     return missingDependencies.map { (plugin, dependencies) ->
