@@ -38,9 +38,9 @@ abstract class AbstractJarResolver(
     }
 
     val control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES)
-    val bundleName = control.toBundleName(baseName, locale)
+    val bundleName: String = control.toBundleName(baseName, locale)
 
-    val resourceName = control.toResourceName(bundleName, "properties")
+    val resourceName: String = control.toResourceName(bundleName, "properties")
     val propertyResourceBundle = try {
       readPropertyResourceBundle(resourceName)
     } catch (e: IllegalArgumentException) {
