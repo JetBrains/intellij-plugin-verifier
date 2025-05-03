@@ -1,8 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
-import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.jar.Jar
@@ -11,8 +9,15 @@ import com.jetbrains.plugin.structure.jar.PathInJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.newZipHandler
 import org.objectweb.asm.tree.ClassNode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.nio.charset.MalformedInputException
+import java.nio.charset.UnmappableCharacterException
 import java.nio.file.Path
 import java.util.*
+
+private val LOG: Logger = LoggerFactory.getLogger(LazyJarResolver::class.java)
 
 class LazyJarResolver(
   override val jarPath: Path,
@@ -94,13 +99,27 @@ class LazyJarResolver(
   }
 
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    return fileSystemProvider.getFileSystem(jarPath).use { fs ->
-      val path = fs.getPath(bundleResourceName)
-      if (path.exists()) {
-        path.inputStream().use { PropertyResourceBundle(it) }
-      } else {
-        null
+    try {
+      return zipHandler.handleEntry(bundleResourceName) { bundleResourceName, entry ->
+        val inputStream = bundleResourceName.getInputStream(entry)
+        PropertyResourceBundle(inputStream)
       }
+    } catch (e: IOException) {
+      bundleResourceName.logException(e, "I/O error")
+    } catch (e: NullPointerException) {
+      bundleResourceName.logException(e, "Stream is null")
+    } catch (e: IllegalArgumentException) {
+      bundleResourceName.logException(e, "Stream contains malformed Unicode sequences")
+    } catch (e: MalformedInputException) {
+      bundleResourceName.logException(e, "Stream contains an invalid UTF-8 sequence")
+    } catch (e: UnmappableCharacterException) {
+      bundleResourceName.logException(e, "Stream contains an unmappable UTF-8 sequence")
     }
+    return null
   }
+
+  private fun String.logException(e: Exception, reason: String) {
+    LOG.debug("Cannot read resource bundle '{}'. {}: {}", this, reason, e.message, e)
+  }
+
 }
