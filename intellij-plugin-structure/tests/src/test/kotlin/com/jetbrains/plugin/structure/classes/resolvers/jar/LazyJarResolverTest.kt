@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.classes.resolvers.jar
 
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
@@ -111,6 +112,21 @@ class LazyJarResolverTest {
       val resourceBundleResolution = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
       assertTrue(resourceBundleResolution is Found)
       resourceBundleResolution as Found
+    }
+  }
+
+  @Test
+  fun `malformed resource bundle content`() {
+    val jarPath: Path = temporaryFolder.newFile("plugin-malformed-utf8.jar").toPath()
+    val malformedIso88591 = "\\u00G1=\\u00G1"
+    buildZipFile(jarPath) {
+      dirs("com/example") {
+        file("MyClass_en_US.properties", malformedIso88591)
+      }
+    }
+    LazyJarResolver(jarPath, Resolver.ReadMode.FULL, fileOrigin).use { resolver ->
+      val result = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
+      assertTrue(result is ResolutionResult.FailedToRead)
     }
   }
 
