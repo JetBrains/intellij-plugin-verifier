@@ -12,24 +12,24 @@ import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolvers
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.isDistributionIde
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.ide.layout.InvalidIdeLayoutException
 import java.nio.file.Path
 
-class DistributionIdeResolverCreator {
+class DistributionIdeResolverProvider : IdeResolverProvider {
+
   @Throws(InvalidIdeException::class)
-  fun createIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
+  override fun getIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
     val idePath = ide.idePath
-    if (isDistributionIde(idePath)) {
+    if (supports(idePath)) {
       return getIdeResolverFromDistribution(ide, configuration)
     } else {
       throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
   }
 
-  fun supports(idePath: Path): Boolean = with(idePath) {
+  override fun supports(idePath: Path): Boolean = with(idePath) {
     return resolve("lib").isDirectory &&
       !resolve(".idea").isDirectory
   }

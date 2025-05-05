@@ -6,7 +6,7 @@ package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
-import com.jetbrains.plugin.structure.ide.jps.CompiledIdeResolverCreator
+import com.jetbrains.plugin.structure.ide.jps.CompiledIdeResolverProvider
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import org.junit.Assert.assertTrue
@@ -27,7 +27,7 @@ class CompiledIdeResolverTest {
     val ideVersion = IdeVersion.createIdeVersion("IU-163.1")
     val ide = MockIde(ideVersion, idePath, bundledPlugins = emptyList())
 
-    val ideResolverCreator = CompiledIdeResolverCreator()
+    val ideResolverCreator = CompiledIdeResolverProvider()
     val ideResolver = ideResolverCreator.createIdeResolver(ide, IdeResolverConfiguration(readMode = FULL))
     with(ideResolver.allClassNames) {
       assertTrue(any { "com/example/LibPluginService".contentEquals(it) })

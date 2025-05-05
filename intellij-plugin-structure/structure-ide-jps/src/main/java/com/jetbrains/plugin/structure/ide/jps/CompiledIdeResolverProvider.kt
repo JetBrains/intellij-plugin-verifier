@@ -18,14 +18,15 @@ import com.jetbrains.plugin.structure.classes.resolvers.buildJarOrZipFileResolve
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverProvider
 import java.nio.file.Path
 
-class CompiledIdeResolverCreator {
-  fun createIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
+class CompiledIdeResolverProvider : IdeResolverProvider {
+  override fun getIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
     return getIdeResolver(ide, configuration.readMode)
   }
 
-  fun supports(idePath: Path): Boolean {
+  override fun supports(idePath: Path): Boolean {
     return isCompiledUltimate(idePath)
       || isCompiledCommunity(idePath)
   }

@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 
 object IdeResolverCreator {
-  private val distributionIdeResolverCreator = DistributionIdeResolverCreator()
+  private val distributionIdeResolverProvider = DistributionIdeResolverProvider()
 
   @JvmStatic
   fun createIdeResolver(ide: Ide): Resolver = createIdeResolver(Resolver.ReadMode.FULL, ide)
@@ -21,8 +21,8 @@ object IdeResolverCreator {
   @JvmStatic
   fun createIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
     val idePath = ide.idePath
-    if (distributionIdeResolverCreator.supports(idePath)) {
-      return distributionIdeResolverCreator.createIdeResolver(ide, configuration)
+    if (distributionIdeResolverProvider.supports(idePath)) {
+      return distributionIdeResolverProvider.getIdeResolver(ide, configuration)
     } else {
       throw InvalidIdeException(idePath, "Invalid IDE $ide at $idePath")
     }
