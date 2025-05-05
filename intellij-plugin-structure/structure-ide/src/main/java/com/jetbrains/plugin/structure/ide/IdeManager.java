@@ -74,4 +74,17 @@ public abstract class IdeManager {
   @NotNull
   public abstract Ide createIde(@NotNull Path idePath, @Nullable IdeVersion version) throws IOException, InvalidIdeException;
 
+  /**
+   * Indicates if this {@link IdeManager} instance is able to create an {@link Ide} instance based on the provided
+   * IDE path and an optional version.
+   * <p>
+   * This is a hint for dynamic resolution of IDE managers.
+   * It might prevent the creation or access of IDE managers that would otherwise fail when creating IDE instances.
+   * @param idePath IDE home directory
+   * @param version version of the IDE
+   * @return {@code true} if this manager is able to construct an {@link Ide} instance
+   */
+  public boolean supports(@NotNull Path idePath, @Nullable IdeVersion version) {
+    return true;
+  }
 }
