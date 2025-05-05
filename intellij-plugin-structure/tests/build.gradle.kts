@@ -22,3 +22,19 @@ dependencies {
 
   testImplementation(sharedLibs.byteBuddy)
 }
+
+val testOutput by configurations.creating {
+  isCanBeConsumed = true
+  isCanBeResolved = false
+}
+
+val testJar by tasks.registering(Jar::class) {
+  archiveClassifier.set("tests")
+  from(sourceSets["test"].output)
+  dependsOn(tasks.testClasses)
+}
+
+
+artifacts {
+  add("testOutput", testJar)
+}
