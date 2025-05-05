@@ -28,7 +28,7 @@ class CompiledIdeResolverTest {
     val ide = MockIde(ideVersion, idePath, bundledPlugins = emptyList())
 
     val ideResolverCreator = CompiledIdeResolverProvider()
-    val ideResolver = ideResolverCreator.createIdeResolver(ide, IdeResolverConfiguration(readMode = FULL))
+    val ideResolver = ideResolverCreator.getIdeResolver(ide, IdeResolverConfiguration(readMode = FULL))
     with(ideResolver.allClassNames) {
       assertTrue(any { "com/example/LibPluginService".contentEquals(it) })
       assertTrue(any { "com/example/somePlugin/SomePluginService".contentEquals(it) })
